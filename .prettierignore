@@ -1,0 +1,14 @@
+# Ignore files for prettier
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.env*
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+.husky/
+.git/
+*.min.js
+*.min.css
