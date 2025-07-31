@@ -228,25 +228,4 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
 
     return this.softDelete(id);
   }
-
-  /**
-   * 更新作者作品数量（冗余字段维护）
-   * @param authorId 作者ID
-   * @returns 更新结果
-   */
-  async updateAuthorWorksCount(authorId: number) {
-    const worksCount = await this.prisma.workComic.count({
-      where: {
-        authorId,
-        deletedAt: null,
-      },
-    });
-
-    return this.updateById({
-      id: authorId,
-      data: {
-        worksCount,
-      },
-    });
-  }
 }

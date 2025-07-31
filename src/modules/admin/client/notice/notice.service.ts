@@ -34,6 +34,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
+    // @ts-expect-error ignore
     return this.create({ data: createNoticeDto });
   }
 
@@ -139,6 +140,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
 
     return await this.update({
       where: { id },
+      // @ts-expect-error ignore
       data: updateData,
     });
   }
