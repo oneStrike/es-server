@@ -59,7 +59,6 @@ export type WorkComicVersionMinAggregateOutputType = {
   translatorGroup: string | null;
   description: string | null;
   isRecommended: boolean | null;
-  isEnabled: boolean | null;
   isPublished: boolean | null;
   publishAt: Date | null;
   lastUpdated: Date | null;
@@ -87,7 +86,6 @@ export type WorkComicVersionMaxAggregateOutputType = {
   translatorGroup: string | null;
   description: string | null;
   isRecommended: boolean | null;
-  isEnabled: boolean | null;
   isPublished: boolean | null;
   publishAt: Date | null;
   lastUpdated: Date | null;
@@ -115,7 +113,6 @@ export type WorkComicVersionCountAggregateOutputType = {
   translatorGroup: number;
   description: number;
   isRecommended: number;
-  isEnabled: number;
   isPublished: number;
   publishAt: number;
   lastUpdated: number;
@@ -170,7 +167,6 @@ export type WorkComicVersionMinAggregateInputType = {
   translatorGroup?: true;
   description?: true;
   isRecommended?: true;
-  isEnabled?: true;
   isPublished?: true;
   publishAt?: true;
   lastUpdated?: true;
@@ -198,7 +194,6 @@ export type WorkComicVersionMaxAggregateInputType = {
   translatorGroup?: true;
   description?: true;
   isRecommended?: true;
-  isEnabled?: true;
   isPublished?: true;
   publishAt?: true;
   lastUpdated?: true;
@@ -226,7 +221,6 @@ export type WorkComicVersionCountAggregateInputType = {
   translatorGroup?: true;
   description?: true;
   isRecommended?: true;
-  isEnabled?: true;
   isPublished?: true;
   publishAt?: true;
   lastUpdated?: true;
@@ -352,7 +346,6 @@ export type WorkComicVersionGroupByOutputType = {
   translatorGroup: string | null;
   description: string | null;
   isRecommended: boolean;
-  isEnabled: boolean;
   isPublished: boolean;
   publishAt: Date | null;
   lastUpdated: Date | null;
@@ -405,7 +398,6 @@ export type WorkComicVersionWhereInput = {
     | null;
   description?: Prisma.StringNullableFilter<'WorkComicVersion'> | string | null;
   isRecommended?: Prisma.BoolFilter<'WorkComicVersion'> | boolean;
-  isEnabled?: Prisma.BoolFilter<'WorkComicVersion'> | boolean;
   isPublished?: Prisma.BoolFilter<'WorkComicVersion'> | boolean;
   publishAt?:
     | Prisma.DateTimeNullableFilter<'WorkComicVersion'>
@@ -450,7 +442,6 @@ export type WorkComicVersionOrderByWithRelationInput = {
   translatorGroup?: Prisma.SortOrderInput | Prisma.SortOrder;
   description?: Prisma.SortOrderInput | Prisma.SortOrder;
   isRecommended?: Prisma.SortOrder;
-  isEnabled?: Prisma.SortOrder;
   isPublished?: Prisma.SortOrder;
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder;
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -495,7 +486,6 @@ export type WorkComicVersionWhereUniqueInput = Prisma.AtLeast<
       | string
       | null;
     isRecommended?: Prisma.BoolFilter<'WorkComicVersion'> | boolean;
-    isEnabled?: Prisma.BoolFilter<'WorkComicVersion'> | boolean;
     isPublished?: Prisma.BoolFilter<'WorkComicVersion'> | boolean;
     publishAt?:
       | Prisma.DateTimeNullableFilter<'WorkComicVersion'>
@@ -545,7 +535,6 @@ export type WorkComicVersionOrderByWithAggregationInput = {
   translatorGroup?: Prisma.SortOrderInput | Prisma.SortOrder;
   description?: Prisma.SortOrderInput | Prisma.SortOrder;
   isRecommended?: Prisma.SortOrder;
-  isEnabled?: Prisma.SortOrder;
   isPublished?: Prisma.SortOrder;
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder;
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -591,7 +580,6 @@ export type WorkComicVersionScalarWhereWithAggregatesInput = {
     | string
     | null;
   isRecommended?: Prisma.BoolWithAggregatesFilter<'WorkComicVersion'> | boolean;
-  isEnabled?: Prisma.BoolWithAggregatesFilter<'WorkComicVersion'> | boolean;
   isPublished?: Prisma.BoolWithAggregatesFilter<'WorkComicVersion'> | boolean;
   publishAt?:
     | Prisma.DateTimeNullableWithAggregatesFilter<'WorkComicVersion'>
@@ -647,7 +635,6 @@ export type WorkComicVersionCreateInput = {
   translatorGroup?: string | null;
   description?: string | null;
   isRecommended?: boolean;
-  isEnabled?: boolean;
   isPublished?: boolean;
   publishAt?: Date | string | null;
   lastUpdated?: Date | string | null;
@@ -677,7 +664,6 @@ export type WorkComicVersionUncheckedCreateInput = {
   translatorGroup?: string | null;
   description?: string | null;
   isRecommended?: boolean;
-  isEnabled?: boolean;
   isPublished?: boolean;
   publishAt?: Date | string | null;
   lastUpdated?: Date | string | null;
@@ -707,7 +693,6 @@ export type WorkComicVersionUpdateInput = {
     | null;
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   publishAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
@@ -752,7 +737,6 @@ export type WorkComicVersionUncheckedUpdateInput = {
     | null;
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   publishAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
@@ -793,7 +777,6 @@ export type WorkComicVersionCreateManyInput = {
   translatorGroup?: string | null;
   description?: string | null;
   isRecommended?: boolean;
-  isEnabled?: boolean;
   isPublished?: boolean;
   publishAt?: Date | string | null;
   lastUpdated?: Date | string | null;
@@ -822,7 +805,6 @@ export type WorkComicVersionUpdateManyMutationInput = {
     | null;
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   publishAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
@@ -865,7 +847,6 @@ export type WorkComicVersionUncheckedUpdateManyInput = {
     | null;
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   publishAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
@@ -916,7 +897,6 @@ export type WorkComicVersionCountOrderByAggregateInput = {
   translatorGroup?: Prisma.SortOrder;
   description?: Prisma.SortOrder;
   isRecommended?: Prisma.SortOrder;
-  isEnabled?: Prisma.SortOrder;
   isPublished?: Prisma.SortOrder;
   publishAt?: Prisma.SortOrder;
   lastUpdated?: Prisma.SortOrder;
@@ -957,7 +937,6 @@ export type WorkComicVersionMaxOrderByAggregateInput = {
   translatorGroup?: Prisma.SortOrder;
   description?: Prisma.SortOrder;
   isRecommended?: Prisma.SortOrder;
-  isEnabled?: Prisma.SortOrder;
   isPublished?: Prisma.SortOrder;
   publishAt?: Prisma.SortOrder;
   lastUpdated?: Prisma.SortOrder;
@@ -985,7 +964,6 @@ export type WorkComicVersionMinOrderByAggregateInput = {
   translatorGroup?: Prisma.SortOrder;
   description?: Prisma.SortOrder;
   isRecommended?: Prisma.SortOrder;
-  isEnabled?: Prisma.SortOrder;
   isPublished?: Prisma.SortOrder;
   publishAt?: Prisma.SortOrder;
   lastUpdated?: Prisma.SortOrder;
@@ -1180,7 +1158,6 @@ export type WorkComicVersionCreateWithoutChaptersInput = {
   translatorGroup?: string | null;
   description?: string | null;
   isRecommended?: boolean;
-  isEnabled?: boolean;
   isPublished?: boolean;
   publishAt?: Date | string | null;
   lastUpdated?: Date | string | null;
@@ -1209,7 +1186,6 @@ export type WorkComicVersionUncheckedCreateWithoutChaptersInput = {
   translatorGroup?: string | null;
   description?: string | null;
   isRecommended?: boolean;
-  isEnabled?: boolean;
   isPublished?: boolean;
   publishAt?: Date | string | null;
   lastUpdated?: Date | string | null;
@@ -1266,7 +1242,6 @@ export type WorkComicVersionUpdateWithoutChaptersInput = {
     | null;
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   publishAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
@@ -1310,7 +1285,6 @@ export type WorkComicVersionUncheckedUpdateWithoutChaptersInput = {
     | null;
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   publishAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
@@ -1348,7 +1322,6 @@ export type WorkComicVersionCreateWithoutComicInput = {
   translatorGroup?: string | null;
   description?: string | null;
   isRecommended?: boolean;
-  isEnabled?: boolean;
   isPublished?: boolean;
   publishAt?: Date | string | null;
   lastUpdated?: Date | string | null;
@@ -1376,7 +1349,6 @@ export type WorkComicVersionUncheckedCreateWithoutComicInput = {
   translatorGroup?: string | null;
   description?: string | null;
   isRecommended?: boolean;
-  isEnabled?: boolean;
   isPublished?: boolean;
   publishAt?: Date | string | null;
   lastUpdated?: Date | string | null;
@@ -1458,7 +1430,6 @@ export type WorkComicVersionScalarWhereInput = {
     | null;
   description?: Prisma.StringNullableFilter<'WorkComicVersion'> | string | null;
   isRecommended?: Prisma.BoolFilter<'WorkComicVersion'> | boolean;
-  isEnabled?: Prisma.BoolFilter<'WorkComicVersion'> | boolean;
   isPublished?: Prisma.BoolFilter<'WorkComicVersion'> | boolean;
   publishAt?:
     | Prisma.DateTimeNullableFilter<'WorkComicVersion'>
@@ -1497,7 +1468,6 @@ export type WorkComicVersionCreateManyComicInput = {
   translatorGroup?: string | null;
   description?: string | null;
   isRecommended?: boolean;
-  isEnabled?: boolean;
   isPublished?: boolean;
   publishAt?: Date | string | null;
   lastUpdated?: Date | string | null;
@@ -1526,7 +1496,6 @@ export type WorkComicVersionUpdateWithoutComicInput = {
     | null;
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   publishAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
@@ -1569,7 +1538,6 @@ export type WorkComicVersionUncheckedUpdateWithoutComicInput = {
     | null;
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   publishAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
@@ -1612,7 +1580,6 @@ export type WorkComicVersionUncheckedUpdateManyWithoutComicInput = {
     | null;
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean;
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean;
   publishAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
@@ -1694,7 +1661,6 @@ export type WorkComicVersionSelect<
     translatorGroup?: boolean;
     description?: boolean;
     isRecommended?: boolean;
-    isEnabled?: boolean;
     isPublished?: boolean;
     publishAt?: boolean;
     lastUpdated?: boolean;
@@ -1733,7 +1699,6 @@ export type WorkComicVersionSelectCreateManyAndReturn<
     translatorGroup?: boolean;
     description?: boolean;
     isRecommended?: boolean;
-    isEnabled?: boolean;
     isPublished?: boolean;
     publishAt?: boolean;
     lastUpdated?: boolean;
@@ -1768,7 +1733,6 @@ export type WorkComicVersionSelectUpdateManyAndReturn<
     translatorGroup?: boolean;
     description?: boolean;
     isRecommended?: boolean;
-    isEnabled?: boolean;
     isPublished?: boolean;
     publishAt?: boolean;
     lastUpdated?: boolean;
@@ -1799,7 +1763,6 @@ export type WorkComicVersionSelectScalar = {
   translatorGroup?: boolean;
   description?: boolean;
   isRecommended?: boolean;
-  isEnabled?: boolean;
   isPublished?: boolean;
   publishAt?: boolean;
   lastUpdated?: boolean;
@@ -1830,7 +1793,6 @@ export type WorkComicVersionOmit<
   | 'translatorGroup'
   | 'description'
   | 'isRecommended'
-  | 'isEnabled'
   | 'isPublished'
   | 'publishAt'
   | 'lastUpdated'
@@ -1917,10 +1879,6 @@ export type $WorkComicVersionPayload<
        */
       isRecommended: boolean;
       /**
-       * 是否启用
-       */
-      isEnabled: boolean;
-      /**
        * 发布状态
        */
       isPublished: boolean;
@@ -1957,7 +1915,7 @@ export type $WorkComicVersionPayload<
        */
       readRule: number;
       /**
-       * 购买需要消耗的金额（分为单位）
+       * 购买需要消耗的积分
        */
       purchaseAmount: number;
       /**
@@ -2628,7 +2586,6 @@ export interface WorkComicVersionFieldRefs {
   readonly translatorGroup: Prisma.FieldRef<'WorkComicVersion', 'String'>;
   readonly description: Prisma.FieldRef<'WorkComicVersion', 'String'>;
   readonly isRecommended: Prisma.FieldRef<'WorkComicVersion', 'Boolean'>;
-  readonly isEnabled: Prisma.FieldRef<'WorkComicVersion', 'Boolean'>;
   readonly isPublished: Prisma.FieldRef<'WorkComicVersion', 'Boolean'>;
   readonly publishAt: Prisma.FieldRef<'WorkComicVersion', 'DateTime'>;
   readonly lastUpdated: Prisma.FieldRef<'WorkComicVersion', 'DateTime'>;

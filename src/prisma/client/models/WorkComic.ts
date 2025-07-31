@@ -2925,7 +2925,7 @@ export type $WorkComicPayload<
        */
       readRule: number;
       /**
-       * 购买需要消耗的金额（分为单位）
+       * 购买需要消耗的积分
        */
       purchaseAmount: number | null;
       /**

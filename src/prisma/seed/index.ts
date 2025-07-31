@@ -19,24 +19,24 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../client/client';
 
 // ==================== 用户管理模块 ====================
-import { createInitialAdminAccount } from './adminUser'; // 管理员账户初始化
+import { createInitialAdminAccount } from './models/adminUser'; // 管理员账户初始化
 
 // ==================== 内容管理模块 ====================
-import { createInitialAuthors } from './author'; // 作者信息管理
+import { createInitialAuthors } from './models/author'; // 作者信息管理
 // ==================== 系统配置模块 ====================
-import { createInitialClientConfig } from './clientConfig'; // 客户端全局配置
+import { createInitialClientConfig } from './models/clientConfig'; // 客户端全局配置
 // ==================== 运营功能模块 ====================
-import { createInitialClientNotice } from './clientNotice'; // 客户端通知公告
-import { createInitialClientPageConfig } from './clientPageConfig'; // 页面访问配置
-import { createInitialComics } from './comic'; // 漫画基础信息
-import { createInitialDataDictionary } from './dataDictionary'; // 数据字典（语言、国籍、出版社等）
+import { createInitialClientNotice } from './models/clientNotice'; // 客户端通知公告
+import { createInitialClientPageConfig } from './models/clientPageConfig'; // 页面访问配置
+import { createInitialComics } from './models/comic'; // 漫画基础信息
+import { createInitialDataDictionary } from './models/dataDictionary'; // 数据字典（语言、国籍、出版社等）
 
-import { createInitialSystemRequestLog } from './systemRequestLog'; // 系统请求日志配置
-import { createInitialWorkCategory } from './workCategory'; // 作品分类管理
-import { createInitialWorkComicChapters } from './workComicChapter'; // 漫画章节内容
-import { createInitialWorkComicRelations } from './workComicRelations'; // 作品关联关系（作者-漫画-分类）
+import { createInitialSystemRequestLog } from './models/systemRequestLog'; // 系统请求日志配置
+import { createInitialWorkCategory } from './models/workCategory'; // 作品分类管理
+import { createInitialWorkComicChapters } from './models/workComicChapter'; // 漫画章节内容
+import { createInitialWorkComicRelations } from './models/workComicRelations'; // 作品关联关系（作者-漫画-分类）
 
-import { createInitialWorkComicVersions } from './workComicVersion'; // 漫画多语言版本
+import { createInitialWorkComicVersions } from './models/workComicVersion'; // 漫画多语言版本
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
@@ -65,7 +65,7 @@ async function runSeeds() {
     createInitialAuthors(prisma), // 内容管理：作者信息
     createInitialClientConfig(prisma), // 系统配置：客户端配置
     createInitialClientPageConfig(prisma), // 系统配置：页面配置
-    createInitialSystemRequestLog(prisma), // 系统配置：请求日志
+    createInitialSystemRequestLog(), // 系统配置：请求日志
   ]);
   console.log('✅ 第一层基础数据初始化完成');
 

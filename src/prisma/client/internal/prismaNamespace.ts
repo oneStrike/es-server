@@ -105,12 +105,12 @@ export type PrismaVersion = {
 };
 
 /**
- * Prisma Client JS version: 6.10.1
- * Query Engine version: 9b628578b3b7cae625e8c927178f15a170e74a9c
+ * Prisma Client JS version: 6.13.0
+ * Query Engine version: 361e86d0ea4987e9f53a565309b3eed797a6bcbd
  */
 export const prismaVersion: PrismaVersion = {
-  client: '6.10.1',
-  engine: '9b628578b3b7cae625e8c927178f15a170e74a9c',
+  client: '6.13.0',
+  engine: '361e86d0ea4987e9f53a565309b3eed797a6bcbd',
 };
 
 /**
@@ -1932,7 +1932,6 @@ export const WorkComicVersionScalarFieldEnum = {
   translatorGroup: 'translatorGroup',
   description: 'description',
   isRecommended: 'isRecommended',
-  isEnabled: 'isEnabled',
   isPublished: 'isPublished',
   publishAt: 'publishAt',
   lastUpdated: 'lastUpdated',
@@ -2136,16 +2135,24 @@ export interface PrismaClientOptions {
   /**
    * @example
    * ```
-   * // Defaults to stdout
+   * // Shorthand for `emit: 'stdout'`
    * log: ['query', 'info', 'warn', 'error']
    *
-   * // Emit as events
+   * // Emit as events only
    * log: [
-   *   { emit: 'stdout', level: 'query' },
-   *   { emit: 'stdout', level: 'info' },
-   *   { emit: 'stdout', level: 'warn' }
-   *   { emit: 'stdout', level: 'error' }
+   *   { emit: 'event', level: 'query' },
+   *   { emit: 'event', level: 'info' },
+   *   { emit: 'event', level: 'warn' }
+   *   { emit: 'event', level: 'error' }
    * ]
+   *
+   * / Emit as events and log to stdout
+   * og: [
+   *  { emit: 'stdout', level: 'query' },
+   *  { emit: 'stdout', level: 'info' },
+   *  { emit: 'stdout', level: 'warn' }
+   *  { emit: 'stdout', level: 'error' }
+   *
    * ```
    * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/logging#the-log-option).
    */
@@ -2205,16 +2212,14 @@ export type LogDefinition = {
   emit: 'stdout' | 'event';
 };
 
-export type GetLogType<T extends LogLevel | LogDefinition> =
-  T extends LogDefinition
-    ? T['emit'] extends 'event'
-      ? T['level']
-      : never
-    : never;
-export type GetEvents<T extends any> =
-  T extends Array<LogLevel | LogDefinition>
-    ? GetLogType<T[0]> | GetLogType<T[1]> | GetLogType<T[2]> | GetLogType<T[3]>
-    : never;
+export type CheckIsLogLevel<T> = T extends LogLevel ? T : never;
+
+export type GetLogType<T> = CheckIsLogLevel<
+  T extends LogDefinition ? T['level'] : T
+>;
+
+export type GetEvents<T extends any[]> =
+  T extends Array<LogLevel | LogDefinition> ? GetLogType<T[number]> : never;
 
 export type QueryEvent = {
   timestamp: Date;
