@@ -1,7 +1,7 @@
 import {
   AuthorGenderEnum,
   AuthorRoleEnum,
-} from '../../modules/admin/work/author/author.constant';
+} from '../../../modules/admin/work/author/author.constant';
 
 export async function createInitialAuthors(prisma: any) {
   const initData = [
