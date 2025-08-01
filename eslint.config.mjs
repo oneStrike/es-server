@@ -1,90 +1,51 @@
-import js from '@eslint/js';
+import tsEslintPlugin from '@typescript-eslint/eslint-plugin';
 import globals from 'globals';
-import tseslint from 'typescript-eslint';
-import prettierConfig from 'eslint-config-prettier';
-import prettierPlugin from 'eslint-plugin-prettier';
+import tsParser from '@typescript-eslint/parser';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import js from '@eslint/js';
+import { FlatCompat } from '@eslint/eslintrc';
 
-export default tseslint.config(
-  {
-    ignores: [
-      'node_modules/**',
-      'dist/**',
-      'build/**',
-      'coverage/**',
-      '.env*',
-      '*.log',
-      'package-lock.json',
-      'yarn.lock',
-      'pnpm-lock.yaml',
-      '.git/**',
-      '.vscode/**',
-      '.idea/**',
-      '.husky/**',
-      '**/prisma/client/**',
-      'webpack.config.js',
-      'commitlint.config.js',
-      '**/data/**',
-      '**/*.min.js',
-    ],
-  },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  prettierConfig,
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended,
+  allConfig: js.configs.all,
+});
+
+export default [
+  ...compat.extends(
+    'plugin:@typescript-eslint/recommended',
+    'plugin:prettier/recommended'
+  ),
   {
     plugins: {
-      prettier: prettierPlugin,
+      '@typescript-eslint': tsEslintPlugin,
     },
     languageOptions: {
       globals: {
         ...globals.node,
         ...globals.jest,
       },
-      ecmaVersion: 2023,
+      parser: tsParser,
+      ecmaVersion: 5,
       sourceType: 'module',
       parserOptions: {
-        project: './tsconfig.json',
-        tsconfigRootDir: import.meta.dirname,
+        project: 'tsconfig.json',
+        tsconfigRootDir: __dirname,
       },
     },
     rules: {
-      // Prettier 集成
-      'prettier/prettier': 'error',
-
-      // TypeScript 基础规则
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
+      '@typescript-eslint/interface-name-prefix': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-
-      // 代码质量基础规则
-      'no-debugger': 'error',
-      'no-var': 'error',
-      'prefer-const': 'error',
-
-      // NestJS 兼容
-      'class-methods-use-this': 'off',
-    },
-  },
-  // 种子文件特殊规则
-  {
-    files: ['src/prisma/seed/**/*.ts'],
-    rules: {
-      'no-console': 'off',
-      'no-await-in-loop': 'off',
-    },
-  },
-  // 测试文件特殊规则
-  {
-    files: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'test/**/*.ts'],
-    rules: {
       '@typescript-eslint/no-explicit-any': 'off',
-      'no-console': 'off',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': ['error'],
+      'require-await': 'off',
+      '@typescript-eslint/require-await': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
     },
-  }
-);
+  },
+];
