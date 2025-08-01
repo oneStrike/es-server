@@ -92,6 +92,7 @@ export class BaseNoticeDto {
     description: '关联页面代码',
     example: 'home',
     required: false,
+    default: null,
   })
   pageCode?: string;
 
@@ -180,6 +181,7 @@ export class CreateNoticeDto extends OmitType(BaseNoticeDto, [
   'readCount',
   'createdAt',
   'updatedAt',
+  'clientPage',
 ]) {}
 
 /**

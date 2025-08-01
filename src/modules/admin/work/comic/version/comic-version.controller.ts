@@ -10,7 +10,6 @@ import {
   CreateComicVersionDto,
   QueryComicVersionDto,
   UpdateComicVersionDto,
-  UpdateVersionEnabledStatusDto,
   UpdateVersionRecommendedStatusDto,
 } from './dto/comic-version.dto';
 

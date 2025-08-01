@@ -34,8 +34,33 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
-    // @ts-expect-error ignore
-    return this.create({ data: createNoticeDto });
+    const { pageCode, ...others } = createNoticeDto;
+    if (pageCode) {
+      const pageInfo = await this.prisma.clientPageConfig.findFirst({
+        where: {
+          pageCode: pageCode,
+        },
+        select: {
+          id: true,
+        },
+      });
+      if (!pageInfo) {
+        throw new BadRequestException('关联页面不存在');
+      } else {
+        return this.create({
+          data: {
+            ...others,
+            clientPage: {
+              connect: {
+                id: pageInfo.id,
+              },
+            },
+          },
+        });
+      }
+    }
+
+    return this.create({ data: others });
   }
 
   /**
@@ -129,7 +154,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
    * @returns 更新后的通知信息
    */
   async updateNotice(updateNoticeDto: UpdateNoticeDto) {
-    const { id, ...updateData } = updateNoticeDto;
+    const { id, pageCode, ...updateData } = updateNoticeDto;
 
     // 验证时间范围
     if (updateData.publishStartTime && updateData.publishEndTime) {
