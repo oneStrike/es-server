@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { MaxMindModule } from '@/common/module/maxmind/maxmind.module';
 import { AdminRequestLogInterceptor } from './interceptors/request-log.interceptor';
 import { RequestLogController } from './request-log.controller';
 import { RequestLogService } from './request-log.service';
@@ -17,7 +16,6 @@ import { RequestLogService } from './request-log.service';
  * - 统计分析：提供请求日志的各种统计信息
  */
 @Module({
-  imports: [MaxMindModule],
   controllers: [RequestLogController],
   providers: [RequestLogService, AdminRequestLogInterceptor],
   exports: [

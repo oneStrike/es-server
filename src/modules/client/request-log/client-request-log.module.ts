@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { RequestLogModule } from '@/modules/admin/request-log/request-log.module';
-import { MaxMindModule } from '../../../common/module/maxmind/maxmind.module';
 import { ClientRequestLogInterceptor } from './interceptors/client-request-log.interceptor';
 
 /**
@@ -15,7 +14,6 @@ import { ClientRequestLogInterceptor } from './interceptors/client-request-log.i
  */
 @Module({
   imports: [
-    MaxMindModule,
     RequestLogModule, // 导入管理端的请求日志模块，复用服务和数据模型
   ],
   providers: [

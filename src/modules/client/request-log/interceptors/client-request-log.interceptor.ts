@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { FastifyRequest } from 'fastify';
 import { BaseRequestLogInterceptor } from '@/common/interceptors/base-request-log.interceptor';
-import { MaxMindGeoIPService } from '@/common/services/maxmind-geoip.service';
 import { RequestLogConfigService } from '@/config/request-log.config';
 import { RequestLogService } from '@/modules/admin/request-log/request-log.service';
 import { ClientJwtPayload } from '@/modules/client/auth/client-jwt.service';
@@ -21,15 +20,10 @@ import { ClientJwtPayload } from '@/modules/client/auth/client-jwt.service';
  */
 @Injectable()
 export class ClientRequestLogInterceptor extends BaseRequestLogInterceptor {
-  constructor(
-    requestLogService: RequestLogService,
-    reflector: Reflector,
-    maxMindGeoIPService: MaxMindGeoIPService
-  ) {
+  constructor(requestLogService: RequestLogService, reflector: Reflector) {
     super(
       requestLogService,
       reflector,
-      maxMindGeoIPService,
       ClientRequestLogInterceptor.name,
       RequestLogConfigService.getClientConfig()
     );

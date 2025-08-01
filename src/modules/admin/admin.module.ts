@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { MaxMindModule } from '@/common/module/maxmind/maxmind.module';
 import { DictionaryController } from '@/modules/admin/dictionary/dictionary.controller';
 import { AdminRequestLogInterceptor } from '@/modules/admin/request-log/interceptors/request-log.interceptor';
 import { AdminUploadModule } from '@/modules/admin/upload/upload.module';
@@ -21,7 +20,6 @@ import { WorkModule } from './work/work.module';
     RequestLogModule,
     AdminUploadModule,
     DictionaryModule,
-    MaxMindModule,
     ClientNoticeModule,
     ClientPageConfigModule,
     WorkModule,

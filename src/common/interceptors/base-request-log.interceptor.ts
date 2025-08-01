@@ -14,7 +14,6 @@ import {
 } from '@/config/request-log.config';
 import { CreateRequestLogDto } from '@/modules/admin/request-log/dto/request-log.dto';
 import { RequestLogService } from '@/modules/admin/request-log/request-log.service';
-import { MaxMindGeoIPService } from '../services/maxmind-geoip.service';
 
 /**
  * 基础请求日志拦截器
@@ -28,7 +27,6 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
   constructor(
     protected readonly requestLogService: RequestLogService,
     protected readonly reflector: Reflector,
-    protected readonly maxMindGeoIPService: MaxMindGeoIPService,
     loggerName: string,
     config: RequestLogConfig
   ) {
@@ -108,11 +106,6 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
       // 获取客户端IP地址
       const clientIp = this.getClientIp(request);
 
-      // 获取IP地址地理位置信息
-      const geoLocation =
-        await this.maxMindGeoIPService.getGeoLocation(clientIp);
-      const ipLocation = geoLocation.fullLocation;
-
       // 获取响应状态码
       const statusCode = error
         ? error.status || 500
@@ -131,7 +124,7 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
       const createRequestLogDto: CreateRequestLogDto = {
         username: this.extractUsername(request),
         userId: userInfo.userId ? Number(userInfo.userId) : undefined,
-        ipLocation,
+        ipLocation: '',
         ipAddress: clientIp,
         httpMethod: request.method,
         requestPath: request.url.split('?')[0],
