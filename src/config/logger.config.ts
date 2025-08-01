@@ -1,7 +1,7 @@
 import type { WinstonModuleOptions } from 'nest-winston';
 import * as process from 'node:process';
 import * as winston from 'winston';
-import * as DailyRotateFile from 'winston-daily-rotate-file';
+import DailyRotateFile from 'winston-daily-rotate-file';
 /**
  * 日志级别枚举
  */
@@ -88,7 +88,7 @@ function createFileTransport(
   config: LoggerConfig,
   module: LogModule,
   level: LogLevel = config.level
-): InstanceType<typeof DailyRotateFile> {
+): DailyRotateFile {
   return new DailyRotateFile({
     level,
     filename: `${config.dirname}/${module}/${level}-%DATE%.log`,
@@ -139,7 +139,7 @@ function createFileTransport(
 function createErrorFileTransport(
   config: LoggerConfig,
   module: LogModule
-): InstanceType<typeof DailyRotateFile> {
+): DailyRotateFile {
   return createFileTransport(config, module, LogLevel.ERROR);
 }
 
@@ -149,7 +149,7 @@ function createErrorFileTransport(
 function createCombinedFileTransport(
   config: LoggerConfig,
   module: LogModule
-): InstanceType<typeof DailyRotateFile> {
+): DailyRotateFile {
   return new DailyRotateFile({
     level: config.level,
     filename: `${config.dirname}/${module}/combined-%DATE%.log`,

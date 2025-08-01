@@ -114,7 +114,7 @@ export class LoggerFactoryService {
    */
   getLoggerStats(): {
     totalLoggers: number;
-    moduleLoggers: IteratorObject<LogModule, boolean>;
+    moduleLoggers: Record<LogModule, boolean>;
     cachedServices: number;
   } {
     return {
@@ -124,7 +124,7 @@ export class LoggerFactoryService {
           acc[module] = this.loggers.has(module);
           return acc;
         },
-        {} as IteratorObject<LogModule, boolean>
+        {} as Record<LogModule, boolean>
       ),
       cachedServices: this.loggerServices.size,
     };
