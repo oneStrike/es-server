@@ -71,13 +71,13 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
     }
 
     return next.handle().pipe(
-      tap(() => {
+      tap(async () => {
         // 请求成功时记录日志
-        this.logRequest(request, response, startTime, null);
+        await this.logRequest(request, response, startTime, null);
       }),
-      catchError(error => {
+      catchError(async error => {
         // 请求失败时记录日志
-        this.logRequest(request, response, startTime, error);
+        await this.logRequest(request, response, startTime, error);
         return throwError(() => error);
       })
     );
@@ -90,12 +90,12 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
    * @param startTime 请求开始时间
    * @param error 错误信息（如果有）
    */
-  protected async logRequest(
+  protected logRequest(
     request: FastifyRequest,
     response: FastifyReply,
     startTime: number,
     error?: any
-  ): Promise<void> {
+  ): void {
     try {
       const endTime = Date.now();
       const duration = endTime - startTime;
@@ -204,11 +204,7 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
    * @param request
    * @returns 操作动作描述
    */
-  protected getActionByMethod(request: FastifyRequest): string {
-    console.log(
-      '🚀 ~ BaseRequestLogInterceptor ~ getActionByMethod ~ request:',
-      request
-    );
+  protected getActionByMethod(): string {
     return '操作';
   }
 
@@ -224,7 +220,7 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
     userInfo: { userId?: string; userPhone?: string },
     userType: string
   ): string {
-    const action = this.getActionByMethod(request);
+    const action = this.getActionByMethod();
     const path = request.url.split('?')[0];
     const user = userInfo.userPhone || userInfo.userId;
     const userDesc = user ? `${userType}(${user})` : `匿名${userType}`;

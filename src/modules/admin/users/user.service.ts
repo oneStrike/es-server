@@ -105,13 +105,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     }
 
     // 尝试解密密码（如果是RSA加密的）
-    let password = body.password;
-    try {
-      password = this.rsa.decryptWithAdmin(body.password);
-    } catch (error) {
-      console.log('🚀 ~ AdminUserService ~ login ~ error:', error);
-      throw new BadRequestException('账号或密码错误');
-    }
+    const password = this.rsa.decryptWithAdmin(body.password);
 
     // 检查账户是否被锁定
     if (user.isLocked) {
@@ -155,11 +149,9 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       username: user.username,
     });
 
-    // 去除 user 对象的 password 属性
-    const { password: _password, ...userWithoutPassword } = user;
-
+    delete user.password;
     return {
-      user: userWithoutPassword,
+      user,
       tokens,
     };
   }

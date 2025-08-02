@@ -195,6 +195,7 @@ export class UpdateNoticeDto extends IntersectionType(
       'isPublished',
       'createdAt',
       'updatedAt',
+      'clientPage',
     ])
   ),
   IdDto
@@ -213,7 +214,14 @@ export class QueryNoticeDto extends IntersectionType(
     'isPinned',
     'showAsPopup',
   ])
-) {}
+) {
+  @ValidateString({
+    description: '关联页面代码',
+    example: 'home',
+    required: false,
+  })
+  pageCode?: string;
+}
 
 /**
  * 通知状态更新DTO

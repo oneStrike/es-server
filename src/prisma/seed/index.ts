@@ -31,7 +31,6 @@ import { createInitialClientPageConfig } from './models/clientPageConfig'; // �
 import { createInitialComics } from './models/comic'; // 漫画基础信息
 import { createInitialDataDictionary } from './models/dataDictionary'; // 数据字典（语言、国籍、出版社等）
 
-import { createInitialSystemRequestLog } from './models/systemRequestLog'; // 系统请求日志配置
 import { createInitialWorkCategory } from './models/workCategory'; // 作品分类管理
 import { createInitialWorkComicChapters } from './models/workComicChapter'; // 漫画章节内容
 import { createInitialWorkComicRelations } from './models/workComicRelations'; // 作品关联关系（作者-漫画-分类）
@@ -65,7 +64,6 @@ async function runSeeds() {
     createInitialAuthors(prisma), // 内容管理：作者信息
     createInitialClientConfig(prisma), // 系统配置：客户端配置
     createInitialClientPageConfig(prisma), // 系统配置：页面配置
-    createInitialSystemRequestLog(), // 系统配置：请求日志
   ]);
   console.log('✅ 第一层基础数据初始化完成');
 
