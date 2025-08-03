@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientNoticeController } from './notice.controller';
 import { ClientNoticeService } from './notice.service';
+import { NoticeSchedulerService } from './notice-scheduler.service';
 
 /**
  * 客户端通知模块
@@ -8,7 +9,7 @@ import { ClientNoticeService } from './notice.service';
  */
 @Module({
   controllers: [ClientNoticeController],
-  providers: [ClientNoticeService],
-  exports: [ClientNoticeService], // 导出服务供其他模块使用
+  providers: [ClientNoticeService, NoticeSchedulerService],
+  exports: [ClientNoticeService, NoticeSchedulerService], // 导出服务供其他模块使用
 })
 export class ClientNoticeModule {}
