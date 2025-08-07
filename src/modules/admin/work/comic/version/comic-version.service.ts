@@ -308,6 +308,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
     return this.findMany({
       where: {
         comicId,
+        isEnabled: true,
       },
       omit: {
         description: true,

@@ -38,6 +38,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       code: status,
       message,
     };
+    console.log('🚀 ~ HttpExceptionFilter ~ exception:', exception);
     // 将完整的错误响应添加到response对象上，供日志拦截器使用
     // @ts-expect-error ignore
     response.errorResponse = errorResponse;

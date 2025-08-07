@@ -1,9 +1,9 @@
-import { applyDecorators } from '@nestjs/common';
 import type { ApiPropertyOptions } from '@nestjs/swagger';
+import type { ValidateBooleanOptions } from './types';
+import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
-import type { ValidateBooleanOptions } from './types';
 
 /**
  * 布尔类型验证装饰器

@@ -2,18 +2,18 @@ import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import type { UploadConfig } from '@/config/upload.config';
 import { join } from 'node:path';
 import * as process from 'node:process';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import { ConfigService } from '@nestjs/config';
-import type { UploadConfig } from '@/config/upload.config';
 
 export async function setupMultipart(
   fastifyAdapter: FastifyAdapter,
   app: NestFastifyApplication
 ) {
-  const uploadConfig = app.get(ConfigService).get<UploadConfig>('upload')!;
+  const uploadConfig = app.get(ConfigService).get<UploadConfig>('upload');
 
   // 注册静态文件服务
   await fastifyAdapter.register(fastifyStatic, {

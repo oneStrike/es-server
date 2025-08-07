@@ -14,33 +14,36 @@ export interface ApiDocOptions<TModel> {
 }
 
 // 工具函数：判断是否是类
-const isClass = (model: any): model is Type<unknown> =>
-  typeof model === 'function' && model.prototype;
+function isClass(model: any): model is Type<unknown> {
+  return typeof model === 'function' && model.prototype;
+}
 
 // 基础响应结构（不含 data）
-const baseResponse = (summary: string) => ({
-  status: 200,
-  description: `${summary}成功`,
-  content: {
-    'application/json': {
-      schema: {
-        type: 'object',
-        properties: {
-          code: {
-            type: 'number',
-            description: '响应状态码',
-            example: 200,
-          },
-          message: {
-            type: 'string',
-            description: '响应消息',
-            example: 'success',
+function baseResponse(summary: string) {
+  return {
+    status: 200,
+    description: `${summary}成功`,
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            code: {
+              type: 'number',
+              description: '响应状态码',
+              example: 200,
+            },
+            message: {
+              type: 'string',
+              description: '响应消息',
+              example: 'success',
+            },
           },
         },
       },
     },
-  },
-});
+  };
+}
 
 export function ApiDoc<TModel extends Type<any>>(
   options: ApiDocOptions<TModel>
@@ -118,21 +121,25 @@ export function ApiPageDoc<TModel extends Type<any>>(
                   pageIndex: {
                     type: 'number',
                     description: '当前页码',
+                    required: true,
                     example: 0,
                   },
                   pageSize: {
                     type: 'number',
                     description: '每页条数',
+                    required: true,
                     example: 15,
                   },
                   total: {
                     type: 'number',
                     description: '总条数',
+                    required: true,
                     example: 100,
                   },
                   ...(dataSchema && {
                     list: {
                       type: 'array',
+                      required: true,
                       description: '列表数据',
                       items: dataSchema,
                     },

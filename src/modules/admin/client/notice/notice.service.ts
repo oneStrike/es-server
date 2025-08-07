@@ -34,33 +34,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
-    const { pageCode, ...others } = createNoticeDto;
-    if (pageCode) {
-      const pageInfo = await this.prisma.clientPageConfig.findFirst({
-        where: {
-          pageCode: pageCode,
-        },
-        select: {
-          id: true,
-        },
-      });
-      if (!pageInfo) {
-        throw new BadRequestException('关联页面不存在');
-      } else {
-        return this.create({
-          data: {
-            ...others,
-            clientPage: {
-              connect: {
-                id: pageInfo.id,
-              },
-            },
-          },
-        });
-      }
-    }
-
-    return this.create({ data: others });
+    return this.create({ data: createNoticeDto });
   }
 
   /**
@@ -76,8 +50,6 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       isPinned,
       isPublished,
       showAsPopup,
-      pageCode,
-      ...pageParams
     } = queryNoticeDto;
 
     const where: ClientNoticeWhereInput = {};
@@ -90,11 +62,9 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
     if (isPublished !== undefined) where.isPublished = isPublished;
     if (isPinned !== undefined) where.isPinned = isPinned;
     if (showAsPopup !== undefined) where.showAsPopup = showAsPopup;
-    if (pageCode !== undefined) where.pageCode = pageCode;
 
     return this.findPagination({
       where,
-      ...pageParams,
       omit: {
         content: true,
         popupBackgroundImage: true,
@@ -117,7 +87,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       app: { enableApp: true },
     }[platform];
 
-    return await this.findMany({
+    return this.findMany({
       where: {
         isPublished: true, // 已发布
         ...platformCondition,
@@ -158,7 +128,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
    * @returns 更新后的通知信息
    */
   async updateNotice(updateNoticeDto: UpdateNoticeDto) {
-    const { id, pageCode, ...updateData } = updateNoticeDto;
+    const { id, ...updateData } = updateNoticeDto;
 
     // 验证时间范围
     if (updateData.publishStartTime && updateData.publishEndTime) {
@@ -167,37 +137,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
-    const notice = await this.findById({ id });
-    if (!notice) {
-      throw new BadRequestException('通知不存在');
-    }
-    if (pageCode && notice.pageCode !== pageCode) {
-      const pageInfo = await this.prisma.clientPageConfig.findFirst({
-        where: {
-          pageCode,
-        },
-        select: {
-          id: true,
-        },
-      });
-      if (!pageInfo) {
-        throw new BadRequestException('关联页面不存在');
-      } else {
-        return await this.update({
-          where: { id },
-          data: {
-            ...updateData,
-            clientPage: {
-              connect: {
-                id: pageInfo.id,
-              },
-            },
-          },
-        });
-      }
-    }
-
-    return await this.update({
+    return this.update({
       where: { id },
       data: updateData,
     });
@@ -222,7 +162,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
     }
 
     // 原子性更新阅读次数
-    return await this.update({
+    return this.update({
       where: { id },
       data: {
         readCount: {

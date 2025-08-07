@@ -88,7 +88,7 @@ function createFileTransport(
   config: LoggerConfig,
   module: LogModule,
   level: LogLevel = config.level
-): DailyRotateFile {
+): InstanceType<typeof DailyRotateFile> {
   return new DailyRotateFile({
     level,
     filename: `${config.dirname}/${module}/${level}-%DATE%.log`,
@@ -139,7 +139,7 @@ function createFileTransport(
 function createErrorFileTransport(
   config: LoggerConfig,
   module: LogModule
-): DailyRotateFile {
+): InstanceType<typeof DailyRotateFile> {
   return createFileTransport(config, module, LogLevel.ERROR);
 }
 
@@ -149,7 +149,7 @@ function createErrorFileTransport(
 function createCombinedFileTransport(
   config: LoggerConfig,
   module: LogModule
-): DailyRotateFile {
+): InstanceType<typeof DailyRotateFile> {
   return new DailyRotateFile({
     level: config.level,
     filename: `${config.dirname}/${module}/combined-%DATE%.log`,

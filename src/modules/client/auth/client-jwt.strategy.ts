@@ -49,9 +49,8 @@ export class ClientJwtStrategy extends PassportStrategy(
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request);
 
     // 检查令牌是否在黑名单中
-    const isBlacklisted = await this.jwtBlacklistService.isInClientBlacklist(
-      token!
-    );
+    const isBlacklisted =
+      await this.jwtBlacklistService.isInClientBlacklist(token);
     if (isBlacklisted) {
       throw new UnauthorizedException('登录失效，请重新登录！');
     }

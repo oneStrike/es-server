@@ -1,9 +1,9 @@
-import { applyDecorators } from '@nestjs/common';
 import type { ApiPropertyOptions } from '@nestjs/swagger';
+import type { ValidateEnumOptions } from './types';
+import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsOptional } from 'class-validator';
-import type { ValidateEnumOptions } from './types';
 import { isNumberEnum } from './utils';
 
 /**

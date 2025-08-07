@@ -1,9 +1,7 @@
-import {
-  FastifyAdapter,
-  type NestFastifyApplication,
-} from '@nestjs/platform-fastify';
+import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import * as process from 'node:process';
 import { NestFactory } from '@nestjs/core';
+import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { AppModule } from '@/app.module';
 
 import { AdminModule } from '@/modules/admin/admin.module';
@@ -32,7 +30,7 @@ async function bootstrap() {
 
   if (module.hot) {
     module.hot.accept();
-    module.hot.dispose(() => app.close());
+    module.hot.dispose(async () => app.close());
   }
 }
 

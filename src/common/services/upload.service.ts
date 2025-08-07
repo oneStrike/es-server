@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import * as process from 'node:process';
-import { Transform, pipeline } from 'node:stream';
+import { pipeline, Transform } from 'node:stream';
 import { promisify } from 'node:util';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -22,7 +22,7 @@ export class UploadService {
   );
 
   private uploadConfig: UploadConfig | null = null;
-  private mimeTypeMap = new Map<string, string>();
+  private mimeTypeMap: Map<string, string> = new Map();
 
   constructor(private configService: ConfigService) {}
 
@@ -165,7 +165,7 @@ export class UploadService {
   ): Promise<UploadResponseDto[]> {
     const config = this.getUploadConfig();
     const files = data.files();
-    const filePromises: Array<Promise<UploadResponseDto | null>> = [];
+    const filePromises: Promise<UploadResponseDto | null>[] = [];
     const errors: Error[] = [];
 
     scene = scene || 'shared'; // 默认场景
@@ -302,9 +302,7 @@ export class UploadService {
     const results = await Promise.all(filePromises);
 
     // 过滤掉失败的文件
-    const successResults = results.filter(
-      result => result !== null
-    ) as UploadResponseDto[];
+    const successResults = results.filter(result => result !== null);
 
     // 如果有错误且没有成功的文件，抛出第一个错误
     if (errors.length > 0 && successResults.length === 0) {

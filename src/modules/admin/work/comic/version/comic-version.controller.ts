@@ -10,6 +10,7 @@ import {
   CreateComicVersionDto,
   QueryComicVersionDto,
   UpdateComicVersionDto,
+  UpdateVersionEnabledStatusDto,
   UpdateVersionRecommendedStatusDto,
 } from './dto/comic-version.dto';
 
@@ -101,6 +102,25 @@ export class WorkComicVersionController {
     @Body() body: UpdateVersionRecommendedStatusDto
   ) {
     return this.comicVersionService.updateVersionRecommendedStatus(body);
+  }
+
+  /**
+   * 批量更新版本启用状态
+   */
+  @Post('/batch-update-version-enabled-status')
+  @ApiDoc({
+    summary: '批量更新版本启用状态',
+    model: CountDto,
+  })
+  async updateEnabledStatus(@Body() body: UpdateVersionEnabledStatusDto) {
+    return this.comicVersionService.updateMany({
+      where: {
+        id: { in: body.ids },
+      },
+      data: {
+        isEnabled: body.isEnabled,
+      },
+    });
   }
 
   /**

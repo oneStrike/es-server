@@ -54,7 +54,6 @@ export class CopyService {
         })),
       };
     } catch (error) {
-      console.log('🚀 ~ CopyService ~ searchWord ~ error:', error);
       return { code: 201 };
     }
   }
@@ -65,7 +64,7 @@ export class CopyService {
    * @returns 漫画详情
    */
   async parseWord(id: string) {
-    return await this.wordDetail(id);
+    return this.wordDetail(id);
   }
 
   /**
@@ -82,7 +81,6 @@ export class CopyService {
         ? { code: 201 }
         : { code: 200, data: data.results };
     } catch (error) {
-      console.log('🚀 ~ CopyService ~ wordDetail ~ error:', error);
       return { code: 201 };
     }
   }
@@ -101,7 +99,6 @@ export class CopyService {
         ? { code: 201 }
         : { code: 200, data: data.results.list };
     } catch (error) {
-      console.log('🚀 ~ CopyService ~ chapterList ~ error:', error);
       return { code: 201 };
     }
   }
@@ -121,7 +118,6 @@ export class CopyService {
         ? { code: 201 }
         : { code: 200, data: data.results };
     } catch (error) {
-      console.log('🚀 ~ CopyService ~ chapterContent ~ error:', error);
       return { code: 201 };
     }
   }

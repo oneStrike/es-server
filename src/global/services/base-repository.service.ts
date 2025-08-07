@@ -128,17 +128,17 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   async create(
     options: { data: ModelTypes<T>['CreateInput'] } & Partial<QueryOptions<T>>
   ): Promise<ModelTypes<T>['Model']> {
-    return await this.model.create({
+    return this.model.create({
       data: options.data,
       ...this.buildWriteQueryArgs(options),
     });
   }
 
   async createMany(options: {
-    data: Array<ModelTypes<T>['CreateInput']>;
+    data: ModelTypes<T>['CreateInput'][];
     skipDuplicates?: boolean;
   }): Promise<BatchResult> {
-    return await this.model.createMany({
+    return this.model.createMany({
       data: options.data,
       skipDuplicates: options.skipDuplicates,
     });
@@ -148,10 +148,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     options?: { where?: ModelTypes<T>['WhereInput'] } & Partial<QueryOptions<T>>
   ): Promise<ModelTypes<T>['Model'] | null> {
     const where = this.getWhere(options?.where);
-    return await this.model.findFirst({
-      where,
-      ...this.buildQueryArgs(options),
-    });
+    return this.model.findFirst({ where, ...this.buildQueryArgs(options) });
   }
 
   async findByUnique(
@@ -160,10 +157,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     >
   ): Promise<ModelTypes<T>['Model'] | null> {
     const where = this.getWhere(options.where as ModelTypes<T>['WhereInput']);
-    return await this.model.findFirst({
-      where,
-      ...this.buildQueryArgs(options),
-    });
+    return this.model.findFirst({ where, ...this.buildQueryArgs(options) });
   }
 
   async findById(
@@ -220,8 +214,12 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     }
     let finalOrderBy: ModelTypes<T>['OrderByInput'] = { id: 'desc' } as any;
     if (orderBy) {
-      finalOrderBy =
-        typeof orderBy === 'string' ? JSON.parse(orderBy) : orderBy;
+      try {
+        finalOrderBy =
+          typeof orderBy === 'string' ? JSON.parse(orderBy) : orderBy;
+      } catch (e) {
+        // ignore
+      }
     }
     return this._paginationInternal(
       {
@@ -241,7 +239,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
       data: ModelTypes<T>['UpdateInput'];
     } & Partial<QueryOptions<T>>
   ): Promise<ModelTypes<T>['Model']> {
-    return await this.model.update({
+    return this.model.update({
       where: options.where,
       data: options.data,
       ...this.buildWriteQueryArgs(options),
@@ -266,10 +264,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     where: ModelTypes<T>['WhereInput'];
     data: ModelTypes<T>['UpdateInput'];
   }): Promise<BatchResult> {
-    return await this.model.updateMany({
-      where: options.where,
-      data: options.data,
-    });
+    return this.model.updateMany({ where: options.where, data: options.data });
   }
 
   async delete(
@@ -277,7 +272,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
       QueryOptions<T>
     >
   ): Promise<ModelTypes<T>['Model']> {
-    return await this.model.delete({
+    return this.model.delete({
       where: options.where,
       ...this.buildWriteQueryArgs(options),
     });
@@ -293,7 +288,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   }
 
   async deleteMany(where?: ModelTypes<T>['WhereInput']): Promise<BatchResult> {
-    return await this.model.deleteMany({ where });
+    return this.model.deleteMany({ where });
   }
 
   async count(where?: ModelTypes<T>['WhereInput']): Promise<number> {
@@ -308,7 +303,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     where?: ModelTypes<T>['WhereInput'],
     mode: 'active' | 'deleted' | 'all' = 'active'
   ): Promise<number> {
-    return await this.model.count({ where: this.getWhere(where, mode) });
+    return this.model.count({ where: this.getWhere(where, mode) });
   }
 
   async upsert(
@@ -318,7 +313,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
       update: ModelTypes<T>['UpdateInput'];
     } & Partial<QueryOptions<T>>
   ): Promise<ModelTypes<T>['Model']> {
-    return await this.model.upsert({
+    return this.model.upsert({
       where: options.where,
       create: options.create,
       update: options.update,
@@ -414,7 +409,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
       pageIndex?: number;
       pageSize?: number;
     } & Partial<QueryOptions<T>>
-  ): Promise<Array<ModelTypes<T>['Model']>> {
+  ): Promise<ModelTypes<T>['Model'][]> {
     return this._findManyInternal(options, 'all');
   }
 
@@ -425,7 +420,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
       pageIndex?: number;
       pageSize?: number;
     } & Partial<QueryOptions<T>>
-  ): Promise<Array<ModelTypes<T>['Model']>> {
+  ): Promise<ModelTypes<T>['Model'][]> {
     if (!this.supportsSoftDelete) return [];
     return this._findManyInternal(options, 'deleted');
   }
@@ -442,17 +437,10 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     const { where, orderBy, pageIndex, pageSize, ...rest } = options || {};
     const skip = pageIndex ?? BaseRepositoryService.DEFAULT_PAGE_INDEX;
     const take = pageSize ?? BaseRepositoryService.DEFAULT_PAGE_SIZE;
-    console.log({
+    return this.model.findMany({
       where: this.getWhere(where, mode),
       orderBy: orderBy || { id: 'desc' },
-      skip: skip * take,
-      take,
-      ...this.buildQueryArgs(rest),
-    });
-    return await this.model.findMany({
-      where: this.getWhere(where, mode),
-      orderBy: orderBy || { id: 'desc' },
-      skip: skip * take,
+      skip,
       take,
       ...this.buildQueryArgs(rest),
     });
@@ -478,7 +466,10 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     } & Partial<QueryOptions<T>>
   ): Promise<PaginationResult<any>> {
     if (!this.supportsSoftDelete) {
-      const { pageIndex, pageSize } = options || {};
+      const {
+        pageIndex = BaseRepositoryService.DEFAULT_PAGE_INDEX,
+        pageSize = BaseRepositoryService.DEFAULT_PAGE_SIZE,
+      } = options || {};
       return { list: [], total: 0, pageIndex, pageSize };
     }
     return this._paginationInternal(options, 'deleted');
@@ -493,7 +484,11 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     } & Partial<QueryOptions<T>>,
     mode: 'active' | 'deleted' | 'all' = 'active'
   ): Promise<PaginationResult<any>> {
-    const { pageIndex, pageSize, where } = options || {};
+    const {
+      pageIndex = BaseRepositoryService.DEFAULT_PAGE_INDEX,
+      pageSize = BaseRepositoryService.DEFAULT_PAGE_SIZE,
+      where,
+    } = options || {};
     const [list, total] = await Promise.all([
       this._findManyInternal(
         { ...this.buildQueryArgs(options), pageIndex, pageSize },

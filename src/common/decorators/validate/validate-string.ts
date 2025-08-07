@@ -1,5 +1,6 @@
-import { applyDecorators } from '@nestjs/common';
 import type { ApiPropertyOptions } from '@nestjs/swagger';
+import type { ValidateStringOptions } from './types';
+import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -10,7 +11,6 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import type { ValidateStringOptions } from './types';
 
 /**
  * 字符串类型验证装饰器

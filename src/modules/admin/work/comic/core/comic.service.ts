@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { BaseRepositoryService } from '@/global/services/base-repository.service';
-import { WorkComicWhereInput } from '@/prisma/client/models/WorkComic';
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { WorkComicWhereInput } from '@/prisma/client/models/WorkComic'
 
-import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto';
+import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
 
 /**
  * 漫画服务类
@@ -10,8 +10,8 @@ import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto';
  */
 @Injectable()
 export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
-  protected readonly modelName = 'WorkComic' as const;
-  protected readonly supportsSoftDelete = true;
+  protected readonly modelName = 'WorkComic' as const
+  protected readonly supportsSoftDelete = true
 
   /**
    * 创建漫画
@@ -19,21 +19,21 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
    * @returns 创建的漫画信息
    */
   async createComic(createComicDto: CreateComicDto) {
-    const { authorIds, categoryIds, ...comicData } = createComicDto;
+    const { authorIds, categoryIds, ...comicData } = createComicDto
 
     // 验证漫画名称是否已存在
     const existingComic = await this.findFirst({
       where: {
         name: createComicDto.name,
       },
-    });
+    })
     if (existingComic) {
-      throw new BadRequestException('漫画名称已存在');
+      throw new BadRequestException('漫画名称已存在')
     }
 
     // 验证作者是否存在
     if (!authorIds || authorIds.length === 0) {
-      throw new BadRequestException('至少需要关联一个作者');
+      throw new BadRequestException('至少需要关联一个作者')
     }
 
     const existingAuthors = await this.prisma.workAuthor.findMany({
@@ -41,10 +41,10 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
         id: { in: authorIds },
         isEnabled: true,
       },
-    });
+    })
 
     if (existingAuthors.length !== authorIds.length) {
-      throw new BadRequestException('部分作者不存在或已禁用');
+      throw new BadRequestException('部分作者不存在或已禁用')
     }
 
     // 验证分类是否存在
@@ -53,10 +53,10 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
         id: { in: categoryIds },
         isEnabled: true,
       },
-    });
+    })
 
     if (existingCategories.length !== categoryIds.length) {
-      throw new BadRequestException('部分分类不存在或已禁用');
+      throw new BadRequestException('部分分类不存在或已禁用')
     }
 
     return this.create({
@@ -80,7 +80,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
           })),
         },
       },
-    });
+    })
   }
 
   /**
@@ -102,62 +102,62 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
       isNew,
       publisher,
       author,
-    } = queryComicDto;
+    } = queryComicDto
 
     // 构建查询条件
-    const where: WorkComicWhereInput = {};
+    const where: WorkComicWhereInput = {}
 
     // 漫画名称模糊搜索
     if (name) {
       where.name = {
         contains: name,
         mode: 'insensitive',
-      };
+      }
     }
 
     // 发布状态筛选
     if (isPublished !== undefined) {
-      where.isPublished = isPublished;
+      where.isPublished = isPublished
     }
 
     // 连载状态筛选
     if (serialStatus !== undefined) {
-      where.serialStatus = serialStatus;
+      where.serialStatus = serialStatus
     }
 
     // 语言筛选
     if (language) {
-      where.language = language;
+      where.language = language
     }
 
     // 地区筛选
     if (region) {
-      where.region = region;
+      where.region = region
     }
 
     // 年龄分级筛选
     if (ageRating) {
-      where.ageRating = ageRating;
+      where.ageRating = ageRating
     }
 
     // 阅读规则筛选
     if (readRule !== undefined) {
-      where.readRule = readRule;
+      where.readRule = readRule
     }
 
     // 推荐状态筛选
     if (typeof isRecommended === 'boolean') {
-      where.isRecommended = isRecommended;
+      where.isRecommended = isRecommended
     }
 
     // 热门状态筛选
     if (typeof isHot === 'boolean') {
-      where.isHot = isHot;
+      where.isHot = isHot
     }
 
     // 新作状态筛选
     if (typeof isNew === 'boolean') {
-      where.isNew = isNew;
+      where.isNew = isNew
     }
 
     // 出版社模糊搜索
@@ -165,7 +165,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
       where.publisher = {
         contains: publisher,
         mode: 'insensitive',
-      };
+      }
     }
 
     // 作者名称模糊搜索
@@ -179,7 +179,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
             },
           },
         },
-      };
+      }
     }
 
     const pageData = await this.findPagination({
@@ -223,7 +223,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
           },
         },
       },
-    });
+    })
     pageData.list = pageData.list.map(item => ({
       ...item,
       comicAuthors: item.comicAuthors.map(author => ({
@@ -235,8 +235,8 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
       comicCategories: item.comicCategories.map(category => ({
         ...category.category,
       })),
-    }));
-    return pageData;
+    }))
+    return pageData
   }
 
   /**
@@ -274,23 +274,23 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
           },
         },
       },
-    });
+    })
 
     if (!comic) {
-      throw new BadRequestException('漫画不存在');
+      throw new BadRequestException('漫画不存在')
     }
 
     return {
       ...comic,
-      comicAuthors: comic.comicAuthors!.map(author => ({
+      comicAuthors: comic.comicAuthors.map(author => ({
         ...author.author,
         isPrimary: author.isPrimary,
         sortOrder: author.sortOrder,
       })),
-      comicCategories: comic.comicCategories!.map(category => ({
+      comicCategories: comic.comicCategories.map(category => ({
         ...category.category,
       })),
-    };
+    }
   }
 
   /**
@@ -299,12 +299,12 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
    * @returns 更新后的漫画信息
    */
   async updateComic(updateComicDto: UpdateComicDto) {
-    const { id, authorIds, categoryIds, ...updateData } = updateComicDto;
+    const { id, authorIds, categoryIds, ...updateData } = updateComicDto
 
     // 验证漫画是否存在
-    const existingComic = await this.findById({ id });
+    const existingComic = await this.findById({ id })
     if (!existingComic) {
-      throw new BadRequestException('漫画不存在');
+      throw new BadRequestException('漫画不存在')
     }
 
     // 如果更新名称，验证是否与其他漫画重复
@@ -314,9 +314,9 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
           name: updateData.name,
           id: { not: id },
         },
-      });
+      })
       if (duplicateComic) {
-        throw new BadRequestException('漫画名称已存在');
+        throw new BadRequestException('漫画名称已存在')
       }
     }
 
@@ -327,10 +327,10 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
           id: { in: authorIds },
           isEnabled: true,
         },
-      });
+      })
 
       if (existingAuthors.length !== authorIds.length) {
-        throw new BadRequestException('部分作者不存在或已禁用');
+        throw new BadRequestException('部分作者不存在或已禁用')
       }
     }
 
@@ -341,27 +341,27 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
           id: { in: categoryIds },
           isEnabled: true,
         },
-      });
+      })
 
       if (existingCategories.length !== categoryIds.length) {
-        throw new BadRequestException('部分分类不存在或已禁用');
+        throw new BadRequestException('部分分类不存在或已禁用')
       }
     }
 
     // 使用事务更新漫画及其关联关系
-    return this.prisma.$transaction(async tx => {
+    return this.prisma.$transaction(async (tx) => {
       // 更新漫画基本信息
       const updatedComic = await tx.workComic.update({
         where: { id },
         data: updateData,
-      });
+      })
 
       // 更新作者关联关系（如果提供了authorIds）
       if (authorIds !== undefined) {
         // 删除现有的作者关联
         await tx.workComicAuthor.deleteMany({
           where: { comicId: id },
-        });
+        })
 
         // 创建新的作者关联
         if (authorIds.length > 0) {
@@ -373,7 +373,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
               isPrimary: index === 0, // 第一个作者设为主要作者
               sortOrder: index,
             })),
-          });
+          })
         }
       }
 
@@ -382,7 +382,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
         // 删除现有的分类关联
         await tx.workComicCategory.deleteMany({
           where: { comicId: id },
-        });
+        })
 
         // 创建新的分类关联
         if (categoryIds.length > 0) {
@@ -393,12 +393,12 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
               isPrimary: index === 0, // 第一个分类设为主要分类
               weight: categoryIds.length - index, // 权重递减
             })),
-          });
+          })
         }
       }
 
-      return updatedComic;
-    });
+      return updatedComic
+    })
   }
 
   /**
@@ -413,14 +413,14 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
         comicId: id,
         deletedAt: null,
       },
-    });
+    })
 
     if (chapterCount > 0) {
       throw new BadRequestException(
-        `该漫画还有 ${chapterCount} 个关联章节，无法删除`
-      );
+        `该漫画还有 ${chapterCount} 个关联章节，无法删除`,
+      )
     }
 
-    return this.softDelete(id);
+    return this.softDelete(id)
   }
 }

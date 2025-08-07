@@ -83,7 +83,7 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
       where.accessLevel = accessLevel as any;
     }
 
-    return await this.findMany({
+    return this.findMany({
       where,
       orderBy: [{ pageName: 'asc' }],
       select: {
@@ -137,7 +137,7 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
       }
     }
 
-    return await this.update({
+    return this.update({
       where: { id },
       data: updateData,
     });
@@ -165,7 +165,7 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
     }
 
     // 原子性更新访问次数
-    return await this.update({
+    return this.update({
       where: { id: pageConfig.id },
       data: {
         accessCount: {

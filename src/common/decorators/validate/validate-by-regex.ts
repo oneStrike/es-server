@@ -1,9 +1,9 @@
-import { applyDecorators } from '@nestjs/common';
 import type { ApiPropertyOptions } from '@nestjs/swagger';
+import type { ValidateRegexOptions } from './types';
+import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsOptional, IsString, Matches } from 'class-validator';
-import type { ValidateRegexOptions } from './types';
 
 /**
  * 正则表达式验证装饰器

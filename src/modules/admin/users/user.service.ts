@@ -105,7 +105,12 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     }
 
     // 尝试解密密码（如果是RSA加密的）
-    const password = this.rsa.decryptWithAdmin(body.password);
+    let password = body.password;
+    try {
+      password = this.rsa.decryptWithAdmin(body.password);
+    } catch (error) {
+      throw new BadRequestException('账号或密码错误');
+    }
 
     // 检查账户是否被锁定
     if (user.isLocked) {
@@ -149,9 +154,11 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       username: user.username,
     });
 
-    delete user.password;
+    // 去除 user 对象的 password 属性
+    const { password: _password, ...userWithoutPassword } = user;
+
     return {
-      user,
+      user: userWithoutPassword,
       tokens,
     };
   }
@@ -185,7 +192,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       throw new BadRequestException('新密码和确认密码不一致');
     }
 
-    const authHeader = req.headers.authorization!;
+    const authHeader = req.headers.authorization;
     const accessToken = authHeader.substring(7); // 去掉 'Bearer ' 前缀
 
     // 查找用户
@@ -259,7 +266,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
    * 注册管理员用户
    */
   async register(body: UserRegisterDto) {
-    const { username, password, confirmPassword, avatar, role } = body;
+    const { username, mobile, password, confirmPassword, avatar, role } = body;
     if (password !== confirmPassword) {
       throw new BadRequestException('密码和确认密码不一致');
     }

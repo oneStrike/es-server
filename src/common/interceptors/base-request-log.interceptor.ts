@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { Observable, catchError, tap, throwError } from 'rxjs';
+import { catchError, Observable, tap, throwError } from 'rxjs';
 import {
   RequestLogConfig,
   RequestLogConfigService,
@@ -71,13 +71,13 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
     }
 
     return next.handle().pipe(
-      tap(async () => {
+      tap(data => {
         // 请求成功时记录日志
-        await this.logRequest(request, response, startTime, null);
+        this.logRequest(request, response, startTime, null);
       }),
-      catchError(async error => {
+      catchError(error => {
         // 请求失败时记录日志
-        await this.logRequest(request, response, startTime, error);
+        this.logRequest(request, response, startTime, error);
         return throwError(() => error);
       })
     );
@@ -90,12 +90,12 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
    * @param startTime 请求开始时间
    * @param error 错误信息（如果有）
    */
-  protected logRequest(
+  protected async logRequest(
     request: FastifyRequest,
     response: FastifyReply,
     startTime: number,
     error?: any
-  ): void {
+  ): Promise<void> {
     try {
       const endTime = Date.now();
       const duration = endTime - startTime;
@@ -204,7 +204,7 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
    * @param request
    * @returns 操作动作描述
    */
-  protected getActionByMethod(): string {
+  protected getActionByMethod(request: FastifyRequest): string {
     return '操作';
   }
 
@@ -220,7 +220,7 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
     userInfo: { userId?: string; userPhone?: string },
     userType: string
   ): string {
-    const action = this.getActionByMethod();
+    const action = this.getActionByMethod(request);
     const path = request.url.split('?')[0];
     const user = userInfo.userPhone || userInfo.userId;
     const userDesc = user ? `${userType}(${user})` : `匿名${userType}`;
@@ -344,7 +344,7 @@ export abstract class BaseRequestLogInterceptor implements NestInterceptor {
  * 跳过请求日志记录的装饰器
  * 用于标记不需要记录日志的接口
  */
-export const SkipRequestLog = () => {
+export function SkipRequestLog() {
   return (
     target: any,
     propertyKey?: string,
@@ -356,4 +356,4 @@ export const SkipRequestLog = () => {
       Reflect.defineMetadata('skipRequestLog', true, target);
     }
   };
-};
+}

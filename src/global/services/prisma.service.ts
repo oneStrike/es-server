@@ -110,7 +110,7 @@ export class PrismaService
   /**
    * 延迟工具函数
    */
-  private delay(ms: number): Promise<void> {
+  private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 

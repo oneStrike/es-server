@@ -1,9 +1,9 @@
-import { applyDecorators } from '@nestjs/common';
 import type { ApiPropertyOptions } from '@nestjs/swagger';
+import type { ValidateJsonOptions } from './types';
+import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsJSON, IsOptional } from 'class-validator';
-import type { ValidateJsonOptions } from './types';
 
 /**
  * JSON字符串验证装饰器

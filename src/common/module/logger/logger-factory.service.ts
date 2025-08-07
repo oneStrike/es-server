@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Logger, createLogger } from 'winston';
-import { LogModule, createWinstonConfig } from '@/config/logger.config';
+import { createLogger, Logger } from 'winston';
+import { createWinstonConfig, LogModule } from '@/config/logger.config';
 import { CustomLoggerService } from './logger.service';
 
 /**
@@ -47,7 +47,7 @@ export class LoggerFactoryService {
 
     // 检查缓存
     if (this.loggerServices.has(cacheKey)) {
-      return this.loggerServices.get(cacheKey)!;
+      return this.loggerServices.get(cacheKey);
     }
 
     // 创建新的日志服务实例
@@ -98,8 +98,9 @@ export class LoggerFactoryService {
       return this.createAdminLogger(context);
     } else if (stack?.includes('/client/')) {
       return this.createClientLogger(context);
+    } else {
+      return this.createGlobalLogger(context);
     }
-    return this.createGlobalLogger(context);
   }
 
   /**
@@ -114,7 +115,7 @@ export class LoggerFactoryService {
    */
   getLoggerStats(): {
     totalLoggers: number;
-    moduleLoggers: Record<LogModule, boolean>;
+    moduleLoggers: IteratorObject<LogModule, boolean>;
     cachedServices: number;
   } {
     return {
@@ -124,7 +125,7 @@ export class LoggerFactoryService {
           acc[module] = this.loggers.has(module);
           return acc;
         },
-        {} as Record<LogModule, boolean>
+        {} as IteratorObject<LogModule, boolean>
       ),
       cachedServices: this.loggerServices.size,
     };
@@ -134,11 +135,13 @@ export class LoggerFactoryService {
    * 关闭所有日志器
    */
   async closeAll(): Promise<void> {
-    const closePromises = Array.from(this.loggers.values()).map(logger => {
-      return new Promise<void>(() => {
-        logger.close();
-      });
-    });
+    const closePromises = Array.from(this.loggers.values()).map(
+      async logger => {
+        return new Promise<void>(resolve => {
+          logger.close();
+        });
+      }
+    );
 
     await Promise.all(closePromises);
     this.loggers.clear();

@@ -75,7 +75,7 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
    * @param createDictionaryItemDto 创建字典项数据
    * @returns 创建的字典项信息
    */
-  createDictionaryItem(createDictionaryItemDto: CreateDictionaryItemDto) {
+  async createDictionaryItem(createDictionaryItemDto: CreateDictionaryItemDto) {
     return this.prisma.dictionaryItem.create({
       data: {
         ...createDictionaryItemDto,
@@ -89,7 +89,7 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
    * @param updateDictionaryItemDto 更新数据
    * @returns 更新后的字典项信息
    */
-  updateDictionaryItem(updateDictionaryItemDto: Record<string, any>) {
+  async updateDictionaryItem(updateDictionaryItemDto: Record<string, any>) {
     const { ids, isEnabled } = updateDictionaryItemDto;
     return this.prisma.dictionaryItem.updateMany({
       where: { id: { in: ids } },

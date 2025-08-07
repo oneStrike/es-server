@@ -28,7 +28,7 @@ export class DictionaryController {
     summary: '分页查询字典',
     model: DictionaryDto,
   })
-  getPage(@Query() query: QueryDictionaryDto) {
+  async getPage(@Query() query: QueryDictionaryDto) {
     return this.dictionaryService.findDictionaries(query);
   }
 
@@ -37,7 +37,7 @@ export class DictionaryController {
     summary: '获取字典详情',
     model: DictionaryDto,
   })
-  getDetail(@Query() query: IdDto) {
+  async getDetail(@Query() query: IdDto) {
     return this.dictionaryService.findById(query);
   }
 
@@ -46,7 +46,7 @@ export class DictionaryController {
     summary: '创建字典',
     model: IdDto,
   })
-  create(@Body() createDictionaryDto: CreateDictionaryDto) {
+  async create(@Body() createDictionaryDto: CreateDictionaryDto) {
     return this.dictionaryService.create({
       data: createDictionaryDto,
     });
@@ -57,7 +57,7 @@ export class DictionaryController {
     summary: '更新字典',
     model: IdDto,
   })
-  update(@Body() updateDictionaryDto: DictionaryDto) {
+  async update(@Body() updateDictionaryDto: DictionaryDto) {
     return this.dictionaryService.update({
       where: { id: updateDictionaryDto.id },
       data: updateDictionaryDto,
@@ -69,7 +69,7 @@ export class DictionaryController {
     summary: '删除字典',
     model: IdsDto,
   })
-  delete(@Body() query: IdsDto) {
+  async delete(@Body() query: IdsDto) {
     return this.dictionaryService.deleteMany({ id: { in: query.ids } });
   }
 
@@ -78,7 +78,7 @@ export class DictionaryController {
     summary: '批量启用禁用字典',
     model: CountDto,
   })
-  enable(@Body() query: BatchEnabledDto) {
+  async enable(@Body() query: BatchEnabledDto) {
     return this.dictionaryService.updateMany({
       where: { id: { in: query.ids } },
       data: { isEnabled: query.isEnabled },
@@ -91,7 +91,7 @@ export class DictionaryController {
     model: DictionaryItemDto,
     isArray: true,
   })
-  getItems(@Query() query: QueryDictionaryItemDto) {
+  async getItems(@Query() query: QueryDictionaryItemDto) {
     return this.dictionaryService.findDictionaryItems(query);
   }
 
@@ -100,7 +100,7 @@ export class DictionaryController {
     summary: '创建字典项',
     model: IdDto,
   })
-  createItem(@Body() createDictionaryItemDto: CreateDictionaryItemDto) {
+  async createItem(@Body() createDictionaryItemDto: CreateDictionaryItemDto) {
     return this.dictionaryService.createDictionaryItem(createDictionaryItemDto);
   }
 
@@ -109,7 +109,7 @@ export class DictionaryController {
     summary: '更新字典项',
     model: IdDto,
   })
-  updateItem(@Body() updateDictionaryItemDto: UpdateDictionaryItemDto) {
+  async updateItem(@Body() updateDictionaryItemDto: UpdateDictionaryItemDto) {
     return this.dictionaryService.updateDictionaryItem({
       ids: [updateDictionaryItemDto.id],
       ...updateDictionaryItemDto,
@@ -121,7 +121,7 @@ export class DictionaryController {
     summary: '删除字典项',
     model: CountDto,
   })
-  deleteItem(@Body() query: IdsDto) {
+  async deleteItem(@Body() query: IdsDto) {
     return this.dictionaryService.deleteDictionaryItem(query.ids);
   }
 
@@ -130,7 +130,7 @@ export class DictionaryController {
     summary: '启用禁用字典项',
     model: CountDto,
   })
-  enableItem(@Body() query: BatchEnabledDto) {
+  async enableItem(@Body() query: BatchEnabledDto) {
     return this.dictionaryService.updateDictionaryItem(query);
   }
 }

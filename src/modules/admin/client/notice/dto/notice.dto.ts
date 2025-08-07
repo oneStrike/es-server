@@ -92,7 +92,6 @@ export class BaseNoticeDto {
     description: '关联页面代码',
     example: 'home',
     required: false,
-    default: null,
   })
   pageCode?: string;
 
@@ -181,7 +180,6 @@ export class CreateNoticeDto extends OmitType(BaseNoticeDto, [
   'readCount',
   'createdAt',
   'updatedAt',
-  'clientPage',
 ]) {}
 
 /**
@@ -195,7 +193,6 @@ export class UpdateNoticeDto extends IntersectionType(
       'isPublished',
       'createdAt',
       'updatedAt',
-      'clientPage',
     ])
   ),
   IdDto
@@ -214,14 +211,7 @@ export class QueryNoticeDto extends IntersectionType(
     'isPinned',
     'showAsPopup',
   ])
-) {
-  @ValidateString({
-    description: '关联页面代码',
-    example: 'home',
-    required: false,
-  })
-  pageCode?: string;
-}
+) {}
 
 /**
  * 通知状态更新DTO

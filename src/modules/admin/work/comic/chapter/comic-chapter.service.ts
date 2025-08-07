@@ -276,7 +276,7 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
       throw new BadRequestException('章节不存在');
     }
 
-    return JSON.parse(chapter.contents!);
+    return JSON.parse(chapter.contents);
   }
 
   /**
@@ -295,7 +295,7 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
       throw new BadRequestException('章节不存在');
     }
 
-    const contents: string[] = JSON.parse(chapter.contents!);
+    const contents: string[] = JSON.parse(chapter.contents);
 
     // 添加内容到指定位置或末尾
     if (index !== undefined && index >= 0 && index <= contents.length) {
@@ -329,7 +329,7 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
       throw new BadRequestException('章节不存在');
     }
 
-    const contents: string[] = JSON.parse(chapter.contents!);
+    const contents: string[] = JSON.parse(chapter.contents);
 
     // 验证索引是否有效
     if (index < 0 || index >= contents.length) {
@@ -364,7 +364,7 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
       throw new BadRequestException('章节不存在');
     }
 
-    const contents: string[] = JSON.parse(chapter.contents!);
+    const contents: string[] = JSON.parse(chapter.contents);
 
     // 验证索引是否有效
     if (index < 0 || index >= contents.length) {
@@ -399,7 +399,7 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
       throw new BadRequestException('章节不存在');
     }
 
-    const contents: string[] = JSON.parse(chapter.contents!);
+    const contents: string[] = JSON.parse(chapter.contents);
 
     // 验证索引是否有效
     if (

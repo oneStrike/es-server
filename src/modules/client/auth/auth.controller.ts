@@ -34,7 +34,7 @@ export class ClientAuthController {
     try {
       // 从请求头中提取访问令牌
       const authHeader = req.headers.authorization;
-      if (!authHeader?.startsWith('Bearer ')) {
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return { success: false, message: 'No token provided' };
       }
 

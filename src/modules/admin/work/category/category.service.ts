@@ -205,6 +205,6 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * 检查分类是否有关联的作品
    */
   async checkCategoryHasWorks(id: number) {
-    return !id;
+    return false;
   }
 }

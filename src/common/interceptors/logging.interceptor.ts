@@ -176,7 +176,7 @@ export class LoggingInterceptor implements NestInterceptor {
       userAgent: request.headers['user-agent'],
       method: request.method,
       url: request.url,
-      userId: (request.user as any)?.id,
+      userId: request.user?.id,
     };
 
     logger.setLogContext(logContext);

@@ -41,7 +41,7 @@ export class AdminUserController {
     model: CaptchaDto,
   })
   @Public()
-  getCaptcha() {
+  async getCaptcha() {
     return this.userService.getCaptcha();
   }
 
@@ -54,7 +54,7 @@ export class AdminUserController {
     model: LoginResponseDto,
   })
   @Public()
-  login(@Body() body: UserLoginDto, @Req() req: FastifyRequest) {
+  async login(@Body() body: UserLoginDto, @Req() req: FastifyRequest) {
     return this.userService.login(body, req);
   }
 
@@ -81,7 +81,7 @@ export class AdminUserController {
     model: IdDto,
   })
   @Public()
-  register(@Body() body: UserRegisterDto) {
+  async register(@Body() body: UserRegisterDto) {
     return this.userService.register(body);
   }
 
@@ -97,7 +97,7 @@ export class AdminUserController {
     model: RefreshTokenResponseDto,
   })
   @Public()
-  refreshToken(@Body() body: RefreshTokenDto) {
+  async refreshToken(@Body() body: RefreshTokenDto) {
     return this.userService.refreshToken(body.refreshToken);
   }
 
@@ -109,7 +109,7 @@ export class AdminUserController {
     summary: '修改密码',
     model: UserDto,
   })
-  updatePassword(
+  async updatePassword(
     @Body() body: UpdatePasswordDto,
     @CurrentUser() user: AdminJwtPayload,
     @Req() req: FastifyRequest
@@ -133,7 +133,7 @@ export class AdminUserController {
     summary: '更新用户信息',
     model: UserDto,
   })
-  updateUserInfo(
+  async updateUserInfo(
     @Body() body: UpdateUserDto,
     @CurrentUser() user: AdminJwtPayload
   ) {
@@ -151,7 +151,7 @@ export class AdminUserController {
     summary: '获取当前用户信息',
     model: UserDto,
   })
-  getUserInfo(@CurrentUser() user: AdminJwtPayload) {
+  async getUserInfo(@CurrentUser() user: AdminJwtPayload) {
     return this.userService.getUserInfo(Number.parseInt(user.sub));
   }
 
@@ -166,7 +166,7 @@ export class AdminUserController {
     summary: '根据ID获取用户信息',
     model: UserDto,
   })
-  getUserById(@Query() query: IdDto) {
+  async getUserById(@Query() query: IdDto) {
     return this.userService.getUserInfo(query.id);
   }
 
@@ -178,7 +178,7 @@ export class AdminUserController {
     summary: '获取管理端用户分页列表',
     model: UserDto,
   })
-  getUsers(@Query() query: UserPageDto) {
+  async getUsers(@Query() query: UserPageDto) {
     return this.userService.getUsers(query);
   }
 

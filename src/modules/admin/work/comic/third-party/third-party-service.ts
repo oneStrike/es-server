@@ -16,7 +16,7 @@ export class WorkComicThirdPartyService {
     const { keyword, platform } = searchDto;
 
     // 验证平台是否支持
-    if (!this[platform]?.searchWord) {
+    if (!this[platform] || !this[platform].searchWord) {
       throw new BadRequestException('暂不支持该平台');
     }
 
@@ -24,10 +24,6 @@ export class WorkComicThirdPartyService {
       const result = await this[platform].searchWord(keyword);
       return result;
     } catch (error) {
-      console.log(
-        '🚀 ~ WorkComicThirdPartyService ~ searchComic ~ error:',
-        error
-      );
       throw new BadRequestException('搜索失败，请稍后重试');
     }
   }

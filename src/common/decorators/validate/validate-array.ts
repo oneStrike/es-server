@@ -1,5 +1,6 @@
-import { applyDecorators } from '@nestjs/common';
 import type { ApiPropertyOptions } from '@nestjs/swagger';
+import type { ValidateArrayOptions } from './types';
+import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
@@ -14,7 +15,6 @@ import {
   MinLength,
   ValidateBy,
 } from 'class-validator';
-import type { ValidateArrayOptions } from './types';
 
 /**
  * 通用数组验证装饰器
@@ -167,7 +167,7 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
         validator: {
           validate: (value: any[]) => {
             if (!Array.isArray(value)) return true; // 数组验证由IsArray处理
-            return value.every(options.itemValidator!);
+            return value.every(options.itemValidator);
           },
           defaultMessage: () =>
             options.itemErrorMessage || '数组中的元素验证失败',

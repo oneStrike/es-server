@@ -30,6 +30,6 @@ export class WorkComicThirdPartyController {
     model: SearchComicItemDto,
   })
   async searchComic(@Query() searchDto: SearchComicRequestDto) {
-    return await this.thirdPartyService.searchComic(searchDto);
+    return this.thirdPartyService.searchComic(searchDto);
   }
 }

@@ -1,10 +1,10 @@
-import { applyDecorators } from '@nestjs/common';
 import type { ApiPropertyOptions } from '@nestjs/swagger';
+import type { ValidateBitmaskOptions } from './types';
+import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional, Validate } from 'class-validator';
 import { BitmaskValidator } from './bitmask-validator';
-import type { ValidateBitmaskOptions } from './types';
 import { isNumberEnum } from './utils';
 
 /**

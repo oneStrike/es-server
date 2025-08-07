@@ -25,7 +25,7 @@ export interface RsaKeyPair {
 @Injectable()
 export class RsaService implements OnModuleInit {
   private static instance: RsaService;
-  private keyPairs = new Map<RsaKeyType, RsaKeyPair>();
+  private keyPairs: Map<RsaKeyType, RsaKeyPair> = new Map();
   private isDevelopment: boolean;
 
   constructor(private configService: ConfigService) {
@@ -275,7 +275,7 @@ export class RsaService implements OnModuleInit {
    */
   decrypt(encryptedData: string, keyType: RsaKeyType): string {
     const keyPair = this.keyPairs.get(keyType);
-    if (!keyPair?.privateKey) {
+    if (!keyPair || !keyPair.privateKey) {
       throw new Error(`${keyType} RSA私钥未初始化`);
     }
     const buffer = Buffer.from(encryptedData, 'base64');
