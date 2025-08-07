@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { BaseRepositoryService } from '@/global/services/base-repository.service'
-import { WorkComicWhereInput } from '@/prisma/client/models/WorkComic'
 
+import { WorkComicWhereInput } from '@/prisma/client/models/WorkComic'
+import { isBoolean, isNotNil } from '@/utils'
 import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
 
 /**
@@ -32,7 +33,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
     }
 
     // 验证作者是否存在
-    if (!authorIds || authorIds.length === 0) {
+    if (!Array.isArray(authorIds) || authorIds.length === 0) {
       throw new BadRequestException('至少需要关联一个作者')
     }
 
@@ -108,7 +109,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
     const where: WorkComicWhereInput = {}
 
     // 漫画名称模糊搜索
-    if (name) {
+    if (isNotNil(name)) {
       where.name = {
         contains: name,
         mode: 'insensitive',
@@ -116,52 +117,52 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
     }
 
     // 发布状态筛选
-    if (isPublished !== undefined) {
+    if (isNotNil(isPublished)) {
       where.isPublished = isPublished
     }
 
     // 连载状态筛选
-    if (serialStatus !== undefined) {
+    if (isNotNil(serialStatus)) {
       where.serialStatus = serialStatus
     }
 
     // 语言筛选
-    if (language) {
+    if (isNotNil(language)) {
       where.language = language
     }
 
     // 地区筛选
-    if (region) {
+    if (isNotNil(region)) {
       where.region = region
     }
 
     // 年龄分级筛选
-    if (ageRating) {
+    if (isNotNil(ageRating)) {
       where.ageRating = ageRating
     }
 
     // 阅读规则筛选
-    if (readRule !== undefined) {
+    if (isNotNil(readRule)) {
       where.readRule = readRule
     }
 
     // 推荐状态筛选
-    if (typeof isRecommended === 'boolean') {
+    if (isBoolean(isRecommended)) {
       where.isRecommended = isRecommended
     }
 
     // 热门状态筛选
-    if (typeof isHot === 'boolean') {
+    if (isBoolean(isHot)) {
       where.isHot = isHot
     }
 
     // 新作状态筛选
-    if (typeof isNew === 'boolean') {
+    if (isBoolean(isNew)) {
       where.isNew = isNew
     }
 
     // 出版社模糊搜索
-    if (publisher) {
+    if (isNotNil(publisher)) {
       where.publisher = {
         contains: publisher,
         mode: 'insensitive',
@@ -169,7 +170,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
     }
 
     // 作者名称模糊搜索
-    if (author) {
+    if (isNotNil(author)) {
       where.comicAuthors = {
         some: {
           author: {
@@ -282,12 +283,12 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
 
     return {
       ...comic,
-      comicAuthors: comic.comicAuthors.map(author => ({
+      comicAuthors: comic.comicAuthors?.map(author => ({
         ...author.author,
         isPrimary: author.isPrimary,
         sortOrder: author.sortOrder,
       })),
-      comicCategories: comic.comicCategories.map(category => ({
+      comicCategories: comic.comicCategories?.map(category => ({
         ...category.category,
       })),
     }
@@ -308,7 +309,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
     }
 
     // 如果更新名称，验证是否与其他漫画重复
-    if (updateData.name && updateData.name !== existingComic.name) {
+    if (isNotNil(updateData.name) && updateData.name !== existingComic.name) {
       const duplicateComic = await this.findFirst({
         where: {
           name: updateData.name,

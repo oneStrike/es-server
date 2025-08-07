@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { FastifyRequest } from 'fastify';
-import { BaseRequestLogInterceptor } from '@/common/interceptors/base-request-log.interceptor';
-import { RequestLogConfigService } from '@/config/request-log.config';
-import { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service';
-import { RequestLogService } from '../request-log.service';
+import { Injectable } from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
+import { FastifyRequest } from 'fastify'
+import { BaseRequestLogInterceptor } from '@/common/interceptors/base-request-log.interceptor'
+import { RequestLogConfigService } from '@/config/request-log.config'
+import { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service'
+import { RequestLogService } from '../request-log.service'
 
 /**
  * 管理端请求日志拦截器
@@ -24,8 +24,8 @@ export class AdminRequestLogInterceptor extends BaseRequestLogInterceptor {
       requestLogService,
       reflector,
       'AdminRequestLogInterceptor',
-      RequestLogConfigService.getAdminConfig()
-    );
+      RequestLogConfigService.getAdminConfig(),
+    )
   }
 
   /**
@@ -34,21 +34,21 @@ export class AdminRequestLogInterceptor extends BaseRequestLogInterceptor {
    * @returns API摘要
    */
   protected getOperationDescription(request: FastifyRequest): string {
-    const path = request.url.split('?')[0];
-    const action = this.getActionByMethod(request);
+    const path = request.url.split('?')[0]
+    const action = this.getActionByMethod(request)
 
     // 根据路径和方法生成摘要
-    const pathSegments = path.split('/').filter(Boolean);
+    const pathSegments = path.split('/').filter(Boolean)
 
     if (pathSegments.length === 0) {
-      return '管理端-根路径访问';
+      return '管理端-根路径访问'
     }
 
     // 简单的路径解析逻辑
-    const module = pathSegments[0] || 'unknown';
-    const resource = pathSegments[1] || 'unknown';
+    const module = pathSegments[0] || 'unknown'
+    const resource = pathSegments[1] || 'unknown'
 
-    return `管理端-${module}模块-${resource}${action}`;
+    return `管理端-${module}模块-${resource}${action}`
   }
 
   /**
@@ -57,12 +57,12 @@ export class AdminRequestLogInterceptor extends BaseRequestLogInterceptor {
    * @returns 管理员用户信息
    */
   protected extractUserInfo(request: FastifyRequest): {
-    userId?: string;
+    userId?: string
   } {
-    const user = request.user as AdminJwtPayload | undefined;
+    const user = request.user as AdminJwtPayload | undefined
     return {
       userId: user?.sub?.toString(),
-    };
+    }
   }
 
   /**
@@ -71,13 +71,13 @@ export class AdminRequestLogInterceptor extends BaseRequestLogInterceptor {
    * @returns 管理员用户名
    */
   protected extractUsername(request: FastifyRequest): string | undefined {
-    const user = request.user as AdminJwtPayload | undefined;
+    const user = request.user as AdminJwtPayload | undefined
     // @ts-expect-error ignore
     if (request.config?.url === '/api/admin/user/user-login') {
       // @ts-expect-error ignore
-      return request.body.username;
+      return request.body.username
     }
-    return user?.username;
+    return user?.username
   }
 
   /**
@@ -88,9 +88,9 @@ export class AdminRequestLogInterceptor extends BaseRequestLogInterceptor {
    */
   protected getOperationRecord(
     request: FastifyRequest,
-    userInfo: { userId?: string; userPhone?: string }
+    userInfo: { userId?: string, userPhone?: string },
   ): string {
-    return this.generateOperationRecord(request, userInfo, '管理员');
+    return this.generateOperationRecord(request, userInfo, '管理员')
   }
 
   /**
@@ -98,7 +98,7 @@ export class AdminRequestLogInterceptor extends BaseRequestLogInterceptor {
    * @returns 日志前缀
    */
   protected getLogPrefix(): string {
-    return '管理端-';
+    return '管理端-'
   }
 
   /**
@@ -106,9 +106,9 @@ export class AdminRequestLogInterceptor extends BaseRequestLogInterceptor {
    * @returns 敏感字段数组
    */
   protected getSensitiveFields(): string[] {
-    return ['password', 'token', 'secret', 'key', 'authorization', 'captcha'];
+    return ['password', 'token', 'secret', 'key', 'authorization', 'captcha']
   }
 }
 
 // 导出装饰器（从基类导入）
-export { SkipRequestLog } from '@/common/interceptors/base-request-log.interceptor';
+export { SkipRequestLog } from '@/common/interceptors/base-request-log.interceptor'
