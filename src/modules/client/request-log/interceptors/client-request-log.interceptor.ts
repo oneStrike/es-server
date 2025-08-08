@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { FastifyRequest } from 'fastify';
-import { BaseRequestLogInterceptor } from '@/common/interceptors/base-request-log.interceptor';
-import { RequestLogConfigService } from '@/config/request-log.config';
-import { RequestLogService } from '@/modules/admin/request-log/request-log.service';
-import { ClientJwtPayload } from '@/modules/client/auth/client-jwt.service';
+import { Injectable } from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
+import { FastifyRequest } from 'fastify'
+import { BaseRequestLogInterceptor } from '@/common/interceptors/base-request-log.interceptor'
+import { RequestLogConfigService } from '@/config/request-log.config'
+import { RequestLogService } from '@/modules/admin/request-log/request-log.service'
+import { ClientJwtPayload } from '@/modules/client/auth/client-jwt.service'
 
 /**
  * 客户端请求日志拦截器
@@ -25,8 +25,8 @@ export class ClientRequestLogInterceptor extends BaseRequestLogInterceptor {
       requestLogService,
       reflector,
       ClientRequestLogInterceptor.name,
-      RequestLogConfigService.getClientConfig()
-    );
+      RequestLogConfigService.getClientConfig(),
+    )
   }
 
   /**
@@ -37,10 +37,10 @@ export class ClientRequestLogInterceptor extends BaseRequestLogInterceptor {
   protected extractUserInfo(request: FastifyRequest): {
     userId?: string
   } {
-    const user = request.user as ClientJwtPayload | undefined;
+    const user = request.user as ClientJwtPayload | undefined
     return {
       userId: user?.sub,
-    };
+    }
   }
 
   /**
@@ -49,8 +49,8 @@ export class ClientRequestLogInterceptor extends BaseRequestLogInterceptor {
    * @returns 客户端用户名（客户端通常没有用户名，返回手机号或用户ID）
    */
   protected extractUsername(request: FastifyRequest): string | undefined {
-    const user = request.user as ClientJwtPayload | undefined;
-    return user?.sub;
+    const user = request.user as ClientJwtPayload | undefined
+    return user?.sub
   }
 
   /**
@@ -59,21 +59,22 @@ export class ClientRequestLogInterceptor extends BaseRequestLogInterceptor {
    * @returns API摘要
    */
   protected getOperationDescription(request: FastifyRequest): string {
-    const path = request.url.split('?')[0];
-    return `客户端-${request.method} ${path}`;
+    const path = request.url.split('?')[0]
+    return `客户端-${request.method} ${path}`
   }
 
   /**
    * 获取操作记录描述
-   * @param request 请求对象
-   * @param userInfo 用户信息
    * @returns 操作记录
    */
   protected getOperationRecord(
     request: FastifyRequest,
-    userInfo: { userId?: string, userPhone?: string }
+    userInfo: {
+      userId?: string
+      userPhone?: string
+    },
   ): string {
-    return this.generateOperationRecord(request, userInfo, '客户端用户');
+    return this.generateOperationRecord(request, userInfo, '客户端用户')
   }
 
   /**
@@ -81,7 +82,7 @@ export class ClientRequestLogInterceptor extends BaseRequestLogInterceptor {
    * @returns 日志前缀
    */
   protected getLogPrefix(): string {
-    return '客户端-';
+    return '客户端-'
   }
 
   /**
@@ -98,9 +99,9 @@ export class ClientRequestLogInterceptor extends BaseRequestLogInterceptor {
       'captcha',
       'smsCode', // 客户端特有的敏感字段
       'verificationCode',
-    ];
+    ]
   }
 }
 
 // 导出装饰器（从基类导入）
-export { SkipRequestLog } from '@/common/interceptors/base-request-log.interceptor';
+export { SkipRequestLog } from '@/common/interceptors/base-request-log.interceptor'

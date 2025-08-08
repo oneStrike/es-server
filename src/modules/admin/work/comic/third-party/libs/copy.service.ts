@@ -53,7 +53,7 @@ export class CopyService {
           source: '拷贝',
         })),
       }
-    } catch (error) {
+    } catch {
       return { code: 201 }
     }
   }
@@ -80,7 +80,7 @@ export class CopyService {
       return data.code !== 200
         ? { code: 201 }
         : { code: 200, data: data.results }
-    } catch (error) {
+    } catch {
       return { code: 201 }
     }
   }
@@ -98,7 +98,7 @@ export class CopyService {
       return data.code !== 200
         ? { code: 201 }
         : { code: 200, data: data.results.list }
-    } catch (error) {
+    } catch {
       return { code: 201 }
     }
   }
@@ -117,7 +117,7 @@ export class CopyService {
       return data.code !== 200
         ? { code: 201 }
         : { code: 200, data: data.results }
-    } catch (error) {
+    } catch {
       return { code: 201 }
     }
   }

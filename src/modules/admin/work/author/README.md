@@ -92,23 +92,23 @@ src/modules/admin/work/author/
 
 ```typescript
 interface WorkAuthor {
-  id: number; // 主键ID
-  name: string; // 作者姓名
-  avatar?: string; // 作者头像URL
-  description?: string; // 作者描述
-  isEnabled: boolean; // 启用状态
-  roles?: number; // 身份角色（位运算）
-  nationality?: string; // 国籍
-  gender: AuthorGenderEnum; // 性别
-  socialLinks?: string; // 社交媒体链接（JSON）
-  remark?: string; // 管理员备注
-  createdAt: Date; // 创建时间
-  updatedAt: Date; // 更新时间
-  worksCount: number; // 作品数量
-  followersCount: number; // 粉丝数量
-  rating?: number; // 平均评分
-  featured: boolean; // 是否推荐
-  deletedAt?: Date; // 软删除时间
+  id: number // 主键ID
+  name: string // 作者姓名
+  avatar?: string // 作者头像URL
+  description?: string // 作者描述
+  isEnabled: boolean // 启用状态
+  roles?: number // 身份角色（位运算）
+  nationality?: string // 国籍
+  gender: AuthorGenderEnum // 性别
+  socialLinks?: string // 社交媒体链接（JSON）
+  remark?: string // 管理员备注
+  createdAt: Date // 创建时间
+  updatedAt: Date // 更新时间
+  worksCount: number // 作品数量
+  followersCount: number // 粉丝数量
+  rating?: number // 平均评分
+  featured: boolean // 是否推荐
+  deletedAt?: Date // 软删除时间
 }
 ```
 

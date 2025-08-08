@@ -11,6 +11,6 @@ export class ClientUserController {
 
   @Get('getClientUserPage')
   async getUsers(@CurrentUser() user: ClientJwtPayload) {
-    return this.userService.getUsers()
+    return user
   }
 }

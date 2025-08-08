@@ -82,8 +82,6 @@ export class AdminRequestLogInterceptor extends BaseRequestLogInterceptor {
 
   /**
    * 获取管理端操作记录
-   * @param request 请求对象
-   * @param userInfo 用户信息
    * @returns 操作记录
    */
   protected getOperationRecord(

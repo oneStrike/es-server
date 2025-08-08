@@ -74,6 +74,6 @@ async function runSeeds() {
 
 runSeeds()
   .catch(() => {
-    process.exit(1)
+    void process.exit(1)
   })
-  .finally(async () => prisma.$disconnect())
+  .finally(() => void prisma.$disconnect())

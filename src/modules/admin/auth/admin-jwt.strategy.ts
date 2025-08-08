@@ -33,7 +33,6 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
   /**
    * 验证 JWT 负载
    * 该方法在 JWT 被成功解码后调用
-   * @param payload JWT 负载
    * @param request
    * @returns 验证通过的用户信息
    * @throws UnauthorizedException 如果角色不是 'admin'

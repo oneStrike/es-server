@@ -85,7 +85,6 @@ export class ClientPageConfigController {
     model: IdDto,
   })
   async update(@Body() body: UpdateClientPageConfigDto) {
-    const { id, ...data } = body
     return this.pageConfigService.updatePage(body)
   }
 

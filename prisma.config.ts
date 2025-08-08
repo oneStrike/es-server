@@ -1,6 +1,6 @@
-import path from 'node:path';
-import { defineConfig } from 'prisma/config';
-import 'dotenv/config';
+import path from 'node:path'
+import { defineConfig } from 'prisma/config'
+import 'dotenv/config'
 
 export default defineConfig({
   experimental: {
@@ -11,4 +11,4 @@ export default defineConfig({
     path: path.join('prisma', 'migrations'),
     seed: 'tsx src/prisma/seed/index.ts',
   },
-});
+})

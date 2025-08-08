@@ -23,7 +23,7 @@ export class WorkComicThirdPartyService {
     try {
       const result = await this[platform].searchWord(keyword)
       return result
-    } catch (error) {
+    } catch {
       throw new BadRequestException('搜索失败，请稍后重试')
     }
   }
