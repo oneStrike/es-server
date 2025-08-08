@@ -24,7 +24,7 @@ export class ClientJwtAuthGuard extends AuthGuard('client-jwt') {
    * @param context 执行上下文，包含当前请求信息
    * @returns 如果路由被标记为公共，则返回 true 跳过认证；否则调用父类的 canActivate 方法进行认证
    */
-  async canActivate(context: ExecutionContext) {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     // 检查路由是否被标记为公共
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
@@ -37,6 +37,7 @@ export class ClientJwtAuthGuard extends AuthGuard('client-jwt') {
     }
 
     // 否则调用父类的 canActivate 方法进行认证
-    return super.canActivate(context)
+    const result = await super.canActivate(context)
+    return result as boolean
   }
 }

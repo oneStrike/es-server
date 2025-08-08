@@ -108,7 +108,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     let password = body.password
     try {
       password = this.rsa.decryptWithAdmin(body.password)
-    } catch (error) {
+    } catch {
       throw new BadRequestException('账号或密码错误')
     }
 
@@ -192,7 +192,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       throw new BadRequestException('新密码和确认密码不一致')
     }
 
-    const authHeader = req.headers.authorization
+    const authHeader = req.headers.authorization!
     const accessToken = authHeader.substring(7) // 去掉 'Bearer ' 前缀
 
     // 查找用户

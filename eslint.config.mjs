@@ -16,6 +16,7 @@ export default antfu(
   },
   {
     rules: {
+      'no-console': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/strict-boolean-expressions': 'off',
