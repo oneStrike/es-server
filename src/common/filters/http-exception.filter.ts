@@ -42,7 +42,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // @ts-expect-error ignore
     response.errorResponse = errorResponse
 
-    response.code(200).send(errorResponse)
+    response.code(status).send(errorResponse)
   }
 
   /**
