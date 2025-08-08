@@ -4,7 +4,7 @@ import {
   OmitType,
   PartialType,
   PickType,
-} from '@nestjs/swagger';
+} from '@nestjs/swagger'
 import {
   ValidateArray,
   ValidateBitmask,
@@ -13,15 +13,15 @@ import {
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { IdDto } from '@/common/dto/id.dto';
-import { PageDto } from '@/common/dto/page.dto';
-import { BasePageConfigFieldsDto } from '@/modules/admin/client/page/dto/page.dto';
+} from '@/common/decorators/validate.decorator'
+import { IdDto } from '@/common/dto/id.dto'
+import { PageDto } from '@/common/dto/page.dto'
+import { BasePageConfigFieldsDto } from '@/modules/admin/client/page/dto/page.dto'
 import {
   EnablePlatformEnum,
   NoticePriorityEnum,
   NoticeTypeEnum,
-} from '../notice.constant';
+} from '../notice.constant'
 
 export class ClientPageDto extends PickType(BasePageConfigFieldsDto, [
   'id',
@@ -40,21 +40,21 @@ export class BaseNoticeDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ValidateString({
     description: '通知标题',
     example: '系统维护通知',
     required: true,
   })
-  title!: string;
+  title!: string
 
   @ValidateString({
     description: '通知内容详情',
     example: '系统将于今晚进行维护升级...',
     required: true,
   })
-  content!: string;
+  content!: string
 
   @ValidateEnum({
     description: '通知类型',
@@ -63,7 +63,7 @@ export class BaseNoticeDto {
     enum: NoticeTypeEnum,
     default: NoticeTypeEnum.SYSTEM,
   })
-  noticeType!: NoticeTypeEnum;
+  noticeType!: NoticeTypeEnum
 
   @ValidateEnum({
     description: '优先级',
@@ -72,35 +72,35 @@ export class BaseNoticeDto {
     enum: NoticePriorityEnum,
     default: NoticePriorityEnum.MEDIUM,
   })
-  priorityLevel!: NoticePriorityEnum;
+  priorityLevel!: NoticePriorityEnum
 
   @ValidateDate({
     description: '发布开始时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
-  publishStartTime?: Date;
+  publishStartTime?: Date
 
   @ValidateDate({
     description: '发布结束时间',
     example: '2024-12-31T23:59:59.999Z',
     required: false,
   })
-  publishEndTime?: Date;
+  publishEndTime?: Date
 
   @ValidateString({
     description: '关联页面代码',
     example: 'home',
     required: false,
   })
-  pageCode?: string;
+  pageCode?: string
 
   @ValidateString({
     description: '通知弹窗背景图片URL',
     example: 'https://example.com/bg.jpg',
     required: false,
   })
-  popupBackgroundImage?: string;
+  popupBackgroundImage?: string
 
   @ValidateBoolean({
     description: '是否发布',
@@ -108,7 +108,7 @@ export class BaseNoticeDto {
     required: true,
     default: false,
   })
-  isPublished!: boolean;
+  isPublished!: boolean
 
   @ValidateBitmask({
     description: '启用的平台',
@@ -116,7 +116,7 @@ export class BaseNoticeDto {
     required: true,
     enum: EnablePlatformEnum,
   })
-  enablePlatform!: EnablePlatformEnum;
+  enablePlatform!: EnablePlatformEnum
 
   @ValidateBoolean({
     description: '是否置顶',
@@ -124,7 +124,7 @@ export class BaseNoticeDto {
     required: false,
     default: false,
   })
-  isPinned?: boolean;
+  isPinned?: boolean
 
   @ValidateBoolean({
     description: '是否弹窗显示',
@@ -132,7 +132,7 @@ export class BaseNoticeDto {
     required: false,
     default: false,
   })
-  showAsPopup?: boolean;
+  showAsPopup?: boolean
 
   @ValidateNumber({
     description: '排序权重（数值越大越靠前）',
@@ -141,7 +141,7 @@ export class BaseNoticeDto {
     min: 0,
     default: 0,
   })
-  order?: number;
+  order?: number
 
   @ValidateNumber({
     description: '阅读次数',
@@ -150,25 +150,25 @@ export class BaseNoticeDto {
     min: 0,
     default: 0,
   })
-  readCount?: number;
+  readCount?: number
 
   @ApiProperty({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
   })
-  createdAt?: Date;
+  createdAt?: Date
 
   @ApiProperty({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
   })
-  updatedAt?: Date;
+  updatedAt?: Date
 
   @ApiProperty({
     description: '通知所关联的客户端页面信息',
     type: ClientPageDto,
   })
-  clientPage?: ClientPageDto;
+  clientPage?: ClientPageDto
 }
 
 /**
@@ -193,9 +193,9 @@ export class UpdateNoticeDto extends IntersectionType(
       'isPublished',
       'createdAt',
       'updatedAt',
-    ])
+    ]),
   ),
-  IdDto
+  IdDto,
 ) {}
 
 /**
@@ -210,7 +210,7 @@ export class QueryNoticeDto extends IntersectionType(
     'isPublished',
     'isPinned',
     'showAsPopup',
-  ])
+  ]),
 ) {}
 
 /**
@@ -225,7 +225,7 @@ export class UpdateNoticeStatusDto extends PickType(BaseNoticeDto, [
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 }
 
 /**

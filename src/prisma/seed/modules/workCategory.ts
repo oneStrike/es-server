@@ -2,8 +2,8 @@
  * 作品分类种子数据接口
  */
 interface IWorkCategoryData {
-  name: string;
-  contentTypes: number;
+  name: string
+  contentTypes: number
 }
 
 /**
@@ -45,20 +45,18 @@ export async function createInitialWorkCategory(prisma: any) {
       name: '悬疑',
       contentTypes: 15,
     },
-  ];
+  ]
 
   // 遍历初始数据，检查是否存在，不存在则创建
   for (const categoryData of INITIAL_WORK_CATEGORIES) {
     const existingCategory = await prisma.workCategory.findFirst({
       where: { name: categoryData.name },
-    });
+    })
 
     if (!existingCategory) {
       await prisma.workCategory.create({
         data: categoryData,
-      });
+      })
     }
   }
-
-  console.log('✅ 作品分类种子数据初始化完成');
 }

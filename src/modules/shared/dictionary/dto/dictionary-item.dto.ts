@@ -2,7 +2,7 @@ import {
   ValidateBoolean,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
+} from '@/common/decorators/validate.decorator'
 
 /**
  * 创建数据字典项DTO
@@ -15,7 +15,7 @@ export class CreateDictionaryItemDto {
     maxLength: 50,
     minLength: 1,
   })
-  dictionaryCode!: string;
+  dictionaryCode!: string
 
   @ValidateString({
     description: '字典项名称',
@@ -24,7 +24,7 @@ export class CreateDictionaryItemDto {
     maxLength: 50,
     minLength: 1,
   })
-  name!: string;
+  name!: string
 
   @ValidateString({
     description: '字典项编码',
@@ -33,7 +33,7 @@ export class CreateDictionaryItemDto {
     maxLength: 50,
     minLength: 1,
   })
-  code!: string;
+  code!: string
 
   @ValidateNumber({
     description: '排序',
@@ -41,7 +41,7 @@ export class CreateDictionaryItemDto {
     required: false,
     min: 0,
   })
-  order?: number;
+  order?: number
 
   @ValidateString({
     description: '字典项封面',
@@ -49,7 +49,7 @@ export class CreateDictionaryItemDto {
     required: false,
     maxLength: 200,
   })
-  cover?: string;
+  cover?: string
 
   @ValidateBoolean({
     description: '状态 true启用 false禁用',
@@ -57,7 +57,7 @@ export class CreateDictionaryItemDto {
     required: false,
     default: true,
   })
-  isEnabled?: boolean;
+  isEnabled?: boolean
 
   @ValidateString({
     description: '备注信息',
@@ -65,7 +65,7 @@ export class CreateDictionaryItemDto {
     required: false,
     maxLength: 255,
   })
-  remark?: string;
+  remark?: string
 }
 
 /**
@@ -77,5 +77,5 @@ export class UpdateDictionaryItemDto extends CreateDictionaryItemDto {
     example: 1,
     required: true,
   })
-  id!: number;
+  id!: number
 }

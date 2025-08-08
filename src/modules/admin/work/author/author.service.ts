@@ -1,14 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { BatchEnabledDto } from '@/common/dto/batch.dto';
-import { BaseRepositoryService } from '@/global/services/base-repository.service';
-import { PrismaService } from '@/global/services/prisma.service';
-import { WorkAuthorWhereInput } from '@/prisma/client/models/WorkAuthor';
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { BatchEnabledDto } from '@/common/dto/batch.dto'
+import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { PrismaService } from '@/global/services/prisma.service'
+import { WorkAuthorWhereInput } from '@/prisma/client/models/WorkAuthor'
 import {
   CreateAuthorDto,
   QueryAuthorDto,
   UpdateAuthorDto,
   UpdateAuthorFeaturedDto,
-} from './dto/author.dto';
+} from './dto/author.dto'
 
 /**
  * 作者服务类
@@ -16,11 +16,11 @@ import {
  */
 @Injectable()
 export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
-  protected readonly modelName = 'WorkAuthor' as const;
-  protected readonly supportsSoftDelete = true;
+  protected readonly modelName = 'WorkAuthor' as const
+  protected readonly supportsSoftDelete = true
 
   constructor(protected readonly prisma: PrismaService) {
-    super(prisma);
+    super(prisma)
   }
 
   /**
@@ -32,23 +32,23 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
     // 验证作者姓名是否已存在
     const existingAuthor = await this.findByUnique({
       where: { name: createAuthorDto.name },
-    });
+    })
     if (existingAuthor) {
-      throw new BadRequestException('作者姓名已存在');
+      throw new BadRequestException('作者姓名已存在')
     }
 
     // 验证社交媒体链接格式
     if (createAuthorDto.socialLinks) {
       try {
-        JSON.parse(createAuthorDto.socialLinks);
+        JSON.parse(createAuthorDto.socialLinks)
       } catch {
         throw new BadRequestException(
-          '社交媒体链接格式不正确，请使用有效的JSON格式'
-        );
+          '社交媒体链接格式不正确，请使用有效的JSON格式',
+        )
       }
     }
 
-    return this.create({ data: createAuthorDto });
+    return this.create({ data: createAuthorDto })
   }
 
   /**
@@ -58,44 +58,44 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
    */
   async getAuthorPage(queryAuthorDto: QueryAuthorDto) {
     const { name, isEnabled, roles, nationality, gender, featured } =
-      queryAuthorDto;
+      queryAuthorDto
 
     // 构建查询条件
-    const where: WorkAuthorWhereInput = {};
+    const where: WorkAuthorWhereInput = {}
 
     // 姓名模糊搜索
     if (name) {
       where.name = {
         contains: name,
         mode: 'insensitive',
-      };
+      }
     }
 
     // 启用状态筛选
     if (typeof isEnabled === 'boolean') {
-      where.isEnabled = isEnabled;
+      where.isEnabled = isEnabled
     }
 
     // 角色筛选（位运算）
     if (roles !== undefined) {
       where.roles = {
         equals: roles,
-      };
+      }
     }
 
     // 国籍筛选
     if (nationality) {
-      where.nationality = nationality;
+      where.nationality = nationality
     }
 
     // 性别筛选
     if (gender !== undefined) {
-      where.gender = gender;
+      where.gender = gender
     }
 
     // 推荐状态筛选
     if (typeof featured === 'boolean') {
-      where.featured = featured;
+      where.featured = featured
     }
 
     return this.findPagination({
@@ -107,7 +107,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
         description: true,
         deletedAt: true,
       },
-    });
+    })
   }
 
   /**
@@ -118,15 +118,15 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
   async getAuthorDetail(id: number) {
     const author = await this.findById({
       id,
-    });
+    })
 
     if (!author) {
-      throw new BadRequestException('作者不存在');
+      throw new BadRequestException('作者不存在')
     }
 
     return {
       ...author,
-    };
+    }
   }
 
   /**
@@ -135,12 +135,12 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
    * @returns 更新后的作者信息
    */
   async updateAuthor(updateAuthorDto: UpdateAuthorDto) {
-    const { id, ...updateData } = updateAuthorDto;
+    const { id, ...updateData } = updateAuthorDto
 
     // 验证作者是否存在
-    const existingAuthor = await this.findById({ id });
+    const existingAuthor = await this.findById({ id })
     if (!existingAuthor) {
-      throw new BadRequestException('作者不存在');
+      throw new BadRequestException('作者不存在')
     }
 
     // 如果更新姓名，验证是否与其他作者重复
@@ -150,27 +150,27 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
           name: updateData.name,
           id: { not: id },
         },
-      });
+      })
       if (duplicateAuthor) {
-        throw new BadRequestException('作者姓名已存在');
+        throw new BadRequestException('作者姓名已存在')
       }
     }
 
     // 验证社交媒体链接格式
     if (updateData.socialLinks) {
       try {
-        JSON.parse(updateData.socialLinks);
+        JSON.parse(updateData.socialLinks)
       } catch {
         throw new BadRequestException(
-          '社交媒体链接格式不正确，请使用有效的JSON格式'
-        );
+          '社交媒体链接格式不正确，请使用有效的JSON格式',
+        )
       }
     }
 
     return this.updateById({
       id,
       data: updateData,
-    });
+    })
   }
 
   /**
@@ -179,7 +179,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
    * @returns 更新结果
    */
   async updateAuthorStatus(updateAuthorStatusDto: BatchEnabledDto) {
-    const { ids, isEnabled } = updateAuthorStatusDto;
+    const { ids, isEnabled } = updateAuthorStatusDto
 
     return this.updateMany({
       where: {
@@ -188,7 +188,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
       data: {
         isEnabled,
       },
-    });
+    })
   }
 
   /**
@@ -197,7 +197,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
    * @returns 更新结果
    */
   async updateAuthorFeatured(updateAuthorFeaturedDto: UpdateAuthorFeaturedDto) {
-    const { ids, featured } = updateAuthorFeaturedDto;
+    const { ids, featured } = updateAuthorFeaturedDto
 
     return this.updateMany({
       where: {
@@ -206,7 +206,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
       data: {
         featured,
       },
-    });
+    })
   }
 
   /**
@@ -216,17 +216,17 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
    */
   async deleteAuthor(id: number) {
     // 验证作者是否存在
-    const existingAuthor = await this.findById({ id });
+    const existingAuthor = await this.findById({ id })
     if (!existingAuthor) {
-      throw new BadRequestException('作者不存在');
+      throw new BadRequestException('作者不存在')
     }
     if (existingAuthor.worksCount && existingAuthor.worksCount > 0) {
       throw new BadRequestException(
-        `该作者还有 ${existingAuthor.worksCount} 个关联作品，无法删除`
-      );
+        `该作者还有 ${existingAuthor.worksCount} 个关联作品，无法删除`,
+      )
     }
 
-    return this.softDelete(id);
+    return this.softDelete(id)
   }
 
   /**
@@ -240,13 +240,13 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
         authorId,
         deletedAt: null,
       },
-    });
+    })
 
     return this.updateById({
       id: authorId,
       data: {
         worksCount,
       },
-    });
+    })
   }
 }

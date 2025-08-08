@@ -1,7 +1,7 @@
-import type { ExecutionContext } from '@nestjs/common';
-import type { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service';
-import type { ClientJwtPayload } from '@/modules/client/auth/client-jwt.service';
-import { createParamDecorator } from '@nestjs/common';
+import type { ExecutionContext } from '@nestjs/common'
+import type { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service'
+import type { ClientJwtPayload } from '@/modules/client/auth/client-jwt.service'
+import { createParamDecorator } from '@nestjs/common'
 
 /**
  * CurrentUser 装饰器
@@ -17,9 +17,9 @@ import { createParamDecorator } from '@nestjs/common';
 export const CurrentUser = createParamDecorator(
   (
     data: unknown,
-    ctx: ExecutionContext
+    ctx: ExecutionContext,
   ): AdminJwtPayload | ClientJwtPayload => {
-    const request = ctx.switchToHttp().getRequest();
-    return request.user;
-  }
-);
+    const request = ctx.switchToHttp().getRequest()
+    return request.user
+  },
+)

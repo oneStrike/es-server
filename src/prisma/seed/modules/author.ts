@@ -1,7 +1,7 @@
 import {
   AuthorGenderEnum,
   AuthorRoleEnum,
-} from '../../../modules/admin/work/author/author.constant';
+} from '../../../modules/admin/work/author/author.constant'
 
 export async function createInitialAuthors(prisma: any) {
   const initData = [
@@ -85,15 +85,13 @@ export async function createInitialAuthors(prisma: any) {
       followersCount: 0,
       featured: false,
     },
-  ];
+  ]
 
   for (const item of initData) {
     await prisma.workAuthor.upsert({
       where: { name: item.name },
       update: item,
       create: item,
-    });
+    })
   }
-
-  console.log('✅ 作者种子数据初始化完成');
 }

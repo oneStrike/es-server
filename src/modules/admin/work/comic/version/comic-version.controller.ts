@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { BatchPublishDto, CountDto } from '@/common/dto/batch.dto';
-import { IdDto } from '@/common/dto/id.dto';
-import { WorkComicVersionService } from './comic-version.service';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { BatchPublishDto, CountDto } from '@/common/dto/batch.dto'
+import { IdDto } from '@/common/dto/id.dto'
+import { WorkComicVersionService } from './comic-version.service'
 import {
   BaseComicVersionDto,
   ComicVersionDetailResponseDto,
@@ -12,7 +12,7 @@ import {
   UpdateComicVersionDto,
   UpdateVersionEnabledStatusDto,
   UpdateVersionRecommendedStatusDto,
-} from './dto/comic-version.dto';
+} from './dto/comic-version.dto'
 
 /**
  * 漫画版本管理控制器
@@ -32,7 +32,7 @@ export class WorkComicVersionController {
     model: IdDto,
   })
   async create(@Body() body: CreateComicVersionDto) {
-    return this.comicVersionService.createComicVersion(body);
+    return this.comicVersionService.createComicVersion(body)
   }
 
   /**
@@ -44,7 +44,7 @@ export class WorkComicVersionController {
     model: BaseComicVersionDto,
   })
   async getPage(@Query() query: QueryComicVersionDto) {
-    return this.comicVersionService.getComicVersionPage(query);
+    return this.comicVersionService.getComicVersionPage(query)
   }
 
   /**
@@ -56,7 +56,7 @@ export class WorkComicVersionController {
     model: ComicVersionDetailResponseDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.comicVersionService.getComicVersionDetail(query.id);
+    return this.comicVersionService.getComicVersionDetail(query.id)
   }
 
   /**
@@ -68,7 +68,7 @@ export class WorkComicVersionController {
     model: IdDto,
   })
   async update(@Body() body: UpdateComicVersionDto) {
-    return this.comicVersionService.updateComicVersion(body);
+    return this.comicVersionService.updateComicVersion(body)
   }
 
   /**
@@ -87,7 +87,7 @@ export class WorkComicVersionController {
       data: {
         isPublished: body.isPublished,
       },
-    });
+    })
   }
 
   /**
@@ -99,9 +99,9 @@ export class WorkComicVersionController {
     model: CountDto,
   })
   async updateRecommendedStatus(
-    @Body() body: UpdateVersionRecommendedStatusDto
+    @Body() body: UpdateVersionRecommendedStatusDto,
   ) {
-    return this.comicVersionService.updateVersionRecommendedStatus(body);
+    return this.comicVersionService.updateVersionRecommendedStatus(body)
   }
 
   /**
@@ -120,7 +120,7 @@ export class WorkComicVersionController {
       data: {
         isEnabled: body.isEnabled,
       },
-    });
+    })
   }
 
   /**
@@ -132,6 +132,6 @@ export class WorkComicVersionController {
     model: IdDto,
   })
   async delete(@Body() body: IdDto) {
-    return this.comicVersionService.deleteComicVersion(body.id);
+    return this.comicVersionService.deleteComicVersion(body.id)
   }
 }

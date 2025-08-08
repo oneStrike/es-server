@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { AdminRequestLogInterceptor } from './interceptors/request-log.interceptor';
-import { RequestLogController } from './request-log.controller';
-import { RequestLogService } from './request-log.service';
+import { Module } from '@nestjs/common'
+import { AdminRequestLogInterceptor } from './interceptors/request-log.interceptor'
+import { RequestLogController } from './request-log.controller'
+import { RequestLogService } from './request-log.service'
 
 /**
  * 请求日志模块

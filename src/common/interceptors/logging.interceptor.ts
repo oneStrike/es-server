@@ -1,25 +1,25 @@
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import {
   CallHandler,
   ExecutionContext,
   Injectable,
   NestInterceptor,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+} from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
+import { Observable } from 'rxjs'
+import { catchError, tap } from 'rxjs/operators'
 import {
   LOG_BUSINESS_KEY,
   LOG_CONTEXT_KEY,
   LOG_MODULE_KEY,
   LOG_PERFORMANCE_KEY,
-} from '@/common/decorators/log.decorator';
-import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service';
+} from '@/common/decorators/log.decorator'
+import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 import {
   CustomLoggerService,
   LogContext,
-} from '@/common/module/logger/logger.service';
-import { LogModule } from '@/config/logger.config';
+} from '@/common/module/logger/logger.service'
+import { LogModule } from '@/config/logger.config'
 
 /**
  * 日志拦截器 - 简化版本
@@ -36,51 +36,51 @@ export class LoggingInterceptor implements NestInterceptor {
     'token',
     'secret',
     'key',
-  ]);
+  ])
 
   constructor(
     private readonly loggerFactory: LoggerFactoryService,
-    private readonly reflector: Reflector
+    private readonly reflector: Reflector,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const startTime = Date.now();
-    const request = context.switchToHttp().getRequest<FastifyRequest>();
-    const response = context.switchToHttp().getResponse<FastifyReply>();
+    const startTime = Date.now()
+    const request = context.switchToHttp().getRequest<FastifyRequest>()
+    const response = context.switchToHttp().getResponse<FastifyReply>()
 
     // 简化元数据获取
-    const logModule = this.getLogModule(context);
-    const logContext = this.getLogContext(context);
-    const shouldLogPerformance = this.shouldLogPerformance(context);
-    const businessAction = this.getBusinessAction(context);
+    const logModule = this.getLogModule(context)
+    const logContext = this.getLogContext(context)
+    const shouldLogPerformance = this.shouldLogPerformance(context)
+    const businessAction = this.getBusinessAction(context)
 
     // 创建日志器并设置上下文
-    const logger = this.loggerFactory.createLogger(logModule, logContext);
-    this.setRequestContext(logger, request);
+    const logger = this.loggerFactory.createLogger(logModule, logContext)
+    this.setRequestContext(logger, request)
 
     return next.handle().pipe(
-      tap(data => {
-        const duration = Date.now() - startTime;
+      tap((data) => {
+        const duration = Date.now() - startTime
         logger.logRequest(
           request.method,
           request.url,
           response.statusCode,
-          duration
-        );
+          duration,
+        )
 
         if (shouldLogPerformance) {
           logger.logPerformance(
             `${context.getClass().name}.${context.getHandler().name}`,
-            duration
-          );
+            duration,
+          )
         }
 
         if (businessAction) {
-          logger.logBusiness(businessAction, 'success', { responseData: data });
+          logger.logBusiness(businessAction, 'success', { responseData: data })
         }
       }),
-      catchError(error => {
-        const duration = Date.now() - startTime;
+      catchError((error) => {
+        const duration = Date.now() - startTime
         logger.error(
           `Request failed: ${request.method} ${request.url}`,
           error.stack,
@@ -89,18 +89,18 @@ export class LoggingInterceptor implements NestInterceptor {
             duration,
             errorMessage: error.message,
             errorResponse: error.response,
-          }
-        );
+          },
+        )
 
         if (businessAction) {
           logger.logBusiness(businessAction, 'failure', {
             error: error.message,
-          });
+          })
         }
 
-        throw error;
-      })
-    );
+        throw error
+      }),
+    )
   }
 
   /**
@@ -110,16 +110,22 @@ export class LoggingInterceptor implements NestInterceptor {
     const module = this.reflector.getAllAndOverride<LogModule>(LOG_MODULE_KEY, [
       context.getHandler(),
       context.getClass(),
-    ]);
+    ])
 
-    if (module) return module;
+    if (module) {
+      return module
+    }
 
     // 根据路径自动判断
-    const request = context.switchToHttp().getRequest<FastifyRequest>();
-    const path = request.url;
-    if (path.startsWith('/api/admin')) return LogModule.ADMIN;
-    if (path.startsWith('/api/client')) return LogModule.CLIENT;
-    return LogModule.GLOBAL;
+    const request = context.switchToHttp().getRequest<FastifyRequest>()
+    const path = request.url
+    if (path.startsWith('/api/admin')) {
+      return LogModule.ADMIN
+    }
+    if (path.startsWith('/api/client')) {
+      return LogModule.CLIENT
+    }
+    return LogModule.GLOBAL
   }
 
   /**
@@ -128,12 +134,12 @@ export class LoggingInterceptor implements NestInterceptor {
   private getLogContext(context: ExecutionContext): string {
     const logContext = this.reflector.getAllAndOverride<string>(
       LOG_CONTEXT_KEY,
-      [context.getHandler(), context.getClass()]
-    );
+      [context.getHandler(), context.getClass()],
+    )
 
     return (
       logContext || `${context.getClass().name}.${context.getHandler().name}`
-    );
+    )
   }
 
   /**
@@ -145,7 +151,7 @@ export class LoggingInterceptor implements NestInterceptor {
         context.getHandler(),
         context.getClass(),
       ]) || false
-    );
+    )
   }
 
   /**
@@ -154,13 +160,16 @@ export class LoggingInterceptor implements NestInterceptor {
   private getBusinessAction(context: ExecutionContext): string | null {
     const action = this.reflector.getAllAndOverride<string | boolean>(
       LOG_BUSINESS_KEY,
-      [context.getHandler(), context.getClass()]
-    );
+      [context.getHandler(), context.getClass()],
+    )
 
-    if (typeof action === 'string') return action;
-    if (action)
-      return `${context.getClass().name}.${context.getHandler().name}`;
-    return null;
+    if (typeof action === 'string') {
+      return action
+    }
+    if (action) {
+      return `${context.getClass().name}.${context.getHandler().name}`
+    }
+    return null
   }
 
   /**
@@ -168,7 +177,7 @@ export class LoggingInterceptor implements NestInterceptor {
    */
   private setRequestContext(
     logger: CustomLoggerService,
-    request: FastifyRequest
+    request: FastifyRequest,
   ): void {
     const logContext: LogContext = {
       requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -177,37 +186,39 @@ export class LoggingInterceptor implements NestInterceptor {
       method: request.method,
       url: request.url,
       userId: request.user?.id,
-    };
+    }
 
-    logger.setLogContext(logContext);
+    logger.setLogContext(logContext)
   }
 
   /**
    * 获取客户端 IP
    */
   private getClientIp(request: FastifyRequest): string {
-    const xForwardedFor = request.headers['x-forwarded-for'];
+    const xForwardedFor = request.headers['x-forwarded-for']
     if (typeof xForwardedFor === 'string') {
-      return xForwardedFor.split(',')[0].trim();
+      return xForwardedFor.split(',')[0].trim()
     }
     if (Array.isArray(xForwardedFor)) {
-      return xForwardedFor[0]?.split(',')[0]?.trim() || 'unknown';
+      return xForwardedFor[0]?.split(',')[0]?.trim() || 'unknown'
     }
-    return request.headers['x-real-ip']?.toString() || request.ip || 'unknown';
+    return request.headers['x-real-ip']?.toString() || request.ip || 'unknown'
   }
 
   /**
    * 清理敏感信息
    */
   private sanitizeData(data: any): any {
-    if (!data || typeof data !== 'object') return data;
+    if (!data || typeof data !== 'object') {
+      return data
+    }
 
-    const result: any = {};
+    const result: any = {}
     for (const [key, value] of Object.entries(data)) {
       result[key] = this.sensitiveFields.has(key.toLowerCase())
         ? '[REDACTED]'
-        : value;
+        : value
     }
-    return result;
+    return result
   }
 }

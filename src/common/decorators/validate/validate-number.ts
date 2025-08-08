@@ -1,9 +1,9 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger';
-import type { ValidateNumberOptions } from './types';
-import { applyDecorators } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, Max, Min } from 'class-validator';
+import type { ApiPropertyOptions } from '@nestjs/swagger'
+import type { ValidateNumberOptions } from './types'
+import { applyDecorators } from '@nestjs/common'
+import { ApiProperty } from '@nestjs/swagger'
+import { Transform } from 'class-transformer'
+import { IsNumber, IsOptional, Max, Min } from 'class-validator'
 
 /**
  * 数字类型验证装饰器
@@ -39,15 +39,15 @@ import { IsNumber, IsOptional, Max, Min } from 'class-validator';
 export function ValidateNumber(options: ValidateNumberOptions) {
   // 参数验证
   if (!options.description) {
-    throw new Error('ValidateNumber: description is required');
+    throw new Error('ValidateNumber: description is required')
   }
 
   if (
-    options.min !== undefined &&
-    options.max !== undefined &&
-    options.min > options.max
+    options.min !== undefined
+    && options.max !== undefined
+    && options.min > options.max
   ) {
-    throw new Error('ValidateNumber: min should not be greater than max');
+    throw new Error('ValidateNumber: min should not be greater than max')
   }
 
   // 构建API属性配置
@@ -58,42 +58,42 @@ export function ValidateNumber(options: ValidateNumberOptions) {
     default: options.default,
     nullable: !(options.required ?? true),
     type: Number,
-  };
+  }
 
   // 添加范围限制到API文档
   if (options.min !== undefined) {
-    apiPropertyOptions.minimum = options.min;
+    apiPropertyOptions.minimum = options.min
   }
   if (options.max !== undefined) {
-    apiPropertyOptions.maximum = options.max;
+    apiPropertyOptions.maximum = options.max
   }
 
   // 基础装饰器
   const decorators = [
     ApiProperty(apiPropertyOptions),
     IsNumber({}, { message: '必须是数字类型' }),
-  ];
+  ]
 
   // 范围验证
   if (options.max !== undefined) {
     decorators.push(
       Max(options.max, {
         message: `数值不能大于${options.max}`,
-      })
-    );
+      }),
+    )
   }
 
   if (options.min !== undefined) {
     decorators.push(
       Min(options.min, {
         message: `数值不能小于${options.min}`,
-      })
-    );
+      }),
+    )
   }
 
   // 可选字段处理
   if (!(options.required ?? true)) {
-    decorators.push(IsOptional());
+    decorators.push(IsOptional())
   }
 
   // 转换逻辑
@@ -101,30 +101,30 @@ export function ValidateNumber(options: ValidateNumberOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null) &&
-        options.default !== undefined
+        (value === undefined || value === null)
+        && options.default !== undefined
       ) {
-        return options.default;
+        return options.default
       }
 
       // 字符串转数字
       if (typeof value === 'string') {
-        const trimmedValue = value.trim();
+        const trimmedValue = value.trim()
         if (trimmedValue === '') {
-          return undefined;
+          return undefined
         }
-        const numValue = Number(trimmedValue);
-        return Number.isNaN(numValue) ? value : numValue;
+        const numValue = Number(trimmedValue)
+        return Number.isNaN(numValue) ? value : numValue
       }
 
-      return value;
-    })
-  );
+      return value
+    }),
+  )
 
   // 自定义转换函数
   if (options.transform) {
-    decorators.push(Transform(options.transform));
+    decorators.push(Transform(options.transform))
   }
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }

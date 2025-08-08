@@ -1,8 +1,8 @@
-import { Global, Module } from '@nestjs/common';
-import { WinstonModule } from 'nest-winston';
-import { globalLoggerConfig } from '@/config/logger.config';
-import { LoggerFactoryService } from './logger-factory.service';
-import { CustomLoggerService } from './logger.service';
+import { Global, Module } from '@nestjs/common'
+import { WinstonModule } from 'nest-winston'
+import { globalLoggerConfig } from '@/config/logger.config'
+import { LoggerFactoryService } from './logger-factory.service'
+import { CustomLoggerService } from './logger.service'
 
 /**
  * 日志模块
@@ -20,7 +20,7 @@ import { CustomLoggerService } from './logger.service';
       provide: CustomLoggerService,
       useFactory: (loggerFactory: LoggerFactoryService) => {
         // 提供默认的全局日志服务
-        return loggerFactory.createGlobalLogger('Global');
+        return loggerFactory.createGlobalLogger('Global')
       },
       inject: [LoggerFactoryService],
     },

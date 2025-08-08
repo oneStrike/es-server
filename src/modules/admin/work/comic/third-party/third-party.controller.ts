@@ -1,13 +1,13 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc } from '@/common/decorators/api-doc.decorator';
+import { Controller, Get, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc } from '@/common/decorators/api-doc.decorator'
 import {
   PlatformResponseDto,
   SearchComicItemDto,
-} from './dto/third-party-response.dto';
-import { SearchComicRequestDto } from './dto/third-party.request';
-import { WorkComicThirdPartyService } from './third-party-service';
-import { PLATFORMS } from './third-party.constant';
+} from './dto/third-party-response.dto'
+import { SearchComicRequestDto } from './dto/third-party.request'
+import { WorkComicThirdPartyService } from './third-party-service'
+import { PLATFORMS } from './third-party.constant'
 
 @ApiTags('第三方漫画平台内容解析')
 @Controller('admin/work/comic/third-party')
@@ -21,7 +21,7 @@ export class WorkComicThirdPartyController {
     isArray: true,
   })
   async getPlatforms() {
-    return PLATFORMS;
+    return PLATFORMS
   }
 
   @Get('/search')
@@ -30,6 +30,6 @@ export class WorkComicThirdPartyController {
     model: SearchComicItemDto,
   })
   async searchComic(@Query() searchDto: SearchComicRequestDto) {
-    return this.thirdPartyService.searchComic(searchDto);
+    return this.thirdPartyService.searchComic(searchDto)
   }
 }

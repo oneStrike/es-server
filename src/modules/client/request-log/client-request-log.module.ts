@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { RequestLogModule } from '@/modules/admin/request-log/request-log.module';
-import { ClientRequestLogInterceptor } from './interceptors/client-request-log.interceptor';
+import { Module } from '@nestjs/common'
+import { RequestLogModule } from '@/modules/admin/request-log/request-log.module'
+import { ClientRequestLogInterceptor } from './interceptors/client-request-log.interceptor'
 
 /**
  * 客户端请求日志模块

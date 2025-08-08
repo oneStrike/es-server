@@ -4,10 +4,10 @@
  */
 
 // 导出控制器
-export { ClientNoticeController } from './notice.controller';
+export { ClientNoticeController } from './notice.controller'
 
 // 导出模块
-export { ClientNoticeModule } from './notice.module';
+export { ClientNoticeModule } from './notice.module'
 
 // 导出服务
-export { ClientNoticeService } from './notice.service';
+export { ClientNoticeService } from './notice.service'

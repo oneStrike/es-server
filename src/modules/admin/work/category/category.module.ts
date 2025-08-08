@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { WorkCategoryController } from './category.controller';
-import { WorkCategoryService } from './category.service';
+import { Module } from '@nestjs/common'
+import { WorkCategoryController } from './category.controller'
+import { WorkCategoryService } from './category.service'
 
 /**
  * 分类管理模块

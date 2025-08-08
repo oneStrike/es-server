@@ -1,10 +1,10 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger';
-import type { ValidateEnumOptions } from './types';
-import { applyDecorators } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsEnum, IsOptional } from 'class-validator';
-import { isNumberEnum } from './utils';
+import type { ApiPropertyOptions } from '@nestjs/swagger'
+import type { ValidateEnumOptions } from './types'
+import { applyDecorators } from '@nestjs/common'
+import { ApiProperty } from '@nestjs/swagger'
+import { Transform } from 'class-transformer'
+import { IsEnum, IsOptional } from 'class-validator'
+import { isNumberEnum } from './utils'
 
 /**
  * 枚举验证装饰器
@@ -51,11 +51,11 @@ import { isNumberEnum } from './utils';
 export function ValidateEnum(options: ValidateEnumOptions) {
   // 参数验证
   if (!options.description) {
-    throw new Error('ValidateEnum: description is required');
+    throw new Error('ValidateEnum: description is required')
   }
 
   if (!options.enum) {
-    throw new Error('ValidateEnum: enum is required');
+    throw new Error('ValidateEnum: enum is required')
   }
 
   // 构建API属性配置
@@ -66,7 +66,7 @@ export function ValidateEnum(options: ValidateEnumOptions) {
     default: options.default,
     nullable: !(options.required ?? true),
     enum: options.enum,
-  };
+  }
 
   // 基础装饰器
   const decorators = [
@@ -74,11 +74,11 @@ export function ValidateEnum(options: ValidateEnumOptions) {
     IsEnum(options.enum, {
       message: `必须是有效的枚举值: ${Object.values(options.enum).join(', ')}`,
     }),
-  ];
+  ]
 
   // 可选字段处理
   if (!(options.required ?? true)) {
-    decorators.push(IsOptional());
+    decorators.push(IsOptional())
   }
 
   // 转换逻辑
@@ -86,45 +86,45 @@ export function ValidateEnum(options: ValidateEnumOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null) &&
-        options.default !== undefined
+        (value === undefined || value === null)
+        && options.default !== undefined
       ) {
-        return options.default;
+        return options.default
       }
 
       // 处理空值和可选字段
       if (value === undefined || value === null) {
-        return value;
+        return value
       }
 
       // 对于数字枚举，尝试字符串转数字
       if (isNumberEnum(options.enum) && typeof value === 'string') {
-        const trimmedValue = value.trim();
+        const trimmedValue = value.trim()
         if (trimmedValue === '') {
-          return undefined;
+          return undefined
         }
-        const numValue = Number(trimmedValue);
+        const numValue = Number(trimmedValue)
         if (
-          !Number.isNaN(numValue) &&
-          Object.values(options.enum).includes(numValue)
+          !Number.isNaN(numValue)
+          && Object.values(options.enum).includes(numValue)
         ) {
-          return numValue;
+          return numValue
         }
       }
 
       // 字符串trim处理
       if (typeof value === 'string') {
-        return value.trim();
+        return value.trim()
       }
 
-      return value;
-    })
-  );
+      return value
+    }),
+  )
 
   // 自定义转换函数
   if (options.transform) {
-    decorators.push(Transform(options.transform));
+    decorators.push(Transform(options.transform))
   }
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }

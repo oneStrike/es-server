@@ -1,12 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { BaseRepositoryService } from '@/global/services/base-repository.service';
-import { PrismaService } from '@/global/services/prisma.service';
-import { ClientNoticeWhereInput } from '@/prisma/client/models/ClientNotice';
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { PrismaService } from '@/global/services/prisma.service'
+import { ClientNoticeWhereInput } from '@/prisma/client/models/ClientNotice'
 import {
   CreateNoticeDto,
   QueryNoticeDto,
   UpdateNoticeDto,
-} from './dto/notice.dto';
+} from './dto/notice.dto'
 
 /**
  * 通知服务类
@@ -14,11 +14,11 @@ import {
  */
 @Injectable()
 export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
-  protected readonly modelName = 'ClientNotice' as const;
-  protected readonly supportsSoftDelete = true;
+  protected readonly modelName = 'ClientNotice' as const
+  protected readonly supportsSoftDelete = true
 
   constructor(protected readonly prisma: PrismaService) {
-    super(prisma);
+    super(prisma)
   }
 
   /**
@@ -30,11 +30,11 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
     // 验证时间范围
     if (createNoticeDto.publishStartTime && createNoticeDto.publishEndTime) {
       if (createNoticeDto.publishStartTime >= createNoticeDto.publishEndTime) {
-        throw new BadRequestException('发布开始时间不能大于或等于结束时间');
+        throw new BadRequestException('发布开始时间不能大于或等于结束时间')
       }
     }
 
-    return this.create({ data: createNoticeDto });
+    return this.create({ data: createNoticeDto })
   }
 
   /**
@@ -50,18 +50,28 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       isPinned,
       isPublished,
       showAsPopup,
-    } = queryNoticeDto;
+    } = queryNoticeDto
 
-    const where: ClientNoticeWhereInput = {};
+    const where: ClientNoticeWhereInput = {}
 
     if (title) {
-      where.title = { contains: title, mode: 'insensitive' };
+      where.title = { contains: title, mode: 'insensitive' }
     }
-    if (noticeType !== undefined) where.noticeType = noticeType;
-    if (priorityLevel !== undefined) where.priorityLevel = priorityLevel;
-    if (isPublished !== undefined) where.isPublished = isPublished;
-    if (isPinned !== undefined) where.isPinned = isPinned;
-    if (showAsPopup !== undefined) where.showAsPopup = showAsPopup;
+    if (noticeType !== undefined) {
+      where.noticeType = noticeType
+    }
+    if (priorityLevel !== undefined) {
+      where.priorityLevel = priorityLevel
+    }
+    if (isPublished !== undefined) {
+      where.isPublished = isPublished
+    }
+    if (isPinned !== undefined) {
+      where.isPinned = isPinned
+    }
+    if (showAsPopup !== undefined) {
+      where.showAsPopup = showAsPopup
+    }
 
     return this.findPagination({
       where,
@@ -69,7 +79,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
         content: true,
         popupBackgroundImage: true,
       },
-    });
+    })
   }
 
   /**
@@ -78,14 +88,14 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
    * @returns 有效的通知列表
    */
   async findActiveNotices(platform: 'applet' | 'web' | 'app' = 'web') {
-    const now = new Date();
+    const now = new Date()
 
     // 构建平台筛选条件
     const platformCondition = {
       applet: { enableApplet: true },
       web: { enableWeb: true },
       app: { enableApp: true },
-    }[platform];
+    }[platform]
 
     return this.findMany({
       where: {
@@ -119,7 +129,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
         content: true,
         popupBackgroundImage: true,
       },
-    });
+    })
   }
 
   /**
@@ -128,19 +138,19 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
    * @returns 更新后的通知信息
    */
   async updateNotice(updateNoticeDto: UpdateNoticeDto) {
-    const { id, ...updateData } = updateNoticeDto;
+    const { id, ...updateData } = updateNoticeDto
 
     // 验证时间范围
     if (updateData.publishStartTime && updateData.publishEndTime) {
       if (updateData.publishStartTime >= updateData.publishEndTime) {
-        throw new BadRequestException('发布开始时间不能大于或等于结束时间');
+        throw new BadRequestException('发布开始时间不能大于或等于结束时间')
       }
     }
 
     return this.update({
       where: { id },
       data: updateData,
-    });
+    })
   }
 
   /**
@@ -155,10 +165,10 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
         id,
         isPublished: true,
       },
-    });
+    })
 
     if (!notice) {
-      throw new BadRequestException('通知不存在或未发布');
+      throw new BadRequestException('通知不存在或未发布')
     }
 
     // 原子性更新阅读次数
@@ -173,6 +183,6 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
         id: true,
         readCount: true,
       },
-    });
+    })
   }
 }

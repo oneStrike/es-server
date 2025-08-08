@@ -1,16 +1,16 @@
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { FastifyRequest } from 'fastify';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { Public } from '@/common/decorators/public.decorator';
-import { IdDto } from '@/common/dto/id.dto';
-import { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { FastifyRequest } from 'fastify'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { CurrentUser } from '@/common/decorators/current-user.decorator'
+import { Public } from '@/common/decorators/public.decorator'
+import { IdDto } from '@/common/dto/id.dto'
+import { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service'
 import {
   RefreshTokenDto,
   RefreshTokenResponseDto,
   TokenDto,
-} from '@/modules/admin/users/dto/token.dto';
+} from '@/modules/admin/users/dto/token.dto'
 import {
   LoginResponseDto,
   UpdatePasswordDto,
@@ -19,9 +19,9 @@ import {
   UserLoginDto,
   UserPageDto,
   UserRegisterDto,
-} from '@/modules/admin/users/dto/user.dto';
-import { AdminUserService } from '@/modules/admin/users/user.service';
-import { CaptchaDto } from './dto/captcha.dto';
+} from '@/modules/admin/users/dto/user.dto'
+import { AdminUserService } from '@/modules/admin/users/user.service'
+import { CaptchaDto } from './dto/captcha.dto'
 
 /**
  * 管理端用户控制器
@@ -42,7 +42,7 @@ export class AdminUserController {
   })
   @Public()
   async getCaptcha() {
-    return this.userService.getCaptcha();
+    return this.userService.getCaptcha()
   }
 
   /**
@@ -55,7 +55,7 @@ export class AdminUserController {
   })
   @Public()
   async login(@Body() body: UserLoginDto, @Req() req: FastifyRequest) {
-    return this.userService.login(body, req);
+    return this.userService.login(body, req)
   }
 
   /**
@@ -69,7 +69,7 @@ export class AdminUserController {
     },
   })
   async logout(@Body() body: TokenDto) {
-    return this.userService.logout(body);
+    return this.userService.logout(body)
   }
 
   /**
@@ -82,7 +82,7 @@ export class AdminUserController {
   })
   @Public()
   async register(@Body() body: UserRegisterDto) {
-    return this.userService.register(body);
+    return this.userService.register(body)
   }
 
   /**
@@ -98,7 +98,7 @@ export class AdminUserController {
   })
   @Public()
   async refreshToken(@Body() body: RefreshTokenDto) {
-    return this.userService.refreshToken(body.refreshToken);
+    return this.userService.refreshToken(body.refreshToken)
   }
 
   /**
@@ -112,13 +112,9 @@ export class AdminUserController {
   async updatePassword(
     @Body() body: UpdatePasswordDto,
     @CurrentUser() user: AdminJwtPayload,
-    @Req() req: FastifyRequest
+    @Req() req: FastifyRequest,
   ) {
-    return this.userService.updatePassword(
-      Number.parseInt(user.sub),
-      body,
-      req
-    );
+    return this.userService.updatePassword(Number.parseInt(user.sub), body, req)
   }
 
   /**
@@ -135,9 +131,9 @@ export class AdminUserController {
   })
   async updateUserInfo(
     @Body() body: UpdateUserDto,
-    @CurrentUser() user: AdminJwtPayload
+    @CurrentUser() user: AdminJwtPayload,
   ) {
-    return this.userService.updateUserInfo(Number.parseInt(user.sub), body);
+    return this.userService.updateUserInfo(Number.parseInt(user.sub), body)
   }
 
   /**
@@ -152,7 +148,7 @@ export class AdminUserController {
     model: UserDto,
   })
   async getUserInfo(@CurrentUser() user: AdminJwtPayload) {
-    return this.userService.getUserInfo(Number.parseInt(user.sub));
+    return this.userService.getUserInfo(Number.parseInt(user.sub))
   }
 
   /**
@@ -167,7 +163,7 @@ export class AdminUserController {
     model: UserDto,
   })
   async getUserById(@Query() query: IdDto) {
-    return this.userService.getUserInfo(query.id);
+    return this.userService.getUserInfo(query.id)
   }
 
   /**
@@ -179,7 +175,7 @@ export class AdminUserController {
     model: UserDto,
   })
   async getUsers(@Query() query: UserPageDto) {
-    return this.userService.getUsers(query);
+    return this.userService.getUsers(query)
   }
 
   @Post('user-delete')
@@ -188,6 +184,6 @@ export class AdminUserController {
     model: IdDto,
   })
   async deleteUser(@Body() query: IdDto) {
-    return this.userService.delete({ where: { id: query.id } });
+    return this.userService.delete({ where: { id: query.id } })
   }
 }

@@ -2,21 +2,21 @@ import {
   Injectable,
   LoggerService as NestLoggerService,
   Scope,
-} from '@nestjs/common';
-import { Logger } from 'winston';
-import { LogModule } from '@/config/logger.config';
+} from '@nestjs/common'
+import { Logger } from 'winston'
+import { LogModule } from '@/config/logger.config'
 
 /**
  * 日志上下文接口
  */
 export interface LogContext {
-  requestId?: string;
-  userId?: string;
-  module?: string;
-  action?: string;
-  ip?: string;
-  userAgent?: string;
-  [key: string]: any;
+  requestId?: string
+  userId?: string
+  module?: string
+  action?: string
+  ip?: string
+  userAgent?: string
+  [key: string]: any
 }
 
 /**
@@ -25,33 +25,33 @@ export interface LogContext {
  */
 @Injectable({ scope: Scope.TRANSIENT })
 export class CustomLoggerService implements NestLoggerService {
-  private context?: string;
-  logContext: LogContext = {};
+  private context?: string
+  logContext: LogContext = {}
 
   constructor(
     private readonly logger: Logger,
-    private readonly module: LogModule
+    private readonly module: LogModule,
   ) {}
 
   /**
    * 设置日志上下文
    */
   setContext(context: string): void {
-    this.context = context;
+    this.context = context
   }
 
   /**
    * 设置请求上下文信息
    */
   setLogContext(context: LogContext): void {
-    this.logContext = { ...this.logContext, ...context };
+    this.logContext = { ...this.logContext, ...context }
   }
 
   /**
    * 清除上下文信息
    */
   clearContext(): void {
-    this.logContext = {};
+    this.logContext = {}
   }
 
   /**
@@ -63,35 +63,35 @@ export class CustomLoggerService implements NestLoggerService {
       module: this.module,
       ...this.logContext,
       ...meta,
-    };
+    }
   }
 
   /**
    * Debug级别日志
    */
   debug(message: string, meta?: any): void {
-    this.logger.debug(message, this.getMetadata(meta));
+    this.logger.debug(message, this.getMetadata(meta))
   }
 
   /**
    * Info级别日志
    */
   log(message: string, meta?: any): void {
-    this.logger.info(message, this.getMetadata(meta));
+    this.logger.info(message, this.getMetadata(meta))
   }
 
   /**
    * Info级别日志（别名）
    */
   info(message: string, meta?: any): void {
-    this.log(message, meta);
+    this.log(message, meta)
   }
 
   /**
    * Warn级别日志
    */
   warn(message: string, meta?: any): void {
-    this.logger.warn(message, this.getMetadata(meta));
+    this.logger.warn(message, this.getMetadata(meta))
   }
 
   /**
@@ -101,7 +101,7 @@ export class CustomLoggerService implements NestLoggerService {
     this.logger.error(message, {
       ...this.getMetadata(meta),
       trace,
-    });
+    })
   }
 
   /**
@@ -112,14 +112,14 @@ export class CustomLoggerService implements NestLoggerService {
     url: string,
     statusCode: number,
     responseTime: number,
-    meta?: any
+    meta?: any,
   ): void {
-    const message = `${method} ${url} ${statusCode} - ${responseTime}ms`;
+    const message = `${method} ${url} ${statusCode} - ${responseTime}ms`
 
     if (statusCode >= 400) {
-      this.error(message, undefined, { type: 'HTTP_REQUEST', ...meta });
+      this.error(message, undefined, { type: 'HTTP_REQUEST', ...meta })
     } else {
-      this.info(message, { type: 'HTTP_REQUEST', ...meta });
+      this.info(message, { type: 'HTTP_REQUEST', ...meta })
     }
   }
 
@@ -130,28 +130,28 @@ export class CustomLoggerService implements NestLoggerService {
     operation: string,
     table: string,
     duration: number,
-    meta?: any
+    meta?: any,
   ): void {
-    const message = `DB ${operation} on ${table} - ${duration}ms`;
+    const message = `DB ${operation} on ${table} - ${duration}ms`
     this.debug(message, {
       type: 'DATABASE',
       operation,
       table,
       duration,
       ...meta,
-    });
+    })
   }
 
   /**
    * 记录业务操作
    */
   logBusiness(action: string, result: 'success' | 'failure', meta?: any): void {
-    const message = `Business action: ${action} - ${result}`;
+    const message = `Business action: ${action} - ${result}`
 
     if (result === 'failure') {
-      this.warn(message, { type: 'BUSINESS', action, result, ...meta });
+      this.warn(message, { type: 'BUSINESS', action, result, ...meta })
     } else {
-      this.info(message, { type: 'BUSINESS', action, result, ...meta });
+      this.info(message, { type: 'BUSINESS', action, result, ...meta })
     }
   }
 
@@ -161,21 +161,21 @@ export class CustomLoggerService implements NestLoggerService {
   logSecurity(
     event: string,
     level: 'info' | 'warn' | 'error',
-    meta?: any
+    meta?: any,
   ): void {
-    const message = `Security event: ${event}`;
-    const logMeta = { type: 'SECURITY', event, ...meta };
+    const message = `Security event: ${event}`
+    const logMeta = { type: 'SECURITY', event, ...meta }
 
     switch (level) {
       case 'info':
-        this.info(message, logMeta);
-        break;
+        this.info(message, logMeta)
+        break
       case 'warn':
-        this.warn(message, logMeta);
-        break;
+        this.warn(message, logMeta)
+        break
       case 'error':
-        this.error(message, undefined, logMeta);
-        break;
+        this.error(message, undefined, logMeta)
+        break
     }
   }
 
@@ -183,7 +183,7 @@ export class CustomLoggerService implements NestLoggerService {
    * 记录性能指标
    */
   logPerformance(operation: string, duration: number, meta?: any): void {
-    const message = `Performance: ${operation} - ${duration}ms`;
+    const message = `Performance: ${operation} - ${duration}ms`
 
     // 超过1秒的操作记录为警告
     if (duration > 1000) {
@@ -193,14 +193,14 @@ export class CustomLoggerService implements NestLoggerService {
         duration,
         slow: true,
         ...meta,
-      });
+      })
     } else {
       this.debug(message, {
         type: 'PERFORMANCE',
         operation,
         duration,
         ...meta,
-      });
+      })
     }
   }
 
@@ -208,9 +208,9 @@ export class CustomLoggerService implements NestLoggerService {
    * 创建子日志器（带特定上下文）
    */
   child(context: string, additionalContext?: LogContext): CustomLoggerService {
-    const childLogger = new CustomLoggerService(this.logger, this.module);
-    childLogger.setContext(context);
-    childLogger.setLogContext({ ...this.logContext, ...additionalContext });
-    return childLogger;
+    const childLogger = new CustomLoggerService(this.logger, this.module)
+    childLogger.setContext(context)
+    childLogger.setLogContext({ ...this.logContext, ...additionalContext })
+    return childLogger
   }
 }

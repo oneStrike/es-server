@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { BaseRepositoryService } from '@/global/services/base-repository.service';
+import { Injectable, Logger } from '@nestjs/common'
+import { BaseRepositoryService } from '@/global/services/base-repository.service'
 import {
   CreateRequestLogDto,
   QueryRequestLogDto,
   RequestLogDto,
-} from './dto/request-log.dto';
+} from './dto/request-log.dto'
 
 /**
  * 请求日志服务类
@@ -12,8 +12,8 @@ import {
  */
 @Injectable()
 export class RequestLogService extends BaseRepositoryService<'SystemRequestLog'> {
-  protected readonly modelName = 'SystemRequestLog';
-  readonly logger = new Logger(RequestLogService.name);
+  protected readonly modelName = 'SystemRequestLog'
+  readonly logger = new Logger(RequestLogService.name)
 
   /**
    * 创建请求日志记录
@@ -21,7 +21,7 @@ export class RequestLogService extends BaseRepositoryService<'SystemRequestLog'>
    * @returns 创建的请求日志记录
    */
   async createRequestLog(logData: CreateRequestLogDto) {
-    return this.create({ data: logData, select: { id: true } });
+    return this.create({ data: logData, select: { id: true } })
   }
 
   /**
@@ -30,21 +30,28 @@ export class RequestLogService extends BaseRepositoryService<'SystemRequestLog'>
    * @returns 分页数据
    */
   async findRequestLogs(queryDto: QueryRequestLogDto) {
-    const { username, userId, responseCode, httpMethod, requestPath } =
-      queryDto;
+    const { username, userId, responseCode, httpMethod, requestPath } = queryDto
 
-    const where: any = {};
+    const where: any = {}
 
     if (username) {
-      where.username = { contains: username };
+      where.username = { contains: username }
     }
-    if (userId !== undefined) where.userId = userId;
-    if (responseCode !== undefined) where.responseCode = responseCode;
-    if (httpMethod) where.httpMethod = httpMethod;
-    if (requestPath) where.requestPath = requestPath;
+    if (userId !== undefined) {
+      where.userId = userId
+    }
+    if (responseCode !== undefined) {
+      where.responseCode = responseCode
+    }
+    if (httpMethod) {
+      where.httpMethod = httpMethod
+    }
+    if (requestPath) {
+      where.requestPath = requestPath
+    }
     return this.findPagination({
       where,
-    });
+    })
   }
 
   /**
@@ -54,22 +61,22 @@ export class RequestLogService extends BaseRepositoryService<'SystemRequestLog'>
    */
   async findRequestLogById(id: number): Promise<RequestLogDto | null> {
     try {
-      this.logger.log(`查询请求日志详情，ID: ${id}`);
+      this.logger.log(`查询请求日志详情，ID: ${id}`)
 
       const requestLog = await this.prisma.systemRequestLog.findUnique({
         where: { id },
-      });
+      })
 
       if (!requestLog) {
-        this.logger.warn(`请求日志不存在，ID: ${id}`);
-        return null;
+        this.logger.warn(`请求日志不存在，ID: ${id}`)
+        return null
       }
 
-      this.logger.log(`请求日志查询成功，ID: ${id}`);
-      return requestLog as RequestLogDto;
+      this.logger.log(`请求日志查询成功，ID: ${id}`)
+      return requestLog as RequestLogDto
     } catch (error) {
-      this.logger.error(`查询请求日志详情失败: ${error.message}`, error.stack);
-      throw error;
+      this.logger.error(`查询请求日志详情失败: ${error.message}`, error.stack)
+      throw error
     }
   }
 }

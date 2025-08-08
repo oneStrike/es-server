@@ -3,7 +3,7 @@ import {
   OmitType,
   PartialType,
   PickType,
-} from '@nestjs/swagger';
+} from '@nestjs/swagger'
 import {
   ValidateArray,
   ValidateBoolean,
@@ -11,10 +11,10 @@ import {
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { IdDto } from '@/common/dto/id.dto';
-import { PageDto } from '@/common/dto/page.dto';
-import { ChapterReadRuleEnum } from '../comic-chapter.constant';
+} from '@/common/decorators/validate.decorator'
+import { IdDto } from '@/common/dto/id.dto'
+import { PageDto } from '@/common/dto/page.dto'
+import { ChapterReadRuleEnum } from '../comic-chapter.constant'
 
 /**
  * 漫画章节基础DTO
@@ -26,7 +26,7 @@ export class BaseComicChapterDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ValidateString({
     description: '章节标题',
@@ -34,7 +34,7 @@ export class BaseComicChapterDto {
     required: true,
     maxLength: 100,
   })
-  title!: string;
+  title!: string
 
   @ValidateString({
     description: '章节副标题或描述',
@@ -42,7 +42,7 @@ export class BaseComicChapterDto {
     required: false,
     maxLength: 200,
   })
-  subtitle?: string;
+  subtitle?: string
 
   @ValidateBoolean({
     description: '发布状态（true: 已发布, false: 未发布）',
@@ -50,7 +50,7 @@ export class BaseComicChapterDto {
     required: true,
     default: false,
   })
-  isPublished!: boolean;
+  isPublished!: boolean
 
   @ValidateNumber({
     description: '关联的漫画ID',
@@ -58,7 +58,7 @@ export class BaseComicChapterDto {
     required: true,
     min: 1,
   })
-  comicId!: number;
+  comicId!: number
 
   @ValidateNumber({
     description: '关联的漫画版本ID',
@@ -66,7 +66,7 @@ export class BaseComicChapterDto {
     required: false,
     min: 1,
   })
-  versionId?: number;
+  versionId?: number
 
   @ValidateNumber({
     description: '章节序号（用于排序）',
@@ -74,7 +74,7 @@ export class BaseComicChapterDto {
     required: true,
     min: 0,
   })
-  chapterNumber!: number;
+  chapterNumber!: number
 
   @ValidateEnum({
     description: '查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买）',
@@ -83,7 +83,7 @@ export class BaseComicChapterDto {
     enum: ChapterReadRuleEnum,
     default: ChapterReadRuleEnum.PUBLIC,
   })
-  readRule!: ChapterReadRuleEnum;
+  readRule!: ChapterReadRuleEnum
 
   @ValidateNumber({
     description: '购买需要消耗的积分',
@@ -92,7 +92,7 @@ export class BaseComicChapterDto {
     min: 0,
     default: 0,
   })
-  purchaseAmount?: number;
+  purchaseAmount?: number
 
   @ValidateString({
     description: '漫画内容（JSON格式存储图片URL数组）',
@@ -101,7 +101,7 @@ export class BaseComicChapterDto {
     required: true,
     default: '[]',
   })
-  contents!: string;
+  contents!: string
 
   @ValidateBoolean({
     description: '是否为试读章节',
@@ -109,14 +109,14 @@ export class BaseComicChapterDto {
     required: true,
     default: false,
   })
-  isPreview!: boolean;
+  isPreview!: boolean
 
   @ValidateDate({
     description: '发布时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
-  publishAt?: Date;
+  publishAt?: Date
 
   @ValidateString({
     description: '章节缩略图',
@@ -124,7 +124,7 @@ export class BaseComicChapterDto {
     required: false,
     maxLength: 255,
   })
-  thumbnail?: string;
+  thumbnail?: string
 
   @ValidateNumber({
     description: '阅读次数',
@@ -133,7 +133,7 @@ export class BaseComicChapterDto {
     min: 0,
     default: 0,
   })
-  viewCount!: number;
+  viewCount!: number
 
   @ValidateNumber({
     description: '点赞数',
@@ -142,7 +142,7 @@ export class BaseComicChapterDto {
     min: 0,
     default: 0,
   })
-  likeCount!: number;
+  likeCount!: number
 
   @ValidateNumber({
     description: '评论数',
@@ -151,7 +151,7 @@ export class BaseComicChapterDto {
     min: 0,
     default: 0,
   })
-  commentCount!: number;
+  commentCount!: number
 
   @ValidateString({
     description: '管理员备注',
@@ -159,21 +159,21 @@ export class BaseComicChapterDto {
     required: false,
     maxLength: 1000,
   })
-  remark?: string;
+  remark?: string
 
   @ValidateDate({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  createdAt!: Date;
+  createdAt!: Date
 
   @ValidateDate({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  updatedAt!: Date;
+  updatedAt!: Date
 }
 
 /**
@@ -199,7 +199,7 @@ export class AddChapterContentDto extends IdDto {
     example: 'https://example.com/new-page.jpg',
     required: true,
   })
-  content!: string;
+  content!: string
 
   @ValidateNumber({
     description: '插入位置索引（可选，默认添加到末尾）',
@@ -207,7 +207,7 @@ export class AddChapterContentDto extends IdDto {
     required: false,
     min: 0,
   })
-  index?: number;
+  index?: number
 }
 
 /**
@@ -222,7 +222,7 @@ export class UpdateChapterContentDto extends OmitType(AddChapterContentDto, [
     required: true,
     min: 0,
   })
-  index!: number;
+  index!: number
 }
 
 /**
@@ -242,7 +242,7 @@ export class MoveChapterContentDto extends IdDto {
     required: true,
     min: 0,
   })
-  fromIndex!: number;
+  fromIndex!: number
 
   @ValidateNumber({
     description: '目标索引位置',
@@ -250,7 +250,7 @@ export class MoveChapterContentDto extends IdDto {
     required: true,
     min: 0,
   })
-  toIndex!: number;
+  toIndex!: number
 }
 
 /**
@@ -263,7 +263,7 @@ export class BatchUpdateChapterContentsDto extends IdDto {
     required: true,
     itemType: 'string',
   })
-  contents!: string;
+  contents!: string
 }
 
 /**
@@ -278,9 +278,9 @@ export class UpdateComicChapterDto extends IntersectionType(
       'viewCount',
       'likeCount',
       'commentCount',
-    ])
+    ]),
   ),
-  IdDto
+  IdDto,
 ) {}
 
 /**
@@ -294,14 +294,14 @@ export class QueryComicChapterDto extends IntersectionType(
     'versionId',
     'readRule',
     'isPreview',
-  ])
+  ]),
 ) {
   @ValidateString({
     description: '章节标题（模糊搜索）',
     example: '第一话',
     required: false,
   })
-  title?: string;
+  title?: string
 
   @ValidateNumber({
     description: '漫画ID（精确匹配）',
@@ -309,7 +309,7 @@ export class QueryComicChapterDto extends IntersectionType(
     required: true,
     min: 1,
   })
-  comicId: number;
+  comicId: number
 }
 
 /**
@@ -322,14 +322,14 @@ export class UpdateChapterPublishStatusDto {
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 
   @ValidateBoolean({
     description: '发布状态（true: 发布, false: 取消发布）',
     example: true,
     required: true,
   })
-  isPublished!: boolean;
+  isPublished!: boolean
 }
 
 /**
@@ -342,7 +342,7 @@ export class UpdateChapterReadRuleDto {
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 
   @ValidateEnum({
     description: '查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买）',
@@ -350,7 +350,7 @@ export class UpdateChapterReadRuleDto {
     required: true,
     enum: ChapterReadRuleEnum,
   })
-  readRule!: ChapterReadRuleEnum;
+  readRule!: ChapterReadRuleEnum
 }
 
 /**

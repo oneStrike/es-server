@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { BaseRepositoryService } from '@/global/services/base-repository.service';
-import { CreateDictionaryItemDto } from './dto/dictionary-item.dto';
+import { Injectable } from '@nestjs/common'
+import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { CreateDictionaryItemDto } from './dto/dictionary-item.dto'
 import {
   QueryDictionaryDto,
   QueryDictionaryItemDto,
-} from './dto/query-dictionary.dto';
+} from './dto/query-dictionary.dto'
 
 /**
  * 数据字典服务类
@@ -12,7 +12,7 @@ import {
  */
 @Injectable()
 export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
-  protected readonly modelName = 'Dictionary' as const;
+  protected readonly modelName = 'Dictionary' as const
 
   /**
    * 分页查询字典列表
@@ -20,24 +20,24 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
    * @returns 分页数据
    */
   async findDictionaries(queryDto: QueryDictionaryDto) {
-    const { code, name, isEnabled } = queryDto;
+    const { code, name, isEnabled } = queryDto
 
-    const where: any = {};
+    const where: any = {}
 
     if (code) {
-      where.code = { contains: code };
+      where.code = { contains: code }
     }
     if (name) {
-      where.name = { contains: name };
+      where.name = { contains: name }
     }
     if (isEnabled !== undefined) {
-      where.isEnabled = { equals: isEnabled };
+      where.isEnabled = { equals: isEnabled }
     }
 
     return this.findPagination({
       where,
       ...queryDto,
-    });
+    })
   }
 
   /**
@@ -46,28 +46,28 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
    * @returns 分页数据
    */
   async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
-    const { dictionaryCode, name, code, isEnabled } = queryDto;
+    const { dictionaryCode, name, code, isEnabled } = queryDto
 
     const where: any = {
       dictionaryCode: {
         in: dictionaryCode.split(','),
       },
-    };
+    }
 
     if (code) {
-      where.code = { contains: code };
+      where.code = { contains: code }
     }
     if (name) {
-      where.name = { contains: name };
+      where.name = { contains: name }
     }
     if (isEnabled !== undefined) {
-      where.isEnabled = { equals: isEnabled };
+      where.isEnabled = { equals: isEnabled }
     }
 
     return this.prisma.dictionaryItem.findMany({
       where,
       orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
-    });
+    })
   }
 
   /**
@@ -81,7 +81,7 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
         ...createDictionaryItemDto,
         isEnabled: createDictionaryItemDto.isEnabled ?? true,
       },
-    });
+    })
   }
 
   /**
@@ -90,11 +90,11 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
    * @returns 更新后的字典项信息
    */
   async updateDictionaryItem(updateDictionaryItemDto: Record<string, any>) {
-    const { ids, isEnabled } = updateDictionaryItemDto;
+    const { ids, isEnabled } = updateDictionaryItemDto
     return this.prisma.dictionaryItem.updateMany({
       where: { id: { in: ids } },
       data: { isEnabled },
-    });
+    })
   }
 
   /**
@@ -108,6 +108,6 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
           in: ids,
         },
       },
-    });
+    })
   }
 }

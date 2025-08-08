@@ -1,4 +1,4 @@
-import * as process from 'node:process';
+import * as process from 'node:process'
 
 /**
  * 请求日志配置
@@ -6,21 +6,21 @@ import * as process from 'node:process';
  */
 export interface RequestLogConfig {
   /** 是否启用请求日志记录 */
-  enabled: boolean;
+  enabled: boolean
   /** 日志保留天数 */
-  retentionDays: number;
+  retentionDays: number
   /** 是否记录请求参数 */
-  logRequestParams: boolean;
+  logRequestParams: boolean
   /** 是否记录响应数据 */
-  logResponseData: boolean;
+  logResponseData: boolean
   /** 敏感字段列表（将被脱敏处理） */
-  sensitiveFields: string[];
+  sensitiveFields: string[]
   /** 跳过日志记录的路径模式 */
-  skipPaths: string[];
+  skipPaths: string[]
   /** 跳过日志记录的HTTP方法 */
-  skipMethods: string[];
+  skipMethods: string[]
   /** 最大请求参数长度（超过将被截断） */
-  maxParamsLength: number;
+  maxParamsLength: number
 }
 
 /**
@@ -46,7 +46,7 @@ export const DEFAULT_REQUEST_LOG_CONFIG: RequestLogConfig = {
   skipPaths: ['/health', '/metrics', '/favicon.ico', '/robots.txt'],
   skipMethods: ['OPTIONS'],
   maxParamsLength: 10000,
-};
+}
 
 /**
  * 管理端请求日志配置
@@ -61,7 +61,7 @@ export const ADMIN_REQUEST_LOG_CONFIG: RequestLogConfig = {
     '/admin/auth/captcha', // 跳过验证码接口
     '/admin/upload/temp', // 跳过临时文件上传
   ],
-};
+}
 
 /**
  * 客户端请求日志配置
@@ -82,7 +82,7 @@ export const CLIENT_REQUEST_LOG_CONFIG: RequestLogConfig = {
     'email', // 客户端额外保护邮箱
     'idCard', // 客户端额外保护身份证
   ],
-};
+}
 
 /**
  * 请求日志配置服务
@@ -97,9 +97,9 @@ export class RequestLogConfigService {
       // 可以从环境变量或配置文件中覆盖配置
       enabled: process.env.ADMIN_REQUEST_LOG_ENABLED !== 'false',
       retentionDays: Number.parseInt(
-        process.env.ADMIN_REQUEST_LOG_RETENTION_DAYS || '90'
+        process.env.ADMIN_REQUEST_LOG_RETENTION_DAYS || '90',
       ),
-    };
+    }
   }
 
   /**
@@ -111,9 +111,9 @@ export class RequestLogConfigService {
       // 可以从环境变量或配置文件中覆盖配置
       enabled: process.env.CLIENT_REQUEST_LOG_ENABLED !== 'false',
       retentionDays: Number.parseInt(
-        process.env.CLIENT_REQUEST_LOG_RETENTION_DAYS || '30'
+        process.env.CLIENT_REQUEST_LOG_RETENTION_DAYS || '30',
       ),
-    };
+    }
   }
 
   /**
@@ -123,14 +123,14 @@ export class RequestLogConfigService {
    * @returns 是否跳过
    */
   static shouldSkipPath(path: string, config: RequestLogConfig): boolean {
-    return config.skipPaths.some(skipPath => {
+    return config.skipPaths.some((skipPath) => {
       // 支持通配符匹配
       if (skipPath.includes('*')) {
-        const regex = new RegExp(skipPath.replace(/\*/g, '.*'));
-        return regex.test(path);
+        const regex = new RegExp(skipPath.replace(/\*/g, '.*'))
+        return regex.test(path)
       }
-      return path.startsWith(skipPath);
-    });
+      return path.startsWith(skipPath)
+    })
   }
 
   /**
@@ -140,7 +140,7 @@ export class RequestLogConfigService {
    * @returns 是否跳过
    */
   static shouldSkipMethod(method: string, config: RequestLogConfig): boolean {
-    return config.skipMethods.includes(method.toUpperCase());
+    return config.skipMethods.includes(method.toUpperCase())
   }
 
   /**
@@ -151,25 +151,25 @@ export class RequestLogConfigService {
    */
   static sanitizeData(data: any, config: RequestLogConfig): any {
     if (!data || typeof data !== 'object') {
-      return data;
+      return data
     }
 
-    const sanitized = Array.isArray(data) ? [...data] : { ...data };
+    const sanitized = Array.isArray(data) ? [...data] : { ...data }
 
     for (const field of config.sensitiveFields) {
       if (field in sanitized) {
-        sanitized[field] = '***';
+        sanitized[field] = '***'
       }
     }
 
     // 递归处理嵌套对象
     for (const key in sanitized) {
       if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
-        sanitized[key] = this.sanitizeData(sanitized[key], config);
+        sanitized[key] = this.sanitizeData(sanitized[key], config)
       }
     }
 
-    return sanitized;
+    return sanitized
   }
 
   /**
@@ -180,9 +180,9 @@ export class RequestLogConfigService {
    */
   static truncateParams(params: string, config: RequestLogConfig): string {
     if (!params || params.length <= config.maxParamsLength) {
-      return params;
+      return params
     }
 
-    return `${params.substring(0, config.maxParamsLength)}... (truncated)`;
+    return `${params.substring(0, config.maxParamsLength)}... (truncated)`
   }
 }

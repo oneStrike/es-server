@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { CountDto } from '@/common/dto/batch.dto';
-import { IdDto } from '@/common/dto/id.dto';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { CountDto } from '@/common/dto/batch.dto'
+import { IdDto } from '@/common/dto/id.dto'
 
-import { WorkComicService } from './comic.service';
+import { WorkComicService } from './comic.service'
 import {
   BaseComicDto,
   CreateComicDto,
@@ -14,7 +14,7 @@ import {
   UpdateComicNewDto,
   UpdateComicRecommendedDto,
   UpdateComicStatusDto,
-} from './dto/comic.dto';
+} from './dto/comic.dto'
 
 /**
  * 漫画管理控制器
@@ -34,7 +34,7 @@ export class WorkComicController {
     model: IdDto,
   })
   async create(@Body() body: CreateComicDto) {
-    return this.comicService.createComic(body);
+    return this.comicService.createComic(body)
   }
 
   /**
@@ -46,7 +46,7 @@ export class WorkComicController {
     model: BaseComicDto,
   })
   async getPage(@Query() query: QueryComicDto) {
-    return this.comicService.getComicPage(query);
+    return this.comicService.getComicPage(query)
   }
 
   /**
@@ -58,7 +58,7 @@ export class WorkComicController {
     model: BaseComicDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.comicService.getComicDetail(query.id);
+    return this.comicService.getComicDetail(query.id)
   }
 
   /**
@@ -70,7 +70,7 @@ export class WorkComicController {
     model: IdDto,
   })
   async update(@Body() body: UpdateComicDto) {
-    return this.comicService.updateComic(body);
+    return this.comicService.updateComic(body)
   }
 
   /**
@@ -87,7 +87,7 @@ export class WorkComicController {
       data: {
         isPublished: body.isPublished,
       },
-    });
+    })
   }
 
   /**
@@ -104,7 +104,7 @@ export class WorkComicController {
       data: {
         isRecommended: body.isRecommended,
       },
-    });
+    })
   }
 
   /**
@@ -121,7 +121,7 @@ export class WorkComicController {
       data: {
         isHot: body.isHot,
       },
-    });
+    })
   }
 
   /**
@@ -138,7 +138,7 @@ export class WorkComicController {
       data: {
         isNew: body.isNew,
       },
-    });
+    })
   }
 
   /**
@@ -150,6 +150,6 @@ export class WorkComicController {
     model: IdDto,
   })
   async delete(@Body() body: IdDto) {
-    return this.comicService.deleteComic(body.id);
+    return this.comicService.deleteComic(body.id)
   }
 }

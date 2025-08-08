@@ -1,9 +1,9 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger';
-import type { ValidateRegexOptions } from './types';
-import { applyDecorators } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsOptional, IsString, Matches } from 'class-validator';
+import type { ApiPropertyOptions } from '@nestjs/swagger'
+import type { ValidateRegexOptions } from './types'
+import { applyDecorators } from '@nestjs/common'
+import { ApiProperty } from '@nestjs/swagger'
+import { Transform } from 'class-transformer'
+import { IsOptional, IsString, Matches } from 'class-validator'
 
 /**
  * 正则表达式验证装饰器
@@ -39,11 +39,11 @@ import { IsOptional, IsString, Matches } from 'class-validator';
 export function ValidateByRegex(options: ValidateRegexOptions) {
   // 参数验证
   if (!options.description) {
-    throw new Error('ValidateByRegex: description is required');
+    throw new Error('ValidateByRegex: description is required')
   }
 
   if (!options.regex) {
-    throw new Error('ValidateByRegex: regex is required');
+    throw new Error('ValidateByRegex: regex is required')
   }
 
   // 构建API属性配置
@@ -55,7 +55,7 @@ export function ValidateByRegex(options: ValidateRegexOptions) {
     nullable: !(options.required ?? true),
     type: String,
     pattern: options.regex.source,
-  };
+  }
 
   // 基础装饰器
   const decorators = [
@@ -64,11 +64,11 @@ export function ValidateByRegex(options: ValidateRegexOptions) {
     Matches(options.regex, {
       message: options.message || '格式不正确',
     }),
-  ];
+  ]
 
   // 可选字段处理
   if (!(options.required ?? true)) {
-    decorators.push(IsOptional());
+    decorators.push(IsOptional())
   }
 
   // 转换逻辑
@@ -76,25 +76,25 @@ export function ValidateByRegex(options: ValidateRegexOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null) &&
-        options.default !== undefined
+        (value === undefined || value === null)
+        && options.default !== undefined
       ) {
-        return options.default;
+        return options.default
       }
 
       // 字符串trim处理
       if (typeof value === 'string') {
-        return value.trim();
+        return value.trim()
       }
 
-      return value;
-    })
-  );
+      return value
+    }),
+  )
 
   // 自定义转换函数
   if (options.transform) {
-    decorators.push(Transform(options.transform));
+    decorators.push(Transform(options.transform))
   }
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }

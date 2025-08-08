@@ -4,11 +4,11 @@ import {
   Logger,
   OnApplicationShutdown,
   OnModuleInit,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaPg } from '@prisma/adapter-pg';
+} from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-import { PrismaClient } from '@/prisma/client/client';
+import { PrismaClient } from '@/prisma/client/client'
 
 /**
  * Prisma 数据库服务
@@ -19,26 +19,25 @@ import { PrismaClient } from '@/prisma/client/client';
 @Global()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnApplicationShutdown
-{
-  private readonly logger = new Logger(PrismaService.name);
-  private isConnected = false;
-  private connectionAttempts = 0;
-  private readonly maxRetries = 3;
-  private readonly retryDelay = 2000; // 2秒
+  implements OnModuleInit, OnApplicationShutdown {
+  private readonly logger = new Logger(PrismaService.name)
+  private isConnected = false
+  private connectionAttempts = 0
+  private readonly maxRetries = 3
+  private readonly retryDelay = 2000 // 2秒
 
   constructor(private readonly configService: ConfigService) {
-    const databaseUrl = configService.get<string>('DATABASE_URL');
+    const databaseUrl = configService.get<string>('DATABASE_URL')
 
     if (!databaseUrl) {
-      throw new Error('DATABASE_URL 环境变量未配置');
+      throw new Error('DATABASE_URL 环境变量未配置')
     }
 
     super({
       adapter: new PrismaPg({
         connectionString: databaseUrl,
       }),
-    });
+    })
   }
 
   /**
@@ -47,11 +46,11 @@ export class PrismaService
    */
   async onModuleInit(): Promise<void> {
     if (this.isConnected) {
-      this.logger.warn('数据库已连接，跳过重复连接');
-      return;
+      this.logger.warn('数据库已连接，跳过重复连接')
+      return
     }
 
-    await this.connectWithRetry();
+    await this.connectWithRetry()
   }
 
   /**
@@ -61,32 +60,33 @@ export class PrismaService
   private async connectWithRetry(): Promise<void> {
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
-        this.connectionAttempts = attempt;
-        this.logger.log(`尝试连接数据库 (${attempt}/${this.maxRetries})`);
+        this.connectionAttempts = attempt
+        this.logger.log(`尝试连接数据库 (${attempt}/${this.maxRetries})`)
 
-        await this.$connect();
-        this.isConnected = true;
-        this.logger.log('✅ 数据库连接成功');
+        await this.$connect()
+        this.isConnected = true
+        this.logger.log('✅ 数据库连接成功')
 
         // 🔍 执行连接后的健康检查
-        await this.performHealthCheck();
-        return;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
+        await this.performHealthCheck()
+        return
+      }
+      catch (error) {
+        const errorMessage
+          = error instanceof Error ? error.message : String(error)
         this.logger.error(
-          `❌ 数据库连接失败 (尝试 ${attempt}/${this.maxRetries}): ${errorMessage}`
-        );
+          `❌ 数据库连接失败 (尝试 ${attempt}/${this.maxRetries}): ${errorMessage}`,
+        )
 
         if (attempt === this.maxRetries) {
-          this.logger.error('🚨 数据库连接重试次数已达上限，应用启动失败');
-          throw new Error(`数据库连接失败: ${errorMessage}`);
+          this.logger.error('🚨 数据库连接重试次数已达上限，应用启动失败')
+          throw new Error(`数据库连接失败: ${errorMessage}`)
         }
 
         // 等待后重试
         if (attempt < this.maxRetries) {
-          this.logger.log(`⏳ ${this.retryDelay / 1000}秒后重试连接...`);
-          await this.delay(this.retryDelay);
+          this.logger.log(`⏳ ${this.retryDelay / 1000}秒后重试连接...`)
+          await this.delay(this.retryDelay)
         }
       }
     }
@@ -98,12 +98,13 @@ export class PrismaService
    */
   private async performHealthCheck(): Promise<void> {
     try {
-      await this.$queryRaw`SELECT 1 as health_check`;
-      this.logger.log('🩺 数据库健康检查通过');
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      this.logger.warn(`⚠️ 数据库健康检查失败: ${errorMessage}`);
+      await this.$queryRaw`SELECT 1 as health_check`
+      this.logger.log('🩺 数据库健康检查通过')
+    }
+    catch (error) {
+      const errorMessage
+        = error instanceof Error ? error.message : String(error)
+      this.logger.warn(`⚠️ 数据库健康检查失败: ${errorMessage}`)
     }
   }
 
@@ -111,7 +112,7 @@ export class PrismaService
    * 延迟工具函数
    */
   private async delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 
   /**
@@ -120,22 +121,23 @@ export class PrismaService
    */
   async onApplicationShutdown(): Promise<void> {
     if (!this.isConnected) {
-      this.logger.log('数据库未连接，跳过断开操作');
-      return;
+      this.logger.log('数据库未连接，跳过断开操作')
+      return
     }
 
     try {
-      this.logger.log('🔄 正在断开数据库连接...');
+      this.logger.log('🔄 正在断开数据库连接...')
 
       // 等待所有待处理的查询完成
-      await this.$disconnect();
-      this.isConnected = false;
+      await this.$disconnect()
+      this.isConnected = false
 
-      this.logger.log('✅ 数据库连接已安全断开');
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      this.logger.error(`❌ 数据库断开连接失败: ${errorMessage}`);
+      this.logger.log('✅ 数据库连接已安全断开')
+    }
+    catch (error) {
+      const errorMessage
+        = error instanceof Error ? error.message : String(error)
+      this.logger.error(`❌ 数据库断开连接失败: ${errorMessage}`)
     }
   }
 
@@ -144,7 +146,7 @@ export class PrismaService
    * @returns 连接状态布尔值
    */
   getConnectionStatus(): boolean {
-    return this.isConnected;
+    return this.isConnected
   }
 
   /**
@@ -152,7 +154,7 @@ export class PrismaService
    * @returns 当前连接尝试次数
    */
   getConnectionAttempts(): number {
-    return this.connectionAttempts;
+    return this.connectionAttempts
   }
 
   /**
@@ -160,23 +162,24 @@ export class PrismaService
    * @returns 健康检查结果
    */
   async checkHealth(): Promise<{
-    status: 'healthy' | 'unhealthy';
-    message: string;
+    status: 'healthy' | 'unhealthy'
+    message: string
   }> {
     try {
       if (!this.isConnected) {
-        return { status: 'unhealthy', message: '数据库未连接' };
+        return { status: 'unhealthy', message: '数据库未连接' }
       }
 
-      await this.$queryRaw`SELECT 1 as health_check`;
-      return { status: 'healthy', message: '数据库连接正常' };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      await this.$queryRaw`SELECT 1 as health_check`
+      return { status: 'healthy', message: '数据库连接正常' }
+    }
+    catch (error) {
+      const errorMessage
+        = error instanceof Error ? error.message : String(error)
       return {
         status: 'unhealthy',
         message: `数据库健康检查失败: ${errorMessage}`,
-      };
+      }
     }
   }
 
@@ -185,16 +188,16 @@ export class PrismaService
    * @returns 数据库连接和性能统计
    */
   getStats(): {
-    isConnected: boolean;
-    connectionAttempts: number;
-    maxRetries: number;
-    retryDelay: number;
+    isConnected: boolean
+    connectionAttempts: number
+    maxRetries: number
+    retryDelay: number
   } {
     return {
       isConnected: this.isConnected,
       connectionAttempts: this.connectionAttempts,
       maxRetries: this.maxRetries,
       retryDelay: this.retryDelay,
-    };
+    }
   }
 }

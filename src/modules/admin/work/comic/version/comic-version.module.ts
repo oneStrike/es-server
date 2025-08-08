@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { WorkComicVersionController } from './comic-version.controller';
-import { WorkComicVersionService } from './comic-version.service';
+import { Module } from '@nestjs/common'
+import { WorkComicVersionController } from './comic-version.controller'
+import { WorkComicVersionService } from './comic-version.service'
 
 /**
  * 漫画版本模块

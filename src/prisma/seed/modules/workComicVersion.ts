@@ -130,12 +130,12 @@ export async function createInitialWorkComicVersions(prisma: any) {
         },
       ],
     },
-  ];
+  ]
 
   for (const comicData of versionData) {
     const comic = await prisma.workComic.findFirst({
       where: { name: comicData.comicName },
-    });
+    })
 
     if (comic) {
       for (const versionInfo of comicData.versions) {
@@ -145,7 +145,7 @@ export async function createInitialWorkComicVersions(prisma: any) {
             language: versionInfo.language,
             versionName: versionInfo.versionName,
           },
-        });
+        })
 
         if (!existingVersion) {
           await prisma.workComicVersion.create({
@@ -153,11 +153,9 @@ export async function createInitialWorkComicVersions(prisma: any) {
               ...versionInfo,
               comicId: comic.id,
             },
-          });
+          })
         }
       }
     }
   }
-
-  console.log('✅ 漫画版本种子数据初始化完成');
 }

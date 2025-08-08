@@ -1,21 +1,21 @@
-import type { Type } from '@nestjs/common';
-import { applyDecorators } from '@nestjs/common';
+import type { Type } from '@nestjs/common'
+import { applyDecorators } from '@nestjs/common'
 import {
   ApiExtraModels,
   ApiOperation,
   ApiResponse,
   getSchemaPath,
-} from '@nestjs/swagger';
+} from '@nestjs/swagger'
 
 export interface ApiDocOptions<TModel> {
-  summary: string;
-  model?: Type<TModel> | Record<string, any>;
-  isArray?: boolean;
+  summary: string
+  model?: Type<TModel> | Record<string, any>
+  isArray?: boolean
 }
 
 // 工具函数：判断是否是类
 function isClass(model: any): model is Type<unknown> {
-  return typeof model === 'function' && model.prototype;
+  return typeof model === 'function' && model.prototype
 }
 
 // 基础响应结构（不含 data）
@@ -42,22 +42,23 @@ function baseResponse(summary: string) {
         },
       },
     },
-  };
+  }
 }
 
 export function ApiDoc<TModel extends Type<any>>(
-  options: ApiDocOptions<TModel>
+  options: ApiDocOptions<TModel>,
 ) {
-  const { summary, model, isArray } = options;
-  let dataSchema;
-  const decorators = [ApiOperation({ summary })];
+  const { summary, model, isArray } = options
+  let dataSchema
+  const decorators = [ApiOperation({ summary })]
 
   if (model) {
     if (isClass(model)) {
-      decorators.push(ApiExtraModels(model));
-      dataSchema = { $ref: getSchemaPath(model) };
-    } else {
-      dataSchema = model;
+      decorators.push(ApiExtraModels(model))
+      dataSchema = { $ref: getSchemaPath(model) }
+    }
+    else {
+      dataSchema = model
     }
 
     // 如果指定了isArray，则将数据包装成数组形式
@@ -65,7 +66,7 @@ export function ApiDoc<TModel extends Type<any>>(
       dataSchema = {
         type: 'array',
         items: dataSchema,
-      };
+      }
     }
   }
   decorators.push(
@@ -76,32 +77,32 @@ export function ApiDoc<TModel extends Type<any>>(
           schema: {
             ...baseResponse(summary).content['application/json'].schema,
             properties: {
-              ...baseResponse(summary).content['application/json'].schema
-                .properties,
+              ...baseResponse(summary).content['application/json'].schema.properties,
               ...(dataSchema && { data: dataSchema }),
             },
           },
         },
       },
-    })
-  );
+    }),
+  )
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }
 
 export function ApiPageDoc<TModel extends Type<any>>(
-  options: ApiDocOptions<TModel>
+  options: ApiDocOptions<TModel>,
 ) {
-  const { summary, model } = options;
-  let dataSchema;
-  const decorators = [ApiOperation({ summary })];
+  const { summary, model } = options
+  let dataSchema
+  const decorators = [ApiOperation({ summary })]
 
   if (model) {
     if (isClass(model)) {
-      decorators.push(ApiExtraModels(model));
-      dataSchema = { $ref: getSchemaPath(model) };
-    } else {
-      dataSchema = model;
+      decorators.push(ApiExtraModels(model))
+      dataSchema = { $ref: getSchemaPath(model) }
+    }
+    else {
+      dataSchema = model
     }
   }
 
@@ -113,8 +114,7 @@ export function ApiPageDoc<TModel extends Type<any>>(
           schema: {
             ...baseResponse(summary).content['application/json'].schema,
             properties: {
-              ...baseResponse(summary).content['application/json'].schema
-                .properties,
+              ...baseResponse(summary).content['application/json'].schema.properties,
               data: {
                 type: 'object',
                 properties: {
@@ -150,8 +150,8 @@ export function ApiPageDoc<TModel extends Type<any>>(
           },
         },
       },
-    })
-  );
+    }),
+  )
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }

@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { ValidateString } from '@/common/decorators/validate.decorator';
+import { ApiProperty } from '@nestjs/swagger'
+import { ValidateString } from '@/common/decorators/validate.decorator'
 
 export class UploadFileDto {
   @ValidateString({
@@ -7,31 +7,31 @@ export class UploadFileDto {
     required: false,
     default: 'shared',
   })
-  scene?: string;
+  scene?: string
 }
 
 export class UploadResponseDto {
   @ApiProperty({ description: '文件名' })
-  filename: string;
+  filename: string
 
   @ApiProperty({ description: '文件路径' })
-  filePath: string;
+  filePath: string
 
   @ApiProperty({ description: '文件场景' })
-  scene: string;
+  scene: string
 
   @ApiProperty({ description: '文件大小' })
-  fileSize: number;
+  fileSize: number
 
   @ApiProperty({ description: '文件类型mimeType' })
-  mimeType: string;
+  mimeType: string
 
   @ApiProperty({ description: '文件类型' })
-  fileType: string;
+  fileType: string
 
   @ApiProperty({ description: '原始文件名' })
-  originalName: string;
+  originalName: string
 
   @ApiProperty({ description: '上传时间' })
-  uploadTime: Date;
+  uploadTime: Date
 }

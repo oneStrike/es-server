@@ -1,9 +1,9 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger';
-import type { ValidateBooleanOptions } from './types';
-import { applyDecorators } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsBoolean, IsOptional } from 'class-validator';
+import type { ApiPropertyOptions } from '@nestjs/swagger'
+import type { ValidateBooleanOptions } from './types'
+import { applyDecorators } from '@nestjs/common'
+import { ApiProperty } from '@nestjs/swagger'
+import { Transform } from 'class-transformer'
+import { IsBoolean, IsOptional } from 'class-validator'
 
 /**
  * 布尔类型验证装饰器
@@ -36,7 +36,7 @@ import { IsBoolean, IsOptional } from 'class-validator';
 export function ValidateBoolean(options: ValidateBooleanOptions) {
   // 参数验证
   if (!options.description) {
-    throw new Error('ValidateBoolean: description is required');
+    throw new Error('ValidateBoolean: description is required')
   }
 
   // 构建API属性配置
@@ -47,17 +47,17 @@ export function ValidateBoolean(options: ValidateBooleanOptions) {
     default: options.default,
     nullable: !(options.required ?? true),
     type: Boolean,
-  };
+  }
 
   // 基础装饰器
   const decorators = [
     ApiProperty(apiPropertyOptions),
     IsBoolean({ message: '必须是布尔类型' }),
-  ];
+  ]
 
   // 可选字段处理
   if (!(options.required ?? true)) {
-    decorators.push(IsOptional());
+    decorators.push(IsOptional())
   }
 
   // 转换逻辑
@@ -65,37 +65,37 @@ export function ValidateBoolean(options: ValidateBooleanOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null) &&
-        options.default !== undefined
+        (value === undefined || value === null)
+        && options.default !== undefined
       ) {
-        return options.default;
+        return options.default
       }
 
       // 字符串转布尔值
       if (typeof value === 'string') {
-        const trimmedValue = value.trim().toLowerCase();
+        const trimmedValue = value.trim().toLowerCase()
         if (trimmedValue === 'true' || trimmedValue === '1') {
-          return true;
+          return true
         }
         if (trimmedValue === 'false' || trimmedValue === '0') {
-          return false;
+          return false
         }
-        return value; // 保持原值，让验证器处理错误
+        return value // 保持原值，让验证器处理错误
       }
 
       // 数字转布尔值
       if (typeof value === 'number') {
-        return value !== 0;
+        return value !== 0
       }
 
-      return value;
-    })
-  );
+      return value
+    }),
+  )
 
   // 自定义转换函数
   if (options.transform) {
-    decorators.push(Transform(options.transform));
+    decorators.push(Transform(options.transform))
   }
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }

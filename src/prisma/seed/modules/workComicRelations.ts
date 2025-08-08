@@ -36,7 +36,7 @@ export async function createInitialWorkComicRelations(prisma: any) {
       isPrimary: true,
       sortOrder: 1,
     },
-  ];
+  ]
 
   // 创建漫画分类关联关系
   const comicCategoryRelations = [
@@ -70,16 +70,16 @@ export async function createInitialWorkComicRelations(prisma: any) {
       isPrimary: true,
       weight: 100,
     },
-  ];
+  ]
 
   // 处理作者关联
   for (const relation of comicAuthorRelations) {
     const comic = await prisma.workComic.findFirst({
       where: { name: relation.comicName },
-    });
+    })
     const author = await prisma.workAuthor.findFirst({
       where: { name: relation.authorName },
-    });
+    })
 
     if (comic && author) {
       const existingRelation = await prisma.workComicAuthor.findFirst({
@@ -87,7 +87,7 @@ export async function createInitialWorkComicRelations(prisma: any) {
           comicId: comic.id,
           authorId: author.id,
         },
-      });
+      })
 
       if (!existingRelation) {
         await prisma.workComicAuthor.create({
@@ -98,7 +98,7 @@ export async function createInitialWorkComicRelations(prisma: any) {
             isPrimary: relation.isPrimary,
             sortOrder: relation.sortOrder,
           },
-        });
+        })
       }
     }
   }
@@ -107,10 +107,10 @@ export async function createInitialWorkComicRelations(prisma: any) {
   for (const relation of comicCategoryRelations) {
     const comic = await prisma.workComic.findFirst({
       where: { name: relation.comicName },
-    });
+    })
     const category = await prisma.workCategory.findFirst({
       where: { name: relation.categoryName },
-    });
+    })
 
     if (comic && category) {
       const existingRelation = await prisma.workComicCategory.findFirst({
@@ -118,7 +118,7 @@ export async function createInitialWorkComicRelations(prisma: any) {
           comicId: comic.id,
           categoryId: category.id,
         },
-      });
+      })
 
       if (!existingRelation) {
         await prisma.workComicCategory.create({
@@ -128,10 +128,8 @@ export async function createInitialWorkComicRelations(prisma: any) {
             isPrimary: relation.isPrimary,
             weight: relation.weight,
           },
-        });
+        })
       }
     }
   }
-
-  console.log('✅ 漫画关联关系种子数据初始化完成');
 }

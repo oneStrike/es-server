@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto';
-import { IdDto } from '@/common/dto/id.dto';
-import { WorkAuthorService } from './author.service';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto'
+import { IdDto } from '@/common/dto/id.dto'
+import { WorkAuthorService } from './author.service'
 import {
   AuthorDetailResponseDto,
   AuthorPageResponseDto,
@@ -11,7 +11,7 @@ import {
   QueryAuthorDto,
   UpdateAuthorDto,
   UpdateAuthorFeaturedDto,
-} from './dto/author.dto';
+} from './dto/author.dto'
 
 /**
  * 作者管理控制器
@@ -31,7 +31,7 @@ export class WorkAuthorController {
     model: IdDto,
   })
   async create(@Body() body: CreateAuthorDto) {
-    return this.authorService.createAuthor(body);
+    return this.authorService.createAuthor(body)
   }
 
   /**
@@ -43,7 +43,7 @@ export class WorkAuthorController {
     model: AuthorPageResponseDto,
   })
   async getPage(@Query() query: QueryAuthorDto) {
-    return this.authorService.getAuthorPage(query);
+    return this.authorService.getAuthorPage(query)
   }
 
   /**
@@ -55,7 +55,7 @@ export class WorkAuthorController {
     model: AuthorDetailResponseDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.authorService.getAuthorDetail(query.id);
+    return this.authorService.getAuthorDetail(query.id)
   }
 
   /**
@@ -67,7 +67,7 @@ export class WorkAuthorController {
     model: IdDto,
   })
   async update(@Body() body: UpdateAuthorDto) {
-    return this.authorService.updateAuthor(body);
+    return this.authorService.updateAuthor(body)
   }
 
   /**
@@ -79,7 +79,7 @@ export class WorkAuthorController {
     model: CountDto,
   })
   async updateStatus(@Body() body: BatchEnabledDto) {
-    return this.authorService.updateAuthorStatus(body);
+    return this.authorService.updateAuthorStatus(body)
   }
 
   /**
@@ -91,7 +91,7 @@ export class WorkAuthorController {
     model: CountDto,
   })
   async updateFeatured(@Body() body: UpdateAuthorFeaturedDto) {
-    return this.authorService.updateAuthorFeatured(body);
+    return this.authorService.updateAuthorFeatured(body)
   }
 
   /**
@@ -103,6 +103,6 @@ export class WorkAuthorController {
     model: IdDto,
   })
   async delete(@Body() body: IdDto) {
-    return this.authorService.deleteAuthor(body.id);
+    return this.authorService.deleteAuthor(body.id)
   }
 }

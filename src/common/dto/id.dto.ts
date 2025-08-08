@@ -1,7 +1,7 @@
 import {
   ValidateArray,
   ValidateNumber,
-} from '@/common/decorators/validate.decorator';
+} from '@/common/decorators/validate.decorator'
 
 export class IdDto {
   @ValidateNumber({
@@ -9,7 +9,7 @@ export class IdDto {
     example: 1,
     required: true,
   })
-  id: number;
+  id: number
 }
 
 export class IdsDto {
@@ -19,5 +19,5 @@ export class IdsDto {
     example: [1, 2, 3],
     required: true,
   })
-  ids: number[];
+  ids: number[]
 }

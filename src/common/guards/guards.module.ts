@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { SmartJwtAuthGuard } from './smart-jwt-auth.guard';
+import { Module } from '@nestjs/common'
+import { SmartJwtAuthGuard } from './smart-jwt-auth.guard'
 
 /**
  * GuardsModule 守卫模块

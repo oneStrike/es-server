@@ -1,8 +1,8 @@
 import {
   ValidateBoolean,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { IdDto } from '@/common/dto/id.dto';
+} from '@/common/decorators/validate.decorator'
+import { IdDto } from '@/common/dto/id.dto'
 
 /**
  * 更新数据字典DTO
@@ -15,7 +15,7 @@ export class UpdateDictionaryDto extends IdDto {
     maxLength: 50,
     minLength: 1,
   })
-  name?: string;
+  name?: string
 
   @ValidateString({
     description: '字典编码',
@@ -24,7 +24,7 @@ export class UpdateDictionaryDto extends IdDto {
     maxLength: 50,
     minLength: 1,
   })
-  code?: string;
+  code?: string
 
   @ValidateString({
     description: '字典封面',
@@ -32,14 +32,14 @@ export class UpdateDictionaryDto extends IdDto {
     required: false,
     maxLength: 200,
   })
-  cover?: string;
+  cover?: string
 
   @ValidateBoolean({
     description: '状态 true启用 false禁用',
     example: true,
     required: false,
   })
-  isEnabled?: boolean;
+  isEnabled?: boolean
 
   @ValidateString({
     description: '备注信息',
@@ -47,5 +47,5 @@ export class UpdateDictionaryDto extends IdDto {
     required: false,
     maxLength: 255,
   })
-  remark?: string;
+  remark?: string
 }

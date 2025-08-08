@@ -1,12 +1,12 @@
-import { Module } from '@nestjs/common';
-import { JwtModule as NestjsJwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@/common/module/jwt/jwt.module';
-import { JwtConfigService } from '@/config/jwt.config';
-import { AdminAuthController } from '@/modules/admin/auth/auth.controller';
-import { AdminJwtAuthGuard } from './admin-jwt-auth.guard';
-import { AdminJwtService } from './admin-jwt.service';
-import { AdminJwtStrategy } from './admin-jwt.strategy';
+import { Module } from '@nestjs/common'
+import { JwtModule as NestjsJwtModule } from '@nestjs/jwt'
+import { PassportModule } from '@nestjs/passport'
+import { JwtModule } from '@/common/module/jwt/jwt.module'
+import { JwtConfigService } from '@/config/jwt.config'
+import { AdminAuthController } from '@/modules/admin/auth/auth.controller'
+import { AdminJwtAuthGuard } from './admin-jwt-auth.guard'
+import { AdminJwtService } from './admin-jwt.service'
+import { AdminJwtStrategy } from './admin-jwt.strategy'
 
 @Module({
   controllers: [AdminAuthController],
@@ -16,7 +16,7 @@ import { AdminJwtStrategy } from './admin-jwt.strategy';
     NestjsJwtModule.registerAsync({
       inject: [JwtConfigService],
       useFactory: (jwtConfigService: JwtConfigService) => {
-        return jwtConfigService.getAdminJwtConfig();
+        return jwtConfigService.getAdminJwtConfig()
       },
     }),
   ],

@@ -1,12 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { BaseRepositoryService } from '@/global/services/base-repository.service';
-import { PageStatusEnum } from '@/modules/admin/client/page/page.constant';
-import { ClientPageConfigWhereInput } from '@/prisma/client/models/ClientPageConfig';
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { PageStatusEnum } from '@/modules/admin/client/page/page.constant'
+import { ClientPageConfigWhereInput } from '@/prisma/client/models/ClientPageConfig'
 import {
   BasePageConfigFieldsDto,
   QueryClientPageConfigDto,
   UpdateClientPageConfigDto,
-} from './dto/page.dto';
+} from './dto/page.dto'
 
 /**
  * 页面配置服务类
@@ -14,8 +14,8 @@ import {
  */
 @Injectable()
 export class ClientPageConfigService extends BaseRepositoryService<'ClientPageConfig'> {
-  protected readonly modelName = 'ClientPageConfig' as const;
-  protected readonly supportsSoftDelete = true;
+  protected readonly modelName = 'ClientPageConfig' as const
+  protected readonly supportsSoftDelete = true
 
   /**
    * 创建页面配置
@@ -26,24 +26,24 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
     // 验证页面编码是否已存在
     const existingByCode = await this.findFirst({
       where: { pageCode: createPageConfigDto.pageCode },
-    });
+    })
     if (existingByCode) {
       throw new BadRequestException(
-        `页面编码 "${createPageConfigDto.pageCode}" 已存在`
-      );
+        `页面编码 "${createPageConfigDto.pageCode}" 已存在`,
+      )
     }
 
     // 验证页面路径是否已存在
     const existingByPath = await this.findFirst({
       where: { pagePath: createPageConfigDto.pagePath },
-    });
+    })
     if (existingByPath) {
       throw new BadRequestException(
-        `页面路径 "${createPageConfigDto.pagePath}" 已存在`
-      );
+        `页面路径 "${createPageConfigDto.pagePath}" 已存在`,
+      )
     }
 
-    return this.create({ data: createPageConfigDto });
+    return this.create({ data: createPageConfigDto })
   }
 
   /**
@@ -53,20 +53,28 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
    */
   async findPageConfigPage(queryPageConfigDto: QueryClientPageConfigDto) {
     const { pageName, pageCode, accessLevel, pageStatus, ...other } =
-      queryPageConfigDto;
+      queryPageConfigDto
 
-    const where: ClientPageConfigWhereInput = {};
+    const where: ClientPageConfigWhereInput = {}
 
-    if (pageName) where.pageName = { contains: pageName, mode: 'insensitive' };
-    if (pageCode) where.pageCode = pageCode;
-    if (accessLevel !== undefined) where.accessLevel = accessLevel;
-    if (pageStatus !== undefined) where.pageStatus = pageStatus;
+    if (pageName) {
+      where.pageName = { contains: pageName, mode: 'insensitive' }
+    }
+    if (pageCode) {
+      where.pageCode = pageCode
+    }
+    if (accessLevel !== undefined) {
+      where.accessLevel = accessLevel
+    }
+    if (pageStatus !== undefined) {
+      where.pageStatus = pageStatus
+    }
 
     return this.findPagination({
       ...other,
       where,
       orderBy: [{ createdAt: 'desc' }],
-    });
+    })
   }
 
   /**
@@ -77,10 +85,10 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
   async findActivePageConfigs(accessLevel?: string) {
     const where: ClientPageConfigWhereInput = {
       pageStatus: PageStatusEnum.ENABLED, // 只返回启用的页面
-    };
+    }
 
     if (accessLevel) {
-      where.accessLevel = accessLevel as any;
+      where.accessLevel = accessLevel as any
     }
 
     return this.findMany({
@@ -96,7 +104,7 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
         description: true,
         accessCount: true,
       },
-    });
+    })
   }
 
   /**
@@ -105,7 +113,7 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
    * @returns 更新后的页面配置信息
    */
   async updatePage(updatePageConfigDto: UpdateClientPageConfigDto) {
-    const { id, ...updateData } = updatePageConfigDto;
+    const { id, ...updateData } = updatePageConfigDto
 
     // 如果更新页面编码，验证是否已存在
     if (updateData.pageCode) {
@@ -114,11 +122,11 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
           pageCode: updateData.pageCode,
           id: { not: id },
         },
-      });
+      })
       if (existingByCode) {
         throw new BadRequestException(
-          `页面编码 "${updateData.pageCode}" 已存在`
-        );
+          `页面编码 "${updateData.pageCode}" 已存在`,
+        )
       }
     }
 
@@ -129,18 +137,18 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
           pagePath: updateData.pagePath,
           id: { not: id },
         },
-      });
+      })
       if (existingByPath) {
         throw new BadRequestException(
-          `页面路径 "${updateData.pagePath}" 已存在`
-        );
+          `页面路径 "${updateData.pagePath}" 已存在`,
+        )
       }
     }
 
     return this.update({
       where: { id },
       data: updateData,
-    });
+    })
   }
 
   /**
@@ -158,10 +166,10 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
       select: {
         id: true,
       },
-    });
+    })
 
     if (!pageConfig || Array.isArray(pageConfig)) {
-      throw new BadRequestException('页面不存在或未启用');
+      throw new BadRequestException('页面不存在或未启用')
     }
 
     // 原子性更新访问次数
@@ -172,6 +180,6 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
           increment: 1,
         },
       },
-    });
+    })
   }
 }

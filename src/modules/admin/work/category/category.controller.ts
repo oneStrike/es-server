@@ -1,16 +1,16 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto';
-import { IdDto } from '@/common/dto/id.dto';
-import { OrderDto } from '@/common/dto/order.dto';
-import { WorkCategoryService } from './category.service';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto'
+import { IdDto } from '@/common/dto/id.dto'
+import { OrderDto } from '@/common/dto/order.dto'
+import { WorkCategoryService } from './category.service'
 import {
   BaseCategoryDto,
   CreateCategoryDto,
   QueryCategoryDto,
   UpdateCategoryDto,
-} from './dto/category.dto';
+} from './dto/category.dto'
 
 /**
  * 分类管理控制器
@@ -30,7 +30,7 @@ export class WorkCategoryController {
     model: IdDto,
   })
   async create(@Body() body: CreateCategoryDto) {
-    return this.categoryService.createCategory(body);
+    return this.categoryService.createCategory(body)
   }
 
   /**
@@ -42,7 +42,7 @@ export class WorkCategoryController {
     model: BaseCategoryDto,
   })
   async getPage(@Query() query: QueryCategoryDto) {
-    return this.categoryService.getCategoryPage(query);
+    return this.categoryService.getCategoryPage(query)
   }
 
   /**
@@ -54,7 +54,7 @@ export class WorkCategoryController {
     model: BaseCategoryDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.categoryService.getCategoryDetail(query.id);
+    return this.categoryService.getCategoryDetail(query.id)
   }
 
   /**
@@ -66,7 +66,7 @@ export class WorkCategoryController {
     model: IdDto,
   })
   async update(@Body() body: UpdateCategoryDto) {
-    return this.categoryService.updateCategory(body);
+    return this.categoryService.updateCategory(body)
   }
 
   /**
@@ -78,7 +78,7 @@ export class WorkCategoryController {
     model: CountDto,
   })
   async updateStatus(@Body() body: BatchEnabledDto) {
-    return this.categoryService.updateCategoryStatus(body);
+    return this.categoryService.updateCategoryStatus(body)
   }
 
   /**
@@ -90,7 +90,7 @@ export class WorkCategoryController {
     model: CountDto,
   })
   async deleteBatch(@Body() body: { ids: number[] }) {
-    return this.categoryService.deleteCategoryBatch(body.ids);
+    return this.categoryService.deleteCategoryBatch(body.ids)
   }
 
   /**
@@ -102,6 +102,6 @@ export class WorkCategoryController {
     model: OrderDto,
   })
   async categoryOrder(@Body() body: OrderDto) {
-    return this.categoryService.dragSort(body);
+    return this.categoryService.dragSort(body)
   }
 }

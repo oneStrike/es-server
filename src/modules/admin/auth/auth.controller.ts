@@ -1,9 +1,9 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc } from '@/common/decorators/api-doc.decorator';
-import { Public } from '@/common/decorators/public.decorator';
-import { RsaService } from '@/common/module/jwt/rsa.service';
-import { RsaPublicKeyDto } from './dto/rsa-public-key.dto';
+import { Controller, Get } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc } from '@/common/decorators/api-doc.decorator'
+import { Public } from '@/common/decorators/public.decorator'
+import { RsaService } from '@/common/module/jwt/rsa.service'
+import { RsaPublicKeyDto } from './dto/rsa-public-key.dto'
 
 /**
  * 管理端认证控制器
@@ -28,6 +28,6 @@ export class AdminAuthController {
   getAdminPublicKey(): RsaPublicKeyDto {
     return {
       publicKey: this.rsaService.getAdminPublicKey(),
-    };
+    }
   }
 }

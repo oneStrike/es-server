@@ -1,7 +1,7 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { AuthGuard } from '@nestjs/passport';
-import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
+import { AuthGuard } from '@nestjs/passport'
+import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator'
 
 /**
  * SmartJwtAuthGuard 智能JWT认证守卫
@@ -22,29 +22,30 @@ export class SmartJwtAuthGuard implements CanActivate {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
-    ]);
+    ])
 
     // 如果路由被标记为公共，则跳过认证
     if (isPublic) {
-      return true;
+      return true
     }
 
-    const request = context.switchToHttp().getRequest();
-    const path = request.route?.path || request.url;
+    const request = context.switchToHttp().getRequest()
+    const path: string = request.route?.path || request.url
 
     // 根据路径前缀选择合适的策略
     if (this.isAdminPath(path)) {
       // 管理员路径使用admin-jwt策略
-      const adminGuard = new (AuthGuard('admin-jwt'))();
-      return adminGuard.canActivate(context) as Promise<boolean>;
-    } else if (this.isClientPath(path)) {
+      const adminGuard = new (AuthGuard('admin-jwt'))()
+      return adminGuard.canActivate(context) as Promise<boolean>
+    }
+    else if (this.isClientPath(path)) {
       // 客户端路径使用client-jwt策略
-      const clientGuard = new (AuthGuard('client-jwt'))();
-      return clientGuard.canActivate(context) as Promise<boolean>;
+      const clientGuard = new (AuthGuard('client-jwt'))()
+      return clientGuard.canActivate(context) as Promise<boolean>
     }
 
     // 其他路径默认不需要认证
-    return true;
+    return true
   }
 
   /**
@@ -53,8 +54,8 @@ export class SmartJwtAuthGuard implements CanActivate {
    * @returns 是否为管理员路径
    */
   private isAdminPath(path: string): boolean {
-    const adminPaths = ['/admin', '/api/admin'];
-    return adminPaths.some(adminPath => path.startsWith(adminPath));
+    const adminPaths = ['/admin', '/api/admin']
+    return adminPaths.some(adminPath => path.startsWith(adminPath))
   }
 
   /**
@@ -63,7 +64,7 @@ export class SmartJwtAuthGuard implements CanActivate {
    * @returns 是否为客户端路径
    */
   private isClientPath(path: string): boolean {
-    const clientPaths = ['/client', '/api/client', '/app'];
-    return clientPaths.some(clientPath => path.startsWith(clientPath));
+    const clientPaths = ['/client', '/api/client', '/app']
+    return clientPaths.some(clientPath => path.startsWith(clientPath))
   }
 }

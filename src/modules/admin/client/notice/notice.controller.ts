@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { CountDto } from '@/common/dto/batch.dto';
-import { IdDto, IdsDto } from '@/common/dto/id.dto';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { CountDto } from '@/common/dto/batch.dto'
+import { IdDto, IdsDto } from '@/common/dto/id.dto'
 import {
   BaseNoticeDto,
   CreateNoticeDto,
@@ -10,8 +10,8 @@ import {
   QueryNoticeDto,
   UpdateNoticeDto,
   UpdateNoticeStatusDto,
-} from './dto/notice.dto';
-import { ClientNoticeService } from './notice.service';
+} from './dto/notice.dto'
+import { ClientNoticeService } from './notice.service'
 
 /**
  * 客户端通知控制器
@@ -31,7 +31,7 @@ export class ClientNoticeController {
     model: IdDto,
   })
   async create(@Body() body: CreateNoticeDto) {
-    return this.noticeService.createNotice(body);
+    return this.noticeService.createNotice(body)
   }
 
   /**
@@ -43,7 +43,7 @@ export class ClientNoticeController {
     model: NoticePageResponseDto,
   })
   async getPage(@Query() query: QueryNoticeDto) {
-    return this.noticeService.findNoticePage(query);
+    return this.noticeService.findNoticePage(query)
   }
 
   /**
@@ -67,7 +67,7 @@ export class ClientNoticeController {
           },
         },
       },
-    });
+    })
   }
 
   /**
@@ -79,7 +79,7 @@ export class ClientNoticeController {
     model: IdDto,
   })
   async update(@Body() body: UpdateNoticeDto) {
-    return this.noticeService.updateNotice(body);
+    return this.noticeService.updateNotice(body)
   }
 
   /**
@@ -94,7 +94,7 @@ export class ClientNoticeController {
     return this.noticeService.updateMany({
       where: { id: { in: body.ids } },
       data: { isPublished: body.isPublished },
-    });
+    })
   }
 
   /**
@@ -106,6 +106,6 @@ export class ClientNoticeController {
     model: CountDto,
   })
   async batchRemove(@Body() body: IdsDto) {
-    return this.noticeService.softDeleteMany({ id: { in: body.ids } });
+    return this.noticeService.softDeleteMany({ id: { in: body.ids } })
   }
 }

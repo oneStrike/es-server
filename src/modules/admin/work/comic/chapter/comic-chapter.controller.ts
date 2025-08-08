@@ -1,12 +1,12 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { CountDto } from '@/common/dto/batch.dto';
-import { IdDto, IdsDto } from '@/common/dto/id.dto';
-import { OrderDto } from '@/common/dto/order.dto';
-import { ComicChapterDetailDto } from '@/modules/admin/work/comic/chapter/dto/comic-chapter-response';
-import { WorkComicVersionService } from '../version/comic-version.service';
-import { WorkComicChapterService } from './comic-chapter.service';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { CountDto } from '@/common/dto/batch.dto'
+import { IdDto, IdsDto } from '@/common/dto/id.dto'
+import { OrderDto } from '@/common/dto/order.dto'
+import { ComicChapterDetailDto } from '@/modules/admin/work/comic/chapter/dto/comic-chapter-response'
+import { WorkComicVersionService } from '../version/comic-version.service'
+import { WorkComicChapterService } from './comic-chapter.service'
 import {
   AddChapterContentDto,
   BatchUpdateChapterContentsDto,
@@ -18,7 +18,7 @@ import {
   UpdateChapterContentDto,
   UpdateChapterPublishStatusDto,
   UpdateComicChapterDto,
-} from './dto/comic-chapter.dto';
+} from './dto/comic-chapter.dto'
 
 /**
  * 漫画章节管理控制器
@@ -29,7 +29,7 @@ import {
 export class WorkComicChapterController {
   constructor(
     private readonly comicChapterService: WorkComicChapterService,
-    private readonly comicVersionService: WorkComicVersionService
+    private readonly comicVersionService: WorkComicVersionService,
   ) {}
 
   /**
@@ -41,7 +41,7 @@ export class WorkComicChapterController {
     model: IdDto,
   })
   async create(@Body() body: CreateComicChapterDto) {
-    return this.comicChapterService.createComicChapter(body);
+    return this.comicChapterService.createComicChapter(body)
   }
 
   /**
@@ -53,7 +53,7 @@ export class WorkComicChapterController {
     model: ComicChapterPageResponseDto,
   })
   async getPage(@Query() query: QueryComicChapterDto) {
-    return this.comicChapterService.getComicChapterPage(query);
+    return this.comicChapterService.getComicChapterPage(query)
   }
 
   /**
@@ -65,7 +65,7 @@ export class WorkComicChapterController {
     model: ComicChapterDetailDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.comicChapterService.getComicChapterDetail(query.id);
+    return this.comicChapterService.getComicChapterDetail(query.id)
   }
 
   /**
@@ -77,7 +77,7 @@ export class WorkComicChapterController {
     model: IdDto,
   })
   async update(@Body() body: UpdateComicChapterDto) {
-    return this.comicChapterService.updateComicChapter(body);
+    return this.comicChapterService.updateComicChapter(body)
   }
 
   /**
@@ -91,7 +91,7 @@ export class WorkComicChapterController {
   async batchDelete(@Body() body: IdsDto) {
     return this.comicChapterService.deleteMany({
       id: { in: body.ids },
-    });
+    })
   }
 
   /**
@@ -110,7 +110,7 @@ export class WorkComicChapterController {
       data: {
         isPublished: body.isPublished,
       },
-    });
+    })
   }
 
   /**
@@ -119,7 +119,7 @@ export class WorkComicChapterController {
   @Post('swap-chapter-numbers')
   @ApiDoc({ summary: '交换两个章节的章节号', model: OrderDto })
   async swapChapterNumbers(@Body() swapChapterNumberDto: OrderDto) {
-    return this.comicChapterService.swapChapterNumbers(swapChapterNumberDto);
+    return this.comicChapterService.swapChapterNumbers(swapChapterNumberDto)
   }
 
   /**
@@ -136,7 +136,7 @@ export class WorkComicChapterController {
     },
   })
   async getChapterContents(@Query() query: IdDto) {
-    return this.comicChapterService.getChapterContents(query.id);
+    return this.comicChapterService.getChapterContents(query.id)
   }
 
   /**
@@ -153,7 +153,7 @@ export class WorkComicChapterController {
     },
   })
   async addChapterContent(@Body() body: AddChapterContentDto) {
-    return this.comicChapterService.addChapterContent(body);
+    return this.comicChapterService.addChapterContent(body)
   }
 
   /**
@@ -170,7 +170,7 @@ export class WorkComicChapterController {
     },
   })
   async updateChapterContent(@Body() body: UpdateChapterContentDto) {
-    return this.comicChapterService.updateChapterContent(body);
+    return this.comicChapterService.updateChapterContent(body)
   }
 
   /**
@@ -187,7 +187,7 @@ export class WorkComicChapterController {
     },
   })
   async deleteChapterContent(@Body() body: DeleteChapterContentDto) {
-    return this.comicChapterService.deleteChapterContent(body);
+    return this.comicChapterService.deleteChapterContent(body)
   }
 
   /**
@@ -204,7 +204,7 @@ export class WorkComicChapterController {
     },
   })
   async moveChapterContent(@Body() body: MoveChapterContentDto) {
-    return this.comicChapterService.moveChapterContent(body);
+    return this.comicChapterService.moveChapterContent(body)
   }
 
   /**
@@ -221,9 +221,9 @@ export class WorkComicChapterController {
     },
   })
   async batchUpdateChapterContents(
-    @Body() body: BatchUpdateChapterContentsDto
+    @Body() body: BatchUpdateChapterContentsDto,
   ) {
-    return this.comicChapterService.batchUpdateChapterContents(body);
+    return this.comicChapterService.batchUpdateChapterContents(body)
   }
 
   /**
@@ -235,6 +235,6 @@ export class WorkComicChapterController {
     model: IdDto,
   })
   async clearChapterContents(@Body() body: IdDto) {
-    return this.comicChapterService.clearChapterContents(body.id);
+    return this.comicChapterService.clearChapterContents(body.id)
   }
 }

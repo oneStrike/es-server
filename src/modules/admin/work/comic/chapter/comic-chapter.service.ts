@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { OrderDto } from '@/common/dto/order.dto';
-import { BaseRepositoryService } from '@/global/services/base-repository.service';
-import { PrismaService } from '@/global/services/prisma.service';
-import { WorkComicChapterWhereInput } from '@/prisma/client/models/WorkComicChapter';
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { OrderDto } from '@/common/dto/order.dto'
+import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { PrismaService } from '@/global/services/prisma.service'
+import { WorkComicChapterWhereInput } from '@/prisma/client/models/WorkComicChapter'
 import {
   AddChapterContentDto,
   BatchUpdateChapterContentsDto,
@@ -13,7 +13,7 @@ import {
   UpdateChapterContentDto,
   UpdateChapterReadRuleDto,
   UpdateComicChapterDto,
-} from './dto/comic-chapter.dto';
+} from './dto/comic-chapter.dto'
 
 /**
  * 漫画章节服务类
@@ -21,11 +21,11 @@ import {
  */
 @Injectable()
 export class WorkComicChapterService extends BaseRepositoryService<'WorkComicChapter'> {
-  protected readonly modelName = 'WorkComicChapter' as const;
-  protected readonly supportsSoftDelete = true;
+  protected readonly modelName = 'WorkComicChapter' as const
+  protected readonly supportsSoftDelete = true
 
   constructor(protected readonly prisma: PrismaService) {
-    super(prisma);
+    super(prisma)
   }
 
   /**
@@ -34,22 +34,22 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
    * @returns 创建的章节信息
    */
   async createComicChapter(createComicChapterDto: CreateComicChapterDto) {
-    const { comicId, versionId, chapterNumber } = createComicChapterDto;
+    const { comicId, versionId, chapterNumber } = createComicChapterDto
 
     if (!(await this.exists({ id: comicId }))) {
-      throw new BadRequestException('关联的漫画不存在');
+      throw new BadRequestException('关联的漫画不存在')
     }
 
     // 如果提供了版本ID，验证版本是否存在且属于该漫画
     if (versionId) {
       const version = await this.prisma.workComicVersion.findUnique({
         where: { id: versionId },
-      });
+      })
       if (!version) {
-        throw new BadRequestException('关联的漫画版本不存在');
+        throw new BadRequestException('关联的漫画版本不存在')
       }
       if (version.comicId !== comicId) {
-        throw new BadRequestException('漫画版本与漫画不匹配');
+        throw new BadRequestException('漫画版本与漫画不匹配')
       }
     }
 
@@ -57,19 +57,19 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
     const whereCondition: any = {
       comicId,
       chapterNumber,
-    };
+    }
     if (versionId) {
-      whereCondition.versionId = versionId;
+      whereCondition.versionId = versionId
     }
 
     const existingChapter = await this.findFirst({
       where: whereCondition,
-    });
+    })
     if (existingChapter) {
-      throw new BadRequestException('该漫画下章节号已存在');
+      throw new BadRequestException('该漫画下章节号已存在')
     }
 
-    return this.create({ data: createComicChapterDto });
+    return this.create({ data: createComicChapterDto })
   }
 
   /**
@@ -79,40 +79,40 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
    */
   async getComicChapterPage(queryComicChapterDto: QueryComicChapterDto) {
     const { title, isPublished, comicId, versionId, readRule, isPreview } =
-      queryComicChapterDto;
+      queryComicChapterDto
 
     // 构建查询条件
-    const where: WorkComicChapterWhereInput = {};
+    const where: WorkComicChapterWhereInput = {}
 
     // 标题模糊搜索
     if (title) {
       where.title = {
         contains: title,
         mode: 'insensitive',
-      };
+      }
     }
 
     // 发布状态筛选
     if (typeof isPublished === 'boolean') {
-      where.isPublished = isPublished;
+      where.isPublished = isPublished
     }
 
     // 漫画ID筛选
-    where.comicId = comicId;
+    where.comicId = comicId
 
     // 版本ID筛选
     if (versionId) {
-      where.versionId = versionId;
+      where.versionId = versionId
     }
 
     // 查看规则筛选
     if (readRule !== undefined) {
-      where.readRule = readRule;
+      where.readRule = readRule
     }
 
     // 试读章节筛选
     if (typeof isPreview === 'boolean') {
-      where.isPreview = isPreview;
+      where.isPreview = isPreview
     }
 
     return this.findPagination({
@@ -123,7 +123,7 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
         deletedAt: true,
       },
       orderBy: [{ comicId: 'asc' }, { chapterNumber: 'asc' }],
-    });
+    })
   }
 
   /**
@@ -152,13 +152,13 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
           },
         },
       },
-    });
+    })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
 
-    return chapter;
+    return chapter
   }
 
   /**
@@ -167,12 +167,12 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
    * @returns 更新后的章节信息
    */
   async updateComicChapter(updateComicChapterDto: UpdateComicChapterDto) {
-    const { id, ...updateData } = updateComicChapterDto;
+    const { id, ...updateData } = updateComicChapterDto
 
     // 验证章节是否存在
-    const existingChapter = await this.findById({ id });
+    const existingChapter = await this.findById({ id })
     if (!existingChapter) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
 
     // 如果更新版本ID，验证版本是否存在且属于该漫画
@@ -180,12 +180,12 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
       if (updateData.versionId) {
         const version = await this.prisma.workComicVersion.findUnique({
           where: { id: updateData.versionId },
-        });
+        })
         if (!version) {
-          throw new BadRequestException('关联的漫画版本不存在');
+          throw new BadRequestException('关联的漫画版本不存在')
         }
         if (version.comicId !== existingChapter.comicId) {
-          throw new BadRequestException('漫画版本与漫画不匹配');
+          throw new BadRequestException('漫画版本与漫画不匹配')
         }
       }
     }
@@ -199,29 +199,29 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
         comicId: existingChapter.comicId,
         chapterNumber: updateData.chapterNumber,
         id: { not: id },
-      };
+      }
 
       // 使用更新后的版本ID或现有的版本ID进行重复检查
       const targetVersionId =
         updateData.versionId !== undefined
           ? updateData.versionId
-          : existingChapter.versionId;
+          : existingChapter.versionId
       if (targetVersionId) {
-        whereCondition.versionId = targetVersionId;
+        whereCondition.versionId = targetVersionId
       }
 
       const duplicateChapter = await this.findFirst({
         where: whereCondition,
-      });
+      })
       if (duplicateChapter) {
-        throw new BadRequestException('该漫画下章节号已存在');
+        throw new BadRequestException('该漫画下章节号已存在')
       }
     }
 
     return this.updateById({
       id,
       data: updateData,
-    });
+    })
   }
 
   /**
@@ -230,9 +230,9 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
    * @returns 更新结果
    */
   async updateChapterReadRule(
-    updateChapterReadRuleDto: UpdateChapterReadRuleDto
+    updateChapterReadRuleDto: UpdateChapterReadRuleDto,
   ) {
-    const { ids, readRule } = updateChapterReadRuleDto;
+    const { ids, readRule } = updateChapterReadRuleDto
 
     return this.updateMany({
       where: {
@@ -241,7 +241,7 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
       data: {
         readRule,
       },
-    });
+    })
   }
 
   /**
@@ -251,12 +251,12 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
    */
   async deleteComicChapter(id: number) {
     // 验证章节是否存在
-    const existingChapter = await this.findById({ id });
+    const existingChapter = await this.findById({ id })
     if (!existingChapter) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
 
-    return this.deleteById({ id });
+    return this.deleteById({ id })
   }
 
   /**
@@ -270,136 +270,144 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
       select: {
         contents: true,
       },
-    });
+    })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
 
-    return JSON.parse(chapter.contents);
+    return chapter.contents ? JSON.parse(chapter.contents) : []
   }
 
   /**
    * 添加章节内容
    */
   async addChapterContent(body: AddChapterContentDto) {
-    const { id, content, index } = body;
+    const { id, content, index } = body
     const chapter = await this.findById({
       id,
       select: {
         contents: true,
       },
-    });
+    })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
 
-    const contents: string[] = JSON.parse(chapter.contents);
+    const contents: string[] = chapter.contents
+      ? JSON.parse(chapter.contents)
+      : []
 
     // 添加内容到指定位置或末尾
     if (index !== undefined && index >= 0 && index <= contents.length) {
-      contents.splice(index, 0, content);
+      contents.splice(index, 0, content)
     } else {
-      contents.push(content);
+      contents.push(content)
     }
 
     // 更新数据库
     await this.updateById({
       id,
       data: { contents: JSON.stringify(contents) },
-    });
+    })
 
-    return contents;
+    return contents
   }
 
   /**
    * 更新章节内容
    */
   async updateChapterContent(body: UpdateChapterContentDto) {
-    const { id, index, content } = body;
+    const { id, index, content } = body
     const chapter = await this.findById({
       id,
       select: {
         contents: true,
       },
-    });
+    })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
 
-    const contents: string[] = JSON.parse(chapter.contents);
+    const contents: string[] = chapter.contents
+      ? JSON.parse(chapter.contents)
+      : []
 
     // 验证索引是否有效
     if (index < 0 || index >= contents.length) {
-      throw new BadRequestException('索引超出范围');
+      throw new BadRequestException('索引超出范围')
     }
 
     // 更新指定位置的内容
-    contents[index] = content;
+    contents[index] = content
 
     // 更新数据库
     await this.updateById({
       id,
       data: { contents: JSON.stringify(contents) },
-    });
+    })
 
-    return contents;
+    return contents
   }
 
   /**
    * 删除章节内容
    */
   async deleteChapterContent(body: DeleteChapterContentDto) {
-    const { id, index } = body;
+    const { id, index } = body
     const chapter = await this.findById({
       id,
       select: {
         contents: true,
       },
-    });
+    })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
 
-    const contents: string[] = JSON.parse(chapter.contents);
+    const contents: string[] = chapter.contents
+      ? JSON.parse(chapter.contents)
+      : []
 
     // 验证索引是否有效
     if (index < 0 || index >= contents.length) {
-      throw new BadRequestException('索引超出范围');
+      throw new BadRequestException('索引超出范围')
     }
 
     // 删除指定位置的内容
-    contents.splice(index, 1);
+    contents.splice(index, 1)
 
     // 更新数据库
     await this.updateById({
       id,
       data: { contents: JSON.stringify(contents) },
-    });
+    })
 
-    return contents;
+    return contents
   }
 
   /**
    * 移动章节内容（用于排序）
    */
   async moveChapterContent(body: MoveChapterContentDto) {
-    const { id, fromIndex, toIndex } = body;
+    const { id, fromIndex, toIndex } = body
     const chapter = await this.findById({
       id,
       select: {
         contents: true,
       },
-    });
+    })
 
     if (!chapter) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
 
-    const contents: string[] = JSON.parse(chapter.contents);
+    const contents: string[] = chapter.contents
+      ? JSON.parse(chapter.contents)
+      : []
 
     // 验证索引是否有效
     if (
@@ -408,43 +416,43 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
       toIndex < 0 ||
       toIndex >= contents.length
     ) {
-      throw new BadRequestException('索引超出范围');
+      throw new BadRequestException('索引超出范围')
     }
 
     // 移动内容
-    const [movedContent] = contents.splice(fromIndex, 1);
-    contents.splice(toIndex, 0, movedContent);
+    const [movedContent] = contents.splice(fromIndex, 1)
+    contents.splice(toIndex, 0, movedContent)
 
     // 更新数据库
     await this.updateById({
       id,
       data: { contents: JSON.stringify(contents) },
-    });
+    })
 
-    return contents;
+    return contents
   }
 
   /**
    * 批量更新章节内容
    */
   async batchUpdateChapterContents(body: BatchUpdateChapterContentsDto) {
-    const { id, contents } = body;
+    const { id, contents } = body
 
     if (!(await this.exists({ id }))) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
 
     if (!Array.isArray(contents)) {
-      throw new BadRequestException('contents数据格式不正确');
+      throw new BadRequestException('contents数据格式不正确')
     }
 
     // 更新数据库
     await this.updateById({
       id,
       data: { contents: JSON.stringify(contents) },
-    });
+    })
 
-    return contents;
+    return contents
   }
 
   /**
@@ -452,14 +460,14 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
    */
   async clearChapterContents(id: number) {
     if (!(await this.exists({ id }))) {
-      throw new BadRequestException('章节不存在');
+      throw new BadRequestException('章节不存在')
     }
     // 更新数据库
     await this.updateById({
       id,
       data: { contents: '[]' },
-    });
-    return id;
+    })
+    return id
   }
 
   /**
@@ -468,59 +476,59 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
    * @returns 交换结果
    */
   async swapChapterNumbers(swapChapterNumberDto: OrderDto) {
-    const { targetId, dragId } = swapChapterNumberDto;
+    const { targetId, dragId } = swapChapterNumberDto
 
     // 验证两个章节ID不能相同
     if (targetId === dragId) {
-      throw new BadRequestException('不能交换相同的章节');
+      throw new BadRequestException('不能交换相同的章节')
     }
 
     // 获取两个章节的信息
     const [targetChapter, dragChapter] = await Promise.all([
       this.findById({ id: targetId }),
       this.findById({ id: dragId }),
-    ]);
+    ])
 
     // 验证章节是否存在
     if (!targetChapter) {
-      throw new BadRequestException(`章节ID ${targetId} 不存在`);
+      throw new BadRequestException(`章节ID ${targetId} 不存在`)
     }
     if (!dragChapter) {
-      throw new BadRequestException(`章节ID ${dragId} 不存在`);
+      throw new BadRequestException(`章节ID ${dragId} 不存在`)
     }
 
     // 验证两个章节是否属于同一漫画
     if (targetChapter.comicId !== dragChapter.comicId) {
-      throw new BadRequestException('只能交换同一漫画下的章节号');
+      throw new BadRequestException('只能交换同一漫画下的章节号')
     }
 
     // 验证两个章节是否属于同一版本（都有版本ID或都没有版本ID）
     if (targetChapter.versionId !== dragChapter.versionId) {
-      throw new BadRequestException('只能交换同一版本下的章节号');
+      throw new BadRequestException('只能交换同一版本下的章节号')
     }
 
     // 使用事务确保数据一致性
-    return this.prisma.$transaction(async tx => {
+    return this.prisma.$transaction(async (tx) => {
       // 临时章节号，避免唯一约束冲突
-      const tempChapterNumber = -Math.random() * 1000000;
+      const tempChapterNumber = -Math.random() * 1000000
 
       // 第一步：将拖拽章节的章节号设为临时值
       await tx.workComicChapter.update({
         where: { id: dragId },
         data: { chapterNumber: tempChapterNumber },
-      });
+      })
 
       // 第二步：将目标章节的章节号设为拖拽章节的原章节号
       await tx.workComicChapter.update({
         where: { id: targetId },
         data: { chapterNumber: dragChapter.chapterNumber },
-      });
+      })
 
       // 第三步：将拖拽章节的章节号设为目标章节的原章节号
       await tx.workComicChapter.update({
         where: { id: dragId },
         data: { chapterNumber: targetChapter.chapterNumber },
-      });
+      })
 
       return {
         message: '章节号交换成功',
@@ -536,7 +544,7 @@ export class WorkComicChapterService extends BaseRepositoryService<'WorkComicCha
             newChapterNumber: targetChapter.chapterNumber,
           },
         },
-      };
-    });
+      }
+    })
   }
 }

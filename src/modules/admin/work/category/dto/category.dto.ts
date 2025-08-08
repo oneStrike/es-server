@@ -3,14 +3,14 @@ import {
   OmitType,
   PartialType,
   PickType,
-} from '@nestjs/swagger';
+} from '@nestjs/swagger'
 import {
   ValidateBoolean,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { IdDto } from '@/common/dto/id.dto';
-import { PageDto } from '@/common/dto/page.dto';
+} from '@/common/decorators/validate.decorator'
+import { IdDto } from '@/common/dto/id.dto'
+import { PageDto } from '@/common/dto/page.dto'
 
 /**
  * 分类基础 DTO
@@ -22,7 +22,7 @@ export class BaseCategoryDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ValidateString({
     description: '分类名称',
@@ -30,7 +30,7 @@ export class BaseCategoryDto {
     required: true,
     maxLength: 20,
   })
-  name!: string;
+  name!: string
 
   @ValidateString({
     description: '分类图标URL',
@@ -38,7 +38,7 @@ export class BaseCategoryDto {
     required: false,
     maxLength: 200,
   })
-  icon?: string;
+  icon?: string
 
   @ValidateNumber({
     description: '人气值',
@@ -46,7 +46,7 @@ export class BaseCategoryDto {
     required: false,
     min: 0,
   })
-  popularity!: number;
+  popularity!: number
 
   @ValidateNumber({
     description: '辅助人气值',
@@ -54,7 +54,7 @@ export class BaseCategoryDto {
     required: false,
     min: 0,
   })
-  popularityWeight!: number;
+  popularityWeight!: number
 
   @ValidateNumber({
     description: '排序值',
@@ -63,7 +63,7 @@ export class BaseCategoryDto {
     min: 0,
     max: 32767,
   })
-  order!: number;
+  order!: number
 
   @ValidateNumber({
     description: '小说数量',
@@ -71,7 +71,7 @@ export class BaseCategoryDto {
     required: false,
     min: 0,
   })
-  novelCount!: number;
+  novelCount!: number
 
   @ValidateNumber({
     description: '漫画数量',
@@ -79,7 +79,7 @@ export class BaseCategoryDto {
     required: false,
     min: 0,
   })
-  comicCount!: number;
+  comicCount!: number
 
   @ValidateNumber({
     description: '图片数量',
@@ -87,7 +87,7 @@ export class BaseCategoryDto {
     required: false,
     min: 0,
   })
-  imageSetCount!: number;
+  imageSetCount!: number
 
   @ValidateNumber({
     description: '插画数量',
@@ -95,14 +95,14 @@ export class BaseCategoryDto {
     required: false,
     min: 0,
   })
-  illustrationCount!: number;
+  illustrationCount!: number
 
   @ValidateBoolean({
     description: '是否启用',
     example: true,
     required: false,
   })
-  isEnabled!: boolean;
+  isEnabled!: boolean
 
   @ValidateNumber({
     description: '应用类型',
@@ -111,21 +111,21 @@ export class BaseCategoryDto {
     min: 1,
     max: 32767,
   })
-  contentTypes!: number;
+  contentTypes!: number
 
   @ValidateString({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
-  createdAt!: string;
+  createdAt!: string
 
   @ValidateString({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
-  updatedAt!: string;
+  updatedAt!: string
 }
 
 /**
@@ -156,9 +156,9 @@ export class UpdateCategoryDto extends IntersectionType(
       'comicCount',
       'imageSetCount',
       'illustrationCount',
-    ])
+    ]),
   ),
-  IdDto
+  IdDto,
 ) {}
 
 /**
@@ -166,5 +166,5 @@ export class UpdateCategoryDto extends IntersectionType(
  */
 export class QueryCategoryDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BaseCategoryDto), ['name', 'isEnabled', 'contentTypes'])
+  PickType(PartialType(BaseCategoryDto), ['name', 'isEnabled', 'contentTypes']),
 ) {}

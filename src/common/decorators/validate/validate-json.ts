@@ -1,9 +1,9 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger';
-import type { ValidateJsonOptions } from './types';
-import { applyDecorators } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsJSON, IsOptional } from 'class-validator';
+import type { ApiPropertyOptions } from '@nestjs/swagger'
+import type { ValidateJsonOptions } from './types'
+import { applyDecorators } from '@nestjs/common'
+import { ApiProperty } from '@nestjs/swagger'
+import { Transform } from 'class-transformer'
+import { IsJSON, IsOptional } from 'class-validator'
 
 /**
  * JSON字符串验证装饰器
@@ -36,7 +36,7 @@ import { IsJSON, IsOptional } from 'class-validator';
 export function ValidateJson(options: ValidateJsonOptions) {
   // 参数验证
   if (!options.description) {
-    throw new Error('ValidateJson: description is required');
+    throw new Error('ValidateJson: description is required')
   }
 
   // 构建API属性配置
@@ -48,17 +48,17 @@ export function ValidateJson(options: ValidateJsonOptions) {
     nullable: !(options.required ?? true),
     type: String,
     format: 'json',
-  };
+  }
 
   // 基础装饰器
   const decorators = [
     ApiProperty(apiPropertyOptions),
     IsJSON({ message: '必须是有效的JSON字符串格式' }),
-  ];
+  ]
 
   // 可选字段处理
   if (!(options.required ?? true)) {
-    decorators.push(IsOptional());
+    decorators.push(IsOptional())
   }
 
   // 转换逻辑
@@ -66,34 +66,35 @@ export function ValidateJson(options: ValidateJsonOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null) &&
-        options.default !== undefined
+        (value === undefined || value === null)
+        && options.default !== undefined
       ) {
-        return options.default;
+        return options.default
       }
 
       // 对象转JSON字符串
       if (typeof value === 'object' && value !== null) {
         try {
-          return JSON.stringify(value);
-        } catch {
-          return value; // 保持原值，让验证器处理错误
+          return JSON.stringify(value)
+        }
+        catch {
+          return value // 保持原值，让验证器处理错误
         }
       }
 
       // 字符串trim处理
       if (typeof value === 'string') {
-        return value.trim();
+        return value.trim()
       }
 
-      return value;
-    })
-  );
+      return value
+    }),
+  )
 
   // 自定义转换函数
   if (options.transform) {
-    decorators.push(Transform(options.transform));
+    decorators.push(Transform(options.transform))
   }
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }

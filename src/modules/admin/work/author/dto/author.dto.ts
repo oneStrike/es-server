@@ -3,7 +3,7 @@ import {
   OmitType,
   PartialType,
   PickType,
-} from '@nestjs/swagger';
+} from '@nestjs/swagger'
 import {
   ValidateArray,
   ValidateBoolean,
@@ -11,10 +11,10 @@ import {
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { IdDto } from '@/common/dto/id.dto';
-import { PageDto } from '@/common/dto/page.dto';
-import { AuthorGenderEnum, AuthorRoleEnum } from '../author.constant';
+} from '@/common/decorators/validate.decorator'
+import { IdDto } from '@/common/dto/id.dto'
+import { PageDto } from '@/common/dto/page.dto'
+import { AuthorGenderEnum, AuthorRoleEnum } from '../author.constant'
 
 /**
  * 作者基础DTO
@@ -26,28 +26,28 @@ export class BaseAuthorDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ValidateString({
     description: '作者姓名',
     example: '村上春树',
     required: true,
   })
-  name!: string;
+  name!: string
 
   @ValidateString({
     description: '作者头像URL',
     example: 'https://example.com/avatar.jpg',
     required: false,
   })
-  avatar?: string;
+  avatar?: string
 
   @ValidateString({
     description: '作者描述',
     example: '日本著名小说家，代表作有《挪威的森林》等',
     required: false,
   })
-  description?: string;
+  description?: string
 
   @ValidateBoolean({
     description: '启用状态（true: 启用, false: 禁用）',
@@ -55,7 +55,7 @@ export class BaseAuthorDto {
     required: true,
     default: true,
   })
-  isEnabled!: boolean;
+  isEnabled!: boolean
 
   @ValidateNumber({
     description: '作者身份角色（位运算：1=作家, 2=插画家, 4=漫画家, 8=模特）',
@@ -64,14 +64,14 @@ export class BaseAuthorDto {
     min: 0,
     default: 0,
   })
-  roles?: number;
+  roles?: number
 
   @ValidateString({
     description: '国籍',
     example: '日本',
     required: false,
   })
-  nationality?: string;
+  nationality?: string
 
   @ValidateEnum({
     description: '性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）',
@@ -80,35 +80,35 @@ export class BaseAuthorDto {
     enum: AuthorGenderEnum,
     default: AuthorGenderEnum.UNKNOWN,
   })
-  gender!: AuthorGenderEnum;
+  gender!: AuthorGenderEnum
 
   @ValidateString({
     description: '社交媒体链接（JSON格式存储多个平台链接）',
     example: '{"twitter":"@author","instagram":"@author_ig"}',
     required: false,
   })
-  socialLinks?: string;
+  socialLinks?: string
 
   @ValidateString({
     description: '管理员备注',
     example: '优秀作者，作品质量高',
     required: false,
   })
-  remark?: string;
+  remark?: string
 
   @ValidateDate({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  createdAt!: Date;
+  createdAt!: Date
 
   @ValidateDate({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  updatedAt!: Date;
+  updatedAt!: Date
 
   @ValidateNumber({
     description: '作品数量（冗余字段，用于提升查询性能）',
@@ -117,7 +117,7 @@ export class BaseAuthorDto {
     min: 0,
     default: 0,
   })
-  worksCount!: number;
+  worksCount!: number
 
   @ValidateNumber({
     description: '粉丝数量（冗余字段，用于前台展示）',
@@ -126,7 +126,7 @@ export class BaseAuthorDto {
     min: 0,
     default: 0,
   })
-  followersCount!: number;
+  followersCount!: number
 
   @ValidateBoolean({
     description: '是否为推荐作者（用于前台推荐展示）',
@@ -134,7 +134,7 @@ export class BaseAuthorDto {
     required: true,
     default: false,
   })
-  featured!: boolean;
+  featured!: boolean
 }
 
 /**
@@ -161,9 +161,9 @@ export class UpdateAuthorDto extends IntersectionType(
       'updatedAt',
       'worksCount',
       'followersCount',
-    ])
+    ]),
   ),
-  IdDto
+  IdDto,
 ) {}
 
 /**
@@ -178,14 +178,14 @@ export class QueryAuthorDto extends IntersectionType(
     'nationality',
     'gender',
     'featured',
-  ])
+  ]),
 ) {
   @ValidateString({
     description: '作者姓名（模糊搜索）',
     example: '村上',
     required: false,
   })
-  name?: string;
+  name?: string
 }
 
 /**
@@ -200,7 +200,7 @@ export class UpdateAuthorFeaturedDto extends PickType(BaseAuthorDto, [
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 }
 
 /**

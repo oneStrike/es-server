@@ -1,7 +1,7 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { AuthGuard } from '@nestjs/passport';
-import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator';
+import { ExecutionContext, Injectable } from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
+import { AuthGuard } from '@nestjs/passport'
+import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator'
 
 /**
  * AdminJwtAuthGuard 类
@@ -16,7 +16,7 @@ export class AdminJwtAuthGuard extends AuthGuard('admin-jwt') {
    * @param reflector 用于获取路由元数据的 Reflector 服务
    */
   constructor(private reflector: Reflector) {
-    super();
+    super()
   }
 
   /**
@@ -29,13 +29,13 @@ export class AdminJwtAuthGuard extends AuthGuard('admin-jwt') {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
-    ]);
+    ])
 
     // 如果路由被标记为公共，则跳过认证
     if (isPublic) {
-      return true;
+      return true
     }
     // 否则调用父类的 canActivate 方法进行认证
-    return super.canActivate(context);
+    return super.canActivate(context)
   }
 }

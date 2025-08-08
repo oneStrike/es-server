@@ -2,7 +2,7 @@ export async function createInitialClientConfig(prisma: any) {
   // 检查是否已存在配置
   const existingConfig = await prisma.clientConfig.findFirst({
     where: { isActive: true },
-  });
+  })
 
   if (!existingConfig) {
     await prisma.clientConfig.create({
@@ -26,8 +26,6 @@ export async function createInitialClientConfig(prisma: any) {
         createdBy: 1, // 管理员创建
         updatedBy: 1,
       },
-    });
+    })
   }
-
-  console.log('✅ 客户端配置种子数据初始化完成');
 }

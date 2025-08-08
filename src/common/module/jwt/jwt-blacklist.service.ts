@@ -1,6 +1,6 @@
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
-import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable } from '@nestjs/common'
+import { Cache } from 'cache-manager'
 
 /**
  * JWT黑名单服务
@@ -10,8 +10,8 @@ import { Cache } from 'cache-manager';
 @Injectable()
 export class JwtBlacklistService {
   // 黑名单缓存前缀
-  private readonly ADMIN_BLACKLIST_PREFIX = 'jwt:blacklist:admin:';
-  private readonly CLIENT_BLACKLIST_PREFIX = 'jwt:blacklist:client:';
+  private readonly ADMIN_BLACKLIST_PREFIX = 'jwt:blacklist:admin:'
+  private readonly CLIENT_BLACKLIST_PREFIX = 'jwt:blacklist:client:'
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
@@ -22,13 +22,13 @@ export class JwtBlacklistService {
    */
   async addToAdminBlacklist(
     token: string,
-    expiresIn: number = 7 * 24 * 60 * 60
+    expiresIn: number = 7 * 24 * 60 * 60,
   ): Promise<void> {
     await this.cacheManager.set(
       this.ADMIN_BLACKLIST_PREFIX + token,
       true,
-      expiresIn * 1000
-    );
+      expiresIn * 1000,
+    )
   }
 
   /**
@@ -38,13 +38,13 @@ export class JwtBlacklistService {
    */
   async addToClientBlacklist(
     token: string,
-    expiresIn: number = 7 * 24 * 60 * 60
+    expiresIn: number = 7 * 24 * 60 * 60,
   ): Promise<void> {
     await this.cacheManager.set(
       this.CLIENT_BLACKLIST_PREFIX + token,
       true,
-      expiresIn * 1000
-    );
+      expiresIn * 1000,
+    )
   }
 
   /**
@@ -54,9 +54,9 @@ export class JwtBlacklistService {
    */
   async isInAdminBlacklist(token: string): Promise<boolean> {
     const result = await this.cacheManager.get(
-      this.ADMIN_BLACKLIST_PREFIX + token
-    );
-    return result === true;
+      this.ADMIN_BLACKLIST_PREFIX + token,
+    )
+    return result === true
   }
 
   /**
@@ -66,9 +66,9 @@ export class JwtBlacklistService {
    */
   async isInClientBlacklist(token: string): Promise<boolean> {
     const result = await this.cacheManager.get(
-      this.CLIENT_BLACKLIST_PREFIX + token
-    );
-    return result === true;
+      this.CLIENT_BLACKLIST_PREFIX + token,
+    )
+    return result === true
   }
 
   /**
@@ -76,7 +76,7 @@ export class JwtBlacklistService {
    * @param token JWT令牌
    */
   async removeFromAdminBlacklist(token: string): Promise<void> {
-    await this.cacheManager.del(this.ADMIN_BLACKLIST_PREFIX + token);
+    await this.cacheManager.del(this.ADMIN_BLACKLIST_PREFIX + token)
   }
 
   /**
@@ -84,6 +84,6 @@ export class JwtBlacklistService {
    * @param token JWT令牌
    */
   async removeFromClientBlacklist(token: string): Promise<void> {
-    await this.cacheManager.del(this.CLIENT_BLACKLIST_PREFIX + token);
+    await this.cacheManager.del(this.CLIENT_BLACKLIST_PREFIX + token)
   }
 }

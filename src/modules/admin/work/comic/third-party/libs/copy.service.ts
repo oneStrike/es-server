@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import axios, { AxiosInstance } from 'axios';
+import { Injectable } from '@nestjs/common'
+import axios, { AxiosInstance } from 'axios'
 
 /**
  * 拷贝漫画平台服务
@@ -7,19 +7,19 @@ import axios, { AxiosInstance } from 'axios';
  */
 @Injectable()
 export class CopyService {
-  private readonly httpClient: AxiosInstance;
-  private readonly baseUrl = 'https://api.copy-manga.com';
+  private readonly httpClient: AxiosInstance
+  private readonly baseUrl = 'https://api.copy-manga.com'
   private readonly headers = {
     platform: 3,
     version: '2.2.5',
-  };
+  }
 
   constructor() {
     this.httpClient = axios.create({
       baseURL: this.baseUrl,
       headers: this.headers,
       timeout: 10000,
-    });
+    })
   }
 
   /**
@@ -35,10 +35,10 @@ export class CopyService {
           limit: 30,
           offset: 0,
         },
-      });
+      })
 
       if (data.code !== 200) {
-        return { code: 201 };
+        return { code: 201 }
       }
 
       return {
@@ -52,9 +52,9 @@ export class CopyService {
           })),
           source: '拷贝',
         })),
-      };
+      }
     } catch (error) {
-      return { code: 201 };
+      return { code: 201 }
     }
   }
 
@@ -64,7 +64,7 @@ export class CopyService {
    * @returns 漫画详情
    */
   async parseWord(id: string) {
-    return this.wordDetail(id);
+    return this.wordDetail(id)
   }
 
   /**
@@ -75,13 +75,13 @@ export class CopyService {
   async wordDetail(path: string) {
     try {
       const { data } = await this.httpClient.get(
-        `/api/v3/comic2/${path}?in_mainland=true&platform=3`
-      );
+        `/api/v3/comic2/${path}?in_mainland=true&platform=3`,
+      )
       return data.code !== 200
         ? { code: 201 }
-        : { code: 200, data: data.results };
+        : { code: 200, data: data.results }
     } catch (error) {
-      return { code: 201 };
+      return { code: 201 }
     }
   }
 
@@ -93,13 +93,13 @@ export class CopyService {
   async chapterList(path: string) {
     try {
       const { data } = await this.httpClient.get(
-        `/api/v3/comic/${path}/group/default/chapters?limit=500&offset=0&in_mainland=true&platform=3`
-      );
+        `/api/v3/comic/${path}/group/default/chapters?limit=500&offset=0&in_mainland=true&platform=3`,
+      )
       return data.code !== 200
         ? { code: 201 }
-        : { code: 200, data: data.results.list };
+        : { code: 200, data: data.results.list }
     } catch (error) {
-      return { code: 201 };
+      return { code: 201 }
     }
   }
 
@@ -112,13 +112,13 @@ export class CopyService {
   async chapterContent(path: string, chapterId: string) {
     try {
       const { data } = await this.httpClient.get(
-        `/api/v3/comic/${path}/chapter2/${chapterId}?in_mainland=true&platform=3`
-      );
+        `/api/v3/comic/${path}/chapter2/${chapterId}?in_mainland=true&platform=3`,
+      )
       return data.code !== 200
         ? { code: 201 }
-        : { code: 200, data: data.results };
+        : { code: 200, data: data.results }
     } catch (error) {
-      return { code: 201 };
+      return { code: 201 }
     }
   }
 }

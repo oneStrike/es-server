@@ -1,8 +1,8 @@
-import { Controller, Get, ParseIntPipe, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { QueryRequestLogDto, RequestLogDto } from './dto/request-log.dto';
-import { RequestLogService } from './request-log.service';
+import { Controller, Get, ParseIntPipe, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { QueryRequestLogDto, RequestLogDto } from './dto/request-log.dto'
+import { RequestLogService } from './request-log.service'
 
 /**
  * 请求日志控制器
@@ -25,7 +25,7 @@ export class RequestLogController {
     model: RequestLogDto,
   })
   async findRequestLogs(@Query() queryDto: QueryRequestLogDto) {
-    return this.requestLogService.findRequestLogs(queryDto);
+    return this.requestLogService.findRequestLogs(queryDto)
   }
 
   /**
@@ -40,6 +40,6 @@ export class RequestLogController {
     model: RequestLogDto,
   })
   async findRequestLogById(@Query('id', ParseIntPipe) id: number) {
-    return this.requestLogService.findRequestLogById(id);
+    return this.requestLogService.findRequestLogById(id)
   }
 }

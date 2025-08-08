@@ -75,20 +75,18 @@ export async function createInitialClientNotice(prisma: any) {
       showAsPopup: false,
       order: 60,
     },
-  ];
+  ]
 
   for (const item of initData) {
     // 由于没有唯一约束，我们使用title作为判断条件
     const existingNotice = await prisma.clientNotice.findFirst({
       where: { title: item.title },
-    });
+    })
 
     if (!existingNotice) {
       await prisma.clientNotice.create({
         data: item,
-      });
+      })
     }
   }
-
-  console.log('✅ 客户端通知种子数据初始化完成');
 }

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger'
 
 export class PlatformResponseDto {
   @ApiProperty({
@@ -7,7 +7,7 @@ export class PlatformResponseDto {
     type: 'string',
     required: true,
   })
-  name: string;
+  name: string
 
   @ApiProperty({
     description: '平台名称code',
@@ -15,7 +15,7 @@ export class PlatformResponseDto {
     type: 'string',
     required: true,
   })
-  code: string;
+  code: string
 }
 
 export class SearchComicItemDto {
@@ -24,33 +24,33 @@ export class SearchComicItemDto {
     example: 'shingeki-no-kyojin',
     type: 'string',
   })
-  id: string;
+  id: string
 
   @ApiProperty({
     description: '漫画名称',
     example: '进击的巨人',
     type: 'string',
   })
-  name: string;
+  name: string
 
   @ApiProperty({
     description: '封面图片URL',
     example: 'https://example.com/cover.jpg',
     type: 'string',
   })
-  cover: string;
+  cover: string
 
   @ApiProperty({
     description: '作者列表',
     type: [String],
     example: ['谏山创'],
   })
-  author: string[];
+  author: string[]
 
   @ApiProperty({
     description: '来源平台',
     example: '拷贝',
     type: 'string',
   })
-  source: string;
+  source: string
 }

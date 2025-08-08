@@ -1,8 +1,8 @@
 import {
   ValidateBoolean,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { PageDto } from '@/common/dto/page.dto';
+} from '@/common/decorators/validate.decorator'
+import { PageDto } from '@/common/dto/page.dto'
 
 /**
  * 查询数据字典DTO
@@ -14,7 +14,7 @@ export class QueryDictionaryDto extends PageDto {
     required: false,
     maxLength: 50,
   })
-  name?: string;
+  name?: string
 
   @ValidateString({
     description: '字典编码（模糊查询）',
@@ -22,14 +22,14 @@ export class QueryDictionaryDto extends PageDto {
     required: false,
     maxLength: 50,
   })
-  code?: string;
+  code?: string
 
   @ValidateBoolean({
     description: '状态筛选',
     example: true,
     required: false,
   })
-  isEnabled?: boolean;
+  isEnabled?: boolean
 }
 
 /**
@@ -42,7 +42,7 @@ export class QueryDictionaryItemDto {
     required: true,
     maxLength: 500,
   })
-  dictionaryCode!: string;
+  dictionaryCode!: string
 
   @ValidateString({
     description: '字典项名称（模糊查询）',
@@ -50,7 +50,7 @@ export class QueryDictionaryItemDto {
     required: false,
     maxLength: 50,
   })
-  name?: string;
+  name?: string
 
   @ValidateString({
     description: '字典项编码（模糊查询）',
@@ -58,12 +58,12 @@ export class QueryDictionaryItemDto {
     required: false,
     maxLength: 50,
   })
-  code?: string;
+  code?: string
 
   @ValidateBoolean({
     description: '状态筛选',
     example: true,
     required: false,
   })
-  isEnabled?: boolean;
+  isEnabled?: boolean
 }

@@ -5,19 +5,19 @@ import {
   ParseIntPipe,
   Post,
   Query,
-} from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { CountDto } from '@/common/dto/batch.dto';
-import { IdDto, IdsDto } from '@/common/dto/id.dto';
+} from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { CountDto } from '@/common/dto/batch.dto'
+import { IdDto, IdsDto } from '@/common/dto/id.dto'
 import {
   BasePageConfigFieldsDto,
   ClientPageConfigPageResponseDto,
   ClientPageConfigResponseDto,
   QueryClientPageConfigDto,
   UpdateClientPageConfigDto,
-} from './dto/page.dto';
-import { ClientPageConfigService } from './page.service';
+} from './dto/page.dto'
+import { ClientPageConfigService } from './page.service'
 
 /**
  * 客户端页面配置控制器
@@ -37,7 +37,7 @@ export class ClientPageConfigController {
     model: IdDto,
   })
   async create(@Body() body: BasePageConfigFieldsDto) {
-    return this.pageConfigService.createPageConfig(body);
+    return this.pageConfigService.createPageConfig(body)
   }
 
   /**
@@ -49,7 +49,7 @@ export class ClientPageConfigController {
     model: ClientPageConfigPageResponseDto,
   })
   async findPage(@Query() query: QueryClientPageConfigDto) {
-    return this.pageConfigService.findPageConfigPage(query);
+    return this.pageConfigService.findPageConfigPage(query)
   }
 
   /**
@@ -61,7 +61,7 @@ export class ClientPageConfigController {
     model: ClientPageConfigResponseDto,
   })
   async findDetail(@Query('id', ParseIntPipe) id: number) {
-    return this.pageConfigService.findById({ id });
+    return this.pageConfigService.findById({ id })
   }
 
   /**
@@ -73,7 +73,7 @@ export class ClientPageConfigController {
     model: ClientPageConfigResponseDto,
   })
   async findByCode(@Query('pageCode') pageCode: string) {
-    return this.pageConfigService.findByUnique({ where: { pageCode } });
+    return this.pageConfigService.findByUnique({ where: { pageCode } })
   }
 
   /**
@@ -85,8 +85,8 @@ export class ClientPageConfigController {
     model: IdDto,
   })
   async update(@Body() body: UpdateClientPageConfigDto) {
-    const { id, ...data } = body;
-    return this.pageConfigService.updatePage(body);
+    const { id, ...data } = body
+    return this.pageConfigService.updatePage(body)
   }
 
   /**
@@ -100,6 +100,6 @@ export class ClientPageConfigController {
   async batchDelete(@Body() body: IdsDto) {
     return this.pageConfigService.softDeleteMany({
       id: { in: body.ids },
-    });
+    })
   }
 }

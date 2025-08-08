@@ -1,10 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
-import { IsString, MaxLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger'
+import { Exclude } from 'class-transformer'
+import { IsString, MaxLength } from 'class-validator'
 import {
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
+} from '@/common/decorators/validate.decorator'
 
 export class ClientUserDto {
   @ValidateNumber({
@@ -13,7 +13,7 @@ export class ClientUserDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ApiProperty({
     description: '用户名',
@@ -21,43 +21,43 @@ export class ClientUserDto {
   })
   @IsString()
   @MaxLength(20)
-  username!: string;
+  username!: string
 
   @ApiProperty({
     description: '密码',
     example: 'Aa@123456',
   })
   @Exclude()
-  password: string;
+  password: string
 
   @ApiProperty({
     description: '用户头像',
   })
-  avatar?: string;
+  avatar?: string
 
   @ApiProperty({
     description: '用户手机号',
     example: '13800138000',
   })
-  mobile?: string;
+  mobile?: string
 
   @ApiProperty({
     description: '用户状态',
     example: true,
   })
-  status: boolean;
+  status: boolean
 
   @ApiProperty({
     description: '创建时间',
     example: '2021-01-01 00:00:00',
   })
-  createdAt: Date;
+  createdAt: Date
 
   @ApiProperty({
     description: '更新时间',
     example: '2021-01-01 00:00:00',
   })
-  updatedAt: Date;
+  updatedAt: Date
 }
 
 export class ClientLoginDto {
@@ -66,14 +66,14 @@ export class ClientLoginDto {
     example: 'client001',
     required: true,
   })
-  username!: string;
+  username!: string
 
   @ValidateString({
     description: '密码',
     example: 'Aa@123456',
     required: true,
   })
-  password!: string;
+  password!: string
 }
 
 export class ClientRegisterDto {
@@ -82,21 +82,21 @@ export class ClientRegisterDto {
     example: 'client001',
     required: true,
   })
-  username!: string;
+  username!: string
 
   @ValidateString({
     description: '密码',
     example: 'Aa@123456',
     required: true,
   })
-  password!: string;
+  password!: string
 
   @ValidateString({
     description: '手机号',
     example: '13800138000',
     required: false,
   })
-  mobile?: string;
+  mobile?: string
 }
 
 export class RefreshTokenDto {
@@ -105,5 +105,5 @@ export class RefreshTokenDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
   })
-  refreshToken!: string;
+  refreshToken!: string
 }

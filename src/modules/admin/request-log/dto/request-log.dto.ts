@@ -1,9 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger'
 import {
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { PageDto } from '@/common/dto/page.dto';
+} from '@/common/decorators/validate.decorator'
+import { PageDto } from '@/common/dto/page.dto'
 
 /**
  * 系统请求日志响应DTO
@@ -14,98 +14,98 @@ export class RequestLogDto {
     description: '主键ID',
     example: 1,
   })
-  id!: number;
+  id!: number
 
   @ApiProperty({
     description: '用户名',
     example: 'admin001',
     required: false,
   })
-  username?: string;
+  username?: string
 
   @ApiProperty({
     description: '用户主键ID',
     example: 1,
     required: false,
   })
-  userId?: number;
+  userId?: number
 
   @ApiProperty({
     description: '调用IP地址',
     example: '192.168.1.100',
     required: true,
   })
-  ipAddress!: string;
+  ipAddress!: string
 
   @ApiProperty({
     description: 'IP映射地址',
     example: '北京市朝阳区',
     required: true,
   })
-  ipLocation!: string;
+  ipLocation!: string
 
   @ApiProperty({
     description: '响应状态码',
     example: 200,
     required: true,
   })
-  responseCode!: number;
+  responseCode!: number
 
   @ApiProperty({
     description: '响应描述',
     example: '请求成功',
     required: true,
   })
-  responseMessage!: string;
+  responseMessage!: string
 
   @ApiProperty({
     description: '请求方法',
     example: 'GET',
     required: true,
   })
-  httpMethod!: string;
+  httpMethod!: string
 
   @ApiProperty({
     description: '请求路径',
     example: '/api/admin/users',
     required: true,
   })
-  requestPath!: string;
+  requestPath!: string
 
   @ApiProperty({
     description: '接口描述信息',
     example: '获取用户列表',
     required: true,
   })
-  operationDescription!: string;
+  operationDescription!: string
 
   @ApiProperty({
     description: '浏览器信息标识',
     example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     required: true,
   })
-  userAgent!: string;
+  userAgent!: string
 
   @ApiProperty({
     description: '请求参数',
     example: '{"page": 1, "pageSize": 10}',
     required: false,
   })
-  requestParams?: string;
+  requestParams?: string
 
   @ApiProperty({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  createdAt!: Date;
+  createdAt!: Date
 
   @ApiProperty({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  updatedAt!: Date;
+  updatedAt!: Date
 }
 
 /**
@@ -119,7 +119,7 @@ export class CreateRequestLogDto {
     required: false,
     maxLength: 20,
   })
-  username?: string;
+  username?: string
 
   @ValidateNumber({
     description: '用户主键ID',
@@ -127,7 +127,7 @@ export class CreateRequestLogDto {
     required: false,
     min: 1,
   })
-  userId?: number;
+  userId?: number
 
   @ValidateString({
     description: '调用IP地址',
@@ -135,7 +135,7 @@ export class CreateRequestLogDto {
     required: true,
     maxLength: 20,
   })
-  ipAddress!: string;
+  ipAddress!: string
 
   @ValidateString({
     description: 'IP映射地址',
@@ -143,7 +143,7 @@ export class CreateRequestLogDto {
     required: true,
     maxLength: 300,
   })
-  ipLocation!: string;
+  ipLocation!: string
 
   @ValidateNumber({
     description: '响应状态码',
@@ -152,7 +152,7 @@ export class CreateRequestLogDto {
     min: 100,
     max: 599,
   })
-  responseCode!: number;
+  responseCode!: number
 
   @ValidateString({
     description: '响应描述',
@@ -160,7 +160,7 @@ export class CreateRequestLogDto {
     required: true,
     maxLength: 300,
   })
-  responseMessage!: string;
+  responseMessage!: string
 
   @ValidateString({
     description: '请求方法',
@@ -168,14 +168,14 @@ export class CreateRequestLogDto {
     required: true,
     maxLength: 10,
   })
-  httpMethod!: string;
+  httpMethod!: string
 
   @ValidateNumber({
     description: '请求耗时',
     example: 200,
     required: true,
   })
-  duration!: number;
+  duration!: number
 
   @ValidateString({
     description: '请求路径',
@@ -183,7 +183,7 @@ export class CreateRequestLogDto {
     required: true,
     maxLength: 100,
   })
-  requestPath!: string;
+  requestPath!: string
 
   @ValidateString({
     description: '接口描述信息',
@@ -191,7 +191,7 @@ export class CreateRequestLogDto {
     required: true,
     maxLength: 255,
   })
-  operationDescription!: string;
+  operationDescription!: string
 
   @ValidateString({
     description: '浏览器信息标识',
@@ -199,14 +199,14 @@ export class CreateRequestLogDto {
     required: true,
     maxLength: 1000,
   })
-  userAgent!: string;
+  userAgent!: string
 
   @ValidateString({
     description: '请求参数',
     example: '{"page": 1, "pageSize": 10}',
     required: false,
   })
-  requestParams?: string;
+  requestParams?: string
 }
 
 /**
@@ -220,7 +220,7 @@ export class QueryRequestLogDto extends PageDto {
     required: false,
     maxLength: 20,
   })
-  username?: string;
+  username?: string
 
   @ValidateNumber({
     description: '用户ID精确查询',
@@ -228,7 +228,7 @@ export class QueryRequestLogDto extends PageDto {
     required: false,
     min: 1,
   })
-  userId?: number;
+  userId?: number
 
   @ValidateNumber({
     description: '响应状态码',
@@ -237,7 +237,7 @@ export class QueryRequestLogDto extends PageDto {
     min: 100,
     max: 599,
   })
-  responseCode?: number;
+  responseCode?: number
 
   @ValidateString({
     description: '请求方法',
@@ -245,7 +245,7 @@ export class QueryRequestLogDto extends PageDto {
     required: false,
     maxLength: 10,
   })
-  httpMethod?: string;
+  httpMethod?: string
 
   @ValidateString({
     description: '请求路径模糊查询',
@@ -253,5 +253,5 @@ export class QueryRequestLogDto extends PageDto {
     required: false,
     maxLength: 100,
   })
-  requestPath?: string;
+  requestPath?: string
 }

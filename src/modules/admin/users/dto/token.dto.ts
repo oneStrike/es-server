@@ -1,5 +1,5 @@
-import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { ValidateString } from '@/common/decorators/validate.decorator';
+import { ApiProperty, OmitType } from '@nestjs/swagger'
+import { ValidateString } from '@/common/decorators/validate.decorator'
 
 export class TokenDto {
   @ValidateString({
@@ -7,14 +7,14 @@ export class TokenDto {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
   })
-  accessToken!: string;
+  accessToken!: string
 
   @ValidateString({
     description: '刷新令牌',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
   })
-  refreshToken!: string;
+  refreshToken!: string
 }
 
 export class RefreshTokenDto extends OmitType(TokenDto, ['accessToken']) {}
@@ -24,5 +24,5 @@ export class RefreshTokenResponseDto {
     description: '刷新令牌响应',
     type: TokenDto,
   })
-  tokens: TokenDto;
+  tokens: TokenDto
 }

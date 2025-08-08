@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { WorkComicChapterModule } from './chapter/comic-chapter.module';
-import { WorkComicModule } from './core/comic.module';
-import { WorkComicVersionModule } from './version/comic-version.module';
+import { Module } from '@nestjs/common'
+import { WorkComicChapterModule } from './chapter/comic-chapter.module'
+import { WorkComicModule } from './core/comic.module'
+import { WorkComicVersionModule } from './version/comic-version.module'
 
 /**
  * 漫画管理模块

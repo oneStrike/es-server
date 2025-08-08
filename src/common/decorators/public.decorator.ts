@@ -1,10 +1,10 @@
-import { SetMetadata } from '@nestjs/common';
+import { SetMetadata } from '@nestjs/common'
 
 /**
  * 用于标记公共路由的元数据键
  * 被标记为公共的路由将跳过 JWT 鉴权
  */
-export const IS_PUBLIC_KEY = 'isPublic';
+export const IS_PUBLIC_KEY = 'isPublic'
 
 /**
  * Public 装饰器
@@ -16,4 +16,4 @@ export const IS_PUBLIC_KEY = 'isPublic';
  * @Get('login')
  * login() { ... }
  */
-export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+export const Public = () => SetMetadata(IS_PUBLIC_KEY, true)

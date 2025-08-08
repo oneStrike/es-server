@@ -1,4 +1,4 @@
-import { ValidateString } from '@/common/decorators/validate.decorator';
+import { ValidateString } from '@/common/decorators/validate.decorator'
 
 export class CaptchaDto {
   @ValidateString({
@@ -6,7 +6,7 @@ export class CaptchaDto {
     example: '1234',
     required: true,
   })
-  id: string;
+  id: string
 
   @ValidateString({
     description: '验证码',
@@ -14,5 +14,5 @@ export class CaptchaDto {
       '<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"150\" height=\"50\"></svg></svg>',
     required: true,
   })
-  data: string;
+  data: string
 }

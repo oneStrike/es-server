@@ -1,13 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { ValidateBoolean } from '@/common/decorators/validate.decorator';
-import { IdsDto } from './id.dto';
+import { ApiProperty } from '@nestjs/swagger'
+import { ValidateBoolean } from '@/common/decorators/validate.decorator'
+import { IdsDto } from './id.dto'
 
 export class BatchOperationResultDto {
   @ApiProperty({
     description: '操作成功的数据量',
     example: true,
   })
-  count!: number;
+  count!: number
 }
 
 export class BatchEnabledDto extends IdsDto {
@@ -15,7 +15,7 @@ export class BatchEnabledDto extends IdsDto {
     description: '启用或者禁用',
     example: true,
   })
-  isEnabled!: boolean;
+  isEnabled!: boolean
 }
 
 export class BatchPublishDto extends IdsDto {
@@ -23,7 +23,7 @@ export class BatchPublishDto extends IdsDto {
     description: '发布或者取消发布',
     example: true,
   })
-  isPublished!: boolean;
+  isPublished!: boolean
 }
 
 export class CountDto {
@@ -31,5 +31,5 @@ export class CountDto {
     description: '操作成功的数据数量',
     example: 1,
   })
-  count!: number;
+  count!: number
 }

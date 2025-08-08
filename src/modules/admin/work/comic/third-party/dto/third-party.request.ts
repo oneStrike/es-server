@@ -1,4 +1,4 @@
-import { ValidateString } from '@/common/decorators/validate.decorator';
+import { ValidateString } from '@/common/decorators/validate.decorator'
 
 export class SearchComicRequestDto {
   @ValidateString({
@@ -7,7 +7,7 @@ export class SearchComicRequestDto {
     description: '搜索关键词',
     example: '进击的巨人',
   })
-  keyword!: string;
+  keyword!: string
 
   @ValidateString({
     required: true,
@@ -15,5 +15,5 @@ export class SearchComicRequestDto {
     description: '平台代码',
     example: 'copy',
   })
-  platform!: string;
+  platform!: string
 }

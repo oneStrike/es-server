@@ -1,8 +1,8 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger';
-import type { ValidateArrayOptions } from './types';
-import { applyDecorators } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import type { ApiPropertyOptions } from '@nestjs/swagger'
+import type { ValidateArrayOptions } from './types'
+import { applyDecorators } from '@nestjs/common'
+import { ApiProperty } from '@nestjs/swagger'
+import { Transform } from 'class-transformer'
 import {
   IsArray,
   IsBoolean,
@@ -14,7 +14,7 @@ import {
   MaxLength,
   MinLength,
   ValidateBy,
-} from 'class-validator';
+} from 'class-validator'
 
 /**
  * 通用数组验证装饰器
@@ -61,38 +61,38 @@ import {
 export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
   // 参数验证
   if (!options.description) {
-    throw new Error('ValidateArray: description is required');
+    throw new Error('ValidateArray: description is required')
   }
 
   if (!options.itemType) {
-    throw new Error('ValidateArray: itemType is required');
+    throw new Error('ValidateArray: itemType is required')
   }
 
   if (
-    options.minLength !== undefined &&
-    options.maxLength !== undefined &&
-    options.minLength > options.maxLength
+    options.minLength !== undefined
+    && options.maxLength !== undefined
+    && options.minLength > options.maxLength
   ) {
     throw new Error(
-      'ValidateArray: minLength should not be greater than maxLength'
-    );
+      'ValidateArray: minLength should not be greater than maxLength',
+    )
   }
 
   // 根据itemType确定API文档中的类型
   const getApiType = () => {
     switch (options.itemType) {
       case 'string':
-        return String;
+        return String
       case 'number':
-        return Number;
+        return Number
       case 'boolean':
-        return Boolean;
+        return Boolean
       case 'object':
-        return Object;
+        return Object
       default:
-        return String;
+        return String
     }
-  };
+  }
 
   // 构建API属性配置
   const apiPropertyOptions: ApiPropertyOptions = {
@@ -103,14 +103,14 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
     nullable: !(options.required ?? true),
     type: getApiType(),
     isArray: true,
-  };
+  }
 
   // 添加长度限制到API文档
   if (options.minLength !== undefined) {
-    apiPropertyOptions.minItems = options.minLength;
+    apiPropertyOptions.minItems = options.minLength
   }
   if (options.maxLength !== undefined) {
-    apiPropertyOptions.maxItems = options.maxLength;
+    apiPropertyOptions.maxItems = options.maxLength
   }
 
   // 根据itemType获取相应的验证器
@@ -121,7 +121,7 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
           each: true,
           message:
             options.itemErrorMessage || '数组中的每个元素都必须是字符串类型',
-        });
+        })
       case 'number':
         return IsNumber(
           {},
@@ -129,35 +129,35 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
             each: true,
             message:
               options.itemErrorMessage || '数组中的每个元素都必须是数字类型',
-          }
-        );
+          },
+        )
       case 'boolean':
         return IsBoolean({
           each: true,
           message:
             options.itemErrorMessage || '数组中的每个元素都必须是布尔类型',
-        });
+        })
       case 'object':
         return IsObject({
           each: true,
           message:
             options.itemErrorMessage || '数组中的每个元素都必须是对象类型',
-        });
+        })
       default:
         return IsString({
           each: true,
           message:
             options.itemErrorMessage || '数组中的每个元素都必须是字符串类型',
-        });
+        })
     }
-  };
+  }
 
   // 基础装饰器
   const decorators = [
     ApiProperty(apiPropertyOptions),
     IsArray({ message: '必须是数组类型' }),
     getItemValidator(),
-  ];
+  ]
 
   // 自定义验证器（如果提供）
   if (options.itemValidator) {
@@ -166,19 +166,20 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
         name: 'customItemValidator',
         validator: {
           validate: (value: any[]) => {
-            if (!Array.isArray(value)) return true; // 数组验证由IsArray处理
-            return value.every(options.itemValidator);
+            if (!Array.isArray(value))
+              { return true } // 数组验证由IsArray处理
+            return value.every(item => options.itemValidator!(item))
           },
           defaultMessage: () =>
             options.itemErrorMessage || '数组中的元素验证失败',
         },
-      })
-    );
+      }),
+    )
   }
 
   // 非空验证（如果是必填字段）
   if (options.required ?? true) {
-    decorators.push(IsNotEmpty({ message: '数组不能为空' }));
+    decorators.push(IsNotEmpty({ message: '数组不能为空' }))
   }
 
   // 长度验证
@@ -186,21 +187,21 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
     decorators.push(
       MaxLength(options.maxLength, {
         message: `数组长度不能超过${options.maxLength}个元素`,
-      })
-    );
+      }),
+    )
   }
 
   if (options.minLength !== undefined) {
     decorators.push(
       MinLength(options.minLength, {
         message: `数组长度不能少于${options.minLength}个元素`,
-      })
-    );
+      }),
+    )
   }
 
   // 可选字段处理
   if (!(options.required ?? true)) {
-    decorators.push(IsOptional());
+    decorators.push(IsOptional())
   }
 
   // 转换逻辑
@@ -208,60 +209,63 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null) &&
-        options.default !== undefined
+        (value === undefined || value === null)
+        && options.default !== undefined
       ) {
-        return options.default;
+        return options.default
       }
 
       // 根据itemType进行类型转换
       if (Array.isArray(value)) {
-        return value.map(item => {
+        return value.map((item) => {
           switch (options.itemType) {
             case 'number':
               if (typeof item === 'string') {
-                const trimmedItem = item.trim();
+                const trimmedItem = item.trim()
                 if (trimmedItem === '') {
-                  return item; // 保持原值，让验证器处理错误
+                  return item // 保持原值，让验证器处理错误
                 }
-                const numValue = Number(trimmedItem);
-                return Number.isNaN(numValue) ? item : numValue;
+                const numValue = Number(trimmedItem)
+                return Number.isNaN(numValue) ? item : numValue
               }
-              return item;
+              return item
             case 'boolean':
               if (typeof item === 'string') {
-                const lowerItem = item.toLowerCase().trim();
-                if (lowerItem === 'true' || lowerItem === '1') return true;
-                if (lowerItem === 'false' || lowerItem === '0') return false;
-                return item; // 保持原值，让验证器处理错误
+                const lowerItem = item.toLowerCase().trim()
+                if (lowerItem === 'true' || lowerItem === '1')
+                  { return true }
+                if (lowerItem === 'false' || lowerItem === '0')
+                  { return false }
+                return item // 保持原值，让验证器处理错误
               }
-              return item;
+              return item
             case 'string':
-              return typeof item === 'string' ? item : String(item);
+              return typeof item === 'string' ? item : String(item)
             case 'object':
               // 如果是字符串，尝试解析为JSON
               if (typeof item === 'string') {
                 try {
-                  return JSON.parse(item);
-                } catch {
-                  return item; // 保持原值，让验证器处理错误
+                  return JSON.parse(item)
+                }
+                catch {
+                  return item // 保持原值，让验证器处理错误
                 }
               }
-              return item;
+              return item
             default:
-              return item;
+              return item
           }
-        });
+        })
       }
 
-      return value;
-    })
-  );
+      return value
+    }),
+  )
 
   // 自定义转换函数
   if (options.transform) {
-    decorators.push(Transform(options.transform));
+    decorators.push(Transform(options.transform))
   }
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }

@@ -4,7 +4,7 @@ import {
   OmitType,
   PartialType,
   PickType,
-} from '@nestjs/swagger';
+} from '@nestjs/swagger'
 import {
   ValidateArray,
   ValidateBoolean,
@@ -12,10 +12,10 @@ import {
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { IdDto } from '@/common/dto/id.dto';
-import { PageDto } from '@/common/dto/page.dto';
-import { ComicReadRuleEnum, ComicSerialStatusEnum } from '../comic.constant';
+} from '@/common/decorators/validate.decorator'
+import { IdDto } from '@/common/dto/id.dto'
+import { PageDto } from '@/common/dto/page.dto'
+import { ComicReadRuleEnum, ComicSerialStatusEnum } from '../comic.constant'
 
 /**
  * 漫画作者DTO
@@ -27,7 +27,7 @@ export class ComicAuthorDto {
     required: true,
     type: Number,
   })
-  id!: IdDto;
+  id!: IdDto
 
   @ApiProperty({
     description: '作者名称',
@@ -35,7 +35,7 @@ export class ComicAuthorDto {
     required: true,
     type: String,
   })
-  name!: string;
+  name!: string
 
   @ApiProperty({
     description: '是否为主要作者',
@@ -43,7 +43,7 @@ export class ComicAuthorDto {
     required: true,
     type: Boolean,
   })
-  isPrimary!: boolean;
+  isPrimary!: boolean
 
   @ApiProperty({
     description: '排序',
@@ -51,7 +51,7 @@ export class ComicAuthorDto {
     required: true,
     type: Number,
   })
-  sortOrder!: boolean;
+  sortOrder!: boolean
 }
 
 /**
@@ -65,7 +65,7 @@ export class ComicCategoryDto {
     required: true,
     type: Number,
   })
-  id!: IdDto;
+  id!: IdDto
 
   @ApiProperty({
     description: '分类名称',
@@ -73,7 +73,7 @@ export class ComicCategoryDto {
     required: true,
     type: String,
   })
-  name!: string;
+  name!: string
 }
 
 /**
@@ -86,7 +86,7 @@ export class BaseComicDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ValidateString({
     description: '漫画名称',
@@ -94,7 +94,7 @@ export class BaseComicDto {
     required: true,
     maxLength: 100,
   })
-  name!: string;
+  name!: string
 
   @ValidateString({
     description: '漫画别名（支持多别名，用逗号分隔）',
@@ -102,7 +102,7 @@ export class BaseComicDto {
     required: false,
     maxLength: 200,
   })
-  alias?: string;
+  alias?: string
 
   @ValidateString({
     description: '漫画封面URL',
@@ -110,7 +110,7 @@ export class BaseComicDto {
     required: true,
     maxLength: 500,
   })
-  cover!: string;
+  cover!: string
 
   @ApiProperty({
     description: '漫画分类',
@@ -127,7 +127,7 @@ export class BaseComicDto {
     required: true,
     type: [ComicCategoryDto], // 明确指定类型为 ComicCategoryDto 数组
   })
-  comicCategories!: ComicCategoryDto[];
+  comicCategories!: ComicCategoryDto[]
 
   @ApiProperty({
     description: '漫画作者',
@@ -148,7 +148,7 @@ export class BaseComicDto {
     required: true,
     type: [ComicAuthorDto], // 明确指定类型为 ComicAuthorDto 数组
   })
-  comicAuthors!: ComicAuthorDto[];
+  comicAuthors!: ComicAuthorDto[]
 
   @ValidateNumber({
     description: '热度值（用于排序）',
@@ -157,7 +157,7 @@ export class BaseComicDto {
     min: 0,
     default: 0,
   })
-  popularity!: number;
+  popularity!: number
 
   @ValidateNumber({
     description: '虚拟热度热度权重（影响热度计算）',
@@ -166,28 +166,28 @@ export class BaseComicDto {
     min: 0,
     default: 1.0,
   })
-  popularityWeight?: number;
+  popularityWeight?: number
 
   @ValidateString({
     description: '语言代码',
     example: 'en',
     required: true,
   })
-  language!: string;
+  language!: string
 
   @ValidateString({
     description: '地区代码',
     example: 'CN',
     required: true,
   })
-  region!: string;
+  region!: string
 
   @ValidateString({
     description: '年龄分级',
     example: 'R14',
     required: true,
   })
-  ageRating!: string;
+  ageRating!: string
 
   @ValidateBoolean({
     description: '发布状态',
@@ -195,14 +195,14 @@ export class BaseComicDto {
     required: true,
     default: true,
   })
-  isPublished!: boolean;
+  isPublished!: boolean
 
   @ValidateDate({
     description: '发布日期',
     example: '2024-01-01',
     required: false,
   })
-  publishAt?: Date;
+  publishAt?: Date
 
   @ApiProperty({
     description: '最后更新时间',
@@ -210,14 +210,14 @@ export class BaseComicDto {
     required: false,
     type: Date,
   })
-  lastUpdated: Date;
+  lastUpdated: Date
 
   @ValidateString({
     description: '漫画简介',
     example: '这是一部关于巨人的漫画...',
     required: true,
   })
-  description: string;
+  description: string
 
   @ValidateString({
     description: '出版社',
@@ -225,7 +225,7 @@ export class BaseComicDto {
     required: false,
     maxLength: 100,
   })
-  publisher?: string;
+  publisher?: string
 
   @ValidateString({
     description: '原始来源',
@@ -233,7 +233,7 @@ export class BaseComicDto {
     required: false,
     maxLength: 100,
   })
-  originalSource?: string;
+  originalSource?: string
 
   @ValidateEnum({
     description: '连载状态',
@@ -242,7 +242,7 @@ export class BaseComicDto {
     enum: ComicSerialStatusEnum,
     default: ComicSerialStatusEnum.SERIALIZING,
   })
-  serialStatus!: ComicSerialStatusEnum;
+  serialStatus!: ComicSerialStatusEnum
 
   @ValidateBoolean({
     description: '是否允许下载',
@@ -250,7 +250,7 @@ export class BaseComicDto {
     required: true,
     default: true,
   })
-  canDownload!: boolean;
+  canDownload!: boolean
 
   @ValidateBoolean({
     description: '是否允许评论',
@@ -258,7 +258,7 @@ export class BaseComicDto {
     required: true,
     default: true,
   })
-  canComment!: boolean;
+  canComment!: boolean
 
   @ValidateEnum({
     description: '阅读规则',
@@ -267,7 +267,7 @@ export class BaseComicDto {
     enum: ComicReadRuleEnum,
     default: ComicReadRuleEnum.FREE,
   })
-  readRule!: ComicReadRuleEnum;
+  readRule!: ComicReadRuleEnum
 
   @ValidateNumber({
     description: '所需积分',
@@ -275,7 +275,7 @@ export class BaseComicDto {
     required: false,
     min: 0,
   })
-  purchaseAmount?: number;
+  purchaseAmount?: number
 
   @ValidateNumber({
     description: '总章节数',
@@ -284,7 +284,7 @@ export class BaseComicDto {
     min: 0,
     default: 0,
   })
-  totalChapters!: number;
+  totalChapters!: number
 
   @ValidateNumber({
     description: '总阅读次数',
@@ -293,7 +293,7 @@ export class BaseComicDto {
     min: 0,
     default: 0,
   })
-  totalViews!: number;
+  totalViews!: number
 
   @ValidateNumber({
     description: '收藏数',
@@ -302,7 +302,7 @@ export class BaseComicDto {
     min: 0,
     default: 0,
   })
-  favoriteCount!: number;
+  favoriteCount!: number
 
   @ValidateNumber({
     description: '评论总数',
@@ -311,7 +311,7 @@ export class BaseComicDto {
     min: 0,
     default: 0,
   })
-  commentCount!: number;
+  commentCount!: number
 
   @ValidateNumber({
     description: '点赞总数',
@@ -320,7 +320,7 @@ export class BaseComicDto {
     min: 0,
     default: 0,
   })
-  likeCount!: number;
+  likeCount!: number
 
   @ValidateNumber({
     description: '评分（1-10分，保留1位小数）',
@@ -329,7 +329,7 @@ export class BaseComicDto {
     min: 0,
     max: 10,
   })
-  rating?: number;
+  rating?: number
 
   @ValidateNumber({
     description: '评分人数',
@@ -338,7 +338,7 @@ export class BaseComicDto {
     min: 0,
     default: 0,
   })
-  ratingCount!: number;
+  ratingCount!: number
 
   @ValidateString({
     description: 'SEO标题',
@@ -346,7 +346,7 @@ export class BaseComicDto {
     required: false,
     maxLength: 100,
   })
-  seoTitle?: string;
+  seoTitle?: string
 
   @ValidateString({
     description: 'SEO描述',
@@ -354,7 +354,7 @@ export class BaseComicDto {
     required: false,
     maxLength: 200,
   })
-  seoDescription?: string;
+  seoDescription?: string
 
   @ValidateString({
     description: 'SEO关键词',
@@ -362,7 +362,7 @@ export class BaseComicDto {
     required: false,
     maxLength: 200,
   })
-  seoKeywords?: string;
+  seoKeywords?: string
 
   @ValidateNumber({
     description: '推荐权重（影响推荐排序）',
@@ -371,7 +371,7 @@ export class BaseComicDto {
     min: 0,
     default: 1.0,
   })
-  recommendWeight?: number;
+  recommendWeight?: number
 
   @ValidateBoolean({
     description: '是否推荐',
@@ -379,7 +379,7 @@ export class BaseComicDto {
     required: true,
     default: false,
   })
-  isRecommended!: boolean;
+  isRecommended!: boolean
 
   @ValidateBoolean({
     description: '是否热门',
@@ -387,7 +387,7 @@ export class BaseComicDto {
     required: true,
     default: false,
   })
-  isHot!: boolean;
+  isHot!: boolean
 
   @ValidateBoolean({
     description: '是否新作',
@@ -395,7 +395,7 @@ export class BaseComicDto {
     required: true,
     default: false,
   })
-  isNew!: boolean;
+  isNew!: boolean
 
   @ValidateString({
     description: '版权信息',
@@ -403,42 +403,42 @@ export class BaseComicDto {
     required: false,
     maxLength: 200,
   })
-  copyright?: string;
+  copyright?: string
 
   @ValidateString({
     description: '免责声明',
     example: '本作品仅供娱乐，不代表任何立场',
     required: false,
   })
-  disclaimer?: string;
+  disclaimer?: string
 
   @ValidateString({
     description: '管理员备注',
     example: '优质漫画，推荐首页展示',
     required: false,
   })
-  remark?: string;
+  remark?: string
 
   @ValidateDate({
     description: '软删除时间',
     example: null,
     required: false,
   })
-  deletedAt?: Date | null;
+  deletedAt?: Date | null
 
   @ValidateDate({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  createdAt!: Date;
+  createdAt!: Date
 
   @ValidateDate({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  updatedAt!: Date;
+  updatedAt!: Date
 }
 
 /**
@@ -469,7 +469,7 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
     example: [1, 2],
     required: true,
   })
-  authorIds!: number[];
+  authorIds!: number[]
 
   @ValidateArray({
     description: '关联的分类ID列表',
@@ -477,7 +477,7 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
     example: [1, 2, 3],
     required: true,
   })
-  categoryIds!: number[];
+  categoryIds!: number[]
 }
 
 /**
@@ -497,9 +497,9 @@ export class UpdateComicDto extends IntersectionType(
       'ratingCount',
       'comicCategories',
       'comicAuthors',
-    ])
+    ]),
   ),
-  IdDto
+  IdDto,
 ) {
   @ValidateArray({
     description: '关联的作者ID列表（可选，传入则更新关联关系）',
@@ -507,7 +507,7 @@ export class UpdateComicDto extends IntersectionType(
     example: [1, 2],
     required: false,
   })
-  authorIds?: number[];
+  authorIds?: number[]
 
   @ValidateArray({
     description: '关联的分类ID列表（可选，传入则更新关联关系）',
@@ -515,7 +515,7 @@ export class UpdateComicDto extends IntersectionType(
     example: [1, 2, 3],
     required: false,
   })
-  categoryIds?: number[];
+  categoryIds?: number[]
 }
 
 /**
@@ -534,28 +534,28 @@ export class QueryComicDto extends IntersectionType(
     'isRecommended',
     'isHot',
     'isNew',
-  ])
+  ]),
 ) {
   @ValidateString({
     description: '作者名称',
     example: '村',
     required: false,
   })
-  author?: string;
+  author?: string
 
   @ValidateString({
     description: '漫画名称（模糊搜索）',
     example: '进击',
     required: false,
   })
-  name?: string;
+  name?: string
 
   @ValidateString({
     description: '出版社（模糊搜索）',
     example: '讲谈社',
     required: false,
   })
-  publisher?: string;
+  publisher?: string
 }
 
 /**
@@ -570,7 +570,7 @@ export class UpdateComicRecommendedDto extends PickType(BaseComicDto, [
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 }
 
 /**
@@ -585,7 +585,7 @@ export class UpdateComicStatusDto extends PickType(BaseComicDto, [
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 }
 
 /**
@@ -598,7 +598,7 @@ export class UpdateComicHotDto extends PickType(BaseComicDto, ['isHot']) {
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 }
 
 /**
@@ -611,7 +611,7 @@ export class UpdateComicNewDto extends PickType(BaseComicDto, ['isNew']) {
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 }
 
 /**
@@ -624,14 +624,14 @@ export class BatchEnabledDto {
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 
   @ValidateBoolean({
     description: '发布状态',
     example: true,
     required: true,
   })
-  isPublished!: boolean;
+  isPublished!: boolean
 }
 
 /**
@@ -645,7 +645,7 @@ export class UpdateComicRatingDto extends IdDto {
     min: 1,
     max: 10,
   })
-  rating!: number;
+  rating!: number
 
   @ValidateNumber({
     description: '用户ID（可选）',
@@ -653,7 +653,7 @@ export class UpdateComicRatingDto extends IdDto {
     required: false,
     min: 1,
   })
-  userId?: number;
+  userId?: number
 }
 
 /**
@@ -667,5 +667,5 @@ export class IncrementCountDto extends IdDto {
     min: 1,
     default: 1,
   })
-  increment?: number;
+  increment?: number
 }

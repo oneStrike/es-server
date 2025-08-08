@@ -1,15 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { BaseComicChapterDto } from '@/modules/admin/work/comic/chapter/dto/comic-chapter.dto';
+import { ApiProperty } from '@nestjs/swagger'
+import { BaseComicChapterDto } from '@/modules/admin/work/comic/chapter/dto/comic-chapter.dto'
 
 /**
  * 关联的漫画信息
  */
 export class RelatedComicDto {
   @ApiProperty({ description: '漫画ID', example: 1 })
-  id: number;
+  id: number
 
   @ApiProperty({ description: '漫画名字', example: '示例漫画' })
-  name: string;
+  name: string
 }
 
 /**
@@ -17,13 +17,13 @@ export class RelatedComicDto {
  */
 export class RelatedVersionDto {
   @ApiProperty({ description: '版本ID', example: 1 })
-  id: number;
+  id: number
 
   @ApiProperty({ description: '版本名字', example: '第一版' })
-  versionName: string;
+  versionName: string
 
   @ApiProperty({ description: '版本语言', example: 'zh' })
-  language: string;
+  language: string
 }
 
 /**
@@ -35,12 +35,12 @@ export class ComicChapterDetailDto extends BaseComicChapterDto {
     description: '关联的漫画信息',
     type: RelatedComicDto,
   })
-  relatedComic: RelatedComicDto;
+  relatedComic: RelatedComicDto
 
   @ApiProperty({
     description: '关联的漫画版本信息',
     type: RelatedVersionDto,
     nullable: true,
   })
-  relatedVersion: RelatedVersionDto | null;
+  relatedVersion: RelatedVersionDto | null
 }

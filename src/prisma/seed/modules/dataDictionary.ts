@@ -2,13 +2,13 @@
  * 数据字典种子数据接口
  */
 interface IDictionaryData {
-  name: string;
-  code: string;
+  name: string
+  code: string
 }
 
 interface IDictionaryItemData {
-  name: string;
-  code: string;
+  name: string
+  code: string
 }
 
 /**
@@ -38,7 +38,7 @@ export async function createInitialDataDictionary(prisma: any) {
       name: '作品年龄限制',
       code: 'work_age_rating',
     },
-  ];
+  ]
   // 数据字典项数据
   const itemData: Record<string, IDictionaryItemData[]> = {
     work_language: [
@@ -167,22 +167,24 @@ export async function createInitialDataDictionary(prisma: any) {
         code: 'shogakukan',
       },
     ],
-  };
+  }
 
   for (const item of initData) {
     // 检查数据字典是否已存在
     const existingDictionary = await prisma.dictionary.findFirst({
       where: { code: item.code },
-    });
+    })
 
     if (!existingDictionary) {
       await prisma.dictionary.create({
         data: item,
-      });
+      })
     }
 
     // 处理字典项数据
-    if (!itemData[item.code]) continue;
+    if (!itemData[item.code]) {
+      continue
+    }
 
     for (const subItem of itemData[item.code]) {
       // 检查字典项是否已存在
@@ -191,7 +193,7 @@ export async function createInitialDataDictionary(prisma: any) {
           dictionaryCode: item.code,
           code: subItem.code,
         },
-      });
+      })
 
       if (!existingItem) {
         await prisma.dictionaryItem.create({
@@ -201,10 +203,8 @@ export async function createInitialDataDictionary(prisma: any) {
               connect: { code: item.code },
             },
           },
-        });
+        })
       }
     }
   }
-
-  console.log('✅ 数据字典种子数据初始化完成');
 }

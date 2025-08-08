@@ -1,9 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger'
 import {
   ValidateJson,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
+} from '@/common/decorators/validate.decorator'
 
 export class PageDto {
   @ValidateNumber({
@@ -14,7 +14,7 @@ export class PageDto {
     required: false,
     default: 15,
   })
-  pageSize?: number;
+  pageSize?: number
 
   @ValidateNumber({
     description: '当前页码',
@@ -23,15 +23,15 @@ export class PageDto {
     required: false,
     default: 0,
   })
-  pageIndex?: number;
+  pageIndex?: number
 
   @ValidateJson({
     description: '排序字段，json格式',
     // prettier ignore
-    example: "{id:'desc'}",
+    example: '{id:\'desc\'}',
     required: false,
   })
-  orderBy?: string;
+  orderBy?: string
 
   @ValidateString({
     description: '开始时间',
@@ -39,7 +39,7 @@ export class PageDto {
     required: false,
     type: 'ISO8601',
   })
-  startDate?: string;
+  startDate?: string
 
   @ValidateString({
     description: '结束时间',
@@ -47,7 +47,7 @@ export class PageDto {
     required: false,
     type: 'ISO8601',
   })
-  endDate?: string;
+  endDate?: string
 }
 
 export class PageResponseDto {
@@ -56,19 +56,19 @@ export class PageResponseDto {
     example: 0,
     required: true,
   })
-  pageIndex!: number;
+  pageIndex!: number
 
   @ApiProperty({
     description: '单页大小，最大500，默认15',
     example: 0,
     required: true,
   })
-  pageSize!: number;
+  pageSize!: number
 
   @ApiProperty({
     description: '符合条件的总记录数',
     example: 0,
     required: true,
   })
-  total!: number;
+  total!: number
 }

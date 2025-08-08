@@ -1,11 +1,11 @@
-import { ApiProperty, OmitType, PickType } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PickType } from '@nestjs/swagger'
 import {
   ValidateBoolean,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { PageDto } from '@/common/dto/page.dto';
-import { TokenDto } from './token.dto';
+} from '@/common/decorators/validate.decorator'
+import { PageDto } from '@/common/dto/page.dto'
+import { TokenDto } from './token.dto'
 
 export class UserDto {
   @ValidateNumber({
@@ -14,7 +14,7 @@ export class UserDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ValidateString({
     description: '用户名',
@@ -23,28 +23,28 @@ export class UserDto {
     maxLength: 20,
     minLength: 5,
   })
-  username!: string;
+  username!: string
 
   @ValidateString({
     description: '手机号',
     example: '13838384388',
     required: true,
   })
-  mobile!: string;
+  mobile!: string
 
   @ValidateString({
     description: '头像',
     example: 'https://example.com/avatar.png',
     required: false,
   })
-  avatar?: string;
+  avatar?: string
 
   @ValidateBoolean({
     description: '是否启用',
     example: true,
     default: true,
   })
-  isEnabled: boolean;
+  isEnabled: boolean
 
   @ValidateNumber({
     description: '角色 0普通管理员 1超级管理员',
@@ -53,21 +53,21 @@ export class UserDto {
     min: 0,
     max: 1,
   })
-  role: number;
+  role: number
 
   @ApiProperty({
     description: '最后登录时间',
     example: '2021-01-01 00:00:00',
     required: false,
   })
-  lastLoginAt?: Date;
+  lastLoginAt?: Date
 
   @ApiProperty({
     description: '最后登录IP',
     example: '192.168.1.1',
     required: false,
   })
-  lastLoginIp?: string;
+  lastLoginIp?: string
 
   @ValidateNumber({
     description: '登录失败次数',
@@ -75,26 +75,26 @@ export class UserDto {
     default: 0,
     min: 0,
   })
-  loginFailCount: number;
+  loginFailCount: number
 
   @ValidateBoolean({
     description: '是否锁定',
     example: false,
     default: false,
   })
-  isLocked: boolean;
+  isLocked: boolean
 
   @ApiProperty({
     description: '创建时间',
     example: '2021-01-01 00:00:00',
   })
-  createdAt: Date;
+  createdAt: Date
 
   @ApiProperty({
     description: '更新时间',
     example: '2021-01-01 00:00:00',
   })
-  updatedAt: Date;
+  updatedAt: Date
 }
 
 export class UserLoginDto extends PickType(UserDto, ['username']) {
@@ -103,21 +103,21 @@ export class UserLoginDto extends PickType(UserDto, ['username']) {
     example: 'Aa@123456',
     required: true,
   })
-  password!: string;
+  password!: string
 
   @ValidateString({
     description: '验证码',
     example: '1234',
     required: true,
   })
-  captcha!: string;
+  captcha!: string
 
   @ValidateString({
     description: '验证码ID',
     example: 'a1b2c3d4',
     required: true,
   })
-  captchaId!: string;
+  captchaId!: string
 }
 
 export class LoginResponseDto {
@@ -126,14 +126,14 @@ export class LoginResponseDto {
     type: TokenDto,
     required: true,
   })
-  tokens: TokenDto;
+  tokens: TokenDto
 
   @ApiProperty({
     description: '用户信息',
     type: UserDto,
     required: true,
   })
-  user: UserDto;
+  user: UserDto
 }
 
 export class UserRegisterDto extends OmitType(UserDto, [
@@ -151,14 +151,14 @@ export class UserRegisterDto extends OmitType(UserDto, [
     example: 'Aa@123456',
     required: true,
   })
-  password!: string;
+  password!: string
 
   @ValidateString({
     description: '密码',
     example: 'Aa@123456',
     required: true,
   })
-  confirmPassword!: string;
+  confirmPassword!: string
 }
 
 export class UpdateUserDto extends OmitType(UserDto, [
@@ -176,7 +176,7 @@ export class UpdateUserDto extends OmitType(UserDto, [
     required: false,
     min: 1,
   })
-  id?: number;
+  id?: number
 }
 
 export class UpdatePasswordDto extends PickType(TokenDto, ['refreshToken']) {
@@ -185,21 +185,21 @@ export class UpdatePasswordDto extends PickType(TokenDto, ['refreshToken']) {
     example: 'Aa@123456',
     required: true,
   })
-  oldPassword!: string;
+  oldPassword!: string
 
   @ValidateString({
     description: '密码',
     example: 'Aa@123456',
     required: true,
   })
-  newPassword!: string;
+  newPassword!: string
 
   @ValidateString({
     description: '密码',
     example: 'Aa@123456',
     required: true,
   })
-  confirmPassword!: string;
+  confirmPassword!: string
 }
 
 export class UserPageDto extends PageDto {
@@ -209,14 +209,14 @@ export class UserPageDto extends PageDto {
     required: false,
     maxLength: 20,
   })
-  username?: string;
+  username?: string
 
   @ValidateBoolean({
     description: '是否启用',
     example: true,
     required: false,
   })
-  isEnabled?: boolean;
+  isEnabled?: boolean
 
   @ValidateNumber({
     description: '角色 0普通管理员 1超级管理员',
@@ -225,5 +225,5 @@ export class UserPageDto extends PageDto {
     min: 0,
     max: 1,
   })
-  role?: number;
+  role?: number
 }

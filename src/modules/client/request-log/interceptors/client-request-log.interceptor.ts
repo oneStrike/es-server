@@ -35,7 +35,7 @@ export class ClientRequestLogInterceptor extends BaseRequestLogInterceptor {
    * @returns 用户信息对象
    */
   protected extractUserInfo(request: FastifyRequest): {
-    userId?: string;
+    userId?: string
   } {
     const user = request.user as ClientJwtPayload | undefined;
     return {
@@ -71,7 +71,7 @@ export class ClientRequestLogInterceptor extends BaseRequestLogInterceptor {
    */
   protected getOperationRecord(
     request: FastifyRequest,
-    userInfo: { userId?: string; userPhone?: string }
+    userInfo: { userId?: string, userPhone?: string }
   ): string {
     return this.generateOperationRecord(request, userInfo, '客户端用户');
   }

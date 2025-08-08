@@ -4,27 +4,27 @@ import {
   OmitType,
   PartialType,
   PickType,
-} from '@nestjs/swagger';
+} from '@nestjs/swagger'
 import {
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { IdDto } from '@/common/dto/id.dto';
-import { PageDto } from '@/common/dto/page.dto';
-import { PageRuleEnum, PageStatusEnum } from '../page.constant';
+} from '@/common/decorators/validate.decorator'
+import { IdDto } from '@/common/dto/id.dto'
+import { PageDto } from '@/common/dto/page.dto'
+import { PageRuleEnum, PageStatusEnum } from '../page.constant'
 
 /**
  * 页面配置基础字段DTO
  */
-export class BasePageConfigFieldsDto {
+export class BasePageConfigFieldsDto extends IdDto {
   @ValidateString({
     description: '页面编码（唯一标识）',
     example: 'home',
     required: true,
     maxLength: 50,
   })
-  pageCode!: string;
+  pageCode!: string
 
   @ValidateString({
     description: '页面路径（URL路径）',
@@ -32,7 +32,7 @@ export class BasePageConfigFieldsDto {
     required: true,
     maxLength: 300,
   })
-  pagePath!: string;
+  pagePath!: string
 
   @ValidateString({
     description: '页面名称',
@@ -40,7 +40,7 @@ export class BasePageConfigFieldsDto {
     required: true,
     maxLength: 100,
   })
-  pageName!: string;
+  pageName!: string
 
   @ValidateString({
     description: '页面标题（用于SEO）',
@@ -48,7 +48,7 @@ export class BasePageConfigFieldsDto {
     required: false,
     maxLength: 200,
   })
-  pageTitle?: string;
+  pageTitle?: string
 
   @ValidateEnum({
     description: '页面权限级别',
@@ -57,7 +57,7 @@ export class BasePageConfigFieldsDto {
     enum: PageRuleEnum,
     default: PageRuleEnum.GUEST,
   })
-  accessLevel!: PageRuleEnum;
+  accessLevel!: PageRuleEnum
 
   @ValidateEnum({
     description: '页面状态',
@@ -66,7 +66,7 @@ export class BasePageConfigFieldsDto {
     enum: PageStatusEnum,
     default: PageStatusEnum.ENABLED,
   })
-  pageStatus!: PageStatusEnum;
+  pageStatus!: PageStatusEnum
 
   @ValidateString({
     description: '页面描述信息',
@@ -74,21 +74,21 @@ export class BasePageConfigFieldsDto {
     required: false,
     maxLength: 500,
   })
-  description?: string;
+  description?: string
 }
 
 /**
  * 更新页面配置DTO
  */
 export class UpdateClientPageConfigDto extends PartialType(
-  BasePageConfigFieldsDto
+  BasePageConfigFieldsDto,
 ) {
   @ValidateNumber({
     description: '页面ID',
     example: 1,
     required: true,
   })
-  id!: number;
+  id!: number
 }
 
 /**
@@ -101,7 +101,7 @@ export class QueryClientPageConfigDto extends IntersectionType(
     'pageCode',
     'accessLevel',
     'pageStatus',
-  ])
+  ]),
 ) {}
 
 /**
@@ -109,25 +109,25 @@ export class QueryClientPageConfigDto extends IntersectionType(
  */
 export class ClientPageConfigResponseDto extends IntersectionType(
   BasePageConfigFieldsDto,
-  IdDto
+  IdDto,
 ) {
   @ApiProperty({
     description: '访问次数统计',
     example: 100,
   })
-  viewCount!: number;
+  viewCount!: number
 
   @ApiProperty({
     description: '创建时间',
     example: '2021-01-01 00:00:00',
   })
-  createdAt!: Date;
+  createdAt!: Date
 
   @ApiProperty({
     description: '更新时间',
     example: '2021-01-01 00:00:00',
   })
-  updatedAt!: Date;
+  updatedAt!: Date
 }
 
 /**
@@ -135,7 +135,7 @@ export class ClientPageConfigResponseDto extends IntersectionType(
  */
 export class ClientPageConfigPageResponseDto extends OmitType(
   ClientPageConfigResponseDto,
-  ['description']
+  ['description'],
 ) {}
 
 /**
@@ -147,5 +147,5 @@ export class IncrementViewCountDto {
     example: 'home',
     required: true,
   })
-  pageCode!: string;
+  pageCode!: string
 }

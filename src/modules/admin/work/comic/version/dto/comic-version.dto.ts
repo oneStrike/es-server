@@ -3,7 +3,7 @@ import {
   OmitType,
   PartialType,
   PickType,
-} from '@nestjs/swagger';
+} from '@nestjs/swagger'
 import {
   ValidateArray,
   ValidateBoolean,
@@ -11,11 +11,11 @@ import {
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
-import { BatchEnabledDto } from '@/common/dto/batch.dto';
-import { IdDto } from '@/common/dto/id.dto';
-import { PageDto } from '@/common/dto/page.dto';
-import { VersionReadRuleEnum } from '../comic-version.constant';
+} from '@/common/decorators/validate.decorator'
+import { BatchEnabledDto } from '@/common/dto/batch.dto'
+import { IdDto } from '@/common/dto/id.dto'
+import { PageDto } from '@/common/dto/page.dto'
+import { VersionReadRuleEnum } from '../comic-version.constant'
 
 /**
  * 漫画版本基础DTO
@@ -27,7 +27,7 @@ export class BaseComicVersionDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ValidateNumber({
     description: '关联的原始漫画ID',
@@ -35,7 +35,7 @@ export class BaseComicVersionDto {
     required: true,
     min: 1,
   })
-  comicId!: number;
+  comicId!: number
 
   @ValidateString({
     description: '版本名称（如：英语版、日语版、XX汉化组等）',
@@ -43,7 +43,7 @@ export class BaseComicVersionDto {
     required: true,
     maxLength: 100,
   })
-  versionName!: string;
+  versionName!: string
 
   @ValidateString({
     description: '语言代码（如：zh-CN, en-US, ja-JP）',
@@ -51,7 +51,7 @@ export class BaseComicVersionDto {
     required: true,
     maxLength: 10,
   })
-  language!: string;
+  language!: string
 
   @ValidateString({
     description: '翻译组/汉化组名称',
@@ -59,14 +59,14 @@ export class BaseComicVersionDto {
     required: false,
     maxLength: 100,
   })
-  translatorGroup?: string;
+  translatorGroup?: string
 
   @ValidateString({
     description: '版本描述',
     example: '高质量中文翻译版本',
     required: false,
   })
-  description?: string;
+  description?: string
 
   @ValidateBoolean({
     description: '是否为推荐版本',
@@ -74,7 +74,7 @@ export class BaseComicVersionDto {
     required: true,
     default: false,
   })
-  isRecommended!: boolean;
+  isRecommended!: boolean
 
   @ValidateBoolean({
     description: '发布状态',
@@ -82,21 +82,21 @@ export class BaseComicVersionDto {
     required: true,
     default: false,
   })
-  isPublished!: boolean;
+  isPublished!: boolean
 
   @ValidateDate({
     description: '发布时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
-  publishAt?: Date;
+  publishAt?: Date
 
   @ValidateDate({
     description: '最后更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
-  lastUpdated?: Date;
+  lastUpdated?: Date
 
   @ValidateNumber({
     description: '总阅读次数',
@@ -105,7 +105,7 @@ export class BaseComicVersionDto {
     min: 0,
     default: 0,
   })
-  totalViews!: number;
+  totalViews!: number
 
   @ValidateNumber({
     description: '收藏数',
@@ -114,7 +114,7 @@ export class BaseComicVersionDto {
     min: 0,
     default: 0,
   })
-  favoriteCount!: number;
+  favoriteCount!: number
 
   @ValidateNumber({
     description: '点赞数',
@@ -123,7 +123,7 @@ export class BaseComicVersionDto {
     min: 0,
     default: 0,
   })
-  likeCount!: number;
+  likeCount!: number
 
   @ValidateNumber({
     description: '评分（1-10分，保留一位小数）',
@@ -132,7 +132,7 @@ export class BaseComicVersionDto {
     min: 1,
     max: 10,
   })
-  rating?: number;
+  rating?: number
 
   @ValidateNumber({
     description: '评分人数',
@@ -141,7 +141,7 @@ export class BaseComicVersionDto {
     min: 0,
     default: 0,
   })
-  ratingCount!: number;
+  ratingCount!: number
 
   @ValidateEnum({
     description: '查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
@@ -150,7 +150,7 @@ export class BaseComicVersionDto {
     enum: VersionReadRuleEnum,
     default: VersionReadRuleEnum.PUBLIC,
   })
-  readRule!: VersionReadRuleEnum;
+  readRule!: VersionReadRuleEnum
 
   @ValidateNumber({
     description: '购买需要消耗的积分',
@@ -159,7 +159,7 @@ export class BaseComicVersionDto {
     min: 0,
     default: 0,
   })
-  purchaseAmount!: number;
+  purchaseAmount!: number
 
   @ValidateString({
     description: '版权信息',
@@ -167,14 +167,14 @@ export class BaseComicVersionDto {
     required: false,
     maxLength: 500,
   })
-  copyright?: string;
+  copyright?: string
 
   @ValidateString({
     description: '免责声明',
     example: '本内容仅供学习交流使用',
     required: false,
   })
-  disclaimer?: string;
+  disclaimer?: string
 
   @ValidateString({
     description: '备注（内部使用）',
@@ -182,7 +182,7 @@ export class BaseComicVersionDto {
     required: false,
     maxLength: 1000,
   })
-  remark?: string;
+  remark?: string
 
   @ValidateNumber({
     description: '排序权重（用于版本列表排序）',
@@ -191,21 +191,21 @@ export class BaseComicVersionDto {
     min: 0,
     default: 0,
   })
-  sortOrder!: number;
+  sortOrder!: number
 
   @ValidateDate({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  createdAt!: Date;
+  createdAt!: Date
 
   @ValidateDate({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
-  updatedAt!: Date;
+  updatedAt!: Date
 }
 
 /**
@@ -239,9 +239,9 @@ export class UpdateComicVersionDto extends IntersectionType(
       'ratingCount',
       'createdAt',
       'updatedAt',
-    ])
+    ]),
   ),
-  IdDto
+  IdDto,
 ) {}
 
 /**
@@ -256,14 +256,14 @@ export class QueryComicVersionDto extends IntersectionType(
     'isRecommended',
     'isPublished',
     'readRule',
-  ])
+  ]),
 ) {
   @ValidateString({
     description: '版本名称（模糊搜索）',
     example: '中文版',
     required: false,
   })
-  versionName?: string;
+  versionName?: string
 
   @ValidateNumber({
     description: '漫画ID（精确匹配）',
@@ -271,14 +271,14 @@ export class QueryComicVersionDto extends IntersectionType(
     required: true,
     min: 1,
   })
-  comicId!: number;
+  comicId!: number
 
   @ValidateString({
     description: '翻译组名称（模糊搜索）',
     example: '汉化组',
     required: false,
   })
-  translatorGroup?: string;
+  translatorGroup?: string
 }
 
 /**
@@ -290,7 +290,7 @@ export class UpdateVersionPublishStatusDto extends BatchEnabledDto {
     example: true,
     required: true,
   })
-  isPublished!: boolean;
+  isPublished!: boolean
 }
 
 /**
@@ -302,7 +302,7 @@ export class UpdateVersionRecommendedStatusDto extends BatchEnabledDto {
     example: true,
     required: true,
   })
-  isRecommended!: boolean;
+  isRecommended!: boolean
 }
 
 /**
@@ -320,7 +320,7 @@ export class UpdateVersionReadRuleDto {
     example: [1, 2, 3],
     required: true,
   })
-  ids!: number[];
+  ids!: number[]
 
   @ValidateEnum({
     description: '查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
@@ -328,7 +328,7 @@ export class UpdateVersionReadRuleDto {
     required: true,
     enum: VersionReadRuleEnum,
   })
-  readRule!: VersionReadRuleEnum;
+  readRule!: VersionReadRuleEnum
 }
 
 /**

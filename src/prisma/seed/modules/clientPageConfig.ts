@@ -90,15 +90,13 @@ export async function createInitialClientPageConfig(prisma: any) {
       pageStatus: 1,
       description: '平台服务条款和使用协议',
     },
-  ];
+  ]
 
   for (const item of initData) {
     await prisma.clientPageConfig.upsert({
       where: { pageCode: item.pageCode },
       update: item,
       create: item,
-    });
+    })
   }
-
-  console.log('✅ 客户端页面配置种子数据初始化完成');
 }

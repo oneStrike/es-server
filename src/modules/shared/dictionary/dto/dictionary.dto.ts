@@ -1,9 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger'
 import {
   ValidateBoolean,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator';
+} from '@/common/decorators/validate.decorator'
 
 /**
  * 数据字典响应DTO
@@ -15,7 +15,7 @@ export class DictionaryDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ValidateString({
     description: '字典名称',
@@ -23,7 +23,7 @@ export class DictionaryDto {
     required: true,
     maxLength: 50,
   })
-  name!: string;
+  name!: string
 
   @ValidateString({
     description: '字典编码',
@@ -31,7 +31,7 @@ export class DictionaryDto {
     required: true,
     maxLength: 50,
   })
-  code!: string;
+  code!: string
 
   @ValidateString({
     description: '字典封面',
@@ -39,14 +39,14 @@ export class DictionaryDto {
     required: false,
     maxLength: 200,
   })
-  cover?: string;
+  cover?: string
 
   @ValidateBoolean({
     description: '状态 true启用 false禁用',
     example: true,
     required: true,
   })
-  isEnabled!: boolean;
+  isEnabled!: boolean
 
   @ValidateString({
     description: '备注信息',
@@ -54,19 +54,19 @@ export class DictionaryDto {
     required: false,
     maxLength: 255,
   })
-  remark?: string;
+  remark?: string
 
   @ApiProperty({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
   })
-  createdAt!: Date;
+  createdAt!: Date
 
   @ApiProperty({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
   })
-  updatedAt!: Date;
+  updatedAt!: Date
 }
 
 /**
@@ -79,7 +79,7 @@ export class DictionaryItemDto {
     required: true,
     min: 1,
   })
-  id!: number;
+  id!: number
 
   @ValidateString({
     description: '字典编码',
@@ -87,7 +87,7 @@ export class DictionaryItemDto {
     required: true,
     maxLength: 50,
   })
-  dictionaryCode!: string;
+  dictionaryCode!: string
 
   @ValidateString({
     description: '字典项名称',
@@ -95,7 +95,7 @@ export class DictionaryItemDto {
     required: true,
     maxLength: 50,
   })
-  name!: string;
+  name!: string
 
   @ValidateString({
     description: '字典项编码',
@@ -103,7 +103,7 @@ export class DictionaryItemDto {
     required: true,
     maxLength: 50,
   })
-  code!: string;
+  code!: string
 
   @ValidateNumber({
     description: '排序',
@@ -111,7 +111,7 @@ export class DictionaryItemDto {
     required: false,
     min: 0,
   })
-  order?: number;
+  order?: number
 
   @ValidateString({
     description: '字典项封面',
@@ -119,14 +119,14 @@ export class DictionaryItemDto {
     required: false,
     maxLength: 200,
   })
-  cover?: string;
+  cover?: string
 
   @ValidateBoolean({
     description: '状态 true启用 false禁用',
     example: true,
     required: true,
   })
-  isEnabled!: boolean;
+  isEnabled!: boolean
 
   @ValidateString({
     description: '备注信息',
@@ -134,17 +134,17 @@ export class DictionaryItemDto {
     required: false,
     maxLength: 255,
   })
-  remark?: string;
+  remark?: string
 
   @ApiProperty({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
   })
-  createdAt!: Date;
+  createdAt!: Date
 
   @ApiProperty({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
   })
-  updatedAt!: Date;
+  updatedAt!: Date
 }

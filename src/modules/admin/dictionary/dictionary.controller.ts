@@ -1,22 +1,22 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator';
-import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto';
-import { IdDto, IdsDto } from '@/common/dto/id.dto';
-import { DictionaryService } from '@/modules/shared/dictionary/dictionary.service';
-import { CreateDictionaryDto } from '@/modules/shared/dictionary/dto/create-dictionary.dto';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto'
+import { IdDto, IdsDto } from '@/common/dto/id.dto'
+import { DictionaryService } from '@/modules/shared/dictionary/dictionary.service'
+import { CreateDictionaryDto } from '@/modules/shared/dictionary/dto/create-dictionary.dto'
 import {
   CreateDictionaryItemDto,
   UpdateDictionaryItemDto,
-} from '@/modules/shared/dictionary/dto/dictionary-item.dto';
+} from '@/modules/shared/dictionary/dto/dictionary-item.dto'
 import {
   DictionaryDto,
   DictionaryItemDto,
-} from '@/modules/shared/dictionary/dto/dictionary.dto';
+} from '@/modules/shared/dictionary/dto/dictionary.dto'
 import {
   QueryDictionaryDto,
   QueryDictionaryItemDto,
-} from '@/modules/shared/dictionary/dto/query-dictionary.dto';
+} from '@/modules/shared/dictionary/dto/query-dictionary.dto'
 
 @ApiTags('字典管理')
 @Controller('/admin/dictionary')
@@ -29,7 +29,7 @@ export class DictionaryController {
     model: DictionaryDto,
   })
   async getPage(@Query() query: QueryDictionaryDto) {
-    return this.dictionaryService.findDictionaries(query);
+    return this.dictionaryService.findDictionaries(query)
   }
 
   @Get('dictionary-detail')
@@ -38,7 +38,7 @@ export class DictionaryController {
     model: DictionaryDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.dictionaryService.findById(query);
+    return this.dictionaryService.findById(query)
   }
 
   @Post('create-dictionary')
@@ -49,7 +49,7 @@ export class DictionaryController {
   async create(@Body() createDictionaryDto: CreateDictionaryDto) {
     return this.dictionaryService.create({
       data: createDictionaryDto,
-    });
+    })
   }
 
   @Post('update-dictionary')
@@ -61,7 +61,7 @@ export class DictionaryController {
     return this.dictionaryService.update({
       where: { id: updateDictionaryDto.id },
       data: updateDictionaryDto,
-    });
+    })
   }
 
   @Post('delete-dictionary')
@@ -70,7 +70,7 @@ export class DictionaryController {
     model: IdsDto,
   })
   async delete(@Body() query: IdsDto) {
-    return this.dictionaryService.deleteMany({ id: { in: query.ids } });
+    return this.dictionaryService.deleteMany({ id: { in: query.ids } })
   }
 
   @Post('batch-update-dictionary-status')
@@ -82,7 +82,7 @@ export class DictionaryController {
     return this.dictionaryService.updateMany({
       where: { id: { in: query.ids } },
       data: { isEnabled: query.isEnabled },
-    });
+    })
   }
 
   @Get('dictionary-items')
@@ -92,7 +92,7 @@ export class DictionaryController {
     isArray: true,
   })
   async getItems(@Query() query: QueryDictionaryItemDto) {
-    return this.dictionaryService.findDictionaryItems(query);
+    return this.dictionaryService.findDictionaryItems(query)
   }
 
   @Post('create-dictionary-item')
@@ -101,7 +101,7 @@ export class DictionaryController {
     model: IdDto,
   })
   async createItem(@Body() createDictionaryItemDto: CreateDictionaryItemDto) {
-    return this.dictionaryService.createDictionaryItem(createDictionaryItemDto);
+    return this.dictionaryService.createDictionaryItem(createDictionaryItemDto)
   }
 
   @Post('update-dictionary-item')
@@ -113,7 +113,7 @@ export class DictionaryController {
     return this.dictionaryService.updateDictionaryItem({
       ids: [updateDictionaryItemDto.id],
       ...updateDictionaryItemDto,
-    });
+    })
   }
 
   @Post('delete-dictionary-item')
@@ -122,7 +122,7 @@ export class DictionaryController {
     model: CountDto,
   })
   async deleteItem(@Body() query: IdsDto) {
-    return this.dictionaryService.deleteDictionaryItem(query.ids);
+    return this.dictionaryService.deleteDictionaryItem(query.ids)
   }
 
   @Post('update-dictionary-item-status')
@@ -131,6 +131,6 @@ export class DictionaryController {
     model: CountDto,
   })
   async enableItem(@Body() query: BatchEnabledDto) {
-    return this.dictionaryService.updateDictionaryItem(query);
+    return this.dictionaryService.updateDictionaryItem(query)
   }
 }

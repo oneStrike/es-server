@@ -142,12 +142,12 @@ export async function createInitialWorkComicChapters(prisma: any) {
         },
       ],
     },
-  ];
+  ]
 
   for (const comicData of chapterData) {
     const comic = await prisma.workComic.findFirst({
       where: { name: comicData.comicName },
-    });
+    })
 
     if (comic) {
       for (const chapterInfo of comicData.chapters) {
@@ -157,7 +157,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
             chapterNumber: chapterInfo.chapterNumber,
             versionId: null, // 原版章节
           },
-        });
+        })
 
         if (!existingChapter) {
           await prisma.workComicChapter.create({
@@ -166,11 +166,9 @@ export async function createInitialWorkComicChapters(prisma: any) {
               comicId: comic.id,
               versionId: null, // 原版章节
             },
-          });
+          })
         }
       }
     }
   }
-
-  console.log('✅ 漫画章节种子数据初始化完成');
 }

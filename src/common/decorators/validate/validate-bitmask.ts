@@ -1,11 +1,11 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger';
-import type { ValidateBitmaskOptions } from './types';
-import { applyDecorators } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, Validate } from 'class-validator';
-import { BitmaskValidator } from './bitmask-validator';
-import { isNumberEnum } from './utils';
+import type { ApiPropertyOptions } from '@nestjs/swagger'
+import type { ValidateBitmaskOptions } from './types'
+import { applyDecorators } from '@nestjs/common'
+import { ApiProperty } from '@nestjs/swagger'
+import { Transform } from 'class-transformer'
+import { IsNumber, IsOptional, Validate } from 'class-validator'
+import { BitmaskValidator } from './bitmask-validator'
+import { isNumberEnum } from './utils'
 
 /**
  * 位掩码验证装饰器
@@ -47,22 +47,22 @@ import { isNumberEnum } from './utils';
 export function ValidateBitmask(options: ValidateBitmaskOptions) {
   // 参数验证
   if (!options.description) {
-    throw new Error('ValidateBitmask: description is required');
+    throw new Error('ValidateBitmask: description is required')
   }
 
   if (!options.enum) {
-    throw new Error('ValidateBitmask: enum is required');
+    throw new Error('ValidateBitmask: enum is required')
   }
 
   if (!isNumberEnum(options.enum)) {
-    throw new Error('ValidateBitmask: enum must be a number enum');
+    throw new Error('ValidateBitmask: enum must be a number enum')
   }
 
   // 计算有效范围
   const enumValues = Object.values(options.enum).filter(
-    (value): value is number => typeof value === 'number'
-  );
-  const maxValue = enumValues.reduce((acc, value) => acc | value, 0);
+    (value): value is number => typeof value === 'number',
+  )
+  const maxValue = enumValues.reduce((acc, value) => acc | value, 0)
 
   // 构建API属性配置
   const apiPropertyOptions: ApiPropertyOptions = {
@@ -74,7 +74,7 @@ export function ValidateBitmask(options: ValidateBitmaskOptions) {
     type: Number,
     minimum: 0,
     maximum: maxValue,
-  };
+  }
 
   // 基础装饰器
   const decorators = [
@@ -83,11 +83,11 @@ export function ValidateBitmask(options: ValidateBitmaskOptions) {
     Validate(BitmaskValidator, [options.enum], {
       message: '位掩码值无效',
     }),
-  ];
+  ]
 
   // 可选字段处理
   if (!(options.required ?? true)) {
-    decorators.push(IsOptional());
+    decorators.push(IsOptional())
   }
 
   // 转换逻辑
@@ -95,35 +95,35 @@ export function ValidateBitmask(options: ValidateBitmaskOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null) &&
-        options.default !== undefined
+        (value === undefined || value === null)
+        && options.default !== undefined
       ) {
-        return options.default;
+        return options.default
       }
 
       // 处理空值和可选字段
       if (value === undefined || value === null) {
-        return value;
+        return value
       }
 
       // 字符串转数字
       if (typeof value === 'string') {
-        const trimmedValue = value.trim();
+        const trimmedValue = value.trim()
         if (trimmedValue === '') {
-          return undefined;
+          return undefined
         }
-        const numValue = Number(trimmedValue);
-        return Number.isNaN(numValue) ? value : numValue;
+        const numValue = Number(trimmedValue)
+        return Number.isNaN(numValue) ? value : numValue
       }
 
-      return value;
-    })
-  );
+      return value
+    }),
+  )
 
   // 自定义转换函数
   if (options.transform) {
-    decorators.push(Transform(options.transform));
+    decorators.push(Transform(options.transform))
   }
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }

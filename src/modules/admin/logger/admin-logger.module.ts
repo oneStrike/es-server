@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service';
+import { Module } from '@nestjs/common'
+import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 
 /**
  * Admin模块专用日志模块
@@ -9,7 +9,7 @@ import { LoggerFactoryService } from '@/common/module/logger/logger-factory.serv
     {
       provide: 'ADMIN_LOGGER',
       useFactory: (loggerFactory: LoggerFactoryService) => {
-        return loggerFactory.createAdminLogger('AdminModule');
+        return loggerFactory.createAdminLogger('AdminModule')
       },
       inject: [LoggerFactoryService],
     },

@@ -1,4 +1,4 @@
-import { ValidateNumber } from '@/common/decorators/validate.decorator';
+import { ValidateNumber } from '@/common/decorators/validate.decorator'
 
 export class OrderDto {
   @ValidateNumber({
@@ -6,12 +6,12 @@ export class OrderDto {
     required: true,
     example: 1,
   })
-  targetId!: number;
+  targetId!: number
 
   @ValidateNumber({
     description: '当前拖拽数据的id',
     required: true,
     example: 2,
   })
-  dragId!: number;
+  dragId!: number
 }

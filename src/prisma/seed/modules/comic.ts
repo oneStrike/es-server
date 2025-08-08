@@ -1,7 +1,7 @@
 import {
   ComicReadRuleEnum,
   ComicSerialStatusEnum,
-} from '../../../modules/admin/work/comic/core/comic.constant';
+} from '../../../modules/admin/work/comic/core/comic.constant'
 
 export async function createInitialComics(prisma: any) {
   const initData = [
@@ -201,21 +201,19 @@ export async function createInitialComics(prisma: any) {
       disclaimer: '本作品仅供娱乐，不代表任何立场',
       remark: '经典热血漫画，影响深远',
     },
-  ];
+  ]
 
   for (const item of initData) {
     // 先查找是否已存在同名漫画
     const existingComic = await prisma.workComic.findFirst({
       where: { name: item.name },
-    });
+    })
 
     if (!existingComic) {
       // 如果不存在，则创建新记录
       await prisma.workComic.create({
         data: item,
-      });
+      })
     }
   }
-
-  console.log('✅ 漫画种子数据初始化完成');
 }

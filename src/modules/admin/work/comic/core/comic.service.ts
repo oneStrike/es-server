@@ -225,15 +225,15 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
         },
       },
     })
-    pageData.list = pageData.list.map(item => ({
+    pageData.list = pageData.list.map((item) => ({
       ...item,
-      comicAuthors: item.comicAuthors.map(author => ({
+      comicAuthors: item.comicAuthors.map((author) => ({
         ...author.author,
         roleType: author.roleType,
         isPrimary: author.isPrimary,
         sortOrder: author.sortOrder,
       })),
-      comicCategories: item.comicCategories.map(category => ({
+      comicCategories: item.comicCategories.map((category) => ({
         ...category.category,
       })),
     }))
@@ -283,12 +283,12 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
 
     return {
       ...comic,
-      comicAuthors: comic.comicAuthors?.map(author => ({
+      comicAuthors: comic.comicAuthors?.map((author) => ({
         ...author.author,
         isPrimary: author.isPrimary,
         sortOrder: author.sortOrder,
       })),
-      comicCategories: comic.comicCategories?.map(category => ({
+      comicCategories: comic.comicCategories?.map((category) => ({
         ...category.category,
       })),
     }

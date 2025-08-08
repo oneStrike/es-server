@@ -1,19 +1,19 @@
-import * as process from 'node:process';
-import { CacheModule } from '@nestjs/cache-manager';
-import { BadRequestException, Module, ValidationPipe } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
-import { LoggingInterceptor } from '@/common/interceptors/logging.interceptor';
-import { TransformInterceptor } from '@/common/interceptors/transform.interceptor';
-import { LoggerModule } from '@/common/module/logger/logger.module';
-import uploadConfig from '@/config/upload.config';
-import { AdminModule } from '@/modules/admin/admin.module';
-import { RequestLogModule } from '@/modules/admin/request-log/request-log.module';
-import { ClientModule } from '@/modules/client/client.module';
-import { GuardsModule } from './common/guards/guards.module';
-import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard';
-import { GlobalModule } from './global/global.module';
+import * as process from 'node:process'
+import { CacheModule } from '@nestjs/cache-manager'
+import { BadRequestException, Module, ValidationPipe } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
+import { HttpExceptionFilter } from '@/common/filters/http-exception.filter'
+import { LoggingInterceptor } from '@/common/interceptors/logging.interceptor'
+import { TransformInterceptor } from '@/common/interceptors/transform.interceptor'
+import { LoggerModule } from '@/common/module/logger/logger.module'
+import uploadConfig from '@/config/upload.config'
+import { AdminModule } from '@/modules/admin/admin.module'
+import { RequestLogModule } from '@/modules/admin/request-log/request-log.module'
+import { ClientModule } from '@/modules/client/client.module'
+import { GuardsModule } from './common/guards/guards.module'
+import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard'
+import { GlobalModule } from './global/global.module'
 
 @Module({
   imports: [
@@ -41,10 +41,10 @@ import { GlobalModule } from './global/global.module';
       useValue: new ValidationPipe({
         transform: true,
         whitelist: true,
-        exceptionFactory: errors => {
+        exceptionFactory: (errors) => {
           return new BadRequestException(
-            errors.map(error => `${error.property}数据格式校验失败`)
-          );
+            errors.map((error) => `${error.property}数据格式校验失败`),
+          )
         },
       }),
     },

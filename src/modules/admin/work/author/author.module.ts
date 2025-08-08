@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { WorkAuthorController } from './author.controller';
-import { WorkAuthorService } from './author.service';
+import { Module } from '@nestjs/common'
+import { WorkAuthorController } from './author.controller'
+import { WorkAuthorService } from './author.service'
 
 /**
  * 作者管理模块

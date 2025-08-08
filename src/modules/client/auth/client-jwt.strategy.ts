@@ -1,9 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service';
-import { JwtConfigService } from '@/config/jwt.config';
-import { ClientJwtPayload } from './client-jwt.service';
+import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { PassportStrategy } from '@nestjs/passport'
+import { ExtractJwt, Strategy } from 'passport-jwt'
+import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
+import { JwtConfigService } from '@/config/jwt.config'
+import { ClientJwtPayload } from './client-jwt.service'
 
 /**
  * ClientJwtStrategy 类
@@ -13,7 +13,7 @@ import { ClientJwtPayload } from './client-jwt.service';
 @Injectable()
 export class ClientJwtStrategy extends PassportStrategy(
   Strategy,
-  'client-jwt'
+  'client-jwt',
 ) {
   /**
    * 构造函数
@@ -22,14 +22,14 @@ export class ClientJwtStrategy extends PassportStrategy(
    */
   constructor(
     private jwtConfigService: JwtConfigService,
-    private jwtBlacklistService: JwtBlacklistService
+    private jwtBlacklistService: JwtBlacklistService,
   ) {
-    const config = jwtConfigService.getClientJwtConfig(); // 获取客户端 JWT 配置
+    const config = jwtConfigService.getClientJwtConfig() // 获取客户端 JWT 配置
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // 从请求头中提取 JWT
       ignoreExpiration: false, // 不忽略过期时间
       secretOrKey: config.secret, // 使用配置中的密钥
-    });
+    })
   }
 
   /**
@@ -42,20 +42,22 @@ export class ClientJwtStrategy extends PassportStrategy(
   async validate(payload: ClientJwtPayload, request: any) {
     // 确保角色为 'client'
     if (payload.role !== 'client') {
-      throw new UnauthorizedException('登录失效，请重新登录！');
+      throw new UnauthorizedException('登录失效，请重新登录！')
     }
 
     // 获取原始令牌
-    const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request);
+    const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request)
 
     // 检查令牌是否在黑名单中
-    const isBlacklisted =
-      await this.jwtBlacklistService.isInClientBlacklist(token);
+    const isBlacklisted = await this.jwtBlacklistService.isInClientBlacklist(
+      token as string,
+    )
+
     if (isBlacklisted) {
-      throw new UnauthorizedException('登录失效，请重新登录！');
+      throw new UnauthorizedException('登录失效，请重新登录！')
     }
 
     // 返回验证通过的用户信息，将被添加到请求对象中
-    return payload;
+    return payload
   }
 }

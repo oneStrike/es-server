@@ -1,13 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { BatchEnabledDto } from '@/common/dto/batch.dto';
-import { BaseRepositoryService } from '@/global/services/base-repository.service';
-import { PrismaService } from '@/global/services/prisma.service';
-import { CategoryTypesEnum } from './category.constant';
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { BatchEnabledDto } from '@/common/dto/batch.dto'
+import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { PrismaService } from '@/global/services/prisma.service'
+import { CategoryTypesEnum } from './category.constant'
 import {
   CreateCategoryDto,
   QueryCategoryDto,
   UpdateCategoryDto,
-} from './dto/category.dto';
+} from './dto/category.dto'
 
 /**
  * 分类服务类
@@ -15,11 +15,11 @@ import {
  */
 @Injectable()
 export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
-  protected readonly modelName = 'WorkCategory' as const;
-  protected readonly supportsSoftDelete = true; // 分类不支持软删除
+  protected readonly modelName = 'WorkCategory' as const
+  protected readonly supportsSoftDelete = true // 分类不支持软删除
 
   constructor(protected readonly prisma: PrismaService) {
-    super(prisma);
+    super(prisma)
   }
 
   /**
@@ -31,20 +31,20 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
     // 验证分类名称是否已存在
     const existingCategory = await this.findByUnique({
       where: { name: createCategoryDto.name },
-    });
+    })
     if (existingCategory) {
-      throw new BadRequestException('分类名称已存在');
+      throw new BadRequestException('分类名称已存在')
     }
 
     // 验证应用类型的有效性
     if (createCategoryDto.contentTypes) {
-      this.validateContentTypes(createCategoryDto.contentTypes);
+      this.validateContentTypes(createCategoryDto.contentTypes)
     }
 
     // 如果没有指定排序值，设置为最大值+1
     if (!createCategoryDto.order) {
-      const maxOrder = await this.getMaxOrder();
-      createCategoryDto.order = maxOrder + 1;
+      const maxOrder = await this.getMaxOrder()
+      createCategoryDto.order = maxOrder + 1
     }
 
     return this.create({
@@ -57,7 +57,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
         imageSetCount: 0,
         illustrationCount: 0,
       },
-    });
+    })
   }
 
   /**
@@ -66,28 +66,28 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 分页结果
    */
   async getCategoryPage(queryDto: QueryCategoryDto) {
-    const { name, isEnabled, contentTypes } = queryDto;
+    const { name, isEnabled, contentTypes } = queryDto
 
     // 构建查询条件
-    const where: any = {};
+    const where: any = {}
 
     if (name) {
-      where.name = { contains: name };
+      where.name = { contains: name }
     }
 
     if (isEnabled !== undefined) {
-      where.isEnabled = isEnabled;
+      where.isEnabled = isEnabled
     }
 
     if (contentTypes !== undefined) {
       // 使用简单的等值查询
-      where.contentTypes = contentTypes;
+      where.contentTypes = contentTypes
     }
 
     return this.findPagination({
       where,
       ...queryDto,
-    });
+    })
   }
 
   /**
@@ -96,11 +96,11 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 分类详情
    */
   async getCategoryDetail(id: number) {
-    const category = await this.findById({ id });
+    const category = await this.findById({ id })
     if (!category) {
-      throw new BadRequestException('分类不存在');
+      throw new BadRequestException('分类不存在')
     }
-    return category;
+    return category
   }
 
   /**
@@ -109,33 +109,33 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 更新后的分类信息
    */
   async updateCategory(updateCategoryDto: UpdateCategoryDto) {
-    const { id, ...updateData } = updateCategoryDto;
+    const { id, ...updateData } = updateCategoryDto
 
     // 验证分类是否存在
-    const existingCategory = await this.findById({ id });
+    const existingCategory = await this.findById({ id })
     if (!existingCategory) {
-      throw new BadRequestException('分类不存在');
+      throw new BadRequestException('分类不存在')
     }
 
     // 如果更新名称，验证名称是否已被其他分类使用
     if (updateData.name && updateData.name !== existingCategory.name) {
       const duplicateCategory = await this.findByUnique({
         where: { name: updateData.name },
-      });
+      })
       if (duplicateCategory && duplicateCategory.id !== id) {
-        throw new BadRequestException('分类名称已存在');
+        throw new BadRequestException('分类名称已存在')
       }
     }
 
     // 验证应用类型的有效性
     if (updateData.contentTypes !== undefined) {
-      this.validateContentTypes(updateData.contentTypes);
+      this.validateContentTypes(updateData.contentTypes)
     }
 
     return this.updateById({
       id,
       data: updateData,
-    });
+    })
   }
 
   /**
@@ -144,20 +144,20 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 更新结果
    */
   async updateCategoryStatus(updateStatusDto: BatchEnabledDto) {
-    const { ids, isEnabled } = updateStatusDto;
+    const { ids, isEnabled } = updateStatusDto
 
     // 验证所有分类是否存在
     const categories = await this.findMany({
       where: { id: { in: ids } },
-    });
+    })
     if (categories.length !== ids.length) {
-      throw new BadRequestException('部分分类不存在');
+      throw new BadRequestException('部分分类不存在')
     }
 
     return this.updateMany({
       where: { id: { in: ids } },
       data: { isEnabled },
-    });
+    })
   }
 
   /**
@@ -169,10 +169,10 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       CategoryTypesEnum.NOVEL,
       CategoryTypesEnum.COMIC,
       CategoryTypesEnum.ILLUSTRATOR,
-    ];
+    ]
 
     // 检查是否为有效的枚举值
-    return validTypes.includes(contentTypes);
+    return validTypes.includes(contentTypes)
   }
 
   /**
@@ -184,19 +184,19 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
     // 验证所有分类是否存在
     const categories = await this.findMany({
       where: { id: { in: ids } },
-    });
+    })
     if (categories.length !== ids.length) {
-      throw new BadRequestException('部分分类不存在');
+      throw new BadRequestException('部分分类不存在')
     }
 
     // 检查是否有关联的作品
     for (const id of ids) {
-      const hasWorks = await this.checkCategoryHasWorks(id);
+      const hasWorks = await this.checkCategoryHasWorks()
       if (hasWorks) {
-        const category = categories.find(c => c.id === id);
+        const category = categories.find((c) => c.id === id)
         throw new BadRequestException(
-          `分类 ${category?.name} 还有作品，无法删除`
-        );
+          `分类 ${category?.name} 还有作品，无法删除`,
+        )
       }
     }
   }
@@ -204,7 +204,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
   /**
    * 检查分类是否有关联的作品
    */
-  async checkCategoryHasWorks(id: number) {
-    return false;
+  async checkCategoryHasWorks() {
+    return false
   }
 }

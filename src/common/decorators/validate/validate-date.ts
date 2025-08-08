@@ -1,9 +1,9 @@
-import type { ApiPropertyOptions } from '@nestjs/swagger';
-import type { ValidateDateTimeOptions } from './types';
-import { applyDecorators } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsDate, IsOptional } from 'class-validator';
+import type { ApiPropertyOptions } from '@nestjs/swagger'
+import type { ValidateDateTimeOptions } from './types'
+import { applyDecorators } from '@nestjs/common'
+import { ApiProperty } from '@nestjs/swagger'
+import { Transform } from 'class-transformer'
+import { IsDate, IsOptional } from 'class-validator'
 
 /**
  * 日期类型验证装饰器
@@ -36,7 +36,7 @@ import { IsDate, IsOptional } from 'class-validator';
 export function ValidateDate(options: ValidateDateTimeOptions) {
   // 参数验证
   if (!options.description) {
-    throw new Error('ValidateDate: description is required');
+    throw new Error('ValidateDate: description is required')
   }
 
   // 构建API属性配置
@@ -48,17 +48,17 @@ export function ValidateDate(options: ValidateDateTimeOptions) {
     nullable: !(options.required ?? true),
     type: Date,
     format: 'date-time',
-  };
+  }
 
   // 基础装饰器
   const decorators = [
     ApiProperty(apiPropertyOptions),
     IsDate({ message: '必须是有效的日期格式' }),
-  ];
+  ]
 
   // 可选字段处理
   if (!(options.required ?? true)) {
-    decorators.push(IsOptional());
+    decorators.push(IsOptional())
   }
 
   // 转换逻辑
@@ -66,36 +66,36 @@ export function ValidateDate(options: ValidateDateTimeOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null) &&
-        options.default !== undefined
+        (value === undefined || value === null)
+        && options.default !== undefined
       ) {
-        return options.default;
+        return options.default
       }
 
       // 字符串转Date
       if (typeof value === 'string') {
-        const trimmedValue = value.trim();
+        const trimmedValue = value.trim()
         if (trimmedValue === '') {
-          return undefined;
+          return undefined
         }
-        const dateValue = new Date(trimmedValue);
-        return Number.isNaN(dateValue.getTime()) ? value : dateValue;
+        const dateValue = new Date(trimmedValue)
+        return Number.isNaN(dateValue.getTime()) ? value : dateValue
       }
 
       // 数字转Date（时间戳）
       if (typeof value === 'number') {
-        const dateValue = new Date(value);
-        return Number.isNaN(dateValue.getTime()) ? value : dateValue;
+        const dateValue = new Date(value)
+        return Number.isNaN(dateValue.getTime()) ? value : dateValue
       }
 
-      return value;
-    })
-  );
+      return value
+    }),
+  )
 
   // 自定义转换函数
   if (options.transform) {
-    decorators.push(Transform(options.transform));
+    decorators.push(Transform(options.transform))
   }
 
-  return applyDecorators(...decorators);
+  return applyDecorators(...decorators)
 }

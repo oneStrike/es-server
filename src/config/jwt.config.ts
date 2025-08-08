@@ -1,15 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import process from 'node:process'
+import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 
 /**
  * JWT 配置接口，定义统一的返回结构
  */
 interface JwtConfig {
-  secret: string;
+  secret: string
   signOptions: {
-    expiresIn: string;
-  };
-  refreshExpiresIn: string;
+    expiresIn: string
+  }
+  refreshExpiresIn: string
 }
 
 /**
@@ -26,12 +27,7 @@ export class JwtConfigService {
    * @returns JWT 配置对象，包含密钥、签名选项和刷新令牌过期时间
    */
   getAdminJwtConfig(): JwtConfig {
-    return this.buildJwtConfig(
-      'ADMIN_JWT',
-      'admin-default-secret',
-      '7d',
-      '30d'
-    );
+    return this.buildJwtConfig('ADMIN_JWT', 'admin-default-secret', '7d', '30d')
   }
 
   /**
@@ -43,8 +39,8 @@ export class JwtConfigService {
       'CLIENT_JWT',
       'client-default-secret',
       '24h',
-      '7d'
-    );
+      '7d',
+    )
   }
 
   /**
@@ -59,22 +55,22 @@ export class JwtConfigService {
     prefix: string,
     defaultSecret: string,
     defaultExpire: string,
-    defaultRefreshExpire: string
+    defaultRefreshExpire: string,
   ): JwtConfig {
-    const secret = this.getJwtSecret(`${prefix}_SECRET`, defaultSecret);
+    const secret = this.getJwtSecret(`${prefix}_SECRET`, defaultSecret)
     return {
       secret,
       signOptions: {
         expiresIn: this.configService.get<string>(
           `${prefix}_EXPIRES_IN`,
-          defaultExpire
+          defaultExpire,
         ),
       },
       refreshExpiresIn: this.configService.get<string>(
         `${prefix}_REFRESH_EXPIRES_IN`,
-        defaultRefreshExpire
+        defaultRefreshExpire,
       ),
-    };
+    }
   }
 
   /**
@@ -86,18 +82,16 @@ export class JwtConfigService {
    * @returns JWT 密钥
    */
   private getJwtSecret(key: string, defaultValue: string): string {
-    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    const nodeEnv = this.configService.get<string>('NODE_ENV')
 
     if (nodeEnv === 'production') {
-      const secret = process.env[key];
+      const secret = process.env[key]
       if (!secret) {
-        throw new Error(
-          `${key} environment variable is required in production`
-        );
+        throw new Error(`${key} environment variable is required in production`)
       }
-      return secret;
+      return secret
     }
 
-    return this.configService.get<string>(key, defaultValue);
+    return this.configService.get<string>(key, defaultValue)
   }
 }

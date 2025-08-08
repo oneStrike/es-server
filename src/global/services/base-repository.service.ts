@@ -70,13 +70,13 @@ export abstract class BaseRepositoryService<T extends ModelName> {
    */
   private buildQueryArgs(options?: Partial<QueryOptions<T>>) {
     const { select, omit, include } = options || {}
-    if (select && omit)
+    if (select && omit) {
       throw new Error('select 和 omit 不能同时使用')
+    }
     const args: Record<string, any> = {}
     if (select) {
       args.select = select
-    }
-    else if (this.supportsSoftDelete) {
+    } else if (this.supportsSoftDelete) {
       args.omit = omit
         ? { ...BaseRepositoryService.DEFAULT_OMIT, ...omit }
         : BaseRepositoryService.DEFAULT_OMIT
@@ -92,13 +92,13 @@ export abstract class BaseRepositoryService<T extends ModelName> {
    */
   private buildWriteQueryArgs(options?: Partial<QueryOptions<T>>) {
     const { select, omit, include } = options || {}
-    if (select && omit)
+    if (select && omit) {
       throw new Error('select 和 omit 不能同时使用')
+    }
     const args: Record<string, any> = {}
     if (select) {
       args.select = select
-    }
-    else {
+    } else {
       args.select = { id: true }
     }
     if (include != null) {
@@ -132,7 +132,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   async create(
     options: { data: ModelTypes<T>['CreateInput'] } & Partial<QueryOptions<T>>,
   ): Promise<ModelTypes<T>['Model']> {
-    return (this.model).create({
+    return this.model.create({
       data: options.data,
       ...this.buildWriteQueryArgs(options),
     })
@@ -149,7 +149,9 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   }
 
   async findFirst(
-    options?: { where?: ModelTypes<T>['WhereInput'] } & Partial<QueryOptions<T>>,
+    options?: { where?: ModelTypes<T>['WhereInput'] } & Partial<
+      QueryOptions<T>
+    >,
   ): Promise<ModelTypes<T>['Model'] | null> {
     const where = this.getWhere(options?.where)
     return this.model.findFirst({ where, ...this.buildQueryArgs(options) })
@@ -160,7 +162,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
       QueryOptions<T>
     >,
   ): Promise<ModelTypes<T>['Model'] | null> {
-    const where = this.getWhere(options.where as ModelTypes<T>['WhereInput'])
+    const where = this.getWhere(options.where)
     return this.model.findFirst({ where, ...this.buildQueryArgs(options) })
   }
 
@@ -218,13 +220,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     }
     let finalOrderBy: ModelTypes<T>['OrderByInput'] = { id: 'desc' } as any
     if (orderBy) {
-      try {
-        finalOrderBy
-          = typeof orderBy === 'string' ? JSON.parse(orderBy) : orderBy
-      }
-      catch (e) {
-        // ignore
-      }
+      finalOrderBy = typeof orderBy === 'string' ? JSON.parse(orderBy) : orderBy
     }
     return this._paginationInternal(
       {
@@ -354,7 +350,9 @@ export abstract class BaseRepositoryService<T extends ModelName> {
 
   async softDelete(id: number): Promise<ModelTypes<T>['Model']> {
     if (!this.supportsSoftDelete) {
-      throw new BadRequestException(`${this.modelName} 不支持软删除功能`)
+      throw new BadRequestException(
+        `${this.modelName as string} 不支持软删除功能`,
+      )
     }
 
     if (!(await this.exists({ id } as ModelTypes<T>['WhereInput']))) {
@@ -369,8 +367,11 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   async softDeleteMany(
     where: ModelTypes<T>['WhereInput'],
   ): Promise<BatchResult> {
-    if (!this.supportsSoftDelete)
-      throw new BadRequestException(`${this.modelName} 不支持软删除功能`)
+    if (!this.supportsSoftDelete) {
+      throw new BadRequestException(
+        `${this.modelName as string} 不支持软删除功能`,
+      )
+    }
     return this.updateMany({
       where: { ...where, deletedAt: null },
       data: { deletedAt: new Date() } as ModelTypes<T>['UpdateInput'],
@@ -378,8 +379,11 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   }
 
   async restore(id: number): Promise<ModelTypes<T>['Model']> {
-    if (!this.supportsSoftDelete)
-      throw new BadRequestException(`${this.modelName} 不支持软删除功能`)
+    if (!this.supportsSoftDelete) {
+      throw new BadRequestException(
+        `${this.modelName as string} 不支持软删除功能`,
+      )
+    }
     return this.updateById({
       id,
       data: { deletedAt: null } as ModelTypes<T>['UpdateInput'],
@@ -387,8 +391,11 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   }
 
   async restoreMany(where: ModelTypes<T>['WhereInput']): Promise<BatchResult> {
-    if (!this.supportsSoftDelete)
-      throw new BadRequestException(`${this.modelName} 不支持软删除功能`)
+    if (!this.supportsSoftDelete) {
+      throw new BadRequestException(
+        `${this.modelName as string} 不支持软删除功能`,
+      )
+    }
     return this.updateMany({
       where,
       data: { deletedAt: null } as ModelTypes<T>['UpdateInput'],
@@ -426,8 +433,9 @@ export abstract class BaseRepositoryService<T extends ModelName> {
       pageSize?: number
     } & Partial<QueryOptions<T>>,
   ): Promise<ModelTypes<T>['Model'][]> {
-    if (!this.supportsSoftDelete)
+    if (!this.supportsSoftDelete) {
       return []
+    }
     return this._findManyInternal(options, 'deleted')
   }
 
@@ -510,14 +518,17 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   }
 
   async countOnlyDeleted(where?: ModelTypes<T>['WhereInput']): Promise<number> {
-    if (!this.supportsSoftDelete)
+    if (!this.supportsSoftDelete) {
       return 0
+    }
     return this._countInternal(where, 'deleted')
   }
 
-  async getSoftDeleteStats(
-    where?: ModelTypes<T>['WhereInput'],
-  ): Promise<{ total: number, active: number, deleted: number }> {
+  async getSoftDeleteStats(where?: ModelTypes<T>['WhereInput']): Promise<{
+    total: number
+    active: number
+    deleted: number
+  }> {
     if (!this.supportsSoftDelete) {
       const total = await this._countInternal(where, 'active')
       return { total, active: total, deleted: 0 }
@@ -544,20 +555,26 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   }: {
     dragId: number
     targetId: number
-  }): Promise<{ dragId: number, targetId: number }> {
+  }): Promise<{
+    dragId: number
+    targetId: number
+  }> {
     return this.transaction(async () => {
       const [dragRecord, targetRecord] = await Promise.all([
         this.findById({ id: dragId }),
         this.findById({ id: targetId }),
       ])
-      if (!dragRecord || !targetRecord)
+      if (!dragRecord || !targetRecord) {
         throw new BadRequestException('记录不存在')
+      }
       const dragOrder = (dragRecord as any).order
       const targetOrder = (targetRecord as any).order
-      if (dragOrder === undefined || targetOrder === undefined)
+      if (dragOrder === undefined || targetOrder === undefined) {
         throw new BadRequestException('记录缺少排序字段')
-      if (dragOrder === targetOrder)
+      }
+      if (dragOrder === targetOrder) {
         return { dragId, targetId }
+      }
       await Promise.all([
         this.updateById({
           id: dragId,

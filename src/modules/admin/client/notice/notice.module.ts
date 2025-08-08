@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { ClientNoticeController } from './notice.controller';
-import { ClientNoticeService } from './notice.service';
+import { Module } from '@nestjs/common'
+import { ClientNoticeController } from './notice.controller'
+import { ClientNoticeService } from './notice.service'
 
 /**
  * 客户端通知模块
