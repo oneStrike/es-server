@@ -90,14 +90,15 @@ export class AdminJwtService {
   }
 
   /**
-   * 使用刷新令牌生成新的访问令牌和刷新令牌
+   * 使用刷新令牌生成新的访问令牌
    * @param refreshToken 刷新令牌
-   * @returns 新的访问令牌和刷新令牌
+   * @returns 新的访问令牌和原有的刷新令牌
    * @throws 如果刷新令牌无效或已过期
    */
   async refreshAccessToken(refreshToken: string): Promise<AdminTokens> {
     const config = this.jwtConfigService.getAdminJwtConfig()
 
+    // 验证刷新令牌
     const payload = await this.jwtService.verifyAsync(refreshToken, {
       secret: config.secret,
     })
@@ -106,11 +107,24 @@ export class AdminJwtService {
       throw new Error('Invalid refresh token')
     }
 
-    // 生成新的令牌对
-    return this.generateTokens({
+    // 只生成新的访问令牌，使用原始 payload 中的数据
+    const adminPayload: AdminJwtPayload = {
       sub: payload.sub,
-      username: payload.username || 'admin',
+      username: payload.username,
+      role: payload.role,
+      permissions: payload.permissions,
+    }
+
+    const accessToken = await this.jwtService.signAsync(adminPayload, {
+      secret: config.secret,
+      expiresIn: config.signOptions.expiresIn,
     })
+
+    // 返回新的访问令牌和原有的刷新令牌
+    return {
+      accessToken,
+      refreshToken, // 保持原有的刷新令牌不变
+    }
   }
 
   /**
