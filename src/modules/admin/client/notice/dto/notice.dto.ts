@@ -210,6 +210,7 @@ export class QueryNoticeDto extends IntersectionType(
     'isPublished',
     'isPinned',
     'showAsPopup',
+    'pageCode',
   ]),
 ) {}
 

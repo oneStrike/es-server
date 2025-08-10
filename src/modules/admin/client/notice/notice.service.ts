@@ -34,7 +34,33 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
-    return this.create({ data: createNoticeDto })
+    const { pageCode, ...others } = createNoticeDto
+    if (pageCode) {
+      const pageInfo = await this.prisma.clientPageConfig.findFirst({
+        where: {
+          pageCode,
+        },
+        select: {
+          id: true,
+        },
+      })
+      if (!pageInfo) {
+        throw new BadRequestException('关联页面不存在')
+      } else {
+        return this.create({
+          data: {
+            ...others,
+            clientPage: {
+              connect: {
+                id: pageInfo.id,
+              },
+            },
+          },
+        })
+      }
+    }
+
+    return this.create({ data: others })
   }
 
   /**
@@ -50,6 +76,8 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       isPinned,
       isPublished,
       showAsPopup,
+      pageCode,
+      ...pageParams
     } = queryNoticeDto
 
     const where: ClientNoticeWhereInput = {}
@@ -72,9 +100,13 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
     if (showAsPopup !== undefined) {
       where.showAsPopup = showAsPopup
     }
+    if (pageCode !== undefined) {
+      where.pageCode = pageCode
+    }
 
     return this.findPagination({
       where,
+      ...pageParams,
       omit: {
         content: true,
         popupBackgroundImage: true,
@@ -138,12 +170,42 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
    * @returns 更新后的通知信息
    */
   async updateNotice(updateNoticeDto: UpdateNoticeDto) {
-    const { id, ...updateData } = updateNoticeDto
+    const { id, pageCode, ...updateData } = updateNoticeDto
 
     // 验证时间范围
     if (updateData.publishStartTime && updateData.publishEndTime) {
       if (updateData.publishStartTime >= updateData.publishEndTime) {
         throw new BadRequestException('发布开始时间不能大于或等于结束时间')
+      }
+    }
+
+    const notice = await this.findById({ id })
+    if (!notice) {
+      throw new BadRequestException('通知不存在')
+    }
+    if (pageCode && notice.pageCode !== pageCode) {
+      const pageInfo = await this.prisma.clientPageConfig.findFirst({
+        where: {
+          pageCode,
+        },
+        select: {
+          id: true,
+        },
+      })
+      if (!pageInfo) {
+        throw new BadRequestException('关联页面不存在')
+      } else {
+        return this.update({
+          where: { id },
+          data: {
+            ...updateData,
+            clientPage: {
+              connect: {
+                id: pageInfo.id,
+              },
+            },
+          },
+        })
       }
     }
 
