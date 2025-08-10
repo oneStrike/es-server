@@ -180,23 +180,13 @@ export class CreateNoticeDto extends OmitType(BaseNoticeDto, [
   'readCount',
   'createdAt',
   'updatedAt',
+  'clientPage',
 ]) {}
 
 /**
  * 更新通知DTO
  */
-export class UpdateNoticeDto extends IntersectionType(
-  PartialType(
-    OmitType(BaseNoticeDto, [
-      'id',
-      'readCount',
-      'isPublished',
-      'createdAt',
-      'updatedAt',
-    ]),
-  ),
-  IdDto,
-) {}
+export class UpdateNoticeDto extends IntersectionType(CreateNoticeDto, IdDto) {}
 
 /**
  * 通知查询DTO

@@ -34,7 +34,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
-    const { pageCode, ...others } = createNoticeDto
+    const { pageCode, ...others } = createNoticeDto // 明确移除 clientPage
     if (pageCode) {
       const pageInfo = await this.prisma.clientPageConfig.findFirst({
         where: {
@@ -52,7 +52,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
             ...others,
             clientPage: {
               connect: {
-                id: pageInfo.id,
+                id: pageInfo.id, // 使用 Prisma 的 connect 方法
               },
             },
           },
@@ -60,7 +60,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
-    return this.create({ data: others })
+    return this.create({ data: others }) // 确保 others 不包含非法字段
   }
 
   /**
