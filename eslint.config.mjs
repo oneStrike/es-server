@@ -2,4 +2,10 @@
 
 import { defineConfig } from '@vben/eslint-config';
 
-export default defineConfig();
+export default defineConfig([
+  {
+    rules: {
+      'no-console': 'off',
+    },
+  },
+]);

@@ -16,6 +16,7 @@
   },
   "type": "module",
   "scripts": {
+    "att": "tsx ./src/utils/openapi-generator/index.ts",
     "build": "pnpm vite build --mode production",
     "build:analyze": "pnpm vite build --mode analyze",
     "dev": "pnpm vite --mode development",
@@ -44,6 +45,7 @@
     "ant-design-vue": "catalog:",
     "dayjs": "catalog:",
     "pinia": "catalog:",
+    "tsx": "^4.20.4",
     "vue": "catalog:",
     "vue-router": "catalog:"
   }
