@@ -1,17 +1,24 @@
 <script lang="ts" setup>
 import type { VbenFormSchema } from '@vben/common-ui';
 
+import type { UserLoginDto } from '#/apis/types/user';
+
 import { computed } from 'vue';
 
 import { AuthenticationLogin, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
+import { getCaptchaApi } from '#/apis';
 import { useAuthStore } from '#/store';
 
 defineOptions({ name: 'Login' });
 
 const authStore = useAuthStore();
-
+const captchaData = ref();
+async function fetchCaptcha() {
+  captchaData.value = await getCaptchaApi();
+}
+fetchCaptcha();
 const formSchema = computed((): VbenFormSchema[] => {
   return [
     {
@@ -32,8 +39,40 @@ const formSchema = computed((): VbenFormSchema[] => {
       label: $t('authentication.password'),
       rules: z.string().min(1, { message: $t('authentication.passwordTip') }),
     },
+    {
+      component: 'VbenInput',
+      componentProps: {
+        placeholder: '请输入验证码',
+        maxlength: 4,
+      },
+      suffix: () =>
+        h(
+          'div',
+          {
+            class: 'flex items-center gap-2',
+          },
+          [
+            // 验证码图片
+            h('img', {
+              src: captchaData.value?.data,
+              alt: '验证码',
+              class: 'h-14 w-30 cursor-pointer',
+              onClick: fetchCaptcha,
+              title: '点击刷新验证码',
+            }),
+          ],
+        ),
+      fieldName: 'captcha',
+      label: '验证码',
+      rules: z.string().min(4, { message: '请输入正确的验证码' }),
+    },
   ];
 });
+
+async function login(params: Partial<UserLoginDto>) {
+  params.captchaId = captchaData.value?.id;
+  await authStore.authLogin(params as UserLoginDto);
+}
 </script>
 
 <template>
@@ -45,6 +84,6 @@ const formSchema = computed((): VbenFormSchema[] => {
     :show-forget-password="false"
     :show-qrcode-login="false"
     :show-code-login="false"
-    @submit="authStore.authLogin"
+    @submit="login"
   />
 </template>
