@@ -39,6 +39,7 @@ function notify(type: NotificationType) {
   >
     <Card class="mb-5" title="按钮">
       <Space>
+        <t-button>信息</t-button>
         <Button>Default</Button>
         <Button type="primary"> Primary </Button>
         <Button> Info </Button>
