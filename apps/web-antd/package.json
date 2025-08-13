@@ -45,8 +45,14 @@
     "ant-design-vue": "catalog:",
     "dayjs": "catalog:",
     "pinia": "catalog:",
+    "tdesign-vue-next": "^1.15.2",
     "tsx": "^4.20.4",
     "vue": "catalog:",
     "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "@tdesign-vue-next/auto-import-resolver": "^0.1.1",
+    "unplugin-auto-import": "^20.0.0",
+    "unplugin-vue-components": "^29.0.0"
   }
 }
