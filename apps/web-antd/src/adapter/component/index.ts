@@ -18,7 +18,7 @@ import { notification } from 'ant-design-vue';
 const AutoComplete = defineAsyncComponent(
   () => import('ant-design-vue/es/auto-complete'),
 );
-const Button = defineAsyncComponent(() => import('ant-design-vue/es/button'));
+const Button = defineAsyncComponent(() => import('tdesign-vue-next/es/button'));
 const Checkbox = defineAsyncComponent(
   () => import('ant-design-vue/es/checkbox'),
 );
@@ -163,7 +163,13 @@ async function initComponentAdapter() {
     DatePicker,
     // 自定义默认按钮
     DefaultButton: (props, { attrs, slots }) => {
-      return h(Button, { ...props, attrs, type: 'default' }, slots);
+      const { variant, ...restProps } = props;
+      const buttonProps = {
+        ...restProps,
+        theme: 'default',
+        variant: variant === 'ghost' ? 'outline' : variant,
+      };
+      return h(Button, { ...attrs, ...buttonProps }, slots);
     },
     Divider,
     IconPicker: withDefaultPlaceholder(IconPicker, 'select', {
@@ -177,7 +183,7 @@ async function initComponentAdapter() {
     Mentions: withDefaultPlaceholder(Mentions, 'input'),
     // 自定义主要按钮
     PrimaryButton: (props, { attrs, slots }) => {
-      return h(Button, { ...props, attrs, type: 'primary' }, slots);
+      return h(Button, { ...props, attrs, theme: 'primary' }, slots);
     },
     Radio,
     RadioGroup,

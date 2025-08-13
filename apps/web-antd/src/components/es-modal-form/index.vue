@@ -76,7 +76,9 @@ const [BaseForm, formApi] = useVbenForm({
 <template>
   <Modal :title="modalTitle" class="w-[1000px]">
     <template #prepend-footer>
-      <t-button @click="formApi.resetForm()">重置</t-button>
+      <t-button theme="default" class="mr-2" @click="formApi.resetForm()">
+        重置
+      </t-button>
     </template>
     <BaseForm />
   </Modal>
