@@ -24,6 +24,7 @@ function updateCSSVariables(preferences: Preferences) {
   if (Reflect.has(theme, 'mode')) {
     const dark = isDarkTheme(mode);
     root.classList.toggle('dark', dark);
+    root.setAttribute('theme-mode', mode);
   }
 
   // html 设置 data-theme=[builtinType]

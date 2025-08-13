@@ -1,5 +1,9 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { Page } from '@vben/common-ui';
+</script>
 
 <template>
-  <div>我是通知公告</div>
+  <Page>
+    <t-button theme="default">确定</t-button>
+  </Page>
 </template>
