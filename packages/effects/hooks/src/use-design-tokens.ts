@@ -336,7 +336,6 @@ export function useTDesignDesignTokens() {
   watch(
     () => [preferences.theme, isDark.value],
     () => {
-      const background = getCssVariableValue('--background');
       const border = getCssVariableValue('--border');
       const accent = getCssVariableValue('--accent');
       const radius = getCssVariableValue('--radius', false);
@@ -419,13 +418,13 @@ export function useTDesignDesignTokens() {
         '--td-text-color-secondary': `hsl(${getCssVariableValueRaw('--foreground')} / 0.8)`,
         '--td-text-color-placeholder': `hsl(${getCssVariableValueRaw('--foreground')} / 0.6)`,
         '--td-text-color-disabled': `hsl(${getCssVariableValueRaw('--foreground')} / 0.4)`,
-        '--td-text-color-anti': getCssVariableValue('--background'),
+        '--td-text-color-anti': getCssVariableValue('--primary-foreground'),
         '--td-text-color-brand': getCssVariableValue('--primary-500'),
         '--td-text-color-link': getCssVariableValue('--primary-500'),
 
         // 背景色适配
         '--td-bg-color-page': getCssVariableValue('--background-deep'),
-        '--td-bg-color-container': getCssVariableValue('--background'),
+        '--td-bg-color-container': getCssVariableValue('--card'),
         '--td-bg-color-container-hover': accent,
         '--td-bg-color-container-active': getCssVariableValue('--accent-hover'),
         '--td-bg-color-container-select': getCssVariableValue('--accent'),
@@ -457,44 +456,6 @@ export function useTDesignDesignTokens() {
         '--td-radius-medium': `${Number.parseFloat(radius) * 12}px`,
         '--td-radius-small': `${Number.parseFloat(radius) * 8}px`,
         '--td-radius-extrasmall': `${Number.parseFloat(radius) * 6}px`,
-
-        // 字体大小适配
-        '--td-font-size-body-large': '16px',
-        '--td-font-size-body-medium': '14px',
-        '--td-font-size-body-small': '12px',
-        '--td-font-size-title-large': '20px',
-        '--td-font-size-title-medium': '18px',
-        '--td-font-size-title-small': '16px',
-
-        // 间距适配
-        '--td-spacer': '8px',
-        '--td-spacer-1': '4px',
-        '--td-spacer-2': '8px',
-        '--td-spacer-3': '12px',
-        '--td-spacer-4': '16px',
-        '--td-spacer-5': '20px',
-
-        // 蒙层色适配
-        '--td-mask-active': isDark.value
-          ? 'rgba(0,0,0,0.4)'
-          : 'rgba(0,0,0,0.6)',
-        '--td-mask-disabled': isDark.value
-          ? 'rgba(0,0,0,0.6)'
-          : 'rgba(255,255,255,0.6)',
-
-        // 滚动条色适配
-        '--td-scrollbar-color': isDark.value
-          ? 'rgba(255,255,255,0.1)'
-          : 'rgba(0,0,0,0.1)',
-        '--td-scrollbar-hover-color': isDark.value
-          ? 'rgba(255,255,255,0.3)'
-          : 'rgba(0,0,0,0.3)',
-        '--td-scroll-track-color': background,
-
-        // 表格阴影色适配
-        '--td-table-shadow-color': isDark.value
-          ? 'rgba(0,0,0,0.55)'
-          : 'rgba(0,0,0,0.08)',
       };
 
       updateCSSVariables(variables, `__vben_tdesign_styles__`);

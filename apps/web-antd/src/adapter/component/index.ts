@@ -47,7 +47,7 @@ const RangePicker = defineAsyncComponent(() =>
   import('ant-design-vue/es/date-picker').then((res) => res.RangePicker),
 );
 const Rate = defineAsyncComponent(() => import('ant-design-vue/es/rate'));
-const Select = defineAsyncComponent(() => import('ant-design-vue/es/select'));
+const Select = defineAsyncComponent(() => import('tdesign-vue-next/es/select'));
 const Space = defineAsyncComponent(() => import('ant-design-vue/es/space'));
 const Switch = defineAsyncComponent(() => import('ant-design-vue/es/switch'));
 const Textarea = defineAsyncComponent(() =>
