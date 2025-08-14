@@ -14,7 +14,7 @@ const [Form, formApi] = useVbenModal({
 <template>
   <Page>
     <t-card>
-      <t-button theme="default" @click="formApi.open()">确定</t-button>
+      <t-button @click="formApi.open()">确定</t-button>
     </t-card>
     <Form :schema="formSchema" />
   </Page>

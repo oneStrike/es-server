@@ -1,3 +1,4 @@
+import './theme.css';
 export * from './use-app-config';
 export * from './use-content-maximize';
 export * from './use-design-tokens';
