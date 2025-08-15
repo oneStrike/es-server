@@ -98,7 +98,7 @@ async function handleEnter() {
   }
   const to = result[index];
   if (to) {
-    searchHistory.value = uniqueByField([...searchHistory.value, to], 'path');
+    searchHistory.value.push(to);
     handleClose();
     await nextTick();
     if (isHttpUrl(to.path)) {
