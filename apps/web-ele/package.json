@@ -27,6 +27,7 @@
     "#/*": "./src/*"
   },
   "dependencies": {
+    "@tinymce/tinymce-vue": "^6.3.0",
     "@vben/access": "workspace:*",
     "@vben/common-ui": "workspace:*",
     "@vben/constants": "workspace:*",
@@ -44,8 +45,10 @@
     "@vueuse/core": "catalog:",
     "dayjs": "catalog:",
     "element-plus": "catalog:",
+    "lodash-es": "^4.17.21",
     "node-forge": "^1.3.1",
     "pinia": "catalog:",
+    "tinymce": "^8.0.2",
     "vue": "catalog:",
     "vue-router": "catalog:"
   },
