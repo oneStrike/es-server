@@ -16,6 +16,7 @@
   },
   "type": "module",
   "scripts": {
+    "att": "pnpx tsx ./src/utils/openapi-generator/index.ts",
     "build": "pnpm vite build --mode production",
     "build:analyze": "pnpm vite build --mode analyze",
     "dev": "pnpm vite --mode development",
@@ -43,11 +44,16 @@
     "@vueuse/core": "catalog:",
     "dayjs": "catalog:",
     "element-plus": "catalog:",
+    "node-forge": "^1.3.1",
     "pinia": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:"
   },
   "devDependencies": {
-    "unplugin-element-plus": "catalog:"
+    "@types/node-forge": "^1.3.13",
+    "ts-node": "^10.9.2",
+    "unplugin-auto-import": "^20.0.0",
+    "unplugin-element-plus": "catalog:",
+    "unplugin-vue-components": "^29.0.0"
   }
 }
