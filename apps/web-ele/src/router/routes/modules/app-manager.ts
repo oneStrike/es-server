@@ -13,7 +13,7 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'Notice',
         path: '/notice',
-        component: () => import('#/views/app-manager/notice/notice.vue'),
+        component: () => import('#/views/app-manager/notice/index.vue'),
         meta: {
           title: '通知公告',
           icon: 'codex:dot-circle',
