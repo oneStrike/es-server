@@ -50,6 +50,7 @@ setupVbenVxeTable({
           zoom: true,
           search: true,
         },
+        exportConfig: {},
       } as VxeTableGridOptions,
     });
 
