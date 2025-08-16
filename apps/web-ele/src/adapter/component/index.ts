@@ -111,12 +111,9 @@ const ElTreeSelect = defineAsyncComponent(() =>
     import('element-plus/es/components/tree-select/style/css'),
   ]).then(([res]) => res.ElTreeSelect),
 );
-const ElUpload = defineAsyncComponent(() =>
-  Promise.all([
-    import('element-plus/es/components/upload/index'),
-    import('element-plus/es/components/upload/style/css'),
-  ]).then(([res]) => res.ElUpload),
-);
+const ElUpload = defineAsyncComponent(() => import('#/components/es-upload'));
+
+const RichText = defineAsyncComponent(() => import('#/components/es-editor'));
 
 const withDefaultPlaceholder = <T extends Component>(
   component: T,
@@ -164,6 +161,7 @@ export type ComponentType =
   | 'Input'
   | 'InputNumber'
   | 'RadioGroup'
+  | 'RichText'
   | 'Select'
   | 'Space'
   | 'Switch'
@@ -308,6 +306,7 @@ async function initComponentAdapter() {
     },
     TreeSelect: withDefaultPlaceholder(ElTreeSelect, 'select'),
     Upload: ElUpload,
+    RichText,
   };
 
   // 将组件注册到全局共享状态中

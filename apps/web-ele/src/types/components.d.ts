@@ -12,8 +12,10 @@ declare module 'vue' {
     ElDivider: typeof import('element-plus/es')['ElDivider']
     ElPopconfirm: typeof import('element-plus/es')['ElPopconfirm']
     ElText: typeof import('element-plus/es')['ElText']
+    ElUpload: typeof import('element-plus/es')['ElUpload']
     EsEditor: typeof import('./../components/es-editor/es-editor.vue')['default']
     EsModalForm: typeof import('./../components/es-modal-form/index.vue')['default']
+    EsUpload: typeof import('./../components/es-upload/es-upload.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }

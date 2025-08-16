@@ -42,6 +42,13 @@ setupVbenVxeTable({
           pageSize: 15,
           pageSizes: [15, 30, 45, 75, 100],
         },
+        toolbarConfig: {
+          custom: true,
+          export: true,
+          refresh: true,
+          zoom: true,
+          search: true,
+        },
       } as VxeTableGridOptions,
     });
 

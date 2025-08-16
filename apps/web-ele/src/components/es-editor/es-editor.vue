@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { EsEditorProps } from './types';
 
+import { usePreferences } from '@vben/preferences';
+
 import Editor from '@tinymce/tinymce-vue';
 import tinymce from 'tinymce/tinymce';
 
@@ -51,17 +53,20 @@ const tinymceId = ref(
   `vue-tinymce-${Date.now()}${(Math.random() * 1000).toFixed(0)}`,
 );
 const modelValue = defineModel({ type: String, default: '' });
+const { isDark } = usePreferences();
+const editorKey = computed(() => `tinymce-${isDark.value ? 'dark' : 'light'}`);
 
 // 定义一个对象 init初始化
 const init = reactive({
   selector: `#${tinymceId.value}`, // 富文本编辑器的id,
   language_url: '/libs/tinymce/langs/zh_CN.js', // 语言包的路径，具体路径看自己的项目
   language: 'zh_CN',
-  skin_url: '/libs/tinymce/skins/ui/oxide', // skin路径，具体路径看自己的项目
+  skin_url: `/libs/tinymce/skins/ui/oxide${isDark.value ? '-dark' : ''}`, // skin路径，具体路径看自己的项目
   editable_root: props.editableRoot,
   height: 600,
   branding: false, // 是否禁用"Powered by TinyMCE"
   promotion: false, // 去掉 upgrade
+  zindex: 2100, // 提升层级，确保下拉菜单/弹层在对话框之上
   license_key: 'gpl', // 使用 GPL 许可证密钥，避免许可证管理器加载错误
   // toolbar_sticky: true,
   // toolbar_sticky_offset: 100,
@@ -110,7 +115,9 @@ const init = reactive({
   // autoresize_overflow_padding: 16,
   min_height: props.height,
   max_height: props.height,
-  content_css: '/tinymce/skins/content/default/content.css', // 以css文件方式自定义可编辑区域的css样式，css文件需自己创建并引入
+  content_css: isDark.value
+    ? '/libs/tinymce/skins/content/dark/content.css'
+    : '/libs/tinymce/skins/content/default/content.css', // 以css文件方式自定义可编辑区域的css样式，css文件需自己创建并引入
   images_upload_handler(blobInfo: any) {
     return new Promise((resolve, reject) => {
       useUpload(blobInfo.blob(), 'editor').then(({ success, error }) => {
@@ -141,10 +148,17 @@ watch(
   { immediate: true },
 );
 
-// 初始化编辑器
-onMounted(() => {
-  tinymce.init({});
-});
+// 监听主题切换，动态更新 TinyMCE 皮肤与内容样式
+watch(
+  () => isDark.value,
+  (v) => {
+    init.skin_url = `/libs/tinymce/skins/ui/oxide${v ? '-dark' : ''}`;
+    init.content_css = v
+      ? '/libs/tinymce/skins/content/dark/content.css'
+      : '/libs/tinymce/skins/content/default/content.css';
+  },
+  { immediate: false },
+);
 
 // 设置值
 const setContent = (content: string) => {
@@ -163,12 +177,19 @@ defineExpose({
 </script>
 
 <template>
-  <div style="height: 100%; overflow: hidden">
+  <div style="height: 100%; overflow: visible">
     <Editor
       :id="tinymceId"
+      :key="editorKey"
       v-model="modelValue"
       :init="init"
       :enabled="enabled"
     />
   </div>
 </template>
+
+<style>
+.tox-tinymce-aux {
+  z-index: 999999 !important;
+}
+</style>

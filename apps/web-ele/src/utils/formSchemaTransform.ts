@@ -154,7 +154,7 @@ export const formSchemaTransform: FormSchemaTransform = {
         item.componentProps = {
           ...item.componentProps,
           placeholder: componentConfig?.placeholder || item.label,
-          class: 'w-[320px]',
+          class: 'w-[280px]',
           allowClear: true,
           options: existingOptions ?? [],
         };

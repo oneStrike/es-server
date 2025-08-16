@@ -78,13 +78,6 @@ const gridOptions: VxeGridProps<NoticePageResponseDto> = {
     },
     sort: true,
   },
-
-  toolbarConfig: {
-    custom: true,
-    export: true,
-    refresh: true,
-    zoom: true,
-  },
 };
 
 const [Form, formApi] = useVbenModal({
