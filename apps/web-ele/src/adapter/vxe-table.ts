@@ -17,6 +17,9 @@ setupVbenVxeTable({
         columnConfig: {
           resizable: true,
         },
+        rowConfig: {
+          isHover: true,
+        },
         minHeight: 180,
         formConfig: {
           // 全局禁用vxe-table的表单配置，使用formOptions
@@ -25,16 +28,20 @@ setupVbenVxeTable({
         proxyConfig: {
           autoLoad: true,
           response: {
-            result: 'items',
+            result: 'list',
             total: 'total',
-            list: 'items',
+            list: 'list',
           },
           showActiveMsg: true,
           showResponseMsg: false,
         },
         round: true,
         showOverflow: true,
-        size: 'small',
+        size: 'medium',
+        pagerConfig: {
+          pageSize: 15,
+          pageSizes: [15, 30, 45, 75, 100],
+        },
       } as VxeTableGridOptions,
     });
 

@@ -25,8 +25,6 @@ const modalTitle = computed(() => {
 });
 
 const [Modal, modalApi] = useVbenModal({
-  draggable: true,
-  animationType: 'scale',
   onConfirm: () => formApi.submitForm(),
   onOpenChange(isOpen: boolean) {
     if (isOpen) {

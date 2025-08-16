@@ -89,7 +89,6 @@ const gridOptions: VxeGridProps<NoticePageResponseDto> = {
 
 const [Form, formApi] = useVbenModal({
   connectedComponent: EsModalForm,
-  destroyOnClose: true,
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -202,34 +201,35 @@ function canPublish(record: NoticePageResponseDto): boolean {
       </template>
       <template #actions="{ row }">
         <div class="my-1">
-          <el-button size="small" type="link" @click="openFormModal(row)">
+          <el-button link type="primary" @click="openFormModal(row)">
             编辑
           </el-button>
 
-          <el-divider type="vertical" />
+          <el-divider direction="vertical" />
           <el-popconfirm
             v-if="canPublish(row)"
             :title="
               row.isPublished ? '确认取消发布当前通知?' : '确认发布当前通知?'
             "
-            ok-text="确认"
-            cancel-text="取消"
+            width="180"
+            confirm-button-text="确认"
+            cancel-button-text="取消"
             @confirm="togglePublishStatus(row)"
           >
-            <el-button
-              size="small"
-              type="link"
-              :style="{
-                color: canPublish(row) ? '#1890ff' : '#ff4d4f',
-              }"
-            >
-              {{ getPublishButtonText(row) }}
-            </el-button>
+            <template #reference>
+              <el-button
+                link
+                :style="{
+                  color: canPublish(row) ? '#1890ff' : '#ff4d4f',
+                }"
+              >
+                {{ getPublishButtonText(row) }}
+              </el-button>
+            </template>
           </el-popconfirm>
           <el-button
+            link
             v-else
-            size="small"
-            type="link"
             disabled
             :style="{
               color: '#d9d9d9',
@@ -237,14 +237,16 @@ function canPublish(record: NoticePageResponseDto): boolean {
           >
             {{ getPublishButtonText(row) }}
           </el-button>
-          <el-divider type="vertical" />
+          <el-divider direction="vertical" />
           <el-popconfirm
             title="确认删除当前项?"
-            ok-text="确认"
-            cancel-text="取消"
+            confirm-button-text="确认"
+            cancel-button-text="取消"
             @confirm="deleteNotice(row)"
           >
-            <el-button type="link" danger>删除</el-button>
+            <template #reference>
+              <el-button link type="danger">删除</el-button>
+            </template>
           </el-popconfirm>
         </div>
       </template>
