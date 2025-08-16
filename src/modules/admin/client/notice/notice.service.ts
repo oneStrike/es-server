@@ -77,6 +77,8 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       isPublished,
       showAsPopup,
       pageCode,
+      publishStartTime,
+      publishEndTime,
       ...pageParams
     } = queryNoticeDto
 
@@ -102,6 +104,15 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
     }
     if (pageCode !== undefined) {
       where.pageCode = pageCode
+    }
+    if (publishStartTime) {
+      where.AND = [{ publishStartTime: { lte: publishStartTime } }]
+    }
+    if (publishEndTime) {
+      // 确保 where.AND 是数组类型
+      where.AND = Array.isArray(where.AND)
+        ? [...where.AND, { publishEndTime: { gte: publishEndTime } }]
+        : [{ publishEndTime: { gte: publishEndTime } }]
     }
 
     return this.findPagination({

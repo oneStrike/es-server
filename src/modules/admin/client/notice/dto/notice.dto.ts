@@ -201,6 +201,8 @@ export class QueryNoticeDto extends IntersectionType(
     'isPinned',
     'showAsPopup',
     'pageCode',
+    'publishStartTime',
+    'publishEndTime',
   ]),
 ) {}
 
