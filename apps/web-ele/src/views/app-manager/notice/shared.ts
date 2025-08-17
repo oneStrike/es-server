@@ -157,7 +157,7 @@ export const formSchema: EsFormSchema = [
     component: 'CheckboxGroup',
     rules: 'required',
     componentProps: {
-      placeholder: '请选择发布平台',
+      placeholder: '请选择发布平1台',
       options: enablePlatform,
       valueType: 'bitMask',
     },

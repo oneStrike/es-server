@@ -22,6 +22,7 @@ import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useBitMask } from '#/hooks/useBitmask';
 import { useMessage } from '#/hooks/useFeedback';
 import { createSearchFormOptions } from '#/utils/grid-form-config';
+import NoticeDetail from '#/views/app-manager/notice/detail.vue';
 
 import {
   enablePlatform,
@@ -141,6 +142,10 @@ function canPublish(record: NoticePageResponseDto): boolean {
   const status = getPublishStatus(record.isPublished, record.publishEndTime);
   return status !== 'expired';
 }
+
+const [DetailModal, detailApi] = useVbenModal({
+  connectedComponent: NoticeDetail,
+});
 </script>
 
 <template>
@@ -152,8 +157,25 @@ function canPublish(record: NoticePageResponseDto): boolean {
         </el-button>
       </template>
       <template #title="{ row }">
-        <el-text class="cursor-pointer hover:opacity-50" type="primary">
-          {{ row.title }}
+        <div class="inline-flex">
+          <el-tag
+            class="mr-2"
+            v-if="row.showAsPopup"
+            type="danger"
+            size="small"
+          >
+            首
+          </el-tag>
+          <el-tag class="mr-2" type="danger" v-if="row.isPinned" size="small">
+            顶
+          </el-tag>
+        </div>
+        <el-text
+          class="cursor-pointer hover:opacity-50"
+          type="primary"
+          @click="detailApi.setData({ recordId: row.id }).open()"
+        >
+          {{ row.title + row.title + row.title }}
         </el-text>
       </template>
       <template #noticeType="{ row }">
@@ -168,11 +190,17 @@ function canPublish(record: NoticePageResponseDto): boolean {
           {{ noticePriorityObj[row.priorityLevel]?.label }}
         </el-text>
       </template>
+
       <template #pageCode="{ row }">
         <el-text>
-          {{ row.pageCode ? clientPageObj[row.pageCode] : '-' }}
+          {{
+            row.pageCode && clientPageObj[row.pageCode]
+              ? clientPageObj[row.pageCode]
+              : '-'
+          }}
         </el-text>
       </template>
+
       <template #enablePlatform="{ row }">
         <el-text>
           {{
@@ -197,6 +225,7 @@ function canPublish(record: NoticePageResponseDto): boolean {
           }}
         </el-text>
       </template>
+
       <template #actions="{ row }">
         <div class="my-1">
           <el-button link type="primary" @click="openFormModal(row)">
@@ -215,12 +244,7 @@ function canPublish(record: NoticePageResponseDto): boolean {
             @confirm="togglePublishStatus(row)"
           >
             <template #reference>
-              <el-button
-                link
-                :style="{
-                  color: canPublish(row) ? '#1890ff' : '#ff4d4f',
-                }"
-              >
+              <el-button link :type="canPublish(row) ? 'primary' : 'danger'">
                 {{ getPublishButtonText(row) }}
               </el-button>
             </template>
@@ -257,5 +281,7 @@ function canPublish(record: NoticePageResponseDto): boolean {
       ]"
       :on-submit="handleSubmit"
     />
+
+    <DetailModal />
   </Page>
 </template>
