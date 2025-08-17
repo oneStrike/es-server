@@ -270,6 +270,10 @@ export const noticeColumns =
       show: true,
       width: 230,
     },
+    title: {
+      slots: { default: 'title' },
+      showOverflow: 'tooltip',
+    },
     dateTimeRange: {
       sort: 98,
       formatter: ({ row }: any) => {

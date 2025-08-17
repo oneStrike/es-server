@@ -151,6 +151,11 @@ function canPublish(record: NoticePageResponseDto): boolean {
           添加
         </el-button>
       </template>
+      <template #title="{ row }">
+        <el-text class="cursor-pointer hover:opacity-50" type="primary">
+          {{ row.title }}
+        </el-text>
+      </template>
       <template #noticeType="{ row }">
         <el-text :style="{ color: noticeTypeObj[row.noticeType]?.color }">
           {{ noticeTypeObj[row.noticeType]?.label }}
