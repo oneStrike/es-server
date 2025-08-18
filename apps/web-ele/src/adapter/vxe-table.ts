@@ -4,7 +4,7 @@ import { h } from 'vue';
 
 import { setupVbenVxeTable, useVbenVxeGrid } from '@vben/plugins/vxe-table';
 
-import { ElButton, ElImage } from 'element-plus';
+import { ElButton, ElImage, ElTag } from 'element-plus';
 
 import { useVbenForm } from './form';
 
@@ -70,6 +70,21 @@ setupVbenVxeTable({
         return h(
           ElButton,
           { size: 'small', link: true },
+          { default: () => props?.text },
+        );
+      },
+    });
+
+    // 表格配置项可以用 cellRender: { name: 'CellTag' },
+    vxeUI.renderer.add('CellTag', {
+      renderTableDefault({ props }) {
+        return h(
+          ElTag,
+          {
+            type: props?.type || 'primary',
+            size: props?.size || 'small',
+            ...props,
+          },
           { default: () => props?.text },
         );
       },

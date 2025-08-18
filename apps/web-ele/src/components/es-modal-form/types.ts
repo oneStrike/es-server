@@ -1,9 +1,10 @@
 import type { VbenFormProps } from '@vben/common-ui';
 
-import type { EsFormSchema } from '#/global';
+import type { EsFormSchema } from '#/types';
 
 export interface EsModalFormProps {
   title?: string;
+  width?: number;
   record?: Record<string, any>;
   schema: EsFormSchema;
   bitMaskField?: string[];

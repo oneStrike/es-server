@@ -19,7 +19,7 @@ const sharedData = ref<Partial<EsModalFormProps>>({
 });
 
 const modalTitle = computed(() => {
-  return Object.keys(props.record).length > 0
+  return Object.keys(sharedData.value).length > 0
     ? `编辑${sharedData.value?.title ?? ''}`
     : `新增${sharedData.value?.title ?? ''}`;
 });
@@ -29,6 +29,7 @@ const [Modal, modalApi] = useVbenModal({
   onOpenChange(isOpen: boolean) {
     if (isOpen) {
       sharedData.value = modalApi.getData<EsModalFormProps>();
+
       if (sharedData.value?.record) {
         if (Array.isArray(sharedData.value?.bitMaskField)) {
           sharedData.value.bitMaskField.forEach((field) => {
@@ -46,7 +47,7 @@ const [Modal, modalApi] = useVbenModal({
 });
 
 const [BaseForm, formApi] = useVbenForm({
-  layout: 'vertical',
+  layout: 'horizontal',
   showDefaultActions: false,
   wrapperClass: 'grid-cols-1 md:grid-cols-2 gap-x-4',
   fieldMappingTime: props.fieldMappingTime,
@@ -72,7 +73,7 @@ const [BaseForm, formApi] = useVbenForm({
 });
 </script>
 <template>
-  <Modal :title="modalTitle" class="w-[1000px]">
+  <Modal :title="modalTitle" :class="`w-[${sharedData?.width ?? 1000}px]`">
     <template #prepend-footer>
       <el-button @click="formApi.resetForm()">重置</el-button>
     </template>
