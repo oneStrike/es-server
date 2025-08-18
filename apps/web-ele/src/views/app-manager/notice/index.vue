@@ -175,7 +175,7 @@ const [DetailModal, detailApi] = useVbenModal({
           type="primary"
           @click="detailApi.setData({ recordId: row.id }).open()"
         >
-          {{ row.title + row.title + row.title }}
+          {{ row.title }}
         </el-text>
       </template>
       <template #noticeType="{ row }">

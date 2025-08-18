@@ -84,6 +84,7 @@ export const formSchemaTransform: FormSchemaTransform = {
           title: item.label as string,
           field: item.fieldName,
           align: 'center',
+          minWidth: 100,
           ...itemExtra,
           originalIndex: i,
           sortValue: itemExtra?.sort,
@@ -95,9 +96,9 @@ export const formSchemaTransform: FormSchemaTransform = {
         title: '操作',
         field: 'actions',
         align: 'center',
-        width: 100,
         fixed: 'right',
         originalIndex: -1,
+        width: 100,
         slots: { default: 'actions' },
         ...extra?.actions,
       });

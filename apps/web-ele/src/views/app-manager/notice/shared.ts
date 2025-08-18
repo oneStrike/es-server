@@ -268,7 +268,7 @@ export const noticeColumns =
     },
     actions: {
       show: true,
-      width: 230,
+      width: 210,
     },
     title: {
       slots: { default: 'title' },
@@ -283,6 +283,7 @@ export const noticeColumns =
     publishStatus: {
       title: '发布状态',
       sort: 99,
+      width: 120,
       slots: { default: 'publishStatus' },
     },
     noticeType: {

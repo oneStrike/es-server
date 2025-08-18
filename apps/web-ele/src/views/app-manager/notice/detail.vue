@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { NoticeDetailResponse } from '#/apis/types/notice';
 
-import { computed } from 'vue';
-
 import { useVbenModal } from '@vben/common-ui';
 
 import { noticeDetailApi } from '#/apis';
@@ -72,268 +70,255 @@ const publishStatusInfo = computed(() => {
 </script>
 
 <template>
-  <Modal title="通知详情" class="!w-[800px]">
+  <Modal title="通知详情" class="!w-[800px]" v-if="detail">
     <div v-loading="loading" class="space-y-6">
-      <template v-if="detail">
-        <!-- 基本信息 -->
-        <el-card shadow="never">
-          <template #header>
-            <div class="flex items-center">
-              <span class="text-lg font-medium">基本信息</span>
-            </div>
-          </template>
+      <!-- 基本信息 -->
+      <el-card shadow="never">
+        <template #header>
+          <div class="flex items-center">
+            <span class="text-lg font-medium">基本信息</span>
+          </div>
+        </template>
 
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div class="space-y-3">
-              <div>
-                <label
-                  class="text-sm font-medium text-gray-600 dark:text-gray-300"
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div class="space-y-3">
+            <div>
+              <label
+                class="text-sm font-medium text-gray-600 dark:text-gray-300"
+              >
+                通知标题
+              </label>
+              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                {{ detail.title }}
+              </p>
+            </div>
+
+            <div>
+              <label
+                class="text-sm font-medium text-gray-600 dark:text-gray-300"
+                >通知类型
+              </label>
+              <p class="mt-1">
+                <el-text
+                  v-if="noticeTypeInfo"
+                  :style="{ color: noticeTypeInfo.color }"
                 >
-                  通知标题
-                </label>
-                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                  {{ detail.title }}
-                </p>
-              </div>
+                  {{ noticeTypeInfo.label }}
+                </el-text>
+              </p>
+            </div>
 
-              <div>
-                <label
-                  class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                  >通知类型
-                </label>
-                <p class="mt-1">
-                  <el-text
-                    v-if="noticeTypeInfo"
-                    :style="{ color: noticeTypeInfo.color }"
-                  >
-                    {{ noticeTypeInfo.label }}
-                  </el-text>
-                </p>
-              </div>
-
-              <div>
-                <label
-                  class="text-sm font-medium text-gray-600 dark:text-gray-300"
+            <div>
+              <label
+                class="text-sm font-medium text-gray-600 dark:text-gray-300"
+              >
+                优先级
+              </label>
+              <p class="mt-1">
+                <el-text
+                  v-if="priorityInfo"
+                  :style="{ color: priorityInfo.color }"
                 >
-                  优先级
-                </label>
-                <p class="mt-1">
-                  <el-text
-                    v-if="priorityInfo"
-                    :style="{ color: priorityInfo.color }"
-                  >
-                    {{ priorityInfo.label }}
-                  </el-text>
-                </p>
-              </div>
-
-              <div>
-                <label
-                  class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                  >发布状态
-                </label>
-                <p class="mt-1">
-                  <el-text
-                    v-if="publishStatusInfo"
-                    :style="{ color: publishStatusInfo.color }"
-                  >
-                    {{ publishStatusInfo.label }}
-                  </el-text>
-                </p>
-              </div>
-            </div>
-
-            <div class="space-y-3">
-              <div>
-                <label
-                  class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                  >发布平台
-                </label>
-                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                  {{ enablePlatformLabels || '-' }}
-                </p>
-              </div>
-
-              <div>
-                <label
-                  class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                  >是否置顶
-                </label>
-                <p class="mt-1">
-                  <el-tag
-                    :type="detail.isPinned ? 'success' : 'info'"
-                    size="small"
-                  >
-                    {{ detail.isPinned ? '是' : '否' }}
-                  </el-tag>
-                </p>
-              </div>
-
-              <div>
-                <label
-                  class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                  >首页弹窗
-                </label>
-                <p class="mt-1">
-                  <el-tag
-                    :type="detail.showAsPopup ? 'success' : 'info'"
-                    size="small"
-                  >
-                    {{ detail.showAsPopup ? '是' : '否' }}
-                  </el-tag>
-                </p>
-              </div>
-
-              <div>
-                <label
-                  class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                  >阅读次数
-                </label>
-                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                  {{ detail.readCount || 0 }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </el-card>
-
-        <!-- 时间信息 -->
-        <el-card shadow="never">
-          <template #header>
-            <div class="flex items-center">
-              <span class="text-lg font-medium">时间信息</span>
-            </div>
-          </template>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                >发布开始时间
-              </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{
-                  detail.publishStartTime
-                    ? formatUTC(detail.publishStartTime, 'YYYY-MM-DD HH:mm:ss')
-                    : '-'
-                }}
+                  {{ priorityInfo.label }}
+                </el-text>
               </p>
             </div>
 
             <div>
               <label
                 class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                >发布结束时间
+                >发布状态
+              </label>
+              <p class="mt-1">
+                <el-text
+                  v-if="publishStatusInfo"
+                  :style="{ color: publishStatusInfo.color }"
+                >
+                  {{ publishStatusInfo.label }}
+                </el-text>
+              </p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label
+                class="text-sm font-medium text-gray-600 dark:text-gray-300"
+                >发布平台
               </label>
               <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{
-                  detail.publishEndTime
-                    ? formatUTC(detail.publishEndTime, 'YYYY-MM-DD HH:mm:ss')
-                    : '-'
-                }}
+                {{ enablePlatformLabels || '-' }}
               </p>
             </div>
 
             <div>
               <label
                 class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                >创建时间
+                >是否置顶
               </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ formatUTC(detail.createdAt, 'YYYY-MM-DD HH:mm:ss') }}
+              <p class="mt-1">
+                <el-tag
+                  :type="detail.isPinned ? 'success' : 'info'"
+                  size="small"
+                >
+                  {{ detail.isPinned ? '是' : '否' }}
+                </el-tag>
               </p>
             </div>
 
             <div>
               <label
                 class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                >更新时间
+                >首页弹窗
+              </label>
+              <p class="mt-1">
+                <el-tag
+                  :type="detail.showAsPopup ? 'success' : 'info'"
+                  size="small"
+                >
+                  {{ detail.showAsPopup ? '是' : '否' }}
+                </el-tag>
+              </p>
+            </div>
+
+            <div>
+              <label
+                class="text-sm font-medium text-gray-600 dark:text-gray-300"
+                >阅读次数
               </label>
               <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ formatUTC(detail.updatedAt, 'YYYY-MM-DD HH:mm:ss') }}
+                {{ detail.readCount || 0 }}
               </p>
             </div>
           </div>
-        </el-card>
+        </div>
+      </el-card>
 
-        <!-- 关联页面信息 -->
-        <el-card v-if="detail.pageCode || detail.clientPage" shadow="never">
-          <template #header>
-            <div class="flex items-center">
-              <span class="text-lg font-medium">关联页面</span>
-            </div>
-          </template>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div v-if="detail.pageCode">
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                >页面代码
-              </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ detail.pageCode }}
-              </p>
-            </div>
-
-            <div v-if="detail.clientPage?.pageName">
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                >页面名称
-              </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ detail.clientPage.pageName }}
-              </p>
-            </div>
-
-            <div v-if="detail.clientPage?.pagePath">
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-                >页面路径
-              </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ detail.clientPage.pagePath }}
-              </p>
-            </div>
+      <!-- 时间信息 -->
+      <el-card shadow="never">
+        <template #header>
+          <div class="flex items-center">
+            <span class="text-lg font-medium">时间信息</span>
           </div>
-        </el-card>
+        </template>
 
-        <!-- 弹窗背景图 -->
-        <el-card v-if="detail.popupBackgroundImage" shadow="never">
-          <template #header>
-            <div class="flex items-center">
-              <span class="text-lg font-medium">弹窗背景图</span>
-            </div>
-          </template>
-
-          <div class="flex justify-center">
-            <el-image
-              :src="detail.popupBackgroundImage"
-              :preview-src-list="[detail.popupBackgroundImage]"
-              class="max-h-60 max-w-full rounded-lg"
-              fit="contain"
-              preview-teleported
-            />
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
+              发布开始时间
+            </label>
+            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {{
+                detail.publishStartTime
+                  ? formatUTC(detail.publishStartTime, 'YYYY-MM-DD HH:mm:ss')
+                  : '-'
+              }}
+            </p>
           </div>
-        </el-card>
 
-        <!-- 通知内容 -->
-        <el-card shadow="never">
-          <template #header>
-            <div class="flex items-center">
-              <span class="text-lg font-medium">通知内容</span>
-            </div>
-          </template>
+          <div>
+            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
+              发布结束时间
+            </label>
+            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {{
+                detail.publishEndTime
+                  ? formatUTC(detail.publishEndTime, 'YYYY-MM-DD HH:mm:ss')
+                  : '-'
+              }}
+            </p>
+          </div>
 
-          <div
-            class="prose dark:prose-invert max-w-none"
-            v-html="detail.content"
-          ></div>
-        </el-card>
-      </template>
+          <div>
+            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
+              创建时间
+            </label>
+            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {{ formatUTC(detail.createdAt, 'YYYY-MM-DD HH:mm:ss') }}
+            </p>
+          </div>
 
-      <div v-else-if="!loading" class="flex items-center justify-center py-12">
-        <el-empty description="暂无数据" />
-      </div>
+          <div>
+            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
+              更新时间
+            </label>
+            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {{ formatUTC(detail.updatedAt, 'YYYY-MM-DD HH:mm:ss') }}
+            </p>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 关联页面信息 -->
+      <el-card v-if="detail.pageCode || detail.clientPage" shadow="never">
+        <template #header>
+          <div class="flex items-center">
+            <span class="text-lg font-medium">关联页面</span>
+          </div>
+        </template>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div v-if="detail.pageCode">
+            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
+              页面代码
+            </label>
+            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {{ detail.pageCode }}
+            </p>
+          </div>
+
+          <div v-if="detail.clientPage?.pageName">
+            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
+              页面名称
+            </label>
+            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {{ detail.clientPage.pageName }}
+            </p>
+          </div>
+
+          <div v-if="detail.clientPage?.pagePath">
+            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
+              页面路径
+            </label>
+            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {{ detail.clientPage.pagePath }}
+            </p>
+          </div>
+        </div>
+      </el-card>
+
+      <!-- 弹窗背景图 -->
+      <el-card v-if="detail.popupBackgroundImage" shadow="never">
+        <template #header>
+          <div class="flex items-center">
+            <span class="text-lg font-medium">弹窗背景图</span>
+          </div>
+        </template>
+
+        <div class="flex justify-center">
+          <el-image
+            :src="detail.popupBackgroundImage"
+            :preview-src-list="[detail.popupBackgroundImage]"
+            class="max-h-60 max-w-full rounded-lg"
+            fit="contain"
+            preview-teleported
+          />
+        </div>
+      </el-card>
+
+      <!-- 通知内容 -->
+      <el-card shadow="never">
+        <template #header>
+          <div class="flex items-center">
+            <span class="text-lg font-medium">通知内容</span>
+          </div>
+        </template>
+
+        <div
+          class="prose dark:prose-invert max-w-none"
+          v-html="detail.content"
+        ></div>
+      </el-card>
     </div>
   </Modal>
 </template>
