@@ -169,6 +169,8 @@ export class UpdateUserDto extends OmitType(UserDto, [
   'isLocked',
   'createdAt',
   'updatedAt',
+  'isEnabled',
+  'role',
 ]) {
   @ValidateNumber({
     description: '用户ID',
@@ -177,6 +179,24 @@ export class UpdateUserDto extends OmitType(UserDto, [
     min: 1,
   })
   id?: number
+
+  @ValidateBoolean({
+    description: '是否启用',
+    example: true,
+    default: true,
+    required: false,
+  })
+  isEnabled?: boolean
+
+  @ValidateNumber({
+    description: '角色 0普通管理员 1超级管理员',
+    example: 0,
+    default: 0,
+    min: 0,
+    max: 1,
+    required: false,
+  })
+  role?: number
 }
 
 export class UpdatePasswordDto extends PickType(TokenDto, ['refreshToken']) {
