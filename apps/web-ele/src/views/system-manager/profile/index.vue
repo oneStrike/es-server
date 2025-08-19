@@ -51,11 +51,7 @@ const gridOptions: VxeGridProps<RequestLogDto> = {
           requestPath: '/api/admin/user/user-login',
         };
 
-        const data = await requestLogPageApi(params);
-        return {
-          list: data.list || [],
-          total: data.total || 0,
-        };
+        return await requestLogPageApi(params);
       },
     },
   },
@@ -167,6 +163,7 @@ const getStatusColor = (isEnabled: boolean, isLocked: boolean) => {
 
 onMounted(async () => {
   await fetchUserInfo();
+  gridApi.reload();
 });
 </script>
 
