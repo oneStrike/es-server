@@ -21,7 +21,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "prisma:generate": "rimraf ./src/prisma/client && prisma generate",
+    "prisma:generate": "prisma generate",
     "prisma:init": "pnpm prisma:push && pnpm prisma:seed",
     "prisma:pull": "prisma db pull",
     "prisma:push": "prisma db push --force-reset",

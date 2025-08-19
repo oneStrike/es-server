@@ -9,7 +9,6 @@ import { TransformInterceptor } from '@/common/interceptors/transform.intercepto
 import { LoggerModule } from '@/common/module/logger/logger.module'
 import uploadConfig from '@/config/upload.config'
 import { AdminModule } from '@/modules/admin/admin.module'
-import { RequestLogModule } from '@/modules/admin/request-log/request-log.module'
 import { ClientModule } from '@/modules/client/client.module'
 import { GuardsModule } from './common/guards/guards.module'
 import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard'
@@ -32,7 +31,6 @@ import { GlobalModule } from './global/global.module'
     GuardsModule,
     AdminModule,
     ClientModule,
-    RequestLogModule, // 导入RequestLogModule以提供RequestLogService
   ],
   controllers: [],
   providers: [

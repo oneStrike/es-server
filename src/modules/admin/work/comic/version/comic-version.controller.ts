@@ -118,7 +118,7 @@ export class WorkComicVersionController {
         id: { in: body.ids },
       },
       data: {
-        isEnabled: body.isEnabled,
+        isPublished: body.isEnabled,
       },
     })
   }

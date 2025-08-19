@@ -1,14 +1,11 @@
 import { Module } from '@nestjs/common'
-import { APP_INTERCEPTOR } from '@nestjs/core'
 import { DictionaryController } from '@/modules/admin/dictionary/dictionary.controller'
-import { AdminRequestLogInterceptor } from '@/modules/admin/request-log/interceptors/request-log.interceptor'
 import { AdminUploadModule } from '@/modules/admin/upload/upload.module'
 import { DictionaryModule } from '@/modules/shared/dictionary/dictionary.module'
 import { AdminAuthModule } from './auth/auth.module'
 import { ClientNoticeModule } from './client/notice'
 import { ClientPageConfigModule } from './client/page'
 import { AdminLoggerModule } from './logger/admin-logger.module'
-import { RequestLogModule } from './request-log/request-log.module'
 import { AdminUserModule } from './users/user.module'
 import { WorkModule } from './work/work.module'
 
@@ -17,7 +14,6 @@ import { WorkModule } from './work/work.module'
     AdminAuthModule,
     AdminUserModule,
     AdminLoggerModule,
-    RequestLogModule,
     AdminUploadModule,
     DictionaryModule,
     ClientNoticeModule,
@@ -25,11 +21,6 @@ import { WorkModule } from './work/work.module'
     WorkModule,
   ],
   controllers: [DictionaryController],
-  providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: AdminRequestLogInterceptor,
-    },
-  ],
+  providers: [],
 })
 export class AdminModule {}
