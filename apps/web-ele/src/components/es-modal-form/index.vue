@@ -29,7 +29,7 @@ const [Modal, modalApi] = useVbenModal({
   onOpenChange(isOpen: boolean) {
     if (isOpen) {
       sharedData.value = modalApi.getData<EsModalFormProps>();
-
+      sharedData.value.width = sharedData.value?.width || 900;
       if (sharedData.value?.record) {
         if (Array.isArray(sharedData.value?.bitMaskField)) {
           sharedData.value.bitMaskField.forEach((field) => {
@@ -46,10 +46,18 @@ const [Modal, modalApi] = useVbenModal({
   },
 });
 
+// 根据弹窗宽度动态计算网格列数
+const dynamicWrapperClass = computed(() => {
+  const width = sharedData.value?.width ?? 900;
+  // 根据弹窗宽度设置列数：小于600px为1列，否则为2列
+  const cols = width < 600 ? 1 : 2;
+  return `grid-cols-${cols} gap-x-4`;
+});
+
 const [BaseForm, formApi] = useVbenForm({
-  layout: 'horizontal',
+  layout: 'vertical',
   showDefaultActions: false,
-  wrapperClass: 'grid-cols-1 md:grid-cols-2 gap-x-4',
+  wrapperClass: dynamicWrapperClass as unknown as string,
   fieldMappingTime: props.fieldMappingTime,
 
   handleSubmit: async (values) => {
@@ -73,7 +81,7 @@ const [BaseForm, formApi] = useVbenForm({
 });
 </script>
 <template>
-  <Modal :title="modalTitle" :class="`w-[${sharedData?.width ?? 1000}px]`">
+  <Modal :title="modalTitle" :class="`w-[${sharedData.width}px]`">
     <template #prepend-footer>
       <el-button @click="formApi.resetForm()">重置</el-button>
     </template>

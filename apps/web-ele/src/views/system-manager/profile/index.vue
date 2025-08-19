@@ -194,17 +194,11 @@ onMounted(async () => {
 
           <div v-if="userInfo">
             <!-- 头像区域 -->
-            <div class="mb-6 flex flex-col items-center">
+            <div class="mb-4 flex flex-col items-center">
               <el-avatar :size="120" :src="userInfo.avatar" class="mb-4" />
               <h3 class="text-foreground mb-2 text-xl font-semibold">
                 {{ userInfo.username }}
               </h3>
-              <el-tag
-                :type="getStatusColor(userInfo.isEnabled, userInfo.isLocked)"
-                size="large"
-              >
-                {{ formatStatus(userInfo.isEnabled, userInfo.isLocked) }}
-              </el-tag>
             </div>
 
             <!-- 详细信息区域 -->
@@ -230,17 +224,6 @@ onMounted(async () => {
                   {{ formatStatus(userInfo.isEnabled, userInfo.isLocked) }}
                 </el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="登录失败次数">
-                <span
-                  :class="
-                    userInfo.loginFailCount > 0
-                      ? 'text-red-500'
-                      : 'text-foreground'
-                  "
-                >
-                  {{ userInfo.loginFailCount }} 次
-                </span>
-              </el-descriptions-item>
               <el-descriptions-item label="最后登录时间">
                 {{
                   userInfo.lastLoginAt
@@ -254,9 +237,6 @@ onMounted(async () => {
               <el-descriptions-item label="创建时间">
                 {{ formatTime(userInfo.createdAt) }}
               </el-descriptions-item>
-              <el-descriptions-item label="更新时间">
-                {{ formatTime(userInfo.updatedAt) }}
-              </el-descriptions-item>
             </el-descriptions>
           </div>
         </div>
@@ -267,12 +247,12 @@ onMounted(async () => {
         <div
           class="border-border bg-background h-full rounded-lg border p-6 shadow-sm"
         >
-          <div class="mb-4 flex items-center justify-between">
+          <div class="flex items-center justify-between">
             <h2 class="text-foreground text-lg font-semibold">登录历史记录</h2>
             <el-button @click="refreshHistory"> 刷新 </el-button>
           </div>
 
-          <div class="h-[95%]">
+          <div class="h-[93%]">
             <Grid />
           </div>
         </div>
