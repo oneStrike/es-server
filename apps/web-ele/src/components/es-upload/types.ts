@@ -1,5 +1,3 @@
-import type { UploadListType } from 'ant-design-vue/es/upload/interface';
-
 import type { UploadFileResponse } from '#/apis/types/upload';
 
 export interface EsUploadProps {
@@ -12,7 +10,7 @@ export interface EsUploadProps {
   /** 是否禁用上传组件 */
   disabled?: boolean;
   /** 上传列表的内建样式 */
-  listType?: UploadListType;
+  listType?: 'picture' | 'picture-card' | 'text';
   /** 限制上传文件的最大数量 */
   maxCount?: number;
   /** 是否支持多选文件 */

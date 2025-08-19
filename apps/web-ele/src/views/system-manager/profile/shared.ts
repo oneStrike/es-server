@@ -46,6 +46,15 @@ export const loginHistortColumn: VxeGridPropTypes.Columns<RequestLogDetailRespon
 // 编辑用户信息表单配置
 export const editFormSchema: EsFormSchema = [
   {
+    component: 'Upload',
+    fieldName: 'avatar',
+    label: '头像',
+    componentProps: {
+      placeholder: '请上传头像',
+      maxCount: 1,
+    },
+  },
+  {
     component: 'Input',
     fieldName: 'username',
     label: '用户名',
@@ -62,31 +71,6 @@ export const editFormSchema: EsFormSchema = [
     componentProps: {
       placeholder: '请输入手机号',
     },
-  },
-  {
-    component: 'Input',
-    fieldName: 'avatar',
-    label: '头像',
-    componentProps: {
-      placeholder: '请输入头像URL',
-    },
-  },
-  {
-    component: 'Select',
-    fieldName: 'role',
-    label: '角色',
-    componentProps: {
-      options: [
-        { label: '普通管理员', value: 0 },
-        { label: '超级管理员', value: 1 },
-      ],
-      placeholder: '请选择角色',
-    },
-  },
-  {
-    component: 'Switch',
-    fieldName: 'isEnabled',
-    label: '启用状态',
   },
 ];
 

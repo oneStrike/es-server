@@ -9,7 +9,7 @@ import type {
 import type { EsUploadProps } from '#/components/es-upload/types';
 
 import { ElMessage } from 'element-plus';
-import { cloneDeep, random, uniqueId } from 'lodash-es';
+import { cloneDeep, random } from 'lodash-es';
 
 import { UploadLoop } from '#/components/es-icons';
 import { useUpload } from '#/hooks/useUpload';
@@ -49,7 +49,7 @@ function formatFileList(files: EsUploadProps['modelValue']) {
         formatFileList(file);
       } else {
         fileList.value.push({
-          uid: `${uniqueId()}_${random(1000, 9999)}`,
+          uid: random(1000, 9999),
           size: file.fileSize,
           name: file.originalName,
           url: file.filePath,
@@ -65,7 +65,7 @@ function formatFileList(files: EsUploadProps['modelValue']) {
     } else if (typeof files === 'string') {
       const fileName = files.split('/').pop();
       fileList.value.push({
-        uid: `${uniqueId()}_${random(1000, 9999)}`,
+        uid: random(1000, 9999),
         size: 0,
         name: fileName ?? '',
         url: files,
