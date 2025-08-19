@@ -32,7 +32,6 @@ import {
 } from './shared';
 
 const userStore = useUserStore();
-
 // 用户信息
 const userInfo = ref<null | UserDto>(null);
 const loading = ref(false);

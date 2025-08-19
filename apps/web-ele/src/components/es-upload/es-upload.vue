@@ -2,6 +2,7 @@
 // 使用 Element Plus 的类型与组件 API
 import type {
   UploadFile,
+  UploadProps,
   UploadRawFile,
   UploadRequestOptions,
 } from 'element-plus';
@@ -174,6 +175,13 @@ function onRemove() {
   skipModalValueWatch = true;
   handlerModalValue();
 }
+
+const showPreview = ref(false);
+const previewIndex = ref(0);
+const handlePictureCardPreview: UploadProps['onPreview'] = (uploadFile) => {
+  previewIndex.value = fileList.value.indexOf(uploadFile);
+  showPreview.value = true;
+};
 </script>
 
 <template>
@@ -192,6 +200,7 @@ function onRemove() {
       :http-request="customRequest"
       @exceed="onExceed"
       @remove="onRemove"
+      :on-preview="handlePictureCardPreview"
     >
       <div
         class="hover:text-primary flex size-full items-center justify-center text-gray-500"
@@ -199,6 +208,17 @@ function onRemove() {
         <UploadLoop class="size-7" />
       </div>
     </el-upload>
+
+    <el-image-viewer
+      v-if="showPreview"
+      :url-list="fileList.map((item) => item.url) as string[]"
+      show-progress
+      teleported
+      :z-index="999999999"
+      :close-on-press-escape="false"
+      :initial-index="previewIndex"
+      @close="showPreview = false"
+    />
   </div>
 </template>
 
