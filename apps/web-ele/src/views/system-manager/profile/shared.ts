@@ -4,14 +4,6 @@ import type { EsFormSchema } from '#/types';
 
 import { formatUTC } from '#/utils';
 
-// 获取响应状态颜色
-const getResponseStatusColor = (code: number) => {
-  if (code >= 200 && code < 300) return 'success';
-  if (code >= 400 && code < 500) return 'warning';
-  if (code >= 500) return 'danger';
-  return 'info';
-};
-
 export const loginHistortColumn: VxeGridPropTypes.Columns<RequestLogDetailResponse> =
   [
     {
