@@ -225,6 +225,19 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
   }
 
   /**
+   * 记录登录日志
+   */
+  async logLogin(content: string, username: string) {
+    await this.requestLog.logRequest(content, {
+      actionType: 'admin_login',
+      outcome: true,
+      statusCode: 200,
+      userType: 'admin',
+      params: { username },
+    })
+  }
+
+  /**
    * 退出登录
    */
   async logout(body: TokenDto) {
