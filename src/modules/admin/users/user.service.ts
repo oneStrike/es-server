@@ -20,7 +20,6 @@ import { PrismaService } from '@/global/services/prisma.service'
 import { AdminJwtService } from '@/modules/admin/auth/admin-jwt.service'
 import { TokenDto } from '@/modules/admin/users/dto/token.dto'
 import { CacheKey } from '@/modules/admin/users/user.constant'
-import { RequestLogService } from '@/modules/shared/request-log/request-log.service'
 import {
   UpdatePasswordDto,
   UpdateUserDto,
@@ -36,7 +35,6 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     private readonly rsa: RsaService,
     private readonly crypto: CryptoService,
     private readonly adminJwtService: AdminJwtService,
-    private readonly requestLogService: RequestLogService,
     protected readonly prisma: PrismaService, // 添加这个参数
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
@@ -70,8 +68,6 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
    * 登录
    */
   async login(body: UserLoginDto, req?: FastifyRequest) {
-    const start = Date.now()
-    try {
     // 检查用户输入的验证码
     if (!body.captcha) {
       throw new BadRequestException('请输入验证码')
@@ -161,41 +157,9 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     // 去除 user 对象的 password 属性
     const { password: _password, ...userWithoutPassword } = user
 
-    // 登录成功日志
-    await this.requestLogService.log('管理员登录成功', {
-      req,
-      responseCode: 200,
-      operationDescription: '管理员登录',
-      duration: Date.now() - start,
-      module: 'ADMIN',
-      overrides: {
-        username: user.username,
-      },
-    })
-
     return {
       user: userWithoutPassword,
       tokens,
-    }
-    } catch (error) {
-      const status = typeof (error)?.getStatus === 'function' ? (error).getStatus() : 401
-      await this.requestLogService.log(
-        `管理员登录失败: ${error instanceof Error ? error.message : String(error)}`,
-        {
-          req,
-          responseCode: status,
-          operationDescription: '管理员登录',
-          duration: Date.now() - start,
-          module: 'ADMIN',
-          overrides: {
-            username: body?.username,
-          },
-          extraMeta: {
-            errorName: (error)?.name,
-          },
-        },
-      )
-      throw error
     }
   }
 
