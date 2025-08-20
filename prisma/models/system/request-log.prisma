@@ -40,7 +40,6 @@ model RequestLog {
   @@index([createdAt])
   @@index([userId])
   @@index([actionResult])
-  @@index([outcome])
   @@index([createdAt, actionResult])
   @@map("request_log")
 }

@@ -74,7 +74,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     if (!body.captcha) {
       await this.requestLog.logRequest('管理员登录失败-缺少验证码', {
         actionType: 'admin_login',
-        outcome: false,
+        actionResult: false,
         statusCode: 400,
         userType: 'admin',
         params: { username: body.username },
@@ -90,7 +90,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       if (!captchaText) {
         await this.requestLog.logRequest('管理员登录失败-验证码过期', {
           actionType: 'admin_login',
-          outcome: false,
+          actionResult: false,
           statusCode: 400,
           userType: 'admin',
           params: { username: body.username },
@@ -104,7 +104,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
         await this.cacheManager.del(CacheKey.CAPTCHA + body.captchaId)
         await this.requestLog.logRequest('管理员登录失败-验证码错误', {
           actionType: 'admin_login',
-          outcome: false,
+          actionResult: false,
           statusCode: 400,
           userType: 'admin',
           params: { username: body.username },
@@ -126,7 +126,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     if (!user) {
       await this.requestLog.logRequest('管理员登录失败-账号或密码错误', {
         actionType: 'admin_login',
-        outcome: false,
+        actionResult: false,
         statusCode: 400,
         userType: 'admin',
         params: { username: body.username },
@@ -141,7 +141,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     } catch {
       await this.requestLog.logRequest('管理员登录失败-密码解密失败', {
         actionType: 'admin_login',
-        outcome: false,
+        actionResult: false,
         statusCode: 400,
         userType: 'admin',
         params: { username: body.username },
@@ -153,7 +153,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     if (user.isLocked) {
       await this.requestLog.logRequest('管理员登录失败-账户已锁定', {
         actionType: 'admin_login',
-        outcome: false,
+        actionResult: false,
         statusCode: 401,
         userType: 'admin',
         userId: user.id,
@@ -178,7 +178,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       })
       await this.requestLog.logRequest('管理员登录失败-账号或密码错误', {
         actionType: 'admin_login',
-        outcome: false,
+        actionResult: false,
         statusCode: 400,
         userType: 'admin',
         userId: user.id,
@@ -212,7 +212,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
 
     await this.requestLog.logRequest('管理员登录成功', {
       actionType: 'admin_login',
-      outcome: true,
+      actionResult: true,
       statusCode: 200,
       userType: 'admin',
       userId: user.id,
@@ -230,7 +230,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
   async logLogin(content: string, username: string) {
     await this.requestLog.logRequest(content, {
       actionType: 'admin_login',
-      outcome: true,
+      actionResult: true,
       statusCode: 200,
       userType: 'admin',
       params: { username },

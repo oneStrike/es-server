@@ -28,7 +28,7 @@ export interface RequestContextData {
 export interface LogExtras {
   actionType?: string
   statusCode?: number
-  outcome?: LogOutcomeType | boolean
+  actionResult?: LogOutcomeType | boolean
   errorMessage?: string | null
   userId?: number | null
   userType?: string | null

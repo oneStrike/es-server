@@ -40,12 +40,12 @@ export class RequestLogService implements OnApplicationShutdown {
   async logRequest(content: string, extras?: LogExtras): Promise<void> {
     try {
       const ctx = RequestContextStorage.get()
-      const outcome = normalizeOutcome(extras?.outcome)
+      const actionResult = normalizeOutcome(extras?.actionResult)
       const record: Prisma.RequestLogCreateManyInput = {
         createdAt: new Date(),
         content,
         actionType: extras?.actionType ?? undefined,
-        outcome: (outcome as any) ?? undefined,
+        actionResult: (actionResult as any) ?? undefined,
         errorMessage: extras?.errorMessage ?? undefined,
         statusCode: extras?.statusCode ?? ctx?.statusCode ?? undefined,
         method: extras?.method ?? ctx?.method ?? 'GET',
