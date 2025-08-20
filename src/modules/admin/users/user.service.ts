@@ -20,6 +20,7 @@ import { PrismaService } from '@/global/services/prisma.service'
 import { AdminJwtService } from '@/modules/admin/auth/admin-jwt.service'
 import { TokenDto } from '@/modules/admin/users/dto/token.dto'
 import { CacheKey } from '@/modules/admin/users/user.constant'
+import { RequestLogService } from '@/modules/shared/request-log/request-log.service'
 import {
   UpdatePasswordDto,
   UpdateUserDto,
@@ -36,6 +37,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     private readonly crypto: CryptoService,
     private readonly adminJwtService: AdminJwtService,
     protected readonly prisma: PrismaService, // 添加这个参数
+    private readonly requestLog: RequestLogService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     super(prisma)
@@ -70,6 +72,13 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
   async login(body: UserLoginDto, req?: FastifyRequest) {
     // 检查用户输入的验证码
     if (!body.captcha) {
+      await this.requestLog.logRequest('管理员登录失败-缺少验证码', {
+        actionType: 'admin_login',
+        outcome: false,
+        statusCode: 400,
+        userType: 'admin',
+        params: { username: body.username },
+      })
       throw new BadRequestException('请输入验证码')
     }
     const captchaText = await this.cacheManager.get(
@@ -79,6 +88,13 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     if (process.env.NODE_ENV === 'production') {
       // 检查验证码是否存在于缓存中
       if (!captchaText) {
+        await this.requestLog.logRequest('管理员登录失败-验证码过期', {
+          actionType: 'admin_login',
+          outcome: false,
+          statusCode: 400,
+          userType: 'admin',
+          params: { username: body.username },
+        })
         throw new BadRequestException('验证码已过期')
       }
       // 验证码比较（不区分大小写）
@@ -86,6 +102,13 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
         String(captchaText).toLowerCase() !== String(body.captcha).toLowerCase()
       ) {
         await this.cacheManager.del(CacheKey.CAPTCHA + body.captchaId)
+        await this.requestLog.logRequest('管理员登录失败-验证码错误', {
+          actionType: 'admin_login',
+          outcome: false,
+          statusCode: 400,
+          userType: 'admin',
+          params: { username: body.username },
+        })
         throw new BadRequestException('验证码错误')
       }
     }
@@ -101,6 +124,13 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       },
     })
     if (!user) {
+      await this.requestLog.logRequest('管理员登录失败-账号或密码错误', {
+        actionType: 'admin_login',
+        outcome: false,
+        statusCode: 400,
+        userType: 'admin',
+        params: { username: body.username },
+      })
       throw new BadRequestException('账号或密码错误')
     }
 
@@ -109,11 +139,26 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     try {
       password = this.rsa.decryptWithAdmin(body.password)
     } catch {
+      await this.requestLog.logRequest('管理员登录失败-密码解密失败', {
+        actionType: 'admin_login',
+        outcome: false,
+        statusCode: 400,
+        userType: 'admin',
+        params: { username: body.username },
+      })
       throw new BadRequestException('账号或密码错误')
     }
 
     // 检查账户是否被锁定
     if (user.isLocked) {
+      await this.requestLog.logRequest('管理员登录失败-账户已锁定', {
+        actionType: 'admin_login',
+        outcome: false,
+        statusCode: 401,
+        userType: 'admin',
+        userId: user.id,
+        params: { username: body.username },
+      })
       throw new UnauthorizedException('账户已被锁定，请联系管理员')
     }
 
@@ -130,6 +175,14 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
           loginFailCount: user.loginFailCount + 1,
           isLocked: user.loginFailCount + 1 >= 5, // 失败5次后锁定账户
         },
+      })
+      await this.requestLog.logRequest('管理员登录失败-账号或密码错误', {
+        actionType: 'admin_login',
+        outcome: false,
+        statusCode: 400,
+        userType: 'admin',
+        userId: user.id,
+        params: { username: body.username },
       })
       throw new BadRequestException('账号或密码错误')
     }
@@ -157,6 +210,14 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     // 去除 user 对象的 password 属性
     const { password: _password, ...userWithoutPassword } = user
 
+    await this.requestLog.logRequest('管理员登录成功', {
+      actionType: 'admin_login',
+      outcome: true,
+      statusCode: 200,
+      userType: 'admin',
+      userId: user.id,
+      params: { username: body.username },
+    })
     return {
       user: userWithoutPassword,
       tokens,
