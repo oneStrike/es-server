@@ -165,7 +165,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
 
     // 去除 user 对象的 password 属性
     const { password: _password, ...userWithoutPassword } = user
-    await this.recordLoginLog('登录成功', body, true)
+    await this.recordLoginLog('登录成功', body, true, user.id)
     return {
       user: userWithoutPassword,
       tokens,
@@ -175,11 +175,12 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
   /**
    * 记录用户的登录日志
    */
-  async recordLoginLog(content, body, result = false) {
+  async recordLoginLog(content, body, result = false, userId?) {
     await this.requestLog.logAdmin(`【${body.username}】${content}`, {
       actionType: 'admin_login',
       actionResult: result,
       username: body.username,
+      userId: userId || null,
       params: { username: body.username },
     })
   }
