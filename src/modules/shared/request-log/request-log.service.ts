@@ -42,7 +42,6 @@ export class RequestLogService implements OnApplicationShutdown {
       const ctx = RequestContextStorage.get()
       const actionResult = normalizeOutcome(extras?.actionResult)
       const record: Prisma.RequestLogCreateManyInput = {
-        createdAt: new Date(),
         content,
         actionType: extras?.actionType ?? undefined,
         actionResult: (actionResult as any) ?? undefined,
@@ -53,6 +52,7 @@ export class RequestLogService implements OnApplicationShutdown {
         ip: extras?.ip ?? ctx?.ip ?? undefined,
         userAgent: extras?.userAgent ?? ctx?.userAgent ?? undefined,
         userId: extras?.userId ?? ctx?.userId ?? undefined,
+        username: extras?.username ?? ctx?.username ?? undefined,
         userType: extras?.userType ?? ctx?.userType ?? undefined,
         device: extras?.device ?? ctx?.device ?? undefined,
         params: extras?.params ?? ctx?.params ?? undefined,

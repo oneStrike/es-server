@@ -17,6 +17,7 @@ export interface RequestContextData {
   device?: Record<string, any> | null
   params?: Record<string, any> | null
   userId?: number | null
+  username?: string | null
   userType?: string | null
   statusCode?: number | null
   responseTimeMs?: number | null
@@ -31,6 +32,7 @@ export interface LogExtras {
   actionResult?: LogOutcomeType | boolean
   errorMessage?: string | null
   userId?: number | null
+  username?: string | null
   userType?: string | null
   params?: Record<string, any> | null
   device?: Record<string, any> | null

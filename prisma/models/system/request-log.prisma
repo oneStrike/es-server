@@ -1,10 +1,10 @@
 model RequestLog {
   /// 主键id
   id              Int          @id @default(autoincrement())
-  /// 请求时间（自动记录）
-  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz
   /// 用户ID（可空）
   userId          Int?         @map("user_id")
+  /// 用户名（可空）
+  username        String?      @map("username")
   /// 用户类型（admin/client/system等，可空）
   userType        String?      @map("user_type") @db.VarChar(20)
   /// IP地址（自动获取）
@@ -35,6 +35,8 @@ model RequestLog {
   traceId         String?      @map("trace_id") @db.VarChar(64)
   /// 响应时间（毫秒）
   responseTimeMs  Int?         @map("response_time_ms")
+  /// 请求时间（自动记录）
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
 
   /// 索引优化
   @@index([createdAt])
