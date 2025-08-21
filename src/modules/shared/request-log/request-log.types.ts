@@ -1,10 +1,4 @@
 /**
- * 请求日志类型与查询条件定义
- */
-
-export type LogOutcomeType = 'SUCCESS' | 'FAILURE'
-
-/**
  * 请求上下文在 AsyncLocalStorage 中存储的数据
  */
 export interface RequestContextData {
@@ -29,7 +23,7 @@ export interface RequestContextData {
 export interface LogExtras {
   actionType?: string
   statusCode?: number
-  actionResult?: LogOutcomeType | boolean
+  actionResult: boolean
   errorMessage?: string | null
   userId?: number | null
   username?: string | null

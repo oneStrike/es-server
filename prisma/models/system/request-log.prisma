@@ -19,8 +19,8 @@ model RequestLog {
   statusCode      Int?         @map("status_code")
   /// 操作类型（如登录/注册）
   actionType      String?      @map("action_type") @db.VarChar(50)
-  /// 操作结果 1 成功 0 失败
-  actionResult    Int?         @map("action_result") @db.SmallInt
+  /// 操作结果
+  actionResult    Boolean         @map("action_result")
   /// 错误信息（可空）
   errorMessage    String?      @map("error_message") @db.Text
   /// 设备信息（User-Agent 原始字符串）
@@ -41,7 +41,7 @@ model RequestLog {
   /// 索引优化
   @@index([createdAt])
   @@index([userId])
+  @@index([username])
   @@index([actionResult])
-  @@index([createdAt, actionResult])
   @@map("request_log")
 }

@@ -1,27 +1,9 @@
-import type {
-  LogExtras,
-  LogOutcomeType,
-  LogQueryFilters,
-} from './request-log.types'
+import type { LogExtras } from './request-log.types'
 import type { Prisma } from '@/prisma/client/client'
 import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common'
 import { PrismaService } from '@/global/services/prisma.service'
 import { RequestContextStorage } from './request-context'
-
-function normalizeOutcome(
-  o?: LogOutcomeType | boolean,
-): 'SUCCESS' | 'FAILURE' | null {
-  if (o === true) {
-    return 'SUCCESS'
-  }
-  if (o === false) {
-    return 'FAILURE'
-  }
-  if (o === 'SUCCESS' || o === 'FAILURE') {
-    return o
-  }
-  return null
-}
+import { UserType } from './request-log.constant'
 
 @Injectable()
 export class RequestLogService implements OnApplicationShutdown {
@@ -37,10 +19,10 @@ export class RequestLogService implements OnApplicationShutdown {
    * 对外简洁 API：记录请求日志
    * 自动合并 AsyncLocalStorage 中的上下文信息
    */
-  async logRequest(content: string, extras?: LogExtras): Promise<void> {
+  async logRequest(content: string, extras: LogExtras): Promise<void> {
     try {
       const ctx = RequestContextStorage.get()
-      const actionResult = normalizeOutcome(extras?.actionResult)
+      const actionResult = extras.actionResult
       const record: Prisma.RequestLogCreateManyInput = {
         content,
         actionType: extras?.actionType ?? undefined,
@@ -77,45 +59,13 @@ export class RequestLogService implements OnApplicationShutdown {
   }
 
   /**
-   * 基础查询：按时间范围、用户ID、操作类型筛选
+   * 基础admin模块相关的日志
    */
-  async findLogs(filters: LogQueryFilters) {
-    const page = Math.max(1, filters.page ?? 1)
-    const pageSize = Math.min(200, Math.max(1, filters.pageSize ?? 20))
-    const where: Prisma.RequestLogWhereInput = {}
-
-    if (filters.startAt || filters.endAt) {
-      where.createdAt = {}
-      if (filters.startAt) {
-        ;(where.createdAt as any).gte = filters.startAt
-      }
-      if (filters.endAt) {
-        ;(where.createdAt as any).lte = filters.endAt
-      }
-    }
-    if (typeof filters.userId === 'number') {
-      where.userId = filters.userId
-    }
-    if (filters.actionType) {
-      where.actionType = filters.actionType
-    }
-
-    const [total, items] = await this.prisma.$transaction([
-      this.prisma.requestLog.count({ where }),
-      this.prisma.requestLog.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-    ])
-
-    return {
-      total,
-      page,
-      pageSize,
-      items,
-    }
+  async logAdmin(content: string, extras: LogExtras): Promise<void> {
+    await this.logRequest(content, {
+      ...extras,
+      userType: UserType.ADMIN,
+    })
   }
 
   /**
