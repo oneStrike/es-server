@@ -30,7 +30,7 @@ import { CaptchaDto } from './dto/captcha.dto'
 @ApiTags('管理端用户模块')
 @Controller('admin/user')
 export class AdminUserController {
-  constructor(private readonly userService: AdminUserService) {}
+  constructor(private readonly userService: AdminUserService) { }
 
   /**
    * 获取验证码接口
@@ -54,6 +54,7 @@ export class AdminUserController {
     model: LoginResponseDto,
   })
   @Public()
+
   async login(@Body() body: UserLoginDto, @Req() req: FastifyRequest) {
     return this.userService.login(body, req)
   }

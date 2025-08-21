@@ -23,4 +23,4 @@ import { WorkModule } from './work/work.module'
   controllers: [DictionaryController],
   providers: [],
 })
-export class AdminModule {}
+export class AdminModule { }

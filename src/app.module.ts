@@ -2,9 +2,7 @@ import * as process from 'node:process'
 import { CacheModule } from '@nestjs/cache-manager'
 import {
   BadRequestException,
-  MiddlewareConsumer,
   Module,
-  NestModule,
   ValidationPipe,
 } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
@@ -16,7 +14,6 @@ import { LoggerModule } from '@/common/module/logger/logger.module'
 import uploadConfig from '@/config/upload.config'
 import { AdminModule } from '@/modules/admin/admin.module'
 import { ClientModule } from '@/modules/client/client.module'
-import { RequestLogMiddleware } from '@/modules/shared/request-log/request-log.middleware'
 import { GuardsModule } from './common/guards/guards.module'
 import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard'
 import { GlobalModule } from './global/global.module'
@@ -72,8 +69,5 @@ import { GlobalModule } from './global/global.module'
     },
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestLogMiddleware).forRoutes('*')
-  }
+export class AppModule {
 }

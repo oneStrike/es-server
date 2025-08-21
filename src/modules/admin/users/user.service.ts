@@ -1,4 +1,4 @@
-import { Buffer } from 'node:buffer'
+  import { Buffer } from 'node:buffer'
 import * as process from 'node:process'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import {
@@ -20,7 +20,6 @@ import { PrismaService } from '@/global/services/prisma.service'
 import { AdminJwtService } from '@/modules/admin/auth/admin-jwt.service'
 import { TokenDto } from '@/modules/admin/users/dto/token.dto'
 import { CacheKey } from '@/modules/admin/users/user.constant'
-import { RequestLogService } from '@/modules/shared/request-log/request-log.service'
 import {
   UpdatePasswordDto,
   UpdateUserDto,
@@ -36,8 +35,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     private readonly rsa: RsaService,
     private readonly crypto: CryptoService,
     private readonly adminJwtService: AdminJwtService,
-    protected readonly prisma: PrismaService, // 添加这个参数
-    private readonly requestLog: RequestLogService,
+    protected readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     super(prisma)
@@ -61,7 +59,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       1000 * 60,
     )
     return {
-      data: `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`, // 使用引入的Buffer模块
+      data: `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`,
       id: uniqueId,
     }
   }
@@ -72,7 +70,6 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
   async login(body: UserLoginDto, req?: FastifyRequest) {
     // 检查用户输入的验证码
     if (!body.captcha) {
-      await this.recordLoginLog('登录失败-缺少验证码', body)
       throw new BadRequestException('请输入验证码')
     }
     const captchaText = await this.cacheManager.get(
@@ -82,7 +79,6 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     if (process.env.NODE_ENV === 'production') {
       // 检查验证码是否存在于缓存中
       if (!captchaText) {
-        await this.recordLoginLog('登录失败-验证码过期', body)
         throw new BadRequestException('验证码已过期')
       }
       // 验证码比较（不区分大小写）
@@ -90,7 +86,6 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
         String(captchaText).toLowerCase() !== String(body.captcha).toLowerCase()
       ) {
         await this.cacheManager.del(CacheKey.CAPTCHA + body.captchaId)
-        await this.recordLoginLog('登录失败-验证码错误', body)
         throw new BadRequestException('验证码错误')
       }
     }
@@ -106,7 +101,6 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       },
     })
     if (!user) {
-      await this.recordLoginLog('登录失败-账号或密码错误', body)
       throw new BadRequestException('账号或密码错误')
     }
 
@@ -115,13 +109,11 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     try {
       password = this.rsa.decryptWithAdmin(body.password)
     } catch {
-      await this.recordLoginLog('登录失败-账号或密码错误', body)
       throw new BadRequestException('账号或密码错误')
     }
 
     // 检查账户是否被锁定
     if (user.isLocked) {
-      await this.recordLoginLog('登录失败-账户已被锁定', body)
       throw new UnauthorizedException('账户已被锁定，请联系管理员')
     }
 
@@ -139,7 +131,6 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
           isLocked: user.loginFailCount + 1 >= 5, // 失败5次后锁定账户
         },
       })
-      await this.recordLoginLog('登录失败-账号或密码错误', body)
       throw new BadRequestException('账号或密码错误')
     }
 
@@ -165,24 +156,11 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
 
     // 去除 user 对象的 password 属性
     const { password: _password, ...userWithoutPassword } = user
-    await this.recordLoginLog('登录成功', body, true, user.id)
+
     return {
       user: userWithoutPassword,
       tokens,
     }
-  }
-
-  /**
-   * 记录用户的登录日志
-   */
-  async recordLoginLog(content, body, result = false, userId?) {
-    await this.requestLog.logAdmin(`【${body.username}】${content}`, {
-      actionType: 'admin_login',
-      actionResult: result,
-      username: body.username,
-      userId: userId || null,
-      params: { username: body.username },
-    })
   }
 
   /**
