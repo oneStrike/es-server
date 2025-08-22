@@ -20,9 +20,7 @@ model RequestLog {
   /// 操作类型（如登录/注册）
   actionType     String?  @map("action_type") @db.VarChar(50)
   /// 操作结果
-  isSuccess      Boolean  @map("action_result")
-  /// 错误信息（可空）
-  errorMessage   String?  @map("error_message") @db.Text
+  isSuccess      Boolean  @map("is_success")
   /// 设备信息（User-Agent 原始字符串）
   userAgent      String?  @map("user_agent") @db.VarChar(255)
   /// 设备信息（User-Agent 解析结果，JSON）

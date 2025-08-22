@@ -116,6 +116,126 @@ function truncateJson(obj: any, maxLen = 4096): any {
   }
 }
 
+/**
+ * 解析设备信息（基于 User-Agent + Client Hints，轻量实现）
+ * 返回尽量稳定且简洁的结构，避免 JSON 膨胀
+ */
+function parseUserAgentDevice(
+  uaRaw: string,
+  headers: Record<string, any> = {},
+): Record<string, any> {
+  const ua = String(uaRaw || '')
+  const ual = ua.toLowerCase()
+  const trunc = (s?: string | null, n = 64) =>
+    s == null ? null : String(s).slice(0, n)
+
+  // Client Hints（可选）
+  const chUa = headers['sec-ch-ua'] as string | undefined
+  const chPlatform = headers['sec-ch-ua-platform'] as string | undefined
+  const chMobile = headers['sec-ch-ua-mobile'] as string | undefined
+  const chModel = headers['sec-ch-ua-model'] as string | undefined
+
+  const brands: Array<{ brand: string, version: string }> = []
+  if (chUa) {
+    const re = /"([^"]+)"\s*;\s*v="([^"]+)"/g
+    for (let m = re.exec(chUa); m !== null; m = re.exec(chUa)) {
+      brands.push({ brand: trunc(m[1]) || '', version: trunc(m[2]) || '' })
+    }
+  }
+
+  // 简易 bot 检测
+  const isBot =
+    /bot|spider|crawler|bingpreview|google|duckduckbot|baiduspider|sogou|360spider|yisouspider/.test(
+      ual,
+    )
+
+  // 平台/设备类型判定
+  const isIpad = /ipad/.test(ual)
+  const isTablet =
+    isIpad || (/android/.test(ual) && !/mobile/.test(ual)) || /tablet/.test(ual)
+  const isMobile = /iphone|ipod|android.*mobile|mobile/.test(ual)
+  const deviceType = isBot
+    ? 'bot'
+    : isTablet
+      ? 'tablet'
+      : isMobile
+        ? 'mobile'
+        : 'desktop'
+
+  // OS 识别
+  let osName: string | null = null
+  let osVersion: string | null = null
+  if (/windows nt/.test(ual)) {
+    osName = 'Windows'
+    const m = /windows nt ([0-9_.]+)/.exec(ual)
+    osVersion = m?.[1]?.replace(/_/g, '.') || null
+  } else if (/android/.test(ual)) {
+    osName = 'Android'
+    const m = /android ([0-9_.]+)/.exec(ual)
+    osVersion = m?.[1]?.replace(/_/g, '.') || null
+  } else if (/iphone|ipad|ipod|ios/.test(ual)) {
+    osName = isIpad ? 'iPadOS' : 'iOS'
+    const m = /(?:cpu (?:iphone )?os|ios) [0-9_]+/.exec(ual)
+    osVersion = m?.[2]?.replace(/_/g, '.') || null
+  } else if (/mac os x/.test(ual)) {
+    osName = 'macOS'
+    const m = /mac os x ([0-9_.]+)/.exec(ual)
+    osVersion = m?.[1]?.replace(/_/g, '.') || null
+  } else if (/linux/.test(ual)) {
+    osName = 'Linux'
+  }
+
+  // 浏览器识别（常见主流）
+  let browserName: string | null = null
+  let browserVersion: string | null = null
+  if (/edg\//.test(ual)) {
+    browserName = 'Edge'
+    const m = /edg\/([0-9.]+)/.exec(ual)
+    browserVersion = m?.[1] || null
+  } else if (/opr\//.test(ual)) {
+    browserName = 'Opera'
+    const m = /opr\/([0-9.]+)/.exec(ual)
+    browserVersion = m?.[1] || null
+  } else if (/chrome\//.test(ual)) {
+    browserName = 'Chrome'
+    const m = /chrome\/([0-9.]+)/.exec(ual)
+    browserVersion = m?.[1] || null
+  } else if (/safari\//.test(ual) && /version\//.test(ual)) {
+    browserName = 'Safari'
+    const m = /version\/([0-9.]+)/.exec(ual)
+    browserVersion = m?.[1] || null
+  } else if (/firefox\//.test(ual)) {
+    browserName = 'Firefox'
+    const m = /firefox\/([0-9.]+)/.exec(ual)
+    browserVersion = m?.[1] || null
+  } else if (/msie |trident\//.test(ual)) {
+    browserName = 'IE'
+    const m = /(?:msie |rv:)[0-9.]+/.exec(ual)
+    browserVersion = m?.[2] || null
+  }
+
+  return {
+    type: deviceType,
+    isMobile,
+    isTablet,
+    isBot,
+    os: {
+      name: trunc(osName),
+      version: trunc(osVersion),
+    },
+    browser: {
+      name: trunc(browserName),
+      version: trunc(browserVersion),
+    },
+    clientHints: {
+      brands: brands.slice(0, 5),
+      platform: trunc(chPlatform?.replace(/"/g, '').replace(/"/g, '')),
+      model: trunc(chModel?.replace(/"/g, '').replace(/"/g, '')),
+      mobile: chMobile ? chMobile.includes('1') : undefined,
+    },
+  }
+}
+
 @Injectable()
 /**
  * 请求日志拦截器
@@ -180,6 +300,12 @@ export class RequestLogInterceptor implements NestInterceptor {
 
     const userType = detectUserType(url)
     const ip = getClientIp(req) // 缓存 IP，避免重复解析
+
+    // 预先解析 UA 与设备信息，供后续成功/失败两条路径复用
+    const uaRaw = String(req.headers['user-agent'] || '')
+    const __ua = uaRaw.slice(0, 255) // 数据库 userAgent 限长
+    const deviceInfo = parseUserAgentDevice(uaRaw, req.headers as AnyObj)
+
     // 脱敏字段：装饰器自定义 + 默认字段
     const maskKeys = Array.from(
       new Set([...(meta.maskKeys || []), ...this.defaultMaskKeys]),
@@ -216,10 +342,11 @@ export class RequestLogInterceptor implements NestInterceptor {
     // 用户信息（按常见字段兼容提取）
     const user: AnyObj = (req as AnyObj).user || {}
     const userId = user?.id ?? user?.userId ?? null
-    const username = user?.username ?? user?.name ?? null
-    // 日志内容与扩展构造器
-    const buildContent = (status: number, duration: number) =>
-      meta.content || `${method} ${url} - ${status} (${duration}ms)`
+    let username = user?.username ?? user?.name ?? null
+    if (url.includes('/user/user-login')) {
+      username = safeBody.username
+    }
+    // 日志扩展构造器
     const buildExtras = (data: any) => {
       const extras: AnyObj = {
         requestId: traceId,
@@ -245,8 +372,6 @@ export class RequestLogInterceptor implements NestInterceptor {
         const duration = Date.now() - start
         const statusCode = (res as any).statusCode ?? 200
         // Fire-and-forget：为避免阻塞主流程，不 await
-        // 注意：UA 在数据库中限制为 VARCHAR(255)，此处截断避免超长失败
-        const __ua = String(req.headers['user-agent'] || '').slice(0, 255)
         void this.prisma.requestLog
           .create({
             data: {
@@ -260,9 +385,9 @@ export class RequestLogInterceptor implements NestInterceptor {
               statusCode,
               actionType: meta.actionType || null,
               isSuccess: true,
-              errorMessage: null,
               userAgent: __ua,
-              content: buildContent(statusCode, duration),
+              device: deviceInfo,
+              content: '请求成功',
               extras: buildExtras(data),
               traceId,
               responseTimeMs: duration,
@@ -291,7 +416,6 @@ export class RequestLogInterceptor implements NestInterceptor {
           } catch {}
         }
 
-        const __ua = String(req.headers['user-agent'] || '').slice(0, 255)
         void this.prisma.requestLog
           .create({
             data: {
@@ -305,9 +429,9 @@ export class RequestLogInterceptor implements NestInterceptor {
               statusCode,
               actionType: meta.actionType || null,
               isSuccess: false,
-              errorMessage: String(err?.message || 'Unknown error'),
               userAgent: __ua,
-              content: buildContent(statusCode, duration),
+              device: deviceInfo,
+              content: String(err?.message || 'Unknown error'),
               extras: buildExtras({ error: err?.message }),
               traceId,
               responseTimeMs: duration,
