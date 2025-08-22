@@ -1,47 +1,47 @@
 model RequestLog {
   /// 主键id
-  id              Int          @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   /// 用户ID（可空）
-  userId          Int?         @map("user_id")
+  userId         Int?     @map("user_id")
   /// 用户名（可空）
-  username        String?      @map("username")
+  username       String?  @map("username")
   /// 用户类型（admin/client/system等，可空）
-  userType        String?      @map("user_type") @db.VarChar(20)
+  userType       String?  @map("user_type") @db.VarChar(20)
   /// IP地址（自动获取）
-  ip              String?      @db.VarChar(45)
+  ip             String?  @db.VarChar(45)
   /// 请求方法（GET/POST等）
-  method          String       @db.VarChar(10)
+  method         String   @db.VarChar(10)
   /// 请求路径
-  path            String       @db.VarChar(255)
+  path           String   @db.VarChar(255)
   /// 请求参数（JSON格式）
-  params          Json?
+  params         Json?
   /// 响应状态码
-  statusCode      Int?         @map("status_code")
+  statusCode     Int?     @map("status_code")
   /// 操作类型（如登录/注册）
-  actionType      String?      @map("action_type") @db.VarChar(50)
+  actionType     String?  @map("action_type") @db.VarChar(50)
   /// 操作结果
-  actionResult    Boolean         @map("action_result")
+  isSuccess      Boolean  @map("action_result")
   /// 错误信息（可空）
-  errorMessage    String?      @map("error_message") @db.Text
+  errorMessage   String?  @map("error_message") @db.Text
   /// 设备信息（User-Agent 原始字符串）
-  userAgent       String?      @map("user_agent") @db.VarChar(255)
+  userAgent      String?  @map("user_agent") @db.VarChar(255)
   /// 设备信息（User-Agent 解析结果，JSON）
-  device          Json?
+  device         Json?
   /// 自定义日志内容（必填）
-  content         String       @db.Text
+  content        String   @db.Text
   /// 预留扩展字段（Json）
-  extras          Json?
+  extras         Json?
   /// 追踪ID（链路追踪可用）
-  traceId         String?      @map("trace_id") @db.VarChar(64)
+  traceId        String?  @map("trace_id") @db.VarChar(64)
   /// 响应时间（毫秒）
-  responseTimeMs  Int?         @map("response_time_ms")
+  responseTimeMs Int?     @map("response_time_ms")
   /// 请求时间（自动记录）
-  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   /// 索引优化
   @@index([createdAt])
   @@index([userId])
   @@index([username])
-  @@index([actionResult])
+  @@index([isSuccess])
   @@map("request_log")
 }

@@ -4,6 +4,7 @@ import { FastifyRequest } from 'fastify'
 import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
 import { CurrentUser } from '@/common/decorators/current-user.decorator'
 import { Public } from '@/common/decorators/public.decorator'
+import { RequestLog } from '@/common/decorators/request-log.decorator'
 import { IdDto } from '@/common/dto/id.dto'
 import { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service'
 import {
@@ -54,7 +55,7 @@ export class AdminUserController {
     model: LoginResponseDto,
   })
   @Public()
-
+  @RequestLog({ actionType: '用户管理' })
   async login(@Body() body: UserLoginDto, @Req() req: FastifyRequest) {
     return this.userService.login(body, req)
   }
