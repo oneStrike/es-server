@@ -1,4 +1,4 @@
-export type PlatformResponse = PlatformResponseDto[]
+export type PlatformResponse = PlatformResponseDto[];
 
 /**
  *  类型定义 [SearchRequest]
@@ -6,17 +6,17 @@ export type PlatformResponse = PlatformResponseDto[]
  *  @更新时间 2025-08-23 16:01:23
  */
 export type SearchRequest = {
+  /** 任意合法数值 */
+  [property: string]: any;
+
   /* 搜索关键词 */
-  keyword: string
+  keyword: string;
 
   /* 平台代码 */
-  platform: string
+  platform: string;
+};
 
-  /** 任意合法数值 */
-  [property: string]: any
-}
-
-export type SearchResponse = SearchComicItemDto
+export type SearchResponse = SearchComicItemDto;
 
 /**
  *  类型定义 [PlatformResponseDto]
@@ -24,14 +24,14 @@ export type SearchResponse = SearchComicItemDto
  *  @更新时间 2025-08-23 16:01:23
  */
 export type PlatformResponseDto = {
-  /* 平台名称 */
-  name: string
-  /* 平台名称code */
-  code: string
-
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+  /* 平台名称code */
+  code: string;
+
+  /* 平台名称 */
+  name: string;
+};
 
 /**
  *  类型定义 [SearchComicItemDto]
@@ -39,17 +39,17 @@ export type PlatformResponseDto = {
  *  @更新时间 2025-08-23 16:01:23
  */
 export type SearchComicItemDto = {
-  /* 漫画ID */
-  id: string
-  /* 漫画名称 */
-  name: string
-  /* 封面图片URL */
-  cover: string
-  /* 作者列表 */
-  author: string[]
-  /* 来源平台 */
-  source: string
-
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+  /* 作者列表 */
+  author: string[];
+  /* 封面图片URL */
+  cover: string;
+  /* 漫画ID */
+  id: string;
+  /* 漫画名称 */
+  name: string;
+
+  /* 来源平台 */
+  source: string;
+};
