@@ -48,7 +48,7 @@ function getClientIp(request: FastifyRequest): string {
 /**
  * 根据 URL 粗略判定用户类型（仅用于日志分组展示）
  */
-function detectUserType(url: string): string {
+function detectApiType(url: string): string {
   if (url.startsWith('/api/admin')) {
     return 'admin'
   }
@@ -298,7 +298,7 @@ export class RequestLogInterceptor implements NestInterceptor {
       ;(res as any).header('x-request-id', traceId)
     }
 
-    const userType = detectUserType(url)
+    const apiType = detectApiType(url)
     const ip = getClientIp(req) // 缓存 IP，避免重复解析
 
     // 预先解析 UA 与设备信息，供后续成功/失败两条路径复用
@@ -377,7 +377,7 @@ export class RequestLogInterceptor implements NestInterceptor {
             data: {
               userId,
               username,
-              userType,
+              apiType,
               ip,
               method,
               path: url,
@@ -421,7 +421,7 @@ export class RequestLogInterceptor implements NestInterceptor {
             data: {
               userId,
               username,
-              userType,
+              apiType,
               ip,
               method,
               path: url,

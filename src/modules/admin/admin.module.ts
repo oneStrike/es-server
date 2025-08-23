@@ -6,6 +6,7 @@ import { AdminAuthModule } from './auth/auth.module'
 import { ClientNoticeModule } from './client/notice'
 import { ClientPageConfigModule } from './client/page'
 import { AdminLoggerModule } from './logger/admin-logger.module'
+import { RequestLogModule } from './request-log/request-log.module'
 import { AdminUserModule } from './users/user.module'
 import { WorkModule } from './work/work.module'
 
@@ -16,6 +17,7 @@ import { WorkModule } from './work/work.module'
     AdminLoggerModule,
     AdminUploadModule,
     DictionaryModule,
+    RequestLogModule,
     ClientNoticeModule,
     ClientPageConfigModule,
     WorkModule,

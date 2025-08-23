@@ -5,8 +5,8 @@ model RequestLog {
   userId         Int?     @map("user_id")
   /// 用户名（可空）
   username       String?  @map("username")
-  /// 用户类型（admin/client/system等，可空）
-  userType       String?  @map("user_type") @db.VarChar(20)
+  /// 接口类型（admin/client/system等，可空）
+  apiType       String?  @map("api_type") @db.VarChar(20)
   /// IP地址（自动获取）
   ip             String?  @db.VarChar(45)
   /// 请求方法（GET/POST等）
@@ -27,8 +27,6 @@ model RequestLog {
   device         Json?
   /// 自定义日志内容（必填）
   content        String   @db.Text
-  /// 预留扩展字段（Json）
-  extras         Json?
   /// 追踪ID（链路追踪可用）
   traceId        String?  @map("trace_id") @db.VarChar(64)
   /// 响应时间（毫秒）
