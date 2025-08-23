@@ -47,7 +47,7 @@ const gridOptions: VxeGridProps<RequestLogDto> = {
         const params: RequestLogPageRequest = {
           pageIndex: --page.currentPage,
           pageSize: page.pageSize,
-          userId: userInfo.value.id,
+          username: userInfo.value.username,
           requestPath: '/api/admin/user/user-login',
         };
 
@@ -243,13 +243,15 @@ onMounted(async () => {
         <div
           class="border-border bg-background h-full rounded-lg border p-6 shadow-sm"
         >
-          <div class="flex items-center justify-between">
-            <h2 class="text-foreground text-lg font-semibold">登录历史记录</h2>
-            <el-button @click="refreshHistory"> 刷新 </el-button>
-          </div>
-
+          <h2 class="text-foreground text-lg font-semibold">登录历史记录</h2>
           <div class="h-[93%]">
-            <Grid />
+            <Grid>
+              <template #isSuccess="{ row }">
+                <el-tag :type="row.isSuccess ? 'success' : 'danger'">
+                  {{ row.isSuccess ? '登录成功' : row.content }}
+                </el-tag>
+              </template>
+            </Grid>
           </div>
         </div>
       </div>

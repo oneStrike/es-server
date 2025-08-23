@@ -7,19 +7,9 @@ import { formatUTC } from '#/utils';
 export const loginHistortColumn: VxeGridPropTypes.Columns<RequestLogDetailResponse> =
   [
     {
-      field: 'ipAddress',
+      field: 'ip',
       title: '登录IP',
       width: 140,
-    },
-    {
-      field: 'ipLocation',
-      title: '登录地点',
-      width: 120,
-    },
-    {
-      field: 'responseCode',
-      title: '状态',
-      width: 80,
     },
     {
       field: 'userAgent',
@@ -32,6 +22,12 @@ export const loginHistortColumn: VxeGridPropTypes.Columns<RequestLogDetailRespon
       title: '登录时间',
       width: 160,
       formatter: ({ cellValue }) => formatUTC(cellValue),
+    },
+    {
+      field: 'isSuccess',
+      title: '登录结果',
+      width: 120,
+      slots: { default: 'isSuccess' },
     },
   ];
 
