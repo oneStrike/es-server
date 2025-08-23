@@ -48,10 +48,7 @@ const [Modal, modalApi] = useVbenModal({
 
 // 根据弹窗宽度动态计算网格列数
 const dynamicWrapperClass = computed(() => {
-  const width = sharedData.value?.width ?? 900;
-  // 根据弹窗宽度设置列数：小于600px为1列，否则为2列
-  const cols = width < 600 ? 1 : 2;
-  return `grid-cols-${cols} gap-x-4`;
+  return `grid-cols-${sharedData.value.cols || 2} gap-x-4`;
 });
 
 const [BaseForm, formApi] = useVbenForm({
@@ -81,7 +78,10 @@ const [BaseForm, formApi] = useVbenForm({
 });
 </script>
 <template>
-  <Modal :title="modalTitle" :class="`w-[${sharedData.width}px]`">
+  <Modal
+    :title="modalTitle"
+    :class="sharedData.cols === 1 ? 'w-[500px]' : 'w-[900px]'"
+  >
     <template #prepend-footer>
       <el-button @click="formApi.resetForm()">重置</el-button>
     </template>

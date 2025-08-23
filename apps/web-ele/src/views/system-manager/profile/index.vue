@@ -125,13 +125,13 @@ const openEditDialog = async () => {
   if (!userInfo.value) return;
 
   editFormApi
-    .setData({ width: 500, title: '用户信息', record: userInfo.value })
+    .setData({ cols: 1, title: '用户信息', record: userInfo.value })
     .open();
 };
 
 // 打开修改密码对话框
 const openPasswordDialog = async () => {
-  passwordFormApi.setData({ width: 500, title: '密码' }).open();
+  passwordFormApi.setData({ cols: 1, title: '密码' }).open();
 };
 
 // 刷新登录历史
