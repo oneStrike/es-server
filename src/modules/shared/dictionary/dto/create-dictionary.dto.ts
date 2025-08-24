@@ -47,5 +47,5 @@ export class CreateDictionaryDto {
     required: false,
     maxLength: 255,
   })
-  remark?: string
+  description?: string
 }

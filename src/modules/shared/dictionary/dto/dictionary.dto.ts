@@ -54,7 +54,7 @@ export class DictionaryDto {
     required: false,
     maxLength: 255,
   })
-  remark?: string
+  description?: string
 
   @ApiProperty({
     description: '创建时间',
@@ -134,7 +134,7 @@ export class DictionaryItemDto {
     required: false,
     maxLength: 255,
   })
-  remark?: string
+  description?: string
 
   @ApiProperty({
     description: '创建时间',

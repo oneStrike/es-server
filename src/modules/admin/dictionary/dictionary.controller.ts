@@ -17,11 +17,12 @@ import {
   QueryDictionaryDto,
   QueryDictionaryItemDto,
 } from '@/modules/shared/dictionary/dto/query-dictionary.dto'
+import { UpdateDictionaryDto } from '@/modules/shared/dictionary/dto/update-dictionary.dto'
 
 @ApiTags('字典管理')
 @Controller('/admin/dictionary')
 export class DictionaryController {
-  constructor(private readonly dictionaryService: DictionaryService) {}
+  constructor(private readonly dictionaryService: DictionaryService) { }
 
   @Get('dictionary-page')
   @ApiPageDoc({
@@ -57,7 +58,7 @@ export class DictionaryController {
     summary: '更新字典',
     model: IdDto,
   })
-  async update(@Body() updateDictionaryDto: DictionaryDto) {
+  async update(@Body() updateDictionaryDto: UpdateDictionaryDto) {
     return this.dictionaryService.update({
       where: { id: updateDictionaryDto.id },
       data: updateDictionaryDto,
