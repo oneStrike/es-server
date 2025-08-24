@@ -189,8 +189,6 @@ export const formSchema: EsFormSchema = [
     component: 'DatePicker',
     componentProps: {
       type: 'daterange',
-      startPlaceholder: '请选择开始时间',
-      endPlaceholder: '请选择结束时间',
       valueFormat: 'YYYY-MM-DD',
     },
   },
@@ -301,22 +299,22 @@ export const noticeColumns =
   });
 
 export const noticeFilter = formSchemaTransform.toSearchSchema(formSchema, {
-  content: {
-    hide: true,
-  },
-  showAsPopup: {
-    hide: true,
-  },
-  isPinned: {
-    hide: true,
-  },
-  popupBackgroundImage: {
-    hide: true,
-  },
-  actions: {
-    show: true,
-  },
   title: {
     sort: 99,
+  },
+  dateTimeRange: {
+    sort: 98,
+  },
+  noticeType: {
+    sort: 97,
+  },
+  priorityLevel: {
+    sort: 96,
+  },
+  enablePlatform: {
+    sort: 95,
+  },
+  pageCode: {
+    sort: 94,
   },
 });

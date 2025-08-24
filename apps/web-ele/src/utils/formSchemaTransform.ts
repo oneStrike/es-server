@@ -14,7 +14,6 @@ type FilterItemExtra = Partial<
   Record<
     EsFormSchema[number]['fieldName'],
     Partial<EsFormSchema[number]> & {
-      hide?: boolean;
       show?: boolean;
       sort?: number;
     }
@@ -98,7 +97,7 @@ export const formSchemaTransform: FormSchemaTransform = {
         align: 'center',
         fixed: 'right',
         originalIndex: -1,
-        width: 100,
+        width: 150,
         slots: { default: 'actions' },
         ...extra?.actions,
       });
@@ -138,7 +137,7 @@ export const formSchemaTransform: FormSchemaTransform = {
     for (const [i, item] of innerSchema.entries()) {
       const itemExtra = extra?.[item.fieldName];
 
-      if (itemExtra?.hide !== true) {
+      if (itemExtra) {
         const componentConfig =
           filterComponentProps[
             item.component as keyof typeof filterComponentProps
@@ -156,12 +155,18 @@ export const formSchemaTransform: FormSchemaTransform = {
           ...item.componentProps,
           placeholder: componentConfig?.placeholder || item.label,
           class: 'w-[280px]',
-          allowClear: true,
+          clearable: true,
           options: existingOptions ?? [],
         };
         if (item.component === 'CheckboxGroup') {
           item.component = 'Select';
           item.componentProps.mode = 'multiple';
+        }
+        if (item.component === 'DatePicker') {
+          item.componentProps.startPlaceholder =
+            item.componentProps.startPlaceholder || '开始时间';
+          item.componentProps.endPlaceholder =
+            item.componentProps.endPlaceholder || '结束时间';
         }
         item.label = '';
         item.rules = '';

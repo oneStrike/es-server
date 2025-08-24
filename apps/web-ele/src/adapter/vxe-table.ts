@@ -6,6 +6,8 @@ import { setupVbenVxeTable, useVbenVxeGrid } from '@vben/plugins/vxe-table';
 
 import { ElButton, ElImage, ElTag } from 'element-plus';
 
+import { ImageLine } from '#/components/es-icons';
+
 import { useVbenForm } from './form';
 
 setupVbenVxeTable({
@@ -45,9 +47,9 @@ setupVbenVxeTable({
         },
         toolbarConfig: {
           custom: true,
-          export: true,
+          export: false,
           refresh: true,
-          zoom: true,
+          zoom: false,
           search: true,
         },
         exportConfig: {},
@@ -58,19 +60,31 @@ setupVbenVxeTable({
     vxeUI.renderer.add('CellImage', {
       renderTableDefault(_renderOpts, params) {
         const { column, row } = params;
-        const src = row[column.field];
-        return h(ElImage, { src, previewSrcList: [src] });
+        const src = row[column.field] || '';
+        return h(
+          ElImage,
+          {
+            src,
+            previewSrcList: [src],
+            class: 'size-8',
+            fit: 'contain',
+            previewTeleported: true,
+          },
+          { error: () => h(ImageLine, { class: 'size-8' }) },
+        );
       },
     });
 
     // 表格配置项可以用 cellRender: { name: 'CellLink' },
     vxeUI.renderer.add('CellLink', {
-      renderTableDefault(renderOpts) {
-        const { props } = renderOpts;
+      renderTableDefault(renderOpts, params) {
+        const type = renderOpts.props?.type ?? 'primary';
+        const { column, row } = params;
+        const text = row[column.field] || '';
         return h(
           ElButton,
-          { size: 'small', link: true },
-          { default: () => props?.text },
+          { size: 'small', link: true, class: 'line-clamp-1 w-full', type },
+          { default: () => text },
         );
       },
     });

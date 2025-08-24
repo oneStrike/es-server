@@ -1,41 +1,53 @@
 <script setup lang="ts">
-import type { VxeGridProps } from '@vben/plugins/vxe-table';
+import type { VxeGridProps } from '#/adapter/vxe-table';
+import type { DictionaryDto, DictionaryItemDto } from '#/apis/types/dictionary';
 
-import type { DictionaryDto } from '#/apis/types/dictionary';
-
-import { Page, useVbenModal } from '@vben/common-ui';
+import { useVbenModal } from '@vben/common-ui';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  batchUpdateDictionaryStatusApi,
-  createDictionaryApi,
-  deleteDictionaryApi,
-  dictionaryDetailApi,
-  dictionaryPageApi,
-  updateDictionaryApi,
+  createDictionaryItemApi,
+  deleteDictionaryItemApi,
+  dictionaryItemsApi,
+  updateDictionaryItemApi,
+  updateDictionaryItemStatusApi,
 } from '#/apis';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useMessage } from '#/hooks/useFeedback';
 import { createSearchFormOptions } from '#/utils';
 
-import DictionaryItem from './item.vue';
 import {
-  dictionaryColumns,
+  dictionaryItemColumns,
   dictionarySearchSchema,
-  formSchema,
+  itemFormSchema,
 } from './shared';
 
-const gridOptions: VxeGridProps<DictionaryDto> = {
-  columns: dictionaryColumns,
+type ShareData = {
+  record: DictionaryDto;
+};
+
+defineOptions({
+  name: 'DictionaryItem',
+});
+
+const shareData = ref<ShareData>();
+
+const gridOptions: VxeGridProps<DictionaryItemDto> = {
+  columns: dictionaryItemColumns,
   height: 'auto',
   proxyConfig: {
     ajax: {
       query: async ({ page }, formValues) => {
-        return await dictionaryPageApi({
+        const data = await dictionaryItemsApi({
           pageIndex: --page.currentPage,
           pageSize: page.pageSize,
+          dictionaryCode: shareData.value?.record.code,
           ...formValues,
         });
+        return {
+          list: data,
+          total: data.length,
+        };
       },
     },
     sort: true,
@@ -45,38 +57,44 @@ const gridOptions: VxeGridProps<DictionaryDto> = {
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions,
   formOptions: createSearchFormOptions(dictionarySearchSchema, {
+    wrapperClass: 'grid-cols-3 gap-4',
     showCollapseButton: false,
   }),
 });
 
-async function deleteDictionary(row: DictionaryDto) {
-  await deleteDictionaryApi({ ids: [row.id] });
-  useMessage.success('操作成功');
-  gridApi.reload();
-}
+const [Modal, modalApi] = useVbenModal({
+  onOpenChange(isOpen) {
+    if (isOpen) {
+      shareData.value = modalApi.getData<ShareData>();
+      modalApi.setState({
+        title: shareData.value.record.name,
+      });
+    }
+  },
+});
 
 const [Form, formApi] = useVbenModal({
   connectedComponent: EsModalForm,
 });
-async function openFormModal(row?: DictionaryDto) {
-  let record;
-  if (row) {
-    record = await dictionaryDetailApi({ id: row.id });
+
+async function addDictionaryItem(values: any) {
+  if (!values.dictionaryCode) {
+    values.dictionaryCode = shareData.value!.record.code;
   }
-  formApi
-    .setData({
-      title: '数据字典',
-      record,
-      cols: 1,
-    })
-    .open();
+  await (values.id
+    ? updateDictionaryItemApi(values)
+    : createDictionaryItemApi(values));
+
+  formApi.close();
+  useMessage.success('操作成功');
+  gridApi.reload();
 }
 
 async function toggleEnableStatus(row: DictionaryDto) {
   const newStatus = !row.isEnabled;
   row.loading = true;
   try {
-    await batchUpdateDictionaryStatusApi({
+    await updateDictionaryItemStatusApi({
       ids: [row.id],
       isEnabled: newStatus,
     });
@@ -87,35 +105,30 @@ async function toggleEnableStatus(row: DictionaryDto) {
   }
 }
 
-// 添加数据字典
-async function addDictionary(values: any) {
-  await (values.id ? updateDictionaryApi(values) : createDictionaryApi(values));
-  useMessage.success('操作成功');
-  formApi.close();
-  gridApi.reload();
+async function openFormModal(row?: DictionaryDto) {
+  formApi
+    .setData({
+      title: '数据字典子项',
+      record: row || null,
+      cols: 1,
+    })
+    .open();
 }
 
-const [Detail, detailApi] = useVbenModal({
-  connectedComponent: DictionaryItem,
-});
+async function deleteDictionary(row: DictionaryDto) {
+  await deleteDictionaryItemApi({ ids: [row.id] });
+  useMessage.success('操作成功');
+  gridApi.reload();
+}
 </script>
 
 <template>
-  <Page auto-content-height>
+  <Modal class="h-[1000px] w-[1200px]" v-if="shareData">
     <Grid>
       <template #toolbar-actions>
         <el-button class="ml-2" type="primary" @click="openFormModal()">
           添加
         </el-button>
-      </template>
-      <template #name="{ row }">
-        <el-text
-          class="cursor-pointer hover:opacity-50"
-          type="primary"
-          @click="detailApi.setData({ record: row }).open()"
-        >
-          {{ row.name }}
-        </el-text>
       </template>
       <template #isEnabled="{ row }">
         <el-switch
@@ -126,7 +139,6 @@ const [Detail, detailApi] = useVbenModal({
           @change="toggleEnableStatus(row)"
         />
       </template>
-
       <template #actions="{ row }">
         <el-button link type="primary" @click="openFormModal(row)">
           编辑
@@ -145,10 +157,6 @@ const [Detail, detailApi] = useVbenModal({
       </template>
     </Grid>
 
-    <Form :schema="formSchema" :on-submit="addDictionary" />
-
-    <Detail />
-  </Page>
+    <Form :schema="itemFormSchema" :on-submit="addDictionaryItem" />
+  </Modal>
 </template>
-
-<style scoped></style>

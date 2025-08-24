@@ -10,7 +10,7 @@ import type { VbenFormProps, VbenFormSchema } from '@vben/common-ui';
  */
 export const DEFAULT_SEARCH_FORM_OPTIONS: Omit<VbenFormProps, 'schema'> = {
   wrapperClass:
-    'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6',
+    'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4',
   compact: true,
   showCollapseButton: true,
   submitOnChange: true,

@@ -60,18 +60,20 @@ const [BaseForm, formApi] = useVbenForm({
   handleSubmit: async (values) => {
     modalApi.lock();
 
-    if (Array.isArray(sharedData.value.bitMaskField)) {
-      sharedData.value.bitMaskField.forEach((field) => {
-        if (values[field]) {
-          values[field] = useBitMask.set(values[field]);
-        }
-      });
-    }
+    try {
+      if (Array.isArray(sharedData.value.bitMaskField)) {
+        sharedData.value.bitMaskField.forEach((field) => {
+          if (values[field]) {
+            values[field] = useBitMask.set(values[field]);
+          }
+        });
+      }
 
-    await props.onSubmit?.({
-      ...values,
-      id: sharedData.value?.record?.id,
-    });
+      await props.onSubmit?.({
+        ...values,
+        id: sharedData.value?.record?.id,
+      });
+    } catch {}
     modalApi.unlock();
   },
   schema: props.schema,

@@ -177,11 +177,17 @@ export const pageColumns =
 // 搜索表单配置
 export const pageFilter = formSchemaTransform
   .toSearchSchema(formSchema, {
-    description: {
-      hide: true,
+    pageCode: {
+      show: true,
     },
-    pageTitle: {
-      hide: true,
+    pageName: {
+      show: true,
+    },
+    pageStatus: {
+      show: true,
+    },
+    accessLevel: {
+      show: true,
     },
   })
   .reverse();
