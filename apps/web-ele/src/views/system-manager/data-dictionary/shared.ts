@@ -60,7 +60,7 @@ export const dictionaryColumns =
       show: true,
     },
     name: {
-      cellRender: { name: 'CellLink' },
+      slots: { default: 'name' },
     },
     code: {
       width: 300,

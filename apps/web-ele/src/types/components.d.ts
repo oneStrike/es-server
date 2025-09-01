@@ -37,6 +37,7 @@ declare module 'vue' {
     ElUpload: typeof import('element-plus/es')['ElUpload']
     EsEditor: typeof import('./../components/es-editor/es-editor.vue')['default']
     EsModalForm: typeof import('./../components/es-modal-form/index.vue')['default']
+    EsTable: typeof import('./../components/es-table/es-table.vue')['default']
     EsUpload: typeof import('./../components/es-upload/es-upload.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
