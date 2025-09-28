@@ -7,11 +7,17 @@ import {
 } from '@nestjs/swagger'
 import {
   ValidateBoolean,
+  ValidateEnum,
   ValidateJson,
   ValidateNumber,
   ValidateString,
 } from '@/common/decorators/validate.decorator'
 import { PageDto } from '@/common/dto/page.dto'
+import {
+  ActionTypeEnum,
+  ApiTypeEnum,
+  HttpMethodEnum,
+} from '../request-log.constant'
 
 export class RequestLogDto {
   @ValidateNumber({
@@ -38,13 +44,13 @@ export class RequestLogDto {
   })
   username?: string
 
-  @ValidateString({
+  @ValidateEnum({
     description: '接口类型（admin/client/system等）',
     example: 'admin',
     required: false,
-    maxLength: 20,
+    enum: ApiTypeEnum,
   })
-  apiType?: string
+  apiType?: ApiTypeEnum
 
   @ValidateString({
     description: 'IP地址',
@@ -54,13 +60,13 @@ export class RequestLogDto {
   })
   ip?: string
 
-  @ValidateString({
+  @ValidateEnum({
     description: '请求方法',
     example: 'POST',
     required: true,
-    maxLength: 10,
+    enum: HttpMethodEnum,
   })
-  method!: string
+  method!: HttpMethodEnum
 
   @ValidateString({
     description: '请求路径',
@@ -86,13 +92,13 @@ export class RequestLogDto {
   })
   statusCode?: number
 
-  @ValidateString({
+  @ValidateEnum({
     description: '操作类型',
     example: '用户登录',
     required: false,
-    maxLength: 50,
+    enum: ActionTypeEnum,
   })
-  actionType?: string
+  actionType?: ActionTypeEnum
 
   @ValidateBoolean({
     description: '操作是否成功',
@@ -156,6 +162,8 @@ export class RequestLogPageDto extends IntersectionType(
     'ip',
     'method',
     'path',
+    'statusCode',
+    'apiType',
     'actionType',
     'isSuccess',
     'device',
