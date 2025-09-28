@@ -19,7 +19,7 @@ import { BaseRepositoryService } from '@/global/services/base-repository.service
 import { PrismaService } from '@/global/services/prisma.service'
 import { AdminJwtService } from '@/modules/admin/auth'
 import { CacheKey, TokenDto } from '@/modules/admin/user'
-import { ActionTypeEnum, RequestLogService } from '@/modules/shared/request-log'
+import { RequestLogService } from '@/modules/shared/request-log'
 import {
   UpdatePasswordDto,
   UpdateUserDto,
@@ -71,12 +71,6 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
   async login(body: UserLoginDto, req: FastifyRequest) {
     // 检查用户输入的验证码
     if (!body.captcha) {
-      await this.createLog(
-        `【${body.username}】登录失败，未输入验证码`,
-        false,
-        { username: body.username },
-        req,
-      )
       throw new BadRequestException('请输入验证码')
     }
     const captchaText = await this.cacheManager.get(
@@ -121,7 +115,14 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
 
     // 检查账户是否被锁定
     if (user.isLocked) {
-      throw new UnauthorizedException('账户已被锁定，请联系管理员')
+      await this.requestLogService.createLoginFailureRequestLog(
+        {
+          content: `【${body.username}】登录失败，账户已被锁定`,
+          username: body.username,
+        },
+        req,
+      )
+      throw new UnauthorizedException('账户已被锁定')
     }
 
     // 验证密码
@@ -163,7 +164,14 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
 
     // 去除 user 对象的 password 属性
     const { password: _password, ...userWithoutPassword } = user
-    await this.createLog(`【${user.username}】登录成功`, true, user, req)
+    await this.requestLogService.createLoginSuccessRequestLog(
+      {
+        content: `【${body.username}】登录成功`,
+        username: body.username,
+        userId: user.id,
+      },
+      req,
+    )
     return {
       user: userWithoutPassword,
       tokens,
@@ -359,24 +367,5 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
         lastLoginAt: true,
       },
     })
-  }
-
-  async createLog(
-    content: string,
-    isSuccess: boolean,
-    user: Record<string, any>,
-    req: FastifyRequest,
-  ) {
-    console.log('🚀 ~ AdminUserService ~ createLog ~ user:', user)
-    return this.requestLogService.createRequestLog(
-      {
-        content,
-        username: user.username,
-        userId: user.userId || undefined,
-        actionType: ActionTypeEnum.LOGIN,
-        isSuccess,
-      },
-      req,
-    )
   }
 }

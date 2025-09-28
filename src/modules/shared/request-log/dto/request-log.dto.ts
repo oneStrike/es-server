@@ -143,6 +143,11 @@ export class CreateRequestLogDto extends PickType(RequestLogDto, [
   'actionType',
 ]) {}
 
+export class CreateRequestLogSimpleDto extends IntersectionType(
+  PickType(RequestLogDto, ['content']),
+  PartialType(PickType(RequestLogDto, ['username', 'userId'])),
+) {}
+
 /**
  * 请求日志分页查询DTO
  */
