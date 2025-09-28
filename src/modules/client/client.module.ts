@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common'
 import { ClientAuthModule } from './auth/auth.module'
-import { ClientLoggerModule } from './logger/client-logger.module'
 import { ClientUserModule } from './user/user.module'
 
 @Module({
-  imports: [ClientAuthModule, ClientUserModule, ClientLoggerModule],
+  imports: [ClientAuthModule, ClientUserModule],
   controllers: [],
 })
 export class ClientModule {}

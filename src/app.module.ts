@@ -11,7 +11,6 @@ import { LoggerModule } from '@/common/module/logger/logger.module'
 import uploadConfig from '@/config/upload.config'
 import { AdminModule } from '@/modules/admin/admin.module'
 import { ClientModule } from '@/modules/client/client.module'
-import { SystemModule } from '@/modules/system/system.module'
 import { GuardsModule } from './common/guards/guards.module'
 import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard'
 import { GlobalModule } from './global/global.module'
@@ -33,7 +32,6 @@ import { GlobalModule } from './global/global.module'
     GuardsModule,
     AdminModule,
     ClientModule,
-    SystemModule,
   ],
   controllers: [],
   providers: [

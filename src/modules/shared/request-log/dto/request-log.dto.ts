@@ -1,7 +1,6 @@
 import {
   ApiProperty,
   IntersectionType,
-  OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
@@ -83,15 +82,6 @@ export class RequestLogDto {
   })
   params?: string
 
-  @ValidateNumber({
-    description: '响应状态码',
-    example: 200,
-    required: false,
-    min: 100,
-    max: 599,
-  })
-  statusCode?: number
-
   @ValidateEnum({
     description: '操作类型',
     example: '用户登录',
@@ -145,10 +135,12 @@ export class RequestLogDto {
 /**
  * 创建请求日志DTO
  */
-export class CreateRequestLogDto extends OmitType(RequestLogDto, [
-  'id',
-  'createdAt',
-  'updatedAt',
+export class CreateRequestLogDto extends PickType(RequestLogDto, [
+  'userId',
+  'content',
+  'username',
+  'isSuccess',
+  'actionType',
 ]) {}
 
 /**
@@ -162,7 +154,6 @@ export class RequestLogPageDto extends IntersectionType(
     'ip',
     'method',
     'path',
-    'statusCode',
     'apiType',
     'actionType',
     'isSuccess',

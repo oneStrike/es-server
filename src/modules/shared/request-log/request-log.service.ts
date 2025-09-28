@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { FastifyRequest } from 'fastify'
 import { BaseRepositoryService } from '@/global/services/base-repository.service'
 import { PrismaService } from '@/global/services/prisma.service'
+import { parseRequestLogFields } from '@/utils'
 import { CreateRequestLogDto, RequestLogPageDto } from './dto/request-log.dto'
 
 @Injectable()
@@ -16,13 +18,13 @@ export class RequestLogService extends BaseRepositoryService<'RequestLog'> {
    * @param createDto 创建请求日志的数据
    * @returns 创建的请求日志ID
    */
-  async createRequestLog(createDto: CreateRequestLogDto) {
+  async createRequestLog(createDto: CreateRequestLogDto, req: FastifyRequest) {
     // 处理JSON字段的转换
     const data = {
       ...createDto,
-      params: createDto.params ? JSON.parse(createDto.params) : null,
-      device: createDto.device ? JSON.parse(createDto.device) : null,
+      ...parseRequestLogFields(req),
     }
+    console.log('🚀 ~ RequestLogService ~ createRequestLog ~ data:', data)
 
     return this.create({
       data,
