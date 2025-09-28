@@ -1,7 +1,7 @@
-const path = require('node:path');
-const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin');
-const webpack = require('webpack');
-const nodeExternals = require('webpack-node-externals');
+const path = require('node:path')
+const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin')
+const webpack = require('webpack')
+const nodeExternals = require('webpack-node-externals')
 
 module.exports = {
   entry: ['webpack/hot/poll?100', './src/main.ts'],
@@ -13,13 +13,7 @@ module.exports = {
   },
   externals: [
     nodeExternals({
-      allowlist: [
-        'webpack/hot/poll?100',
-        // 允许处理workspace包，确保热重载正常工作
-        /@akaiito\/.*/,
-        // 允许处理Prisma客户端的runtime模块，确保WASM文件能正确解析
-        /@prisma\/client\/runtime\/.*/,
-      ],
+      allowlist: ['webpack/hot/poll?100'],
     }),
   ],
   module: {
@@ -32,7 +26,7 @@ module.exports = {
             // 启用转译模式，提高编译速度
             transpileOnly: true,
             // 获取类型检查信息但不阻塞编译
-            getCustomTransformers: program => ({
+            getCustomTransformers: () => ({
               before: [],
             }),
             // 编译器选项
@@ -45,10 +39,6 @@ module.exports = {
         },
         exclude: /node_modules/,
       },
-      {
-        test: /\.wasm$/,
-        type: 'webassembly/async',
-      },
     ],
   },
   mode: 'development',
@@ -56,9 +46,6 @@ module.exports = {
     extensions: ['.tsx', '.ts', '.js', '.json'],
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      // 修复 Prisma WASM 文件引用问题
-      './query_compiler_bg.js':
-        '@prisma/client/runtime/query_compiler_bg.postgresql.js',
     },
     // 优化模块解析
     modules: ['node_modules', path.resolve(__dirname, 'src')],
@@ -117,4 +104,4 @@ module.exports = {
     warnings: true,
     errors: true,
   },
-};
+}

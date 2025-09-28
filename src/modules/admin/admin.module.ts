@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common'
 import { DictionaryController } from '@/modules/admin/dictionary/dictionary.controller'
 import { AdminUploadModule } from '@/modules/admin/upload/upload.module'
-import { DictionaryModule } from '@/modules/shared/dictionary/dictionary.module'
+import { RequestLogModule } from '../shared/request-log/request-log.module'
+import { SharedModule } from '../shared/shared.module'
 import { AdminAuthModule } from './auth/auth.module'
 import { ClientNoticeModule } from './client/notice'
 import { ClientPageConfigModule } from './client/page'
-import { AdminLoggerModule } from './logger/admin-logger.module'
-import { RequestLogModule } from './request-log/request-log.module'
+import { RequestLogController } from './request-log/request-log.controller'
 import { AdminUserModule } from './users/user.module'
 import { WorkModule } from './work/work.module'
 
@@ -14,15 +14,14 @@ import { WorkModule } from './work/work.module'
   imports: [
     AdminAuthModule,
     AdminUserModule,
-    AdminLoggerModule,
     AdminUploadModule,
-    DictionaryModule,
+    SharedModule,
     RequestLogModule,
     ClientNoticeModule,
     ClientPageConfigModule,
     WorkModule,
   ],
-  controllers: [DictionaryController],
+  controllers: [DictionaryController, RequestLogController],
   providers: [],
 })
-export class AdminModule { }
+export class AdminModule {}

@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { DictionaryService } from './dictionary.service';
+import { Module } from '@nestjs/common'
+import { DictionaryService } from './dictionary.service'
 
 /**
  * 数据字典模块

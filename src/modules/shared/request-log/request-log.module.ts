@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common'
-import { RequestLogController } from './request-log.controller'
 import { RequestLogService } from './request-log.service'
 
 /**
@@ -8,7 +7,6 @@ import { RequestLogService } from './request-log.service'
  */
 @Module({
   providers: [RequestLogService],
-  controllers: [RequestLogController],
   exports: [RequestLogService],
 })
 export class RequestLogModule {}

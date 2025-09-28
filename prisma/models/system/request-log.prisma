@@ -27,13 +27,10 @@ model RequestLog {
   device         Json?
   /// 自定义日志内容（必填）
   content        String   @db.Text
-  /// 追踪ID（链路追踪可用）
-  traceId        String?  @map("trace_id") @db.VarChar(64)
-  /// 响应时间（毫秒）
-  responseTimeMs Int?     @map("response_time_ms")
-  /// 请求时间（自动记录）
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
-
+  /// 创建时间
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
   /// 索引优化
   @@index([createdAt])
   @@index([userId])

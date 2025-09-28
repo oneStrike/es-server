@@ -2,13 +2,17 @@ import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
 import { IdDto } from '@/common/dto/id.dto'
-import { QueryRequestLogDto, RequestLogDto, RequestLogPageDto } from './dto/request-log.dto'
-import { RequestLogService } from './request-log.service'
+import {
+  QueryRequestLogDto,
+  RequestLogDto,
+  RequestLogPageDto,
+} from '../../shared/request-log/dto/request-log.dto'
+import { RequestLogService } from '../../shared/request-log/request-log.service'
 
 @ApiTags('请求日志')
 @Controller('/admin/request-log')
 export class RequestLogController {
-  constructor(private readonly requestLogService: RequestLogService) { }
+  constructor(private readonly requestLogService: RequestLogService) {}
 
   @Get('/request-log-page')
   @ApiPageDoc({
@@ -22,7 +26,7 @@ export class RequestLogController {
   @Get('/request-log-detail')
   @ApiDoc({
     summary: '获取请求日志详情',
-    model: RequestLogDto
+    model: RequestLogDto,
   })
   async getRequestLogDetail(@Query() query: IdDto) {
     return this.requestLogService.findRequestLogById(query.id)
