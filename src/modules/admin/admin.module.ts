@@ -5,7 +5,7 @@ import { SharedModule } from '../shared/shared.module'
 import { AdminAuthModule } from './auth/auth.module'
 import { ClientNoticeModule } from './client/notice'
 import { ClientPageConfigModule } from './client/page'
-import { AdminUserModule } from './users/user.module'
+import { AdminUserModule } from './user/user.module'
 import { WorkModule } from './work/work.module'
 
 @Module({

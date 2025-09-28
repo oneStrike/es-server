@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common'
 import { CryptoService } from '@/common/module/jwt/crypto.service'
 import { AdminAuthModule } from '@/modules/admin/auth/auth.module' // 导入 AdminAuthModule
-import { AdminUserController } from '@/modules/admin/users/user.controller'
-import { AdminUserService } from '@/modules/admin/users/user.service'
+import { AdminUserController } from '@/modules/admin/user/user.controller'
+import { AdminUserService } from '@/modules/admin/user/user.service'
 import { SharedModule } from '@/modules/shared/shared.module'
 
 @Module({

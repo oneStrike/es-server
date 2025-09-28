@@ -1,4 +1,4 @@
-  import { Buffer } from 'node:buffer'
+import { Buffer } from 'node:buffer'
 import * as process from 'node:process'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import {
@@ -18,8 +18,8 @@ import { BaseRepositoryService } from '@/global/services/base-repository.service
 
 import { PrismaService } from '@/global/services/prisma.service'
 import { AdminJwtService } from '@/modules/admin/auth/admin-jwt.service'
-import { TokenDto } from '@/modules/admin/users/dto/token.dto'
-import { CacheKey } from '@/modules/admin/users/user.constant'
+import { TokenDto } from '@/modules/admin/user/dto/token.dto'
+import { CacheKey } from '@/modules/admin/user/user.constant'
 import {
   UpdatePasswordDto,
   UpdateUserDto,

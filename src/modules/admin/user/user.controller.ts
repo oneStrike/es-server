@@ -11,7 +11,7 @@ import {
   RefreshTokenDto,
   RefreshTokenResponseDto,
   TokenDto,
-} from '@/modules/admin/users/dto/token.dto'
+} from '@/modules/admin/user/dto/token.dto'
 import {
   LoginResponseDto,
   UpdatePasswordDto,
@@ -20,8 +20,8 @@ import {
   UserLoginDto,
   UserPageDto,
   UserRegisterDto,
-} from '@/modules/admin/users/dto/user.dto'
-import { AdminUserService } from '@/modules/admin/users/user.service'
+} from '@/modules/admin/user/dto/user.dto'
+import { AdminUserService } from '@/modules/admin/user/user.service'
 import { CaptchaDto } from './dto/captcha.dto'
 
 /**
