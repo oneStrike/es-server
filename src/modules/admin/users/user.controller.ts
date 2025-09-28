@@ -4,7 +4,7 @@ import { FastifyRequest } from 'fastify'
 import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
 import { CurrentUser } from '@/common/decorators/current-user.decorator'
 import { Public } from '@/common/decorators/public.decorator'
-import { RequestLog } from '@/common/decorators/request-log.decorator'
+
 import { IdDto } from '@/common/dto/id.dto'
 import { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service'
 import {
@@ -31,7 +31,7 @@ import { CaptchaDto } from './dto/captcha.dto'
 @ApiTags('管理端用户模块')
 @Controller('admin/user')
 export class AdminUserController {
-  constructor(private readonly userService: AdminUserService) { }
+  constructor(private readonly userService: AdminUserService) {}
 
   /**
    * 获取验证码接口
@@ -55,7 +55,6 @@ export class AdminUserController {
     model: LoginResponseDto,
   })
   @Public()
-  @RequestLog({ actionType: '用户管理' })
   async login(@Body() body: UserLoginDto, @Req() req: FastifyRequest) {
     return this.userService.login(body, req)
   }
