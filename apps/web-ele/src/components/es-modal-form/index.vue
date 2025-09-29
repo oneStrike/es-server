@@ -41,6 +41,7 @@ const [Modal, modalApi] = useVbenModal({
           });
         }
         formApi.setValues(sharedData.value.record);
+        formApi.updateSchema(sharedData.value.schema);
       }
     }
   },

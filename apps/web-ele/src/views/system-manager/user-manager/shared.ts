@@ -78,6 +78,7 @@ export const formSchema: EsFormSchema = [
     component: 'Input',
     componentProps: {
       placeholder: '请输入用户名',
+      autocomplete: 'new-password',
     },
     fieldName: 'username',
     label: '用户名',
@@ -101,6 +102,7 @@ export const formSchema: EsFormSchema = [
       placeholder: '请输入密码',
       type: 'password',
       showPassword: true,
+      autocomplete: 'new-password',
     },
     fieldName: 'password',
     label: '密码',
