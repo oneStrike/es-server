@@ -16,13 +16,13 @@ export async function setupMultipart(
   const uploadConfig = app.get(ConfigService).get<UploadConfig>('upload')!
 
   // 注册静态文件服务
-  await fastifyAdapter.register(fastifyStatic, {
+  await fastifyAdapter.register(fastifyStatic as any, {
     root: join(process.cwd(), 'uploads'),
     prefix: '/uploads/',
   })
 
   // 注册multipart插件
-  await fastifyAdapter.register(fastifyMultipart, {
+  await fastifyAdapter.register(fastifyMultipart as any, {
     throwFileSizeLimit: true, // 启用文件大小限制异常抛出
     limits: {
       fieldNameSize: 100, // 字段名称最大长度
