@@ -160,9 +160,10 @@ export const formSchema: EsFormSchema = [
   },
 ];
 
-// 编辑表单
+// 编辑表单 - 明确排除密码相关字段
 export const editFormSchema: EsFormSchema = formSchema.filter(
-  (item) => !item.fieldName.toLowerCase().includes('password'),
+  (item) =>
+    item.fieldName !== 'password' && item.fieldName !== 'confirmPassword',
 );
 
 // 表格列配置

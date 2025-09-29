@@ -169,9 +169,9 @@ onMounted(async () => {
       <div class="h-full lg:col-span-2">
         <div
           v-loading="loading"
-          class="border-border bg-background rounded-lg border p-6 shadow-sm"
+          class="border-border bg-background flex h-full flex-col rounded-lg border p-6 shadow-sm"
         >
-          <div class="mb-6 flex items-center justify-between">
+          <div class="mb-6 flex flex-shrink-0 items-center justify-between">
             <h2 class="text-foreground text-lg font-semibold">个人信息</h2>
             <div class="flex gap-2">
               <el-button type="primary" @click="openEditDialog">
@@ -183,9 +183,9 @@ onMounted(async () => {
             </div>
           </div>
 
-          <div v-if="userInfo">
+          <div v-if="userInfo" class="flex flex-1 flex-col overflow-hidden">
             <!-- 头像区域 -->
-            <div class="mb-4 flex flex-col items-center">
+            <div class="mb-4 flex flex-shrink-0 flex-col items-center">
               <el-avatar :size="120" :src="userInfo.avatar" class="mb-4" />
               <h3 class="text-foreground mb-2 text-xl font-semibold">
                 {{ userInfo.username }}
@@ -193,32 +193,48 @@ onMounted(async () => {
             </div>
 
             <!-- 详细信息区域 -->
-            <el-descriptions :column="1" border>
-              <el-descriptions-item label="用户ID">
-                <span class="text-foreground font-mono">{{ userInfo.id }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="用户名">
-                {{ userInfo.username }}
-              </el-descriptions-item>
-              <el-descriptions-item label="手机号">
-                {{ userInfo.mobile }}
-              </el-descriptions-item>
-              <el-descriptions-item label="角色">
-                <el-tag :type="userInfo.role === 1 ? 'danger' : 'primary'">
-                  {{ formatRole(userInfo.role) }}
-                </el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="账户状态">
-                <el-tag
-                  :type="getStatusColor(userInfo.isEnabled, userInfo.isLocked)"
-                >
-                  {{ formatStatus(userInfo.isEnabled, userInfo.isLocked) }}
-                </el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="创建时间">
-                {{ formatTime(userInfo.createdAt) }}
-              </el-descriptions-item>
-            </el-descriptions>
+            <div class="flex-1 overflow-auto">
+              <el-descriptions :column="1" border>
+                <el-descriptions-item label="用户ID">
+                  <span class="text-foreground font-mono">{{
+                    userInfo.id
+                  }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="用户名">
+                  {{ userInfo.username }}
+                </el-descriptions-item>
+                <el-descriptions-item label="手机号">
+                  {{ userInfo.mobile }}
+                </el-descriptions-item>
+                <el-descriptions-item label="角色">
+                  <el-tag :type="userInfo.role === 1 ? 'danger' : 'primary'">
+                    {{ formatRole(userInfo.role) }}
+                  </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="账户状态">
+                  <el-tag
+                    :type="
+                      getStatusColor(userInfo.isEnabled, userInfo.isLocked)
+                    "
+                  >
+                    {{ formatStatus(userInfo.isEnabled, userInfo.isLocked) }}
+                  </el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="最后登录时间">
+                  {{
+                    userInfo.lastLoginAt
+                      ? formatTime(userInfo.lastLoginAt)
+                      : '-'
+                  }}
+                </el-descriptions-item>
+                <el-descriptions-item label="最后登录IP">
+                  {{ userInfo.lastLoginIp || '-' }}
+                </el-descriptions-item>
+                <el-descriptions-item label="创建时间">
+                  {{ formatTime(userInfo.createdAt) }}
+                </el-descriptions-item>
+              </el-descriptions>
+            </div>
           </div>
         </div>
       </div>
