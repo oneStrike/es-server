@@ -134,11 +134,6 @@ const openPasswordDialog = async () => {
   passwordFormApi.setData({ cols: 1, title: '密码' }).open();
 };
 
-// 刷新登录历史
-const refreshHistory = () => {
-  gridApi.reload();
-};
-
 // 格式化时间
 const formatTime = (time: string) => {
   return new Date(time).toLocaleString('zh-CN');
@@ -219,16 +214,6 @@ onMounted(async () => {
                 >
                   {{ formatStatus(userInfo.isEnabled, userInfo.isLocked) }}
                 </el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="最后登录时间">
-                {{
-                  userInfo.lastLoginAt
-                    ? formatTime(userInfo.lastLoginAt)
-                    : '从未登录'
-                }}
-              </el-descriptions-item>
-              <el-descriptions-item label="最后登录IP">
-                {{ userInfo.lastLoginIp || '未知' }}
               </el-descriptions-item>
               <el-descriptions-item label="创建时间">
                 {{ formatTime(userInfo.createdAt) }}

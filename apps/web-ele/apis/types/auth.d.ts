@@ -3,7 +3,7 @@ export type PublicKeyResponse = RsaPublicKeyDto;
 /**
  *  类型定义 [RsaPublicKeyDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type RsaPublicKeyDto = {
   /** 任意合法数值 */

@@ -162,6 +162,9 @@ export const formSchemaTransform: FormSchemaTransform = {
           item.component = 'Select';
           item.componentProps.mode = 'multiple';
         }
+        if (item.component === 'RadioGroup') {
+          item.component = 'Select';
+        }
         if (item.component === 'DatePicker') {
           item.componentProps.startPlaceholder =
             item.componentProps.startPlaceholder || '开始时间';
@@ -171,7 +174,7 @@ export const formSchemaTransform: FormSchemaTransform = {
         item.label = '';
         item.rules = '';
         item.hideLabel = true;
-
+        delete item.defaultValue;
         filterListWithSort.push({
           ...item,
           originalIndex: i,

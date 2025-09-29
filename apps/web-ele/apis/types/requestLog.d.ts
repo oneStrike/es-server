@@ -1,26 +1,32 @@
 /**
  *  类型定义 [RequestLogPageRequest]
- *  @来源 请求日志
- *  @更新时间 2025-08-23 16:01:23
+ *  @来源 系统请求日志模块
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type RequestLogPageRequest = {
   /** 任意合法数值 */
   [property: string]: any;
 
+  /* 操作类型 */
+  actionType?: string;
+
   /* 接口类型（admin/client/system等） */
-  apiType: string;
+  apiType?: string;
+
+  /* 设备信息解析结果（JSON） */
+  device?: string;
 
   /* 结束时间 */
   endDate?: string;
 
-  /* 结束时间 */
-  endTime?: string;
+  /* IP地址 */
+  ip?: string;
 
   /* 操作是否成功 */
-  isSuccess: boolean;
+  isSuccess?: boolean;
 
   /* 请求方法 */
-  method: string;
+  method?: string;
 
   /* 排序字段，json格式 */
   orderBy?: string;
@@ -32,15 +38,12 @@ export type RequestLogPageRequest = {
   pageSize?: number;
 
   /* 请求路径 */
-  path: string;
+  path?: string;
 
   /* 开始时间 */
   startDate?: string;
 
-  /* 开始时间 */
-  startTime?: string;
-
-  /* 用户id */
+  /* 用户ID */
   userId?: number;
 
   /* 用户名 */
@@ -52,7 +55,7 @@ export type RequestLogPageResponse = {
   [property: string]: any;
 
   /* 列表数据 */
-  list?: RequestLogPageDto[];
+  list?: RequestLogDto[];
 
   /* 当前页码 */
   pageIndex?: number;
@@ -65,98 +68,49 @@ export type RequestLogPageResponse = {
 };
 
 /**
- *  类型定义 [RequestLogDetailRequest]
- *  @来源 请求日志
- *  @更新时间 2025-08-23 16:01:23
- */
-export type RequestLogDetailRequest = {
-  /** 任意合法数值 */
-  [property: string]: any;
-
-  /* 主键id */
-  id: number;
-};
-
-export type RequestLogDetailResponse = RequestLogDto;
-
-/**
- *  类型定义 [RequestLogPageDto]
- *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
- */
-export type RequestLogPageDto = {
-  /** 任意合法数值 */
-  [property: string]: any;
-  /* 操作类型 */
-  actionType?: string;
-  /* 接口类型（admin/client/system等） */
-  apiType: 'ADMIN' | 'CLIENT' | 'SYSTEM';
-  /* 自定义日志内容 */
-  content: string;
-  /* 主键id */
-  id: number;
-  /* 用户ip */
-  ip: string;
-  /* 操作是否成功 */
-  isSuccess: boolean;
-  /* 请求方法 */
-  method: string;
-  /* 请求路径 */
-  path: string;
-  /* 响应时间（毫秒） */
-  responseTimeMs: number;
-  /* 状态码 */
-  statusCode: number;
-  /* 追踪ID */
-  traceId?: string;
-  /* 用户代理 */
-  userAgent?: string;
-  /* 用户id */
-  userId?: number;
-
-  /* 用户名 */
-  username?: string;
-};
-
-/**
  *  类型定义 [RequestLogDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type RequestLogDto = {
   /** 任意合法数值 */
   [property: string]: any;
   /* 操作类型 */
-  actionType?: string;
+  actionType?:
+    | '创建数据'
+    | '删除数据'
+    | '数据导入'
+    | '数据导出'
+    | '文件上传'
+    | '文件下载'
+    | '更新数据'
+    | '用户登出'
+    | '用户登录';
   /* 接口类型（admin/client/system等） */
-  apiType: 'ADMIN' | 'CLIENT' | 'SYSTEM';
+  apiType?: 'admin' | 'client' | 'public' | 'system';
   /* 自定义日志内容 */
   content: string;
   /* 创建时间 */
   createdAt: string;
-  /* 设备信息 */
+  /* 设备信息解析结果（JSON） */
   device?: string;
-  /* 主键id */
+  /* 主键ID */
   id: number;
-  /* 用户ip */
-  ip: string;
+  /* IP地址 */
+  ip?: string;
   /* 操作是否成功 */
   isSuccess: boolean;
   /* 请求方法 */
-  method: string;
+  method: 'DELETE' | 'GET' | 'HEAD' | 'OPTIONS' | 'PATCH' | 'POST' | 'PUT';
   /* 请求参数（JSON格式） */
   params?: string;
   /* 请求路径 */
   path: string;
-  /* 响应时间（毫秒） */
-  responseTimeMs: number;
-  /* 状态码 */
-  statusCode: number;
-  /* 追踪ID */
-  traceId?: string;
-  /* 用户代理 */
+  /* 更新时间 */
+  updatedAt: string;
+  /* 设备信息（User-Agent） */
   userAgent?: string;
-  /* 用户id */
+  /* 用户ID */
   userId?: number;
 
   /* 用户名 */

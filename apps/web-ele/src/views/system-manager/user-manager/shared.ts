@@ -1,68 +1,78 @@
 import type { UserDto } from '#/apis/types/user';
 import type { EsFormSchema } from '#/types';
 
-import { z } from '@vben/common-ui';
+import { z } from '#/adapter/form';
+import { formatUTC, formSchemaTransform } from '#/utils';
 
-import { formSchemaTransform } from '#/utils';
-
-/**
- * 用户角色配置
- */
+// 用户角色配置
 export const userRole = [
   {
     label: '普通管理员',
     value: 0,
-    type: 'info',
+    color: '#1890ff', // 蓝色
   },
   {
     label: '超级管理员',
     value: 1,
-    type: 'warning',
+    color: '#ff4d4f', // 红色
   },
 ];
 
-/**
- * 用户角色对象映射
- */
-export const userRoleObj: Record<number, { label: string; type: string }> = {};
+export const userRoleObj: Record<number, { color: string; label: string }> = {};
 for (const item of userRole) {
   userRoleObj[item.value] = {
     label: item.label,
-    type: item.type,
+    color: item.color,
   };
 }
 
-/**
- * 用户状态配置
- */
+// 用户状态配置
 export const userStatus = [
   {
-    label: '禁用',
-    value: 0,
-    type: 'danger',
+    label: '启用',
+    value: true,
+    color: '#52c41a', // 绿色
   },
   {
-    label: '启用',
-    value: 1,
-    type: 'success',
+    label: '禁用',
+    value: false,
+    color: '#ff4d4f', // 红色
   },
 ];
 
-/**
- * 用户状态对象映射
- */
-export const userStatusObj: Record<number, { label: string; type: string }> =
+export const userStatusObj: Record<string, { color: string; label: string }> =
   {};
 for (const item of userStatus) {
-  userStatusObj[item.value] = {
+  userStatusObj[String(item.value)] = {
     label: item.label,
-    type: item.type,
+    color: item.color,
   };
 }
 
-/**
- * 表单配置
- */
+// 锁定状态配置
+export const lockStatus = [
+  {
+    label: '正常',
+    value: false,
+    color: '#52c41a', // 绿色
+  },
+  {
+    label: '锁定',
+    value: true,
+    color: '#ff4d4f', // 红色
+  },
+];
+
+export const lockStatusObj: Record<string, { color: string; label: string }> =
+  {};
+for (const item of lockStatus) {
+  lockStatusObj[String(item.value)] = {
+    label: item.label,
+    color: item.color,
+  };
+}
+
+// 表单配置
 export const formSchema: EsFormSchema = [
   {
     component: 'Input',
@@ -71,17 +81,19 @@ export const formSchema: EsFormSchema = [
     },
     fieldName: 'username',
     label: '用户名',
-    rules: 'required',
+    rules: z.string().min(1, '用户名不能为空'),
   },
   {
     component: 'Input',
     componentProps: {
       placeholder: '请输入手机号',
-      maxlength: 11,
     },
     fieldName: 'mobile',
     label: '手机号',
-    rules: 'required|phone',
+    rules: z
+      .string()
+      .min(1, '手机号不能为空')
+      .regex(/^1[3-9]\d{9}$/, '请输入正确的手机号格式'),
   },
   {
     component: 'Input',
@@ -92,49 +104,24 @@ export const formSchema: EsFormSchema = [
     },
     fieldName: 'password',
     label: '密码',
-    rules: 'required|min:6',
-    dependencies: {
-      triggerFields: ['id'], // 监听id字段变化
-      if: (values) => !values.id, // 只在新增时显示
-    },
+    rules: z.string().min(6, '密码长度不能少于6位'),
   },
   {
     component: 'Input',
     componentProps: {
-      placeholder: '请再次输入密码',
+      placeholder: '请确认密码',
       type: 'password',
       showPassword: true,
     },
     fieldName: 'confirmPassword',
     label: '确认密码',
-    dependencies: {
-      triggerFields: ['id', 'password'], // 监听id和password字段变化
-      if: (values) => !values.id, // 只在新增时显示
-      rules: (values) => {
-        return z
-          .string()
-          .min(1, { message: '请再次输入密码' })
-          .refine((value) => value === values.password, {
-            message: '两次密码输入不一致',
-          });
-      },
-    },
-  },
-  {
-    component: 'Upload',
-    componentProps: {
-      maxCount: 1,
-      returnDataType: 'url',
-      accept: 'image/*',
-    },
-    fieldName: 'avatar',
-    label: '头像',
+    rules: z.string().min(6, '密码长度不能少于6位'),
   },
   {
     label: '角色',
     fieldName: 'role',
     component: 'Select',
-    rules: 'required',
+    rules: z.number().min(0, '请选择角色'),
     componentProps: {
       placeholder: '请选择角色',
       options: userRole,
@@ -142,10 +129,9 @@ export const formSchema: EsFormSchema = [
     },
   },
   {
-    label: '状态',
+    label: '是否启用',
     fieldName: 'isEnabled',
     component: 'RadioGroup',
-    rules: 'required',
     componentProps: {
       options: [
         {
@@ -158,113 +144,89 @@ export const formSchema: EsFormSchema = [
         },
       ],
     },
+    defaultValue: true,
+  },
+  {
+    component: 'Upload',
+    fieldName: 'avatar',
+    label: '头像',
+    componentProps: {
+      maxCount: 1,
+      returnDataType: 'url',
+      accept: 'image/*',
+    },
   },
 ];
 
-/**
- * 表格列配置
- */
+// 编辑表单
+export const editFormSchema: EsFormSchema = formSchema.filter(
+  (item) => !item.fieldName.toLowerCase().includes('password'),
+);
+
+// 表格列配置
 export const userColumns = formSchemaTransform.toTableColumns<UserDto>(
   formSchema,
   {
     password: {
-      hide: true, // 隐藏密码列
+      hide: true,
     },
     confirmPassword: {
-      hide: true, // 隐藏确认密码列
+      hide: true,
     },
     avatar: {
-      hide: true, // 头像在用户名列中显示
-    },
-    actions: {
-      show: true,
-      width: 150,
+      hide: true,
     },
     username: {
-      slots: { default: 'username' },
-      width: 200,
-      sort: 1,
+      showOverflow: 'tooltip',
     },
-    mobile: {
-      width: 150,
-      sort: 2,
-    },
+    mobile: {},
     role: {
       slots: { default: 'role' },
-      width: 120,
-      sort: 3,
     },
     isEnabled: {
       title: '状态',
       slots: { default: 'isEnabled' },
-      width: 100,
-      sort: 4,
-    },
-    isLocked: {
-      title: '锁定状态',
-      slots: { default: 'isLocked' },
-      width: 120,
-      sort: 5,
-    },
-    lastLoginAt: {
-      title: '最后登录时间',
-      slots: { default: 'lastLoginAt' },
-      width: 180,
-      sort: 6,
-    },
-    lastLoginIp: {
-      title: '最后登录IP',
-      width: 150,
-      sort: 7,
-    },
-    loginFailCount: {
-      title: '登录失败次数',
-      width: 120,
-      sort: 8,
     },
     createdAt: {
       title: '创建时间',
-      width: 180,
-      sort: 9,
+      formatter: ({ cellValue }: any) => formatUTC(cellValue),
+      sortable: true,
+      minWidth: 160,
+      sort: 99,
     },
-    updatedAt: {
-      title: '更新时间',
+    actions: {
+      show: true,
       width: 180,
-      sort: 10,
     },
   },
 );
 
-/**
- * 搜索表单配置
- */
+// 搜索表单配置
 export const userFilter = formSchemaTransform.toSearchSchema(formSchema, {
-  password: {
-    hide: true, // 搜索中隐藏密码字段
-  },
-  confirmPassword: {
-    hide: true, // 搜索中隐藏确认密码字段
-  },
-  avatar: {
-    hide: true, // 搜索中隐藏头像字段
-  },
   username: {
-    sort: 1,
+    sort: 99,
   },
   mobile: {
-    sort: 2,
+    sort: 98,
   },
   role: {
-    sort: 3,
+    sort: 97,
   },
   isEnabled: {
-    sort: 4,
-    component: 'Select',
+    sort: 96,
+  },
+  dateRange: {
+    sort: 95,
+    component: 'DatePicker',
+    fieldName: 'dateRange',
+    label: '创建时间',
     componentProps: {
-      placeholder: '请选择状态',
-      options: userStatus,
-      class: 'w-[280px]',
-      allowClear: true,
+      type: 'datetimerange',
+      startPlaceholder: '开始时间',
+      endPlaceholder: '结束时间',
+      format: 'YYYY-MM-DD HH:mm:ss',
+      valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      clearable: true,
     },
   },
 });

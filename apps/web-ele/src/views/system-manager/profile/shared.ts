@@ -7,12 +7,18 @@ import { formatUTC } from '#/utils';
 export const loginHistortColumn: VxeGridPropTypes.Columns<RequestLogDetailResponse> =
   [
     {
+      title: '序号',
+      type: 'seq',
+      width: 50,
+      fixed: 'left',
+    },
+    {
       field: 'ip',
       title: '登录IP',
       width: 140,
     },
     {
-      field: 'userAgent',
+      field: 'device',
       title: '浏览器',
       minWidth: 200,
       showOverflow: 'tooltip',

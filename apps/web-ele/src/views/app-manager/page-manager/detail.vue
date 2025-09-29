@@ -43,178 +43,153 @@ const pageStatusInfo = computed(() => {
   if (!detail.value) return null;
   return pageStatusObj[detail.value.pageStatus];
 });
+
+// 详情卡片配置
+const detailCards = computed(() => [
+  {
+    title: '基本信息',
+    show: true,
+    fields: [
+      {
+        label: '页面名称',
+        value: detail.value?.pageName,
+        type: 'text',
+      },
+      {
+        label: '页面路径',
+        value: detail.value?.pagePath,
+        type: 'text',
+      },
+      {
+        label: '页面代码',
+        value: detail.value?.pageCode,
+        type: 'text',
+      },
+      {
+        label: '权限级别',
+        value: accessLevelInfo.value?.label,
+        type: 'colored-text',
+        color: accessLevelInfo.value?.color,
+      },
+      {
+        label: '页面状态',
+        value: pageStatusInfo.value?.label,
+        type: 'colored-text',
+        color: pageStatusInfo.value?.color,
+      },
+      {
+        label: '页面描述',
+        value: detail.value?.pageDescription || '-',
+        type: 'text',
+      },
+      {
+        label: '页面标题',
+        value: detail.value?.pageTitle || '-',
+        type: 'text',
+      },
+      {
+        label: '页面关键词',
+        value: detail.value?.pageKeywords || '-',
+        type: 'text',
+      },
+    ],
+  },
+  {
+    title: '时间信息',
+    show: true,
+    fields: [
+      {
+        label: '创建时间',
+        value: detail.value?.createdAt
+          ? formatUTC(detail.value.createdAt, 'YYYY-MM-DD HH:mm:ss')
+          : '-',
+        type: 'text',
+      },
+      {
+        label: '更新时间',
+        value: detail.value?.updatedAt
+          ? formatUTC(detail.value.updatedAt, 'YYYY-MM-DD HH:mm:ss')
+          : '-',
+        type: 'text',
+      },
+    ],
+  },
+  {
+    title: '页面配置',
+    show: !!detail.value?.pageConfig,
+    type: 'json',
+    content: detail.value?.pageConfig,
+  },
+]);
 </script>
 
 <template>
   <Modal title="页面详情" class="!w-[800px]" v-if="detail">
     <div v-loading="loading" class="space-y-6">
-      <!-- 基本信息 -->
-      <el-card shadow="never">
-        <template #header>
-          <div class="flex items-center">
-            <span class="text-lg font-medium">基本信息</span>
-          </div>
-        </template>
+      <!-- 动态渲染卡片 -->
+      <template v-for="card in detailCards" :key="card.title">
+        <el-card v-if="card.show" shadow="never">
+          <template #header>
+            <div class="flex items-center">
+              <span class="text-lg font-medium">{{ card.title }}</span>
+            </div>
+          </template>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div class="space-y-3">
+          <!-- 字段列表类型 -->
+          <div v-if="card.fields" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div
+              v-for="field in card.fields"
+              :key="field.label"
+              class="flex items-center"
+            >
+              <label
+                class="text-sm font-medium text-gray-600 dark:text-gray-300"
+              >
+                {{ field.label }}：
+              </label>
+
+              <!-- 普通文本 -->
+              <p
+                v-if="field.type === 'text'"
+                class="text-sm text-gray-900 dark:text-gray-100"
+              >
+                {{ field.value }}
+              </p>
+
+              <!-- 带颜色的文本 -->
+              <el-text
+                v-else-if="field.type === 'colored-text' && field.value"
+                :style="{ color: 'color' in field ? field.color : undefined }"
+              >
+                {{ field.value }}
+              </el-text>
+            </div>
+          </div>
+
+          <!-- JSON配置类型 -->
+          <div
+            v-else-if="card.type === 'json' && card.content"
+            class="space-y-4"
+          >
             <div>
               <label
                 class="text-sm font-medium text-gray-600 dark:text-gray-300"
               >
-                页面名称
+                配置内容
               </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ detail.pageName }}
-              </p>
-            </div>
-
-            <div>
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-              >
-                页面路径
-              </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ detail.pagePath }}
-              </p>
-            </div>
-
-            <div>
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-              >
-                页面代码
-              </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ detail.pageCode }}
-              </p>
-            </div>
-
-            <div>
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-              >
-                权限级别
-              </label>
-              <p class="mt-1">
-                <el-text
-                  v-if="accessLevelInfo"
-                  :style="{ color: accessLevelInfo.color }"
-                >
-                  {{ accessLevelInfo.label }}
-                </el-text>
-              </p>
+              <div class="mt-2">
+                <el-input
+                  :model-value="JSON.stringify(card.content, null, 2)"
+                  type="textarea"
+                  :rows="10"
+                  readonly
+                  class="font-mono text-xs"
+                />
+              </div>
             </div>
           </div>
-
-          <div class="space-y-3">
-            <div>
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-              >
-                页面状态
-              </label>
-              <p class="mt-1">
-                <el-text
-                  v-if="pageStatusInfo"
-                  :style="{ color: pageStatusInfo.color }"
-                >
-                  {{ pageStatusInfo.label }}
-                </el-text>
-              </p>
-            </div>
-
-            <div>
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-              >
-                页面描述
-              </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ detail.pageDescription || '-' }}
-              </p>
-            </div>
-
-            <div>
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-              >
-                页面标题
-              </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ detail.pageTitle || '-' }}
-              </p>
-            </div>
-
-            <div>
-              <label
-                class="text-sm font-medium text-gray-600 dark:text-gray-300"
-              >
-                页面关键词
-              </label>
-              <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                {{ detail.pageKeywords || '-' }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </el-card>
-
-      <!-- 时间信息 -->
-      <el-card shadow="never">
-        <template #header>
-          <div class="flex items-center">
-            <span class="text-lg font-medium">时间信息</span>
-          </div>
-        </template>
-
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
-              创建时间
-            </label>
-            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-              {{ formatUTC(detail.createdAt, 'YYYY-MM-DD HH:mm:ss') }}
-            </p>
-          </div>
-
-          <div>
-            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
-              更新时间
-            </label>
-            <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-              {{ formatUTC(detail.updatedAt, 'YYYY-MM-DD HH:mm:ss') }}
-            </p>
-          </div>
-        </div>
-      </el-card>
-
-      <!-- 页面配置 -->
-      <el-card v-if="detail.pageConfig" shadow="never">
-        <template #header>
-          <div class="flex items-center">
-            <span class="text-lg font-medium">页面配置</span>
-          </div>
-        </template>
-
-        <div class="space-y-4">
-          <div>
-            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">
-              配置内容
-            </label>
-            <div class="mt-2">
-              <el-input
-                :model-value="JSON.stringify(detail.pageConfig, null, 2)"
-                type="textarea"
-                :rows="10"
-                readonly
-                class="font-mono text-xs"
-              />
-            </div>
-          </div>
-        </div>
-      </el-card>
+        </el-card>
+      </template>
     </div>
   </Modal>
 </template>

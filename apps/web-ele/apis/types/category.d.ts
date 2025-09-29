@@ -1,7 +1,7 @@
 /**
  *  类型定义 [CreateCategoryRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type CreateCategoryRequest = CreateCategoryDto;
 
@@ -10,7 +10,7 @@ export type CreateCategoryResponse = IdDto;
 /**
  *  类型定义 [CategoryPageRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type CategoryPageRequest = {
   /** 任意合法数值 */
@@ -61,7 +61,7 @@ export type CategoryPageResponse = {
 /**
  *  类型定义 [CategoryDetailRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type CategoryDetailRequest = {
   /** 任意合法数值 */
@@ -76,7 +76,7 @@ export type CategoryDetailResponse = BaseCategoryDto;
 /**
  *  类型定义 [UpdateCategoryRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type UpdateCategoryRequest = UpdateCategoryDto;
 
@@ -85,7 +85,7 @@ export type UpdateCategoryResponse = IdDto;
 /**
  *  类型定义 [BatchUpdateCategoryStatusRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type BatchUpdateCategoryStatusRequest = BatchEnabledDto;
 
@@ -96,7 +96,7 @@ export type DeleteBatchResponse = CountDto;
 /**
  *  类型定义 [CategoryOrderRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type CategoryOrderRequest = OrderDto;
 
@@ -105,7 +105,7 @@ export type CategoryOrderResponse = OrderDto;
 /**
  *  类型定义 [CreateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type CreateCategoryDto = {
   /** 任意合法数值 */
@@ -126,7 +126,7 @@ export type CreateCategoryDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -139,7 +139,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type BaseCategoryDto = {
   /** 任意合法数值 */
@@ -178,7 +178,7 @@ export type BaseCategoryDto = {
 /**
  *  类型定义 [UpdateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type UpdateCategoryDto = {
   /** 任意合法数值 */
@@ -205,7 +205,7 @@ export type UpdateCategoryDto = {
 /**
  *  类型定义 [BatchEnabledDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type BatchEnabledDto = {
   /** 任意合法数值 */
@@ -220,7 +220,7 @@ export type BatchEnabledDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type CountDto = {
   /** 任意合法数值 */
@@ -233,7 +233,7 @@ export type CountDto = {
 /**
  *  类型定义 [OrderDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-23 16:01:23
+ *  @更新时间 2025-09-29 10:18:47
  */
 export type OrderDto = {
   /** 任意合法数值 */

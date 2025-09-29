@@ -30,6 +30,9 @@ export function createSearchFormOptions(
   return {
     ...DEFAULT_SEARCH_FORM_OPTIONS,
     ...overrides,
-    schema,
+    schema: schema.map((item) => {
+      item.hideLabel = true;
+      return item;
+    }),
   };
 }
