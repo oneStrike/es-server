@@ -281,7 +281,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
    * 注册管理员用户
    */
   async register(body: UserRegisterDto) {
-    const { username, password, confirmPassword, avatar, role } = body
+    const { username, password, confirmPassword, avatar, role, mobile } = body
     if (password !== confirmPassword) {
       throw new BadRequestException('密码和确认密码不一致')
     }
@@ -306,6 +306,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
         username,
         password: encryptedPassword,
         avatar,
+        mobile,
         role: role || 0,
         isEnabled: true,
       },
