@@ -41,7 +41,6 @@ const [Modal, modalApi] = useVbenModal({
           });
         }
         formApi.setValues(sharedData.value.record);
-        formApi.updateSchema(sharedData.value.schema);
       }
     }
   },
@@ -77,7 +76,6 @@ const [BaseForm, formApi] = useVbenForm({
     } catch {}
     modalApi.unlock();
   },
-  schema: props.schema,
 });
 </script>
 <template>
@@ -88,6 +86,6 @@ const [BaseForm, formApi] = useVbenForm({
     <template #prepend-footer>
       <el-button @click="formApi.resetForm()">重置</el-button>
     </template>
-    <BaseForm />
+    <BaseForm :schema="sharedData.schema" />
   </Modal>
 </template>

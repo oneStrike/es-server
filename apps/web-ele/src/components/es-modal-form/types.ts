@@ -7,7 +7,8 @@ export interface EsModalFormProps {
   title?: string;
   width?: number;
   record?: Record<string, any>;
-  schema: EsFormSchema;
+  // 表单配置项，props和sharedData必须传一个
+  schema?: EsFormSchema;
   bitMaskField?: string[];
   fieldMappingTime?: VbenFormProps['fieldMappingTime'];
   onSubmit?: (values: Record<string, any>) => Promise<void> | void;

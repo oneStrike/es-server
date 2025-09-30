@@ -77,7 +77,13 @@ async function openFormModal(row?: UserDto) {
     const response = await userInfoByIdApi({ id: row.id });
     record = response;
   }
-  formApi.setData({ title: '用户管理', record, schema: editFormSchema }).open();
+  formApi
+    .setData({
+      title: '用户管理',
+      record,
+      schema: row ? editFormSchema : formSchema,
+    })
+    .open();
 }
 
 async function handleSubmit(values: UpdateUserDto | UserRegisterRequest) {
@@ -209,7 +215,7 @@ async function toggleUserStatus(record: UserDto) {
       </template>
     </Grid>
 
-    <Form :schema="formSchema" :on-submit="handleSubmit" />
+    <Form :on-submit="handleSubmit" />
   </Page>
 </template>
 
