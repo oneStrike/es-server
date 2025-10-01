@@ -206,9 +206,9 @@ function ringProps(pct: number, size = 92, stroke = 10) {
 </script>
 
 <template>
-  <Page>
+  <Page auto-content-height>
     <main
-      class="min-h-[calc(100vh-var(--header-height,0px))] space-y-6 bg-white p-4 sm:p-6 lg:p-8 dark:bg-neutral-950"
+      class="h-full space-y-6 rounded-lg bg-white p-4 sm:p-6 lg:p-8 dark:bg-neutral-950"
       aria-label="系统状态页面"
     >
       <!-- 顶部标题区 -->
