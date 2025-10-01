@@ -13,15 +13,15 @@ import type {
   BatchDeleteNoticeRequest,
   BatchDeleteNoticeResponse,
   CreateNoticeDto,
-  ClientPageDto,
   IdDto,
   NoticePageResponseDto,
+  ClientPageDto,
   BaseNoticeDto,
   UpdateNoticeDto,
   UpdateNoticeStatusDto,
   CountDto,
   IdsDto
-} from './types/notice'
+} from './types/notice.d'
 
 
   /**

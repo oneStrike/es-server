@@ -22,7 +22,7 @@ import type {
   BatchEnabledDto,
   CountDto,
   UpdateAuthorFeaturedDto
-} from './types/author'
+} from './types/author.d'
 
 
   /**

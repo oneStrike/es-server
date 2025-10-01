@@ -1,7 +1,7 @@
 /**
  *  类型定义 [CreateNoticeRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type CreateNoticeRequest = CreateNoticeDto
 
@@ -10,7 +10,7 @@ export type CreateNoticeResponse = IdDto
 /**
  *  类型定义 [NoticePageRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type NoticePageRequest = {
   /* 单页大小，最大500，默认15 */
@@ -36,6 +36,15 @@ export type NoticePageRequest = {
 
   /* 优先级 */
   priorityLevel?: number
+
+  /* 发布开始时间 */
+  publishStartTime?: string
+
+  /* 发布结束时间 */
+  publishEndTime?: string
+
+  /* 关联页面代码 */
+  pageCode?: string
 
   /* 是否发布 */
   isPublished?: boolean
@@ -70,7 +79,7 @@ export type NoticePageResponse = {
 /**
  *  类型定义 [NoticeDetailRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type NoticeDetailRequest = {
   /* 主键id */
@@ -85,7 +94,7 @@ export type NoticeDetailResponse = BaseNoticeDto
 /**
  *  类型定义 [UpdateNoticeRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type UpdateNoticeRequest = UpdateNoticeDto
 
@@ -94,7 +103,7 @@ export type UpdateNoticeResponse = IdDto
 /**
  *  类型定义 [BatchUpdateNoticeStatusRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type BatchUpdateNoticeStatusRequest = UpdateNoticeStatusDto
 
@@ -103,7 +112,7 @@ export type BatchUpdateNoticeStatusResponse = CountDto
 /**
  *  类型定义 [BatchDeleteNoticeRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type BatchDeleteNoticeRequest = IdsDto
 
@@ -112,7 +121,7 @@ export type BatchDeleteNoticeResponse = CountDto
 /**
  *  类型定义 [CreateNoticeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type CreateNoticeDto = {
   /* 通知标题 */
@@ -139,25 +148,6 @@ export type CreateNoticeDto = {
   showAsPopup?: boolean
   /* 排序权重（数值越大越靠前） */
   order?: number
-  /* 通知所关联的客户端页面信息 */
-  clientPage: ClientPageDto
-
-  /** 任意合法数值 */
-  [property: string]: any
-}
-
-/**
- *  类型定义 [ClientPageDto]
- *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
- */
-export type ClientPageDto = {
-  /* 页面编码（唯一标识） */
-  pageCode: string
-  /* 页面路径（URL路径） */
-  pagePath: string
-  /* 页面名称 */
-  pageName: string
 
   /** 任意合法数值 */
   [property: string]: any
@@ -166,7 +156,7 @@ export type ClientPageDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type IdDto = {
   /* 主键id */
@@ -179,7 +169,7 @@ export type IdDto = {
 /**
  *  类型定义 [NoticePageResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type NoticePageResponseDto = {
   /* 通知ID */
@@ -222,9 +212,28 @@ export type NoticePageResponseDto = {
 }
 
 /**
+ *  类型定义 [ClientPageDto]
+ *  @来源 components.schemas
+ *  @更新时间 2025-10-01 20:10:50
+ */
+export type ClientPageDto = {
+  /* 主键id */
+  id: number
+  /* 页面编码（唯一标识） */
+  pageCode: string
+  /* 页面路径（URL路径） */
+  pagePath: string
+  /* 页面名称 */
+  pageName: string
+
+  /** 任意合法数值 */
+  [property: string]: any
+}
+
+/**
  *  类型定义 [BaseNoticeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type BaseNoticeDto = {
   /* 通知ID */
@@ -271,17 +280,17 @@ export type BaseNoticeDto = {
 /**
  *  类型定义 [UpdateNoticeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type UpdateNoticeDto = {
   /* 通知标题 */
-  title?: string
+  title: string
   /* 通知内容详情 */
-  content?: string
+  content: string
   /* 通知类型 */
-  noticeType?: 0 | 1 | 2 | 3
+  noticeType: 0 | 1 | 2 | 3
   /* 优先级 */
-  priorityLevel?: 0 | 1 | 2 | 3
+  priorityLevel: 0 | 1 | 2 | 3
   /* 发布开始时间 */
   publishStartTime?: string
   /* 发布结束时间 */
@@ -291,15 +300,13 @@ export type UpdateNoticeDto = {
   /* 通知弹窗背景图片URL */
   popupBackgroundImage?: string
   /* 启用的平台 */
-  enablePlatform?: number
+  enablePlatform: number
   /* 是否置顶 */
   isPinned?: boolean
   /* 是否弹窗显示 */
   showAsPopup?: boolean
   /* 排序权重（数值越大越靠前） */
   order?: number
-  /* 通知所关联的客户端页面信息 */
-  clientPage?: ClientPageDto
   /* 主键id */
   id: number
 
@@ -310,7 +317,7 @@ export type UpdateNoticeDto = {
 /**
  *  类型定义 [UpdateNoticeStatusDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type UpdateNoticeStatusDto = {
   /* 是否发布 */
@@ -325,7 +332,7 @@ export type UpdateNoticeStatusDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type CountDto = {
   /* 操作成功的数据数量 */
@@ -338,7 +345,7 @@ export type CountDto = {
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type IdsDto = {
   /* 主键id */

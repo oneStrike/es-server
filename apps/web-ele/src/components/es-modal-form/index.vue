@@ -51,6 +51,10 @@ const dynamicWrapperClass = computed(() => {
   return `grid-cols-${sharedData.value.cols || 2} gap-x-4`;
 });
 
+const normalizedSchema = computed(
+  () => (sharedData.value.schema || props.schema) as any,
+);
+
 const [BaseForm, formApi] = useVbenForm({
   layout: 'vertical',
   showDefaultActions: false,
@@ -86,6 +90,6 @@ const [BaseForm, formApi] = useVbenForm({
     <template #prepend-footer>
       <el-button @click="formApi.resetForm()">重置</el-button>
     </template>
-    <BaseForm :schema="sharedData.schema" />
+    <BaseForm :schema="normalizedSchema" />
   </Modal>
 </template>

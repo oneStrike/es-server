@@ -2,7 +2,7 @@ import { requestClient } from '#/utils/request'
 import type {
   PublicKeyResponse,
   RsaPublicKeyDto
-} from './types/auth'
+} from './types/auth.d'
 
 
   /**

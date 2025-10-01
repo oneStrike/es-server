@@ -1,7 +1,7 @@
 /**
  *  类型定义 [RequestLogPageRequest]
- *  @来源 管理端请求日志模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @来源 系统请求日志模块
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type RequestLogPageRequest = {
   /* 单页大小，最大500，默认15 */
@@ -19,20 +19,32 @@ export type RequestLogPageRequest = {
   /* 结束时间 */
   endDate?: string
 
-  /* 用户名模糊查询 */
-  username?: string
-
-  /* 用户ID精确查询 */
+  /* 用户ID */
   userId?: number
 
-  /* 响应状态码 */
-  responseCode?: number
+  /* 用户名 */
+  username?: string
+
+  /* 接口类型（admin/client/system等） */
+  apiType?: string
+
+  /* IP地址 */
+  ip?: string
 
   /* 请求方法 */
-  httpMethod?: string
+  method?: string
 
-  /* 请求路径模糊查询 */
-  requestPath?: string
+  /* 请求路径 */
+  path?: string
+
+  /* 操作类型 */
+  actionType?: string
+
+  /* 操作是否成功 */
+  isSuccess?: boolean
+
+  /* 设备信息解析结果（JSON） */
+  device?: string
 
   /** 任意合法数值 */
   [property: string]: any
@@ -56,50 +68,37 @@ export type RequestLogPageResponse = {
 }
 
 /**
- *  类型定义 [RequestLogDetailRequest]
- *  @来源 管理端请求日志模块
- *  @更新时间 2025-08-15 22:51:06
- */
-export type RequestLogDetailRequest = {
-  
-  id: number
-
-  /** 任意合法数值 */
-  [property: string]: any
-}
-
-export type RequestLogDetailResponse = RequestLogDto
-
-/**
  *  类型定义 [RequestLogDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type RequestLogDto = {
   /* 主键ID */
   id: number
+  /* 用户ID */
+  userId?: number
   /* 用户名 */
   username?: string
-  /* 用户主键ID */
-  userId?: number
-  /* 调用IP地址 */
-  ipAddress: string
-  /* IP映射地址 */
-  ipLocation: string
-  /* 响应状态码 */
-  responseCode: number
-  /* 响应描述 */
-  responseMessage: string
+  /* 接口类型（admin/client/system等） */
+  apiType?: 'admin' | 'client' | 'system' | 'public'
+  /* IP地址 */
+  ip?: string
   /* 请求方法 */
-  httpMethod: string
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS'
   /* 请求路径 */
-  requestPath: string
-  /* 接口描述信息 */
-  operationDescription: string
-  /* 浏览器信息标识 */
-  userAgent: string
-  /* 请求参数 */
-  requestParams?: string
+  path: string
+  /* 请求参数（JSON格式） */
+  params?: string
+  /* 操作类型 */
+  actionType?: '用户登录' | '用户登出' | '创建数据' | '更新数据' | '删除数据' | '文件上传' | '文件下载' | '数据导出' | '数据导入'
+  /* 操作是否成功 */
+  isSuccess: boolean
+  /* 设备信息（User-Agent） */
+  userAgent?: string
+  /* 设备信息解析结果（JSON） */
+  device?: string
+  /* 自定义日志内容 */
+  content: string
   /* 创建时间 */
   createdAt: string
   /* 更新时间 */

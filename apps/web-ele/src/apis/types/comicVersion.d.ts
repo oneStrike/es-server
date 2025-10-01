@@ -1,7 +1,7 @@
 /**
  *  类型定义 [CreateComicVersionRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type CreateComicVersionRequest = CreateComicVersionDto
 
@@ -10,7 +10,7 @@ export type CreateComicVersionResponse = IdDto
 /**
  *  类型定义 [ComicVersionPageRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type ComicVersionPageRequest = {
   /* 单页大小，最大500，默认15 */
@@ -73,7 +73,7 @@ export type ComicVersionPageResponse = {
 /**
  *  类型定义 [ComicVersionDetailRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type ComicVersionDetailRequest = {
   /* 主键id */
@@ -88,7 +88,7 @@ export type ComicVersionDetailResponse = ComicVersionDetailResponseDto
 /**
  *  类型定义 [UpdateComicVersionRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type UpdateComicVersionRequest = UpdateComicVersionDto
 
@@ -97,7 +97,7 @@ export type UpdateComicVersionResponse = IdDto
 /**
  *  类型定义 [BatchUpdateVersionPublishStatusRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type BatchUpdateVersionPublishStatusRequest = BatchPublishDto
 
@@ -106,7 +106,7 @@ export type BatchUpdateVersionPublishStatusResponse = CountDto
 /**
  *  类型定义 [BatchUpdateVersionRecommendedStatusRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type BatchUpdateVersionRecommendedStatusRequest = UpdateVersionRecommendedStatusDto
 
@@ -115,7 +115,7 @@ export type BatchUpdateVersionRecommendedStatusResponse = CountDto
 /**
  *  类型定义 [BatchUpdateVersionEnabledStatusRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type BatchUpdateVersionEnabledStatusRequest = UpdateVersionEnabledStatusDto
 
@@ -124,7 +124,7 @@ export type BatchUpdateVersionEnabledStatusResponse = CountDto
 /**
  *  类型定义 [DeleteComicVersionRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type DeleteComicVersionRequest = IdDto
 
@@ -133,7 +133,7 @@ export type DeleteComicVersionResponse = IdDto
 /**
  *  类型定义 [CreateComicVersionDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type CreateComicVersionDto = {
   /* 关联的原始漫画ID */
@@ -170,7 +170,7 @@ export type CreateComicVersionDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type IdDto = {
   /* 主键id */
@@ -183,7 +183,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseComicVersionDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type BaseComicVersionDto = {
   /* 版本ID */
@@ -240,7 +240,7 @@ export type BaseComicVersionDto = {
 /**
  *  类型定义 [ComicVersionDetailResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type ComicVersionDetailResponseDto = {
   /* 版本ID */
@@ -297,7 +297,7 @@ export type ComicVersionDetailResponseDto = {
 /**
  *  类型定义 [UpdateComicVersionDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type UpdateComicVersionDto = {
   /* 版本名称（如：英语版、日语版、XX汉化组等） */
@@ -338,7 +338,7 @@ export type UpdateComicVersionDto = {
 /**
  *  类型定义 [BatchPublishDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type BatchPublishDto = {
   /* 主键id */
@@ -353,7 +353,7 @@ export type BatchPublishDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type CountDto = {
   /* 操作成功的数据数量 */
@@ -366,7 +366,7 @@ export type CountDto = {
 /**
  *  类型定义 [UpdateVersionRecommendedStatusDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type UpdateVersionRecommendedStatusDto = {
   /* 主键id */
@@ -383,7 +383,7 @@ export type UpdateVersionRecommendedStatusDto = {
 /**
  *  类型定义 [UpdateVersionEnabledStatusDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type UpdateVersionEnabledStatusDto = {
   /* 主键id */

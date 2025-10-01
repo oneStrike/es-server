@@ -5,7 +5,7 @@ import type {
   SearchResponse,
   PlatformResponseDto,
   SearchComicItemDto
-} from './types/thirdParty'
+} from './types/thirdParty.d'
 
 
   /**

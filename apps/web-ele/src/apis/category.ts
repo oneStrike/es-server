@@ -10,17 +10,19 @@ import type {
   UpdateCategoryResponse,
   BatchUpdateCategoryStatusRequest,
   BatchUpdateCategoryStatusResponse,
-  DeleteBatchResponse,
   CategoryOrderRequest,
   CategoryOrderResponse,
+  BatchDeleteCategoryRequest,
+  BatchDeleteCategoryResponse,
   CreateCategoryDto,
   IdDto,
   BaseCategoryDto,
   UpdateCategoryDto,
   BatchEnabledDto,
   CountDto,
-  OrderDto
-} from './types/category'
+  OrderDto,
+  IdsDto
+} from './types/category.d'
 
 
   /**
@@ -64,16 +66,16 @@ import type {
 
 
   /**
-   * 批量删除分类
-   */
-  export async function deleteBatchApi(): Promise<DeleteBatchResponse> {
-    return requestClient.post<DeleteBatchResponse>('/api/admin/work/category/delete-batch');
-  }
-
-
-  /**
    * 分类拖拽排序
    */
   export async function categoryOrderApi(params: CategoryOrderRequest): Promise<CategoryOrderResponse> {
     return requestClient.post<CategoryOrderResponse>('/api/admin/work/category/category-order', params);
+  }
+
+
+  /**
+   * 批量删除分类
+   */
+  export async function batchDeleteCategoryApi(params: BatchDeleteCategoryRequest): Promise<BatchDeleteCategoryResponse> {
+    return requestClient.post<BatchDeleteCategoryResponse>('/api/admin/work/category/batch-delete-category', params);
   }

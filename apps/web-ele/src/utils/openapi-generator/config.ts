@@ -46,10 +46,10 @@ export interface OpenAPIGeneratorConfig {
  * 默认配置
  */
 export const defaultConfig: OpenAPIGeneratorConfig = {
-  baseUrl: 'http://127.0.0.1:4523/export/openapi/2?version=3.0',
-  openApiUrl: 'http://127.0.0.1:4523/export/openapi/2?version=3.0',
-  outputDir: './apis',
-  typesOutputDir: './apis/types',
+  baseUrl: 'http://127.0.0.1:4523/export/openapi/3?version=3.0',
+  openApiUrl: 'http://127.0.0.1:4523/export/openapi/3?version=3.0',
+  outputDir: './src/apis',
+  typesOutputDir: './src/apis/types',
   typesDirName: 'types',
   httpHandler: 'requestClient',
   httpHandlerImport: '#/utils/request',

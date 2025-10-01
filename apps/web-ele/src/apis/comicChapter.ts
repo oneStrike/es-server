@@ -44,7 +44,7 @@ import type {
   DeleteChapterContentDto,
   MoveChapterContentDto,
   BatchUpdateChapterContentsDto
-} from './types/comicChapter'
+} from './types/comicChapter.d'
 
 
   /**

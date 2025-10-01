@@ -29,7 +29,7 @@ import type {
   UpdateComicRecommendedDto,
   UpdateComicHotDto,
   UpdateComicNewDto
-} from './types/comic'
+} from './types/comic.d'
 
 
   /**

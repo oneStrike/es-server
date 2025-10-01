@@ -3,7 +3,7 @@ export type PlatformResponse = PlatformResponseDto[]
 /**
  *  类型定义 [SearchRequest]
  *  @来源 第三方漫画平台内容解析
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type SearchRequest = {
   /* 搜索关键词 */
@@ -21,7 +21,7 @@ export type SearchResponse = SearchComicItemDto
 /**
  *  类型定义 [PlatformResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type PlatformResponseDto = {
   /* 平台名称 */
@@ -36,7 +36,7 @@ export type PlatformResponseDto = {
 /**
  *  类型定义 [SearchComicItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-08-15 22:51:06
+ *  @更新时间 2025-10-01 20:10:50
  */
 export type SearchComicItemDto = {
   /* 漫画ID */

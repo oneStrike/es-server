@@ -25,7 +25,7 @@ import type {
   CountDto,
   UpdateVersionRecommendedStatusDto,
   UpdateVersionEnabledStatusDto
-} from './types/comicVersion'
+} from './types/comicVersion.d'
 
 
   /**

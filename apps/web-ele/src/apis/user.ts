@@ -31,7 +31,7 @@ import type {
   RefreshTokenResponseDto,
   UpdatePasswordDto,
   UpdateUserDto
-} from './types/user'
+} from './types/user.d'
 
 
   /**

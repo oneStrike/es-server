@@ -19,7 +19,7 @@ import type {
   UpdateClientPageConfigDto,
   IdsDto,
   CountDto
-} from './types/clientPage'
+} from './types/clientPage.d'
 
 
   /**

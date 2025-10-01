@@ -160,7 +160,9 @@ export const formSchemaTransform: FormSchemaTransform = {
         };
         if (item.component === 'CheckboxGroup') {
           item.component = 'Select';
-          item.componentProps.mode = 'multiple';
+          item.componentProps.multiple = true;
+          item.componentProps.collapseTags = true;
+          item.componentProps.collapseTagsTooltip = true;
         }
         if (item.component === 'RadioGroup') {
           item.component = 'Select';

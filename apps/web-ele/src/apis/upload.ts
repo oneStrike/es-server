@@ -3,7 +3,7 @@ import type {
   UploadFileRequest,
   UploadFileResponse,
   UploadResponseDto
-} from './types/upload'
+} from './types/upload.d'
 
 
   /**
