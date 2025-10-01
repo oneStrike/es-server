@@ -86,7 +86,6 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
 
     return this.findPagination({
       where,
-      ...queryDto,
     })
   }
 
