@@ -15,6 +15,7 @@ import {
   batchUpdateCategoryStatusApi,
   categoryDetailApi,
   categoryPageApi,
+  contentTypePageApi,
   createCategoryApi,
   updateCategoryApi,
 } from '#/apis';
@@ -38,6 +39,8 @@ function handleSuccessReload(gridApi: any, message = '操作成功'): void {
   gridApi.reload();
 }
 
+contentTypePageApi();
+
 /**
  * 统一错误处理机制：
  */
@@ -59,6 +62,14 @@ const gridOptions: VxeGridProps<BaseCategoryDto> = {
   proxyConfig: {
     ajax: {
       query: async ({ page }, formValues) => {
+        if (Array.isArray(formValues.contentTypes)) {
+          formValues.contentTypes = (
+            formValues.contentTypes as number[]
+          ).reduce(
+            (accumulator, currentValue) => accumulator + currentValue,
+            0,
+          );
+        }
         try {
           return await categoryPageApi({
             pageIndex: --page.currentPage,
