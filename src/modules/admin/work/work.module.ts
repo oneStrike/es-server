@@ -8,8 +8,11 @@ import { WorkComicThirdPartyModule } from './comic/third-party/third-party.modul
  * 作品管理主模块
  * 统一管理作品相关的子模块
  */
+import { ContentTypeModule } from './content-type/content-type.module'
+
 @Module({
   imports: [
+    ContentTypeModule,
     WorkAuthorModule,
     WorkCategoryModule,
     ComicModule,

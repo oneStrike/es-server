@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { BatchEnabledDto } from '@/common/dto/batch.dto'
 import { BaseRepositoryService } from '@/global/services/base-repository.service'
 import { PrismaService } from '@/global/services/prisma.service'
-import { CategoryTypesEnum } from './category.constant'
+
 import {
   CreateCategoryDto,
   QueryCategoryDto,
@@ -16,7 +16,6 @@ import {
 @Injectable()
 export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
   protected readonly modelName = 'WorkCategory' as const
-  protected readonly supportsSoftDelete = true // 分类不支持软删除
 
   constructor(protected readonly prisma: PrismaService) {
     super(prisma)
@@ -36,10 +35,14 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       throw new BadRequestException('分类名称已存在')
     }
 
-    // 验证应用类型的有效性
-    if (createCategoryDto.contentTypes) {
-      this.validateContentTypes(createCategoryDto.contentTypes)
+    // 校验内容类型代码（必须为已存在的 WorkContentType.code）
+    if (
+      !createCategoryDto.mediumCodes ||
+      createCategoryDto.mediumCodes.length === 0
+    ) {
+      throw new BadRequestException('请至少选择一个内容类型')
     }
+    await this.validateMediumCodes(createCategoryDto.mediumCodes)
 
     // 如果没有指定排序值，设置为最大值+1
     if (!createCategoryDto.order) {
@@ -47,16 +50,34 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       createCategoryDto.order = maxOrder + 1
     }
 
-    return this.create({
-      data: {
-        ...createCategoryDto,
-        popularity: 0,
-        popularityWeight: 0,
-        novelCount: 0,
-        comicCount: 0,
-        imageSetCount: 0,
-        illustrationCount: 0,
-      },
+    // 事务：创建分类并绑定内容类型
+    return this.prisma.$transaction(async (tx) => {
+      const { mediumCodes, ...payload } = createCategoryDto as any
+      const category = await tx.workCategory.create({
+        data: {
+          ...payload,
+          popularity: 0,
+          popularityWeight: 0,
+        },
+      })
+      const mediums = await tx.workContentType.findMany({
+        where: { code: { in: mediumCodes } },
+        select: { id: true },
+      })
+      if (mediums.length) {
+        await tx.workCategoryContentType.createMany({
+          data: mediums.map((m) => ({
+            categoryId: category.id,
+            contentTypeId: m.id,
+          })),
+          skipDuplicates: true,
+        })
+      }
+      // 返回包含内容类型的详情
+      return tx.workCategory.findUnique({
+        where: { id: category.id },
+        include: { categoryContentTypes: { include: { contentType: true } } },
+      })
     })
   }
 
@@ -66,7 +87,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 分页结果
    */
   async getCategoryPage(queryDto: QueryCategoryDto) {
-    const { name, isEnabled, contentTypes } = queryDto
+    const { name, isEnabled, mediumCodes } = queryDto as any
 
     // 构建查询条件
     const where: any = {}
@@ -79,14 +100,19 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       where.isEnabled = isEnabled
     }
 
-    if (contentTypes !== undefined) {
-      // 使用简单的等值查询
-      where.contentTypes = contentTypes
+    if (Array.isArray(mediumCodes) && mediumCodes.length) {
+      // 按内容类型代码筛选（多对多 some 查询）
+      where.categoryContentTypes = {
+        some: { contentType: { code: { in: mediumCodes } } },
+      }
     }
 
-    return this.findPagination({
+    const data = await this.findPagination({
       where,
+      include: { categoryContentTypes: { include: { contentType: true } } },
     })
+    console.log(data)
+    return data
   }
 
   /**
@@ -95,7 +121,10 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 分类详情
    */
   async getCategoryDetail(id: number) {
-    const category = await this.findById({ id })
+    const category = await this.prisma.workCategory.findUnique({
+      where: { id },
+      include: { categoryContentTypes: { include: { contentType: true } } },
+    })
     if (!category) {
       throw new BadRequestException('分类不存在')
     }
@@ -108,7 +137,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 更新后的分类信息
    */
   async updateCategory(updateCategoryDto: UpdateCategoryDto) {
-    const { id, ...updateData } = updateCategoryDto
+    const { id, ...updateData } = updateCategoryDto as any
 
     // 验证分类是否存在
     const existingCategory = await this.findById({ id })
@@ -126,14 +155,50 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       }
     }
 
-    // 验证应用类型的有效性
-    if (updateData.contentTypes !== undefined) {
-      this.validateContentTypes(updateData.contentTypes)
+    // 如携带内容类型代码则校验
+    if (Array.isArray(updateData.mediumCodes)) {
+      await this.validateMediumCodes(updateData.mediumCodes)
     }
 
-    return this.updateById({
-      id,
-      data: updateData,
+    // 事务：更新基本信息并差异同步内容类型关联
+    return this.prisma.$transaction(async (tx) => {
+      const { mediumCodes, ...rest } = updateData
+      await tx.workCategory.update({ where: { id }, data: rest })
+
+      if (Array.isArray(mediumCodes)) {
+        const target = await tx.workContentType.findMany({
+          where: { code: { in: mediumCodes } },
+          select: { id: true },
+        })
+        const targetIds = new Set(target.map((t) => t.id))
+        const current = await tx.workCategoryContentType.findMany({
+          where: { categoryId: id },
+          select: { contentTypeId: true },
+        })
+        const currentIds = new Set(current.map((c) => c.contentTypeId))
+        const toDelete = [...currentIds].filter((mid) => !targetIds.has(mid))
+        const toCreate = [...targetIds].filter((mid) => !currentIds.has(mid))
+
+        if (toDelete.length) {
+          await tx.workCategoryContentType.deleteMany({
+            where: { categoryId: id, contentTypeId: { in: toDelete } },
+          })
+        }
+        if (toCreate.length) {
+          await tx.workCategoryContentType.createMany({
+            data: toCreate.map((mid) => ({
+              categoryId: id,
+              contentTypeId: mid,
+            })),
+            skipDuplicates: true,
+          })
+        }
+      }
+
+      return tx.workCategory.findUnique({
+        where: { id },
+        include: { categoryContentTypes: { include: { contentType: true } } },
+      })
     })
   }
 
@@ -160,18 +225,16 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
   }
 
   /**
-   * 验证应用类型
+   * 校验内容类型代码均存在
    */
-  private validateContentTypes(contentTypes: number): boolean {
-    const validTypes = [
-      CategoryTypesEnum.PHOTO,
-      CategoryTypesEnum.NOVEL,
-      CategoryTypesEnum.COMIC,
-      CategoryTypesEnum.ILLUSTRATOR,
-    ]
-
-    // 检查是否为有效的枚举值
-    return validTypes.includes(contentTypes)
+  private async validateMediumCodes(codes: string[]) {
+    const unique = Array.from(new Set(codes))
+    const count = await this.prisma.workContentType.count({
+      where: { code: { in: unique }, isEnabled: true },
+    })
+    if (count !== unique.length) {
+      throw new BadRequestException('存在无效或已禁用的内容类型代码')
+    }
   }
 
   /**

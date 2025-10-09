@@ -11,32 +11,44 @@ model WorkCategory {
   popularityWeight  Int       @default(0) @map("popularity_weight") @db.Integer
   /// 排序值（数值越小越靠前）
   order             Int       @default(0) @db.SmallInt
-  /// 小说数量
-  novelCount        Int       @default(0) @map("novel_count") @db.Integer
-  /// 漫画数量
-  comicCount        Int       @default(0) @map("comic_count") @db.Integer
-  /// 图集数量
-  imageSetCount     Int       @default(0) @map("image_set_count") @db.Integer
-  /// 插画作品数量
-  illustrationCount Int       @default(0) @map("illustration_count") @db.Integer
   /// 是否启用
   isEnabled         Boolean   @default(true) @map("is_enabled")
-  /// 内容适用类型（bitmask：1=漫画, 2=小说, 4=插画, 8=图集）
-  contentTypes      Int       @default(0) @map("content_types") @db.SmallInt
+  // 内容类型多对多关联
+  categoryContentTypes   WorkCategoryContentType[]
   /// 创建时间
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
   /// 更新时间
   updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-  /// 软删除时间
-  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz
 
   // 关联关系 - 多对多关系通过中间表
   categoryComics WorkComicCategory[]
 
   /// 索引优化
-  @@index([contentTypes, isEnabled]) // 更高效过滤组合条件
+
   @@index([order])
-  @@index([novelCount, comicCount]) // 支持内容量筛选
   @@index([name]) // 支持快速查找分类名
   @@map("work_category")
+}
+
+
+
+model WorkCategoryContentType {
+  /// 分类ID
+  categoryId Int @map("category_id")
+  /// 内容类型ID
+  contentTypeId   Int @map("content_type_id")
+
+  // 关联
+  category    WorkCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  contentType WorkContentType @relation(fields: [contentTypeId], references: [id], onDelete: Restrict)
+  /// 创建时间
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  // 复合主键与索引
+  @@id([categoryId, contentTypeId])
+  @@index([contentTypeId])
+
+  @@map("work_category_content_type")
 }

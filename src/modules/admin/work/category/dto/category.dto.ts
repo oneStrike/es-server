@@ -5,6 +5,7 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
+  ValidateArray,
   ValidateBoolean,
   ValidateNumber,
   ValidateString,
@@ -65,38 +66,6 @@ export class BaseCategoryDto {
   })
   order!: number
 
-  @ValidateNumber({
-    description: '小说数量',
-    example: 100,
-    required: false,
-    min: 0,
-  })
-  novelCount!: number
-
-  @ValidateNumber({
-    description: '漫画数量',
-    example: 50,
-    required: false,
-    min: 0,
-  })
-  comicCount!: number
-
-  @ValidateNumber({
-    description: '图片数量',
-    example: 200,
-    required: false,
-    min: 0,
-  })
-  imageSetCount!: number
-
-  @ValidateNumber({
-    description: '插画数量',
-    example: 80,
-    required: false,
-    min: 0,
-  })
-  illustrationCount!: number
-
   @ValidateBoolean({
     description: '是否启用',
     example: true,
@@ -104,14 +73,13 @@ export class BaseCategoryDto {
   })
   isEnabled!: boolean
 
-  @ValidateNumber({
-    description: '应用类型',
-    example: 2,
+  @ValidateArray({
+    description: '作品媒介代码数组（如：COMIC/NOVEL/ILLUSTRATION/ALBUM）',
+    example: ['COMIC', 'NOVEL'],
     required: true,
-    min: 1,
-    max: 32767,
+    itemType: 'string',
   })
-  contentTypes!: number
+  mediumCodes?: string[]
 
   @ValidateString({
     description: '创建时间',
@@ -135,29 +103,24 @@ export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
   'id',
   'createdAt',
   'updatedAt',
-  'novelCount',
-  'comicCount',
-  'imageSetCount',
-  'illustrationCount',
   'popularity',
   'popularityWeight',
-]) {}
+]) {
+  // 创建时要求明确指定媒介代码集合
+  @ValidateArray({
+    description: '作品媒介代码数组（必填）',
+    example: ['COMIC', 'NOVEL'],
+    required: true,
+    itemType: 'string',
+  })
+  mediumCodes!: string[]
+}
 
 /**
  * 更新分类 DTO
  */
 export class UpdateCategoryDto extends IntersectionType(
-  PartialType(
-    OmitType(BaseCategoryDto, [
-      'id',
-      'createdAt',
-      'updatedAt',
-      'novelCount',
-      'comicCount',
-      'imageSetCount',
-      'illustrationCount',
-    ]),
-  ),
+  PartialType(OmitType(BaseCategoryDto, ['id', 'createdAt', 'updatedAt'])),
   IdDto,
 ) {}
 
@@ -166,5 +129,5 @@ export class UpdateCategoryDto extends IntersectionType(
  */
 export class QueryCategoryDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BaseCategoryDto), ['name', 'isEnabled', 'contentTypes']),
+  PickType(PartialType(BaseCategoryDto), ['name', 'isEnabled', 'mediumCodes']),
 ) {}
