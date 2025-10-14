@@ -77,8 +77,8 @@ export function mapSchemaToType(schema: any, depth: number = 0): string {
     }
     case 'object': {
       if (schema.properties) {
-        // 避免过深的嵌套，超过3层使用通用类型
-        if (depth > 3) {
+        // 避免过深的嵌套，超过8层使用通用类型
+        if (depth > 8) {
           return 'Record<string, any>';
         }
 

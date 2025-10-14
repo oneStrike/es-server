@@ -1,7 +1,7 @@
 /**
  *  类型定义 [CreateCategoryRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type CreateCategoryRequest = CreateCategoryDto;
 
@@ -10,7 +10,7 @@ export type CreateCategoryResponse = IdDto;
 /**
  *  类型定义 [CategoryPageRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type CategoryPageRequest = {
   /* 单页大小，最大500，默认15 */
@@ -34,9 +34,6 @@ export type CategoryPageRequest = {
   /* 是否启用 */
   isEnabled?: boolean;
 
-  /* 作品媒介代码数组（如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
-  mediumCodes?: any[];
-
   /** 任意合法数值 */
   [property: string]: any;
 };
@@ -52,7 +49,7 @@ export type CategoryPageResponse = {
   total?: number;
 
   /* 列表数据 */
-  list?: BaseCategoryDto[];
+  list?: CategoryPageDto[];
 
   /** 任意合法数值 */
   [property: string]: any;
@@ -61,7 +58,7 @@ export type CategoryPageResponse = {
 /**
  *  类型定义 [CategoryDetailRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type CategoryDetailRequest = {
   /* 主键id */
@@ -76,7 +73,7 @@ export type CategoryDetailResponse = BaseCategoryDto;
 /**
  *  类型定义 [UpdateCategoryRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type UpdateCategoryRequest = UpdateCategoryDto;
 
@@ -85,7 +82,7 @@ export type UpdateCategoryResponse = IdDto;
 /**
  *  类型定义 [BatchUpdateCategoryStatusRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type BatchUpdateCategoryStatusRequest = BatchEnabledDto;
 
@@ -94,7 +91,7 @@ export type BatchUpdateCategoryStatusResponse = CountDto;
 /**
  *  类型定义 [CategoryOrderRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type CategoryOrderRequest = OrderDto;
 
@@ -103,7 +100,7 @@ export type CategoryOrderResponse = OrderDto;
 /**
  *  类型定义 [BatchDeleteCategoryRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type BatchDeleteCategoryRequest = IdsDto;
 
@@ -112,7 +109,7 @@ export type BatchDeleteCategoryResponse = CountDto;
 /**
  *  类型定义 [CreateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type CreateCategoryDto = {
   /* 分类名称 */
@@ -124,7 +121,7 @@ export type CreateCategoryDto = {
   /* 是否启用 */
   isEnabled?: boolean;
   /* 作品媒介代码数组（必填） */
-  mediumCodes: string[];
+  contentType: string[];
 
   /** 任意合法数值 */
   [property: string]: any;
@@ -133,7 +130,7 @@ export type CreateCategoryDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type IdDto = {
   /* 主键id */
@@ -144,9 +141,80 @@ export type IdDto = {
 };
 
 /**
+ *  类型定义 [CategoryPageDto]
+ *  @来源 components.schemas
+ *  @更新时间 2025-10-14 22:47:58
+ */
+export type CategoryPageDto = {
+  /* 分类ID */
+  id: number;
+  /* 分类名称 */
+  name: string;
+  /* 分类图标URL */
+  icon?: string;
+  /* 人气值 */
+  popularity?: number;
+  /* 辅助人气值 */
+  popularityWeight?: number;
+  /* 排序值 */
+  order?: number;
+  /* 是否启用 */
+  isEnabled?: boolean;
+  /* 创建时间 */
+  createdAt?: string;
+  /* 更新时间 */
+  updatedAt?: string;
+  /* 分类包含的媒介类型项数组 */
+  categoryContentTypes: CategoryContentTypeItemDto[];
+
+  /** 任意合法数值 */
+  [property: string]: any;
+};
+
+/**
+ *  类型定义 [CategoryContentTypeItemDto]
+ *  @来源 components.schemas
+ *  @更新时间 2025-10-14 22:47:58
+ */
+export type CategoryContentTypeItemDto = {
+  /* 分类ID */
+  categoryId: number;
+  /* 媒介类型ID */
+  contentTypeId: number;
+  /* 媒介类型对象 */
+  contentType: BaseContentTypeDto;
+
+  /** 任意合法数值 */
+  [property: string]: any;
+};
+
+/**
+ *  类型定义 [BaseContentTypeDto]
+ *  @来源 components.schemas
+ *  @更新时间 2025-10-14 22:47:58
+ */
+export type BaseContentTypeDto = {
+  /* ID */
+  id: number;
+  /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
+  code: string;
+  /* 显示名称 */
+  name: string;
+  /* 是否启用 */
+  isEnabled?: boolean;
+  /* 创建时间 */
+  createdAt?: string;
+  /* 更新时间 */
+  updatedAt?: string;
+
+  /** 任意合法数值 */
+  [property: string]: any;
+};
+
+/**
  *  类型定义 [BaseCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type BaseCategoryDto = {
   /* 分类ID */
@@ -163,8 +231,6 @@ export type BaseCategoryDto = {
   order?: number;
   /* 是否启用 */
   isEnabled?: boolean;
-  /* 作品媒介代码数组（如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
-  mediumCodes: string[];
   /* 创建时间 */
   createdAt?: string;
   /* 更新时间 */
@@ -177,7 +243,7 @@ export type BaseCategoryDto = {
 /**
  *  类型定义 [UpdateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type UpdateCategoryDto = {
   /* 分类名称 */
@@ -192,8 +258,6 @@ export type UpdateCategoryDto = {
   order?: number;
   /* 是否启用 */
   isEnabled?: boolean;
-  /* 作品媒介代码数组（如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
-  mediumCodes?: string[];
   /* 主键id */
   id: number;
 
@@ -204,7 +268,7 @@ export type UpdateCategoryDto = {
 /**
  *  类型定义 [BatchEnabledDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type BatchEnabledDto = {
   /* 主键id */
@@ -219,7 +283,7 @@ export type BatchEnabledDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type CountDto = {
   /* 操作成功的数据数量 */
@@ -232,7 +296,7 @@ export type CountDto = {
 /**
  *  类型定义 [OrderDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type OrderDto = {
   /* 拖拽的目标id */
@@ -247,7 +311,7 @@ export type OrderDto = {
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:09:57
+ *  @更新时间 2025-10-14 22:47:58
  */
 export type IdsDto = {
   /* 主键id */

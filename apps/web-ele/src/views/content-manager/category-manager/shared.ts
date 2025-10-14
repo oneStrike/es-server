@@ -1,4 +1,4 @@
-import type { BaseCategoryDto } from '#/apis/types/category';
+import type { CategoryPageDto } from '#/apis/types/category';
 import type { EsFormSchema } from '#/types';
 
 import { formSchemaTransform } from '#/utils';
@@ -88,7 +88,7 @@ export const formSchema: EsFormSchema = [
  * 与数据字典模块一致，统一使用 formSchemaTransform.toTableColumns。
  */
 export const categoryColumns =
-  formSchemaTransform.toTableColumns<BaseCategoryDto>(formSchema, {
+  formSchemaTransform.toTableColumns<CategoryPageDto>(formSchema, {
     actions: {
       show: true,
     },

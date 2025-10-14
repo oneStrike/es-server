@@ -3,6 +3,7 @@ import type { VxeGridProps } from '@vben/plugins/vxe-table';
 
 import type {
   BaseCategoryDto,
+  CategoryPageDto,
   CreateCategoryDto,
   UpdateCategoryDto,
 } from '#/apis/types/category';
@@ -19,16 +20,10 @@ import {
   updateCategoryApi,
 } from '#/apis';
 import EsModalForm from '#/components/es-modal-form/index.vue';
-import { useBitMask } from '#/hooks/useBitmask';
 import { useMessage } from '#/hooks/useFeedback';
 import { createSearchFormOptions } from '#/utils';
 
-import {
-  categoryColumns,
-  categorySearchSchema,
-  contentType,
-  formSchema,
-} from './shared';
+import { categoryColumns, categorySearchSchema, formSchema } from './shared';
 
 /**
  * 通用的成功处理：提示 + 刷新（遵循DRY原则封装重复逻辑）
@@ -53,7 +48,7 @@ function handleError(e: unknown, fallbackMsg = '操作失败，请稍后重试')
 /**
  * VxeGrid 的选项配置：
  */
-const gridOptions: VxeGridProps<BaseCategoryDto> = {
+const gridOptions: VxeGridProps<CategoryPageDto> = {
   columns: categoryColumns,
   height: 'auto',
   proxyConfig: {
@@ -106,7 +101,7 @@ const [Form, formApi] = useVbenModal({
 /**
  * 打开表单弹窗
  */
-async function openFormModal(row?: BaseCategoryDto): Promise<void> {
+async function openFormModal(row?: CategoryPageDto): Promise<void> {
   try {
     let record: BaseCategoryDto | undefined;
     if (row) {
@@ -129,7 +124,7 @@ async function openFormModal(row?: BaseCategoryDto): Promise<void> {
 /**
  * 切换启用状态
  */
-async function toggleEnableStatus(row: BaseCategoryDto): Promise<void> {
+async function toggleEnableStatus(row: CategoryPageDto): Promise<void> {
   row.loading = true as any;
   try {
     await batchUpdateCategoryStatusApi({
@@ -165,7 +160,7 @@ async function addOrUpdateCategory(values: CategoryFormValues): Promise<void> {
 /**
  * 删除分类
  */
-async function deleteCategory(row: BaseCategoryDto): Promise<void> {
+async function deleteCategory(row: CategoryPageDto): Promise<void> {
   try {
     await batchDeleteCategoryApi({
       ids: [row.id],
@@ -198,7 +193,11 @@ async function deleteCategory(row: BaseCategoryDto): Promise<void> {
 
       <template #contentTypes="{ row }">
         <el-text>
-          {{ useBitMask.getLabels(row.contentTypes, contentType).join('、') }}
+          {{
+            row.categoryContentTypes
+              .map((item) => item.contentType.name)
+              .join('、')
+          }}
         </el-text>
       </template>
 
