@@ -16,6 +16,7 @@ import {
   batchUpdateCategoryStatusApi,
   categoryDetailApi,
   categoryPageApi,
+  contentTypeListApi,
   createCategoryApi,
   updateCategoryApi,
 } from '#/apis';
@@ -32,6 +33,21 @@ function handleSuccessReload(gridApi: any, message = '操作成功'): void {
   useMessage.success(message);
   gridApi.reload();
 }
+
+const contentType = {
+  arr: [],
+  obj: {},
+};
+
+contentTypeListApi().then((res) => {
+  res.forEach((item) => {
+    contentType.arr.push({
+      label: item.name,
+      value: item.id,
+    });
+    contentType.obj[item.id] = item.name;
+  });
+});
 
 /**
  * 统一错误处理机制：

@@ -1,7 +1,7 @@
 /**
  *  类型定义 [DictionaryPageRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type DictionaryPageRequest = {
   /* 单页大小，最大500，默认15 */
@@ -52,7 +52,7 @@ export type DictionaryPageResponse = {
 /**
  *  类型定义 [DictionaryDetailRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type DictionaryDetailRequest = {
   /* 主键id */
@@ -67,7 +67,7 @@ export type DictionaryDetailResponse = DictionaryDto;
 /**
  *  类型定义 [CreateDictionaryRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type CreateDictionaryRequest = CreateDictionaryDto;
 
@@ -76,7 +76,7 @@ export type CreateDictionaryResponse = IdDto;
 /**
  *  类型定义 [UpdateDictionaryRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type UpdateDictionaryRequest = UpdateDictionaryDto;
 
@@ -85,7 +85,7 @@ export type UpdateDictionaryResponse = IdDto;
 /**
  *  类型定义 [DeleteDictionaryRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type DeleteDictionaryRequest = IdsDto;
 
@@ -94,7 +94,7 @@ export type DeleteDictionaryResponse = IdsDto;
 /**
  *  类型定义 [BatchUpdateDictionaryStatusRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type BatchUpdateDictionaryStatusRequest = BatchEnabledDto;
 
@@ -103,7 +103,7 @@ export type BatchUpdateDictionaryStatusResponse = CountDto;
 /**
  *  类型定义 [DictionaryItemsRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type DictionaryItemsRequest = {
   /* 字典编码 */
@@ -127,7 +127,7 @@ export type DictionaryItemsResponse = DictionaryItemDto[];
 /**
  *  类型定义 [CreateDictionaryItemRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type CreateDictionaryItemRequest = CreateDictionaryItemDto;
 
@@ -136,7 +136,7 @@ export type CreateDictionaryItemResponse = IdDto;
 /**
  *  类型定义 [UpdateDictionaryItemRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type UpdateDictionaryItemRequest = UpdateDictionaryItemDto;
 
@@ -145,7 +145,7 @@ export type UpdateDictionaryItemResponse = IdDto;
 /**
  *  类型定义 [DeleteDictionaryItemRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type DeleteDictionaryItemRequest = IdsDto;
 
@@ -154,7 +154,7 @@ export type DeleteDictionaryItemResponse = CountDto;
 /**
  *  类型定义 [UpdateDictionaryItemStatusRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type UpdateDictionaryItemStatusRequest = BatchEnabledDto;
 
@@ -163,7 +163,7 @@ export type UpdateDictionaryItemStatusResponse = CountDto;
 /**
  *  类型定义 [DictionaryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type DictionaryDto = {
   /* 字典ID */
@@ -190,7 +190,7 @@ export type DictionaryDto = {
 /**
  *  类型定义 [CreateDictionaryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type CreateDictionaryDto = {
   /* 字典名称 */
@@ -211,7 +211,7 @@ export type CreateDictionaryDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type IdDto = {
   /* 主键id */
@@ -224,7 +224,7 @@ export type IdDto = {
 /**
  *  类型定义 [UpdateDictionaryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type UpdateDictionaryDto = {
   /* 主键id */
@@ -247,7 +247,7 @@ export type UpdateDictionaryDto = {
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type IdsDto = {
   /* 主键id */
@@ -260,7 +260,7 @@ export type IdsDto = {
 /**
  *  类型定义 [BatchEnabledDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type BatchEnabledDto = {
   /* 主键id */
@@ -275,7 +275,7 @@ export type BatchEnabledDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type CountDto = {
   /* 操作成功的数据数量 */
@@ -288,7 +288,7 @@ export type CountDto = {
 /**
  *  类型定义 [DictionaryItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type DictionaryItemDto = {
   /* 字典项ID */
@@ -319,7 +319,7 @@ export type DictionaryItemDto = {
 /**
  *  类型定义 [CreateDictionaryItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type CreateDictionaryItemDto = {
   /* 字典编码 */
@@ -344,7 +344,7 @@ export type CreateDictionaryItemDto = {
 /**
  *  类型定义 [UpdateDictionaryItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 22:47:58
+ *  @更新时间 2025-10-14 23:15:29
  */
 export type UpdateDictionaryItemDto = {
   /* 字典编码 */
