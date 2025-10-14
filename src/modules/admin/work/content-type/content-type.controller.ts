@@ -29,12 +29,12 @@ export class ContentTypeController {
   }
 
   /**
-   * 分页
+   * 列表
    */
-  @Get('/content-type-page')
-  @ApiPageDoc({ summary: '内容类型分页', model: BaseContentTypeDto })
+  @Get('/content-type-list')
+  @ApiPageDoc({ summary: '内容类型列表', model: BaseContentTypeDto })
   async getPage(@Query() query?: QueryContentTypeDto) {
-    return this.contentTypeService.getContentTypePage(query)
+    return this.contentTypeService.getContentTypeList(query)
   }
 
   /**

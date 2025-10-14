@@ -1,4 +1,5 @@
 import {
+  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -12,6 +13,7 @@ import {
 } from '@/common/decorators/validate.decorator'
 import { IdDto } from '@/common/dto/id.dto'
 import { PageDto } from '@/common/dto/page.dto'
+import { BaseContentTypeDto } from '../../content-type/dto/content-type.dto'
 
 /**
  * 分类基础 DTO
@@ -73,14 +75,6 @@ export class BaseCategoryDto {
   })
   isEnabled!: boolean
 
-  @ValidateArray({
-    description: '作品媒介代码数组（如：COMIC/NOVEL/ILLUSTRATION/ALBUM）',
-    example: ['COMIC', 'NOVEL'],
-    required: true,
-    itemType: 'string',
-  })
-  mediumCodes?: string[]
-
   @ValidateString({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
@@ -94,6 +88,65 @@ export class BaseCategoryDto {
     required: false,
   })
   updatedAt!: string
+}
+
+/**
+ * 分类-内容类型 关系项 DTO
+ */
+export class CategoryContentTypeItemDto {
+  @ValidateNumber({
+    description: '分类ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  categoryId!: number
+
+  @ValidateNumber({
+    description: '内容类型ID',
+    example: 2,
+    required: true,
+    min: 1,
+  })
+  contentTypeId!: number
+
+  @ApiProperty({
+    description: '内容类型对象',
+    type: () => BaseContentTypeDto,
+    required: true,
+    example: { id: 2, code: 'COMIC', name: '漫画' },
+  })
+  contentType!: BaseContentTypeDto
+}
+
+/**
+ * 分类分页 DTO
+ */
+
+export class CategoryPageDto extends BaseCategoryDto {
+  @ApiProperty({
+    description: '分类包含的内容类型项数组',
+    type: () => [CategoryContentTypeItemDto],
+    required: true,
+    example: [
+      {
+        categoryId: 1,
+        contentTypeId: 2,
+        contentType: { id: 2, code: 'COMIC', name: '漫画' },
+      },
+      {
+        categoryId: 1,
+        contentTypeId: 3,
+        contentType: { id: 3, code: 'NOVEL', name: '小说' },
+      },
+    ],
+  })
+  @ValidateArray({
+    description: '分类包含的内容类型项数组',
+    required: true,
+    itemType: 'object',
+  })
+  categoryContentTypes!: CategoryContentTypeItemDto[]
 }
 
 /**
@@ -113,7 +166,7 @@ export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
     required: true,
     itemType: 'string',
   })
-  mediumCodes!: string[]
+  contentType!: string[]
 }
 
 /**
@@ -129,5 +182,5 @@ export class UpdateCategoryDto extends IntersectionType(
  */
 export class QueryCategoryDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BaseCategoryDto), ['name', 'isEnabled', 'mediumCodes']),
+  PickType(PartialType(BaseCategoryDto), ['name', 'isEnabled', 'contentType']),
 ) {}

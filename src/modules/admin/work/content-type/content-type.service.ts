@@ -33,9 +33,9 @@ export class ContentTypeService extends BaseRepositoryService<'WorkContentType'>
   }
 
   /**
-   * 分页查询
+   * 列表查询
    */
-  async getContentTypePage(query?: QueryContentTypeDto) {
+  async getContentTypeList(query?: QueryContentTypeDto) {
     const { code, name, isEnabled } = query as any
     const where: any = {}
     if (code) {
@@ -47,7 +47,7 @@ export class ContentTypeService extends BaseRepositoryService<'WorkContentType'>
     if (isEnabled !== undefined) {
       where.isEnabled = isEnabled
     }
-    return this.findPagination({ where, orderBy: { id: 'desc' } })
+    return this.findMany({ where, orderBy: { id: 'desc' } })
   }
 
   /**

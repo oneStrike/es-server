@@ -37,12 +37,12 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
 
     // 校验内容类型代码（必须为已存在的 WorkContentType.code）
     if (
-      !createCategoryDto.mediumCodes ||
-      createCategoryDto.mediumCodes.length === 0
+      !createCategoryDto.contentType ||
+      createCategoryDto.contentType.length === 0
     ) {
       throw new BadRequestException('请至少选择一个内容类型')
     }
-    await this.validateMediumCodes(createCategoryDto.mediumCodes)
+    await this.validateMediumCodes(createCategoryDto.contentType)
 
     // 如果没有指定排序值，设置为最大值+1
     if (!createCategoryDto.order) {
@@ -52,7 +52,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
 
     // 事务：创建分类并绑定内容类型
     return this.prisma.$transaction(async (tx) => {
-      const { mediumCodes, ...payload } = createCategoryDto as any
+      const { contentType, ...payload } = createCategoryDto as any
       const category = await tx.workCategory.create({
         data: {
           ...payload,
@@ -61,7 +61,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
         },
       })
       const mediums = await tx.workContentType.findMany({
-        where: { code: { in: mediumCodes } },
+        where: { code: { in: contentType } },
         select: { id: true },
       })
       if (mediums.length) {
@@ -87,7 +87,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 分页结果
    */
   async getCategoryPage(queryDto: QueryCategoryDto) {
-    const { name, isEnabled, mediumCodes } = queryDto as any
+    const { name, isEnabled, contentType } = queryDto as any
 
     // 构建查询条件
     const where: any = {}
@@ -100,10 +100,10 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       where.isEnabled = isEnabled
     }
 
-    if (Array.isArray(mediumCodes) && mediumCodes.length) {
+    if (Array.isArray(contentType) && contentType.length) {
       // 按内容类型代码筛选（多对多 some 查询）
       where.categoryContentTypes = {
-        some: { contentType: { code: { in: mediumCodes } } },
+        some: { contentType: { code: { in: contentType } } },
       }
     }
 
@@ -156,18 +156,18 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
     }
 
     // 如携带内容类型代码则校验
-    if (Array.isArray(updateData.mediumCodes)) {
-      await this.validateMediumCodes(updateData.mediumCodes)
+    if (Array.isArray(updateData.contentType)) {
+      await this.validateMediumCodes(updateData.contentType)
     }
 
     // 事务：更新基本信息并差异同步内容类型关联
     return this.prisma.$transaction(async (tx) => {
-      const { mediumCodes, ...rest } = updateData
+      const { contentType, ...rest } = updateData
       await tx.workCategory.update({ where: { id }, data: rest })
 
-      if (Array.isArray(mediumCodes)) {
+      if (Array.isArray(contentType)) {
         const target = await tx.workContentType.findMany({
-          where: { code: { in: mediumCodes } },
+          where: { code: { in: contentType } },
           select: { id: true },
         })
         const targetIds = new Set(target.map((t) => t.id))
