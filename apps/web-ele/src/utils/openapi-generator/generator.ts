@@ -325,7 +325,12 @@ export class OpenAPIGenerator {
     }
 
     // 生成方法签名
-    const paramSignature = paramType === 'void' ? '' : `params: ${paramType}`;
+    const paramsOptional =
+      paramType !== 'void' && this.isAllRequestFieldsOptional(operation);
+    const paramSignature =
+      paramType === 'void'
+        ? ''
+        : `params${paramsOptional ? '?' : ''}: ${paramType}`;
 
     return `
   /**
@@ -686,6 +691,74 @@ ${properties.join('\n')}
       );
     }
 
+    return false;
+  }
+
+  /**
+   * 判断请求所有字段是否为可选
+   * - 若存在任一必填的 query/path 参数，返回 false
+   * - 若存在 requestBody：
+   *   - 若为 $ref，解析到 components.schemas 判断是否有必填
+   *   - 若为对象且无 required，视为全可选
+   *   - 若为数组/基础类型/oneOf/anyOf/allOf，视为有必填单字段
+   * - 若存在字段且未发现必填，返回 true
+   */
+  private isAllRequestFieldsOptional(operation: any): boolean {
+    let hasAny = false;
+
+    // 检查查询/路径参数
+    if (operation.parameters && Array.isArray(operation.parameters)) {
+      for (const param of operation.parameters) {
+        if (param.in === 'query' || param.in === 'path') {
+          hasAny = true;
+          if (param.required) {
+            return false;
+          }
+        }
+      }
+    }
+
+    // 检查请求体
+    const bodySchema =
+      operation.requestBody?.content?.['application/json']?.schema;
+    if (bodySchema) {
+      hasAny = true;
+      if (!this.isSchemaAllOptional(bodySchema)) {
+        return false;
+      }
+    }
+
+    // 如果有字段且全部可选，则返回 true；如果没有任何字段，这里通常不会被调用
+    return hasAny;
+  }
+
+  /**
+   * 判断一个 schema 在我们生成规则下是否“全可选”
+   */
+  private isSchemaAllOptional(schema: any): boolean {
+    // $ref：解析引用继续判断
+    if (schema.$ref) {
+      const typeName = resolveRef(schema.$ref) as string;
+      const refSchema = this.spec?.components?.schemas?.[typeName];
+      if (!refSchema) return false;
+      return this.isSchemaAllOptional(refSchema);
+    }
+
+    // 组合/联合类型：在 generatePropertiesFromSchema 中会作为单字段 data 输出，属必填
+    if (schema.allOf || schema.oneOf || schema.anyOf) {
+      return false;
+    }
+
+    // 对象：若无 required 列表或为空，则顶层属性均可选
+    if (schema.type === 'object') {
+      if (!schema.properties) {
+        // 无属性即无必填，视为可选
+        return true;
+      }
+      return !(Array.isArray(schema.required) && schema.required.length > 0);
+    }
+
+    // 数组/基础类型等：在生成中会作为必填单字段(items/value)输出
     return false;
   }
 }

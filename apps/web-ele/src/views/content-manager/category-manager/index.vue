@@ -15,7 +15,6 @@ import {
   batchUpdateCategoryStatusApi,
   categoryDetailApi,
   categoryPageApi,
-  contentTypePageApi,
   createCategoryApi,
   updateCategoryApi,
 } from '#/apis';
@@ -38,8 +37,6 @@ function handleSuccessReload(gridApi: any, message = '操作成功'): void {
   useMessage.success(message);
   gridApi.reload();
 }
-
-contentTypePageApi();
 
 /**
  * 统一错误处理机制：

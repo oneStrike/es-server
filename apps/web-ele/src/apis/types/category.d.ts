@@ -1,258 +1,258 @@
 /**
  *  类型定义 [CreateCategoryRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
-export type CreateCategoryRequest = CreateCategoryDto
+export type CreateCategoryRequest = CreateCategoryDto;
 
-export type CreateCategoryResponse = IdDto
+export type CreateCategoryResponse = IdDto;
 
 /**
  *  类型定义 [CategoryPageRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type CategoryPageRequest = {
   /* 单页大小，最大500，默认15 */
-  pageSize?: number
+  pageSize?: number;
 
   /* 当前页码 */
-  pageIndex?: number
+  pageIndex?: number;
 
   /* 排序字段，json格式 */
-  orderBy?: string
+  orderBy?: string;
 
   /* 开始时间 */
-  startDate?: string
+  startDate?: string;
 
   /* 结束时间 */
-  endDate?: string
+  endDate?: string;
 
   /* 分类名称 */
-  name?: string
+  name?: string;
 
   /* 是否启用 */
-  isEnabled?: boolean
+  isEnabled?: boolean;
 
   /* 作品媒介代码数组（如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
-  mediumCodes?: any[]
+  mediumCodes?: any[];
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
 export type CategoryPageResponse = {
   /* 当前页码 */
-  pageIndex?: number
+  pageIndex?: number;
 
   /* 每页条数 */
-  pageSize?: number
+  pageSize?: number;
 
   /* 总条数 */
-  total?: number
+  total?: number;
 
   /* 列表数据 */
-  list?: BaseCategoryDto[]
+  list?: BaseCategoryDto[];
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
 /**
  *  类型定义 [CategoryDetailRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type CategoryDetailRequest = {
   /* 主键id */
-  id: number
+  id: number;
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
-export type CategoryDetailResponse = BaseCategoryDto
+export type CategoryDetailResponse = BaseCategoryDto;
 
 /**
  *  类型定义 [UpdateCategoryRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
-export type UpdateCategoryRequest = UpdateCategoryDto
+export type UpdateCategoryRequest = UpdateCategoryDto;
 
-export type UpdateCategoryResponse = IdDto
+export type UpdateCategoryResponse = IdDto;
 
 /**
  *  类型定义 [BatchUpdateCategoryStatusRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
-export type BatchUpdateCategoryStatusRequest = BatchEnabledDto
+export type BatchUpdateCategoryStatusRequest = BatchEnabledDto;
 
-export type BatchUpdateCategoryStatusResponse = CountDto
+export type BatchUpdateCategoryStatusResponse = CountDto;
 
 /**
  *  类型定义 [CategoryOrderRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
-export type CategoryOrderRequest = OrderDto
+export type CategoryOrderRequest = OrderDto;
 
-export type CategoryOrderResponse = OrderDto
+export type CategoryOrderResponse = OrderDto;
 
 /**
  *  类型定义 [BatchDeleteCategoryRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
-export type BatchDeleteCategoryRequest = IdsDto
+export type BatchDeleteCategoryRequest = IdsDto;
 
-export type BatchDeleteCategoryResponse = CountDto
+export type BatchDeleteCategoryResponse = CountDto;
 
 /**
  *  类型定义 [CreateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type CreateCategoryDto = {
   /* 分类名称 */
-  name: string
+  name: string;
   /* 分类图标URL */
-  icon?: string
+  icon?: string;
   /* 排序值 */
-  order?: number
+  order?: number;
   /* 是否启用 */
-  isEnabled?: boolean
+  isEnabled?: boolean;
   /* 作品媒介代码数组（必填） */
-  mediumCodes: string[]
+  mediumCodes: string[];
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type IdDto = {
   /* 主键id */
-  id: number
+  id: number;
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
 /**
  *  类型定义 [BaseCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type BaseCategoryDto = {
   /* 分类ID */
-  id: number
+  id: number;
   /* 分类名称 */
-  name: string
+  name: string;
   /* 分类图标URL */
-  icon?: string
+  icon?: string;
   /* 人气值 */
-  popularity?: number
+  popularity?: number;
   /* 辅助人气值 */
-  popularityWeight?: number
+  popularityWeight?: number;
   /* 排序值 */
-  order?: number
+  order?: number;
   /* 是否启用 */
-  isEnabled?: boolean
+  isEnabled?: boolean;
   /* 作品媒介代码数组（如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
-  mediumCodes: string[]
+  mediumCodes: string[];
   /* 创建时间 */
-  createdAt?: string
+  createdAt?: string;
   /* 更新时间 */
-  updatedAt?: string
+  updatedAt?: string;
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
 /**
  *  类型定义 [UpdateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type UpdateCategoryDto = {
   /* 分类名称 */
-  name?: string
+  name?: string;
   /* 分类图标URL */
-  icon?: string
+  icon?: string;
   /* 人气值 */
-  popularity?: number
+  popularity?: number;
   /* 辅助人气值 */
-  popularityWeight?: number
+  popularityWeight?: number;
   /* 排序值 */
-  order?: number
+  order?: number;
   /* 是否启用 */
-  isEnabled?: boolean
+  isEnabled?: boolean;
   /* 作品媒介代码数组（如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
-  mediumCodes?: string[]
+  mediumCodes?: string[];
   /* 主键id */
-  id: number
+  id: number;
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
 /**
  *  类型定义 [BatchEnabledDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type BatchEnabledDto = {
   /* 主键id */
-  ids: number[]
+  ids: number[];
   /* 启用或者禁用 */
-  isEnabled: boolean
+  isEnabled: boolean;
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type CountDto = {
   /* 操作成功的数据数量 */
-  count: number
+  count: number;
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
 /**
  *  类型定义 [OrderDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type OrderDto = {
   /* 拖拽的目标id */
-  targetId: number
+  targetId: number;
   /* 当前拖拽数据的id */
-  dragId: number
+  dragId: number;
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
 
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type IdsDto = {
   /* 主键id */
-  ids: number[]
+  ids: number[];
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};

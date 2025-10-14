@@ -1,14 +1,14 @@
-export type PublicKeyResponse = RsaPublicKeyDto
+export type PublicKeyResponse = RsaPublicKeyDto;
 
 /**
  *  类型定义 [RsaPublicKeyDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-08 23:37:24
+ *  @更新时间 2025-10-14 22:09:57
  */
 export type RsaPublicKeyDto = {
   /* RSA公钥 */
-  publicKey: string
+  publicKey: string;
 
   /** 任意合法数值 */
-  [property: string]: any
-}
+  [property: string]: any;
+};
