@@ -3,25 +3,6 @@ import type { EsFormSchema } from '#/types';
 
 import { formSchemaTransform } from '#/utils';
 
-export const contentType = [
-  {
-    label: '漫画',
-    value: 1,
-  },
-  {
-    label: '小说',
-    value: 2,
-  },
-  {
-    label: '插画',
-    value: 4,
-  },
-  {
-    label: '图集',
-    value: 8,
-  },
-];
-
 /**
  * 分类管理模块的表单 Schema
  */
@@ -77,7 +58,7 @@ export const formSchema: EsFormSchema = [
     rules: 'required',
     componentProps: {
       placeholder: '请选择内容类型',
-      options: contentType,
+      options: [],
       valueType: 'bitMask',
     },
   },

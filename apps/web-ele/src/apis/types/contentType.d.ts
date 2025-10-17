@@ -1,7 +1,7 @@
 /**
  *  类型定义 [CreateContentTypeRequest]
  *  @来源 内容类型管理模块
- *  @更新时间 2025-10-14 23:15:29
+ *  @更新时间 2025-10-15 22:09:38
  */
 export type CreateContentTypeRequest = CreateContentTypeDto;
 
@@ -10,7 +10,7 @@ export type CreateContentTypeResponse = IdDto;
 /**
  *  类型定义 [UpdateContentTypeRequest]
  *  @来源 内容类型管理模块
- *  @更新时间 2025-10-14 23:15:29
+ *  @更新时间 2025-10-15 22:09:38
  */
 export type UpdateContentTypeRequest = UpdateContentTypeDto;
 
@@ -19,7 +19,7 @@ export type UpdateContentTypeResponse = IdDto;
 /**
  *  类型定义 [ContentTypeListRequest]
  *  @来源 内容类型管理模块
- *  @更新时间 2025-10-14 23:15:29
+ *  @更新时间 2025-10-15 22:09:38
  */
 export type ContentTypeListRequest = {
   /* 单页大小，最大500，默认15 */
@@ -50,27 +50,12 @@ export type ContentTypeListRequest = {
   [property: string]: any;
 };
 
-export type ContentTypeListResponse = {
-  /* 当前页码 */
-  pageIndex?: number;
-
-  /* 每页条数 */
-  pageSize?: number;
-
-  /* 总条数 */
-  total?: number;
-
-  /* 列表数据 */
-  list?: BaseContentTypeDto[];
-
-  /** 任意合法数值 */
-  [property: string]: any;
-};
+export type ContentTypeListResponse = BaseContentTypeDto[];
 
 /**
  *  类型定义 [CreateContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 23:15:29
+ *  @更新时间 2025-10-15 22:09:38
  */
 export type CreateContentTypeDto = {
   /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
@@ -87,7 +72,7 @@ export type CreateContentTypeDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 23:15:29
+ *  @更新时间 2025-10-15 22:09:38
  */
 export type IdDto = {
   /* 主键id */
@@ -100,7 +85,7 @@ export type IdDto = {
 /**
  *  类型定义 [UpdateContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 23:15:29
+ *  @更新时间 2025-10-15 22:09:38
  */
 export type UpdateContentTypeDto = {
   /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
@@ -119,7 +104,7 @@ export type UpdateContentTypeDto = {
 /**
  *  类型定义 [BaseContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-14 23:15:29
+ *  @更新时间 2025-10-15 22:09:38
  */
 export type BaseContentTypeDto = {
   /* ID */

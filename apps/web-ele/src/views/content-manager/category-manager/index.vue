@@ -22,6 +22,7 @@ import {
 } from '#/apis';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useMessage } from '#/hooks/useFeedback';
+import { useForm } from '#/hooks/useForm';
 import { createSearchFormOptions } from '#/utils';
 
 import { categoryColumns, categorySearchSchema, formSchema } from './shared';
@@ -34,20 +35,7 @@ function handleSuccessReload(gridApi: any, message = '操作成功'): void {
   gridApi.reload();
 }
 
-const contentType = {
-  arr: [],
-  obj: {},
-};
-
-contentTypeListApi().then((res) => {
-  res.forEach((item) => {
-    contentType.arr.push({
-      label: item.name,
-      value: item.id,
-    });
-    contentType.obj[item.id] = item.name;
-  });
-});
+const contentTypeMap: Record<number, string> = {};
 
 /**
  * 统一错误处理机制：
@@ -113,7 +101,22 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const [Form, formApi] = useVbenModal({
   connectedComponent: EsModalForm,
 });
-
+contentTypeListApi().then((res) => {
+  const options = res.map((item) => {
+    contentTypeMap[item.id] = item.name;
+    return {
+      label: contentTypeMap[item.id]!,
+      value: item.id,
+    };
+  });
+  useForm.setOptions(formSchema, {
+    contentTypes: options,
+  });
+  useForm.setOptions(categorySearchSchema, {
+    contentTypes: options,
+  });
+  gridApi.formApi.updateSchema(categorySearchSchema);
+});
 /**
  * 打开表单弹窗
  */
@@ -166,8 +169,8 @@ async function addOrUpdateCategory(values: CategoryFormValues): Promise<void> {
       ? updateCategoryApi(values as UpdateCategoryDto)
       : createCategoryApi(values as CreateCategoryDto));
     useMessage.success('操作成功');
-    formApi.close();
-    gridApi.reload();
+    await formApi.close();
+    await gridApi.reload();
   } catch (error) {
     handleError(error, '保存分类失败');
   }
