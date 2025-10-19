@@ -58,10 +58,8 @@ const gridOptions: VxeGridProps<CategoryPageDto> = {
   proxyConfig: {
     ajax: {
       query: async ({ page }, formValues) => {
-        if (Array.isArray(formValues.contentTypes)) {
-          formValues.contentTypes = (
-            formValues.contentTypes as number[]
-          ).reduce(
+        if (Array.isArray(formValues.contentType)) {
+          formValues.contentType = (formValues.contentType as number[]).reduce(
             (accumulator, currentValue) => accumulator + currentValue,
             0,
           );
@@ -106,14 +104,14 @@ contentTypeListApi().then((res) => {
     contentTypeMap[item.id] = item.name;
     return {
       label: contentTypeMap[item.id]!,
-      value: item.id,
+      value: item.code,
     };
   });
   useForm.setOptions(formSchema, {
-    contentTypes: options,
+    contentType: options,
   });
   useForm.setOptions(categorySearchSchema, {
-    contentTypes: options,
+    contentType: options,
   });
   gridApi.formApi.updateSchema(categorySearchSchema);
 });
@@ -132,7 +130,6 @@ async function openFormModal(row?: CategoryPageDto): Promise<void> {
         record,
         cols: 1,
         schema: formSchema,
-        bitMaskField: ['contentTypes'],
       })
       .open();
   } catch (error) {
@@ -210,7 +207,7 @@ async function deleteCategory(row: CategoryPageDto): Promise<void> {
         />
       </template>
 
-      <template #contentTypes="{ row }">
+      <template #contentType="{ row }">
         <el-text>
           {{
             row.categoryContentTypes

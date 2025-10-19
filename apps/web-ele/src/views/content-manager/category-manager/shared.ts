@@ -53,13 +53,12 @@ export const formSchema: EsFormSchema = [
   },
   {
     label: '内容类型',
-    fieldName: 'contentTypes',
+    fieldName: 'contentType',
     component: 'CheckboxGroup',
     rules: 'required',
     componentProps: {
       placeholder: '请选择内容类型',
       options: [],
-      valueType: 'bitMask',
     },
   },
 ];
@@ -84,9 +83,9 @@ export const categoryColumns =
       sort: 99,
       slots: { default: 'isEnabled' },
     },
-    contentTypes: {
+    contentType: {
       title: '应用类型',
-      slots: { default: 'contentTypes' },
+      slots: { default: 'contentType' },
     },
   });
 
@@ -102,7 +101,7 @@ export const categorySearchSchema = formSchemaTransform.toSearchSchema(
     isEnabled: {
       show: true,
     },
-    contentTypes: {
+    contentType: {
       show: true,
     },
   },
