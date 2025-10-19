@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { ApiDoc } from '@/common/decorators/api-doc.decorator'
 import { IdDto } from '@/common/dto/id.dto'
 import { ContentTypeService } from './content-type.service'
 import {
@@ -32,7 +32,7 @@ export class ContentTypeController {
    * 列表
    */
   @Get('/content-type-list')
-  @ApiPageDoc({ summary: '内容类型列表', model: BaseContentTypeDto })
+  @ApiDoc({ summary: '内容类型列表', model: BaseContentTypeDto, isArray: true })
   async getPage(@Query() query?: QueryContentTypeDto) {
     return this.contentTypeService.getContentTypeList(query)
   }

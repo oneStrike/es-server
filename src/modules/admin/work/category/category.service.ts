@@ -261,6 +261,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
         )
       }
     }
+    return this.deleteMany({ id: { in: ids } })
   }
 
   /**
