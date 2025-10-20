@@ -86,7 +86,7 @@ setupVbenVxeTable({
           {
             type,
           },
-          () => formatUTC(text),
+          { default: () => formatUTC(text) },
         );
       },
     });
@@ -107,7 +107,27 @@ setupVbenVxeTable({
 
     // 表格配置项可以用 cellRender: { name: 'CellTag' },
     vxeUI.renderer.add('CellTag', {
-      renderTableDefault({ props }) {
+      renderTableDefault({ props }, params) {
+        const { column, row } = params;
+        const tags = row[column.field] || '';
+
+        // 处理字符串数组或字符串的情况
+        if (Array.isArray(tags)) {
+          return tags.map((tag, idx) =>
+            h(
+              ElTag,
+              {
+                type: props?.type || 'primary',
+                size: props?.size || 'small',
+                class: idx + 1 === tags.length ? '' : 'mr-1',
+                ...props,
+              },
+              { default: () => tag },
+            ),
+          );
+        }
+
+        // 处理字符串情况
         return h(
           ElTag,
           {
@@ -115,7 +135,7 @@ setupVbenVxeTable({
             size: props?.size || 'small',
             ...props,
           },
-          { default: () => props?.text },
+          { default: () => tags },
         );
       },
     });
@@ -126,6 +146,7 @@ setupVbenVxeTable({
   useVbenForm,
 });
 
+// 表格查询参数
 const queryParams = ({ page, formValues, sorts }: any) => {
   if (sorts.length > 0) {
     formValues.orderBy = {};

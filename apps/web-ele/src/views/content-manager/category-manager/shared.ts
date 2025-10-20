@@ -8,15 +8,6 @@ import { formSchemaTransform } from '#/utils';
  */
 export const formSchema: EsFormSchema = [
   {
-    component: 'Input',
-    componentProps: {
-      placeholder: '请输入分类名称',
-    },
-    fieldName: 'name',
-    label: '分类名称',
-    rules: 'required',
-  },
-  {
     component: 'Upload',
     componentProps: {
       placeholder: '请上传分类图标',
@@ -27,11 +18,39 @@ export const formSchema: EsFormSchema = [
   {
     component: 'Input',
     componentProps: {
-      type: 'number',
+      placeholder: '请输入分类名称',
+    },
+    fieldName: 'name',
+    label: '分类名称',
+    rules: 'required',
+  },
+
+  {
+    component: 'InputNumber',
+    componentProps: {
+      min: 0,
+      max: 999_999_999,
+      align: 'left',
+      class: '!w-full',
+      controlsPosition: 'right',
       placeholder: '请输入排序值（数字越小越靠前）',
     },
     fieldName: 'order',
     label: '排序',
+  },
+  {
+    component: 'InputNumber',
+    componentProps: {
+      type: 'number',
+      min: 0,
+      max: 999_999_999,
+      align: 'left',
+      class: '!w-full',
+      controlsPosition: 'right',
+      placeholder: '请输入辅助热度',
+    },
+    fieldName: 'popularityWeight',
+    label: '辅助热度',
   },
   {
     component: 'RadioGroup',
@@ -85,7 +104,19 @@ export const categoryColumns =
     },
     contentType: {
       title: '应用类型',
-      slots: { default: 'contentType' },
+      cellRender: {
+        name: 'CellTag',
+      },
+    },
+    popularity: {
+      title: '热度',
+      field: 'popularity',
+      sort: 9,
+      sortable: true,
+    },
+    popularityWeight: {
+      sort: 10,
+      sortable: true,
     },
     createdAt: {
       show: true,

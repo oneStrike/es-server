@@ -88,7 +88,7 @@ const [BaseForm, formApi] = useVbenForm({
 <template>
   <Modal
     :title="modalTitle"
-    :class="sharedData.cols === 1 ? 'w-[500px]' : 'w-[900px]'"
+    :class="sharedData.cols === 1 ? 'w-[700px]' : 'w-[900px]'"
   >
     <template #prepend-footer>
       <el-button @click="formApi.resetForm()">重置</el-button>

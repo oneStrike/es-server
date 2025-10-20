@@ -68,6 +68,7 @@ const gridOptions: VxeGridProps<BaseCategoryDto> = {
         dragId: params.dragRow.id,
         targetId: params.newRow.id,
       });
+      await gridApi.reload();
       return true;
     },
   },
@@ -77,7 +78,16 @@ const gridOptions: VxeGridProps<BaseCategoryDto> = {
         if (Array.isArray(formValues.contentType)) {
           formValues.contentType = JSON.stringify(formValues.contentType);
         }
-        return await categoryPageApi(queryParams({ page, formValues, sorts }));
+        const gridData = await categoryPageApi(
+          queryParams({ page, formValues, sorts }),
+        );
+        gridData.list?.map((item) => {
+          item.contentType = item.categoryContentTypes.map(
+            (item) => item.contentType.name,
+          );
+          return item;
+        });
+        return gridData;
       },
     },
     sort: true,
@@ -129,7 +139,6 @@ async function openFormModal(row?: BaseCategoryDto): Promise<void> {
       .setData({
         title: '分类',
         record,
-        cols: 1,
         schema: formSchema,
       })
       .open();
