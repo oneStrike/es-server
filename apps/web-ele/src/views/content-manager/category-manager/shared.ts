@@ -14,6 +14,7 @@ export const formSchema: EsFormSchema = [
     },
     fieldName: 'icon',
     label: '图标',
+    formItemClass: 'col-span-2',
   },
   {
     component: 'Input',
@@ -24,7 +25,16 @@ export const formSchema: EsFormSchema = [
     label: '分类名称',
     rules: 'required',
   },
-
+  {
+    label: '内容类型',
+    fieldName: 'contentType',
+    component: 'CheckboxGroup',
+    rules: 'required',
+    componentProps: {
+      placeholder: '请选择内容类型',
+      options: [],
+    },
+  },
   {
     component: 'InputNumber',
     componentProps: {
@@ -51,34 +61,6 @@ export const formSchema: EsFormSchema = [
     },
     fieldName: 'popularityWeight',
     label: '辅助热度',
-  },
-  {
-    component: 'RadioGroup',
-    componentProps: {
-      options: [
-        {
-          label: '启用',
-          value: true,
-        },
-        {
-          label: '禁用',
-          value: false,
-        },
-      ],
-    },
-    fieldName: 'isEnabled',
-    label: '状态',
-    defaultValue: true,
-  },
-  {
-    label: '内容类型',
-    fieldName: 'contentType',
-    component: 'CheckboxGroup',
-    rules: 'required',
-    componentProps: {
-      placeholder: '请选择内容类型',
-      options: [],
-    },
   },
 ];
 
