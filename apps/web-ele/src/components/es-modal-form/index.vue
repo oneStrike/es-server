@@ -25,7 +25,9 @@ const modalTitle = computed(() => {
 });
 
 const [Modal, modalApi] = useVbenModal({
-  onConfirm: () => formApi.submitForm(),
+  onConfirm: async () => {
+    await formApi.validateAndSubmitForm();
+  },
   onOpenChange(isOpen: boolean) {
     if (isOpen) {
       sharedData.value = modalApi.getData<EsModalFormProps>();
@@ -77,6 +79,7 @@ const [BaseForm, formApi] = useVbenForm({
         ...values,
         id: sharedData.value?.record?.id,
       });
+      modalApi.close();
     } catch {}
     modalApi.unlock();
   },

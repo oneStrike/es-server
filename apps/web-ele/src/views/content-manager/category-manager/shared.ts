@@ -87,6 +87,9 @@ export const categoryColumns =
       title: '应用类型',
       slots: { default: 'contentType' },
     },
+    createdAt: {
+      show: true,
+    },
   });
 
 /**

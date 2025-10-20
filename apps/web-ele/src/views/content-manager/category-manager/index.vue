@@ -3,7 +3,6 @@ import type { VxeGridProps } from '@vben/plugins/vxe-table';
 
 import type {
   BaseCategoryDto,
-  CategoryPageDto,
   CreateCategoryDto,
   UpdateCategoryDto,
 } from '#/apis/types/category';
@@ -52,34 +51,20 @@ function handleError(e: unknown, fallbackMsg = '操作失败，请稍后重试')
 /**
  * VxeGrid 的选项配置：
  */
-const gridOptions: VxeGridProps<CategoryPageDto> = {
+const gridOptions: VxeGridProps<BaseCategoryDto> = {
   columns: categoryColumns,
   height: 'auto',
   proxyConfig: {
     ajax: {
       query: async ({ page }, formValues) => {
         if (Array.isArray(formValues.contentType)) {
-          formValues.contentType = (formValues.contentType as number[]).reduce(
-            (accumulator, currentValue) => accumulator + currentValue,
-            0,
-          );
+          formValues.contentType = JSON.stringify(formValues.contentType);
         }
-        try {
-          return await categoryPageApi({
-            pageIndex: --page.currentPage,
-            pageSize: page.pageSize,
-            ...formValues,
-          });
-        } catch (error) {
-          handleError(error, '查询分类列表失败');
-          // 出错时返回空数据以保证表格不崩溃
-          return {
-            pageIndex: page.currentPage,
-            pageSize: page.pageSize,
-            total: 0,
-            list: [],
-          };
-        }
+        return await categoryPageApi({
+          pageIndex: --page.currentPage,
+          pageSize: page.pageSize,
+          ...formValues,
+        });
       },
     },
     sort: true,
@@ -118,11 +103,14 @@ contentTypeListApi().then((res) => {
 /**
  * 打开表单弹窗
  */
-async function openFormModal(row?: CategoryPageDto): Promise<void> {
+async function openFormModal(row?: BaseCategoryDto): Promise<void> {
   try {
     let record: BaseCategoryDto | undefined;
     if (row) {
       record = await categoryDetailApi({ id: row.id });
+      record.contentType = record.categoryContentTypes.map(
+        (item) => item.contentType.code,
+      );
     }
     formApi
       .setData({
@@ -140,7 +128,7 @@ async function openFormModal(row?: CategoryPageDto): Promise<void> {
 /**
  * 切换启用状态
  */
-async function toggleEnableStatus(row: CategoryPageDto): Promise<void> {
+async function toggleEnableStatus(row: BaseCategoryDto): Promise<void> {
   row.loading = true as any;
   try {
     await batchUpdateCategoryStatusApi({
@@ -161,22 +149,17 @@ async function toggleEnableStatus(row: CategoryPageDto): Promise<void> {
 type CategoryFormValues = CreateCategoryDto | UpdateCategoryDto;
 
 async function addOrUpdateCategory(values: CategoryFormValues): Promise<void> {
-  try {
-    await (values.id
-      ? updateCategoryApi(values as UpdateCategoryDto)
-      : createCategoryApi(values as CreateCategoryDto));
-    useMessage.success('操作成功');
-    await formApi.close();
-    await gridApi.reload();
-  } catch (error) {
-    handleError(error, '保存分类失败');
-  }
+  await (values.id
+    ? updateCategoryApi(values as UpdateCategoryDto)
+    : createCategoryApi(values as CreateCategoryDto));
+  useMessage.success('操作成功');
+  await gridApi.reload();
 }
 
 /**
  * 删除分类
  */
-async function deleteCategory(row: CategoryPageDto): Promise<void> {
+async function deleteCategory(row: BaseCategoryDto): Promise<void> {
   try {
     await batchDeleteCategoryApi({
       ids: [row.id],
@@ -229,7 +212,9 @@ async function deleteCategory(row: CategoryPageDto): Promise<void> {
           @confirm="deleteCategory(row)"
         >
           <template #reference>
-            <el-button link type="danger">删除</el-button>
+            <el-button link type="danger" :disabled="row.isEnabled">
+              删除
+            </el-button>
           </template>
         </el-popconfirm>
       </template>
