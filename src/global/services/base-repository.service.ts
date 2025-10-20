@@ -54,10 +54,11 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   static readonly MAX_PAGE_SIZE = 500
   static readonly DEFAULT_PAGE_SIZE = 15
   static readonly DEFAULT_PAGE_INDEX = 0
-  static readonly DEFAULT_SELECT = { id: true }
   static readonly DEFAULT_OMIT = { deletedAt: true }
+  static readonly DEFAULT_SORT_FIELD = 'id'
 
   protected abstract readonly modelName: T
+  protected abstract readonly sortField: string
   protected readonly supportsSoftDelete: boolean = false
 
   constructor(protected readonly prisma: PrismaService) {}
@@ -219,7 +220,9 @@ export abstract class BaseRepositoryService<T extends ModelName> {
       }
       finalWhere = { ...finalWhere, [dateField]: dateCond }
     }
-    let finalOrderBy: ModelTypes<T>['OrderByInput'] = { id: 'desc' }
+    let finalOrderBy: ModelTypes<T>['OrderByInput'] = {
+      [this.sortField || BaseRepositoryService.DEFAULT_SORT_FIELD]: 'desc',
+    }
     if (orderBy) {
       const orderByParse = jsonParse(orderBy, {})
       finalOrderBy = Object.keys(orderByParse).map((key) => ({
@@ -457,7 +460,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
     const take = pageSize ?? BaseRepositoryService.DEFAULT_PAGE_SIZE
     return this.model.findMany({
       where: this.getWhere(where, mode),
-      orderBy: orderBy || { id: 'desc' },
+      orderBy,
       skip,
       take,
       ...this.buildQueryArgs(rest),

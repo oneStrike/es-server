@@ -17,6 +17,7 @@ import {
 @Injectable()
 export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
   protected readonly modelName = 'WorkCategory' as const
+  protected readonly sortField = 'order' as const
 
   constructor(protected readonly prisma: PrismaService) {
     super(prisma)
