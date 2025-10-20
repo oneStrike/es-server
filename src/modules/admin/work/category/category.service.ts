@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { BatchEnabledDto } from '@/common/dto/batch.dto'
 import { BaseRepositoryService } from '@/global/services/base-repository.service'
 import { PrismaService } from '@/global/services/prisma.service'
+import { jsonParse } from '@/utils'
 
 import {
   CreateCategoryDto,
@@ -100,10 +101,11 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       where.isEnabled = isEnabled
     }
 
-    if (Array.isArray(contentType) && contentType.length) {
+    const types = jsonParse(contentType, [])
+    if (types.length) {
       // 按内容类型代码筛选（多对多 some 查询）
       where.categoryContentTypes = {
-        some: { contentType: { code: { in: contentType } } },
+        some: { contentType: { code: { in: types } } },
       }
     }
 
@@ -111,7 +113,6 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       where,
       include: { categoryContentTypes: { include: { contentType: true } } },
     })
-    console.log(data)
     return data
   }
 

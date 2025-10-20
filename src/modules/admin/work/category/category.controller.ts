@@ -7,7 +7,6 @@ import { OrderDto } from '@/common/dto/order.dto'
 import { WorkCategoryService } from './category.service'
 import {
   BaseCategoryDto,
-  CategoryPageDto,
   CreateCategoryDto,
   QueryCategoryDto,
   UpdateCategoryDto,
@@ -40,7 +39,7 @@ export class WorkCategoryController {
   @Get('/category-page')
   @ApiPageDoc({
     summary: '分页查询分类列表',
-    model: CategoryPageDto,
+    model: BaseCategoryDto,
   })
   async getPage(@Query() query: QueryCategoryDto) {
     return this.categoryService.getCategoryPage(query)

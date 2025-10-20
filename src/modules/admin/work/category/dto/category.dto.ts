@@ -8,6 +8,7 @@ import {
 import {
   ValidateArray,
   ValidateBoolean,
+  ValidateJson,
   ValidateNumber,
   ValidateString,
 } from '@/common/decorators/validate.decorator'
@@ -15,6 +16,34 @@ import { IdDto } from '@/common/dto/id.dto'
 import { PageDto } from '@/common/dto/page.dto'
 import { BaseContentTypeDto } from '../../content-type/dto/content-type.dto'
 
+/**
+ * 分类-内容类型 关系项 DTO
+ */
+export class CategoryContentTypeItemDto {
+  @ValidateNumber({
+    description: '分类ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  categoryId!: number
+
+  @ValidateNumber({
+    description: '内容类型ID',
+    example: 2,
+    required: true,
+    min: 1,
+  })
+  contentTypeId!: number
+
+  @ApiProperty({
+    description: '内容类型对象',
+    type: () => BaseContentTypeDto,
+    required: true,
+    example: { id: 2, code: 'COMIC', name: '漫画' },
+  })
+  contentType!: BaseContentTypeDto
+}
 /**
  * 分类基础 DTO
  */
@@ -75,55 +104,6 @@ export class BaseCategoryDto {
   })
   isEnabled!: boolean
 
-  @ValidateString({
-    description: '创建时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: false,
-  })
-  createdAt!: string
-
-  @ValidateString({
-    description: '更新时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: false,
-  })
-  updatedAt!: string
-}
-
-/**
- * 分类-内容类型 关系项 DTO
- */
-export class CategoryContentTypeItemDto {
-  @ValidateNumber({
-    description: '分类ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  categoryId!: number
-
-  @ValidateNumber({
-    description: '内容类型ID',
-    example: 2,
-    required: true,
-    min: 1,
-  })
-  contentTypeId!: number
-
-  @ApiProperty({
-    description: '内容类型对象',
-    type: () => BaseContentTypeDto,
-    required: true,
-    example: { id: 2, code: 'COMIC', name: '漫画' },
-  })
-  contentType!: BaseContentTypeDto
-}
-
-/**
- * 分类分页 DTO
- */
-
-export class CategoryPageDto extends BaseCategoryDto {
   @ApiProperty({
     description: '分类包含的内容类型项数组',
     type: () => [CategoryContentTypeItemDto],
@@ -141,12 +121,21 @@ export class CategoryPageDto extends BaseCategoryDto {
       },
     ],
   })
-  @ValidateArray({
-    description: '分类包含的内容类型项数组',
-    required: true,
-    itemType: 'object',
-  })
   categoryContentTypes!: CategoryContentTypeItemDto[]
+
+  @ValidateString({
+    description: '创建时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+  })
+  createdAt!: string
+
+  @ValidateString({
+    description: '更新时间',
+    example: '2024-01-01T00:00:00.000Z',
+    required: false,
+  })
+  updatedAt!: string
 }
 
 /**
@@ -158,6 +147,7 @@ export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
   'updatedAt',
   'popularity',
   'popularityWeight',
+  'categoryContentTypes',
 ]) {
   // 创建时要求明确指定媒介代码集合
   @ValidateArray({
@@ -173,7 +163,7 @@ export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
  * 更新分类 DTO
  */
 export class UpdateCategoryDto extends IntersectionType(
-  PartialType(OmitType(BaseCategoryDto, ['id', 'createdAt', 'updatedAt'])),
+  CreateCategoryDto,
   IdDto,
 ) {}
 
@@ -182,5 +172,12 @@ export class UpdateCategoryDto extends IntersectionType(
  */
 export class QueryCategoryDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(CreateCategoryDto), ['name', 'isEnabled', 'contentType']),
-) {}
+  PickType(PartialType(CreateCategoryDto), ['name', 'isEnabled']),
+) {
+  @ValidateJson({
+    description: '作品媒介代码数组 JSON 字符串',
+    example: ' ["COMIC", "NOVEL"]',
+    required: false,
+  })
+  contentType?: string
+}
