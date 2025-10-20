@@ -14,6 +14,7 @@ import {
   batchDeleteCategoryApi,
   batchUpdateCategoryStatusApi,
   categoryDetailApi,
+  categoryOrderApi,
   categoryPageApi,
   contentTypeListApi,
   createCategoryApi,
@@ -57,6 +58,18 @@ const gridOptions: VxeGridProps<BaseCategoryDto> = {
   sortConfig: {
     remote: true,
     multiple: true,
+  },
+  rowConfig: {
+    drag: true,
+  },
+  rowDragConfig: {
+    async dragEndMethod(params) {
+      await categoryOrderApi({
+        dragId: params.dragRow.id,
+        targetId: params.newRow.id,
+      });
+      return true;
+    },
   },
   proxyConfig: {
     ajax: {

@@ -121,11 +121,14 @@ export const formSchemaTransform: FormSchemaTransform = {
     }
 
     if (extra && Object.keys(extra).length > 0) {
-      Object.values(extra).forEach((item) => {
-        columnsWithSort.push({
-          ...item,
-          originalIndex: item?.sort ?? -1,
-        });
+      Object.keys(extra).forEach((key) => {
+        const item = extra[key];
+        if (!['createdAt', 'seq'].includes(key)) {
+          columnsWithSort.push({
+            ...item,
+            originalIndex: item?.sort ?? -1,
+          });
+        }
       });
     }
 
@@ -138,6 +141,7 @@ export const formSchemaTransform: FormSchemaTransform = {
       width: 50,
       fixed: 'left',
       originalIndex: -1,
+      ...extra?.seq,
     });
 
     // 移除辅助属性，返回最终的列配置

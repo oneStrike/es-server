@@ -69,9 +69,6 @@ export const formSchema: EsFormSchema = [
  */
 export const categoryColumns =
   formSchemaTransform.toTableColumns<BaseCategoryDto>(formSchema, {
-    actions: {
-      show: true,
-    },
     icon: {
       cellRender: {
         name: 'CellImage',
@@ -92,6 +89,12 @@ export const categoryColumns =
     },
     createdAt: {
       show: true,
+    },
+    actions: {
+      show: true,
+    },
+    seq: {
+      dragSort: true,
     },
   });
 
