@@ -58,7 +58,7 @@ export abstract class BaseRepositoryService<T extends ModelName> {
   static readonly DEFAULT_SORT_FIELD = 'id'
 
   protected abstract readonly modelName: T
-  protected abstract readonly sortField: string
+  protected readonly sortField?: string = BaseRepositoryService.DEFAULT_SORT_FIELD
   protected readonly supportsSoftDelete: boolean = false
 
   constructor(protected readonly prisma: PrismaService) {}

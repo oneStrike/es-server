@@ -73,7 +73,6 @@ export class ClientPageConfigService extends BaseRepositoryService<'ClientPageCo
     return this.findPagination({
       ...other,
       where,
-      orderBy: [{ createdAt: 'desc' }],
     })
   }
 
