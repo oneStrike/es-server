@@ -62,11 +62,11 @@ export type UserInfoResponse = UserDto;
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UserInfoByIdRequest = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 export type UserInfoByIdResponse = UserDto;
@@ -77,35 +77,41 @@ export type UserInfoByIdResponse = UserDto;
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UserPageRequest = {
-  /* 单页大小，最大500，默认15 */
-  pageSize?: number;
-
-  /* 当前页码 */
-  pageIndex?: number;
-
-  /* 排序字段，json格式 */
-  orderBy?: string;
-
-  /* 开始时间 */
-  startDate?: string;
+  /** 任意合法数值 */
+  [property: string]: any;
 
   /* 结束时间 */
   endDate?: string;
 
-  /* 用户名 */
-  username?: string;
-
   /* 是否启用 */
   isEnabled?: boolean;
+
+  /* 排序字段，json格式 */
+  orderBy?: string;
+
+  /* 当前页码 */
+  pageIndex?: number;
+
+  /* 单页大小，最大500，默认15 */
+  pageSize?: number;
 
   /* 角色 0普通管理员 1超级管理员 */
   role?: number;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 开始时间 */
+  startDate?: string;
+
+  /* 用户名 */
+  username?: string;
 };
 
 export type UserPageResponse = {
+  /** 任意合法数值 */
+  [property: string]: any;
+
+  /* 列表数据 */
+  list?: UserDto[];
+
   /* 当前页码 */
   pageIndex?: number;
 
@@ -114,12 +120,6 @@ export type UserPageResponse = {
 
   /* 总条数 */
   total?: number;
-
-  /* 列表数据 */
-  list?: UserDto[];
-
-  /** 任意合法数值 */
-  [property: string]: any;
 };
 
 /**
@@ -137,13 +137,13 @@ export type UserDeleteResponse = IdDto;
  *  @更新时间 2025-10-20 09:05:51
  */
 export type CaptchaDto = {
-  /* 验证码 key */
-  id: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 验证码 */
   data: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 验证码 key */
+  id: string;
 };
 
 /**
@@ -152,17 +152,17 @@ export type CaptchaDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UserLoginDto = {
-  /* 用户名 */
-  username: string;
-  /* 密码 */
-  password: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 验证码 */
   captcha: string;
   /* 验证码ID */
   captchaId: string;
+  /* 密码 */
+  password: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 用户名 */
+  username: string;
 };
 
 /**
@@ -171,13 +171,13 @@ export type UserLoginDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type LoginResponseDto = {
-  /* 令牌信息 */
-  tokens: TokenDto;
-  /* 用户信息 */
-  user: UserDto;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 令牌信息 */
+  tokens: TokenDto;
+
+  /* 用户信息 */
+  user: UserDto;
 };
 
 /**
@@ -186,13 +186,13 @@ export type LoginResponseDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type TokenDto = {
-  /* 账号令牌 */
-  accessToken: string;
-  /* 刷新令牌 */
-  refreshToken: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 账号令牌 */
+  accessToken: string;
+
+  /* 刷新令牌 */
+  refreshToken: string;
 };
 
 /**
@@ -201,33 +201,33 @@ export type TokenDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UserDto = {
-  /* 用户ID */
-  id: number;
-  /* 用户名 */
-  username: string;
-  /* 手机号 */
-  mobile: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 头像 */
   avatar?: string;
+  /* 创建时间 */
+  createdAt: string;
+  /* 用户ID */
+  id: number;
   /* 是否启用 */
   isEnabled: boolean;
-  /* 角色 0普通管理员 1超级管理员 */
-  role: number;
+  /* 是否锁定 */
+  isLocked: boolean;
   /* 最后登录时间 */
   lastLoginAt?: string;
   /* 最后登录IP */
   lastLoginIp?: string;
   /* 登录失败次数 */
   loginFailCount: number;
-  /* 是否锁定 */
-  isLocked: boolean;
-  /* 创建时间 */
-  createdAt: string;
+  /* 手机号 */
+  mobile: string;
+  /* 角色 0普通管理员 1超级管理员 */
+  role: number;
   /* 更新时间 */
   updatedAt: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 用户名 */
+  username: string;
 };
 
 /**
@@ -236,21 +236,21 @@ export type UserDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UserRegisterDto = {
-  /* 用户名 */
-  username: string;
-  /* 手机号 */
-  mobile: string;
-  /* 头像 */
-  avatar?: string;
-  /* 角色 0普通管理员 1超级管理员 */
-  role: number;
-  /* 密码 */
-  password: string;
-  /* 密码 */
-  confirmPassword: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 头像 */
+  avatar?: string;
+  /* 密码 */
+  confirmPassword: string;
+  /* 手机号 */
+  mobile: string;
+  /* 密码 */
+  password: string;
+  /* 角色 0普通管理员 1超级管理员 */
+  role: number;
+
+  /* 用户名 */
+  username: string;
 };
 
 /**
@@ -259,11 +259,11 @@ export type UserRegisterDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type IdDto = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 /**
@@ -272,11 +272,11 @@ export type IdDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type RefreshTokenDto = {
-  /* 刷新令牌 */
-  refreshToken: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 刷新令牌 */
+  refreshToken: string;
 };
 
 /**
@@ -285,11 +285,11 @@ export type RefreshTokenDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type RefreshTokenResponseDto = {
-  /* 刷新令牌响应 */
-  tokens: TokenDto;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 刷新令牌响应 */
+  tokens: TokenDto;
 };
 
 /**
@@ -298,17 +298,17 @@ export type RefreshTokenResponseDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UpdatePasswordDto = {
-  /* 刷新令牌 */
-  refreshToken: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 密码 */
-  oldPassword: string;
+  confirmPassword: string;
   /* 密码 */
   newPassword: string;
   /* 密码 */
-  confirmPassword: string;
+  oldPassword: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 刷新令牌 */
+  refreshToken: string;
 };
 
 /**
@@ -317,19 +317,19 @@ export type UpdatePasswordDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UpdateUserDto = {
-  /* 用户名 */
-  username: string;
-  /* 手机号 */
-  mobile: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 头像 */
   avatar?: string;
   /* 用户ID */
   id?: number;
   /* 是否启用 */
   isEnabled?: boolean;
+  /* 手机号 */
+  mobile: string;
   /* 角色 0普通管理员 1超级管理员 */
   role?: number;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 用户名 */
+  username: string;
 };

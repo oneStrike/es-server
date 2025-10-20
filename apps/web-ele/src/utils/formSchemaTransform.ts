@@ -104,6 +104,22 @@ export const formSchemaTransform: FormSchemaTransform = {
       delete extra.actions;
     }
 
+    if (extra?.createdAt && extra.createdAt.show) {
+      columnsWithSort.push({
+        title: '创建时间',
+        field: 'createdAt',
+        align: 'center',
+        originalIndex: 99,
+        width: 150,
+        ...extra?.actions,
+        sortable: true,
+        cellRender: {
+          name: 'CellDate',
+        },
+      });
+      delete extra.actions;
+    }
+
     if (extra && Object.keys(extra).length > 0) {
       Object.values(extra).forEach((item) => {
         columnsWithSort.push({

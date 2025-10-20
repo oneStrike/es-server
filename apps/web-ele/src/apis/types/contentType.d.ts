@@ -22,32 +22,32 @@ export type UpdateContentTypeResponse = IdDto;
  *  @更新时间 2025-10-20 09:05:51
  */
 export type ContentTypeListRequest = {
-  /* 单页大小，最大500，默认15 */
-  pageSize?: number;
-
-  /* 当前页码 */
-  pageIndex?: number;
-
-  /* 排序字段，json格式 */
-  orderBy?: string;
-
-  /* 开始时间 */
-  startDate?: string;
-
-  /* 结束时间 */
-  endDate?: string;
+  /** 任意合法数值 */
+  [property: string]: any;
 
   /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
   code?: string;
 
-  /* 显示名称 */
-  name?: string;
+  /* 结束时间 */
+  endDate?: string;
 
   /* 是否启用 */
   isEnabled?: boolean;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 显示名称 */
+  name?: string;
+
+  /* 排序字段，json格式 */
+  orderBy?: string;
+
+  /* 当前页码 */
+  pageIndex?: number;
+
+  /* 单页大小，最大500，默认15 */
+  pageSize?: number;
+
+  /* 开始时间 */
+  startDate?: string;
 };
 
 export type ContentTypeListResponse = BaseContentTypeDto[];
@@ -58,15 +58,15 @@ export type ContentTypeListResponse = BaseContentTypeDto[];
  *  @更新时间 2025-10-20 09:05:51
  */
 export type CreateContentTypeDto = {
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
   code: string;
-  /* 显示名称 */
-  name: string;
   /* 是否启用 */
   isEnabled?: boolean;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 显示名称 */
+  name: string;
 };
 
 /**
@@ -75,11 +75,11 @@ export type CreateContentTypeDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type IdDto = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 /**
@@ -88,17 +88,17 @@ export type IdDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UpdateContentTypeDto = {
-  /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
-  code?: string;
-  /* 显示名称 */
-  name?: string;
-  /* 是否启用 */
-  isEnabled?: boolean;
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
+  code?: string;
+  /* 主键id */
+  id: number;
+  /* 是否启用 */
+  isEnabled?: boolean;
+
+  /* 显示名称 */
+  name?: string;
 };
 
 /**
@@ -107,19 +107,19 @@ export type UpdateContentTypeDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type BaseContentTypeDto = {
-  /* ID */
-  id: number;
-  /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
-  code: string;
-  /* 显示名称 */
-  name: string;
-  /* 是否启用 */
-  isEnabled?: boolean;
-  /* 创建时间 */
-  createdAt?: string;
-  /* 更新时间 */
-  updatedAt?: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
+  code: string;
+  /* 创建时间 */
+  createdAt?: string;
+  /* ID */
+  id: number;
+  /* 是否启用 */
+  isEnabled?: boolean;
+  /* 显示名称 */
+  name: string;
+
+  /* 更新时间 */
+  updatedAt?: string;
 };

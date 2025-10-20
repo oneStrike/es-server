@@ -6,14 +6,14 @@ export type PlatformResponse = PlatformResponseDto[];
  *  @更新时间 2025-10-20 09:05:51
  */
 export type SearchRequest = {
+  /** 任意合法数值 */
+  [property: string]: any;
+
   /* 搜索关键词 */
   keyword: string;
 
   /* 平台代码 */
   platform: string;
-
-  /** 任意合法数值 */
-  [property: string]: any;
 };
 
 export type SearchResponse = SearchComicItemDto;
@@ -24,13 +24,13 @@ export type SearchResponse = SearchComicItemDto;
  *  @更新时间 2025-10-20 09:05:51
  */
 export type PlatformResponseDto = {
-  /* 平台名称 */
-  name: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 平台名称code */
   code: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 平台名称 */
+  name: string;
 };
 
 /**
@@ -39,17 +39,17 @@ export type PlatformResponseDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type SearchComicItemDto = {
+  /** 任意合法数值 */
+  [property: string]: any;
+  /* 作者列表 */
+  author: string[];
+  /* 封面图片URL */
+  cover: string;
   /* 漫画ID */
   id: string;
   /* 漫画名称 */
   name: string;
-  /* 封面图片URL */
-  cover: string;
-  /* 作者列表 */
-  author: string[];
+
   /* 来源平台 */
   source: string;
-
-  /** 任意合法数值 */
-  [property: string]: any;
 };

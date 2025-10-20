@@ -9,7 +9,7 @@ import type {
 
 import { Page, useVbenModal } from '@vben/common-ui';
 
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { queryParams, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   batchDeleteCategoryApi,
   batchUpdateCategoryStatusApi,
@@ -54,17 +54,17 @@ function handleError(e: unknown, fallbackMsg = '操作失败，请稍后重试')
 const gridOptions: VxeGridProps<BaseCategoryDto> = {
   columns: categoryColumns,
   height: 'auto',
+  sortConfig: {
+    remote: true,
+    multiple: true,
+  },
   proxyConfig: {
     ajax: {
-      query: async ({ page }, formValues) => {
+      query: async ({ page, sorts }, formValues) => {
         if (Array.isArray(formValues.contentType)) {
           formValues.contentType = JSON.stringify(formValues.contentType);
         }
-        return await categoryPageApi({
-          pageIndex: --page.currentPage,
-          pageSize: page.pageSize,
-          ...formValues,
-        });
+        return await categoryPageApi(queryParams({ page, formValues, sorts }));
       },
     },
     sort: true,

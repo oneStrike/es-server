@@ -4,35 +4,41 @@
  *  @更新时间 2025-10-20 09:05:51
  */
 export type DictionaryPageRequest = {
-  /* 单页大小，最大500，默认15 */
-  pageSize?: number;
-
-  /* 当前页码 */
-  pageIndex?: number;
-
-  /* 排序字段，json格式 */
-  orderBy?: string;
-
-  /* 开始时间 */
-  startDate?: string;
-
-  /* 结束时间 */
-  endDate?: string;
-
-  /* 字典名称（模糊查询） */
-  name?: string;
+  /** 任意合法数值 */
+  [property: string]: any;
 
   /* 字典编码（模糊查询） */
   code?: string;
 
+  /* 结束时间 */
+  endDate?: string;
+
   /* 状态筛选 */
   isEnabled?: boolean;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 字典名称（模糊查询） */
+  name?: string;
+
+  /* 排序字段，json格式 */
+  orderBy?: string;
+
+  /* 当前页码 */
+  pageIndex?: number;
+
+  /* 单页大小，最大500，默认15 */
+  pageSize?: number;
+
+  /* 开始时间 */
+  startDate?: string;
 };
 
 export type DictionaryPageResponse = {
+  /** 任意合法数值 */
+  [property: string]: any;
+
+  /* 列表数据 */
+  list?: DictionaryDto[];
+
   /* 当前页码 */
   pageIndex?: number;
 
@@ -41,12 +47,6 @@ export type DictionaryPageResponse = {
 
   /* 总条数 */
   total?: number;
-
-  /* 列表数据 */
-  list?: DictionaryDto[];
-
-  /** 任意合法数值 */
-  [property: string]: any;
 };
 
 /**
@@ -55,11 +55,11 @@ export type DictionaryPageResponse = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type DictionaryDetailRequest = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 export type DictionaryDetailResponse = DictionaryDto;
@@ -106,20 +106,20 @@ export type BatchUpdateDictionaryStatusResponse = CountDto;
  *  @更新时间 2025-10-20 09:05:51
  */
 export type DictionaryItemsRequest = {
-  /* 字典编码 */
-  dictionaryCode: string;
-
-  /* 字典项名称（模糊查询） */
-  name?: string;
+  /** 任意合法数值 */
+  [property: string]: any;
 
   /* 字典项编码（模糊查询） */
   code?: string;
 
+  /* 字典编码 */
+  dictionaryCode: string;
+
   /* 状态筛选 */
   isEnabled?: boolean;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 字典项名称（模糊查询） */
+  name?: string;
 };
 
 export type DictionaryItemsResponse = DictionaryItemDto[];
@@ -166,25 +166,25 @@ export type UpdateDictionaryItemStatusResponse = CountDto;
  *  @更新时间 2025-10-20 09:05:51
  */
 export type DictionaryDto = {
-  /* 字典ID */
-  id: number;
-  /* 字典名称 */
-  name: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 字典编码 */
   code: string;
   /* 字典封面 */
   cover?: string;
-  /* 状态 true启用 false禁用 */
-  isEnabled: boolean;
-  /* 备注信息 */
-  description?: string;
   /* 创建时间 */
   createdAt: string;
+  /* 备注信息 */
+  description?: string;
+  /* 字典ID */
+  id: number;
+  /* 状态 true启用 false禁用 */
+  isEnabled: boolean;
+  /* 字典名称 */
+  name: string;
+
   /* 更新时间 */
   updatedAt: string;
-
-  /** 任意合法数值 */
-  [property: string]: any;
 };
 
 /**
@@ -193,19 +193,19 @@ export type DictionaryDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type CreateDictionaryDto = {
-  /* 字典名称 */
-  name: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 字典编码 */
   code: string;
   /* 字典封面 */
   cover?: string;
-  /* 状态 true启用 false禁用 */
-  isEnabled?: boolean;
   /* 备注信息 */
   description?: string;
+  /* 状态 true启用 false禁用 */
+  isEnabled?: boolean;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 字典名称 */
+  name: string;
 };
 
 /**
@@ -214,11 +214,11 @@ export type CreateDictionaryDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type IdDto = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 /**
@@ -227,21 +227,21 @@ export type IdDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UpdateDictionaryDto = {
-  /* 主键id */
-  id: number;
-  /* 字典名称 */
-  name?: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 字典编码 */
   code?: string;
   /* 字典封面 */
   cover?: string;
-  /* 状态 true启用 false禁用 */
-  isEnabled?: boolean;
   /* 备注信息 */
   description?: string;
+  /* 主键id */
+  id: number;
+  /* 状态 true启用 false禁用 */
+  isEnabled?: boolean;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 字典名称 */
+  name?: string;
 };
 
 /**
@@ -250,11 +250,11 @@ export type UpdateDictionaryDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type IdsDto = {
-  /* 主键id */
-  ids: number[];
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  ids: number[];
 };
 
 /**
@@ -263,13 +263,13 @@ export type IdsDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type BatchEnabledDto = {
-  /* 主键id */
-  ids: number[];
-  /* 启用或者禁用 */
-  isEnabled: boolean;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 主键id */
+  ids: number[];
+
+  /* 启用或者禁用 */
+  isEnabled: boolean;
 };
 
 /**
@@ -278,11 +278,11 @@ export type BatchEnabledDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type CountDto = {
-  /* 操作成功的数据数量 */
-  count: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 操作成功的数据数量 */
+  count: number;
 };
 
 /**
@@ -291,29 +291,29 @@ export type CountDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type DictionaryItemDto = {
-  /* 字典项ID */
-  id: number;
-  /* 字典编码 */
-  dictionaryCode: string;
-  /* 字典项名称 */
-  name: string;
-  /* 字典项编码 */
-  code: string;
-  /* 排序 */
-  order?: number;
-  /* 字典项封面 */
-  cover?: string;
-  /* 状态 true启用 false禁用 */
-  isEnabled: boolean;
-  /* 备注信息 */
-  description?: string;
-  /* 创建时间 */
-  createdAt: string;
-  /* 更新时间 */
-  updatedAt: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 字典项编码 */
+  code: string;
+  /* 字典项封面 */
+  cover?: string;
+  /* 创建时间 */
+  createdAt: string;
+  /* 备注信息 */
+  description?: string;
+  /* 字典编码 */
+  dictionaryCode: string;
+  /* 字典项ID */
+  id: number;
+  /* 状态 true启用 false禁用 */
+  isEnabled: boolean;
+  /* 字典项名称 */
+  name: string;
+  /* 排序 */
+  order?: number;
+
+  /* 更新时间 */
+  updatedAt: string;
 };
 
 /**
@@ -322,23 +322,23 @@ export type DictionaryItemDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type CreateDictionaryItemDto = {
-  /* 字典编码 */
-  dictionaryCode: string;
-  /* 字典项名称 */
-  name: string;
-  /* 字典项编码 */
-  code: string;
-  /* 排序 */
-  order?: number;
-  /* 字典项封面 */
-  cover?: string;
-  /* 状态 true启用 false禁用 */
-  isEnabled?: boolean;
-  /* 备注信息 */
-  description?: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 字典项编码 */
+  code: string;
+  /* 字典项封面 */
+  cover?: string;
+  /* 备注信息 */
+  description?: string;
+  /* 字典编码 */
+  dictionaryCode: string;
+  /* 状态 true启用 false禁用 */
+  isEnabled?: boolean;
+  /* 字典项名称 */
+  name: string;
+
+  /* 排序 */
+  order?: number;
 };
 
 /**
@@ -347,23 +347,23 @@ export type CreateDictionaryItemDto = {
  *  @更新时间 2025-10-20 09:05:51
  */
 export type UpdateDictionaryItemDto = {
-  /* 字典编码 */
-  dictionaryCode: string;
-  /* 字典项名称 */
-  name: string;
-  /* 字典项编码 */
-  code: string;
-  /* 排序 */
-  order?: number;
-  /* 字典项封面 */
-  cover?: string;
-  /* 状态 true启用 false禁用 */
-  isEnabled?: boolean;
-  /* 备注信息 */
-  description?: string;
-  /* 字典项ID */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 字典项编码 */
+  code: string;
+  /* 字典项封面 */
+  cover?: string;
+  /* 备注信息 */
+  description?: string;
+  /* 字典编码 */
+  dictionaryCode: string;
+  /* 字典项ID */
+  id: number;
+  /* 状态 true启用 false禁用 */
+  isEnabled?: boolean;
+  /* 字典项名称 */
+  name: string;
+
+  /* 排序 */
+  order?: number;
 };

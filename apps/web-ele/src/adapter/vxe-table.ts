@@ -4,9 +4,10 @@ import { h } from 'vue';
 
 import { setupVbenVxeTable, useVbenVxeGrid } from '@vben/plugins/vxe-table';
 
-import { ElButton, ElImage, ElTag } from 'element-plus';
+import { ElButton, ElImage, ElTag, ElText } from 'element-plus';
 
 import { ImageLine } from '#/components/es-icons';
+import { formatUTC } from '#/utils';
 
 import { useVbenForm } from './form';
 
@@ -74,6 +75,21 @@ setupVbenVxeTable({
         );
       },
     });
+    // 表格配置项可以用 cellRender: { name: 'CellDate' },
+    vxeUI.renderer.add('CellDate', {
+      renderTableDefault(_renderOpts, params) {
+        const { column, row } = params;
+        const type = _renderOpts.props?.type ?? '';
+        const text = row[column.field] || '';
+        return h(
+          ElText,
+          {
+            type,
+          },
+          () => formatUTC(text),
+        );
+      },
+    });
 
     // 表格配置项可以用 cellRender: { name: 'CellLink' },
     vxeUI.renderer.add('CellLink', {
@@ -110,6 +126,21 @@ setupVbenVxeTable({
   useVbenForm,
 });
 
-export { useVbenVxeGrid };
+const queryParams = ({ page, formValues, sorts }: any) => {
+  if (sorts.length > 0) {
+    formValues.orderBy = {};
+    sorts.forEach((item: any) => {
+      formValues.orderBy[item.field] = item.order;
+    });
+    formValues.orderBy = JSON.stringify(formValues.orderBy);
+  }
+  return {
+    pageIndex: --page.currentPage,
+    pageSize: page.pageSize,
+    ...formValues,
+  };
+};
+
+export { queryParams, useVbenVxeGrid };
 
 export type * from '@vben/plugins/vxe-table';

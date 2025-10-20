@@ -1,30 +1,21 @@
-import { requestClient } from '#/utils/request';
 import type {
-  CreateCategoryRequest,
-  CreateCategoryResponse,
-  CategoryPageRequest,
-  CategoryPageResponse,
-  CategoryDetailRequest,
-  CategoryDetailResponse,
-  UpdateCategoryRequest,
-  UpdateCategoryResponse,
-  BatchUpdateCategoryStatusRequest,
-  BatchUpdateCategoryStatusResponse,
-  CategoryOrderRequest,
-  CategoryOrderResponse,
   BatchDeleteCategoryRequest,
   BatchDeleteCategoryResponse,
-  CreateCategoryDto,
-  IdDto,
-  BaseCategoryDto,
-  CategoryContentTypeItemDto,
-  BaseContentTypeDto,
-  UpdateCategoryDto,
-  BatchEnabledDto,
-  CountDto,
-  OrderDto,
-  IdsDto,
+  BatchUpdateCategoryStatusRequest,
+  BatchUpdateCategoryStatusResponse,
+  CategoryDetailRequest,
+  CategoryDetailResponse,
+  CategoryOrderRequest,
+  CategoryOrderResponse,
+  CategoryPageRequest,
+  CategoryPageResponse,
+  CreateCategoryRequest,
+  CreateCategoryResponse,
+  UpdateCategoryRequest,
+  UpdateCategoryResponse,
 } from './types/category.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 创建分类
