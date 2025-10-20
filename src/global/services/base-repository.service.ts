@@ -1,6 +1,7 @@
 import type { Prisma } from '@/prisma/client/client'
 import { BadRequestException, Global, Injectable } from '@nestjs/common'
 import { PrismaService } from '@/global/services/prisma.service'
+import { jsonParse } from '@/utils'
 
 export interface PaginationResult<T> {
   list: T[]
@@ -218,9 +219,12 @@ export abstract class BaseRepositoryService<T extends ModelName> {
       }
       finalWhere = { ...finalWhere, [dateField]: dateCond }
     }
-    let finalOrderBy: ModelTypes<T>['OrderByInput'] = { id: 'desc' } as any
+    let finalOrderBy: ModelTypes<T>['OrderByInput'] = { id: 'desc' }
     if (orderBy) {
-      finalOrderBy = typeof orderBy === 'string' ? JSON.parse(orderBy) : orderBy
+      const orderByParse = jsonParse(orderBy, {})
+      finalOrderBy = Object.keys(orderByParse).map((key) => ({
+        [key]: orderByParse[key],
+      }))
     }
     return this._paginationInternal(
       {

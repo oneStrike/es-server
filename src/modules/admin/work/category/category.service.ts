@@ -88,7 +88,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 分页结果
    */
   async getCategoryPage(queryDto: QueryCategoryDto) {
-    const { name, isEnabled, contentType } = queryDto as any
+    const { name, isEnabled, contentType, ...pageParams } = queryDto as any
 
     // 构建查询条件
     const where: any = {}
@@ -109,11 +109,11 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       }
     }
 
-    const data = await this.findPagination({
+    return this.findPagination({
       where,
       include: { categoryContentTypes: { include: { contentType: true } } },
+      ...pageParams,
     })
-    return data
   }
 
   /**
