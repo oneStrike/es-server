@@ -14,6 +14,7 @@ type FilterItemExtra = Partial<
   Record<
     EsFormSchema[number]['fieldName'],
     Partial<EsFormSchema[number]> & {
+      hide?: boolean;
       show?: boolean;
       sort?: number;
     }
@@ -156,8 +157,9 @@ export const formSchemaTransform: FormSchemaTransform = {
     // 先过滤出需要的项目并添加排序信息
     for (const [i, item] of innerSchema.entries()) {
       const itemExtra = extra?.[item.fieldName];
+      delete extra?.[item.fieldName];
 
-      if (itemExtra) {
+      if (itemExtra && itemExtra.hide !== true) {
         const componentConfig =
           filterComponentProps[
             item.component as keyof typeof filterComponentProps
@@ -205,8 +207,23 @@ export const formSchemaTransform: FormSchemaTransform = {
       }
     }
 
-    // 根据 sort 属性排序，没有 sort 的保持原有位置
-    sortItemsWithSortValue(filterListWithSort);
+    if (extra) {
+      Object.keys(extra).forEach((key) => {
+        const item = extra[key];
+        if (item) {
+          item.fieldName = item?.fieldName || key;
+          filterListWithSort.push({
+            ...item,
+            originalIndex: filterListWithSort.length,
+            sortValue: item?.sort,
+          } as (typeof filterListWithSort)[number]);
+        }
+      });
+    }
+    typeof (
+      // 根据 sort 属性排序，没有 sort 的保持原有位置
+      sortItemsWithSortValue(filterListWithSort)
+    );
 
     // 移除辅助属性，返回最终的过滤列表
     return filterListWithSort;

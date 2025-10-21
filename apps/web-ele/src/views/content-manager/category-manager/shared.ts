@@ -79,6 +79,7 @@ export const categoryColumns =
       show: true,
       title: '状态',
       sort: 99,
+      minWidth: 100,
       slots: { default: 'isEnabled' },
     },
     order: {
@@ -89,11 +90,13 @@ export const categoryColumns =
       cellRender: {
         name: 'CellTag',
       },
+      minWidth: 200,
     },
     popularity: {
       title: '热度',
       field: 'popularity',
       sort: 9,
+      minWidth: 100,
       sortable: true,
     },
     popularityWeight: {
@@ -121,7 +124,21 @@ export const categorySearchSchema = formSchemaTransform.toSearchSchema(
       show: true,
     },
     isEnabled: {
-      show: true,
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        clearable: true,
+        options: [
+          {
+            label: '启用',
+            value: true,
+          },
+          {
+            label: '禁用',
+            value: false,
+          },
+        ],
+      },
     },
     contentType: {
       show: true,
