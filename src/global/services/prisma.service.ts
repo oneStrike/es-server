@@ -19,7 +19,8 @@ import { PrismaClient } from '@/prisma/client/client'
 @Global()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnApplicationShutdown {
+  implements OnModuleInit, OnApplicationShutdown
+{
   private readonly logger = new Logger(PrismaService.name)
   private isConnected = false
   private connectionAttempts = 0
@@ -37,6 +38,24 @@ export class PrismaService
       adapter: new PrismaPg({
         connectionString: databaseUrl,
       }),
+      log: [
+        {
+          emit: 'event',
+          level: 'query',
+        },
+        {
+          emit: 'stdout',
+          level: 'error',
+        },
+        {
+          emit: 'stdout',
+          level: 'info',
+        },
+        {
+          emit: 'stdout',
+          level: 'warn',
+        },
+      ],
     })
   }
 
@@ -70,10 +89,9 @@ export class PrismaService
         // 🔍 执行连接后的健康检查
         await this.performHealthCheck()
         return
-      }
-      catch (error) {
-        const errorMessage
-          = error instanceof Error ? error.message : String(error)
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error)
         this.logger.error(
           `❌ 数据库连接失败 (尝试 ${attempt}/${this.maxRetries}): ${errorMessage}`,
         )
@@ -100,10 +118,9 @@ export class PrismaService
     try {
       await this.$queryRaw`SELECT 1 as health_check`
       this.logger.log('🩺 数据库健康检查通过')
-    }
-    catch (error) {
-      const errorMessage
-        = error instanceof Error ? error.message : String(error)
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
       this.logger.warn(`⚠️ 数据库健康检查失败: ${errorMessage}`)
     }
   }
@@ -112,7 +129,7 @@ export class PrismaService
    * 延迟工具函数
    */
   private async delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   /**
@@ -133,10 +150,9 @@ export class PrismaService
       this.isConnected = false
 
       this.logger.log('✅ 数据库连接已安全断开')
-    }
-    catch (error) {
-      const errorMessage
-        = error instanceof Error ? error.message : String(error)
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
       this.logger.error(`❌ 数据库断开连接失败: ${errorMessage}`)
     }
   }
@@ -172,10 +188,9 @@ export class PrismaService
 
       await this.$queryRaw`SELECT 1 as health_check`
       return { status: 'healthy', message: '数据库连接正常' }
-    }
-    catch (error) {
-      const errorMessage
-        = error instanceof Error ? error.message : String(error)
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
       return {
         status: 'unhealthy',
         message: `数据库健康检查失败: ${errorMessage}`,

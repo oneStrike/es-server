@@ -1,12 +1,12 @@
 model WorkComicCategory {
   /// 漫画ID
-  comicId    Int @map("comic_id")
+  comicId    Int      @map("comic_id")
   /// 分类ID  
-  categoryId Int @map("category_id")
+  categoryId Int      @map("category_id")
   /// 是否为主要分类
-  isPrimary  Boolean @default(false) @map("is_primary")
+  isPrimary  Boolean  @default(false) @map("is_primary")
   /// 分类权重（用于排序显示）
-  weight     Int @default(0)
+  weight     Int      @default(0)
   /// 关联时间
   createdAt  DateTime @default(now()) @map("created_at")
   /// 更新时间
