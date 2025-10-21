@@ -196,11 +196,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
           })
         }
       }
-
-      return tx.workCategory.findUnique({
-        where: { id },
-        include: { categoryContentTypes: { include: { contentType: true } } },
-      })
+      return id
     })
   }
 
@@ -257,7 +253,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
     for (const id of ids) {
       const hasWorks = await this.checkCategoryHasWorks()
       if (hasWorks) {
-        const category = categories.find((c) => c.id === id)
+        const category = categories.find((c) => c?.id === id)
         throw new BadRequestException(
           `分类 ${category?.name} 还有作品，无法删除`,
         )

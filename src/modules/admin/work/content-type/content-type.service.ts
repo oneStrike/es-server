@@ -47,7 +47,7 @@ export class ContentTypeService extends BaseRepositoryService<'WorkContentType'>
     if (isEnabled !== undefined) {
       where.isEnabled = isEnabled
     }
-    return this.findMany({ where, orderBy: { id: 'desc' } })
+    return this.findMany({ where })
   }
 
   /**

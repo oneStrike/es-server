@@ -146,7 +146,6 @@ export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
   'createdAt',
   'updatedAt',
   'popularity',
-  'popularityWeight',
   'categoryContentTypes',
 ]) {
   // 创建时要求明确指定媒介代码集合
