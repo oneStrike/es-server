@@ -38,18 +38,6 @@ function handleSuccessReload(gridApi: any, message = '操作成功'): void {
 const contentTypeMap: Record<number, string> = {};
 
 /**
- * 统一错误处理机制：
- */
-function handleError(e: unknown, fallbackMsg = '操作失败，请稍后重试'): void {
-  // 可按需扩展为错误上报、日志采集等
-  const msg =
-    typeof e === 'object' && e && 'message' in e
-      ? (e as any).message
-      : fallbackMsg;
-  useMessage.error(msg);
-}
-
-/**
  * VxeGrid 的选项配置：
  */
 const gridOptions: VxeGridProps<BaseCategoryDto> = {
@@ -127,24 +115,20 @@ contentTypeListApi().then((res) => {
  * 打开表单弹窗
  */
 async function openFormModal(row?: BaseCategoryDto): Promise<void> {
-  try {
-    let record: BaseCategoryDto | undefined;
-    if (row) {
-      record = await categoryDetailApi({ id: row.id });
-      record.contentType = record.categoryContentTypes.map(
-        (item) => item.contentType.code,
-      );
-    }
-    formApi
-      .setData({
-        title: '分类',
-        record,
-        schema: formSchema,
-      })
-      .open();
-  } catch (error) {
-    handleError(error, '获取分类详情失败');
+  let record: BaseCategoryDto | undefined;
+  if (row) {
+    record = await categoryDetailApi({ id: row.id });
+    record.contentType = record.categoryContentTypes.map(
+      (item) => item.contentType.code,
+    );
   }
+  formApi
+    .setData({
+      title: '分类',
+      record,
+      schema: formSchema,
+    })
+    .open();
 }
 
 /**
@@ -152,17 +136,12 @@ async function openFormModal(row?: BaseCategoryDto): Promise<void> {
  */
 async function toggleEnableStatus(row: BaseCategoryDto): Promise<void> {
   row.loading = true as any;
-  try {
-    await batchUpdateCategoryStatusApi({
-      ids: [row.id],
-      isEnabled: !row.isEnabled,
-    });
-    handleSuccessReload(gridApi);
-  } catch (error) {
-    handleError(error, '更新分类状态失败');
-  } finally {
-    row.loading = false as any;
-  }
+  await batchUpdateCategoryStatusApi({
+    ids: [row.id],
+    isEnabled: !row.isEnabled,
+  });
+  handleSuccessReload(gridApi);
+  row.loading = false as any;
 }
 
 /**
@@ -182,14 +161,10 @@ async function addOrUpdateCategory(values: CategoryFormValues): Promise<void> {
  * 删除分类
  */
 async function deleteCategory(row: BaseCategoryDto): Promise<void> {
-  try {
-    await batchDeleteCategoryApi({
-      ids: [row.id],
-    });
-    handleSuccessReload(gridApi);
-  } catch (error) {
-    handleError(error, '删除分类失败');
-  }
+  await batchDeleteCategoryApi({
+    ids: [row.id],
+  });
+  handleSuccessReload(gridApi);
 }
 </script>
 
