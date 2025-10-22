@@ -22,9 +22,7 @@ model ClientPageConfig {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
   /// 更新时间
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-  /// 软删除时间
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
-
+  
   /// 关联的通知公告
   notices ClientNotice[] @relation("notices")
 

@@ -1,9 +1,9 @@
+import type { WorkCategoryWhereInput } from '@/prisma/client/models'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { BatchEnabledDto } from '@/common/dto/batch.dto'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
-import { PrismaService } from '@/global/services/prisma.service'
-import { jsonParse } from '@/utils'
 
+import { RepositoryService } from '@/common/services/repository.service'
+import { jsonParse } from '@/utils'
 import {
   CreateCategoryDto,
   QueryCategoryDto,
@@ -15,12 +15,9 @@ import {
  * 继承 BaseRepositoryService，提供分类相关的业务逻辑
  */
 @Injectable()
-export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
-  protected readonly modelName = 'WorkCategory' as const
-  protected readonly sortField = 'order' as const
-
-  constructor(protected readonly prisma: PrismaService) {
-    super(prisma)
+export class WorkCategoryService extends RepositoryService {
+  get workCategory() {
+    return this.prisma.workCategory
   }
 
   /**
@@ -30,7 +27,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    */
   async createCategory(createCategoryDto: CreateCategoryDto) {
     // 验证分类名称是否已存在
-    const existingCategory = await this.findByUnique({
+    const existingCategory = await this.workCategory.findUnique({
       where: { name: createCategoryDto.name },
     })
     if (existingCategory) {
@@ -48,7 +45,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
 
     // 如果没有指定排序值，设置为最大值+1
     if (!createCategoryDto.order) {
-      const maxOrder = await this.getMaxOrder()
+      const maxOrder = await this.workCategory.maxOrder()
       createCategoryDto.order = maxOrder + 1
     }
 
@@ -89,10 +86,10 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    * @returns 分页结果
    */
   async getCategoryPage(queryDto: QueryCategoryDto) {
-    const { name, isEnabled, contentType, ...pageParams } = queryDto as any
+    const { name, isEnabled, contentType, ...pageParams } = queryDto
 
     // 构建查询条件
-    const where: any = {}
+    const where: WorkCategoryWhereInput = {}
 
     if (name) {
       where.name = { contains: name }
@@ -110,10 +107,9 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
       }
     }
 
-    return this.findPagination({
-      where,
+    return this.workCategory.findPagination({
+      where: { ...where, ...pageParams },
       include: { categoryContentTypes: { include: { contentType: true } } },
-      ...pageParams,
     })
   }
 
@@ -142,14 +138,16 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
     const { id, ...updateData } = updateCategoryDto as any
 
     // 验证分类是否存在
-    const existingCategory = await this.findById({ id })
+    const existingCategory = await this.workCategory.findUnique({
+      where: { id },
+    })
     if (!existingCategory) {
       throw new BadRequestException('分类不存在')
     }
 
     // 如果更新名称，验证名称是否已被其他分类使用
     if (updateData.name && updateData.name !== existingCategory.name) {
-      const duplicateCategory = await this.findByUnique({
+      const duplicateCategory = await this.workCategory.findUnique({
         where: { name: updateData.name },
       })
       if (duplicateCategory && duplicateCategory.id !== id) {
@@ -209,14 +207,14 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
     const { ids, isEnabled } = updateStatusDto
 
     // 验证所有分类是否存在
-    const categories = await this.findMany({
+    const categories = await this.workCategory.findMany({
       where: { id: { in: ids } },
     })
     if (categories.length !== ids.length) {
       throw new BadRequestException('部分分类不存在')
     }
 
-    return this.updateMany({
+    return this.workCategory.updateMany({
       where: { id: { in: ids } },
       data: { isEnabled },
     })
@@ -242,7 +240,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
    */
   async deleteCategoryBatch(ids: number[]) {
     // 验证所有分类是否存在
-    const categories = await this.findMany({
+    const categories = await this.workCategory.findMany({
       where: { id: { in: ids } },
     })
     if (categories.length !== ids.length) {
@@ -259,7 +257,7 @@ export class WorkCategoryService extends BaseRepositoryService<'WorkCategory'> {
         )
       }
     }
-    return this.deleteMany({ id: { in: ids } })
+    return this.workCategory.deleteMany({ where: { id: { in: ids } } })
   }
 
   /**

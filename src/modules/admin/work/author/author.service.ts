@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { BatchEnabledDto } from '@/common/dto/batch.dto'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
-import { PrismaService } from '@/global/services/prisma.service'
+import { RepositoryService } from '@/common/services/repository.service'
 import { WorkAuthorWhereInput } from '@/prisma/client/models/WorkAuthor'
 import {
   CreateAuthorDto,
@@ -15,12 +14,9 @@ import {
  * 提供作者的增删改查等核心业务逻辑
  */
 @Injectable()
-export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
-  protected readonly modelName = 'WorkAuthor' as const
-  protected readonly supportsSoftDelete = true
-
-  constructor(protected readonly prisma: PrismaService) {
-    super(prisma)
+export class WorkAuthorService extends RepositoryService {
+  get workAuthor() {
+    return this.prisma.workAuthor
   }
 
   /**
@@ -30,7 +26,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
    */
   async createAuthor(createAuthorDto: CreateAuthorDto) {
     // 验证作者姓名是否已存在
-    const existingAuthor = await this.findByUnique({
+    const existingAuthor = await this.workAuthor.findUnique({
       where: { name: createAuthorDto.name },
     })
     if (existingAuthor) {
@@ -48,7 +44,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
       }
     }
 
-    return this.create({ data: createAuthorDto })
+    return this.workAuthor.create({ data: createAuthorDto })
   }
 
   /**
@@ -98,7 +94,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
       where.featured = featured
     }
 
-    return this.findPagination({
+    return this.workAuthor.findPagination({
       where,
       omit: {
         remark: true,
@@ -116,8 +112,8 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
    * @returns 作者详情信息
    */
   async getAuthorDetail(id: number) {
-    const author = await this.findById({
-      id,
+    const author = await this.workAuthor.findUnique({
+      where: { id },
     })
 
     if (!author) {
@@ -138,14 +134,14 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
     const { id, ...updateData } = updateAuthorDto
 
     // 验证作者是否存在
-    const existingAuthor = await this.findById({ id })
+    const existingAuthor = await this.workAuthor.findUnique({ where: { id } })
     if (!existingAuthor) {
       throw new BadRequestException('作者不存在')
     }
 
     // 如果更新姓名，验证是否与其他作者重复
     if (updateData.name && updateData.name !== existingAuthor.name) {
-      const duplicateAuthor = await this.findFirst({
+      const duplicateAuthor = await this.workAuthor.findFirst({
         where: {
           name: updateData.name,
           id: { not: id },
@@ -167,8 +163,8 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
       }
     }
 
-    return this.updateById({
-      id,
+    return this.workAuthor.update({
+      where: { id },
       data: updateData,
     })
   }
@@ -181,7 +177,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
   async updateAuthorStatus(updateAuthorStatusDto: BatchEnabledDto) {
     const { ids, isEnabled } = updateAuthorStatusDto
 
-    return this.updateMany({
+    return this.workAuthor.updateMany({
       where: {
         id: { in: ids },
       },
@@ -199,7 +195,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
   async updateAuthorFeatured(updateAuthorFeaturedDto: UpdateAuthorFeaturedDto) {
     const { ids, featured } = updateAuthorFeaturedDto
 
-    return this.updateMany({
+    return this.workAuthor.updateMany({
       where: {
         id: { in: ids },
       },
@@ -216,7 +212,7 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
    */
   async deleteAuthor(id: number) {
     // 验证作者是否存在
-    const existingAuthor = await this.findById({ id })
+    const existingAuthor = await this.workAuthor.findUnique({ where: { id } })
     if (!existingAuthor) {
       throw new BadRequestException('作者不存在')
     }
@@ -226,6 +222,6 @@ export class WorkAuthorService extends BaseRepositoryService<'WorkAuthor'> {
       )
     }
 
-    return this.softDelete(id)
+    return this.workAuthor.softDelete({ id })
   }
 }

@@ -1,5 +1,9 @@
+import type {
+  DictionaryItemWhereInput,
+  DictionaryWhereInput,
+} from '@/prisma/client/models'
 import { Injectable } from '@nestjs/common'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { RepositoryService } from '@/common/services/repository.service'
 import { CreateDictionaryItemDto } from './dto/dictionary-item.dto'
 import {
   QueryDictionaryDto,
@@ -11,8 +15,14 @@ import {
  * 提供字典和字典项的增删改查功能
  */
 @Injectable()
-export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
-  protected readonly modelName = 'Dictionary' as const
+export class DictionaryService extends RepositoryService {
+  get dictionary() {
+    return this.prisma.dictionary
+  }
+
+  get dictionaryItem() {
+    return this.prisma.dictionaryItem
+  }
 
   /**
    * 分页查询字典列表
@@ -22,7 +32,7 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
   async findDictionaries(queryDto: QueryDictionaryDto) {
     const { code, name, isEnabled } = queryDto
 
-    const where: any = {}
+    const where: DictionaryWhereInput = {}
 
     if (code) {
       where.code = { contains: code }
@@ -34,10 +44,7 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
       where.isEnabled = { equals: isEnabled }
     }
 
-    return this.findPagination({
-      where,
-      ...queryDto,
-    })
+    return this.dictionary.findPagination({ where })
   }
 
   /**
@@ -48,7 +55,7 @@ export class DictionaryService extends BaseRepositoryService<'Dictionary'> {
   async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
     const { dictionaryCode, name, code, isEnabled } = queryDto
 
-    const where: any = {
+    const where: DictionaryItemWhereInput = {
       dictionaryCode: {
         in: dictionaryCode.split(','),
       },

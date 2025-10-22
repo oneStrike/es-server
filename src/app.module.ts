@@ -14,7 +14,6 @@ import { ClientModule } from '@/modules/client/client.module'
 import { PrismaService } from '@/prisma/prisma.connect'
 import { GuardsModule } from './common/guards/guards.module'
 import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard'
-import { GlobalModule } from './global/global.module'
 
 @Module({
   imports: [
@@ -35,7 +34,6 @@ import { GlobalModule } from './global/global.module'
     }),
 
     LoggerModule, // 添加日志模块
-    GlobalModule,
     GuardsModule,
     AdminModule,
     ClientModule,

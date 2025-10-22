@@ -61,7 +61,7 @@ export class ClientPageConfigController {
     model: ClientPageConfigResponseDto,
   })
   async findDetail(@Query('id', ParseIntPipe) id: number) {
-    return this.pageConfigService.findById({ id })
+    return this.pageConfigService.clientPageConfig.findUnique({ where: { id } })
   }
 
   /**
@@ -73,7 +73,9 @@ export class ClientPageConfigController {
     model: ClientPageConfigResponseDto,
   })
   async findByCode(@Query('pageCode') pageCode: string) {
-    return this.pageConfigService.findByUnique({ where: { pageCode } })
+    return this.pageConfigService.clientPageConfig.findUnique({
+      where: { pageCode },
+    })
   }
 
   /**
@@ -93,12 +95,12 @@ export class ClientPageConfigController {
    */
   @Post('/batch-delete-client-page')
   @ApiDoc({
-    summary: '批量软删除页面配置',
+    summary: '批量删除页面配置',
     model: CountDto,
   })
   async batchDelete(@Body() body: IdsDto) {
-    return this.pageConfigService.softDeleteMany({
-      id: { in: body.ids },
+    return this.pageConfigService.clientPageConfig.deleteMany({
+      where: { id: { in: body.ids } },
     })
   }
 }

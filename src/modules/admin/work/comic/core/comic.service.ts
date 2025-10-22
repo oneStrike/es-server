@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { RepositoryService } from '@/common/services/repository.service'
 
 import { WorkComicWhereInput } from '@/prisma/client/models/WorkComic'
 import { isBoolean, isNotNil } from '@/utils'
@@ -10,9 +10,10 @@ import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
  * 提供漫画的增删改查等核心业务逻辑
  */
 @Injectable()
-export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
-  protected readonly modelName = 'WorkComic' as const
-  protected readonly supportsSoftDelete = true
+export class WorkComicService extends RepositoryService {
+  get workComic() {
+    return this.prisma.workComic
+  }
 
   /**
    * 创建漫画
@@ -23,7 +24,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
     const { authorIds, categoryIds, ...comicData } = createComicDto
 
     // 验证漫画名称是否已存在
-    const existingComic = await this.findFirst({
+    const existingComic = await this.workComic.findFirst({
       where: {
         name: createComicDto.name,
       },
@@ -60,7 +61,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
       throw new BadRequestException('部分分类不存在或已禁用')
     }
 
-    return this.create({
+    return this.workComic.create({
       data: {
         ...comicData,
         // 创建作者关联关系
@@ -103,6 +104,7 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
       isNew,
       publisher,
       author,
+      ...pageDto
     } = queryComicDto
 
     // 构建查询条件
@@ -183,8 +185,8 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
       }
     }
 
-    const pageData = await this.findPagination({
-      where,
+    const pageData = await this.workComic.findPagination({
+      where: { ...where, ...pageDto },
       select: {
         // 必须明确指定需要的所有字段
         id: true,
@@ -225,18 +227,20 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
         },
       },
     })
-    pageData.list = pageData.list.map((item) => ({
-      ...item,
-      comicAuthors: item.comicAuthors.map((author) => ({
-        ...author.author,
-        roleType: author.roleType,
-        isPrimary: author.isPrimary,
-        sortOrder: author.sortOrder,
-      })),
-      comicCategories: item.comicCategories.map((category) => ({
-        ...category.category,
-      })),
-    }))
+    pageData.list = pageData.list.map((item) => {
+      return {
+        ...item,
+        comicAuthors: item.comicAuthors.map((author) => ({
+          ...author.author,
+          roleType: author.roleType,
+          isPrimary: author.isPrimary,
+          sortOrder: author.sortOrder,
+        })),
+        comicCategories: item.comicCategories.map((category) => ({
+          ...category.category,
+        })),
+      }
+    })
     return pageData
   }
 
@@ -246,8 +250,8 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
    * @returns 漫画详情信息
    */
   async getComicDetail(id: number) {
-    const comic = await this.findById({
-      id,
+    const comic = await this.workComic.findUnique({
+      where: { id },
       include: {
         comicAuthors: {
           select: {
@@ -303,14 +307,14 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
     const { id, authorIds, categoryIds, ...updateData } = updateComicDto
 
     // 验证漫画是否存在
-    const existingComic = await this.findById({ id })
+    const existingComic = await this.workComic.findUnique({ where: { id } })
     if (!existingComic) {
       throw new BadRequestException('漫画不存在')
     }
 
     // 如果更新名称，验证是否与其他漫画重复
     if (isNotNil(updateData.name) && updateData.name !== existingComic.name) {
-      const duplicateComic = await this.findFirst({
+      const duplicateComic = await this.workComic.findFirst({
         where: {
           name: updateData.name,
           id: { not: id },
@@ -422,6 +426,6 @@ export class WorkComicService extends BaseRepositoryService<'WorkComic'> {
       )
     }
 
-    return this.softDelete(id)
+    return this.workComic.softDelete({ id })
   }
 }

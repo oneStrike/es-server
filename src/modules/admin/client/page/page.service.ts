@@ -1,8 +1,7 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common'
-import { CustomPrismaService } from 'nestjs-prisma/dist/custom'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { RepositoryService } from '@/common/services/repository.service'
 import { PageStatusEnum } from '@/modules/admin/client/page/page.constant'
 import { ClientPageConfigWhereInput } from '@/prisma/client/models/ClientPageConfig'
-import { PrismaClientType } from '@/prisma/prisma.connect'
 import {
   BasePageConfigFieldsDto,
   QueryClientPageConfigDto,
@@ -14,11 +13,10 @@ import {
  * 提供页面配置的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ClientPageConfigService {
-  constructor(
-    @Inject('PrismaService')
-    private prismaService: CustomPrismaService<PrismaClientType>,
-  ) {}
+export class ClientPageConfigService extends RepositoryService {
+  get clientPageConfig() {
+    return this.prisma.clientPageConfig
+  }
 
   /**
    * 创建页面配置
@@ -27,7 +25,7 @@ export class ClientPageConfigService {
    */
   async createPageConfig(createPageConfigDto: BasePageConfigFieldsDto) {
     // 验证页面编码是否已存在
-    const existingByCode = await this.findFirst({
+    const existingByCode = await this.clientPageConfig.findFirst({
       where: { pageCode: createPageConfigDto.pageCode },
     })
     if (existingByCode) {
@@ -37,7 +35,7 @@ export class ClientPageConfigService {
     }
 
     // 验证页面路径是否已存在
-    const existingByPath = await this.findFirst({
+    const existingByPath = await this.clientPageConfig.findFirst({
       where: { pagePath: createPageConfigDto.pagePath },
     })
     if (existingByPath) {
@@ -46,7 +44,7 @@ export class ClientPageConfigService {
       )
     }
 
-    return this.create({ data: createPageConfigDto })
+    return this.clientPageConfig.create({ data: createPageConfigDto })
   }
 
   /**
@@ -73,9 +71,8 @@ export class ClientPageConfigService {
       where.pageStatus = pageStatus
     }
 
-    return this.findPagination({
-      ...other,
-      where,
+    return this.clientPageConfig.findPagination({
+      where: { ...where, ...other },
     })
   }
 
@@ -93,7 +90,7 @@ export class ClientPageConfigService {
       where.accessLevel = accessLevel as any
     }
 
-    return this.findMany({
+    return this.clientPageConfig.findMany({
       where,
       orderBy: [{ pageName: 'asc' }],
       select: {
@@ -119,7 +116,7 @@ export class ClientPageConfigService {
 
     // 如果更新页面编码，验证是否已存在
     if (updateData.pageCode) {
-      const existingByCode = await this.findFirst({
+      const existingByCode = await this.clientPageConfig.findFirst({
         where: {
           pageCode: updateData.pageCode,
           id: { not: id },
@@ -134,7 +131,7 @@ export class ClientPageConfigService {
 
     // 如果更新页面路径，验证是否已存在
     if (updateData.pagePath) {
-      const existingByPath = await this.findFirst({
+      const existingByPath = await this.clientPageConfig.findFirst({
         where: {
           pagePath: updateData.pagePath,
           id: { not: id },
@@ -147,7 +144,7 @@ export class ClientPageConfigService {
       }
     }
 
-    return this.update({
+    return this.clientPageConfig.update({
       where: { id },
       data: updateData,
     })
@@ -160,7 +157,7 @@ export class ClientPageConfigService {
    */
   async incrementViewCount(pageCode: string) {
     // 验证页面是否存在且启用
-    const pageConfig = await this.findFirst({
+    const pageConfig = await this.clientPageConfig.findFirst({
       where: {
         pageCode,
         pageStatus: PageStatusEnum.ENABLED,
@@ -175,7 +172,7 @@ export class ClientPageConfigService {
     }
 
     // 原子性更新访问次数
-    return this.update({
+    return this.clientPageConfig.update({
       where: { id: pageConfig.id },
       data: {
         accessCount: {

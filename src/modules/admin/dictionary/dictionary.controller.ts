@@ -22,7 +22,7 @@ import { UpdateDictionaryDto } from '@/modules/shared/dictionary/dto/update-dict
 @ApiTags('字典管理')
 @Controller('/admin/dictionary')
 export class DictionaryController {
-  constructor(private readonly dictionaryService: DictionaryService) { }
+  constructor(private readonly dictionaryService: DictionaryService) {}
 
   @Get('dictionary-page')
   @ApiPageDoc({
@@ -39,7 +39,7 @@ export class DictionaryController {
     model: DictionaryDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.dictionaryService.findById(query)
+    return this.dictionaryService.dictionary.findUnique({ where: query })
   }
 
   @Post('create-dictionary')
@@ -48,7 +48,7 @@ export class DictionaryController {
     model: IdDto,
   })
   async create(@Body() createDictionaryDto: CreateDictionaryDto) {
-    return this.dictionaryService.create({
+    return this.dictionaryService.dictionary.create({
       data: createDictionaryDto,
     })
   }
@@ -59,8 +59,8 @@ export class DictionaryController {
     model: IdDto,
   })
   async update(@Body() updateDictionaryDto: UpdateDictionaryDto) {
-    return this.dictionaryService.update({
-      where: { id: updateDictionaryDto.id },
+    return this.dictionaryService.dictionary.update({
+      where: updateDictionaryDto,
       data: updateDictionaryDto,
     })
   }
@@ -71,7 +71,9 @@ export class DictionaryController {
     model: IdsDto,
   })
   async delete(@Body() query: IdsDto) {
-    return this.dictionaryService.deleteMany({ id: { in: query.ids } })
+    return this.dictionaryService.dictionary.deleteMany({
+      where: { id: { in: query.ids } },
+    })
   }
 
   @Post('batch-update-dictionary-status')
@@ -80,7 +82,7 @@ export class DictionaryController {
     model: CountDto,
   })
   async enable(@Body() query: BatchEnabledDto) {
-    return this.dictionaryService.updateMany({
+    return this.dictionaryService.dictionary.updateMany({
       where: { id: { in: query.ids } },
       data: { isEnabled: query.isEnabled },
     })

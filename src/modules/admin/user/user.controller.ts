@@ -185,6 +185,6 @@ export class AdminUserController {
     model: IdDto,
   })
   async deleteUser(@Body() query: IdDto) {
-    return this.userService.delete({ where: { id: query.id } })
+    return this.userService.adminUser.delete({ where: { id: query.id } })
   }
 }

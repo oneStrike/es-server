@@ -1,3 +1,4 @@
+import type { AdminUserWhereInput } from '@/prisma/client/models'
 import { Buffer } from 'node:buffer'
 import * as process from 'node:process'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
@@ -14,9 +15,7 @@ import * as svgCaptcha from 'svg-captcha'
 import { v4 as uuid } from 'uuid'
 import { CryptoService } from '@/common/module/jwt/crypto.service'
 import { RsaService } from '@/common/module/jwt/rsa.service'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
-
-import { PrismaService } from '@/global/services/prisma.service'
+import { RepositoryService } from '@/common/services/repository.service'
 import { AdminJwtService } from '@/modules/admin/auth'
 import { CacheKey, TokenDto } from '@/modules/admin/user'
 import { RequestLogService } from '@/modules/shared/request-log'
@@ -29,17 +28,19 @@ import {
 } from './dto/user.dto'
 
 @Injectable()
-export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
-  protected readonly modelName = 'AdminUser' as const
+export class AdminUserService extends RepositoryService {
+  get adminUser() {
+    return this.adminUser
+  }
+
   constructor(
     private readonly rsa: RsaService,
     private readonly crypto: CryptoService,
     private readonly adminJwtService: AdminJwtService,
     private readonly requestLogService: RequestLogService,
-    protected readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
-    super(prisma)
+    super()
   }
 
   /**
@@ -95,7 +96,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     await this.cacheManager.del(CacheKey.CAPTCHA + body.captchaId)
 
     // 查找用户
-    const user = await this.prisma.adminUser.findFirst({
+    const user = await this.adminUser.findFirst({
       where: {
         OR: [{ username: body.username }],
         isEnabled: true, // 只查找启用的用户
@@ -132,7 +133,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     )
     if (!isPasswordValid) {
       // 增加登录失败次数
-      await this.prisma.adminUser.update({
+      await this.adminUser.update({
         where: { id: user.id },
         data: {
           loginFailCount: user.loginFailCount + 1,
@@ -143,7 +144,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     }
 
     // 更新登录信息
-    await this.prisma.adminUser.update({
+    await this.adminUser.update({
       where: { id: user.id },
       data: {
         lastLoginAt: new Date(),
@@ -211,7 +212,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     const accessToken = authHeader.substring(7) // 去掉 'Bearer ' 前缀
 
     // 查找用户
-    const user = await this.prisma.adminUser.findUnique({
+    const user = await this.adminUser.findUnique({
       where: { id: userId },
     })
 
@@ -233,7 +234,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
 
     await this.adminJwtService.logout(accessToken, refreshToken)
 
-    await this.prisma.adminUser.update({
+    await this.adminUser.update({
       where: { id: userId },
       data: { password: encryptedPassword },
       select: {
@@ -250,7 +251,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
   async updateUserInfo(userId: number, updateData: UpdateUserDto) {
     userId = updateData.id || userId
     // 查找用户
-    const user = await this.prisma.adminUser.findUnique({
+    const user = await this.adminUser.findUnique({
       where: { id: userId },
     })
     if (!user) {
@@ -258,7 +259,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     }
     // 如果要更新用户名，检查是否已存在
     if (updateData.username && updateData.username !== user.username) {
-      const existingUser = await this.prisma.adminUser.findUnique({
+      const existingUser = await this.adminUser.findUnique({
         where: { username: updateData.username },
       })
 
@@ -268,7 +269,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     }
 
     // 返回更新后的用户信息（不包含密码）
-    return this.prisma.adminUser.update({
+    return this.adminUser.update({
       where: { id: userId },
       data: updateData,
       select: {
@@ -287,7 +288,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     }
 
     // 检查用户名是否已存在
-    const existingUser = await this.prisma.adminUser.findFirst({
+    const existingUser = await this.adminUser.findFirst({
       where: {
         OR: [{ username }, { mobile: body.mobile }],
       },
@@ -301,7 +302,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
     const encryptedPassword = await this.crypto.encryptPassword(password)
 
     // 创建用户
-    return this.prisma.adminUser.create({
+    return this.adminUser.create({
       data: {
         username,
         password: encryptedPassword,
@@ -320,7 +321,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
    * 获取用户信息
    */
   async getUserInfo(userId: number) {
-    const user = await this.prisma.adminUser.findUnique({
+    const user = await this.adminUser.findUnique({
       where: { id: userId },
       omit: {
         password: true,
@@ -345,7 +346,7 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
   async getUsers(queryDto: UserPageDto) {
     const { username, isEnabled, role } = queryDto
 
-    const where: any = {}
+    const where: AdminUserWhereInput = {}
 
     if (username) {
       where.username = { contains: username }
@@ -357,9 +358,8 @@ export class AdminUserService extends BaseRepositoryService<'AdminUser'> {
       where.role = { equals: role }
     }
 
-    return this.findPagination({
-      where,
-      ...queryDto,
+    return this.adminUser.findPagination({
+      where: { ...where, ...queryDto },
       omit: {
         password: true,
         isLocked: true,

@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
-import { PrismaService } from '@/global/services/prisma.service'
+import { RepositoryService } from '@/common/services/repository.service'
 import { WorkComicVersionWhereInput } from '@/prisma/client/models/WorkComicVersion'
 import {
   CreateComicVersionDto,
@@ -15,12 +14,9 @@ import {
  * 提供漫画版本的增删改查等核心业务逻辑
  */
 @Injectable()
-export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVersion'> {
-  protected readonly modelName = 'WorkComicVersion' as const
-  protected readonly supportsSoftDelete = true
-
-  constructor(protected readonly prisma: PrismaService) {
-    super(prisma)
+export class WorkComicVersionService extends RepositoryService {
+  get workComicVersion() {
+    return this.prisma.workComicVersion
   }
 
   /**
@@ -40,7 +36,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
     }
 
     // 验证同一漫画下的同语言版本名称是否已存在
-    const existingVersion = await this.findFirst({
+    const existingVersion = await this.workComicVersion.findFirst({
       where: {
         comicId,
         language,
@@ -53,7 +49,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
 
     // 如果设置为推荐版本，需要取消同一漫画下其他版本的推荐状态
     if (createComicVersionDto.isRecommended) {
-      await this.updateMany({
+      await this.workComicVersion.updateMany({
         where: {
           comicId,
           isRecommended: true,
@@ -64,7 +60,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
       })
     }
 
-    return this.create({ data: createComicVersionDto })
+    return this.workComicVersion.create({ data: createComicVersionDto })
   }
 
   /**
@@ -81,6 +77,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
       isRecommended,
       isPublished,
       readRule,
+      ...pageDto
     } = queryComicVersionDto
 
     // 构建查询条件
@@ -127,8 +124,8 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
       where.readRule = readRule
     }
 
-    return this.findPagination({
-      where,
+    return this.workComicVersion.findPagination({
+      where: { ...where, ...pageDto },
       omit: {
         description: true,
         disclaimer: true,
@@ -164,8 +161,8 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
    * @returns 版本详情信息
    */
   async getComicVersionDetail(id: number) {
-    const version = await this.findById({
-      id,
+    const version = await this.workComicVersion.findUnique({
+      where: { id },
       include: {
         comic: {
           select: {
@@ -194,7 +191,9 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
     const { id, ...updateData } = updateComicVersionDto
 
     // 验证版本是否存在
-    const existingVersion = await this.findById({ id })
+    const existingVersion = await this.workComicVersion.findUnique({
+      where: { id },
+    })
     if (!existingVersion) {
       throw new BadRequestException('版本不存在')
     }
@@ -206,7 +205,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
         (updateData.language !== undefined &&
           updateData.language !== existingVersion.language)
     ) {
-      const duplicateVersion = await this.findFirst({
+      const duplicateVersion = await this.workComicVersion.findFirst({
         where: {
           comicId: existingVersion.comicId,
           language: updateData.language || existingVersion.language,
@@ -221,7 +220,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
 
     // 如果设置为推荐版本，需要取消同一漫画下其他版本的推荐状态
     if (updateData.isRecommended === true) {
-      await this.updateMany({
+      await this.workComicVersion.updateMany({
         where: {
           comicId: existingVersion.comicId,
           isRecommended: true,
@@ -233,8 +232,8 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
       })
     }
 
-    return this.updateById({
-      id,
+    return this.workComicVersion.update({
+      where: { id },
       data: updateData,
     })
   }
@@ -251,7 +250,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
 
     // 如果设置为推荐，需要先获取这些版本所属的漫画ID
     if (isRecommended) {
-      const versions = await this.findMany({
+      const versions = await this.workComicVersion.findMany({
         where: { id: { in: ids } },
         select: { id: true, comicId: true },
       })
@@ -259,7 +258,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
       const comicIds = [...new Set(versions.map((v) => v.comicId))]
 
       // 取消这些漫画下其他版本的推荐状态
-      await this.updateMany({
+      await this.workComicVersion.updateMany({
         where: {
           comicId: { in: comicIds },
           isRecommended: true,
@@ -271,7 +270,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
       })
     }
 
-    return this.updateMany({
+    return this.workComicVersion.updateMany({
       where: {
         id: { in: ids },
       },
@@ -289,7 +288,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
   async updateVersionReadRule(updateReadRuleDto: UpdateVersionReadRuleDto) {
     const { ids, readRule } = updateReadRuleDto
 
-    return this.updateMany({
+    return this.workComicVersion.updateMany({
       where: {
         id: { in: ids },
       },
@@ -305,7 +304,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
    * @returns 版本列表
    */
   async getVersionsByComicId(comicId: number) {
-    return this.findMany({
+    return this.workComicVersion.findMany({
       where: {
         comicId,
         isPublished: true,
@@ -331,12 +330,14 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
    */
   async deleteComicVersion(id: number) {
     // 验证版本是否存在
-    const existingVersion = await this.findById({ id })
+    const existingVersion = await this.workComicVersion.findUnique({
+      where: { id },
+    })
     if (!existingVersion) {
       throw new BadRequestException('版本不存在')
     }
 
-    return this.deleteById({ id })
+    return this.workComicVersion.delete({ where: { id } })
   }
 
   /**
@@ -346,8 +347,8 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
    * @returns 更新结果
    */
   async incrementViewCount(id: number, increment = 1) {
-    return this.updateById({
-      id,
+    return this.workComicVersion.update({
+      where: { id },
       data: {
         totalViews: {
           increment,
@@ -364,8 +365,8 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
    * @returns 更新结果
    */
   async incrementFavoriteCount(id: number, increment = 1) {
-    return this.updateById({
-      id,
+    return this.workComicVersion.update({
+      where: { id },
       data: {
         favoriteCount: {
           increment,
@@ -381,8 +382,8 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
    * @returns 更新结果
    */
   async incrementLikeCount(id: number, increment = 1) {
-    return this.updateById({
-      id,
+    return this.workComicVersion.update({
+      where: { id },
       data: {
         likeCount: {
           increment,
@@ -403,7 +404,7 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
       throw new BadRequestException('评分必须在1-10之间')
     }
 
-    const version = await this.findById({ id })
+    const version = await this.workComicVersion.findUnique({ where: { id } })
     if (!version) {
       throw new BadRequestException('版本不存在')
     }
@@ -414,8 +415,8 @@ export class WorkComicVersionService extends BaseRepositoryService<'WorkComicVer
     const newCount = currentCount + 1
     const newRating = (currentRating * currentCount + rating) / newCount
 
-    return this.updateById({
-      id,
+    return this.workComicVersion.update({
+      where: { id },
       data: {
         rating: Math.round(newRating * 10) / 10, // 保留一位小数
         ratingCount: newCount,

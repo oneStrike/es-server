@@ -4,13 +4,13 @@ import { Prisma } from '../client/client'
 /**
  * 分页查询扩展
  */
-export async function findPagination<T>(
+export async function findPagination<T, A>(
   this: T,
   options: Prisma.Args<T, 'findMany'> & {
     softDelete?: boolean
   },
 ): Promise<{
-  list: T[]
+  list: Prisma.Result<T, A, 'findMany'>
   total: number
   pageIndex: number
   pageSize: number

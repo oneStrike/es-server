@@ -1,7 +1,7 @@
+import type { RequestLogWhereInput } from '@/prisma/client/models'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { FastifyRequest } from 'fastify'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
-import { PrismaService } from '@/global/services/prisma.service'
+import { RepositoryService } from '@/common/services/repository.service'
 import { parseRequestLogFields } from '@/utils'
 import {
   CreateRequestLogDto,
@@ -11,11 +11,9 @@ import {
 import { ActionTypeEnum } from './request-log.constant'
 
 @Injectable()
-export class RequestLogService extends BaseRepositoryService<'RequestLog'> {
-  protected readonly modelName = 'RequestLog' as const
-
-  constructor(protected readonly prisma: PrismaService) {
-    super(prisma)
+export class RequestLogService extends RepositoryService {
+  get requestLog() {
+    return this.prisma.requestLog
   }
 
   /**
@@ -29,7 +27,7 @@ export class RequestLogService extends BaseRepositoryService<'RequestLog'> {
       ...createDto,
       ...parseRequestLogFields(req),
     }
-    return this.create({
+    return this.requestLog.create({
       data,
       select: { id: true },
     })
@@ -212,7 +210,7 @@ export class RequestLogService extends BaseRepositoryService<'RequestLog'> {
    * @returns 请求日志详情
    */
   async getRequestLogById(id: number) {
-    const requestLog = await this.findById({ id })
+    const requestLog = await this.requestLog.findUnique({ where: { id } })
 
     if (!requestLog) {
       throw new NotFoundException('请求日志不存在')
@@ -240,7 +238,7 @@ export class RequestLogService extends BaseRepositoryService<'RequestLog'> {
     } = queryDto
 
     // 构建查询条件
-    const where: any = {}
+    const where: RequestLogWhereInput = {}
 
     if (userId) {
       where.userId = userId
@@ -274,10 +272,8 @@ export class RequestLogService extends BaseRepositoryService<'RequestLog'> {
       where.isSuccess = isSuccess
     }
 
-    return this.findPagination({
-      where,
-      ...pageOptions,
-      orderBy: { createdAt: 'desc' },
+    return this.requestLog.findPagination({
+      where: { ...where, ...pageOptions },
     })
   }
 }

@@ -80,7 +80,7 @@ export class WorkComicVersionController {
     model: CountDto,
   })
   async updatePublishStatus(@Body() body: BatchPublishDto) {
-    return this.comicVersionService.updateMany({
+    return this.comicVersionService.workComicVersion.updateMany({
       where: {
         id: { in: body.ids },
       },
@@ -113,7 +113,7 @@ export class WorkComicVersionController {
     model: CountDto,
   })
   async updateEnabledStatus(@Body() body: UpdateVersionEnabledStatusDto) {
-    return this.comicVersionService.updateMany({
+    return this.comicVersionService.workComicVersion.updateMany({
       where: {
         id: { in: body.ids },
       },

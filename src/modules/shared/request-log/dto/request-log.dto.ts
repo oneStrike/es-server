@@ -162,6 +162,5 @@ export class RequestLogPageDto extends IntersectionType(
     'apiType',
     'actionType',
     'isSuccess',
-    'device',
   ]),
 ) {}

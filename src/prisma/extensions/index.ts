@@ -1,3 +1,4 @@
 export * from './exists'
 export * from './findPagination'
+export * from './maxOrder'
 export * as softDelete from './softDelete'

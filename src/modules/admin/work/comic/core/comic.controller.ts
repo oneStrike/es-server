@@ -82,7 +82,7 @@ export class WorkComicController {
     model: CountDto,
   })
   async updateStatus(@Body() body: UpdateComicStatusDto) {
-    return this.comicService.updateMany({
+    return this.comicService.workComic.updateMany({
       where: { id: { in: body.ids } },
       data: {
         isPublished: body.isPublished,
@@ -99,7 +99,7 @@ export class WorkComicController {
     model: CountDto,
   })
   async updateRecommended(@Body() body: UpdateComicRecommendedDto) {
-    return this.comicService.updateMany({
+    return this.comicService.workComic.updateMany({
       where: { id: { in: body.ids } },
       data: {
         isRecommended: body.isRecommended,
@@ -116,7 +116,7 @@ export class WorkComicController {
     model: CountDto,
   })
   async updateHot(@Body() body: UpdateComicHotDto) {
-    return this.comicService.updateMany({
+    return this.comicService.workComic.updateMany({
       where: { id: { in: body.ids } },
       data: {
         isHot: body.isHot,
@@ -133,7 +133,7 @@ export class WorkComicController {
     model: CountDto,
   })
   async updateNew(@Body() body: UpdateComicNewDto) {
-    return this.comicService.updateMany({
+    return this.comicService.workComic.updateMany({
       where: { id: { in: body.ids } },
       data: {
         isNew: body.isNew,

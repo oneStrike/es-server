@@ -89,8 +89,8 @@ export class WorkComicChapterController {
     model: CountDto,
   })
   async batchDelete(@Body() body: IdsDto) {
-    return this.comicChapterService.deleteMany({
-      id: { in: body.ids },
+    return this.comicChapterService.workComicChapter.deleteMany({
+      where: { id: { in: body.ids } },
     })
   }
 
@@ -103,7 +103,7 @@ export class WorkComicChapterController {
     model: CountDto,
   })
   async updatePublishStatus(@Body() body: UpdateChapterPublishStatusDto) {
-    return this.comicChapterService.updateMany({
+    return this.comicChapterService.workComicChapter.updateMany({
       where: {
         id: { in: body.ids },
       },
