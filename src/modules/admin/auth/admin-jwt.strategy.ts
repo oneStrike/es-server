@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
-import { JwtConfigService } from '@/config/jwt.config'
+import { adminJwtConfig } from '@/config/jwt.config'
 import { AdminJwtPayload } from './admin-jwt.service'
 
 /**
@@ -14,30 +14,27 @@ import { AdminJwtPayload } from './admin-jwt.service'
 export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
   /**
    * 构造函数
-   * @param jwtConfigService JWT 配置服务，用于获取 JWT 密钥
+   * @param jwtConfigService JWT 配置服务,用于获取 JWT 密钥
    * @param jwtBlacklistService
    */
-  constructor(
-    private jwtConfigService: JwtConfigService,
-    private jwtBlacklistService: JwtBlacklistService,
-  ) {
-    const config = jwtConfigService.getAdminJwtConfig() // 获取管理员 JWT 配置
+  constructor(private jwtBlacklistService: JwtBlacklistService) {
+    console.log('AdminJwtStrategy constructor', adminJwtConfig)
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // 从请求头中提取 JWT
       ignoreExpiration: false, // 不忽略过期时间
-      secretOrKey: config.secret, // 使用配置中的密钥
-      passReqToCallback: true,
+      secretOrKey: adminJwtConfig.secret!, // 使用配置中的密钥
     })
   }
 
   /**
    * 验证 JWT 负载
    * 该方法在 JWT 被成功解码后调用
-   * @param request
+   * @param payload JWT 负载
+   * @param request 请求对象(可选)
    * @returns 验证通过的用户信息
    * @throws UnauthorizedException 如果角色不是 'admin'
    */
-  async validate(request: any, payload: AdminJwtPayload) {
+  async validate(payload: AdminJwtPayload, request?: any) {
     // 确保角色为 'admin'
     if (payload.role !== 'admin') {
       throw new UnauthorizedException('登录失效，请重新登录！')

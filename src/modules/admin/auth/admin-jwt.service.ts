@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
-import { JwtConfigService } from '@/config/jwt.config'
+import { adminJwtConfig } from '@/config/jwt.config'
 
 /**
  * AdminJwtPayload 接口
@@ -34,7 +34,6 @@ export interface AdminTokens {
 export class AdminJwtService {
   constructor(
     private jwtService: JwtService, // 注入 JwtService
-    private jwtConfigService: JwtConfigService, // 注入 JwtConfigService
     private jwtBlacklistService: JwtBlacklistService, // 注入 JWT 黑名单服务
   ) {}
 
@@ -51,11 +50,10 @@ export class AdminJwtService {
       role: 'admin', // 确保角色为 'admin'
     }
 
-    const config = this.jwtConfigService.getAdminJwtConfig() // 获取管理员 JWT 配置
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(adminPayload, {
-        secret: config.secret, // 使用配置中的密钥
-        expiresIn: config.signOptions.expiresIn, // 设置访问令牌过期时间
+        secret: adminJwtConfig.secret, // 使用配置中的密钥
+        expiresIn: adminJwtConfig.expiresIn, // 设置访问令牌过期时间
       }),
       this.jwtService.signAsync(
         {
@@ -65,8 +63,8 @@ export class AdminJwtService {
           username: payload.username,
         },
         {
-          secret: config.secret, // 使用配置中的密钥
-          expiresIn: config.refreshExpiresIn, // 设置刷新令牌过期时间
+          secret: adminJwtConfig.secret, // 使用配置中的密钥
+          expiresIn: adminJwtConfig.refreshExpiresIn, // 设置刷新令牌过期时间
         },
       ),
     ])
@@ -83,9 +81,8 @@ export class AdminJwtService {
    * @returns 解码后的 JWT 负载
    */
   async verifyToken(token: string): Promise<AdminJwtPayload> {
-    const config = this.jwtConfigService.getAdminJwtConfig()
     return this.jwtService.verifyAsync(token, {
-      secret: config.secret,
+      secret: adminJwtConfig.secret,
     })
   }
 
@@ -96,11 +93,9 @@ export class AdminJwtService {
    * @throws 如果刷新令牌无效或已过期
    */
   async refreshAccessToken(refreshToken: string): Promise<AdminTokens> {
-    const config = this.jwtConfigService.getAdminJwtConfig()
-
     // 验证刷新令牌
     const payload = await this.jwtService.verifyAsync(refreshToken, {
-      secret: config.secret,
+      secret: adminJwtConfig.secret,
     })
 
     if (payload.type !== 'refresh' || payload.role !== 'admin') {
@@ -116,8 +111,8 @@ export class AdminJwtService {
     }
 
     const accessToken = await this.jwtService.signAsync(adminPayload, {
-      secret: config.secret,
-      expiresIn: config.signOptions.expiresIn,
+      secret: adminJwtConfig.secret,
+      expiresIn: adminJwtConfig.expiresIn,
     })
 
     // 返回新的访问令牌和原有的刷新令牌
@@ -136,9 +131,8 @@ export class AdminJwtService {
   async logout(accessToken: string, refreshToken?: string): Promise<boolean> {
     try {
       // 获取访问令牌的过期时间
-      const config = this.jwtConfigService.getAdminJwtConfig()
       const payload = await this.jwtService.verifyAsync(accessToken, {
-        secret: config.secret,
+        secret: adminJwtConfig.secret,
         ignoreExpiration: true, // 即使令牌已过期也解析它
       })
 
@@ -156,7 +150,7 @@ export class AdminJwtService {
           const refreshPayload = await this.jwtService.verifyAsync(
             refreshToken,
             {
-              secret: config.secret,
+              secret: adminJwtConfig.secret,
               ignoreExpiration: true,
             },
           )

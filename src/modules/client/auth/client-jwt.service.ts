@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
-import { JwtConfigService } from '@/config/jwt.config'
+import { clientJwtConfig } from '@/config/jwt.config'
 
 /**
  * ClientJwtPayload 接口
@@ -35,7 +35,6 @@ export interface ClientTokens {
 export class ClientJwtService {
   constructor(
     private jwtService: JwtService, // 注入 JwtService
-    private jwtConfigService: JwtConfigService, // 注入 JwtConfigService
     private jwtBlacklistService: JwtBlacklistService, // 注入 JWT 黑名单服务
   ) {}
 
@@ -52,18 +51,16 @@ export class ClientJwtService {
       role: 'client', // 确保角色为 'client'
     }
 
-    const config = this.jwtConfigService.getClientJwtConfig() // 获取客户端 JWT 配置
-
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(clientPayload, {
-        secret: config.secret, // 使用配置中的密钥
-        expiresIn: config.signOptions.expiresIn, // 设置访问令牌过期时间
+        secret: clientJwtConfig.secret, // 使用配置中的密钥
+        expiresIn: clientJwtConfig.expiresIn, // 设置访问令牌过期时间
       }),
       this.jwtService.signAsync(
         { sub: payload.sub, type: 'refresh', role: 'client' },
         {
-          secret: config.secret, // 使用配置中的密钥
-          expiresIn: config.refreshExpiresIn, // 设置刷新令牌过期时间
+          secret: clientJwtConfig.secret, // 使用配置中的密钥
+          expiresIn: clientJwtConfig.refreshExpiresIn, // 设置刷新令牌过期时间
         },
       ),
     ])
@@ -80,9 +77,8 @@ export class ClientJwtService {
    * @returns 解码后的 JWT 负载
    */
   async verifyToken(token: string): Promise<ClientJwtPayload> {
-    const config = this.jwtConfigService.getClientJwtConfig()
     return this.jwtService.verifyAsync(token, {
-      secret: config.secret,
+      secret: clientJwtConfig.secret,
     })
   }
 
@@ -93,10 +89,8 @@ export class ClientJwtService {
    * @throws 如果刷新令牌无效或已过期
    */
   async refreshAccessToken(refreshToken: string): Promise<string> {
-    const config = this.jwtConfigService.getClientJwtConfig()
-
     const payload = await this.jwtService.verifyAsync(refreshToken, {
-      secret: config.secret,
+      secret: clientJwtConfig.secret,
     })
 
     if (payload.type !== 'refresh' || payload.role !== 'client') {
@@ -110,8 +104,8 @@ export class ClientJwtService {
     }
 
     return this.jwtService.signAsync(newPayload, {
-      secret: config.secret,
-      expiresIn: config.signOptions.expiresIn,
+      secret: clientJwtConfig.secret,
+      expiresIn: clientJwtConfig.expiresIn,
     })
   }
 
@@ -124,9 +118,8 @@ export class ClientJwtService {
   async logout(accessToken: string, refreshToken?: string): Promise<boolean> {
     try {
       // 获取访问令牌的过期时间
-      const config = this.jwtConfigService.getClientJwtConfig()
       const payload = await this.jwtService.verifyAsync(accessToken, {
-        secret: config.secret,
+        secret: clientJwtConfig.secret,
         ignoreExpiration: true, // 即使令牌已过期也解析它
       })
 
@@ -144,7 +137,7 @@ export class ClientJwtService {
           const refreshPayload = await this.jwtService.verifyAsync(
             refreshToken,
             {
-              secret: config.secret,
+              secret: clientJwtConfig.secret,
               ignoreExpiration: true,
             },
           )

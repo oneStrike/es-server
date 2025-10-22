@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
-import { JwtConfigService } from '@/config/jwt.config'
+import { clientJwtConfig } from '@/config/jwt.config'
 import { ClientJwtPayload } from './client-jwt.service'
 
 /**
@@ -20,15 +20,11 @@ export class ClientJwtStrategy extends PassportStrategy(
    * @param jwtConfigService JWT 配置服务，用于获取 JWT 密钥
    * @param jwtBlacklistService
    */
-  constructor(
-    private jwtConfigService: JwtConfigService,
-    private jwtBlacklistService: JwtBlacklistService,
-  ) {
-    const config = jwtConfigService.getClientJwtConfig() // 获取客户端 JWT 配置
+  constructor(private jwtBlacklistService: JwtBlacklistService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // 从请求头中提取 JWT
       ignoreExpiration: false, // 不忽略过期时间
-      secretOrKey: config.secret, // 使用配置中的密钥
+      secretOrKey: clientJwtConfig.secret!, // 使用配置中的密钥
     })
   }
 
@@ -39,7 +35,7 @@ export class ClientJwtStrategy extends PassportStrategy(
    * @returns 验证通过的用户信息
    * @throws UnauthorizedException 如果角色不是 'client'
    */
-  async validate(payload: ClientJwtPayload, request: any) {
+  async validate(payload: ClientJwtPayload, request?: any) {
     // 确保角色为 'client'
     if (payload.role !== 'client') {
       throw new UnauthorizedException('登录失效，请重新登录！')
