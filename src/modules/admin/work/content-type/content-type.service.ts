@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
-import { PrismaService } from '@/global/services/prisma.service'
+import { RepositoryService } from '@/common/services/repository.service'
 import {
   CreateContentTypeDto,
   QueryContentTypeDto,
@@ -11,11 +10,9 @@ import {
  * 内容类型服务
  */
 @Injectable()
-export class ContentTypeService extends BaseRepositoryService<'WorkContentType'> {
-  protected readonly modelName = 'WorkContentType' as const
-
-  constructor(protected readonly prisma: PrismaService) {
-    super(prisma)
+export class ContentTypeService extends RepositoryService {
+  get contentType() {
+    return this.prisma.workContentType
   }
 
   /**
@@ -23,7 +20,7 @@ export class ContentTypeService extends BaseRepositoryService<'WorkContentType'>
    */
   async createContentType(body: CreateContentTypeDto) {
     const { code, name, isEnabled = true } = body
-    const exists = await this.findByUnique({ where: { code } })
+    const exists = await this.contentType.findUnique({ where: { code } })
     if (exists) {
       throw new BadRequestException('内容类型编码已存在')
     }
@@ -47,7 +44,7 @@ export class ContentTypeService extends BaseRepositoryService<'WorkContentType'>
     if (isEnabled !== undefined) {
       where.isEnabled = isEnabled
     }
-    return this.findMany({ where })
+    return this.contentType.findMany({ where })
   }
 
   /**
@@ -55,17 +52,17 @@ export class ContentTypeService extends BaseRepositoryService<'WorkContentType'>
    */
   async updateContentType(body: UpdateContentTypeDto) {
     const { id, code, ...rest } = body as any
-    const exists = await this.findById({ id })
+    const exists = await this.contentType.findUnique({ where: { id } })
     if (!exists) {
       throw new BadRequestException('内容类型不存在')
     }
 
     if (code && code !== exists.code) {
-      const dup = await this.findByUnique({ where: { code } })
+      const dup = await this.contentType.findUnique({ where: { code } })
       if (dup) {
         throw new BadRequestException('内容类型编码已存在')
       }
     }
-    return this.update({ where: { id }, data: { code, ...rest } })
+    return this.contentType.update({ where: { id }, data: { code, ...rest } })
   }
 }
