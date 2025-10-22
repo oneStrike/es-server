@@ -3,13 +3,15 @@ import { CacheModule } from '@nestjs/cache-manager'
 import { BadRequestException, Module, ValidationPipe } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
-import { HttpExceptionFilter } from '@/common/filters/http-exception.filter'
+import { CustomPrismaModule } from 'nestjs-prisma/dist/custom'
 
+import { HttpExceptionFilter } from '@/common/filters/http-exception.filter'
 import { TransformInterceptor } from '@/common/interceptors/transform.interceptor'
 import { LoggerModule } from '@/common/module/logger/logger.module'
 import uploadConfig from '@/config/upload.config'
 import { AdminModule } from '@/modules/admin/admin.module'
 import { ClientModule } from '@/modules/client/client.module'
+import { PrismaService } from '@/prisma/prisma.connect'
 import { GuardsModule } from './common/guards/guards.module'
 import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard'
 import { GlobalModule } from './global/global.module'
@@ -22,10 +24,16 @@ import { GlobalModule } from './global/global.module'
       load: [uploadConfig], // 加载上传配置
       cache: true, // 缓存配置
     }),
+    CustomPrismaModule.forRootAsync({
+      isGlobal: true,
+      name: 'PrismaService',
+      useClass: PrismaService,
+    }),
     CacheModule.register({
       isGlobal: true,
       namespace: 'Akaiito',
     }),
+
     LoggerModule, // 添加日志模块
     GlobalModule,
     GuardsModule,

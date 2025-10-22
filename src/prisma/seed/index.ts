@@ -1,22 +1,5 @@
-/**
- * Prisma 数据库种子文件主入口
- *
- * 功能说明：
- * - 初始化数据库基础数据
- * - 按依赖关系分层执行种子数据
- * - 确保数据完整性和一致性
- *
- * 执行顺序：
- * 1. 基础数据（无依赖）
- * 2. 漫画基础数据
- * 3. 关联数据（依赖漫画和作者）
- * 4. 章节数据（依赖版本）
- * 5. 通知数据（依赖页面配置）
- */
-
-import * as process from 'node:process'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '../client/client'
+import process from 'node:process'
+import { prisma } from '@/prisma/prisma.connect'
 
 // ==================== 用户管理模块 ====================
 import { createInitialAdminAccount } from './modules/adminUser' // 管理员账户初始化
@@ -38,20 +21,8 @@ import { createInitialWorkComicRelations } from './modules/workComicRelations' /
 
 import { createInitialWorkComicVersions } from './modules/workComicVersion' // 漫画多语言版本
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-})
-const prisma = new PrismaClient({ adapter })
-
 /**
  * 执行数据库种子数据初始化
- *
- * 按照数据依赖关系分层执行，确保数据完整性：
- * 1. 第一层：基础数据（无依赖关系，可并行执行）
- * 2. 第二层：漫画基础数据（依赖作者和分类）
- * 3. 第三层：关联数据（依赖漫画基础数据）
- * 4. 第四层：章节数据（依赖版本数据）
- * 5. 第五层：通知数据（依赖页面配置）
  */
 async function runSeeds() {
   await Promise.all([

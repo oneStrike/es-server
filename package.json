@@ -57,6 +57,7 @@
     "keyv": "^5.5.3",
     "nest-winston": "^1.10.2",
     "nestjs-cls": "^6.0.1",
+    "nestjs-prisma": "^0.26.0",
     "node-cron": "^4.2.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

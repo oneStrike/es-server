@@ -14,7 +14,7 @@ export class IdDto {
 
 export class IdsDto {
   @ValidateArray({
-    description: '主键id',
+    description: '主键id集合',
     itemType: 'number',
     example: [1, 2, 3],
     required: true,

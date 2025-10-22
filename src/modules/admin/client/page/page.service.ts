@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
+import { BadRequestException, Inject, Injectable } from '@nestjs/common'
+import { CustomPrismaService } from 'nestjs-prisma/dist/custom'
 import { PageStatusEnum } from '@/modules/admin/client/page/page.constant'
 import { ClientPageConfigWhereInput } from '@/prisma/client/models/ClientPageConfig'
+import { PrismaClientType } from '@/prisma/prisma.connect'
 import {
   BasePageConfigFieldsDto,
   QueryClientPageConfigDto,
@@ -13,9 +14,11 @@ import {
  * 提供页面配置的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ClientPageConfigService extends BaseRepositoryService<'ClientPageConfig'> {
-  protected readonly modelName = 'ClientPageConfig' as const
-  protected readonly supportsSoftDelete = true
+export class ClientPageConfigService {
+  constructor(
+    @Inject('PrismaService')
+    private prismaService: CustomPrismaService<PrismaClientType>,
+  ) {}
 
   /**
    * 创建页面配置

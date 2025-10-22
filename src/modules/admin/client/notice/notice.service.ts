@@ -1,24 +1,23 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { BaseRepositoryService } from '@/global/services/base-repository.service'
-import { PrismaService } from '@/global/services/prisma.service'
+import { RepositoryService } from '@/common/services/repository.service'
 import { ClientNoticeWhereInput } from '@/prisma/client/models/ClientNotice'
+
 import {
   CreateNoticeDto,
   QueryNoticeDto,
   UpdateNoticeDto,
 } from './dto/notice.dto'
-
 /**
- * 通知服务类
- * 提供通知的增删改查等核心业务逻辑
+ * 客户端通知模块服务
  */
 @Injectable()
-export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
-  protected readonly modelName = 'ClientNotice' as const
-  protected readonly supportsSoftDelete = true
+export class ClientNoticeService extends RepositoryService {
+  get clientNotice() {
+    return this.prisma.clientNotice
+  }
 
-  constructor(protected readonly prisma: PrismaService) {
-    super(prisma)
+  get clientPageConfig() {
+    return this.prisma.clientPageConfig
   }
 
   /**
@@ -36,7 +35,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
 
     const { pageCode, ...others } = createNoticeDto // 明确移除 clientPage
     if (pageCode) {
-      const pageInfo = await this.prisma.clientPageConfig.findFirst({
+      const pageInfo = await this.clientNotice.findFirst({
         where: {
           pageCode,
         },
@@ -47,7 +46,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       if (!pageInfo) {
         throw new BadRequestException('关联页面不存在')
       } else {
-        return this.create({
+        return this.clientNotice.create({
           data: {
             ...others,
             clientPage: {
@@ -60,7 +59,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
-    return this.create({ data: others }) // 确保 others 不包含非法字段
+    return this.clientNotice.create({ data: others }) // 确保 others 不包含非法字段
   }
 
   /**
@@ -115,9 +114,11 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
         : [{ publishEndTime: { gte: publishEndTime } }]
     }
 
-    return this.findPagination({
-      where,
-      ...pageParams,
+    return this.clientNotice.findPagination({
+      where: {
+        ...pageParams,
+        ...where,
+      },
       omit: {
         content: true,
         popupBackgroundImage: true,
@@ -140,7 +141,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       app: { enableApp: true },
     }[platform]
 
-    return this.findMany({
+    return this.clientNotice.findMany({
       where: {
         isPublished: true, // 已发布
         ...platformCondition,
@@ -190,12 +191,12 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
-    const notice = await this.findById({ id })
+    const notice = await this.clientNotice.findUnique({ where: { id } })
     if (!notice) {
       throw new BadRequestException('通知不存在')
     }
     if (pageCode && notice.pageCode !== pageCode) {
-      const pageInfo = await this.prisma.clientPageConfig.findFirst({
+      const pageInfo = await this.clientPageConfig.findFirst({
         where: {
           pageCode,
         },
@@ -206,7 +207,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       if (!pageInfo) {
         throw new BadRequestException('关联页面不存在')
       } else {
-        return this.update({
+        return this.clientNotice.update({
           where: { id },
           data: {
             ...updateData,
@@ -220,7 +221,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
       }
     }
 
-    return this.update({
+    return this.clientNotice.update({
       where: { id },
       data: updateData,
     })
@@ -233,7 +234,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
    */
   async incrementViewCount(id: number) {
     // 验证通知是否存在且已发布
-    const notice = await this.findFirst({
+    const notice = await this.clientNotice.findFirst({
       where: {
         id,
         isPublished: true,
@@ -245,7 +246,7 @@ export class ClientNoticeService extends BaseRepositoryService<'ClientNotice'> {
     }
 
     // 原子性更新阅读次数
-    return this.update({
+    return this.clientNotice.update({
       where: { id },
       data: {
         readCount: {

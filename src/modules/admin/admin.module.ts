@@ -3,6 +3,7 @@ import { DictionaryController } from '@/modules/admin/dictionary/dictionary.cont
 import { AdminUploadModule } from '@/modules/admin/upload/upload.module'
 import { SharedModule } from '../shared/shared.module'
 import { AdminAuthModule } from './auth/auth.module'
+import { FooModule } from './client/foo/foo.module'
 import { ClientNoticeModule } from './client/notice'
 import { ClientPageConfigModule } from './client/page'
 import { RequestLogController } from './request-log'
@@ -18,6 +19,7 @@ import { WorkModule } from './work/work.module'
     ClientNoticeModule,
     ClientPageConfigModule,
     WorkModule,
+    FooModule,
   ],
   controllers: [DictionaryController, RequestLogController],
   providers: [],

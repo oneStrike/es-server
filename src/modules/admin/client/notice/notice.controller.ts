@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { Public } from '@/common/decorators/public.decorator'
 import { CountDto } from '@/common/dto/batch.dto'
 import { IdDto, IdsDto } from '@/common/dto/id.dto'
 import {
@@ -42,6 +43,7 @@ export class ClientNoticeController {
     summary: '分页查询通知列表',
     model: NoticePageResponseDto,
   })
+  @Public()
   async getPage(@Query() query: QueryNoticeDto) {
     return this.noticeService.findNoticePage(query)
   }
@@ -55,7 +57,7 @@ export class ClientNoticeController {
     model: BaseNoticeDto,
   })
   async findOne(@Query() query: IdDto) {
-    return this.noticeService.findByUnique({
+    return this.noticeService.clientNotice.findUnique({
       where: query,
       include: {
         clientPage: {
@@ -91,7 +93,7 @@ export class ClientNoticeController {
     model: CountDto,
   })
   async updateStatus(@Body() body: UpdateNoticeStatusDto) {
-    return this.noticeService.updateMany({
+    return this.noticeService.clientNotice.updateMany({
       where: { id: { in: body.ids } },
       data: { isPublished: body.isPublished },
     })
@@ -106,6 +108,8 @@ export class ClientNoticeController {
     model: CountDto,
   })
   async batchRemove(@Body() body: IdsDto) {
-    return this.noticeService.softDeleteMany({ id: { in: body.ids } })
+    return this.noticeService.clientNotice.softDeleteMany({
+      id: { in: body.ids },
+    })
   }
 }

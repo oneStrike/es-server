@@ -6,7 +6,6 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
-  ValidateArray,
   ValidateBitmask,
   ValidateBoolean,
   ValidateDate,
@@ -14,21 +13,13 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@/common/decorators/validate.decorator'
-import { IdDto } from '@/common/dto/id.dto'
+import { IdDto, IdsDto } from '@/common/dto/id.dto'
 import { PageDto } from '@/common/dto/page.dto'
-import { BasePageConfigFieldsDto } from '@/modules/admin/client/page/dto/page.dto'
 import {
   EnablePlatformEnum,
   NoticePriorityEnum,
   NoticeTypeEnum,
 } from '../notice.constant'
-
-export class ClientPageDto extends PickType(BasePageConfigFieldsDto, [
-  'id',
-  'pageCode',
-  'pageName',
-  'pagePath',
-]) {}
 
 /**
  * 通知基础DTO
@@ -163,12 +154,6 @@ export class BaseNoticeDto {
     example: '2024-01-01T00:00:00.000Z',
   })
   updatedAt?: Date
-
-  @ApiProperty({
-    description: '通知所关联的客户端页面信息',
-    type: ClientPageDto,
-  })
-  clientPage?: ClientPageDto
 }
 
 /**
@@ -180,7 +165,6 @@ export class CreateNoticeDto extends OmitType(BaseNoticeDto, [
   'readCount',
   'createdAt',
   'updatedAt',
-  'clientPage',
 ]) {}
 
 /**
@@ -209,17 +193,10 @@ export class QueryNoticeDto extends IntersectionType(
 /**
  * 通知状态更新DTO
  */
-export class UpdateNoticeStatusDto extends PickType(BaseNoticeDto, [
-  'isPublished',
-]) {
-  @ValidateArray({
-    description: '通知ID列表',
-    itemType: 'number',
-    example: [1, 2, 3],
-    required: true,
-  })
-  ids!: number[]
-}
+export class UpdateNoticeStatusDto extends IntersectionType(
+  PickType(BaseNoticeDto, ['isPublished']),
+  IdsDto,
+) {}
 
 /**
  * 分页接口返回DTO
