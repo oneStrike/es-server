@@ -30,7 +30,7 @@ import {
 @Injectable()
 export class AdminUserService extends RepositoryService {
   get adminUser() {
-    return this.adminUser
+    return this.prisma.adminUser
   }
 
   constructor(
@@ -156,7 +156,6 @@ export class AdminUserService extends RepositoryService {
         loginFailCount: 0, // 重置登录失败次数
       },
     })
-
     // 生成令牌
     const tokens = await this.adminJwtService.generateTokens({
       sub: String(user.id),
@@ -173,6 +172,7 @@ export class AdminUserService extends RepositoryService {
       },
       req,
     )
+
     return {
       user: userWithoutPassword,
       tokens,
