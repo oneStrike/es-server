@@ -1,6 +1,8 @@
 import type { ExecutionContext } from '@nestjs/common'
-import type { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service'
-import type { ClientJwtPayload } from '@/modules/client/auth/client-jwt.service'
+import type {
+  AdminJwtPayload,
+  ClientJwtPayload,
+} from '@/common/interfaces/jwt-payload.interface'
 import { createParamDecorator } from '@nestjs/common'
 
 /**

@@ -1,8 +1,8 @@
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { CurrentUser } from '@/common/decorators/current-user.decorator'
+import { ClientJwtPayload } from '@/common/interfaces/jwt-payload.interface'
 import { ClientUserService } from '@/modules/client/user/user.service'
-import { ClientJwtPayload } from '../auth/client-jwt.service'
 
 @ApiTags('客户端用户模块')
 @Controller('client/user')

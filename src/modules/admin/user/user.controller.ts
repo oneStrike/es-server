@@ -4,9 +4,8 @@ import { FastifyRequest } from 'fastify'
 import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
 import { CurrentUser } from '@/common/decorators/current-user.decorator'
 import { Public } from '@/common/decorators/public.decorator'
-
 import { IdDto } from '@/common/dto/id.dto'
-import { AdminJwtPayload } from '@/modules/admin/auth/admin-jwt.service'
+import { AdminJwtPayload } from '@/common/interfaces/jwt-payload.interface'
 import {
   RefreshTokenDto,
   RefreshTokenResponseDto,

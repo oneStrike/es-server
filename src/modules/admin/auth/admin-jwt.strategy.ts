@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
+import { AdminJwtPayload } from '@/common/interfaces/jwt-payload.interface'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
 import { adminJwtConfig } from '@/config/jwt.config'
-import { AdminJwtPayload } from './admin-jwt.service'
 
 /**
  * AdminJwtStrategy 类
@@ -12,43 +12,37 @@ import { AdminJwtPayload } from './admin-jwt.service'
  */
 @Injectable()
 export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
-  /**
-   * 构造函数
-   * @param jwtConfigService JWT 配置服务,用于获取 JWT 密钥
-   * @param jwtBlacklistService
-   */
   constructor(private jwtBlacklistService: JwtBlacklistService) {
-    console.log('AdminJwtStrategy constructor', adminJwtConfig)
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // 从请求头中提取 JWT
-      ignoreExpiration: false, // 不忽略过期时间
-      secretOrKey: adminJwtConfig.secret!, // 使用配置中的密钥
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: adminJwtConfig.secret!,
+      passReqToCallback: true,
     })
   }
 
   /**
    * 验证 JWT 负载
    * 该方法在 JWT 被成功解码后调用
+   * @param request 请求对象
    * @param payload JWT 负载
-   * @param request 请求对象(可选)
    * @returns 验证通过的用户信息
-   * @throws UnauthorizedException 如果角色不是 'admin'
+   * @throws UnauthorizedException 如果角色不是 'admin' 或令牌在黑名单中
    */
-  async validate(payload: AdminJwtPayload, request?: any) {
-    // 确保角色为 'admin'
+  async validate(request: any, payload: AdminJwtPayload) {
     if (payload.role !== 'admin') {
       throw new UnauthorizedException('登录失效，请重新登录！')
     }
-    // 获取原始令牌
+
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request)
-    // 检查令牌是否在黑名单中
-    const isBlacklisted = await this.jwtBlacklistService.isInAdminBlacklist(
-      token || '',
-    )
-    if (isBlacklisted) {
-      throw new UnauthorizedException('登录失效，请重新登录！')
+
+    if (token) {
+      const isBlacklisted = await this.jwtBlacklistService.isInAdminBlacklist(token)
+      if (isBlacklisted) {
+        throw new UnauthorizedException('登录失效，请重新登录！')
+      }
     }
-    // 返回验证通过的用户信息，将被添加到请求对象中
+
     return payload
   }
 }

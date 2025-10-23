@@ -1,6 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
+import { GUARD_PATH_PREFIXES } from '@/common/constants/auth.constants'
 import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator'
 
 /**
@@ -54,8 +55,7 @@ export class SmartJwtAuthGuard implements CanActivate {
    * @returns 是否为管理员路径
    */
   private isAdminPath(path: string): boolean {
-    const adminPaths = ['/admin', '/api/admin']
-    return adminPaths.some(adminPath => path.startsWith(adminPath))
+    return GUARD_PATH_PREFIXES.ADMIN.some(adminPath => path.startsWith(adminPath))
   }
 
   /**
@@ -64,7 +64,6 @@ export class SmartJwtAuthGuard implements CanActivate {
    * @returns 是否为客户端路径
    */
   private isClientPath(path: string): boolean {
-    const clientPaths = ['/client', '/api/client', '/app']
-    return clientPaths.some(clientPath => path.startsWith(clientPath))
+    return GUARD_PATH_PREFIXES.CLIENT.some(clientPath => path.startsWith(clientPath))
   }
 }

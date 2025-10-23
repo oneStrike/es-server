@@ -1,9 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
+import { ClientJwtPayload } from '@/common/interfaces/jwt-payload.interface'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
 import { clientJwtConfig } from '@/config/jwt.config'
-import { ClientJwtPayload } from './client-jwt.service'
 
 /**
  * ClientJwtStrategy 类
@@ -15,45 +15,37 @@ export class ClientJwtStrategy extends PassportStrategy(
   Strategy,
   'client-jwt',
 ) {
-  /**
-   * 构造函数
-   * @param jwtConfigService JWT 配置服务，用于获取 JWT 密钥
-   * @param jwtBlacklistService
-   */
   constructor(private jwtBlacklistService: JwtBlacklistService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // 从请求头中提取 JWT
-      ignoreExpiration: false, // 不忽略过期时间
-      secretOrKey: clientJwtConfig.secret!, // 使用配置中的密钥
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: clientJwtConfig.secret!,
+      passReqToCallback: true,
     })
   }
 
   /**
    * 验证 JWT 负载
    * 该方法在 JWT 被成功解码后调用
+   * @param request 请求对象
    * @param payload JWT 负载
    * @returns 验证通过的用户信息
-   * @throws UnauthorizedException 如果角色不是 'client'
+   * @throws UnauthorizedException 如果角色不是 'client' 或令牌在黑名单中
    */
-  async validate(payload: ClientJwtPayload, request?: any) {
-    // 确保角色为 'client'
+  async validate(request: any, payload: ClientJwtPayload) {
     if (payload.role !== 'client') {
       throw new UnauthorizedException('登录失效，请重新登录！')
     }
 
-    // 获取原始令牌
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request)
 
-    // 检查令牌是否在黑名单中
-    const isBlacklisted = await this.jwtBlacklistService.isInClientBlacklist(
-      token as string,
-    )
-
-    if (isBlacklisted) {
-      throw new UnauthorizedException('登录失效，请重新登录！')
+    if (token) {
+      const isBlacklisted = await this.jwtBlacklistService.isInClientBlacklist(token)
+      if (isBlacklisted) {
+        throw new UnauthorizedException('登录失效，请重新登录！')
+      }
     }
 
-    // 返回验证通过的用户信息，将被添加到请求对象中
     return payload
   }
 }

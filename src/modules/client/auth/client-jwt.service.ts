@@ -1,30 +1,14 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
+import { v4 as uuid } from 'uuid'
+import { JWT_AUDIENCE } from '@/common/constants/auth.constants'
+import {
+  ClientJwtPayload,
+  RefreshTokenPayload,
+  TokenPair,
+} from '@/common/interfaces/jwt-payload.interface'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
 import { clientJwtConfig } from '@/config/jwt.config'
-
-/**
- * ClientJwtPayload 接口
- * 定义了客户端用户的 JWT 负载结构
- * 包含用户标识、用户名、角色和可选的权限列表
- */
-export interface ClientJwtPayload {
-  sub: string // 用户唯一标识符
-  username: string // 用户名
-  role: 'client' // 用户角色，固定为 'client'
-  clientId?: string // 可选的客户端标识符
-  permissions?: string[] // 可选的权限列表
-}
-
-/**
- * ClientTokens 接口
- * 定义了访问令牌和刷新令牌的结构
- * 用于返回给客户端的认证凭证
- */
-export interface ClientTokens {
-  accessToken: string // 访问令牌
-  refreshToken: string // 刷新令牌
-}
 
 /**
  * ClientJwtService 服务
@@ -33,9 +17,11 @@ export interface ClientTokens {
  */
 @Injectable()
 export class ClientJwtService {
+  private readonly logger = new Logger(ClientJwtService.name)
+
   constructor(
-    private jwtService: JwtService, // 注入 JwtService
-    private jwtBlacklistService: JwtBlacklistService, // 注入 JWT 黑名单服务
+    private jwtService: JwtService,
+    private jwtBlacklistService: JwtBlacklistService,
   ) {}
 
   /**
@@ -44,25 +30,33 @@ export class ClientJwtService {
    * @returns 包含访问令牌和刷新令牌的对象
    */
   async generateTokens(
-    payload: Omit<ClientJwtPayload, 'role'>,
-  ): Promise<ClientTokens> {
-    const clientPayload: ClientJwtPayload = {
+    payload: Omit<ClientJwtPayload, 'role' | 'iat' | 'exp' | 'jti' | 'aud'>,
+  ): Promise<TokenPair> {
+    const jti = uuid()
+    const clientPayload: Omit<ClientJwtPayload, 'iat' | 'exp'> = {
       ...payload,
-      role: 'client', // 确保角色为 'client'
+      role: 'client',
+      jti,
+      aud: JWT_AUDIENCE.CLIENT,
+    }
+
+    const refreshPayload: Omit<RefreshTokenPayload, 'iat' | 'exp'> = {
+      sub: payload.sub,
+      username: payload.username,
+      type: 'refresh',
+      role: 'client',
+      jti: uuid(),
     }
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(clientPayload, {
-        secret: clientJwtConfig.secret, // 使用配置中的密钥
-        expiresIn: clientJwtConfig.expiresIn, // 设置访问令牌过期时间
+        secret: clientJwtConfig.secret,
+        expiresIn: clientJwtConfig.expiresIn,
       }),
-      this.jwtService.signAsync(
-        { sub: payload.sub, type: 'refresh', role: 'client' },
-        {
-          secret: clientJwtConfig.secret, // 使用配置中的密钥
-          expiresIn: clientJwtConfig.refreshExpiresIn, // 设置刷新令牌过期时间
-        },
-      ),
+      this.jwtService.signAsync(refreshPayload, {
+        secret: clientJwtConfig.secret,
+        expiresIn: clientJwtConfig.refreshExpiresIn,
+      }),
     ])
 
     return {
@@ -85,10 +79,10 @@ export class ClientJwtService {
   /**
    * 使用刷新令牌生成新的访问令牌
    * @param refreshToken 刷新令牌
-   * @returns 新的访问令牌
+   * @returns 新的访问令牌和原有的刷新令牌
    * @throws 如果刷新令牌无效或已过期
    */
-  async refreshAccessToken(refreshToken: string): Promise<string> {
+  async refreshAccessToken(refreshToken: string): Promise<TokenPair> {
     const payload = await this.jwtService.verifyAsync(refreshToken, {
       secret: clientJwtConfig.secret,
     })
@@ -97,16 +91,25 @@ export class ClientJwtService {
       throw new Error('Invalid refresh token')
     }
 
-    const newPayload: ClientJwtPayload = {
+    const newPayload: Omit<ClientJwtPayload, 'iat' | 'exp'> = {
       sub: payload.sub,
       username: payload.username || 'client',
       role: 'client',
+      clientId: payload.clientId,
+      permissions: payload.permissions,
+      jti: uuid(),
+      aud: JWT_AUDIENCE.CLIENT,
     }
 
-    return this.jwtService.signAsync(newPayload, {
+    const accessToken = await this.jwtService.signAsync(newPayload, {
       secret: clientJwtConfig.secret,
       expiresIn: clientJwtConfig.expiresIn,
     })
+
+    return {
+      accessToken,
+      refreshToken,
+    }
   }
 
   /**
@@ -117,21 +120,17 @@ export class ClientJwtService {
    */
   async logout(accessToken: string, refreshToken?: string): Promise<boolean> {
     try {
-      // 获取访问令牌的过期时间
       const payload = await this.jwtService.verifyAsync(accessToken, {
         secret: clientJwtConfig.secret,
-        ignoreExpiration: true, // 即使令牌已过期也解析它
+        ignoreExpiration: true,
       })
 
-      // 计算令牌剩余的有效期（秒）
-      const expTime = payload.exp * 1000 // 转换为毫秒
+      const expTime = payload.exp * 1000
       const currentTime = Date.now()
       const ttl = Math.max(0, Math.floor((expTime - currentTime) / 1000))
 
-      // 将访问令牌添加到黑名单
       await this.jwtBlacklistService.addToClientBlacklist(accessToken, ttl)
 
-      // 如果提供了刷新令牌，也将其添加到黑名单
       if (refreshToken) {
         try {
           const refreshPayload = await this.jwtService.verifyAsync(
@@ -153,13 +152,13 @@ export class ClientJwtService {
             refreshTtl,
           )
         } catch (error) {
-          console.error('Error adding refresh token to blacklist:', error)
+          this.logger.error('刷新令牌添加到黑名单失败', error instanceof Error ? error.message : String(error))
         }
       }
 
       return true
     } catch (error) {
-      console.error('Error during logout:', error)
+      this.logger.error('登出失败', error instanceof Error ? error.message : String(error))
       return false
     }
   }

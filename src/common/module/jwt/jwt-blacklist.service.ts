@@ -1,6 +1,7 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Cache } from 'cache-manager'
+import { BLACKLIST_DEFAULT_TTL } from '@/common/constants/auth.constants'
 
 /**
  * JWT黑名单服务
@@ -9,6 +10,8 @@ import { Cache } from 'cache-manager'
  */
 @Injectable()
 export class JwtBlacklistService {
+  private readonly logger = new Logger(JwtBlacklistService.name)
+
   // 黑名单缓存前缀
   private readonly ADMIN_BLACKLIST_PREFIX = 'jwt:blacklist:admin:'
   private readonly CLIENT_BLACKLIST_PREFIX = 'jwt:blacklist:client:'
@@ -18,32 +21,46 @@ export class JwtBlacklistService {
   /**
    * 将令牌添加到管理员黑名单
    * @param token JWT令牌
-   * @param expiresIn 过期时间（秒），默认为7天
+   * @param expiresIn 过期时间（秒），使用令牌实际剩余有效期
    */
   async addToAdminBlacklist(
     token: string,
-    expiresIn: number = 7 * 24 * 60 * 60,
+    expiresIn?: number,
   ): Promise<void> {
+    const ttl = expiresIn ?? BLACKLIST_DEFAULT_TTL.ACCESS_TOKEN
+
+    if (ttl <= 0) {
+      this.logger.warn('尝试添加已过期的令牌到黑名单，已忽略')
+      return
+    }
+
     await this.cacheManager.set(
       this.ADMIN_BLACKLIST_PREFIX + token,
       true,
-      expiresIn * 1000,
+      ttl * 1000,
     )
   }
 
   /**
    * 将令牌添加到客户端黑名单
    * @param token JWT令牌
-   * @param expiresIn 过期时间（秒），默认为7天
+   * @param expiresIn 过期时间（秒），使用令牌实际剩余有效期
    */
   async addToClientBlacklist(
     token: string,
-    expiresIn: number = 7 * 24 * 60 * 60,
+    expiresIn?: number,
   ): Promise<void> {
+    const ttl = expiresIn ?? BLACKLIST_DEFAULT_TTL.ACCESS_TOKEN
+
+    if (ttl <= 0) {
+      this.logger.warn('尝试添加已过期的令牌到黑名单，已忽略')
+      return
+    }
+
     await this.cacheManager.set(
       this.CLIENT_BLACKLIST_PREFIX + token,
       true,
-      expiresIn * 1000,
+      ttl * 1000,
     )
   }
 
