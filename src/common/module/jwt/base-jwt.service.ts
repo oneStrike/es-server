@@ -1,72 +1,73 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { v4 as uuid } from 'uuid'
-import {
-  BaseJwtPayload,
-  RefreshTokenPayload,
-  TokenPair,
-} from '@/common/interfaces/jwt-payload.interface'
+
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
 import { ADMIN_AUTH_CONFIG, CLIENT_AUTH_CONFIG } from '@/config/jwt.config'
 
 type AuthConfig = typeof ADMIN_AUTH_CONFIG | typeof CLIENT_AUTH_CONFIG
 
-type Scope = 'admin' | 'client'
-
 @Injectable()
-export class BaseJwtService<TPayload extends BaseJwtPayload> {
+export class BaseJwtService {
   protected readonly logger = new Logger(BaseJwtService.name)
 
   constructor(
     protected readonly jwtService: JwtService,
     protected readonly jwtBlacklistService: JwtBlacklistService,
     protected readonly config: AuthConfig,
-    protected readonly scope: Scope,
   ) {}
 
-  async generateTokens(
-    payload: Omit<TPayload, 'iat' | 'exp' | 'jti' | 'aud'>,
-  ): Promise<TokenPair> {
-    const accessPayload = this.buildAccessPayload(payload)
-    const refreshPayload = this.buildRefreshPayload({
-      sub: payload.sub,
-      username: payload.username,
-    })
+  async generateTokens(payload) {
+    payload = {
+      ...payload,
+      jti: uuid(),
+      aud: this.config.aud,
+    }
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(accessPayload, {
-        secret: this.config.secret,
-        expiresIn: this.config.expiresIn,
-      }),
-      this.jwtService.signAsync(refreshPayload, {
-        secret: this.config.refreshSecret,
-        expiresIn: this.config.refreshExpiresIn,
-      }),
+      this.jwtService.signAsync(
+        { ...payload, type: 'access' },
+        {
+          secret: this.config.secret,
+          expiresIn: this.config.expiresIn,
+        },
+      ),
+      this.jwtService.signAsync(
+        { ...payload, type: 'refresh' },
+        {
+          secret: this.config.refreshSecret,
+          expiresIn: this.config.refreshExpiresIn,
+        },
+      ),
     ])
 
     return { accessToken, refreshToken }
   }
 
-  async verifyToken(token: string): Promise<TPayload> {
+  async verifyToken(token: string) {
     return this.jwtService.verifyAsync(token, {
       secret: this.config.secret,
     })
   }
 
-  async refreshAccessToken(refreshToken: string): Promise<TokenPair> {
-    const payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(
-      refreshToken,
-      { secret: this.config.refreshSecret },
-    )
+  async verifyRefreshToken(token: string) {
+    return this.jwtService.verifyAsync(token, {
+      secret: this.config.refreshSecret,
+    })
+  }
 
-    if (payload.type !== 'refresh' || payload.role !== this.scope) {
-      throw new Error('Invalid refresh token')
+  async refreshAccessToken(refreshToken: string) {
+    const payload = await this.verifyRefreshToken(refreshToken)
+
+    if (payload.type !== 'refresh') {
+      throw new Error('无效的刷新令牌')
     }
 
-    const accessPayload = this.buildAccessPayload({
-      sub: payload.sub,
-      username: payload.username,
-    } as Omit<TPayload, 'iat' | 'exp' | 'jti' | 'aud'>)
+    const accessPayload = {
+      ...payload,
+      type: 'access',
+      jti: uuid(),
+    }
 
     const accessToken = await this.jwtService.signAsync(accessPayload, {
       secret: this.config.secret,
@@ -81,11 +82,10 @@ export class BaseJwtService<TPayload extends BaseJwtPayload> {
       secret,
       ignoreExpiration: true,
     })
-    const payloadAny = (payload as unknown) as { exp: number, jti?: string }
-    const expTimeMs = payloadAny.exp * 1000
+    const expTimeMs = payload.exp * 1000
     const currentTimeMs = Date.now()
     const ttlSec = Math.max(0, Math.floor((expTimeMs - currentTimeMs) / 1000))
-    const jti = payloadAny.jti
+    const jti = payload.jti
     return { ttlSec, jti }
   }
 
@@ -98,7 +98,7 @@ export class BaseJwtService<TPayload extends BaseJwtPayload> {
       return false
     }
 
-    if (this.scope === 'admin') {
+    if (this.config.aud === 'admin') {
       await this.jwtBlacklistService.addToAdminBlacklist(jti, ttlSec)
     } else {
       await this.jwtBlacklistService.addToClientBlacklist(jti, ttlSec)
@@ -110,7 +110,7 @@ export class BaseJwtService<TPayload extends BaseJwtPayload> {
         this.config.refreshSecret,
       )
       if (rjti) {
-        if (this.scope === 'admin') {
+        if (this.config.aud === 'admin') {
           await this.jwtBlacklistService.addToAdminBlacklist(rjti, rttlSec)
         } else {
           await this.jwtBlacklistService.addToClientBlacklist(rjti, rttlSec)
@@ -119,27 +119,5 @@ export class BaseJwtService<TPayload extends BaseJwtPayload> {
     }
 
     return true
-  }
-
-  protected buildAccessPayload(
-    payload: Omit<TPayload, 'iat' | 'exp' | 'jti' | 'aud'>,
-  ): TPayload {
-    return {
-      ...(payload as any),
-      jti: uuid(),
-      aud: this.config.aud,
-    } as TPayload
-  }
-
-  protected buildRefreshPayload(
-    payload: Pick<BaseJwtPayload, 'sub' | 'username'>,
-  ): RefreshTokenPayload {
-    return {
-      sub: payload.sub,
-      username: payload.username,
-      type: 'refresh',
-      role: this.scope,
-      jti: uuid(),
-    }
   }
 }
