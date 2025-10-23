@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 import { ClientJwtPayload } from '@/common/interfaces/jwt-payload.interface'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
-import { clientJwtConfig } from '@/config/jwt.config'
+import { CLIENT_AUTH_CONFIG } from '@/config/jwt.config'
 
 /**
  * ClientJwtStrategy 类
@@ -13,13 +13,13 @@ import { clientJwtConfig } from '@/config/jwt.config'
 @Injectable()
 export class ClientJwtStrategy extends PassportStrategy(
   Strategy,
-  'client-jwt',
+  CLIENT_AUTH_CONFIG.strategyKey,
 ) {
   constructor(private jwtBlacklistService: JwtBlacklistService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: clientJwtConfig.secret!,
+      secretOrKey: CLIENT_AUTH_CONFIG.secret,
       passReqToCallback: true,
     })
   }
@@ -33,14 +33,13 @@ export class ClientJwtStrategy extends PassportStrategy(
    * @throws UnauthorizedException 如果角色不是 'client' 或令牌在黑名单中
    */
   async validate(request: any, payload: ClientJwtPayload) {
-    if (payload.role !== 'client') {
+    if (payload.aud !== CLIENT_AUTH_CONFIG.aud) {
       throw new UnauthorizedException('登录失效，请重新登录！')
     }
 
-    const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request)
-
-    if (token) {
-      const isBlacklisted = await this.jwtBlacklistService.isInClientBlacklist(token)
+    const jti = payload.jti
+    if (jti) {
+      const isBlacklisted = await this.jwtBlacklistService.isInClientBlacklist(jti)
       if (isBlacklisted) {
         throw new UnauthorizedException('登录失效，请重新登录！')
       }
