@@ -1,5 +1,5 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { Inject, Injectable, Logger } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { Cache } from 'cache-manager'
 
 /**
@@ -7,8 +7,6 @@ import { Cache } from 'cache-manager'
  */
 @Injectable()
 export class JwtBlacklistService {
-  private readonly logger = new Logger(JwtBlacklistService.name)
-
   // 黑名单缓存前缀
   private readonly ADMIN_BLACKLIST_PREFIX = 'jwt:blacklist:admin:'
   private readonly CLIENT_BLACKLIST_PREFIX = 'jwt:blacklist:client:'

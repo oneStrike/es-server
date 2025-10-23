@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { v4 as uuid } from 'uuid'
 
 import { BaseJwtService } from '@/common/module/jwt/base-jwt.service'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
@@ -18,15 +17,5 @@ export class AdminJwtService extends BaseJwtService {
     jwtBlacklistService: JwtBlacklistService,
   ) {
     super(jwtService, jwtBlacklistService, ADMIN_AUTH_CONFIG)
-  }
-
-  // 构造 Admin 访问令牌载荷
-  protected buildPayload(payload) {
-    return {
-      ...payload,
-      jti: uuid(),
-      type: 'access',
-      aud: ADMIN_AUTH_CONFIG.aud,
-    }
   }
 }

@@ -5,9 +5,8 @@ export async function validateJwtPayload(options: {
   payload: any
   expectedAud: string
   blacklistService: JwtBlacklistService
-  scope: 'admin' | 'client'
 }) {
-  const { payload, expectedAud, blacklistService, scope } = options
+  const { payload, expectedAud, blacklistService } = options
 
   if (payload.aud !== expectedAud) {
     throw new UnauthorizedException('登录失效，请重新登录！')
@@ -19,7 +18,7 @@ export async function validateJwtPayload(options: {
   }
 
   const blacklisted =
-    scope === 'admin'
+    expectedAud === 'admin'
       ? await blacklistService.isInAdminBlacklist(jti)
       : await blacklistService.isInClientBlacklist(jti)
 

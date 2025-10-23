@@ -44,20 +44,10 @@ export class BaseJwtService {
     return { accessToken, refreshToken }
   }
 
-  async verifyToken(token: string) {
-    return this.jwtService.verifyAsync(token, {
-      secret: this.config.secret,
-    })
-  }
-
-  async verifyRefreshToken(token: string) {
-    return this.jwtService.verifyAsync(token, {
+  async refreshAccessToken(refreshToken: string) {
+    const payload = await this.jwtService.verifyAsync(refreshToken, {
       secret: this.config.refreshSecret,
     })
-  }
-
-  async refreshAccessToken(refreshToken: string) {
-    const payload = await this.verifyRefreshToken(refreshToken)
 
     if (payload.type !== 'refresh') {
       throw new Error('无效的刷新令牌')
@@ -84,7 +74,7 @@ export class BaseJwtService {
     })
     const expTimeMs = payload.exp * 1000
     const currentTimeMs = Date.now()
-    const ttlSec = Math.max(0, Math.floor((expTimeMs - currentTimeMs) / 1000))
+    const ttlSec = Math.max(0, Math.floor(expTimeMs - currentTimeMs))
     const jti = payload.jti
     return { ttlSec, jti }
   }

@@ -38,7 +38,6 @@ export class AdminJwtStrategy extends PassportStrategy(
       payload,
       expectedAud: ADMIN_AUTH_CONFIG.aud,
       blacklistService: this.jwtBlacklistService,
-      scope: 'admin',
     })
   }
 }
