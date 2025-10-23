@@ -16,7 +16,6 @@ export interface BaseJwtPayload {
  * 包含管理员特定的字段
  */
 export interface AdminJwtPayload extends BaseJwtPayload {
-  role: 'admin' // 用户角色，固定为 'admin'
   permissions?: string[] // 可选的权限列表
 }
 

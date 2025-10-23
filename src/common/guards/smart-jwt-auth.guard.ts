@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
 import { GUARD_PATH_PREFIXES } from '@/common/constants/auth.constants'
 import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator'
+import { ADMIN_AUTH_CONFIG } from '@/config/jwt.config'
 
 /**
  * SmartJwtAuthGuard 智能JWT认证守卫
@@ -36,7 +37,7 @@ export class SmartJwtAuthGuard implements CanActivate {
     // 根据路径前缀选择合适的策略
     if (this.isAdminPath(path)) {
       // 管理员路径使用admin-jwt策略
-      const adminGuard = new (AuthGuard('admin-jwt'))()
+      const adminGuard = new (AuthGuard(ADMIN_AUTH_CONFIG.strategyKey))()
       return adminGuard.canActivate(context) as Promise<boolean>
     }
     else if (this.isClientPath(path)) {

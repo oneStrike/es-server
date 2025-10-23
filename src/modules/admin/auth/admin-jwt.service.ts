@@ -1,14 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { v4 as uuid } from 'uuid'
-import { JWT_AUDIENCE } from '@/common/constants/auth.constants'
 import {
   AdminJwtPayload,
-  RefreshTokenPayload,
   TokenPair,
 } from '@/common/interfaces/jwt-payload.interface'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
-import { adminJwtConfig } from '@/config/jwt.config'
+import { ADMIN_AUTH_CONFIG } from '@/config/jwt.config'
 
 /**
  * AdminJwtService 服务
@@ -32,30 +30,29 @@ export class AdminJwtService {
   async generateTokens(
     payload: Omit<AdminJwtPayload, 'role' | 'iat' | 'exp' | 'jti' | 'aud'>,
   ): Promise<TokenPair> {
-    const jti = uuid()
-    const adminPayload: Omit<AdminJwtPayload, 'iat' | 'exp'> = {
+    const adminPayload = {
       ...payload,
-      role: 'admin',
-      jti,
-      aud: JWT_AUDIENCE.ADMIN,
+      jti: uuid(),
+      type: 'access',
+      aud: ADMIN_AUTH_CONFIG.aud,
     }
 
-    const refreshPayload: Omit<RefreshTokenPayload, 'iat' | 'exp'> = {
+    const refreshPayload = {
       sub: payload.sub,
       username: payload.username,
       type: 'refresh',
-      role: 'admin',
       jti: uuid(),
+      aud: ADMIN_AUTH_CONFIG.aud,
     }
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(adminPayload, {
-        secret: adminJwtConfig.secret,
-        expiresIn: adminJwtConfig.expiresIn,
+        secret: ADMIN_AUTH_CONFIG.secret,
+        expiresIn: ADMIN_AUTH_CONFIG.expiresIn,
       }),
       this.jwtService.signAsync(refreshPayload, {
-        secret: adminJwtConfig.secret,
-        expiresIn: adminJwtConfig.refreshExpiresIn,
+        secret: ADMIN_AUTH_CONFIG.refreshSecret,
+        expiresIn: ADMIN_AUTH_CONFIG.refreshExpiresIn,
       }),
     ])
 
@@ -72,7 +69,7 @@ export class AdminJwtService {
    */
   async verifyToken(token: string): Promise<AdminJwtPayload> {
     return this.jwtService.verifyAsync(token, {
-      secret: adminJwtConfig.secret,
+      secret: ADMIN_AUTH_CONFIG.secret,
     })
   }
 
@@ -85,7 +82,7 @@ export class AdminJwtService {
   async refreshAccessToken(refreshToken: string): Promise<TokenPair> {
     // 验证刷新令牌
     const payload = await this.jwtService.verifyAsync(refreshToken, {
-      secret: adminJwtConfig.secret,
+      secret: ADMIN_AUTH_CONFIG.secret,
     })
 
     if (payload.type !== 'refresh' || payload.role !== 'admin') {
@@ -93,24 +90,37 @@ export class AdminJwtService {
     }
 
     // 只生成新的访问令牌，使用原始 payload 中的数据
-    const adminPayload: Omit<AdminJwtPayload, 'iat' | 'exp'> = {
+    const adminPayload = {
       sub: payload.sub,
       username: payload.username,
-      role: 'admin',
       permissions: payload.permissions,
       jti: uuid(),
-      aud: JWT_AUDIENCE.ADMIN,
+      aud: ADMIN_AUTH_CONFIG.aud,
     }
 
     const accessToken = await this.jwtService.signAsync(adminPayload, {
-      secret: adminJwtConfig.secret,
-      expiresIn: adminJwtConfig.expiresIn,
+      secret: ADMIN_AUTH_CONFIG.secret,
+      expiresIn: ADMIN_AUTH_CONFIG.expiresIn,
     })
 
     // 返回新的访问令牌和原有的刷新令牌
     return {
       accessToken,
       refreshToken, // 保持原有的刷新令牌不变
+    }
+  }
+
+  async tokenTtl(token: string, secret: string) {
+    const payload = await this.jwtService.verifyAsync(token, {
+      secret,
+      ignoreExpiration: true,
+    })
+
+    const expTime = payload.exp * 1000
+    const currentTime = Date.now()
+    return {
+      ttl: Math.max(0, Math.floor(expTime - currentTime)),
+      jti: payload.jti,
     }
   }
 
@@ -121,47 +131,20 @@ export class AdminJwtService {
    * @returns 是否成功登出
    */
   async logout(accessToken: string, refreshToken?: string): Promise<boolean> {
-    try {
-      const payload = await this.jwtService.verifyAsync(accessToken, {
-        secret: adminJwtConfig.secret,
-        ignoreExpiration: true,
-      })
+    const { jti, ttl } = await this.tokenTtl(
+      accessToken,
+      ADMIN_AUTH_CONFIG.secret,
+    )
+    await this.jwtBlacklistService.addToAdminBlacklist(jti, ttl)
 
-      const expTime = payload.exp * 1000
-      const currentTime = Date.now()
-      const ttl = Math.max(0, Math.floor((expTime - currentTime) / 1000))
-
-      await this.jwtBlacklistService.addToAdminBlacklist(accessToken, ttl)
-
-      if (refreshToken) {
-        try {
-          const refreshPayload = await this.jwtService.verifyAsync(
-            refreshToken,
-            {
-              secret: adminJwtConfig.secret,
-              ignoreExpiration: true,
-            },
-          )
-
-          const refreshExpTime = refreshPayload.exp * 1000
-          const refreshTtl = Math.max(
-            0,
-            Math.floor((refreshExpTime - currentTime) / 1000),
-          )
-
-          await this.jwtBlacklistService.addToAdminBlacklist(
-            refreshToken,
-            refreshTtl,
-          )
-        } catch (error) {
-          this.logger.error('刷新令牌添加到黑名单失败', error instanceof Error ? error.message : String(error))
-        }
-      }
-
-      return true
-    } catch (error) {
-      this.logger.error('登出失败', error instanceof Error ? error.message : String(error))
-      return false
+    if (refreshToken) {
+      const { jti, ttl } = await this.tokenTtl(
+        refreshToken,
+        ADMIN_AUTH_CONFIG.refreshSecret,
+      )
+      await this.jwtBlacklistService.addToAdminBlacklist(jti, ttl)
     }
+
+    return true
   }
 }

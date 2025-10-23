@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 import { AdminJwtPayload } from '@/common/interfaces/jwt-payload.interface'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
-import { adminJwtConfig } from '@/config/jwt.config'
+import { ADMIN_AUTH_CONFIG } from '@/config/jwt.config'
 
 /**
  * AdminJwtStrategy 类
@@ -11,12 +11,15 @@ import { adminJwtConfig } from '@/config/jwt.config'
  * 使用 passport-jwt 库提供的 Strategy 类
  */
 @Injectable()
-export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
+export class AdminJwtStrategy extends PassportStrategy(
+  Strategy,
+  ADMIN_AUTH_CONFIG.strategyKey,
+) {
   constructor(private jwtBlacklistService: JwtBlacklistService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: adminJwtConfig.secret!,
+      secretOrKey: ADMIN_AUTH_CONFIG.secret,
       passReqToCallback: true,
     })
   }
@@ -30,17 +33,15 @@ export class AdminJwtStrategy extends PassportStrategy(Strategy, 'admin-jwt') {
    * @throws UnauthorizedException 如果角色不是 'admin' 或令牌在黑名单中
    */
   async validate(request: any, payload: AdminJwtPayload) {
-    if (payload.role !== 'admin') {
+    if (payload.aud !== ADMIN_AUTH_CONFIG.aud) {
       throw new UnauthorizedException('登录失效，请重新登录！')
     }
 
-    const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request)
-
-    if (token) {
-      const isBlacklisted = await this.jwtBlacklistService.isInAdminBlacklist(token)
-      if (isBlacklisted) {
-        throw new UnauthorizedException('登录失效，请重新登录！')
-      }
+    const isBlacklisted = await this.jwtBlacklistService.isInAdminBlacklist(
+      payload.jti!,
+    )
+    if (isBlacklisted) {
+      throw new UnauthorizedException('登录失效，请重新登录！')
     }
 
     return payload

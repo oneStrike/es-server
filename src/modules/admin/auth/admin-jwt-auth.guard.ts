@@ -2,15 +2,18 @@ import { ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
 import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator'
+import { ADMIN_AUTH_CONFIG } from '@/config/jwt.config'
 
 /**
  * AdminJwtAuthGuard 类
  * 实现基于 JWT 的管理员用户认证守卫
- * 继承自 AuthGuard，使用 'admin-jwt' 策略
+ * 继承自 AuthGuard，使用 ADMIN_AUTH_CONFIG.strategyKey 策略
  * 支持通过 @Public() 装饰器跳过特定路由的认证
  */
 @Injectable()
-export class AdminJwtAuthGuard extends AuthGuard('admin-jwt') {
+export class AdminJwtAuthGuard extends AuthGuard(
+  ADMIN_AUTH_CONFIG.strategyKey,
+) {
   /**
    * 构造函数
    * @param reflector 用于获取路由元数据的 Reflector 服务
