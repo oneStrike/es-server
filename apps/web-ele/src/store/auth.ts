@@ -86,14 +86,21 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout(redirect: boolean = true) {
-    try {
-      await userLogoutApi({
-        accessToken: accessStore.accessToken as string,
-        refreshToken: accessStore.refreshToken as string,
-      });
-    } catch {
-      // 不做任何处理
+    const accessToken = accessStore.accessToken as string;
+    const refreshToken = accessStore.refreshToken as string;
+    if (accessToken && refreshToken) {
+      accessStore.setAccessToken(null);
+      accessStore.setRefreshToken(null);
+      try {
+        await userLogoutApi({
+          accessToken,
+          refreshToken,
+        });
+      } catch {
+        // 不做任何处理
+      }
     }
+
     resetAllStores();
     accessStore.setLoginExpired(false);
 
