@@ -20,7 +20,7 @@ export class JwtBlacklistService {
     await this.cacheManager.set(
       this.ADMIN_BLACKLIST_PREFIX + jti,
       true,
-      expiresIn * 1000,
+      expiresIn,
     )
   }
 
@@ -31,7 +31,7 @@ export class JwtBlacklistService {
     await this.cacheManager.set(
       this.CLIENT_BLACKLIST_PREFIX + jti,
       true,
-      expiresIn * 1000,
+      expiresIn,
     )
   }
 

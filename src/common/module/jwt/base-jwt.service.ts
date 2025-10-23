@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { v4 as uuid } from 'uuid'
 
@@ -45,42 +45,38 @@ export class BaseJwtService {
   }
 
   async refreshAccessToken(refreshToken: string) {
-    const payload = await this.jwtService.verifyAsync(refreshToken, {
-      secret: this.config.refreshSecret,
-    })
-
-    if (payload.type !== 'refresh') {
-      throw new Error('无效的刷新令牌')
+    const { aud, jti, exp, iat, ...payload } =
+      await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.config.refreshSecret,
+      })
+    const isBlacklist =
+      this.config.aud === 'admin'
+        ? await this.jwtBlacklistService.isInAdminBlacklist(jti)
+        : await this.jwtBlacklistService.isInClientBlacklist(jti)
+    if (
+      payload.type !== 'refresh' ||
+      payload.type !== this.config.aud ||
+      isBlacklist
+    ) {
+      throw new UnauthorizedException('登录失效，请重新登录！')
     }
 
-    const accessPayload = {
-      ...payload,
-      type: 'access',
-      jti: uuid(),
-    }
-
-    const accessToken = await this.jwtService.signAsync(accessPayload, {
-      secret: this.config.secret,
-      expiresIn: this.config.expiresIn,
-    })
-
-    return { accessToken, refreshToken }
+    return this.generateTokens(payload)
   }
 
-  protected async tokenTtlSeconds(token: string, secret: string) {
+  protected async tokenTtlMsAndJti(token: string, secret: string) {
     const payload = await this.jwtService.verifyAsync(token, {
       secret,
       ignoreExpiration: true,
     })
     const expTimeMs = payload.exp * 1000
     const currentTimeMs = Date.now()
-    const ttlSec = Math.max(0, Math.floor(expTimeMs - currentTimeMs))
-    const jti = payload.jti
-    return { ttlSec, jti }
+    const ttlMs = Math.max(0, Math.floor(expTimeMs - currentTimeMs))
+    return { ttlMs, jti: payload.jti }
   }
 
   async logout(accessToken: string, refreshToken?: string): Promise<boolean> {
-    const { jti, ttlSec } = await this.tokenTtlSeconds(
+    const { jti, ttlMs } = await this.tokenTtlMsAndJti(
       accessToken,
       this.config.secret,
     )
@@ -89,21 +85,21 @@ export class BaseJwtService {
     }
 
     if (this.config.aud === 'admin') {
-      await this.jwtBlacklistService.addToAdminBlacklist(jti, ttlSec)
+      await this.jwtBlacklistService.addToAdminBlacklist(jti, ttlMs)
     } else {
-      await this.jwtBlacklistService.addToClientBlacklist(jti, ttlSec)
+      await this.jwtBlacklistService.addToClientBlacklist(jti, ttlMs)
     }
 
     if (refreshToken) {
-      const { jti: rjti, ttlSec: rttlSec } = await this.tokenTtlSeconds(
+      const { jti: rjti, ttlMs: rttlMs } = await this.tokenTtlMsAndJti(
         refreshToken,
         this.config.refreshSecret,
       )
       if (rjti) {
         if (this.config.aud === 'admin') {
-          await this.jwtBlacklistService.addToAdminBlacklist(rjti, rttlSec)
+          await this.jwtBlacklistService.addToAdminBlacklist(rjti, rttlMs)
         } else {
-          await this.jwtBlacklistService.addToClientBlacklist(rjti, rttlSec)
+          await this.jwtBlacklistService.addToClientBlacklist(rjti, rttlMs)
         }
       }
     }
