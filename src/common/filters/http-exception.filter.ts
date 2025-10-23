@@ -30,6 +30,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * 捕获并处理异常
    */
   catch(exception: unknown, host: ArgumentsHost): void {
+    console.error('🚀 ~ HttpExceptionFilter ~ catch ~ exception:', exception)
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<FastifyReply>()
 
@@ -41,7 +42,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // 将完整的错误响应添加到response对象上，供日志拦截器使用
     // @ts-expect-error ignore
     response.errorResponse = errorResponse
-    console.error(message)
     response.code(status).send(errorResponse)
   }
 
