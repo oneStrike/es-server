@@ -1,7 +1,6 @@
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { CurrentUser } from '@/common/decorators/current-user.decorator'
-import { ClientJwtPayload } from '@/common/interfaces/jwt-payload.interface'
 import { ClientUserService } from '@/modules/client/user/user.service'
 
 @ApiTags('客户端用户模块')
@@ -10,7 +9,7 @@ export class ClientUserController {
   constructor(private readonly userService: ClientUserService) {}
 
   @Get('getClientUserPage')
-  async getUsers(@CurrentUser() user: ClientJwtPayload) {
+  async getUsers(@CurrentUser() user) {
     return user
   }
 }

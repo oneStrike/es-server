@@ -12,8 +12,7 @@ import uploadConfig from '@/config/upload.config'
 import { AdminModule } from '@/modules/admin/admin.module'
 import { ClientModule } from '@/modules/client/client.module'
 import { PrismaService } from '@/prisma/prisma.connect'
-import { GuardsModule } from './common/guards/guards.module'
-import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard'
+import { JwtAuthGuard } from './common/guards/auth.guard'
 
 @Module({
   imports: [
@@ -34,7 +33,6 @@ import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard'
     }),
 
     LoggerModule, // 添加日志模块
-    GuardsModule,
     AdminModule,
     ClientModule,
   ],
@@ -63,7 +61,7 @@ import { SmartJwtAuthGuard } from './common/guards/smart-jwt-auth.guard'
 
     {
       provide: APP_GUARD,
-      useClass: SmartJwtAuthGuard,
+      useClass: JwtAuthGuard,
     },
   ],
 })

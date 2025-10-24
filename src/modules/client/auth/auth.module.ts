@@ -3,7 +3,6 @@ import { JwtModule as NestjsJwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { JwtModule } from '@/common/module/jwt/jwt.module'
 import { CLIENT_AUTH_CONFIG } from '@/config/jwt.config'
-import { ClientJwtAuthGuard } from './client-jwt-auth.guard'
 import { ClientJwtService } from './client-jwt.service'
 import { ClientJwtStrategy } from './client-jwt.strategy'
 
@@ -18,7 +17,7 @@ import { ClientJwtStrategy } from './client-jwt.strategy'
       signOptions: { expiresIn: CLIENT_AUTH_CONFIG.expiresIn },
     }),
   ],
-  providers: [ClientJwtService, ClientJwtStrategy, ClientJwtAuthGuard],
-  exports: [ClientJwtService, ClientJwtAuthGuard],
+  providers: [ClientJwtService, ClientJwtStrategy],
+  exports: [ClientJwtService],
 })
 export class ClientAuthModule {}

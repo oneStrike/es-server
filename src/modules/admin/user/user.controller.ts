@@ -5,7 +5,6 @@ import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
 import { CurrentUser } from '@/common/decorators/current-user.decorator'
 import { Public } from '@/common/decorators/public.decorator'
 import { IdDto } from '@/common/dto/id.dto'
-import { AdminJwtPayload } from '@/common/interfaces/jwt-payload.interface'
 import {
   RefreshTokenDto,
   RefreshTokenResponseDto,
@@ -111,7 +110,7 @@ export class AdminUserController {
   })
   async updatePassword(
     @Body() body: UpdatePasswordDto,
-    @CurrentUser() user: AdminJwtPayload,
+    @CurrentUser() user,
     @Req() req: FastifyRequest,
   ) {
     return this.userService.updatePassword(Number.parseInt(user.sub), body, req)
@@ -129,10 +128,7 @@ export class AdminUserController {
     summary: '更新用户信息',
     model: UserDto,
   })
-  async updateUserInfo(
-    @Body() body: UpdateUserDto,
-    @CurrentUser() user: AdminJwtPayload,
-  ) {
+  async updateUserInfo(@Body() body: UpdateUserDto, @CurrentUser() user) {
     return this.userService.updateUserInfo(Number.parseInt(user.sub), body)
   }
 
@@ -147,7 +143,7 @@ export class AdminUserController {
     summary: '获取当前用户信息',
     model: UserDto,
   })
-  async getUserInfo(@CurrentUser() user: AdminJwtPayload) {
+  async getUserInfo(@CurrentUser() user) {
     return this.userService.getUserInfo(Number.parseInt(user.sub))
   }
 

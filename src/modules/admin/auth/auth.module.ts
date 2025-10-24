@@ -4,7 +4,6 @@ import { PassportModule } from '@nestjs/passport'
 import { JwtModule } from '@/common/module/jwt/jwt.module'
 import { ADMIN_AUTH_CONFIG } from '@/config/jwt.config'
 import { AdminAuthController } from '@/modules/admin/auth/auth.controller'
-import { AdminJwtAuthGuard } from './admin-jwt-auth.guard'
 import { AdminJwtService } from './admin-jwt.service'
 import { AdminJwtStrategy } from './admin-jwt.strategy'
 
@@ -18,7 +17,7 @@ import { AdminJwtStrategy } from './admin-jwt.strategy'
       signOptions: { expiresIn: ADMIN_AUTH_CONFIG.expiresIn },
     }),
   ],
-  providers: [AdminJwtService, AdminJwtStrategy, AdminJwtAuthGuard],
-  exports: [AdminJwtService, AdminJwtAuthGuard],
+  providers: [AdminJwtService, AdminJwtStrategy],
+  exports: [AdminJwtService],
 })
 export class AdminAuthModule {}

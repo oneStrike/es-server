@@ -1,17 +1,16 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
-import { GUARD_PATH_PREFIXES } from '@/common/constants/auth.constants'
 import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator'
-import { ADMIN_AUTH_CONFIG } from '@/config/jwt.config'
+import { ADMIN_AUTH_CONFIG, CLIENT_AUTH_CONFIG } from '@/config/jwt.config'
 
 /**
- * SmartJwtAuthGuard 智能JWT认证守卫
+ * AuthGuard 智能JWT认证守卫
  * 根据请求路径自动选择合适的认证策略
  * 解决多个Guard同时执行导致的冲突问题
  */
 @Injectable()
-export class SmartJwtAuthGuard implements CanActivate {
+export class JwtAuthGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   /**
@@ -39,10 +38,9 @@ export class SmartJwtAuthGuard implements CanActivate {
       // 管理员路径使用admin-jwt策略
       const adminGuard = new (AuthGuard(ADMIN_AUTH_CONFIG.strategyKey))()
       return adminGuard.canActivate(context) as Promise<boolean>
-    }
-    else if (this.isClientPath(path)) {
+    } else if (this.isClientPath(path)) {
       // 客户端路径使用client-jwt策略
-      const clientGuard = new (AuthGuard('client-jwt'))()
+      const clientGuard = new (AuthGuard(CLIENT_AUTH_CONFIG.strategyKey))()
       return clientGuard.canActivate(context) as Promise<boolean>
     }
 
@@ -56,7 +54,9 @@ export class SmartJwtAuthGuard implements CanActivate {
    * @returns 是否为管理员路径
    */
   private isAdminPath(path: string): boolean {
-    return GUARD_PATH_PREFIXES.ADMIN.some(adminPath => path.startsWith(adminPath))
+    return ADMIN_AUTH_CONFIG.guardPathPrefixes.some((adminPath) =>
+      path.startsWith(adminPath),
+    )
   }
 
   /**
@@ -65,6 +65,8 @@ export class SmartJwtAuthGuard implements CanActivate {
    * @returns 是否为客户端路径
    */
   private isClientPath(path: string): boolean {
-    return GUARD_PATH_PREFIXES.CLIENT.some(clientPath => path.startsWith(clientPath))
+    return CLIENT_AUTH_CONFIG.guardPathPrefixes.some((clientPath) =>
+      path.startsWith(clientPath),
+    )
   }
 }
