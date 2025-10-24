@@ -21,7 +21,7 @@ export class ContentTypeController {
   /**
    * 创建
    */
-  @Post('/create-content-type')
+  @Post('/create')
   @ApiDoc({ summary: '创建内容类型', model: IdDto })
   async create(@Body() body: CreateContentTypeDto) {
     const created = await this.contentTypeService.createContentType(body)
@@ -31,7 +31,7 @@ export class ContentTypeController {
   /**
    * 列表
    */
-  @Get('/content-type-list')
+  @Get('/list')
   @ApiDoc({ summary: '内容类型列表', model: BaseContentTypeDto, isArray: true })
   async getPage(@Query() query?: QueryContentTypeDto) {
     return this.contentTypeService.getContentTypeList(query)
@@ -40,7 +40,7 @@ export class ContentTypeController {
   /**
    * 更新
    */
-  @Post('/update-content-type')
+  @Post('/update')
   @ApiDoc({ summary: '更新内容类型', model: IdDto })
   async update(@Body() body: UpdateContentTypeDto) {
     await this.contentTypeService.updateContentType(body)

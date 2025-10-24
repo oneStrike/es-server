@@ -35,7 +35,7 @@ export class WorkComicChapterController {
   /**
    * 创建漫画章节
    */
-  @Post('/create-comic-chapter')
+  @Post('/create')
   @ApiDoc({
     summary: '创建漫画章节',
     model: IdDto,
@@ -47,7 +47,7 @@ export class WorkComicChapterController {
   /**
    * 分页查询漫画章节列表
    */
-  @Get('/comic-chapter-page')
+  @Get('/page')
   @ApiPageDoc({
     summary: '分页查询漫画章节列表',
     model: ComicChapterPageResponseDto,
@@ -59,7 +59,7 @@ export class WorkComicChapterController {
   /**
    * 获取漫画章节详情
    */
-  @Get('/comic-chapter-detail')
+  @Get('/detail')
   @ApiDoc({
     summary: '获取漫画章节详情',
     model: ComicChapterDetailDto,
@@ -71,7 +71,7 @@ export class WorkComicChapterController {
   /**
    * 更新漫画章节信息
    */
-  @Post('/update-comic-chapter')
+  @Post('/update')
   @ApiDoc({
     summary: '更新漫画章节信息',
     model: IdDto,
@@ -83,7 +83,7 @@ export class WorkComicChapterController {
   /**
    * 批量软删除章节
    */
-  @Post('/batch-delete-comic-chapter')
+  @Post('/batch-delete')
   @ApiDoc({
     summary: '批量软删除章节',
     model: CountDto,
@@ -97,7 +97,7 @@ export class WorkComicChapterController {
   /**
    * 批量更新章节发布状态
    */
-  @Post('/batch-update-chapter-publish-status')
+  @Post('/batch-update-status')
   @ApiDoc({
     summary: '批量更新章节发布状态',
     model: CountDto,
@@ -116,7 +116,7 @@ export class WorkComicChapterController {
   /**
    * 交换两个章节的章节号
    */
-  @Post('swap-chapter-numbers')
+  @Post('swap-numbers')
   @ApiDoc({ summary: '交换两个章节的章节号', model: OrderDto })
   async swapChapterNumbers(@Body() swapChapterNumberDto: OrderDto) {
     return this.comicChapterService.swapChapterNumbers(swapChapterNumberDto)
@@ -125,7 +125,7 @@ export class WorkComicChapterController {
   /**
    * 获取章节内容详情
    */
-  @Get('/chapter-contents')
+  @Get('/contents')
   @ApiDoc({
     summary: '获取章节内容详情',
     model: {
@@ -142,7 +142,7 @@ export class WorkComicChapterController {
   /**
    * 添加章节内容
    */
-  @Post('/add-chapter-content')
+  @Post('/add-content')
   @ApiDoc({
     summary: '添加章节内容',
     model: {
@@ -159,7 +159,7 @@ export class WorkComicChapterController {
   /**
    * 更新章节内容
    */
-  @Post('/update-chapter-content')
+  @Post('/update-content')
   @ApiDoc({
     summary: '更新章节内容',
     model: {
@@ -176,7 +176,7 @@ export class WorkComicChapterController {
   /**
    * 删除章节内容
    */
-  @Post('/delete-chapter-content')
+  @Post('/delete-content')
   @ApiDoc({
     summary: '删除章节内容',
     model: {
@@ -193,7 +193,7 @@ export class WorkComicChapterController {
   /**
    * 移动章节内容（排序）
    */
-  @Post('/move-chapter-content')
+  @Post('/move-content')
   @ApiDoc({
     summary: '移动章节内容（排序）',
     model: {
@@ -210,7 +210,7 @@ export class WorkComicChapterController {
   /**
    * 批量更新章节内容
    */
-  @Post('/batch-update-chapter-contents')
+  @Post('/batch-update-contents')
   @ApiDoc({
     summary: '批量更新章节内容',
     model: {
@@ -229,7 +229,7 @@ export class WorkComicChapterController {
   /**
    * 清空章节内容
    */
-  @Post('/clear-chapter-contents')
+  @Post('/clear-contents')
   @ApiDoc({
     summary: '清空章节内容',
     model: IdDto,

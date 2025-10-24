@@ -28,7 +28,7 @@ export class WorkComicController {
   /**
    * 创建漫画
    */
-  @Post('/create-comic')
+  @Post('/create')
   @ApiDoc({
     summary: '创建漫画',
     model: IdDto,
@@ -40,7 +40,7 @@ export class WorkComicController {
   /**
    * 分页查询漫画列表
    */
-  @Get('/comic-page')
+  @Get('/page')
   @ApiPageDoc({
     summary: '分页查询漫画列表',
     model: BaseComicDto,
@@ -52,7 +52,7 @@ export class WorkComicController {
   /**
    * 获取漫画详情
    */
-  @Get('/comic-detail')
+  @Get('/detail')
   @ApiDoc({
     summary: '获取漫画详情',
     model: BaseComicDto,
@@ -64,7 +64,7 @@ export class WorkComicController {
   /**
    * 更新漫画信息
    */
-  @Post('/update-comic')
+  @Post('/update')
   @ApiDoc({
     summary: '更新漫画信息',
     model: IdDto,
@@ -76,7 +76,7 @@ export class WorkComicController {
   /**
    * 批量更新漫画发布状态
    */
-  @Post('/batch-update-comic-status')
+  @Post('/batch-update-status')
   @ApiDoc({
     summary: '批量更新漫画发布状态',
     model: CountDto,
@@ -93,7 +93,7 @@ export class WorkComicController {
   /**
    * 批量更新漫画推荐状态
    */
-  @Post('/batch-update-comic-recommended')
+  @Post('/batch-update-recommended')
   @ApiDoc({
     summary: '批量更新漫画推荐状态',
     model: CountDto,
@@ -110,7 +110,7 @@ export class WorkComicController {
   /**
    * 批量更新漫画热门状态
    */
-  @Post('/batch-update-comic-hot')
+  @Post('/batch-update-hot')
   @ApiDoc({
     summary: '批量更新漫画热门状态',
     model: CountDto,
@@ -127,7 +127,7 @@ export class WorkComicController {
   /**
    * 批量更新漫画新作状态
    */
-  @Post('/batch-update-comic-new')
+  @Post('/batch-update-new')
   @ApiDoc({
     summary: '批量更新漫画新作状态',
     model: CountDto,
@@ -144,7 +144,7 @@ export class WorkComicController {
   /**
    * 软删除漫画
    */
-  @Post('/delete-comic')
+  @Post('/delete')
   @ApiDoc({
     summary: '软删除漫画',
     model: IdDto,

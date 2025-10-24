@@ -25,7 +25,7 @@ export class WorkAuthorController {
   /**
    * 创建作者
    */
-  @Post('/create-author')
+  @Post('/create')
   @ApiDoc({
     summary: '创建作者',
     model: IdDto,
@@ -37,7 +37,7 @@ export class WorkAuthorController {
   /**
    * 分页查询作者列表
    */
-  @Get('/author-page')
+  @Get('/page')
   @ApiPageDoc({
     summary: '分页查询作者列表',
     model: AuthorPageResponseDto,
@@ -49,7 +49,7 @@ export class WorkAuthorController {
   /**
    * 获取作者详情
    */
-  @Get('/author-detail')
+  @Get('/detail')
   @ApiDoc({
     summary: '获取作者详情',
     model: AuthorDetailResponseDto,
@@ -61,7 +61,7 @@ export class WorkAuthorController {
   /**
    * 更新作者信息
    */
-  @Post('/update-author')
+  @Post('/update')
   @ApiDoc({
     summary: '更新作者信息',
     model: IdDto,
@@ -73,7 +73,7 @@ export class WorkAuthorController {
   /**
    * 批量更新作者状态
    */
-  @Post('/batch-update-author-status')
+  @Post('/batch-update-status')
   @ApiDoc({
     summary: '批量更新作者状态',
     model: CountDto,
@@ -85,7 +85,7 @@ export class WorkAuthorController {
   /**
    * 批量更新作者推荐状态
    */
-  @Post('/batch-update-author-featured')
+  @Post('/batch-update-featured')
   @ApiDoc({
     summary: '批量更新作者推荐状态',
     model: CountDto,
@@ -97,7 +97,7 @@ export class WorkAuthorController {
   /**
    * 软删除作者
    */
-  @Post('/delete-author')
+  @Post('/delete')
   @ApiDoc({
     summary: '软删除作者',
     model: IdDto,

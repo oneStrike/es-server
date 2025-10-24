@@ -26,7 +26,7 @@ export class WorkComicVersionController {
   /**
    * 创建漫画版本
    */
-  @Post('/create-comic-version')
+  @Post('/create')
   @ApiDoc({
     summary: '创建漫画版本',
     model: IdDto,
@@ -38,7 +38,7 @@ export class WorkComicVersionController {
   /**
    * 分页查询漫画版本列表
    */
-  @Get('/comic-version-page')
+  @Get('/page')
   @ApiPageDoc({
     summary: '分页查询漫画版本列表',
     model: BaseComicVersionDto,
@@ -50,7 +50,7 @@ export class WorkComicVersionController {
   /**
    * 获取漫画版本详情
    */
-  @Get('/comic-version-detail')
+  @Get('/detail')
   @ApiDoc({
     summary: '获取漫画版本详情',
     model: ComicVersionDetailResponseDto,
@@ -62,7 +62,7 @@ export class WorkComicVersionController {
   /**
    * 更新漫画版本信息
    */
-  @Post('/update-comic-version')
+  @Post('/update')
   @ApiDoc({
     summary: '更新漫画版本信息',
     model: IdDto,
@@ -74,7 +74,7 @@ export class WorkComicVersionController {
   /**
    * 批量更新版本发布状态
    */
-  @Post('/batch-update-version-publish-status')
+  @Post('/batch-update-publish-status')
   @ApiDoc({
     summary: '批量更新版本发布状态',
     model: CountDto,
@@ -93,7 +93,7 @@ export class WorkComicVersionController {
   /**
    * 批量更新版本推荐状态
    */
-  @Post('/batch-update-version-recommended-status')
+  @Post('/batch-update-recommended-status')
   @ApiDoc({
     summary: '批量更新版本推荐状态',
     model: CountDto,
@@ -107,7 +107,7 @@ export class WorkComicVersionController {
   /**
    * 批量更新版本启用状态
    */
-  @Post('/batch-update-version-enabled-status')
+  @Post('/batch-update-enabled-status')
   @ApiDoc({
     summary: '批量更新版本启用状态',
     model: CountDto,
@@ -126,7 +126,7 @@ export class WorkComicVersionController {
   /**
    * 软删除版本
    */
-  @Post('/delete-comic-version')
+  @Post('/delete')
   @ApiDoc({
     summary: '软删除版本',
     model: IdDto,

@@ -24,7 +24,7 @@ export class WorkCategoryController {
   /**
    * 创建分类
    */
-  @Post('/create-category')
+  @Post('/create')
   @ApiDoc({
     summary: '创建分类',
     model: IdDto,
@@ -36,7 +36,7 @@ export class WorkCategoryController {
   /**
    * 分页查询分类列表
    */
-  @Get('/category-page')
+  @Get('/page')
   @ApiPageDoc({
     summary: '分页查询分类列表',
     model: BaseCategoryDto,
@@ -48,7 +48,7 @@ export class WorkCategoryController {
   /**
    * 获取分类详情
    */
-  @Get('/category-detail')
+  @Get('/detail')
   @ApiDoc({
     summary: '获取分类详情',
     model: BaseCategoryDto,
@@ -60,7 +60,7 @@ export class WorkCategoryController {
   /**
    * 更新分类信息
    */
-  @Post('/update-category')
+  @Post('/update')
   @ApiDoc({
     summary: '更新分类信息',
     model: IdDto,
@@ -72,7 +72,7 @@ export class WorkCategoryController {
   /**
    * 批量更新分类状态
    */
-  @Post('/batch-update-category-status')
+  @Post('/batch-update-status')
   @ApiDoc({
     summary: '批量更新分类状态',
     model: CountDto,
@@ -84,7 +84,7 @@ export class WorkCategoryController {
   /**
    * 批量删除分类
    */
-  @Post('/batch-delete-category')
+  @Post('/batch-delete')
   @ApiDoc({
     summary: '批量删除分类',
     model: CountDto,
@@ -96,7 +96,7 @@ export class WorkCategoryController {
   /**
    * 拖拽排序
    */
-  @Post('/category-order')
+  @Post('/order')
   @ApiDoc({
     summary: '分类拖拽排序',
     model: OrderDto,

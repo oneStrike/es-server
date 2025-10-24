@@ -31,7 +31,7 @@ export class ClientPageConfigController {
   /**
    * 创建页面配置
    */
-  @Post('/create-client-page')
+  @Post('/create')
   @ApiDoc({
     summary: '创建页面配置',
     model: IdDto,
@@ -43,7 +43,7 @@ export class ClientPageConfigController {
   /**
    * 分页查询页面配置列表
    */
-  @Get('/client-page-page')
+  @Get('/page')
   @ApiPageDoc({
     summary: '分页查询页面配置列表',
     model: ClientPageConfigPageResponseDto,
@@ -55,7 +55,7 @@ export class ClientPageConfigController {
   /**
    * 根据ID查询页面配置详情
    */
-  @Get('/client-page-detail-by-id')
+  @Get('/detail-by-id')
   @ApiDoc({
     summary: '根据ID查询页面配置详情',
     model: ClientPageConfigResponseDto,
@@ -67,7 +67,7 @@ export class ClientPageConfigController {
   /**
    * 根据页面编码查询页面配置详情
    */
-  @Get('/client-page-detail-by-code')
+  @Get('/detail-by-code')
   @ApiDoc({
     summary: '根据页面编码查询页面配置详情',
     model: ClientPageConfigResponseDto,
@@ -81,7 +81,7 @@ export class ClientPageConfigController {
   /**
    * 批量更新页面配置状态
    */
-  @Post('/update-client-page')
+  @Post('/update')
   @ApiDoc({
     summary: '更新页面配置',
     model: IdDto,
@@ -93,7 +93,7 @@ export class ClientPageConfigController {
   /**
    * 批量软删除页面配置
    */
-  @Post('/batch-delete-client-page')
+  @Post('/batch-delete')
   @ApiDoc({
     summary: '批量删除页面配置',
     model: CountDto,

@@ -19,7 +19,7 @@ export class RequestLogController {
   /**
    * 分页获取请求日志列表
    */
-  @Get('request-log-page')
+  @Get('page')
   @ApiPageDoc({
     summary: '分页获取请求日志列表',
     model: RequestLogDto,
