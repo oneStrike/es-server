@@ -33,7 +33,7 @@ const gridOptions: VxeGridProps<RequestLogDto> = {
           isSuccess: formValues.isSuccess,
           startDate,
           endDate,
-          path: '/api/admin/user/user-login',
+          path: '/api/admin/auth/login',
         };
 
         return await requestLogPageApi(params);
