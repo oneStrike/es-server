@@ -10,6 +10,8 @@ import { CryptoService } from '@/common/module/crypto/crypto.service'
 import { RsaService } from '@/common/module/crypto/rsa.service'
 import { RepositoryService } from '@/common/services/repository.service'
 import { RequestLogService } from '@/modules/foundation/request-log'
+import { AdminUser } from '@/prisma/client/client'
+import { extractIpAddress } from '@/utils'
 import { AdminJwtService } from './admin-jwt.service'
 import { CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto } from './dto/token.dto'
@@ -79,7 +81,7 @@ export class AdminAuthService extends RepositoryService {
     // 查找用户
     const user = await this.adminUser.findFirst({
       where: {
-        OR: [{ username: body.username }],
+        username: body.username,
         isEnabled: true, // 只查找启用的用户
       },
     })
@@ -87,24 +89,29 @@ export class AdminAuthService extends RepositoryService {
       throw new BadRequestException('账号或密码错误')
     }
 
-    // 尝试解密密码（如果是RSA加密的）
-    let password = body.password
-    try {
-      password = this.rsa.decryptWithAdmin(body.password)
-    } catch {
-      throw new BadRequestException('账号或密码错误')
-    }
+    const requestIp = extractIpAddress(req)
 
     // 检查账户是否被锁定
     if (user.isLocked) {
       await this.requestLogService.createLoginFailureRequestLog(
         {
-          content: `【${body.username}】登录失败，账户已被锁定`,
+          content: `【${body.username}】登录失败，账户被锁定`,
           username: body.username,
+          userId: user.id,
         },
         req,
       )
-      throw new UnauthorizedException('账户已被锁定')
+      await this.updateLoginFailInfo(user, requestIp)
+      throw new UnauthorizedException('失败次数过多，请稍后再试')
+    }
+
+    // 解密密码
+    let password = body.password
+    try {
+      password = this.rsa.decryptWithAdmin(body.password)
+    } catch {
+      await this.updateLoginFailInfo(user, requestIp)
+      throw new BadRequestException('账号或密码错误')
     }
 
     // 验证密码
@@ -113,14 +120,7 @@ export class AdminAuthService extends RepositoryService {
       user.password,
     )
     if (!isPasswordValid) {
-      // 增加登录失败次数
-      await this.adminUser.update({
-        where: { id: user.id },
-        data: {
-          loginFailCount: user.loginFailCount + 1,
-          isLocked: user.loginFailCount + 1 >= 5, // 失败5次后锁定账户
-        },
-      })
+      await this.updateLoginFailInfo(user, requestIp)
       throw new BadRequestException('账号或密码错误')
     }
 
@@ -129,12 +129,11 @@ export class AdminAuthService extends RepositoryService {
       where: { id: user.id },
       data: {
         lastLoginAt: new Date(),
-        lastLoginIp:
-          req?.ip ||
-          (req?.headers['x-forwarded-for'] as string) ||
-          (req?.headers['x-real-ip'] as string) ||
-          'unknown',
-        loginFailCount: 0, // 重置登录失败次数
+        lastLoginIp: extractIpAddress(req) || 'unknown',
+        isLocked: false,
+        loginFailIp: null,
+        loginFailAt: null,
+        loginFailCount: 0,
       },
     })
     // 生成令牌
@@ -144,7 +143,14 @@ export class AdminAuthService extends RepositoryService {
     })
 
     // 去除 user 对象的 password 属性
-    const { password: _password, ...userWithoutPassword } = user
+    const {
+      password: _password,
+      loginFailAt,
+      loginFailCount,
+      loginFailIp,
+      isLocked,
+      ...userWithoutPassword
+    } = user
     await this.requestLogService.createLoginSuccessRequestLog(
       {
         content: `【${body.username}】登录成功`,
@@ -158,6 +164,21 @@ export class AdminAuthService extends RepositoryService {
       user: userWithoutPassword,
       tokens,
     }
+  }
+
+  /**
+   * 更新登录失败相关的信息
+   */
+  async updateLoginFailInfo(user: AdminUser, requestIp?: string) {
+    await this.adminUser.update({
+      where: { id: user.id },
+      data: {
+        loginFailIp: requestIp || 'unknown',
+        loginFailAt: new Date(),
+        loginFailCount: user.loginFailCount + 1,
+        isLocked: user.loginFailCount + 1 >= 5, // 失败5次后锁定账户
+      },
+    })
   }
 
   /**

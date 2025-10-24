@@ -17,6 +17,10 @@ model AdminUser {
   lastLoginAt    DateTime? @map("last_login_at") @db.Timestamptz
   /// 最后登录IP
   lastLoginIp    String?   @map("last_login_ip") @db.VarChar(45)
+  /// 登录失败时间
+  loginFailAt    DateTime? @map("login_fail_at") @db.Timestamptz
+  /// 登录失败IP
+  loginFailIp    String?   @map("login_fail_ip") @db.VarChar(45)
   /// 登录失败次数
   loginFailCount Int       @default(0) @map("login_fail_count")
   /// 账户锁定状态

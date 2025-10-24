@@ -37,10 +37,6 @@ export class AdminUserController {
 
   /**
    * 更新用户信息接口
-   * 根据当前用户身份更新其基本信息（如昵称、头像等）
-   * @param body 包含要更新的用户信息的对象
-   * @param user 当前登录用户的身份信息
-   * @returns 更新后的用户信息
    */
   @Post('update-info')
   @ApiDoc({
@@ -52,10 +48,19 @@ export class AdminUserController {
   }
 
   /**
+   * 解锁指定用户的锁定状态接口
+   */
+  @Post('unlock-user')
+  @ApiDoc({
+    summary: '解锁指定用户的锁定状态',
+    model: IdDto,
+  })
+  async unlockUser(@Body() query: IdDto) {
+    return this.userService.unlockUser(query.id)
+  }
+
+  /**
    * 获取当前用户信息接口
-   * 返回当前登录用户的详细信息
-   * @param user 当前登录用户的身份信息
-   * @returns 当前用户的完整信息
    */
   @Get('info')
   @ApiDoc({
@@ -68,9 +73,6 @@ export class AdminUserController {
 
   /**
    * 根据ID获取用户信息接口
-   * 返回指定ID的用户详细信息
-   * @param query 包含用户ID的查询参数对象
-   * @returns 指定ID的用户完整信息
    */
   @Get('info-by-id')
   @ApiDoc({
@@ -107,20 +109,13 @@ export class AdminUserController {
 
   /**
    * 修改密码接口
-   * 允许用户修改自己的登录密码
-   * @param body 包含旧密码和新密码的对象
-   * @param user 当前登录用户的身份信息
-   * @returns 修改结果
    */
   @Post('change-password')
   @ApiDoc({
     summary: '修改密码',
     model: IdDto,
   })
-  async changePassword(
-    @Body() body: ChangePasswordDto,
-    @CurrentUser() user,
-  ) {
+  async changePassword(@Body() body: ChangePasswordDto, @CurrentUser() user) {
     return this.userService.changePassword(Number.parseInt(user.sub), body)
   }
 }

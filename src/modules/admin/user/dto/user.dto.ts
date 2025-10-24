@@ -1,12 +1,10 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger'
 import {
   ValidateBoolean,
-  ValidateByRegex,
   ValidateNumber,
   ValidateString,
 } from '@/common/decorators/validate.decorator'
 import { PageDto } from '@/common/dto/page.dto'
-import { STRONG_PASSWORD_REGEXP } from '@/utils/regexp'
 
 export class UserDto {
   @ValidateNumber({
@@ -108,17 +106,15 @@ export class UserRegisterDto extends OmitType(UserDto, [
   'createdAt',
   'updatedAt',
 ]) {
-  @ValidateByRegex({
-    regex: STRONG_PASSWORD_REGEXP,
+  @ValidateString({
     description: '密码',
     example: 'Aa@123456',
     required: true,
   })
   password!: string
 
-  @ValidateByRegex({
-    regex: STRONG_PASSWORD_REGEXP,
-    description: '确认密码',
+  @ValidateString({
+    description: '密码',
     example: 'Aa@123456',
     required: true,
   })

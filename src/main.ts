@@ -38,7 +38,8 @@ async function bootstrap() {
   await app.register(fastifyCsrf)
   setupSwagger(app)
 
-  await app.listen(process.env.PORT ?? 3000)
+  const port = process.env.PORT ?? 3000
+  await app.listen(port)
 
   // 打印访问地址（控制台显示）
   console.log(`🚀 应用程序已启动`)

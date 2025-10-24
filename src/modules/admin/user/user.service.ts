@@ -151,6 +151,8 @@ export class AdminUserService extends RepositoryService {
         loginFailCount: true,
         lastLoginIp: true,
         lastLoginAt: true,
+        loginFailAt: true,
+        loginFailIp: true,
       },
     })
 
@@ -251,5 +253,29 @@ export class AdminUserService extends RepositoryService {
     return {
       id: userId,
     }
+  }
+
+  /**
+   * 解锁用户
+   */
+  async unlockUser(userId: number) {
+    // 检查用户是否存在
+    const user = await this.adminUser.findUnique({
+      where: { id: userId },
+      select: { id: true, isLocked: true },
+    })
+    if (!user) {
+      throw new NotFoundException('用户不存在')
+    }
+    await this.adminUser.update({
+      where: { id: userId },
+      data: {
+        isLocked: false,
+        loginFailAt: null,
+        loginFailIp: null,
+        loginFailCount: 0,
+      },
+    })
+    return userId
   }
 }
