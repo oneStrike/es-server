@@ -1,101 +1,33 @@
 import { requestClient } from '#/utils/request';
 import type {
-  GetCaptchaResponse,
-  UserLoginRequest,
-  UserLoginResponse,
-  UserLogoutRequest,
-  UserLogoutResponse,
-  UserRegisterRequest,
-  UserRegisterResponse,
-  UserRefreshTokenRequest,
-  UserRefreshTokenResponse,
-  UserUpdatePasswordRequest,
-  UserUpdatePasswordResponse,
-  UserUpdateInfoRequest,
-  UserUpdateInfoResponse,
-  UserInfoResponse,
-  UserInfoByIdRequest,
-  UserInfoByIdResponse,
-  UserPageRequest,
-  UserPageResponse,
-  UserDeleteRequest,
-  UserDeleteResponse,
-  CaptchaDto,
-  UserLoginDto,
-  LoginResponseDto,
-  TokenDto,
-  UserDto,
+  RegisterRequest,
+  RegisterResponse,
+  UpdateInfoRequest,
+  UpdateInfoResponse,
+  InfoResponse,
+  InfoByIdRequest,
+  InfoByIdResponse,
+  PageRequest,
+  PageResponse,
+  DeleteRequest,
+  DeleteResponse,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   UserRegisterDto,
   IdDto,
-  RefreshTokenDto,
-  RefreshTokenResponseDto,
-  UpdatePasswordDto,
   UpdateUserDto,
+  UserDto,
+  ChangePasswordDto,
 } from './types/user.d';
-
-/**
- * 获取验证码
- */
-export async function getCaptchaApi(): Promise<GetCaptchaResponse> {
-  return requestClient.get<GetCaptchaResponse>('/api/admin/user/get-captcha');
-}
-
-/**
- * 管理员登录
- */
-export async function userLoginApi(
-  params: UserLoginRequest,
-): Promise<UserLoginResponse> {
-  return requestClient.post<UserLoginResponse>(
-    '/api/admin/user/user-login',
-    params,
-  );
-}
-
-/**
- * 管理员登出
- */
-export async function userLogoutApi(
-  params: UserLogoutRequest,
-): Promise<UserLogoutResponse> {
-  return requestClient.post<UserLogoutResponse>(
-    '/api/admin/user/user-logout',
-    params,
-  );
-}
 
 /**
  * 用户注册
  */
-export async function userRegisterApi(
-  params: UserRegisterRequest,
-): Promise<UserRegisterResponse> {
-  return requestClient.post<UserRegisterResponse>(
-    '/api/admin/user/user-register',
-    params,
-  );
-}
-
-/**
- * 刷新访问令牌
- */
-export async function userRefreshTokenApi(
-  params: UserRefreshTokenRequest,
-): Promise<UserRefreshTokenResponse> {
-  return requestClient.post<UserRefreshTokenResponse>(
-    '/api/admin/user/user-refresh-token',
-    params,
-  );
-}
-
-/**
- * 修改密码
- */
-export async function userUpdatePasswordApi(
-  params: UserUpdatePasswordRequest,
-): Promise<UserUpdatePasswordResponse> {
-  return requestClient.post<UserUpdatePasswordResponse>(
-    '/api/admin/user/user-update-password',
+export async function registerApi(
+  params: RegisterRequest,
+): Promise<RegisterResponse> {
+  return requestClient.post<RegisterResponse>(
+    '/api/admin/user/register',
     params,
   );
 }
@@ -103,11 +35,11 @@ export async function userUpdatePasswordApi(
 /**
  * 更新用户信息
  */
-export async function userUpdateInfoApi(
-  params: UserUpdateInfoRequest,
-): Promise<UserUpdateInfoResponse> {
-  return requestClient.post<UserUpdateInfoResponse>(
-    '/api/admin/user/user-update-info',
+export async function updateInfoApi(
+  params: UpdateInfoRequest,
+): Promise<UpdateInfoResponse> {
+  return requestClient.post<UpdateInfoResponse>(
+    '/api/admin/user/update-info',
     params,
   );
 }
@@ -115,41 +47,45 @@ export async function userUpdateInfoApi(
 /**
  * 获取当前用户信息
  */
-export async function userInfoApi(): Promise<UserInfoResponse> {
-  return requestClient.get<UserInfoResponse>('/api/admin/user/user-Info');
+export async function infoApi(): Promise<InfoResponse> {
+  return requestClient.get<InfoResponse>('/api/admin/user/info');
 }
 
 /**
  * 根据ID获取用户信息
  */
-export async function userInfoByIdApi(
-  params: UserInfoByIdRequest,
-): Promise<UserInfoByIdResponse> {
-  return requestClient.get<UserInfoByIdResponse>(
-    '/api/admin/user/user-info-by-id',
-    { params },
-  );
-}
-
-/**
- * 获取管理端用户分页列表
- */
-export async function userPageApi(
-  params?: UserPageRequest,
-): Promise<UserPageResponse> {
-  return requestClient.get<UserPageResponse>('/api/admin/user/user-page', {
+export async function infoByIdApi(
+  params: InfoByIdRequest,
+): Promise<InfoByIdResponse> {
+  return requestClient.get<InfoByIdResponse>('/api/admin/user/info-by-id', {
     params,
   });
 }
 
 /**
+ * 获取管理端用户分页列表
+ */
+export async function pageApi(params?: PageRequest): Promise<PageResponse> {
+  return requestClient.get<PageResponse>('/api/admin/user/page', { params });
+}
+
+/**
  * 删除用户
  */
-export async function userDeleteApi(
-  params: UserDeleteRequest,
-): Promise<UserDeleteResponse> {
-  return requestClient.post<UserDeleteResponse>(
-    '/api/admin/user/user-delete',
+export async function deleteApi(
+  params: DeleteRequest,
+): Promise<DeleteResponse> {
+  return requestClient.post<DeleteResponse>('/api/admin/user/delete', params);
+}
+
+/**
+ * 修改密码
+ */
+export async function changePasswordApi(
+  params: ChangePasswordRequest,
+): Promise<ChangePasswordResponse> {
+  return requestClient.post<ChangePasswordResponse>(
+    '/api/admin/user/change-password',
     params,
   );
 }

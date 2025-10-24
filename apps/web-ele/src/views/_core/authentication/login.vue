@@ -6,7 +6,7 @@ import { computed } from 'vue';
 import { AuthenticationLogin, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
-import { getCaptchaApi } from '#/apis';
+import { captchaApi } from '#/apis';
 import { useAuthStore } from '#/store';
 
 defineOptions({ name: 'Login' });
@@ -14,7 +14,7 @@ defineOptions({ name: 'Login' });
 const authStore = useAuthStore();
 const captchaData = ref();
 async function fetchCaptcha() {
-  captchaData.value = await getCaptchaApi();
+  captchaData.value = await captchaApi();
 }
 fetchCaptcha();
 const formSchema = computed((): VbenFormSchema[] => {

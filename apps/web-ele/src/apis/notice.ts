@@ -15,7 +15,6 @@ import type {
   CreateNoticeDto,
   IdDto,
   NoticePageResponseDto,
-  ClientPageDto,
   BaseNoticeDto,
   UpdateNoticeDto,
   UpdateNoticeStatusDto,

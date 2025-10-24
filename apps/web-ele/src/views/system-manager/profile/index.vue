@@ -5,9 +5,9 @@ import type {
   RequestLogPageRequest,
 } from '#/apis/types/requestLog';
 import type {
+  ChangePasswordDto,
+  UpdateUserDto,
   UserDto,
-  UserUpdateInfoRequest,
-  UserUpdatePasswordRequest,
 } from '#/apis/types/user';
 
 import { onMounted, ref } from 'vue';
@@ -16,12 +16,8 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { useUserStore } from '@vben/stores';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { changePasswordApi, infoApi, updateInfoApi } from '#/apis';
 import { requestLogPageApi } from '#/apis/requestLog';
-import {
-  userInfoApi,
-  userUpdateInfoApi,
-  userUpdatePasswordApi,
-} from '#/apis/user';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useMessage } from '#/hooks/useFeedback';
 
@@ -74,7 +70,7 @@ const [PasswordForm, passwordFormApi] = useVbenModal({
 const fetchUserInfo = async () => {
   try {
     loading.value = true;
-    const data = await userInfoApi();
+    const data = await infoApi();
     userInfo.value = data;
   } catch {
     useMessage.error('获取用户信息失败');
@@ -84,9 +80,9 @@ const fetchUserInfo = async () => {
 };
 
 // 提交：编辑用户信息
-async function handleEditSubmit(values: UserUpdateInfoRequest) {
+async function handleEditSubmit(values: UpdateUserDto) {
   try {
-    await userUpdateInfoApi({ ...values, id: userInfo.value!.id });
+    await updateInfoApi({ ...values, id: userInfo.value!.id });
     useMessage.success('用户信息更新成功');
     await fetchUserInfo();
     // 更新全局用户信息
@@ -106,13 +102,13 @@ async function handleEditSubmit(values: UserUpdateInfoRequest) {
 }
 
 // 提交：修改密码
-async function handlePasswordSubmit(values: UserUpdatePasswordRequest) {
+async function handlePasswordSubmit(values: ChangePasswordDto) {
   if (values.newPassword !== values.confirmPassword) {
     useMessage.error('新密码和确认密码不一致');
     return;
   }
   try {
-    await userUpdatePasswordApi(values);
+    await changePasswordApi(values);
     useMessage.success('密码修改成功');
     passwordFormApi.close();
   } catch {

@@ -1,6 +1,6 @@
 import type { UserInfo } from '@vben/types';
 
-import type { UserLoginRequest } from '#/apis/types/user';
+import type { LoginRequest } from '#/apis/types/auth';
 
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
@@ -10,7 +10,7 @@ import { ElNotification } from 'element-plus';
 import forge from 'node-forge';
 import { defineStore } from 'pinia';
 
-import { publicKeyApi, userInfoApi, userLoginApi, userLogoutApi } from '#/apis';
+import { infoApi, loginApi, logoutApi, publicKeyApi } from '#/apis';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
    * @param params 登录表单数据
    */
   async function authLogin(
-    params: UserLoginRequest,
+    params: LoginRequest,
     onSuccess?: () => Promise<void> | void,
   ) {
     // 异步处理用户登录操作并获取 accessToken
@@ -45,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
       });
       // 使用加密后的密码
       params.password = forge.util.encode64(encrypted);
-      const { tokens } = await userLoginApi(params);
+      const { tokens } = await loginApi(params);
 
       // 如果成功获取到 accessToken
       if (tokens.accessToken && tokens.refreshToken) {
@@ -92,7 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
       accessStore.setAccessToken(null);
       accessStore.setRefreshToken(null);
       try {
-        await userLogoutApi({
+        await logoutApi({
           accessToken,
           refreshToken,
         });
@@ -117,7 +117,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchUserInfo() {
     let userInfo: null | UserInfo = null;
-    const user = await userInfoApi();
+    const user = await infoApi();
     userInfo = {
       ...user,
       userId: String(user.id),

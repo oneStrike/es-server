@@ -82,7 +82,7 @@ export async function updateClientPageApi(
 }
 
 /**
- * 批量软删除页面配置
+ * 批量删除页面配置
  */
 export async function batchDeleteClientPageApi(
   params: BatchDeleteClientPageRequest,
