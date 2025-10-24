@@ -1,28 +1,34 @@
+import { requestClient } from '#/utils/request';
 import type {
-  BatchDeleteClientPageRequest,
-  BatchDeleteClientPageResponse,
-  ClientPageDetailByCodeRequest,
-  ClientPageDetailByCodeResponse,
-  ClientPageDetailByIdRequest,
-  ClientPageDetailByIdResponse,
+  ClientPageCreateRequest,
+  ClientPageCreateResponse,
   ClientPagePageRequest,
   ClientPagePageResponse,
-  CreateClientPageRequest,
-  CreateClientPageResponse,
-  UpdateClientPageRequest,
-  UpdateClientPageResponse,
+  ClientPageDetailByIdRequest,
+  ClientPageDetailByIdResponse,
+  ClientPageDetailByCodeRequest,
+  ClientPageDetailByCodeResponse,
+  ClientPageUpdateRequest,
+  ClientPageUpdateResponse,
+  ClientPageBatchDeleteRequest,
+  ClientPageBatchDeleteResponse,
+  BasePageConfigFieldsDto,
+  IdDto,
+  ClientPageConfigPageResponseDto,
+  ClientPageConfigResponseDto,
+  UpdateClientPageConfigDto,
+  IdsDto,
+  CountDto,
 } from './types/clientPage.d';
-
-import { requestClient } from '#/utils/request';
 
 /**
  * 创建页面配置
  */
-export async function createClientPageApi(
-  params: CreateClientPageRequest,
-): Promise<CreateClientPageResponse> {
-  return requestClient.post<CreateClientPageResponse>(
-    '/api/admin/client-page/create-client-page',
+export async function clientPageCreateApi(
+  params: ClientPageCreateRequest,
+): Promise<ClientPageCreateResponse> {
+  return requestClient.post<ClientPageCreateResponse>(
+    '/api/admin/client-page/create',
     params,
   );
 }
@@ -34,7 +40,7 @@ export async function clientPagePageApi(
   params?: ClientPagePageRequest,
 ): Promise<ClientPagePageResponse> {
   return requestClient.get<ClientPagePageResponse>(
-    '/api/admin/client-page/client-page-page',
+    '/api/admin/client-page/page',
     { params },
   );
 }
@@ -46,7 +52,7 @@ export async function clientPageDetailByIdApi(
   params: ClientPageDetailByIdRequest,
 ): Promise<ClientPageDetailByIdResponse> {
   return requestClient.get<ClientPageDetailByIdResponse>(
-    '/api/admin/client-page/client-page-detail-by-id',
+    '/api/admin/client-page/detail-by-id',
     { params },
   );
 }
@@ -58,7 +64,7 @@ export async function clientPageDetailByCodeApi(
   params: ClientPageDetailByCodeRequest,
 ): Promise<ClientPageDetailByCodeResponse> {
   return requestClient.get<ClientPageDetailByCodeResponse>(
-    '/api/admin/client-page/client-page-detail-by-code',
+    '/api/admin/client-page/detail-by-code',
     { params },
   );
 }
@@ -66,11 +72,11 @@ export async function clientPageDetailByCodeApi(
 /**
  * 更新页面配置
  */
-export async function updateClientPageApi(
-  params: UpdateClientPageRequest,
-): Promise<UpdateClientPageResponse> {
-  return requestClient.post<UpdateClientPageResponse>(
-    '/api/admin/client-page/update-client-page',
+export async function clientPageUpdateApi(
+  params: ClientPageUpdateRequest,
+): Promise<ClientPageUpdateResponse> {
+  return requestClient.post<ClientPageUpdateResponse>(
+    '/api/admin/client-page/update',
     params,
   );
 }
@@ -78,11 +84,11 @@ export async function updateClientPageApi(
 /**
  * 批量删除页面配置
  */
-export async function batchDeleteClientPageApi(
-  params: BatchDeleteClientPageRequest,
-): Promise<BatchDeleteClientPageResponse> {
-  return requestClient.post<BatchDeleteClientPageResponse>(
-    '/api/admin/client-page/batch-delete-client-page',
+export async function clientPageBatchDeleteApi(
+  params: ClientPageBatchDeleteRequest,
+): Promise<ClientPageBatchDeleteResponse> {
+  return requestClient.post<ClientPageBatchDeleteResponse>(
+    '/api/admin/client-page/batch-delete',
     params,
   );
 }

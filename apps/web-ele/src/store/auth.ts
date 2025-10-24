@@ -1,6 +1,6 @@
 import type { UserInfo } from '@vben/types';
 
-import type { LoginRequest } from '#/apis/types/auth';
+import type { AuthLoginRequest } from '#/apis/types/auth';
 
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
@@ -10,7 +10,12 @@ import { ElNotification } from 'element-plus';
 import forge from 'node-forge';
 import { defineStore } from 'pinia';
 
-import { infoApi, loginApi, logoutApi, publicKeyApi } from '#/apis';
+import {
+  authLoginApi,
+  authLogoutApi,
+  authPublicKeyApi,
+  userInfoApi,
+} from '#/apis';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -28,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
    * @param params 登录表单数据
    */
   async function authLogin(
-    params: LoginRequest,
+    params: AuthLoginRequest,
     onSuccess?: () => Promise<void> | void,
   ) {
     // 异步处理用户登录操作并获取 accessToken
@@ -45,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
       });
       // 使用加密后的密码
       params.password = forge.util.encode64(encrypted);
-      const { tokens } = await loginApi(params);
+      const { tokens } = await authLoginApi(params);
 
       // 如果成功获取到 accessToken
       if (tokens.accessToken && tokens.refreshToken) {
@@ -92,7 +97,7 @@ export const useAuthStore = defineStore('auth', () => {
       accessStore.setAccessToken(null);
       accessStore.setRefreshToken(null);
       try {
-        await logoutApi({
+        await authLogoutApi({
           accessToken,
           refreshToken,
         });
@@ -117,7 +122,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchUserInfo() {
     let userInfo: null | UserInfo = null;
-    const user = await infoApi();
+    const user = await userInfoApi();
     userInfo = {
       ...user,
       userId: String(user.id),
@@ -138,7 +143,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (publicKey.value) {
       return publicKey.value;
     }
-    const res = await publicKeyApi();
+    const res = await authPublicKeyApi();
     publicKey.value = res.publicKey;
     return publicKey.value;
   }

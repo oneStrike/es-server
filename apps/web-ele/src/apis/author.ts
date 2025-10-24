@@ -1,19 +1,19 @@
 import { requestClient } from '#/utils/request';
 import type {
-  CreateAuthorRequest,
-  CreateAuthorResponse,
+  AuthorCreateRequest,
+  AuthorCreateResponse,
   AuthorPageRequest,
   AuthorPageResponse,
   AuthorDetailRequest,
   AuthorDetailResponse,
-  UpdateAuthorRequest,
-  UpdateAuthorResponse,
-  BatchUpdateAuthorStatusRequest,
-  BatchUpdateAuthorStatusResponse,
-  BatchUpdateAuthorFeaturedRequest,
-  BatchUpdateAuthorFeaturedResponse,
-  DeleteAuthorRequest,
-  DeleteAuthorResponse,
+  AuthorUpdateRequest,
+  AuthorUpdateResponse,
+  AuthorBatchUpdateStatusRequest,
+  AuthorBatchUpdateStatusResponse,
+  AuthorBatchUpdateFeaturedRequest,
+  AuthorBatchUpdateFeaturedResponse,
+  AuthorDeleteRequest,
+  AuthorDeleteResponse,
   CreateAuthorDto,
   IdDto,
   AuthorPageResponseDto,
@@ -27,11 +27,11 @@ import type {
 /**
  * 创建作者
  */
-export async function createAuthorApi(
-  params: CreateAuthorRequest,
-): Promise<CreateAuthorResponse> {
-  return requestClient.post<CreateAuthorResponse>(
-    '/api/admin/work/author/create-author',
+export async function authorCreateApi(
+  params: AuthorCreateRequest,
+): Promise<AuthorCreateResponse> {
+  return requestClient.post<AuthorCreateResponse>(
+    '/api/admin/work/author/create',
     params,
   );
 }
@@ -42,10 +42,9 @@ export async function createAuthorApi(
 export async function authorPageApi(
   params?: AuthorPageRequest,
 ): Promise<AuthorPageResponse> {
-  return requestClient.get<AuthorPageResponse>(
-    '/api/admin/work/author/author-page',
-    { params },
-  );
+  return requestClient.get<AuthorPageResponse>('/api/admin/work/author/page', {
+    params,
+  });
 }
 
 /**
@@ -55,7 +54,7 @@ export async function authorDetailApi(
   params: AuthorDetailRequest,
 ): Promise<AuthorDetailResponse> {
   return requestClient.get<AuthorDetailResponse>(
-    '/api/admin/work/author/author-detail',
+    '/api/admin/work/author/detail',
     { params },
   );
 }
@@ -63,11 +62,11 @@ export async function authorDetailApi(
 /**
  * 更新作者信息
  */
-export async function updateAuthorApi(
-  params: UpdateAuthorRequest,
-): Promise<UpdateAuthorResponse> {
-  return requestClient.post<UpdateAuthorResponse>(
-    '/api/admin/work/author/update-author',
+export async function authorUpdateApi(
+  params: AuthorUpdateRequest,
+): Promise<AuthorUpdateResponse> {
+  return requestClient.post<AuthorUpdateResponse>(
+    '/api/admin/work/author/update',
     params,
   );
 }
@@ -75,11 +74,11 @@ export async function updateAuthorApi(
 /**
  * 批量更新作者状态
  */
-export async function batchUpdateAuthorStatusApi(
-  params: BatchUpdateAuthorStatusRequest,
-): Promise<BatchUpdateAuthorStatusResponse> {
-  return requestClient.post<BatchUpdateAuthorStatusResponse>(
-    '/api/admin/work/author/batch-update-author-status',
+export async function authorBatchUpdateStatusApi(
+  params: AuthorBatchUpdateStatusRequest,
+): Promise<AuthorBatchUpdateStatusResponse> {
+  return requestClient.post<AuthorBatchUpdateStatusResponse>(
+    '/api/admin/work/author/batch-update-status',
     params,
   );
 }
@@ -87,11 +86,11 @@ export async function batchUpdateAuthorStatusApi(
 /**
  * 批量更新作者推荐状态
  */
-export async function batchUpdateAuthorFeaturedApi(
-  params: BatchUpdateAuthorFeaturedRequest,
-): Promise<BatchUpdateAuthorFeaturedResponse> {
-  return requestClient.post<BatchUpdateAuthorFeaturedResponse>(
-    '/api/admin/work/author/batch-update-author-featured',
+export async function authorBatchUpdateFeaturedApi(
+  params: AuthorBatchUpdateFeaturedRequest,
+): Promise<AuthorBatchUpdateFeaturedResponse> {
+  return requestClient.post<AuthorBatchUpdateFeaturedResponse>(
+    '/api/admin/work/author/batch-update-featured',
     params,
   );
 }
@@ -99,11 +98,11 @@ export async function batchUpdateAuthorFeaturedApi(
 /**
  * 软删除作者
  */
-export async function deleteAuthorApi(
-  params: DeleteAuthorRequest,
-): Promise<DeleteAuthorResponse> {
-  return requestClient.post<DeleteAuthorResponse>(
-    '/api/admin/work/author/delete-author',
+export async function authorDeleteApi(
+  params: AuthorDeleteRequest,
+): Promise<AuthorDeleteResponse> {
+  return requestClient.post<AuthorDeleteResponse>(
+    '/api/admin/work/author/delete',
     params,
   );
 }

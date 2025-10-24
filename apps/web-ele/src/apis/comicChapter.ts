@@ -1,33 +1,33 @@
 import { requestClient } from '#/utils/request';
 import type {
-  CreateComicChapterRequest,
-  CreateComicChapterResponse,
+  ComicChapterCreateRequest,
+  ComicChapterCreateResponse,
   ComicChapterPageRequest,
   ComicChapterPageResponse,
   ComicChapterDetailRequest,
   ComicChapterDetailResponse,
-  UpdateComicChapterRequest,
-  UpdateComicChapterResponse,
-  BatchUpdateChapterPublishStatusRequest,
-  BatchUpdateChapterPublishStatusResponse,
-  BatchDeleteComicChapterRequest,
-  BatchDeleteComicChapterResponse,
-  SwapChapterNumbersRequest,
-  SwapChapterNumbersResponse,
-  ChapterContentsRequest,
-  ChapterContentsResponse,
-  AddChapterContentRequest,
-  AddChapterContentResponse,
-  UpdateChapterContentRequest,
-  UpdateChapterContentResponse,
-  DeleteChapterContentRequest,
-  DeleteChapterContentResponse,
-  MoveChapterContentRequest,
-  MoveChapterContentResponse,
-  BatchUpdateChapterContentsRequest,
-  BatchUpdateChapterContentsResponse,
-  ClearChapterContentsRequest,
-  ClearChapterContentsResponse,
+  ComicChapterUpdateRequest,
+  ComicChapterUpdateResponse,
+  ComicChapterBatchDeleteRequest,
+  ComicChapterBatchDeleteResponse,
+  ComicChapterBatchUpdateStatusRequest,
+  ComicChapterBatchUpdateStatusResponse,
+  ComicChapterSwapNumbersRequest,
+  ComicChapterSwapNumbersResponse,
+  ComicChapterContentsRequest,
+  ComicChapterContentsResponse,
+  ComicChapterAddContentRequest,
+  ComicChapterAddContentResponse,
+  ComicChapterUpdateContentRequest,
+  ComicChapterUpdateContentResponse,
+  ComicChapterDeleteContentRequest,
+  ComicChapterDeleteContentResponse,
+  ComicChapterMoveContentRequest,
+  ComicChapterMoveContentResponse,
+  ComicChapterBatchUpdateContentsRequest,
+  ComicChapterBatchUpdateContentsResponse,
+  ComicChapterClearContentsRequest,
+  ComicChapterClearContentsResponse,
   CreateComicChapterDto,
   IdDto,
   ComicChapterPageResponseDto,
@@ -35,9 +35,9 @@ import type {
   RelatedComicDto,
   RelatedVersionDto,
   UpdateComicChapterDto,
-  UpdateChapterPublishStatusDto,
-  CountDto,
   IdsDto,
+  CountDto,
+  UpdateChapterPublishStatusDto,
   OrderDto,
   AddChapterContentDto,
   UpdateChapterContentDto,
@@ -49,11 +49,11 @@ import type {
 /**
  * 创建漫画章节
  */
-export async function createComicChapterApi(
-  params: CreateComicChapterRequest,
-): Promise<CreateComicChapterResponse> {
-  return requestClient.post<CreateComicChapterResponse>(
-    '/api/admin/work/comic-chapter/create-comic-chapter',
+export async function comicChapterCreateApi(
+  params: ComicChapterCreateRequest,
+): Promise<ComicChapterCreateResponse> {
+  return requestClient.post<ComicChapterCreateResponse>(
+    '/api/admin/work/comic-chapter/create',
     params,
   );
 }
@@ -65,7 +65,7 @@ export async function comicChapterPageApi(
   params: ComicChapterPageRequest,
 ): Promise<ComicChapterPageResponse> {
   return requestClient.get<ComicChapterPageResponse>(
-    '/api/admin/work/comic-chapter/comic-chapter-page',
+    '/api/admin/work/comic-chapter/page',
     { params },
   );
 }
@@ -77,7 +77,7 @@ export async function comicChapterDetailApi(
   params: ComicChapterDetailRequest,
 ): Promise<ComicChapterDetailResponse> {
   return requestClient.get<ComicChapterDetailResponse>(
-    '/api/admin/work/comic-chapter/comic-chapter-detail',
+    '/api/admin/work/comic-chapter/detail',
     { params },
   );
 }
@@ -85,23 +85,11 @@ export async function comicChapterDetailApi(
 /**
  * 更新漫画章节信息
  */
-export async function updateComicChapterApi(
-  params: UpdateComicChapterRequest,
-): Promise<UpdateComicChapterResponse> {
-  return requestClient.post<UpdateComicChapterResponse>(
-    '/api/admin/work/comic-chapter/update-comic-chapter',
-    params,
-  );
-}
-
-/**
- * 批量更新章节发布状态
- */
-export async function batchUpdateChapterPublishStatusApi(
-  params: BatchUpdateChapterPublishStatusRequest,
-): Promise<BatchUpdateChapterPublishStatusResponse> {
-  return requestClient.post<BatchUpdateChapterPublishStatusResponse>(
-    '/api/admin/work/comic-chapter/batch-update-chapter-publish-status',
+export async function comicChapterUpdateApi(
+  params: ComicChapterUpdateRequest,
+): Promise<ComicChapterUpdateResponse> {
+  return requestClient.post<ComicChapterUpdateResponse>(
+    '/api/admin/work/comic-chapter/update',
     params,
   );
 }
@@ -109,11 +97,23 @@ export async function batchUpdateChapterPublishStatusApi(
 /**
  * 批量软删除章节
  */
-export async function batchDeleteComicChapterApi(
-  params: BatchDeleteComicChapterRequest,
-): Promise<BatchDeleteComicChapterResponse> {
-  return requestClient.post<BatchDeleteComicChapterResponse>(
-    '/api/admin/work/comic-chapter/batch-delete-comic-chapter',
+export async function comicChapterBatchDeleteApi(
+  params: ComicChapterBatchDeleteRequest,
+): Promise<ComicChapterBatchDeleteResponse> {
+  return requestClient.post<ComicChapterBatchDeleteResponse>(
+    '/api/admin/work/comic-chapter/batch-delete',
+    params,
+  );
+}
+
+/**
+ * 批量更新章节发布状态
+ */
+export async function comicChapterBatchUpdateStatusApi(
+  params: ComicChapterBatchUpdateStatusRequest,
+): Promise<ComicChapterBatchUpdateStatusResponse> {
+  return requestClient.post<ComicChapterBatchUpdateStatusResponse>(
+    '/api/admin/work/comic-chapter/batch-update-status',
     params,
   );
 }
@@ -121,11 +121,11 @@ export async function batchDeleteComicChapterApi(
 /**
  * 交换两个章节的章节号
  */
-export async function swapChapterNumbersApi(
-  params: SwapChapterNumbersRequest,
-): Promise<SwapChapterNumbersResponse> {
-  return requestClient.post<SwapChapterNumbersResponse>(
-    '/api/admin/work/comic-chapter/swap-chapter-numbers',
+export async function comicChapterSwapNumbersApi(
+  params: ComicChapterSwapNumbersRequest,
+): Promise<ComicChapterSwapNumbersResponse> {
+  return requestClient.post<ComicChapterSwapNumbersResponse>(
+    '/api/admin/work/comic-chapter/swap-numbers',
     params,
   );
 }
@@ -133,11 +133,11 @@ export async function swapChapterNumbersApi(
 /**
  * 获取章节内容详情
  */
-export async function chapterContentsApi(
-  params: ChapterContentsRequest,
-): Promise<ChapterContentsResponse> {
-  return requestClient.get<ChapterContentsResponse>(
-    '/api/admin/work/comic-chapter/chapter-contents',
+export async function comicChapterContentsApi(
+  params: ComicChapterContentsRequest,
+): Promise<ComicChapterContentsResponse> {
+  return requestClient.get<ComicChapterContentsResponse>(
+    '/api/admin/work/comic-chapter/contents',
     { params },
   );
 }
@@ -145,11 +145,11 @@ export async function chapterContentsApi(
 /**
  * 添加章节内容
  */
-export async function addChapterContentApi(
-  params: AddChapterContentRequest,
-): Promise<AddChapterContentResponse> {
-  return requestClient.post<AddChapterContentResponse>(
-    '/api/admin/work/comic-chapter/add-chapter-content',
+export async function comicChapterAddContentApi(
+  params: ComicChapterAddContentRequest,
+): Promise<ComicChapterAddContentResponse> {
+  return requestClient.post<ComicChapterAddContentResponse>(
+    '/api/admin/work/comic-chapter/add-content',
     params,
   );
 }
@@ -157,11 +157,11 @@ export async function addChapterContentApi(
 /**
  * 更新章节内容
  */
-export async function updateChapterContentApi(
-  params: UpdateChapterContentRequest,
-): Promise<UpdateChapterContentResponse> {
-  return requestClient.post<UpdateChapterContentResponse>(
-    '/api/admin/work/comic-chapter/update-chapter-content',
+export async function comicChapterUpdateContentApi(
+  params: ComicChapterUpdateContentRequest,
+): Promise<ComicChapterUpdateContentResponse> {
+  return requestClient.post<ComicChapterUpdateContentResponse>(
+    '/api/admin/work/comic-chapter/update-content',
     params,
   );
 }
@@ -169,11 +169,11 @@ export async function updateChapterContentApi(
 /**
  * 删除章节内容
  */
-export async function deleteChapterContentApi(
-  params: DeleteChapterContentRequest,
-): Promise<DeleteChapterContentResponse> {
-  return requestClient.post<DeleteChapterContentResponse>(
-    '/api/admin/work/comic-chapter/delete-chapter-content',
+export async function comicChapterDeleteContentApi(
+  params: ComicChapterDeleteContentRequest,
+): Promise<ComicChapterDeleteContentResponse> {
+  return requestClient.post<ComicChapterDeleteContentResponse>(
+    '/api/admin/work/comic-chapter/delete-content',
     params,
   );
 }
@@ -181,11 +181,11 @@ export async function deleteChapterContentApi(
 /**
  * 移动章节内容（排序）
  */
-export async function moveChapterContentApi(
-  params: MoveChapterContentRequest,
-): Promise<MoveChapterContentResponse> {
-  return requestClient.post<MoveChapterContentResponse>(
-    '/api/admin/work/comic-chapter/move-chapter-content',
+export async function comicChapterMoveContentApi(
+  params: ComicChapterMoveContentRequest,
+): Promise<ComicChapterMoveContentResponse> {
+  return requestClient.post<ComicChapterMoveContentResponse>(
+    '/api/admin/work/comic-chapter/move-content',
     params,
   );
 }
@@ -193,11 +193,11 @@ export async function moveChapterContentApi(
 /**
  * 批量更新章节内容
  */
-export async function batchUpdateChapterContentsApi(
-  params: BatchUpdateChapterContentsRequest,
-): Promise<BatchUpdateChapterContentsResponse> {
-  return requestClient.post<BatchUpdateChapterContentsResponse>(
-    '/api/admin/work/comic-chapter/batch-update-chapter-contents',
+export async function comicChapterBatchUpdateContentsApi(
+  params: ComicChapterBatchUpdateContentsRequest,
+): Promise<ComicChapterBatchUpdateContentsResponse> {
+  return requestClient.post<ComicChapterBatchUpdateContentsResponse>(
+    '/api/admin/work/comic-chapter/batch-update-contents',
     params,
   );
 }
@@ -205,11 +205,11 @@ export async function batchUpdateChapterContentsApi(
 /**
  * 清空章节内容
  */
-export async function clearChapterContentsApi(
-  params: ClearChapterContentsRequest,
-): Promise<ClearChapterContentsResponse> {
-  return requestClient.post<ClearChapterContentsResponse>(
-    '/api/admin/work/comic-chapter/clear-chapter-contents',
+export async function comicChapterClearContentsApi(
+  params: ComicChapterClearContentsRequest,
+): Promise<ComicChapterClearContentsResponse> {
+  return requestClient.post<ComicChapterClearContentsResponse>(
+    '/api/admin/work/comic-chapter/clear-contents',
     params,
   );
 }

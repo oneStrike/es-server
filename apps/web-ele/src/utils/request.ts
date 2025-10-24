@@ -13,7 +13,7 @@ import {
 } from '@vben/request';
 import { useAccessStore } from '@vben/stores';
 
-import { refreshTokenApi } from '#/apis';
+import { authRefreshTokenApi } from '#/apis';
 import { useMessage } from '#/hooks/useFeedback';
 import { useAuthStore } from '#/store';
 
@@ -48,7 +48,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
    */
   async function doRefreshToken() {
     const accessStore = useAccessStore();
-    const resp = await refreshTokenApi({
+    const resp = await authRefreshTokenApi({
       refreshToken: accessStore.refreshToken as string,
     });
     const { accessToken, refreshToken } = resp;

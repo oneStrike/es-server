@@ -16,7 +16,7 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { useUserStore } from '@vben/stores';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { changePasswordApi, infoApi, updateInfoApi } from '#/apis';
+import { userChangePasswordApi, userInfoApi, userUpdateInfoApi } from '#/apis';
 import { requestLogPageApi } from '#/apis/requestLog';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useMessage } from '#/hooks/useFeedback';
@@ -70,7 +70,7 @@ const [PasswordForm, passwordFormApi] = useVbenModal({
 const fetchUserInfo = async () => {
   try {
     loading.value = true;
-    const data = await infoApi();
+    const data = await userInfoApi();
     userInfo.value = data;
   } catch {
     useMessage.error('获取用户信息失败');
@@ -82,7 +82,7 @@ const fetchUserInfo = async () => {
 // 提交：编辑用户信息
 async function handleEditSubmit(values: UpdateUserDto) {
   try {
-    await updateInfoApi({ ...values, id: userInfo.value!.id });
+    await userUpdateInfoApi({ ...values, id: userInfo.value!.id });
     useMessage.success('用户信息更新成功');
     await fetchUserInfo();
     // 更新全局用户信息
@@ -108,7 +108,7 @@ async function handlePasswordSubmit(values: ChangePasswordDto) {
     return;
   }
   try {
-    await changePasswordApi(values);
+    await userChangePasswordApi(values);
     useMessage.success('密码修改成功');
     passwordFormApi.close();
   } catch {

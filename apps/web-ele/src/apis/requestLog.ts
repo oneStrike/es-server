@@ -12,7 +12,7 @@ export async function requestLogPageApi(
   params?: RequestLogPageRequest,
 ): Promise<RequestLogPageResponse> {
   return requestClient.get<RequestLogPageResponse>(
-    '/api/admin/request-log/request-log-page',
+    '/api/admin/request-log/page',
     { params },
   );
 }

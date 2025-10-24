@@ -10,13 +10,12 @@ import { Page, useVbenModal } from '@vben/common-ui';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  batchDeleteNoticeApi,
-  batchUpdateNoticeStatusApi,
-  clientPagePageApi,
-  createNoticeApi,
+  noticeBatchDeleteApi,
+  noticeBatchUpdateStatusApi,
+  noticeCreateApi,
   noticeDetailApi,
   noticePageApi,
-  updateNoticeApi,
+  noticeUpdateApi,
 } from '#/apis';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useBitMask } from '#/hooks/useBitmask';
@@ -37,12 +36,12 @@ import {
 
 const clientPageObj = ref<Record<string, string>>({});
 
-clientPagePageApi({
+noticePageApi({
   pageSize: 500,
 }).then((res) => {
   const pageOptions =
     res.list?.map((pageItem) => {
-      clientPageObj.value[pageItem.pageCode] = pageItem.pageName;
+      clientPageObj.value[pageItem.pageCode!] = pageItem.pageName;
       return {
         label: pageItem.pageName,
         value: pageItem.pageCode,
@@ -103,22 +102,22 @@ async function openFormModal(row?: NoticePageResponseDto) {
 
 async function handleSubmit(values: CreateNoticeDto | UpdateNoticeDto) {
   await (values?.id
-    ? updateNoticeApi(values as UpdateNoticeDto)
-    : createNoticeApi(values as CreateNoticeDto));
+    ? noticeUpdateApi(values as UpdateNoticeDto)
+    : noticeCreateApi(values as CreateNoticeDto));
   formApi.close();
   useMessage.success('操作成功');
   gridApi.reload();
 }
 
 async function deleteNotice(record: NoticePageResponseDto) {
-  await batchDeleteNoticeApi({ ids: [record.id] });
+  await noticeBatchDeleteApi({ ids: [record.id] });
   useMessage.success('操作成功');
   gridApi.reload();
 }
 
 async function togglePublishStatus(record: NoticePageResponseDto) {
   const newStatus = !record.isPublished;
-  await batchUpdateNoticeStatusApi({
+  await noticeBatchUpdateStatusApi({
     ids: [record.id],
     isPublished: newStatus,
   });

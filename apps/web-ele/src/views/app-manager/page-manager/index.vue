@@ -10,11 +10,11 @@ import { Page, useVbenModal } from '@vben/common-ui';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  batchDeleteClientPageApi,
+  clientPageBatchDeleteApi,
+  clientPageCreateApi,
   clientPageDetailByIdApi,
   clientPagePageApi,
-  createClientPageApi,
-  updateClientPageApi,
+  clientPageUpdateApi,
 } from '#/apis';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useMessage } from '#/hooks/useFeedback';
@@ -67,15 +67,15 @@ async function handleSubmit(
   values: BasePageConfigFieldsDto | UpdateClientPageConfigDto,
 ) {
   await (values?.id
-    ? updateClientPageApi(values as UpdateClientPageConfigDto)
-    : createClientPageApi(values as BasePageConfigFieldsDto));
+    ? clientPageUpdateApi(values as UpdateClientPageConfigDto)
+    : clientPageCreateApi(values as BasePageConfigFieldsDto));
   formApi.close();
   useMessage.success('操作成功');
   gridApi.reload();
 }
 
 async function deletePage(record: ClientPageConfigPageResponseDto) {
-  await batchDeleteClientPageApi({ ids: [record.id] });
+  await clientPageBatchDeleteApi({ ids: [record.id] });
   useMessage.success('操作成功');
   gridApi.reload();
 }

@@ -1,30 +1,39 @@
+import { requestClient } from '#/utils/request';
 import type {
-  BatchDeleteCategoryRequest,
-  BatchDeleteCategoryResponse,
-  BatchUpdateCategoryStatusRequest,
-  BatchUpdateCategoryStatusResponse,
-  CategoryDetailRequest,
-  CategoryDetailResponse,
-  CategoryOrderRequest,
-  CategoryOrderResponse,
+  CategoryCreateRequest,
+  CategoryCreateResponse,
   CategoryPageRequest,
   CategoryPageResponse,
-  CreateCategoryRequest,
-  CreateCategoryResponse,
-  UpdateCategoryRequest,
-  UpdateCategoryResponse,
+  CategoryDetailRequest,
+  CategoryDetailResponse,
+  CategoryUpdateRequest,
+  CategoryUpdateResponse,
+  CategoryBatchUpdateStatusRequest,
+  CategoryBatchUpdateStatusResponse,
+  CategoryBatchDeleteRequest,
+  CategoryBatchDeleteResponse,
+  CategoryOrderRequest,
+  CategoryOrderResponse,
+  CreateCategoryDto,
+  IdDto,
+  BaseCategoryDto,
+  CategoryContentTypeItemDto,
+  BaseContentTypeDto,
+  UpdateCategoryDto,
+  BatchEnabledDto,
+  CountDto,
+  IdsDto,
+  OrderDto,
 } from './types/category.d';
-
-import { requestClient } from '#/utils/request';
 
 /**
  * 创建分类
  */
-export async function createCategoryApi(
-  params: CreateCategoryRequest,
-): Promise<CreateCategoryResponse> {
-  return requestClient.post<CreateCategoryResponse>(
-    '/api/admin/work/category/create-category',
+export async function categoryCreateApi(
+  params: CategoryCreateRequest,
+): Promise<CategoryCreateResponse> {
+  return requestClient.post<CategoryCreateResponse>(
+    '/api/admin/work/category/create',
     params,
   );
 }
@@ -36,7 +45,7 @@ export async function categoryPageApi(
   params?: CategoryPageRequest,
 ): Promise<CategoryPageResponse> {
   return requestClient.get<CategoryPageResponse>(
-    '/api/admin/work/category/category-page',
+    '/api/admin/work/category/page',
     { params },
   );
 }
@@ -48,7 +57,7 @@ export async function categoryDetailApi(
   params: CategoryDetailRequest,
 ): Promise<CategoryDetailResponse> {
   return requestClient.get<CategoryDetailResponse>(
-    '/api/admin/work/category/category-detail',
+    '/api/admin/work/category/detail',
     { params },
   );
 }
@@ -56,11 +65,11 @@ export async function categoryDetailApi(
 /**
  * 更新分类信息
  */
-export async function updateCategoryApi(
-  params: UpdateCategoryRequest,
-): Promise<UpdateCategoryResponse> {
-  return requestClient.post<UpdateCategoryResponse>(
-    '/api/admin/work/category/update-category',
+export async function categoryUpdateApi(
+  params: CategoryUpdateRequest,
+): Promise<CategoryUpdateResponse> {
+  return requestClient.post<CategoryUpdateResponse>(
+    '/api/admin/work/category/update',
     params,
   );
 }
@@ -68,11 +77,23 @@ export async function updateCategoryApi(
 /**
  * 批量更新分类状态
  */
-export async function batchUpdateCategoryStatusApi(
-  params: BatchUpdateCategoryStatusRequest,
-): Promise<BatchUpdateCategoryStatusResponse> {
-  return requestClient.post<BatchUpdateCategoryStatusResponse>(
-    '/api/admin/work/category/batch-update-category-status',
+export async function categoryBatchUpdateStatusApi(
+  params: CategoryBatchUpdateStatusRequest,
+): Promise<CategoryBatchUpdateStatusResponse> {
+  return requestClient.post<CategoryBatchUpdateStatusResponse>(
+    '/api/admin/work/category/batch-update-status',
+    params,
+  );
+}
+
+/**
+ * 批量删除分类
+ */
+export async function categoryBatchDeleteApi(
+  params: CategoryBatchDeleteRequest,
+): Promise<CategoryBatchDeleteResponse> {
+  return requestClient.post<CategoryBatchDeleteResponse>(
+    '/api/admin/work/category/batch-delete',
     params,
   );
 }
@@ -84,19 +105,7 @@ export async function categoryOrderApi(
   params: CategoryOrderRequest,
 ): Promise<CategoryOrderResponse> {
   return requestClient.post<CategoryOrderResponse>(
-    '/api/admin/work/category/category-order',
-    params,
-  );
-}
-
-/**
- * 批量删除分类
- */
-export async function batchDeleteCategoryApi(
-  params: BatchDeleteCategoryRequest,
-): Promise<BatchDeleteCategoryResponse> {
-  return requestClient.post<BatchDeleteCategoryResponse>(
-    '/api/admin/work/category/batch-delete-category',
+    '/api/admin/work/category/order',
     params,
   );
 }

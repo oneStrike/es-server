@@ -54,7 +54,7 @@ export const defaultConfig: OpenAPIGeneratorConfig = {
   httpHandler: 'requestClient',
   httpHandlerImport: '#/utils/request',
   naming: {
-    methodNameSegments: 1,
+    methodNameSegments: 2,
     methodNameSuffix: 'Api',
     requestTypeSuffix: 'Request',
     responseTypeSuffix: 'Response',

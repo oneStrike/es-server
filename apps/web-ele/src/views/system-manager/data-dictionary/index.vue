@@ -7,12 +7,12 @@ import { Page, useVbenModal } from '@vben/common-ui';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  batchUpdateDictionaryStatusApi,
-  createDictionaryApi,
-  deleteDictionaryApi,
+  dictionaryBatchUpdateStatusApi,
+  dictionaryCreateApi,
+  dictionaryDeleteApi,
   dictionaryDetailApi,
   dictionaryPageApi,
-  updateDictionaryApi,
+  dictionaryUpdateApi,
 } from '#/apis';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useMessage } from '#/hooks/useFeedback';
@@ -50,7 +50,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 async function deleteDictionary(row: DictionaryDto) {
-  await deleteDictionaryApi({ ids: [row.id] });
+  await dictionaryDeleteApi({ ids: [row.id] });
   useMessage.success('操作成功');
   gridApi.reload();
 }
@@ -76,7 +76,7 @@ async function toggleEnableStatus(row: DictionaryDto) {
   const newStatus = !row.isEnabled;
   row.loading = true;
   try {
-    await batchUpdateDictionaryStatusApi({
+    await dictionaryBatchUpdateStatusApi({
       ids: [row.id],
       isEnabled: newStatus,
     });
@@ -89,7 +89,7 @@ async function toggleEnableStatus(row: DictionaryDto) {
 
 // 添加数据字典
 async function addDictionary(values: any) {
-  await (values.id ? updateDictionaryApi(values) : createDictionaryApi(values));
+  await (values.id ? dictionaryUpdateApi(values) : dictionaryCreateApi(values));
   useMessage.success('操作成功');
   formApi.close();
   gridApi.reload();

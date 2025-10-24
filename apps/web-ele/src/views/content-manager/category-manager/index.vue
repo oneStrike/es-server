@@ -11,14 +11,14 @@ import { Page, useVbenModal } from '@vben/common-ui';
 
 import { queryParams, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  batchDeleteCategoryApi,
-  batchUpdateCategoryStatusApi,
+  categoryBatchDeleteApi,
+  categoryBatchUpdateStatusApi,
+  categoryCreateApi,
   categoryDetailApi,
   categoryOrderApi,
   categoryPageApi,
+  categoryUpdateApi,
   contentTypeListApi,
-  createCategoryApi,
-  updateCategoryApi,
 } from '#/apis';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useMessage } from '#/hooks/useFeedback';
@@ -136,7 +136,7 @@ async function openFormModal(row?: BaseCategoryDto): Promise<void> {
  */
 async function toggleEnableStatus(row: BaseCategoryDto): Promise<void> {
   row.loading = true as any;
-  await batchUpdateCategoryStatusApi({
+  await categoryBatchUpdateStatusApi({
     ids: [row.id],
     isEnabled: !row.isEnabled,
   });
@@ -151,8 +151,8 @@ type CategoryFormValues = CreateCategoryDto | UpdateCategoryDto;
 
 async function addOrUpdateCategory(values: CategoryFormValues): Promise<void> {
   await (values.id
-    ? updateCategoryApi(values as UpdateCategoryDto)
-    : createCategoryApi(values as CreateCategoryDto));
+    ? categoryUpdateApi(values as UpdateCategoryDto)
+    : categoryCreateApi(values as CreateCategoryDto));
   useMessage.success('操作成功');
   await gridApi.reload();
 }
@@ -161,7 +161,7 @@ async function addOrUpdateCategory(values: CategoryFormValues): Promise<void> {
  * 删除分类
  */
 async function deleteCategory(row: BaseCategoryDto): Promise<void> {
-  await batchDeleteCategoryApi({
+  await categoryBatchDeleteApi({
     ids: [row.id],
   });
   handleSuccessReload(gridApi);

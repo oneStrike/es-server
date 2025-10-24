@@ -1,28 +1,34 @@
-import type {
-  ChangePasswordRequest,
-  ChangePasswordResponse,
-  DeleteRequest,
-  DeleteResponse,
-  InfoByIdRequest,
-  InfoByIdResponse,
-  InfoResponse,
-  PageRequest,
-  PageResponse,
-  RegisterRequest,
-  RegisterResponse,
-  UpdateInfoRequest,
-  UpdateInfoResponse,
-} from './types/user.d';
-
 import { requestClient } from '#/utils/request';
+import type {
+  UserRegisterRequest,
+  UserRegisterResponse,
+  UserUpdateInfoRequest,
+  UserUpdateInfoResponse,
+  UserInfoResponse,
+  UserInfoByIdRequest,
+  UserInfoByIdResponse,
+  UserPageRequest,
+  UserPageResponse,
+  UserDeleteRequest,
+  UserDeleteResponse,
+  UserChangePasswordRequest,
+  UserChangePasswordResponse,
+  UserUnlockRequest,
+  UserUnlockResponse,
+  UserRegisterDto,
+  IdDto,
+  UpdateUserDto,
+  UserDto,
+  ChangePasswordDto,
+} from './types/user.d';
 
 /**
  * 用户注册
  */
-export async function registerApi(
-  params: RegisterRequest,
-): Promise<RegisterResponse> {
-  return requestClient.post<RegisterResponse>(
+export async function userRegisterApi(
+  params: UserRegisterRequest,
+): Promise<UserRegisterResponse> {
+  return requestClient.post<UserRegisterResponse>(
     '/api/admin/user/register',
     params,
   );
@@ -31,10 +37,10 @@ export async function registerApi(
 /**
  * 更新用户信息
  */
-export async function updateInfoApi(
-  params: UpdateInfoRequest,
-): Promise<UpdateInfoResponse> {
-  return requestClient.post<UpdateInfoResponse>(
+export async function userUpdateInfoApi(
+  params: UserUpdateInfoRequest,
+): Promise<UserUpdateInfoResponse> {
+  return requestClient.post<UserUpdateInfoResponse>(
     '/api/admin/user/update-info',
     params,
   );
@@ -43,17 +49,17 @@ export async function updateInfoApi(
 /**
  * 获取当前用户信息
  */
-export async function infoApi(): Promise<InfoResponse> {
-  return requestClient.get<InfoResponse>('/api/admin/user/info');
+export async function userInfoApi(): Promise<UserInfoResponse> {
+  return requestClient.get<UserInfoResponse>('/api/admin/user/info');
 }
 
 /**
  * 根据ID获取用户信息
  */
-export async function infoByIdApi(
-  params: InfoByIdRequest,
-): Promise<InfoByIdResponse> {
-  return requestClient.get<InfoByIdResponse>('/api/admin/user/info-by-id', {
+export async function userInfoByIdApi(
+  params: UserInfoByIdRequest,
+): Promise<UserInfoByIdResponse> {
+  return requestClient.get<UserInfoByIdResponse>('/api/admin/user/info-by-id', {
     params,
   });
 }
@@ -61,27 +67,46 @@ export async function infoByIdApi(
 /**
  * 获取管理端用户分页列表
  */
-export async function pageApi(params?: PageRequest): Promise<PageResponse> {
-  return requestClient.get<PageResponse>('/api/admin/user/page', { params });
+export async function userPageApi(
+  params?: UserPageRequest,
+): Promise<UserPageResponse> {
+  return requestClient.get<UserPageResponse>('/api/admin/user/page', {
+    params,
+  });
 }
 
 /**
  * 删除用户
  */
-export async function deleteApi(
-  params: DeleteRequest,
-): Promise<DeleteResponse> {
-  return requestClient.post<DeleteResponse>('/api/admin/user/delete', params);
+export async function userDeleteApi(
+  params: UserDeleteRequest,
+): Promise<UserDeleteResponse> {
+  return requestClient.post<UserDeleteResponse>(
+    '/api/admin/user/delete',
+    params,
+  );
 }
 
 /**
  * 修改密码
  */
-export async function changePasswordApi(
-  params: ChangePasswordRequest,
-): Promise<ChangePasswordResponse> {
-  return requestClient.post<ChangePasswordResponse>(
+export async function userChangePasswordApi(
+  params: UserChangePasswordRequest,
+): Promise<UserChangePasswordResponse> {
+  return requestClient.post<UserChangePasswordResponse>(
     '/api/admin/user/change-password',
+    params,
+  );
+}
+
+/**
+ * 解锁指定用户的锁定状态
+ */
+export async function userUnlockApi(
+  params: UserUnlockRequest,
+): Promise<UserUnlockResponse> {
+  return requestClient.post<UserUnlockResponse>(
+    '/api/admin/user/unlock',
     params,
   );
 }

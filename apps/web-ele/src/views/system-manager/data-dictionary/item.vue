@@ -6,11 +6,11 @@ import { useVbenModal } from '@vben/common-ui';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  createDictionaryItemApi,
-  deleteDictionaryItemApi,
+  dictionaryCreateItemApi,
+  dictionaryDeleteItemApi,
   dictionaryItemsApi,
-  updateDictionaryItemApi,
-  updateDictionaryItemStatusApi,
+  dictionaryUpdateItemApi,
+  dictionaryUpdateItemStatusApi,
 } from '#/apis';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useMessage } from '#/hooks/useFeedback';
@@ -82,8 +82,8 @@ async function addDictionaryItem(values: any) {
     values.dictionaryCode = shareData.value!.record.code;
   }
   await (values.id
-    ? updateDictionaryItemApi(values)
-    : createDictionaryItemApi(values));
+    ? dictionaryUpdateItemApi(values)
+    : dictionaryCreateItemApi(values));
 
   formApi.close();
   useMessage.success('操作成功');
@@ -94,7 +94,7 @@ async function toggleEnableStatus(row: DictionaryDto) {
   const newStatus = !row.isEnabled;
   row.loading = true;
   try {
-    await updateDictionaryItemStatusApi({
+    await dictionaryUpdateItemStatusApi({
       ids: [row.id],
       isEnabled: newStatus,
     });
@@ -116,7 +116,7 @@ async function openFormModal(row?: DictionaryDto) {
 }
 
 async function deleteDictionary(row: DictionaryDto) {
-  await deleteDictionaryItemApi({ ids: [row.id] });
+  await dictionaryDeleteItemApi({ ids: [row.id] });
   useMessage.success('操作成功');
   gridApi.reload();
 }

@@ -1,28 +1,28 @@
 import { requestClient } from '#/utils/request';
 import type {
+  ComicCreateRequest,
+  ComicCreateResponse,
   ComicPageRequest,
   ComicPageResponse,
-  CreateComicRequest,
-  CreateComicResponse,
   ComicDetailRequest,
   ComicDetailResponse,
-  UpdateComicRequest,
-  UpdateComicResponse,
-  BatchUpdateComicStatusRequest,
-  BatchUpdateComicStatusResponse,
-  BatchUpdateComicRecommendedRequest,
-  BatchUpdateComicRecommendedResponse,
-  BatchUpdateComicHotRequest,
-  BatchUpdateComicHotResponse,
-  BatchUpdateComicNewRequest,
-  BatchUpdateComicNewResponse,
-  DeleteComicRequest,
-  DeleteComicResponse,
+  ComicUpdateRequest,
+  ComicUpdateResponse,
+  ComicBatchUpdateStatusRequest,
+  ComicBatchUpdateStatusResponse,
+  ComicBatchUpdateRecommendedRequest,
+  ComicBatchUpdateRecommendedResponse,
+  ComicBatchUpdateHotRequest,
+  ComicBatchUpdateHotResponse,
+  ComicBatchUpdateNewRequest,
+  ComicBatchUpdateNewResponse,
+  ComicDeleteRequest,
+  ComicDeleteResponse,
+  CreateComicDto,
+  IdDto,
   BaseComicDto,
   ComicCategoryDto,
   ComicAuthorDto,
-  CreateComicDto,
-  IdDto,
   UpdateComicDto,
   UpdateComicStatusDto,
   CountDto,
@@ -32,27 +32,26 @@ import type {
 } from './types/comic.d';
 
 /**
+ * 创建漫画
+ */
+export async function comicCreateApi(
+  params: ComicCreateRequest,
+): Promise<ComicCreateResponse> {
+  return requestClient.post<ComicCreateResponse>(
+    '/api/admin/work/comic/create',
+    params,
+  );
+}
+
+/**
  * 分页查询漫画列表
  */
 export async function comicPageApi(
   params?: ComicPageRequest,
 ): Promise<ComicPageResponse> {
-  return requestClient.get<ComicPageResponse>(
-    '/api/admin/work/comic/comic-page',
-    { params },
-  );
-}
-
-/**
- * 创建漫画
- */
-export async function createComicApi(
-  params: CreateComicRequest,
-): Promise<CreateComicResponse> {
-  return requestClient.post<CreateComicResponse>(
-    '/api/admin/work/comic/create-comic',
+  return requestClient.get<ComicPageResponse>('/api/admin/work/comic/page', {
     params,
-  );
+  });
 }
 
 /**
@@ -62,7 +61,7 @@ export async function comicDetailApi(
   params: ComicDetailRequest,
 ): Promise<ComicDetailResponse> {
   return requestClient.get<ComicDetailResponse>(
-    '/api/admin/work/comic/comic-detail',
+    '/api/admin/work/comic/detail',
     { params },
   );
 }
@@ -70,11 +69,11 @@ export async function comicDetailApi(
 /**
  * 更新漫画信息
  */
-export async function updateComicApi(
-  params: UpdateComicRequest,
-): Promise<UpdateComicResponse> {
-  return requestClient.post<UpdateComicResponse>(
-    '/api/admin/work/comic/update-comic',
+export async function comicUpdateApi(
+  params: ComicUpdateRequest,
+): Promise<ComicUpdateResponse> {
+  return requestClient.post<ComicUpdateResponse>(
+    '/api/admin/work/comic/update',
     params,
   );
 }
@@ -82,11 +81,11 @@ export async function updateComicApi(
 /**
  * 批量更新漫画发布状态
  */
-export async function batchUpdateComicStatusApi(
-  params: BatchUpdateComicStatusRequest,
-): Promise<BatchUpdateComicStatusResponse> {
-  return requestClient.post<BatchUpdateComicStatusResponse>(
-    '/api/admin/work/comic/batch-update-comic-status',
+export async function comicBatchUpdateStatusApi(
+  params: ComicBatchUpdateStatusRequest,
+): Promise<ComicBatchUpdateStatusResponse> {
+  return requestClient.post<ComicBatchUpdateStatusResponse>(
+    '/api/admin/work/comic/batch-update-status',
     params,
   );
 }
@@ -94,11 +93,11 @@ export async function batchUpdateComicStatusApi(
 /**
  * 批量更新漫画推荐状态
  */
-export async function batchUpdateComicRecommendedApi(
-  params: BatchUpdateComicRecommendedRequest,
-): Promise<BatchUpdateComicRecommendedResponse> {
-  return requestClient.post<BatchUpdateComicRecommendedResponse>(
-    '/api/admin/work/comic/batch-update-comic-recommended',
+export async function comicBatchUpdateRecommendedApi(
+  params: ComicBatchUpdateRecommendedRequest,
+): Promise<ComicBatchUpdateRecommendedResponse> {
+  return requestClient.post<ComicBatchUpdateRecommendedResponse>(
+    '/api/admin/work/comic/batch-update-recommended',
     params,
   );
 }
@@ -106,11 +105,11 @@ export async function batchUpdateComicRecommendedApi(
 /**
  * 批量更新漫画热门状态
  */
-export async function batchUpdateComicHotApi(
-  params: BatchUpdateComicHotRequest,
-): Promise<BatchUpdateComicHotResponse> {
-  return requestClient.post<BatchUpdateComicHotResponse>(
-    '/api/admin/work/comic/batch-update-comic-hot',
+export async function comicBatchUpdateHotApi(
+  params: ComicBatchUpdateHotRequest,
+): Promise<ComicBatchUpdateHotResponse> {
+  return requestClient.post<ComicBatchUpdateHotResponse>(
+    '/api/admin/work/comic/batch-update-hot',
     params,
   );
 }
@@ -118,11 +117,11 @@ export async function batchUpdateComicHotApi(
 /**
  * 批量更新漫画新作状态
  */
-export async function batchUpdateComicNewApi(
-  params: BatchUpdateComicNewRequest,
-): Promise<BatchUpdateComicNewResponse> {
-  return requestClient.post<BatchUpdateComicNewResponse>(
-    '/api/admin/work/comic/batch-update-comic-new',
+export async function comicBatchUpdateNewApi(
+  params: ComicBatchUpdateNewRequest,
+): Promise<ComicBatchUpdateNewResponse> {
+  return requestClient.post<ComicBatchUpdateNewResponse>(
+    '/api/admin/work/comic/batch-update-new',
     params,
   );
 }
@@ -130,11 +129,11 @@ export async function batchUpdateComicNewApi(
 /**
  * 软删除漫画
  */
-export async function deleteComicApi(
-  params: DeleteComicRequest,
-): Promise<DeleteComicResponse> {
-  return requestClient.post<DeleteComicResponse>(
-    '/api/admin/work/comic/delete-comic',
+export async function comicDeleteApi(
+  params: ComicDeleteRequest,
+): Promise<ComicDeleteResponse> {
+  return requestClient.post<ComicDeleteResponse>(
+    '/api/admin/work/comic/delete',
     params,
   );
 }
