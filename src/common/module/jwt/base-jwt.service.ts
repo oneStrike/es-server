@@ -8,13 +8,13 @@ import { ADMIN_AUTH_CONFIG, CLIENT_AUTH_CONFIG } from '@/config/jwt.config'
 type AuthConfig = typeof ADMIN_AUTH_CONFIG | typeof CLIENT_AUTH_CONFIG
 
 @Injectable()
-export class BaseJwtService {
+export abstract class BaseJwtService {
   protected readonly logger = new Logger(BaseJwtService.name)
+  protected abstract readonly config: AuthConfig
 
   constructor(
     protected readonly jwtService: JwtService,
     protected readonly jwtBlacklistService: JwtBlacklistService,
-    protected readonly config: AuthConfig,
   ) {}
 
   async generateTokens(payload) {

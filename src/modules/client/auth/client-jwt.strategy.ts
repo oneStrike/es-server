@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
-import { ClientJwtPayload } from '@/common/interfaces/jwt-payload.interface'
+
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
 import { CLIENT_AUTH_CONFIG } from '@/config/jwt.config'
 
@@ -32,14 +32,15 @@ export class ClientJwtStrategy extends PassportStrategy(
    * @returns 验证通过的用户信息
    * @throws UnauthorizedException 如果角色不是 'client' 或令牌在黑名单中
    */
-  async validate(request: any, payload: ClientJwtPayload) {
+  async validate(request: any, payload: any) {
     if (payload.aud !== CLIENT_AUTH_CONFIG.aud) {
       throw new UnauthorizedException('登录失效，请重新登录！')
     }
 
     const jti = payload.jti
     if (jti) {
-      const isBlacklisted = await this.jwtBlacklistService.isInClientBlacklist(jti)
+      const isBlacklisted =
+        await this.jwtBlacklistService.isInClientBlacklist(jti)
       if (isBlacklisted) {
         throw new UnauthorizedException('登录失效，请重新登录！')
       }
