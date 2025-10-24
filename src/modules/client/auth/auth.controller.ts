@@ -1,7 +1,7 @@
 import { Controller, Post, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiDoc } from '@/common/decorators/api-doc.decorator';
-import { RsaService } from '@/common/module/jwt/rsa.service';
+import { RsaService } from '@/common/module/crypto/rsa.service';
 import { ClientJwtService } from './client-jwt.service';
 
 /**

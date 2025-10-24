@@ -7,6 +7,7 @@ import { CustomPrismaModule } from 'nestjs-prisma/dist/custom'
 
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter'
 import { TransformInterceptor } from '@/common/interceptors/transform.interceptor'
+import { CryptoModule } from '@/common/module/crypto/crypto.module'
 import { LoggerModule } from '@/common/module/logger/logger.module'
 import uploadConfig from '@/config/upload.config'
 import { AdminModule } from '@/modules/admin/admin.module'
@@ -33,6 +34,7 @@ import { JwtAuthGuard } from './common/guards/auth.guard'
     }),
 
     LoggerModule, // 添加日志模块
+    CryptoModule, // 添加加密模块
     AdminModule,
     ClientModule,
   ],
