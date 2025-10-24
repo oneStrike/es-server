@@ -3,21 +3,21 @@ import { ApiTags } from '@nestjs/swagger'
 import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
 import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto'
 import { IdDto, IdsDto } from '@/common/dto/id.dto'
-import { DictionaryService } from '@/modules/shared/dictionary/dictionary.service'
-import { CreateDictionaryDto } from '@/modules/shared/dictionary/dto/create-dictionary.dto'
+import { DictionaryService } from '@/modules/foundation/dictionary/dictionary.service'
+import { CreateDictionaryDto } from '@/modules/foundation/dictionary/dto/create-dictionary.dto'
 import {
   CreateDictionaryItemDto,
   UpdateDictionaryItemDto,
-} from '@/modules/shared/dictionary/dto/dictionary-item.dto'
+} from '@/modules/foundation/dictionary/dto/dictionary-item.dto'
 import {
   DictionaryDto,
   DictionaryItemDto,
-} from '@/modules/shared/dictionary/dto/dictionary.dto'
+} from '@/modules/foundation/dictionary/dto/dictionary.dto'
 import {
   QueryDictionaryDto,
   QueryDictionaryItemDto,
-} from '@/modules/shared/dictionary/dto/query-dictionary.dto'
-import { UpdateDictionaryDto } from '@/modules/shared/dictionary/dto/update-dictionary.dto'
+} from '@/modules/foundation/dictionary/dto/query-dictionary.dto'
+import { UpdateDictionaryDto } from '@/modules/foundation/dictionary/dto/update-dictionary.dto'
 
 @ApiTags('字典管理')
 @Controller('/admin/dictionary')

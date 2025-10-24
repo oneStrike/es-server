@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
-import { DictionaryModule } from '@/modules/shared/dictionary/dictionary.module'
-import { RequestLogModule } from '@/modules/shared/request-log'
+import { DictionaryModule } from '@/modules/foundation/dictionary/dictionary.module'
+import { RequestLogModule } from '@/modules/foundation/request-log'
 
 @Module({
   imports: [DictionaryModule, RequestLogModule],
@@ -8,4 +8,4 @@ import { RequestLogModule } from '@/modules/shared/request-log'
   providers: [],
   exports: [DictionaryModule, RequestLogModule],
 })
-export class SharedModule {}
+export class FoundationModule {}

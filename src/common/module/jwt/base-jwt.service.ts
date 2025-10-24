@@ -55,7 +55,7 @@ export abstract class BaseJwtService {
         : await this.jwtBlacklistService.isInClientBlacklist(jti)
     if (
       payload.type !== 'refresh' ||
-      payload.type !== this.config.aud ||
+      aud !== this.config.aud ||
       isBlacklist
     ) {
       throw new UnauthorizedException('登录失效，请重新登录！')

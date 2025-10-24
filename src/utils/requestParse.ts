@@ -2,7 +2,7 @@ import type { FastifyRequest } from 'fastify'
 import {
   ApiTypeEnum,
   HttpMethodEnum,
-} from '@/modules/shared/request-log/request-log.constant'
+} from '@/modules/foundation/request-log/request-log.constant'
 
 /**
  * 设备信息接口

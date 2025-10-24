@@ -1,20 +1,15 @@
-import { Buffer } from 'node:buffer'
 import * as process from 'node:process'
-import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import {
   BadRequestException,
-  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
-import { Cache } from 'cache-manager'
 import { FastifyRequest } from 'fastify'
-import * as svgCaptcha from 'svg-captcha'
-import { v4 as uuid } from 'uuid'
+import { CaptchaService } from '@/common/module/captcha'
 import { CryptoService } from '@/common/module/crypto/crypto.service'
 import { RsaService } from '@/common/module/crypto/rsa.service'
 import { RepositoryService } from '@/common/services/repository.service'
-import { RequestLogService } from '@/modules/shared/request-log'
+import { RequestLogService } from '@/modules/foundation/request-log'
 import { AdminJwtService } from './admin-jwt.service'
 import { CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto } from './dto/token.dto'
@@ -35,7 +30,7 @@ export class AdminAuthService extends RepositoryService {
     private readonly crypto: CryptoService,
     private readonly adminJwtService: AdminJwtService,
     private readonly requestLogService: RequestLogService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly captchaService: CaptchaService,
   ) {
     super()
   }
@@ -44,23 +39,7 @@ export class AdminAuthService extends RepositoryService {
    * 获取验证码
    */
   async getCaptcha() {
-    const captcha = svgCaptcha.create({
-      size: 4, // 验证码长度
-      ignoreChars: '0o1i', // 排除 0o1i
-      noise: 3, // 噪声线条数量
-      color: true, // 验证码的字符有颜色，而不是黑白
-    })
-
-    const uniqueId = uuid()
-    await this.cacheManager.set(
-      CacheKey.CAPTCHA + uniqueId,
-      captcha.text,
-      1000 * 60,
-    )
-    return {
-      data: `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`,
-      id: uniqueId,
-    }
+    return this.captchaService.generateSvgCaptcha(CacheKey.CAPTCHA)
   }
 
   /**
@@ -71,26 +50,31 @@ export class AdminAuthService extends RepositoryService {
     if (!body.captcha) {
       throw new BadRequestException('请输入验证码')
     }
-    const captchaText = await this.cacheManager.get(
-      CacheKey.CAPTCHA + body.captchaId,
-    )
 
     if (process.env.NODE_ENV === 'production') {
-      // 检查验证码是否存在于缓存中
-      if (!captchaText) {
+      // 检查验证码是否存在
+      const exists = await this.captchaService.exists(
+        CacheKey.CAPTCHA,
+        body.captchaId,
+      )
+      if (!exists) {
         throw new BadRequestException('验证码已过期')
       }
-      // 验证码比较（不区分大小写）
-      if (
-        String(captchaText).toLowerCase() !== String(body.captcha).toLowerCase()
-      ) {
-        await this.cacheManager.del(CacheKey.CAPTCHA + body.captchaId)
+
+      // 验证验证码是否正确
+      const isValid = await this.captchaService.verify(
+        CacheKey.CAPTCHA,
+        body.captchaId,
+        body.captcha,
+      )
+      if (!isValid) {
+        await this.captchaService.remove(CacheKey.CAPTCHA, body.captchaId)
         throw new BadRequestException('验证码错误')
       }
     }
 
     // 验证通过后，删除已使用的验证码
-    await this.cacheManager.del(CacheKey.CAPTCHA + body.captchaId)
+    await this.captchaService.remove(CacheKey.CAPTCHA, body.captchaId)
 
     // 查找用户
     const user = await this.adminUser.findFirst({

@@ -5,7 +5,7 @@ import {
   RequestLogDto,
   RequestLogPageDto,
   RequestLogService,
-} from '@/modules/shared/request-log'
+} from '@/modules/foundation/request-log'
 
 /**
  * 请求日志控制器
