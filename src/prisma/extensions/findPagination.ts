@@ -16,8 +16,6 @@ export async function findPagination<T, A>(
   pageSize: number
 }> {
   const context = Prisma.getExtensionContext(this) as any
-  console.log('🚀 ~ findPagination ~ context:', context.fields)
-
   // 读取 where，但不要突变原对象
   const rawWhere = (options as any)?.where ?? {}
   let { pageIndex, pageSize, orderBy, startDate, endDate, ...otherWhere } =
