@@ -108,8 +108,8 @@ export class ClientNoticeController {
     model: CountDto,
   })
   async batchRemove(@Body() body: IdsDto) {
-    return this.noticeService.clientNotice.softDeleteMany({
-      id: { in: body.ids },
+    return this.noticeService.clientNotice.deleteMany({
+      where: { id: { in: body.ids } },
     })
   }
 }
