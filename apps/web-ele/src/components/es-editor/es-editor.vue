@@ -120,11 +120,11 @@ const init = reactive({
     : '/libs/tinymce/skins/content/default/content.css', // 以css文件方式自定义可编辑区域的css样式，css文件需自己创建并引入
   images_upload_handler(blobInfo: any) {
     return new Promise((resolve, reject) => {
-      useUpload(blobInfo.blob(), 'editor').then(({ success, error }) => {
-        if (error.length > 0) {
-          reject(new Error('文件上传失败'));
+      useUpload(blobInfo.blob()).then(({ success }) => {
+        if (success.length > 0) {
+          resolve(success[0]?.filePath);
         } else {
-          resolve(success[0].filePath);
+          reject(new Error('文件上传失败'));
         }
       });
     });
@@ -138,11 +138,11 @@ watch(
     nextTick(() => {
       tinymce.activeEditor?.mode.set(newValue ? 'readonly' : 'design');
       const iframeDom = document.querySelector('iframe');
-      // @ts-expect-error ignore
-      iframeDom &&
-        (iframeDom.contentWindow.document.body.style.margin = newValue
-          ? 0
-          : '16px');
+      if (iframeDom?.contentWindow) {
+        iframeDom.contentWindow.document.body.style.margin = newValue
+          ? '0'
+          : '16px';
+      }
     });
   },
   { immediate: true },

@@ -1,10 +1,10 @@
 import type { VxeGridPropTypes } from '#/adapter/vxe-table';
-import type { RequestLogDetailResponse } from '#/apis/types/requestLog';
+import type { RequestLogPageResponse } from '#/apis/types/requestLog';
 import type { EsFormSchema } from '#/types';
 
 import { formatUTC } from '#/utils';
 
-export const loginHistortColumn: VxeGridPropTypes.Columns<RequestLogDetailResponse> =
+export const loginHistortColumn: VxeGridPropTypes.Columns<RequestLogPageResponse> =
   [
     {
       title: '序号',

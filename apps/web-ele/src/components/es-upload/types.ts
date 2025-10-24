@@ -1,8 +1,8 @@
-import type { UploadFileResponse } from '#/apis/types/upload';
+import type { UploadUploadFileResponse } from '#/apis/types/upload';
 
 export interface EsUploadProps {
   /** 上传地址 */
-  modelValue: string | string[] | UploadFileResponse;
+  modelValue: string | string[] | UploadUploadFileResponse;
   /** 允许上传的文件类型 */
   accept?: string;
   /** 上传时附带的额外参数 */

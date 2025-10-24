@@ -1,15 +1,16 @@
 import type { UploadFile } from 'element-plus';
 
-import type { UploadFileResponse } from '#/apis/types/upload';
+import type { UploadUploadFileResponse } from '#/apis/types/upload';
 
 import { ElMessage } from 'element-plus';
 
 import { requestClient } from '#/utils/request';
 
-type UploadFileRes = UploadFileResponse;
+type UploadFileResItem = UploadUploadFileResponse[number]; // UploadResponseDto
+
 const api = {
   common: '/api/admin/upload/upload-file',
-  comic: '/admin/comic/chapter/createComicChapterContent',
+  comic: '/admin/comic/chapter/create',
 };
 
 export async function useUpload(
@@ -23,7 +24,7 @@ export async function useUpload(
   }) => void,
 ): Promise<{
   error: any[];
-  success: UploadFileRes[];
+  success: UploadFileResItem[]; // 修正：应该是 UploadResponseDto[]
 }> {
   return new Promise((resolve) => {
     const target = Array.isArray(files) ? files : [files];
