@@ -13,9 +13,9 @@ export class ClientJwtService extends BaseJwtService {
   constructor(
     jwtService: JwtService,
     jwtBlacklistService: JwtBlacklistService,
-    loggerFactory: LoggerFactoryService,
+    private readonly loggerFactory: LoggerFactoryService,
   ) {
-    super(jwtService, jwtBlacklistService, loggerFactory)
+    super(jwtService, jwtBlacklistService)
     this.logger = loggerFactory.createClientLogger('ClientJwtService')
   }
 }
