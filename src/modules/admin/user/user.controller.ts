@@ -5,6 +5,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator'
 import { Public } from '@/common/decorators/public.decorator'
 import { IdDto } from '@/common/dto/id.dto'
 import {
+  ChangePasswordDto,
   UpdateUserDto,
   UserDto,
   UserPageDto,
@@ -102,5 +103,24 @@ export class AdminUserController {
   })
   async deleteUser(@Body() query: IdDto) {
     return this.userService.adminUser.delete({ where: { id: query.id } })
+  }
+
+  /**
+   * 修改密码接口
+   * 允许用户修改自己的登录密码
+   * @param body 包含旧密码和新密码的对象
+   * @param user 当前登录用户的身份信息
+   * @returns 修改结果
+   */
+  @Post('change-password')
+  @ApiDoc({
+    summary: '修改密码',
+    model: IdDto,
+  })
+  async changePassword(
+    @Body() body: ChangePasswordDto,
+    @CurrentUser() user,
+  ) {
+    return this.userService.changePassword(Number.parseInt(user.sub), body)
   }
 }

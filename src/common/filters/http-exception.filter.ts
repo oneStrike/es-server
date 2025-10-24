@@ -1,11 +1,14 @@
-import type { FastifyReply } from 'fastify'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Inject,
 } from '@nestjs/common'
+import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
+import { CustomLoggerService } from '@/common/module/logger/logger.service'
 
 /**
  * HTTP异常过滤器
@@ -13,6 +16,15 @@ import {
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private logger: CustomLoggerService
+
+  constructor(
+    @Inject(LoggerFactoryService)
+    private readonly loggerFactory: LoggerFactoryService,
+  ) {
+    this.logger = this.loggerFactory.createGlobalLogger('ExceptionFilter')
+  }
+
   /**
    * 数据库错误映射表
    */
@@ -30,11 +42,44 @@ export class HttpExceptionFilter implements ExceptionFilter {
    * 捕获并处理异常
    */
   catch(exception: unknown, host: ArgumentsHost): void {
-    console.error('🚀 ~ HttpExceptionFilter ~ catch ~ exception:', exception)
     const ctx = host.switchToHttp()
+    const request = ctx.getRequest<FastifyRequest>()
     const response = ctx.getResponse<FastifyReply>()
 
     const { status, message } = this.extractErrorInfo(exception)
+
+    // 根据请求路径选择合适的日志器
+    const logger = this.selectLogger(request)
+
+    // 记录异常信息
+    if (exception instanceof Error) {
+      logger.error(
+        `Exception caught: ${message}`,
+        exception.stack,
+        {
+          method: request.method,
+          url: request.url,
+          statusCode: status,
+          ip: request.ip,
+          userAgent: request.headers['user-agent'],
+          exceptionType: exception.constructor.name,
+        },
+      )
+    }
+    else {
+      logger.error(
+        `Exception caught: ${message}`,
+        undefined,
+        {
+          method: request.method,
+          url: request.url,
+          statusCode: status,
+          ip: request.ip,
+          userAgent: request.headers['user-agent'],
+        },
+      )
+    }
+
     const errorResponse = {
       code: status,
       message,
@@ -43,6 +88,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // @ts-expect-error ignore
     response.errorResponse = errorResponse
     response.code(status).send(errorResponse)
+  }
+
+  /**
+   * 根据请求路径选择合适的日志器
+   */
+  private selectLogger(req: FastifyRequest): CustomLoggerService {
+    const path = req.url
+
+    if (path.includes('/admin/')) {
+      return this.loggerFactory.createAdminLogger('ExceptionFilter')
+    }
+    else if (path.includes('/client/')) {
+      return this.loggerFactory.createClientLogger('ExceptionFilter')
+    }
+    else {
+      return this.logger
+    }
   }
 
   /**

@@ -6,6 +6,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { CustomPrismaModule } from 'nestjs-prisma/dist/custom'
 
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter'
+import { LoggerInterceptor } from '@/common/interceptors/logger.interceptor'
 import { TransformInterceptor } from '@/common/interceptors/transform.interceptor'
 import { CryptoModule } from '@/common/module/crypto/crypto.module'
 import { LoggerModule } from '@/common/module/logger/logger.module'
@@ -54,7 +55,11 @@ import { JwtAuthGuard } from './common/guards/auth.guard'
     },
     {
       provide: APP_INTERCEPTOR,
-      useClass: TransformInterceptor,
+      useClass: LoggerInterceptor, // 日志拦截器（最先执行）
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor, // 响应转换拦截器
     },
     {
       provide: APP_FILTER,

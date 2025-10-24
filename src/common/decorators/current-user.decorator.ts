@@ -1,26 +1,12 @@
 import type { ExecutionContext } from '@nestjs/common'
-import type {
-  AdminJwtPayload,
-  ClientJwtPayload,
-} from '@/common/interfaces/jwt-payload.interface'
 import { createParamDecorator } from '@nestjs/common'
 
 /**
  * CurrentUser 装饰器
  * 用于从请求中提取当前用户的信息
- * 支持 Admin 和 Client 模块的 JWT Payload 类型
- *
- * 示例:
- * @Get('profile')
- * getProfile(@CurrentUser() user: AdminJwtPayload) {
- *   return { username: user.username };
- * }
  */
 export const CurrentUser = createParamDecorator(
-  (
-    data: unknown,
-    ctx: ExecutionContext,
-  ): AdminJwtPayload | ClientJwtPayload => {
+  (data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest()
     return request.user
   },

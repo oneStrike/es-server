@@ -10,6 +10,8 @@ import { dirname } from 'node:path'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { RsaKeyType } from '@/common/enum/rsa'
+import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
+import { CustomLoggerService } from '@/common/module/logger/logger.service'
 /**
  * RSA密钥对
  */
@@ -27,9 +29,14 @@ export class RsaService implements OnModuleInit {
   private static instance: RsaService
   private keyPairs: Map<RsaKeyType, RsaKeyPair> = new Map()
   private isDevelopment: boolean
+  private logger: CustomLoggerService
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private loggerFactory: LoggerFactoryService,
+  ) {
     this.isDevelopment = configService.get<string>('NODE_ENV') === 'development'
+    this.logger = this.loggerFactory.createGlobalLogger('RsaService')
   }
 
   /**
@@ -103,14 +110,17 @@ export class RsaService implements OnModuleInit {
           const privateKey = readFileSync(privateKeyPath, 'utf8')
           const publicKey = readFileSync(publicKeyPath, 'utf8')
           this.keyPairs.set(keyType, { privateKey, publicKey })
+          this.logger.debug(`从文件加载 ${keyType} RSA密钥对成功`)
           return
         }
-      } catch (error) {
-        console.error(`读取${keyType} RSA密钥文件失败:`, error)
+      }
+      catch (error) {
+        this.logger.error(`读取${keyType} RSA密钥文件失败`, error.stack)
       }
     }
 
     // 如果无法从文件或环境变量读取，则生成新的密钥对
+    this.logger.info(`生成新的 ${keyType} RSA密钥对`)
     const newKeyPair = this.generateKeyPair()
     this.keyPairs.set(keyType, newKeyPair)
 
@@ -123,17 +133,23 @@ export class RsaService implements OnModuleInit {
           this.ensureDirectoryExists(publicKeyPath)
           writeFileSync(privateKeyPath, newKeyPair.privateKey)
           writeFileSync(publicKeyPath, newKeyPair.publicKey)
-        } catch (error) {
-          console.error(`保存${keyType} RSA密钥文件失败:`, error)
+          this.logger.info(`${keyType} RSA密钥对已保存到文件`)
         }
-      } else {
+        catch (error) {
+          this.logger.error(`保存${keyType} RSA密钥文件失败`, error.stack)
+        }
+      }
+      else {
         // 这里可以考虑将密钥写入.env.development文件
         // 但需要额外的文件操作逻辑
       }
-    } else {
+    }
+    else {
       // 生产环境：记录日志，提示管理员设置环境变量
-      console.warn(
+      this.logger.logSecurity(
         `${keyType} RSA密钥对已生成，但在生产环境中应通过环境变量配置`,
+        'warn',
+        { keyType },
       )
     }
   }

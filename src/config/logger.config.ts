@@ -99,36 +99,32 @@ function createFileTransport(
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       winston.format.errors({ stack: true }),
       winston.format.json(),
-      winston.format.printf(
-        ({
+      // 自定义格式化：将所有元数据合并到一个JSON对象中
+      winston.format.printf((info) => {
+        const { timestamp, level, message, context, metadata, ...rest } = info
+
+        const logEntry: any = {
           timestamp,
           level,
           message,
-          context,
-          trace,
-          requestId,
-          userId,
-          ...meta
-        }) => {
-          const logEntry = {
-            timestamp,
-            level,
-            message,
-            context,
-            requestId,
-            userId,
-            module,
-            ...meta,
-          }
+          module,
+        }
 
-          if (trace) {
-            // @ts-expect-error ignore
-            logEntry.trace = trace
-          }
+        // 添加上下文信息
+        if (context) {
+          logEntry.context = context
+        }
 
-          return JSON.stringify(logEntry)
-        },
-      ),
+        // 合并metadata中的所有字段
+        if (metadata) {
+          Object.assign(logEntry, metadata)
+        }
+
+        // 合并其他字段
+        Object.assign(logEntry, rest)
+
+        return JSON.stringify(logEntry)
+      }),
     ),
   })
 }
@@ -160,6 +156,32 @@ function createCombinedFileTransport(
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       winston.format.errors({ stack: true }),
       winston.format.json(),
+      // 自定义格式化：将所有元数据合并到一个JSON对象中
+      winston.format.printf((info) => {
+        const { timestamp, level, message, context, metadata, ...rest } = info
+
+        const logEntry: any = {
+          timestamp,
+          level,
+          message,
+          module,
+        }
+
+        // 添加上下文信息
+        if (context) {
+          logEntry.context = context
+        }
+
+        // 合并metadata中的所有字段
+        if (metadata) {
+          Object.assign(logEntry, metadata)
+        }
+
+        // 合并其他字段
+        Object.assign(logEntry, rest)
+
+        return JSON.stringify(logEntry)
+      }),
     ),
   })
 }

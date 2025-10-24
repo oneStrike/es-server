@@ -6,16 +6,18 @@ import { extname, join } from 'node:path'
 import * as process from 'node:process'
 import { pipeline, Transform } from 'node:stream'
 import { promisify } from 'node:util'
-import { BadRequestException, Injectable, Logger } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
 import { UploadResponseDto } from '@/common/dto/upload.dto'
+import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
+import { CustomLoggerService } from '@/common/module/logger/logger.service'
 
 const pump = promisify(pipeline)
 
 @Injectable()
 export class UploadService {
-  private readonly logger = new Logger(UploadService.name)
+  private readonly logger: CustomLoggerService
   private readonly uploadPath = join(
     process.cwd(),
     process.env.UPLOAD_DIR || 'uploads',
@@ -24,7 +26,12 @@ export class UploadService {
   private uploadConfig: UploadConfig | null = null
   private mimeTypeMap: Map<string, string> = new Map()
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private loggerFactory: LoggerFactoryService,
+  ) {
+    this.logger = this.loggerFactory.createGlobalLogger('UploadService')
+  }
 
   /**
    * 初始化MIME类型映射表（性能优化：避免重复数组查找）

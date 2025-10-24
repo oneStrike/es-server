@@ -184,3 +184,26 @@ export class UserPageDto extends PageDto {
   })
   role?: number
 }
+
+export class ChangePasswordDto {
+  @ValidateString({
+    description: '旧密码',
+    example: 'Aa@123456',
+    required: true,
+  })
+  oldPassword!: string
+
+  @ValidateString({
+    description: '新密码',
+    example: 'Aa@654321',
+    required: true,
+  })
+  newPassword!: string
+
+  @ValidateString({
+    description: '确认新密码',
+    example: 'Aa@654321',
+    required: true,
+  })
+  confirmPassword!: string
+}
