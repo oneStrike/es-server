@@ -16,6 +16,7 @@ export async function findPagination<T, A>(
   pageSize: number
 }> {
   const context = Prisma.getExtensionContext(this) as any
+  console.log('🚀 ~ findPagination ~ context:', context.fields)
 
   // 读取 where，但不要突变原对象
   const rawWhere = (options as any)?.where ?? {}
@@ -82,13 +83,6 @@ export async function findPagination<T, A>(
     }
   }
 
-  // 软删除过滤：默认仅查询未删除数据
-  if (options.softDelete === true) {
-    otherWhere = { ...otherWhere, deletedAt: { not: null } }
-  } else {
-    otherWhere = { ...otherWhere, deletedAt: null }
-  }
-
   // 计算跳过数量：根据上面规范化后的 0/1 基兼容值
   const skip = Math.max(
     0,
@@ -99,7 +93,9 @@ export async function findPagination<T, A>(
   const take = normalizedPageSize
 
   // 并行查询列表与总数
-  const [list, total] = await Promise.all<[any[], number]>([
+  const [list, total] = await Promise.all<
+    [Prisma.Result<T, A, 'findMany'>, number]
+  >([
     context.findMany({
       ...(options || {}),
       where: otherWhere,

@@ -14,7 +14,9 @@ import { setupSwagger } from '@/nestjs/swagger'
 declare const module: any
 
 async function bootstrap() {
-  const fastifyAdapter = new FastifyAdapter()
+  const fastifyAdapter = new FastifyAdapter({
+    trustProxy: true, // 启用代理信任，用于正确解析 X-Forwarded-For 头部
+  })
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     fastifyAdapter,
@@ -35,19 +37,20 @@ async function bootstrap() {
   app.setGlobalPrefix('api')
 
   await setupMultipart(fastifyAdapter, app)
-  await app.register(fastifyCsrf)
+  // 注册 CSRF 保护插件（使用 any 类型断言解决类型不兼容问题）
+  await app.register(fastifyCsrf as any)
   setupSwagger(app)
 
   const port = process.env.PORT ?? 3000
   await app.listen(port)
 
   // 打印访问地址（控制台显示）
-  console.log(`🚀 应用程序已启动`)
-  console.log(`📍 本地访问地址: http://localhost:${port}`)
-  console.log(`📍 网络访问地址: http://127.0.0.1:${port}`)
-  console.log(`📖 API 文档地址: http://localhost:${port}/api/docs`)
-  console.log(`🔧 管理后台 API: http://localhost:${port}/api/admin`)
-  console.log(`👥 客户端 API: http://localhost:${port}/api/client`)
+  logger.info(`🚀 应用程序已启动`)
+  logger.info(`📍 本地访问地址: http://localhost:${port}`)
+  logger.info(`📍 网络访问地址: http://127.0.0.1:${port}`)
+  logger.info(`📖 API 文档地址: http://localhost:${port}/api/docs`)
+  logger.info(`🔧 管理后台 API: http://localhost:${port}/api/admin`)
+  logger.info(`👥 客户端 API: http://localhost:${port}/api/client`)
 
   if (module.hot) {
     module.hot.accept()

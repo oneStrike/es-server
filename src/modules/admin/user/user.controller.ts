@@ -50,7 +50,7 @@ export class AdminUserController {
   /**
    * 解锁指定用户的锁定状态接口
    */
-  @Post('unlock-user')
+  @Post('unlock')
   @ApiDoc({
     summary: '解锁指定用户的锁定状态',
     model: IdDto,

@@ -67,37 +67,65 @@ export class CustomLoggerService implements NestLoggerService {
   }
 
   /**
+   * 将可选参数标准化为元数据（兼容 Nest LoggerService 的字符串上下文）
+   */
+  private normalizeMeta(metaOrContext?: any): any {
+    if (typeof metaOrContext === 'string') {
+      return { context: metaOrContext }
+    }
+    return metaOrContext
+  }
+
+  /**
    * Debug级别日志
    */
-  debug(message: string, meta?: any): void {
+  debug(message: any, metaOrContext?: any): void {
+    const meta = this.normalizeMeta(metaOrContext)
     this.logger.debug(message, this.getMetadata(meta))
   }
 
   /**
    * Info级别日志
    */
-  log(message: string, meta?: any): void {
+  log(message: any, metaOrContext?: any): void {
+    const meta = this.normalizeMeta(metaOrContext)
     this.logger.info(message, this.getMetadata(meta))
   }
 
   /**
    * Info级别日志（别名）
    */
-  info(message: string, meta?: any): void {
-    this.log(message, meta)
+  info(message: any, metaOrContext?: any): void {
+    this.log(message, metaOrContext)
   }
 
   /**
    * Warn级别日志
    */
-  warn(message: string, meta?: any): void {
+  warn(message: any, metaOrContext?: any): void {
+    const meta = this.normalizeMeta(metaOrContext)
     this.logger.warn(message, this.getMetadata(meta))
   }
 
   /**
    * Error级别日志
+   * 兼容 Nest 的签名：error(message, trace?, context?)
    */
-  error(message: string, trace?: string, meta?: any): void {
+  error(message: any, traceOrMeta?: any, contextOrMeta?: any): void {
+    let trace: string | undefined
+    let meta: any = {}
+
+    if (typeof traceOrMeta === 'string') {
+      trace = traceOrMeta
+    } else if (traceOrMeta && typeof traceOrMeta === 'object') {
+      meta = traceOrMeta
+    }
+
+    if (contextOrMeta) {
+      const extra = this.normalizeMeta(contextOrMeta)
+      meta = { ...meta, ...extra }
+    }
+
     this.logger.error(message, {
       ...this.getMetadata(meta),
       trace,
