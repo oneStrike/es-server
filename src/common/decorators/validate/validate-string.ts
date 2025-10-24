@@ -42,11 +42,6 @@ import {
  * @returns 装饰器函数
  */
 export function ValidateString(options: ValidateStringOptions) {
-  // 参数验证
-  if (!options.description) {
-    throw new Error('ValidateString: description is required')
-  }
-
   if (
     options.minLength
     && options.maxLength

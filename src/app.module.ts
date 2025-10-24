@@ -3,8 +3,9 @@ import { CacheModule } from '@nestjs/cache-manager'
 import { BadRequestException, Module, ValidationPipe } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
-import { CustomPrismaModule } from 'nestjs-prisma/dist/custom'
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 
+import { CustomPrismaModule } from 'nestjs-prisma/dist/custom'
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter'
 import { LoggerInterceptor } from '@/common/interceptors/logger.interceptor'
 import { TransformInterceptor } from '@/common/interceptors/transform.interceptor'
@@ -33,7 +34,23 @@ import { JwtAuthGuard } from './common/guards/auth.guard'
       isGlobal: true,
       namespace: 'Akaiito',
     }),
-
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: 10,
+      },
+      {
+        name: 'medium',
+        ttl: 10000,
+        limit: 30,
+      },
+      {
+        name: 'long',
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     LoggerModule, // 添加日志模块
     CryptoModule, // 添加加密模块
     AdminModule,
@@ -65,7 +82,10 @@ import { JwtAuthGuard } from './common/guards/auth.guard'
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
     },
-
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

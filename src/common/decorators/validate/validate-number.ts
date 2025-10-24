@@ -37,11 +37,6 @@ import { IsNumber, IsOptional, Max, Min } from 'class-validator'
  * @returns 装饰器函数
  */
 export function ValidateNumber(options: ValidateNumberOptions) {
-  // 参数验证
-  if (!options.description) {
-    throw new Error('ValidateNumber: description is required')
-  }
-
   if (
     options.min !== undefined
     && options.max !== undefined

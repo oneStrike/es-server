@@ -37,15 +37,6 @@ import { IsOptional, IsString, Matches } from 'class-validator'
  * @returns 装饰器函数
  */
 export function ValidateByRegex(options: ValidateRegexOptions) {
-  // 参数验证
-  if (!options.description) {
-    throw new Error('ValidateByRegex: description is required')
-  }
-
-  if (!options.regex) {
-    throw new Error('ValidateByRegex: regex is required')
-  }
-
   // 构建API属性配置
   const apiPropertyOptions: ApiPropertyOptions = {
     description: options.description,
@@ -76,8 +67,8 @@ export function ValidateByRegex(options: ValidateRegexOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null)
-        && options.default !== undefined
+        (value === undefined || value === null) &&
+        options.default !== undefined
       ) {
         return options.default
       }

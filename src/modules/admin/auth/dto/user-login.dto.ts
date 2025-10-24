@@ -1,5 +1,9 @@
 import { ApiProperty, PickType } from '@nestjs/swagger'
-import { ValidateString } from '@/common/decorators/validate.decorator'
+import {
+  ValidateByRegex,
+  ValidateString,
+} from '@/common/decorators/validate.decorator'
+import { STRONG_PASSWORD_REGEXP } from '@/utils/regexp'
 import { TokenDto } from './token.dto'
 
 /**
@@ -20,7 +24,8 @@ export class UserBaseDto {
  * 用户登录 DTO
  */
 export class UserLoginDto extends PickType(UserBaseDto, ['username']) {
-  @ValidateString({
+  @ValidateByRegex({
+    regex: STRONG_PASSWORD_REGEXP,
     description: '密码',
     example: 'Aa@123456',
     required: true,

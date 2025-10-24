@@ -34,11 +34,6 @@ import { IsBoolean, IsOptional } from 'class-validator'
  * @returns 装饰器函数
  */
 export function ValidateBoolean(options: ValidateBooleanOptions) {
-  // 参数验证
-  if (!options.description) {
-    throw new Error('ValidateBoolean: description is required')
-  }
-
   // 构建API属性配置
   const apiPropertyOptions: ApiPropertyOptions = {
     description: options.description,
@@ -65,8 +60,8 @@ export function ValidateBoolean(options: ValidateBooleanOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null)
-        && options.default !== undefined
+        (value === undefined || value === null) &&
+        options.default !== undefined
       ) {
         return options.default
       }

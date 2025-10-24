@@ -34,11 +34,6 @@ import { IsDate, IsOptional } from 'class-validator'
  * @returns 装饰器函数
  */
 export function ValidateDate(options: ValidateDateTimeOptions) {
-  // 参数验证
-  if (!options.description) {
-    throw new Error('ValidateDate: description is required')
-  }
-
   // 构建API属性配置
   const apiPropertyOptions: ApiPropertyOptions = {
     description: options.description,
@@ -66,8 +61,8 @@ export function ValidateDate(options: ValidateDateTimeOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null)
-        && options.default !== undefined
+        (value === undefined || value === null) &&
+        options.default !== undefined
       ) {
         return options.default
       }

@@ -59,19 +59,10 @@ import {
  * @returns 装饰器函数
  */
 export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
-  // 参数验证
-  if (!options.description) {
-    throw new Error('ValidateArray: description is required')
-  }
-
-  if (!options.itemType) {
-    throw new Error('ValidateArray: itemType is required')
-  }
-
   if (
-    options.minLength !== undefined
-    && options.maxLength !== undefined
-    && options.minLength > options.maxLength
+    options.minLength !== undefined &&
+    options.maxLength !== undefined &&
+    options.minLength > options.maxLength
   ) {
     throw new Error(
       'ValidateArray: minLength should not be greater than maxLength',
@@ -166,9 +157,10 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
         name: 'customItemValidator',
         validator: {
           validate: (value: any[]) => {
-            if (!Array.isArray(value))
-              { return true } // 数组验证由IsArray处理
-            return value.every(item => options.itemValidator!(item))
+            if (!Array.isArray(value)) {
+              return true
+            } // 数组验证由IsArray处理
+            return value.every((item) => options.itemValidator!(item))
           },
           defaultMessage: () =>
             options.itemErrorMessage || '数组中的元素验证失败',
@@ -209,8 +201,8 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null)
-        && options.default !== undefined
+        (value === undefined || value === null) &&
+        options.default !== undefined
       ) {
         return options.default
       }
@@ -232,10 +224,12 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
             case 'boolean':
               if (typeof item === 'string') {
                 const lowerItem = item.toLowerCase().trim()
-                if (lowerItem === 'true' || lowerItem === '1')
-                  { return true }
-                if (lowerItem === 'false' || lowerItem === '0')
-                  { return false }
+                if (lowerItem === 'true' || lowerItem === '1') {
+                  return true
+                }
+                if (lowerItem === 'false' || lowerItem === '0') {
+                  return false
+                }
                 return item // 保持原值，让验证器处理错误
               }
               return item
@@ -246,8 +240,7 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
               if (typeof item === 'string') {
                 try {
                   return JSON.parse(item)
-                }
-                catch {
+                } catch {
                   return item // 保持原值，让验证器处理错误
                 }
               }

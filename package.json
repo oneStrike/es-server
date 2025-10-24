@@ -42,6 +42,7 @@
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-fastify": "^11.1.6",
+    "@nestjs/throttler": "^6.4.0",
     "@prisma/adapter-pg": "6.17.1",
     "@types/mime-types": "^3.0.1",
     "@types/uuid": "^11.0.0",

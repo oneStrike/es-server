@@ -49,15 +49,6 @@ import { isNumberEnum } from './utils'
  * @returns 装饰器函数
  */
 export function ValidateEnum(options: ValidateEnumOptions) {
-  // 参数验证
-  if (!options.description) {
-    throw new Error('ValidateEnum: description is required')
-  }
-
-  if (!options.enum) {
-    throw new Error('ValidateEnum: enum is required')
-  }
-
   // 构建API属性配置
   const apiPropertyOptions: ApiPropertyOptions = {
     description: options.description,

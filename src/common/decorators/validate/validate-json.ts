@@ -34,11 +34,6 @@ import { IsJSON, IsOptional } from 'class-validator'
  * @returns 装饰器函数
  */
 export function ValidateJson(options: ValidateJsonOptions) {
-  // 参数验证
-  if (!options.description) {
-    throw new Error('ValidateJson: description is required')
-  }
-
   // 构建API属性配置
   const apiPropertyOptions: ApiPropertyOptions = {
     description: options.description,
