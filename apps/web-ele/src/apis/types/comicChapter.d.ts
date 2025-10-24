@@ -13,44 +13,50 @@ export type CreateComicChapterResponse = IdDto;
  *  @更新时间 2025-10-24 11:07:47
  */
 export type ComicChapterPageRequest = {
-  /* 单页大小，最大500，默认15 */
-  pageSize?: number;
-
-  /* 当前页码 */
-  pageIndex?: number;
-
-  /* 排序字段，json格式 */
-  orderBy?: string;
-
-  /* 开始时间 */
-  startDate?: string;
-
-  /* 结束时间 */
-  endDate?: string;
-
-  /* 章节标题（模糊搜索） */
-  title?: string;
-
-  /* 发布状态（true: 已发布, false: 未发布） */
-  isPublished?: boolean;
-
-  /* 关联的漫画版本ID */
-  versionId?: number;
-
-  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
-  readRule?: number;
-
-  /* 是否为试读章节 */
-  isPreview?: boolean;
+  /** 任意合法数值 */
+  [property: string]: any;
 
   /* 漫画ID（精确匹配） */
   comicId: number;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 结束时间 */
+  endDate?: string;
+
+  /* 是否为试读章节 */
+  isPreview?: boolean;
+
+  /* 发布状态（true: 已发布, false: 未发布） */
+  isPublished?: boolean;
+
+  /* 排序字段，json格式 */
+  orderBy?: string;
+
+  /* 当前页码 */
+  pageIndex?: number;
+
+  /* 单页大小，最大500，默认15 */
+  pageSize?: number;
+
+  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
+  readRule?: number;
+
+  /* 开始时间 */
+  startDate?: string;
+
+  /* 章节标题（模糊搜索） */
+  title?: string;
+
+  /* 关联的漫画版本ID */
+  versionId?: number;
 };
 
 export type ComicChapterPageResponse = {
+  /** 任意合法数值 */
+  [property: string]: any;
+
+  /* 列表数据 */
+  list?: ComicChapterPageResponseDto[];
+
   /* 当前页码 */
   pageIndex?: number;
 
@@ -59,12 +65,6 @@ export type ComicChapterPageResponse = {
 
   /* 总条数 */
   total?: number;
-
-  /* 列表数据 */
-  list?: ComicChapterPageResponseDto[];
-
-  /** 任意合法数值 */
-  [property: string]: any;
 };
 
 /**
@@ -73,11 +73,11 @@ export type ComicChapterPageResponse = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type ComicChapterDetailRequest = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 export type ComicChapterDetailResponse = ComicChapterDetailDto;
@@ -125,11 +125,11 @@ export type SwapChapterNumbersResponse = OrderDto;
  *  @更新时间 2025-10-24 11:07:47
  */
 export type ChapterContentsRequest = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 export type ChapterContentsResponse = string[];
@@ -194,31 +194,31 @@ export type ClearChapterContentsResponse = IdDto;
  *  @更新时间 2025-10-24 11:07:47
  */
 export type CreateComicChapterDto = {
-  /* 章节标题 */
-  title: string;
-  /* 章节副标题或描述 */
-  subtitle?: string;
-  /* 关联的漫画ID */
-  comicId: number;
-  /* 关联的漫画版本ID */
-  versionId?: number;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 章节序号（用于排序） */
   chapterNumber: number;
-  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
-  readRule: 0 | 1 | 2 | 3;
-  /* 购买需要消耗的积分 */
-  purchaseAmount?: number;
+  /* 关联的漫画ID */
+  comicId: number;
   /* 是否为试读章节 */
   isPreview: boolean;
   /* 发布时间 */
   publishAt?: string;
-  /* 章节缩略图 */
-  thumbnail?: string;
+  /* 购买需要消耗的积分 */
+  purchaseAmount?: number;
+  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
+  readRule: 0 | 1 | 2 | 3;
   /* 管理员备注 */
   remark?: string;
+  /* 章节副标题或描述 */
+  subtitle?: string;
+  /* 章节缩略图 */
+  thumbnail?: string;
+  /* 章节标题 */
+  title: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 关联的漫画版本ID */
+  versionId?: number;
 };
 
 /**
@@ -227,11 +227,11 @@ export type CreateComicChapterDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type IdDto = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 /**
@@ -240,43 +240,43 @@ export type IdDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type ComicChapterPageResponseDto = {
-  /* 章节ID */
-  id: number;
-  /* 章节标题 */
-  title: string;
-  /* 章节副标题或描述 */
-  subtitle?: string;
-  /* 发布状态（true: 已发布, false: 未发布） */
-  isPublished: boolean;
-  /* 关联的漫画ID */
-  comicId: number;
-  /* 关联的漫画版本ID */
-  versionId?: number;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 章节序号（用于排序） */
   chapterNumber: number;
-  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
-  readRule: 0 | 1 | 2 | 3;
-  /* 购买需要消耗的积分 */
-  purchaseAmount?: number;
-  /* 是否为试读章节 */
-  isPreview: boolean;
-  /* 发布时间 */
-  publishAt?: string;
-  /* 章节缩略图 */
-  thumbnail?: string;
-  /* 阅读次数 */
-  viewCount: number;
-  /* 点赞数 */
-  likeCount: number;
+  /* 关联的漫画ID */
+  comicId: number;
   /* 评论数 */
   commentCount: number;
   /* 创建时间 */
   createdAt: string;
+  /* 章节ID */
+  id: number;
+  /* 是否为试读章节 */
+  isPreview: boolean;
+  /* 发布状态（true: 已发布, false: 未发布） */
+  isPublished: boolean;
+  /* 点赞数 */
+  likeCount: number;
+  /* 发布时间 */
+  publishAt?: string;
+  /* 购买需要消耗的积分 */
+  purchaseAmount?: number;
+  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
+  readRule: 0 | 1 | 2 | 3;
+  /* 章节副标题或描述 */
+  subtitle?: string;
+  /* 章节缩略图 */
+  thumbnail?: string;
+  /* 章节标题 */
+  title: string;
   /* 更新时间 */
   updatedAt: string;
+  /* 关联的漫画版本ID */
+  versionId?: number;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 阅读次数 */
+  viewCount: number;
 };
 
 /**
@@ -285,51 +285,51 @@ export type ComicChapterPageResponseDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type ComicChapterDetailDto = {
-  /* 章节ID */
-  id: number;
-  /* 章节标题 */
-  title: string;
-  /* 章节副标题或描述 */
-  subtitle?: string;
-  /* 发布状态（true: 已发布, false: 未发布） */
-  isPublished: boolean;
-  /* 关联的漫画ID */
-  comicId: number;
-  /* 关联的漫画版本ID */
-  versionId?: number;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 章节序号（用于排序） */
   chapterNumber: number;
-  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
-  readRule: 0 | 1 | 2 | 3;
-  /* 购买需要消耗的积分 */
-  purchaseAmount?: number;
-  /* 漫画内容（JSON格式存储图片URL数组） */
-  contents: string;
-  /* 是否为试读章节 */
-  isPreview: boolean;
-  /* 发布时间 */
-  publishAt?: string;
-  /* 章节缩略图 */
-  thumbnail?: string;
-  /* 阅读次数 */
-  viewCount: number;
-  /* 点赞数 */
-  likeCount: number;
+  /* 关联的漫画ID */
+  comicId: number;
   /* 评论数 */
   commentCount: number;
-  /* 管理员备注 */
-  remark?: string;
+  /* 漫画内容（JSON格式存储图片URL数组） */
+  contents: string;
   /* 创建时间 */
   createdAt: string;
-  /* 更新时间 */
-  updatedAt: string;
+  /* 章节ID */
+  id: number;
+  /* 是否为试读章节 */
+  isPreview: boolean;
+  /* 发布状态（true: 已发布, false: 未发布） */
+  isPublished: boolean;
+  /* 点赞数 */
+  likeCount: number;
+  /* 发布时间 */
+  publishAt?: string;
+  /* 购买需要消耗的积分 */
+  purchaseAmount?: number;
+  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
+  readRule: 0 | 1 | 2 | 3;
   /* 关联的漫画信息 */
   relatedComic: RelatedComicDto;
   /* 关联的漫画版本信息 */
   relatedVersion: RelatedVersionDto;
+  /* 管理员备注 */
+  remark?: string;
+  /* 章节副标题或描述 */
+  subtitle?: string;
+  /* 章节缩略图 */
+  thumbnail?: string;
+  /* 章节标题 */
+  title: string;
+  /* 更新时间 */
+  updatedAt: string;
+  /* 关联的漫画版本ID */
+  versionId?: number;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 阅读次数 */
+  viewCount: number;
 };
 
 /**
@@ -338,13 +338,13 @@ export type ComicChapterDetailDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type RelatedComicDto = {
-  /* 漫画ID */
-  id: number;
-  /* 漫画名字 */
-  name: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 漫画ID */
+  id: number;
+
+  /* 漫画名字 */
+  name: string;
 };
 
 /**
@@ -353,15 +353,15 @@ export type RelatedComicDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type RelatedVersionDto = {
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 版本ID */
   id: number;
-  /* 版本名字 */
-  versionName: string;
   /* 版本语言 */
   language: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 版本名字 */
+  versionName: string;
 };
 
 /**
@@ -370,37 +370,37 @@ export type RelatedVersionDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type UpdateComicChapterDto = {
-  /* 章节标题 */
-  title?: string;
-  /* 章节副标题或描述 */
-  subtitle?: string;
-  /* 发布状态（true: 已发布, false: 未发布） */
-  isPublished?: boolean;
-  /* 关联的漫画ID */
-  comicId?: number;
-  /* 关联的漫画版本ID */
-  versionId?: number;
-  /* 章节序号（用于排序） */
-  chapterNumber?: number;
-  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
-  readRule?: 0 | 1 | 2 | 3;
-  /* 购买需要消耗的积分 */
-  purchaseAmount?: number;
-  /* 漫画内容（JSON格式存储图片URL数组） */
-  contents?: string;
-  /* 是否为试读章节 */
-  isPreview?: boolean;
-  /* 发布时间 */
-  publishAt?: string;
-  /* 章节缩略图 */
-  thumbnail?: string;
-  /* 管理员备注 */
-  remark?: string;
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 章节序号（用于排序） */
+  chapterNumber?: number;
+  /* 关联的漫画ID */
+  comicId?: number;
+  /* 漫画内容（JSON格式存储图片URL数组） */
+  contents?: string;
+  /* 主键id */
+  id: number;
+  /* 是否为试读章节 */
+  isPreview?: boolean;
+  /* 发布状态（true: 已发布, false: 未发布） */
+  isPublished?: boolean;
+  /* 发布时间 */
+  publishAt?: string;
+  /* 购买需要消耗的积分 */
+  purchaseAmount?: number;
+  /* 查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买） */
+  readRule?: 0 | 1 | 2 | 3;
+  /* 管理员备注 */
+  remark?: string;
+  /* 章节副标题或描述 */
+  subtitle?: string;
+  /* 章节缩略图 */
+  thumbnail?: string;
+  /* 章节标题 */
+  title?: string;
+
+  /* 关联的漫画版本ID */
+  versionId?: number;
 };
 
 /**
@@ -409,13 +409,13 @@ export type UpdateComicChapterDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type UpdateChapterPublishStatusDto = {
-  /* 章节ID列表 */
-  ids: number[];
-  /* 发布状态（true: 发布, false: 取消发布） */
-  isPublished: boolean;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 章节ID列表 */
+  ids: number[];
+
+  /* 发布状态（true: 发布, false: 取消发布） */
+  isPublished: boolean;
 };
 
 /**
@@ -424,11 +424,11 @@ export type UpdateChapterPublishStatusDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type CountDto = {
-  /* 操作成功的数据数量 */
-  count: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 操作成功的数据数量 */
+  count: number;
 };
 
 /**
@@ -437,11 +437,11 @@ export type CountDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type IdsDto = {
-  /* 主键id集合 */
-  ids: number[];
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id集合 */
+  ids: number[];
 };
 
 /**
@@ -450,13 +450,13 @@ export type IdsDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type OrderDto = {
-  /* 拖拽的目标id */
-  targetId: number;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 当前拖拽数据的id */
   dragId: number;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 拖拽的目标id */
+  targetId: number;
 };
 
 /**
@@ -465,15 +465,15 @@ export type OrderDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type AddChapterContentDto = {
-  /* 主键id */
-  id: number;
-  /* 要添加的内容（图片URL） */
-  content: string;
-  /* 插入位置索引（可选，默认添加到末尾） */
-  index?: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 要添加的内容（图片URL） */
+  content: string;
+  /* 主键id */
+  id: number;
+
+  /* 插入位置索引（可选，默认添加到末尾） */
+  index?: number;
 };
 
 /**
@@ -482,15 +482,15 @@ export type AddChapterContentDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type UpdateChapterContentDto = {
-  /* 主键id */
-  id: number;
-  /* 要添加的内容（图片URL） */
-  content: string;
-  /* 插入位置索引（可选，默认添加到末尾） */
-  index: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 要添加的内容（图片URL） */
+  content: string;
+  /* 主键id */
+  id: number;
+
+  /* 插入位置索引（可选，默认添加到末尾） */
+  index: number;
 };
 
 /**
@@ -499,13 +499,13 @@ export type UpdateChapterContentDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type DeleteChapterContentDto = {
-  /* 主键id */
-  id: number;
-  /* 插入位置索引（可选，默认添加到末尾） */
-  index: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 主键id */
+  id: number;
+
+  /* 插入位置索引（可选，默认添加到末尾） */
+  index: number;
 };
 
 /**
@@ -514,15 +514,15 @@ export type DeleteChapterContentDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type MoveChapterContentDto = {
-  /* 主键id */
-  id: number;
-  /* 源索引位置 */
-  fromIndex: number;
-  /* 目标索引位置 */
-  toIndex: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 源索引位置 */
+  fromIndex: number;
+  /* 主键id */
+  id: number;
+
+  /* 目标索引位置 */
+  toIndex: number;
 };
 
 /**
@@ -531,11 +531,11 @@ export type MoveChapterContentDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type BatchUpdateChapterContentsDto = {
-  /* 主键id */
-  id: number;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 新的内容数组（JSON格式） */
   contents: string[];
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 主键id */
+  id: number;
 };

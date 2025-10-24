@@ -1,26 +1,19 @@
-import { requestClient } from '#/utils/request';
 import type {
-  CreateNoticeRequest,
-  CreateNoticeResponse,
-  NoticePageRequest,
-  NoticePageResponse,
-  NoticeDetailRequest,
-  NoticeDetailResponse,
-  UpdateNoticeRequest,
-  UpdateNoticeResponse,
-  BatchUpdateNoticeStatusRequest,
-  BatchUpdateNoticeStatusResponse,
   BatchDeleteNoticeRequest,
   BatchDeleteNoticeResponse,
-  CreateNoticeDto,
-  IdDto,
-  NoticePageResponseDto,
-  BaseNoticeDto,
-  UpdateNoticeDto,
-  UpdateNoticeStatusDto,
-  CountDto,
-  IdsDto,
+  BatchUpdateNoticeStatusRequest,
+  BatchUpdateNoticeStatusResponse,
+  CreateNoticeRequest,
+  CreateNoticeResponse,
+  NoticeDetailRequest,
+  NoticeDetailResponse,
+  NoticePageRequest,
+  NoticePageResponse,
+  UpdateNoticeRequest,
+  UpdateNoticeResponse,
 } from './types/notice.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 创建通知消息

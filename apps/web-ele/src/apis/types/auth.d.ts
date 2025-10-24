@@ -35,11 +35,11 @@ export type RefreshTokenResponse = TokenDto;
  *  @更新时间 2025-10-24 11:07:47
  */
 export type RsaPublicKeyDto = {
-  /* RSA公钥 */
-  publicKey: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* RSA公钥 */
+  publicKey: string;
 };
 
 /**
@@ -48,13 +48,13 @@ export type RsaPublicKeyDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type CaptchaDto = {
-  /* 验证码 key */
-  id: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 验证码 */
   data: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 验证码 key */
+  id: string;
 };
 
 /**
@@ -63,17 +63,17 @@ export type CaptchaDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type UserLoginDto = {
-  /* 用户名 */
-  username: string;
-  /* 密码 */
-  password: string;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 验证码 */
   captcha: string;
   /* 验证码ID */
   captchaId: string;
+  /* 密码 */
+  password: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 用户名 */
+  username: string;
 };
 
 /**
@@ -82,13 +82,13 @@ export type UserLoginDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type LoginResponseDto = {
-  /* 令牌信息 */
-  tokens: TokenDto;
-  /* 用户信息 */
-  user: Record<string, any>;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 令牌信息 */
+  tokens: TokenDto;
+
+  /* 用户信息 */
+  user: Record<string, any>;
 };
 
 /**
@@ -97,13 +97,13 @@ export type LoginResponseDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type TokenDto = {
-  /* 账号令牌 */
-  accessToken: string;
-  /* 刷新令牌 */
-  refreshToken: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 账号令牌 */
+  accessToken: string;
+
+  /* 刷新令牌 */
+  refreshToken: string;
 };
 
 /**
@@ -112,9 +112,9 @@ export type TokenDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type RefreshTokenDto = {
-  /* 刷新令牌 */
-  refreshToken: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 刷新令牌 */
+  refreshToken: string;
 };

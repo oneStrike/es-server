@@ -1,25 +1,19 @@
-import { requestClient } from '#/utils/request';
 import type {
-  CreateClientPageRequest,
-  CreateClientPageResponse,
-  ClientPagePageRequest,
-  ClientPagePageResponse,
-  ClientPageDetailByIdRequest,
-  ClientPageDetailByIdResponse,
-  ClientPageDetailByCodeRequest,
-  ClientPageDetailByCodeResponse,
-  UpdateClientPageRequest,
-  UpdateClientPageResponse,
   BatchDeleteClientPageRequest,
   BatchDeleteClientPageResponse,
-  BasePageConfigFieldsDto,
-  IdDto,
-  ClientPageConfigPageResponseDto,
-  ClientPageConfigResponseDto,
-  UpdateClientPageConfigDto,
-  IdsDto,
-  CountDto,
+  ClientPageDetailByCodeRequest,
+  ClientPageDetailByCodeResponse,
+  ClientPageDetailByIdRequest,
+  ClientPageDetailByIdResponse,
+  ClientPagePageRequest,
+  ClientPagePageResponse,
+  CreateClientPageRequest,
+  CreateClientPageResponse,
+  UpdateClientPageRequest,
+  UpdateClientPageResponse,
 } from './types/clientPage.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 创建页面配置

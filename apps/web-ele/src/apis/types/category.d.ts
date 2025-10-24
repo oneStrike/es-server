@@ -13,35 +13,41 @@ export type CreateCategoryResponse = IdDto;
  *  @更新时间 2025-10-24 11:07:47
  */
 export type CategoryPageRequest = {
-  /* 单页大小，最大500，默认15 */
-  pageSize?: number;
-
-  /* 当前页码 */
-  pageIndex?: number;
-
-  /* 排序字段，json格式 */
-  orderBy?: string;
-
-  /* 开始时间 */
-  startDate?: string;
-
-  /* 结束时间 */
-  endDate?: string;
-
-  /* 分类名称 */
-  name?: string;
-
-  /* 是否启用 */
-  isEnabled?: boolean;
+  /** 任意合法数值 */
+  [property: string]: any;
 
   /* 作品媒介代码数组 JSON 字符串 */
   contentType?: string;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 结束时间 */
+  endDate?: string;
+
+  /* 是否启用 */
+  isEnabled?: boolean;
+
+  /* 分类名称 */
+  name?: string;
+
+  /* 排序字段，json格式 */
+  orderBy?: string;
+
+  /* 当前页码 */
+  pageIndex?: number;
+
+  /* 单页大小，最大500，默认15 */
+  pageSize?: number;
+
+  /* 开始时间 */
+  startDate?: string;
 };
 
 export type CategoryPageResponse = {
+  /** 任意合法数值 */
+  [property: string]: any;
+
+  /* 列表数据 */
+  list?: BaseCategoryDto[];
+
   /* 当前页码 */
   pageIndex?: number;
 
@@ -50,12 +56,6 @@ export type CategoryPageResponse = {
 
   /* 总条数 */
   total?: number;
-
-  /* 列表数据 */
-  list?: BaseCategoryDto[];
-
-  /** 任意合法数值 */
-  [property: string]: any;
 };
 
 /**
@@ -64,11 +64,11 @@ export type CategoryPageResponse = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type CategoryDetailRequest = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 export type CategoryDetailResponse = BaseCategoryDto;
@@ -115,21 +115,21 @@ export type BatchDeleteCategoryResponse = CountDto;
  *  @更新时间 2025-10-24 11:07:47
  */
 export type CreateCategoryDto = {
-  /* 分类名称 */
-  name: string;
-  /* 分类图标URL */
-  icon?: string;
-  /* 辅助人气值 */
-  popularityWeight?: number;
-  /* 排序值 */
-  order?: number;
-  /* 是否启用 */
-  isEnabled?: boolean;
-  /* 作品媒介代码数组（必填） */
-  contentType: string[];
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 作品媒介代码数组（必填） */
+  contentType: string[];
+  /* 分类图标URL */
+  icon?: string;
+  /* 是否启用 */
+  isEnabled?: boolean;
+  /* 分类名称 */
+  name: string;
+  /* 排序值 */
+  order?: number;
+
+  /* 辅助人气值 */
+  popularityWeight?: number;
 };
 
 /**
@@ -138,11 +138,11 @@ export type CreateCategoryDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type IdDto = {
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id */
+  id: number;
 };
 
 /**
@@ -151,29 +151,29 @@ export type IdDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type BaseCategoryDto = {
-  /* 分类ID */
-  id: number;
-  /* 分类名称 */
-  name: string;
-  /* 分类图标URL */
-  icon?: string;
-  /* 人气值 */
-  popularity?: number;
-  /* 辅助人气值 */
-  popularityWeight?: number;
-  /* 排序值 */
-  order?: number;
-  /* 是否启用 */
-  isEnabled?: boolean;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 分类包含的内容类型项数组 */
   categoryContentTypes: CategoryContentTypeItemDto[];
   /* 创建时间 */
   createdAt?: string;
+  /* 分类图标URL */
+  icon?: string;
+  /* 分类ID */
+  id: number;
+  /* 是否启用 */
+  isEnabled?: boolean;
+  /* 分类名称 */
+  name: string;
+  /* 排序值 */
+  order?: number;
+  /* 人气值 */
+  popularity?: number;
+  /* 辅助人气值 */
+  popularityWeight?: number;
+
   /* 更新时间 */
   updatedAt?: string;
-
-  /** 任意合法数值 */
-  [property: string]: any;
 };
 
 /**
@@ -182,15 +182,15 @@ export type BaseCategoryDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type CategoryContentTypeItemDto = {
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 分类ID */
   categoryId: number;
-  /* 内容类型ID */
-  contentTypeId: number;
   /* 内容类型对象 */
   contentType: BaseContentTypeDto;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 内容类型ID */
+  contentTypeId: number;
 };
 
 /**
@@ -199,21 +199,21 @@ export type CategoryContentTypeItemDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type BaseContentTypeDto = {
-  /* ID */
-  id: number;
-  /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
-  code: string;
-  /* 显示名称 */
-  name: string;
-  /* 是否启用 */
-  isEnabled?: boolean;
-  /* 创建时间 */
-  createdAt?: string;
-  /* 更新时间 */
-  updatedAt?: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
+  code: string;
+  /* 创建时间 */
+  createdAt?: string;
+  /* ID */
+  id: number;
+  /* 是否启用 */
+  isEnabled?: boolean;
+  /* 显示名称 */
+  name: string;
+
+  /* 更新时间 */
+  updatedAt?: string;
 };
 
 /**
@@ -222,23 +222,23 @@ export type BaseContentTypeDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type UpdateCategoryDto = {
-  /* 分类名称 */
-  name: string;
-  /* 分类图标URL */
-  icon?: string;
-  /* 辅助人气值 */
-  popularityWeight?: number;
-  /* 排序值 */
-  order?: number;
-  /* 是否启用 */
-  isEnabled?: boolean;
-  /* 作品媒介代码数组（必填） */
-  contentType: string[];
-  /* 主键id */
-  id: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 作品媒介代码数组（必填） */
+  contentType: string[];
+  /* 分类图标URL */
+  icon?: string;
+  /* 主键id */
+  id: number;
+  /* 是否启用 */
+  isEnabled?: boolean;
+  /* 分类名称 */
+  name: string;
+  /* 排序值 */
+  order?: number;
+
+  /* 辅助人气值 */
+  popularityWeight?: number;
 };
 
 /**
@@ -247,13 +247,13 @@ export type UpdateCategoryDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type BatchEnabledDto = {
-  /* 主键id集合 */
-  ids: number[];
-  /* 启用或者禁用 */
-  isEnabled: boolean;
-
   /** 任意合法数值 */
   [property: string]: any;
+  /* 主键id集合 */
+  ids: number[];
+
+  /* 启用或者禁用 */
+  isEnabled: boolean;
 };
 
 /**
@@ -262,11 +262,11 @@ export type BatchEnabledDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type CountDto = {
-  /* 操作成功的数据数量 */
-  count: number;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 操作成功的数据数量 */
+  count: number;
 };
 
 /**
@@ -275,13 +275,13 @@ export type CountDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type OrderDto = {
-  /* 拖拽的目标id */
-  targetId: number;
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 当前拖拽数据的id */
   dragId: number;
 
-  /** 任意合法数值 */
-  [property: string]: any;
+  /* 拖拽的目标id */
+  targetId: number;
 };
 
 /**
@@ -290,9 +290,9 @@ export type OrderDto = {
  *  @更新时间 2025-10-24 11:07:47
  */
 export type IdsDto = {
-  /* 主键id集合 */
-  ids: number[];
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 主键id集合 */
+  ids: number[];
 };

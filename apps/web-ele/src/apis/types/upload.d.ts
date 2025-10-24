@@ -4,11 +4,11 @@
  *  @更新时间 2025-10-24 11:07:47
  */
 export type UploadFileRequest = {
-  /* 上传场景 */
-  scene?: string;
-
   /** 任意合法数值 */
   [property: string]: any;
+
+  /* 上传场景 */
+  scene?: string;
 };
 
 export type UploadFileResponse = UploadResponseDto[];
@@ -19,23 +19,23 @@ export type UploadFileResponse = UploadResponseDto[];
  *  @更新时间 2025-10-24 11:07:47
  */
 export type UploadResponseDto = {
+  /** 任意合法数值 */
+  [property: string]: any;
   /* 文件名 */
   filename: string;
   /* 文件路径 */
   filePath: string;
-  /* 文件场景 */
-  scene: string;
   /* 文件大小 */
   fileSize: number;
-  /* 文件类型mimeType */
-  mimeType: string;
   /* 文件类型 */
   fileType: string;
+  /* 文件类型mimeType */
+  mimeType: string;
   /* 原始文件名 */
   originalName: string;
+  /* 文件场景 */
+  scene: string;
+
   /* 上传时间 */
   uploadTime: string;
-
-  /** 任意合法数值 */
-  [property: string]: any;
 };
