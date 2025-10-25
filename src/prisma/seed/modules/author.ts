@@ -7,14 +7,8 @@ export async function createInitialAuthors(prisma: PrismaClient) {
     select: { id: true, code: true },
   })
   const roleTypeMap = Object.fromEntries(
-    roleTypes.map(rt => [rt.code, rt.id]),
+    roleTypes.map((rt) => [rt.code, rt.id]),
   )
-
-  // 确保所需角色类型存在
-  if (!roleTypeMap.WRITER || !roleTypeMap.NOVELIST || !roleTypeMap.MANGAKA || !roleTypeMap.DIRECTOR || !roleTypeMap.SCREENWRITER) {
-    console.error('⚠️  警告：角色类型数据不完整，跳过作者初始化')
-    return
-  }
 
   const initData = [
     {
@@ -22,7 +16,7 @@ export async function createInitialAuthors(prisma: PrismaClient) {
       avatar: 'https://example.com/avatars/haruki-murakami.jpg',
       description: '日本著名小说家，代表作有《挪威的森林》、《海边的卡夫卡》等',
       isEnabled: true,
-      roleTypeIds: [roleTypeMap.WRITER, roleTypeMap.NOVELIST],
+      roleTypeIds: [roleTypeMap.WRITER],
       nationality: '日本',
       gender: AuthorGenderEnum.MALE,
       socialLinks: JSON.stringify({
@@ -39,7 +33,7 @@ export async function createInitialAuthors(prisma: PrismaClient) {
       avatar: 'https://example.com/avatars/keigo-higashino.jpg',
       description: '日本推理小说家，代表作有《白夜行》、《嫌疑人X的献身》等',
       isEnabled: true,
-      roleTypeIds: [roleTypeMap.WRITER, roleTypeMap.NOVELIST],
+      roleTypeIds: [roleTypeMap.WRITER],
       nationality: '日本',
       gender: AuthorGenderEnum.MALE,
       socialLinks: JSON.stringify({
@@ -79,23 +73,6 @@ export async function createInitialAuthors(prisma: PrismaClient) {
       worksCount: 0,
       followersCount: 0,
       featured: true,
-    },
-    {
-      name: '新海诚',
-      avatar: 'https://example.com/avatars/makoto-shinkai.jpg',
-      description: '日本动画导演、编剧，代表作有《你的名字》、《天气之子》等',
-      isEnabled: true,
-      roleTypeIds: [roleTypeMap.DIRECTOR, roleTypeMap.SCREENWRITER],
-      nationality: '日本',
-      gender: AuthorGenderEnum.MALE,
-      socialLinks: JSON.stringify({
-        twitter: '@shinkaimakoto',
-        website: 'https://shinkaimakoto.jp',
-      }),
-      remark: '知名动画导演，擅长青春题材',
-      worksCount: 0,
-      followersCount: 0,
-      featured: false,
     },
   ]
 
