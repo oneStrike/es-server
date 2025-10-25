@@ -36,39 +36,6 @@ for (const item of accessLevel) {
   };
 }
 
-// 页面状态配置
-export const pageStatus = [
-  {
-    label: '草稿',
-    value: 0,
-    color: '#8c8c8c', // 灰色
-  },
-  {
-    label: '已发布',
-    value: 1,
-    color: '#52c41a', // 绿色
-  },
-  {
-    label: '已下线',
-    value: 2,
-    color: '#ff4d4f', // 红色
-  },
-  {
-    label: '维护中',
-    value: 3,
-    color: '#faad14', // 橙色
-  },
-];
-
-export const pageStatusObj: Record<number, { color: string; label: string }> =
-  {};
-for (const item of pageStatus) {
-  pageStatusObj[item.value] = {
-    label: item.label,
-    color: item.color,
-  };
-}
-
 // 表单配置
 export const formSchema: EsFormSchema = [
   {
@@ -119,12 +86,22 @@ export const formSchema: EsFormSchema = [
   },
   {
     label: '页面状态',
-    fieldName: 'pageStatus',
-    component: 'Select',
+    fieldName: 'isEnabled',
+    component: 'RadioGroup',
     rules: 'required',
+    defaultValue: true,
     componentProps: {
       placeholder: '请选择页面状态',
-      options: pageStatus,
+      options: [
+        {
+          label: '启用',
+          value: true,
+        },
+        {
+          label: '禁用',
+          value: false,
+        },
+      ],
       class: 'w-full',
     },
   },
@@ -167,8 +144,8 @@ export const pageColumns =
         slots: { default: 'accessLevel' },
         width: 140,
       },
-      pageStatus: {
-        slots: { default: 'pageStatus' },
+      isEnabled: {
+        slots: { default: 'isEnabled' },
         width: 100,
       },
     },
@@ -183,7 +160,7 @@ export const pageFilter = formSchemaTransform
     pageName: {
       show: true,
     },
-    pageStatus: {
+    isEnabled: {
       show: true,
     },
     accessLevel: {

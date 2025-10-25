@@ -149,9 +149,11 @@ setupVbenVxeTable({
 // 表格查询参数
 const queryParams = ({ page, formValues, sorts }: any) => {
   if (sorts.length > 0) {
-    formValues.orderBy = {};
+    formValues.orderBy = [];
     sorts.forEach((item: any) => {
-      formValues.orderBy[item.field] = item.order;
+      formValues.orderBy.push({
+        [item.field]: item.order,
+      });
     });
     formValues.orderBy = JSON.stringify(formValues.orderBy);
   }

@@ -57,7 +57,7 @@ export const noticePriority = [
     color: '#52c41a',
   },
   {
-    label: '中等优先级',
+    label: '中优先级',
     value: 1,
     color: '#1890ff',
   },

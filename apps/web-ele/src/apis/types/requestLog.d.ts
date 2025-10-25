@@ -1,7 +1,7 @@
 /**
  *  类型定义 [RequestLogPageRequest]
  *  @来源 系统请求日志模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type RequestLogPageRequest = {
   /* 单页大小，最大500，默认15 */
@@ -67,7 +67,7 @@ export type RequestLogPageResponse = {
 /**
  *  类型定义 [RequestLogDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type RequestLogDto = {
   /* 主键ID */

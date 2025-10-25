@@ -1,7 +1,7 @@
 /**
  *  类型定义 [UserRegisterRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UserRegisterRequest = UserRegisterDto;
 
@@ -10,7 +10,7 @@ export type UserRegisterResponse = IdDto;
 /**
  *  类型定义 [UserUpdateInfoRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UserUpdateInfoRequest = UpdateUserDto;
 
@@ -21,7 +21,7 @@ export type UserInfoResponse = UserDto;
 /**
  *  类型定义 [UserInfoByIdRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UserInfoByIdRequest = {
   /* 主键id */
@@ -36,7 +36,7 @@ export type UserInfoByIdResponse = UserDto;
 /**
  *  类型定义 [UserPageRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UserPageRequest = {
   /* 单页大小，最大500，默认15 */
@@ -87,7 +87,7 @@ export type UserPageResponse = {
 /**
  *  类型定义 [UserDeleteRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UserDeleteRequest = IdDto;
 
@@ -96,7 +96,7 @@ export type UserDeleteResponse = IdDto;
 /**
  *  类型定义 [UserChangePasswordRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UserChangePasswordRequest = ChangePasswordDto;
 
@@ -105,7 +105,7 @@ export type UserChangePasswordResponse = IdDto;
 /**
  *  类型定义 [UserUnlockRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UserUnlockRequest = IdDto;
 
@@ -114,7 +114,7 @@ export type UserUnlockResponse = IdDto;
 /**
  *  类型定义 [UserRegisterDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UserRegisterDto = {
   /* 用户名 */
@@ -137,7 +137,7 @@ export type UserRegisterDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type IdDto = {
   /* 主键id */
@@ -150,7 +150,7 @@ export type IdDto = {
 /**
  *  类型定义 [UpdateUserDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UpdateUserDto = {
   /* 用户名 */
@@ -173,7 +173,7 @@ export type UpdateUserDto = {
 /**
  *  类型定义 [UserDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UserDto = {
   /* 用户ID */
@@ -208,7 +208,7 @@ export type UserDto = {
 /**
  *  类型定义 [ChangePasswordDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ChangePasswordDto = {
   /* 旧密码 */

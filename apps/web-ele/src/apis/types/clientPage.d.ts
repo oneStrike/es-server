@@ -1,7 +1,7 @@
 /**
  *  类型定义 [ClientPageCreateRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ClientPageCreateRequest = BasePageConfigFieldsDto;
 
@@ -10,7 +10,7 @@ export type ClientPageCreateResponse = IdDto;
 /**
  *  类型定义 [ClientPagePageRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ClientPagePageRequest = {
   /* 单页大小，最大500，默认15 */
@@ -37,8 +37,8 @@ export type ClientPagePageRequest = {
   /* 页面权限级别 */
   accessLevel?: number;
 
-  /* 页面状态 */
-  pageStatus?: number;
+  /* 页面启用状态 */
+  isEnabled?: boolean;
 
   /** 任意合法数值 */
   [property: string]: any;
@@ -64,7 +64,7 @@ export type ClientPagePageResponse = {
 /**
  *  类型定义 [ClientPageDetailByIdRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ClientPageDetailByIdRequest = {
   id: number;
@@ -78,7 +78,7 @@ export type ClientPageDetailByIdResponse = ClientPageConfigResponseDto;
 /**
  *  类型定义 [ClientPageDetailByCodeRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ClientPageDetailByCodeRequest = {
   pageCode: string;
@@ -92,7 +92,7 @@ export type ClientPageDetailByCodeResponse = ClientPageConfigResponseDto;
 /**
  *  类型定义 [ClientPageUpdateRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ClientPageUpdateRequest = UpdateClientPageConfigDto;
 
@@ -101,7 +101,7 @@ export type ClientPageUpdateResponse = IdDto;
 /**
  *  类型定义 [ClientPageBatchDeleteRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ClientPageBatchDeleteRequest = IdsDto;
 
@@ -110,7 +110,7 @@ export type ClientPageBatchDeleteResponse = CountDto;
 /**
  *  类型定义 [BasePageConfigFieldsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type BasePageConfigFieldsDto = {
   /* 主键id */
@@ -125,8 +125,8 @@ export type BasePageConfigFieldsDto = {
   pageTitle?: string;
   /* 页面权限级别 */
   accessLevel: 0 | 1 | 2 | 3;
-  /* 页面状态 */
-  pageStatus: 0 | 1 | 2 | 3;
+  /* 页面启用状态 */
+  isEnabled: boolean;
   /* 页面描述信息 */
   description?: string;
 
@@ -137,7 +137,7 @@ export type BasePageConfigFieldsDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type IdDto = {
   /* 主键id */
@@ -150,7 +150,7 @@ export type IdDto = {
 /**
  *  类型定义 [ClientPageConfigPageResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ClientPageConfigPageResponseDto = {
   /* 主键id */
@@ -165,8 +165,8 @@ export type ClientPageConfigPageResponseDto = {
   pageTitle?: string;
   /* 页面权限级别 */
   accessLevel: 0 | 1 | 2 | 3;
-  /* 页面状态 */
-  pageStatus: 0 | 1 | 2 | 3;
+  /* 页面启用状态 */
+  isEnabled: boolean;
   /* 访问次数统计 */
   viewCount: number;
   /* 创建时间 */
@@ -181,7 +181,7 @@ export type ClientPageConfigPageResponseDto = {
 /**
  *  类型定义 [ClientPageConfigResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ClientPageConfigResponseDto = {
   /* 主键id */
@@ -196,8 +196,8 @@ export type ClientPageConfigResponseDto = {
   pageTitle?: string;
   /* 页面权限级别 */
   accessLevel: 0 | 1 | 2 | 3;
-  /* 页面状态 */
-  pageStatus: 0 | 1 | 2 | 3;
+  /* 页面启用状态 */
+  isEnabled: boolean;
   /* 页面描述信息 */
   description?: string;
   /* 访问次数统计 */
@@ -214,7 +214,7 @@ export type ClientPageConfigResponseDto = {
 /**
  *  类型定义 [UpdateClientPageConfigDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UpdateClientPageConfigDto = {
   /* 页面ID */
@@ -229,8 +229,8 @@ export type UpdateClientPageConfigDto = {
   pageTitle?: string;
   /* 页面权限级别 */
   accessLevel?: 0 | 1 | 2 | 3;
-  /* 页面状态 */
-  pageStatus?: 0 | 1 | 2 | 3;
+  /* 页面启用状态 */
+  isEnabled?: boolean;
   /* 页面描述信息 */
   description?: string;
 
@@ -241,7 +241,7 @@ export type UpdateClientPageConfigDto = {
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type IdsDto = {
   /* 主键id集合 */
@@ -254,7 +254,7 @@ export type IdsDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type CountDto = {
   /* 操作成功的数据数量 */

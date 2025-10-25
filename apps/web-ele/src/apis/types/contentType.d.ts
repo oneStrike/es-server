@@ -1,7 +1,7 @@
 /**
  *  类型定义 [ContentTypeCreateRequest]
  *  @来源 内容类型管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ContentTypeCreateRequest = CreateContentTypeDto;
 
@@ -10,7 +10,7 @@ export type ContentTypeCreateResponse = IdDto;
 /**
  *  类型定义 [ContentTypeListRequest]
  *  @来源 内容类型管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ContentTypeListRequest = {
   /* 单页大小，最大500，默认15 */
@@ -46,7 +46,7 @@ export type ContentTypeListResponse = BaseContentTypeDto[];
 /**
  *  类型定义 [ContentTypeUpdateRequest]
  *  @来源 内容类型管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ContentTypeUpdateRequest = UpdateContentTypeDto;
 
@@ -55,7 +55,7 @@ export type ContentTypeUpdateResponse = IdDto;
 /**
  *  类型定义 [CreateContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type CreateContentTypeDto = {
   /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
@@ -72,7 +72,7 @@ export type CreateContentTypeDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type IdDto = {
   /* 主键id */
@@ -85,7 +85,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type BaseContentTypeDto = {
   /* ID */
@@ -108,7 +108,7 @@ export type BaseContentTypeDto = {
 /**
  *  类型定义 [UpdateContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UpdateContentTypeDto = {
   /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */

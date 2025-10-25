@@ -37,13 +37,7 @@ export class OpenAPIGenerator {
     const apiUrl = url || this.config.openApiUrl;
 
     try {
-      console.log(`正在请求 OpenAPI 文档: ${apiUrl}`);
       const response = await fetch(apiUrl);
-
-      console.log(`响应状态: ${response.status} ${response.statusText}`);
-      console.log(
-        `响应头 Content-Type: ${response.headers.get('content-type')}`,
-      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -61,24 +55,17 @@ export class OpenAPIGenerator {
 
       // 先获取响应文本，然后尝试解析
       const responseText = await response.text();
-      console.log(`响应内容长度: ${responseText.length} 字符`);
 
       if (!responseText.trim()) {
         throw new Error('服务器返回了空响应');
       }
 
       // 显示响应内容的前100个字符用于调试
-      console.log(
-        `响应内容预览: ${responseText.slice(0, 100)}${responseText.length > 100 ? '...' : ''}`,
-      );
 
       try {
         this.spec = JSON.parse(responseText);
-        console.log('✅ OpenAPI 文档解析成功');
         return this.spec;
       } catch (parseError) {
-        console.error('❌ JSON 解析失败:', parseError);
-        console.error('响应内容:', responseText);
         throw new Error(
           `JSON 解析失败: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
         );

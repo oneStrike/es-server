@@ -12,3 +12,4 @@ export * from './comicVersion';
 export * from './thirdParty';
 export * from './requestLog';
 export * from './contentType';
+export * from './roleType';

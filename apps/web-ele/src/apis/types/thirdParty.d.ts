@@ -3,7 +3,7 @@ export type ThirdPartyPlatformResponse = PlatformResponseDto[];
 /**
  *  类型定义 [ThirdPartySearchRequest]
  *  @来源 第三方漫画平台内容解析
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type ThirdPartySearchRequest = {
   /* 搜索关键词 */
@@ -21,7 +21,7 @@ export type ThirdPartySearchResponse = SearchComicItemDto;
 /**
  *  类型定义 [PlatformResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type PlatformResponseDto = {
   /* 平台名称 */
@@ -36,7 +36,7 @@ export type PlatformResponseDto = {
 /**
  *  类型定义 [SearchComicItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type SearchComicItemDto = {
   /* 漫画ID */

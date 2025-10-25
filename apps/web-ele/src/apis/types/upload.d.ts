@@ -1,7 +1,7 @@
 /**
  *  类型定义 [UploadUploadFileRequest]
  *  @来源 管理端文件上传
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UploadUploadFileRequest = {
   /* 上传场景 */
@@ -16,7 +16,7 @@ export type UploadUploadFileResponse = UploadResponseDto[];
 /**
  *  类型定义 [UploadResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UploadResponseDto = {
   /* 文件名 */

@@ -96,7 +96,7 @@ export async function authorBatchUpdateFeaturedApi(
 }
 
 /**
- * 软删除作者
+ * 删除作者
  */
 export async function authorDeleteApi(
   params: AuthorDeleteRequest,

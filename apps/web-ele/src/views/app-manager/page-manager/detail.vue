@@ -8,7 +8,7 @@ import { useVbenModal } from '@vben/common-ui';
 import { clientPageDetailByIdApi } from '#/apis';
 import { formatUTC } from '#/utils';
 
-import { accessLevelObj, pageStatusObj } from './shared';
+import { accessLevelObj } from './shared';
 
 defineOptions({ name: 'PageDetail' });
 
@@ -37,11 +37,6 @@ async function getDetail() {
 const accessLevelInfo = computed(() => {
   if (!detail.value) return null;
   return accessLevelObj[detail.value.accessLevel];
-});
-
-const pageStatusInfo = computed(() => {
-  if (!detail.value) return null;
-  return pageStatusObj[detail.value.pageStatus];
 });
 
 // 详情卡片配置
@@ -73,9 +68,8 @@ const detailCards = computed(() => [
       },
       {
         label: '页面状态',
-        value: pageStatusInfo.value?.label,
-        type: 'colored-text',
-        color: pageStatusInfo.value?.color,
+        value: detail.value?.isEnabled ? '启用' : '禁用',
+        type: 'text',
       },
       {
         label: '页面描述',

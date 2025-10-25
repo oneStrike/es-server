@@ -21,13 +21,7 @@ import { useMessage } from '#/hooks/useFeedback';
 import { createSearchFormOptions } from '#/utils/grid-form-config';
 import PageDetail from '#/views/app-manager/page-manager/detail.vue';
 
-import {
-  accessLevelObj,
-  formSchema,
-  pageColumns,
-  pageFilter,
-  pageStatusObj,
-} from './shared';
+import { accessLevelObj, formSchema, pageColumns, pageFilter } from './shared';
 
 const gridOptions: VxeGridProps<ClientPageConfigPageResponseDto> = {
   columns: pageColumns,
@@ -83,6 +77,17 @@ async function deletePage(record: ClientPageConfigPageResponseDto) {
 const [DetailModal, detailApi] = useVbenModal({
   connectedComponent: PageDetail,
 });
+
+async function toggleEnableStatus(record: ClientPageConfigPageResponseDto) {
+  record.loading = true;
+  await clientPageUpdateApi({
+    id: record.id,
+    isEnabled: !record.isEnabled,
+  });
+  record.loading = false;
+  useMessage.success('操作成功');
+  gridApi.reload();
+}
 </script>
 
 <template>
@@ -99,13 +104,15 @@ const [DetailModal, detailApi] = useVbenModal({
           {{ accessLevelObj[row.accessLevel]?.label }}
         </el-text>
       </template>
-
-      <template #pageStatus="{ row }">
-        <el-text :style="{ color: pageStatusObj[row.pageStatus]?.color }">
-          {{ pageStatusObj[row.pageStatus]?.label }}
-        </el-text>
+      <template #isEnabled="{ row }">
+        <el-switch
+          :active-value="true"
+          :inactive-value="row.isEnabled"
+          :loading="row.loading"
+          :model-value="row.isEnabled"
+          @change="toggleEnableStatus(row)"
+        />
       </template>
-
       <template #actions="{ row }">
         <div class="my-1">
           <el-button

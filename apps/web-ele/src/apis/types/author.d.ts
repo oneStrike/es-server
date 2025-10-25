@@ -1,7 +1,7 @@
 /**
  *  类型定义 [AuthorCreateRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type AuthorCreateRequest = CreateAuthorDto;
 
@@ -10,7 +10,7 @@ export type AuthorCreateResponse = IdDto;
 /**
  *  类型定义 [AuthorPageRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type AuthorPageRequest = {
   /* 单页大小，最大500，默认15 */
@@ -34,9 +34,6 @@ export type AuthorPageRequest = {
   /* 启用状态（true: 启用, false: 禁用） */
   isEnabled?: boolean;
 
-  /* 作者身份角色（位运算：1=作家, 2=插画家, 4=漫画家, 8=模特） */
-  roles?: number;
-
   /* 国籍 */
   nationality?: string;
 
@@ -45,6 +42,9 @@ export type AuthorPageRequest = {
 
   /* 是否为推荐作者（用于前台推荐展示） */
   featured?: boolean;
+
+  /* 作者角色类型列表（角色ID数组，筛选包含指定角色的作者） */
+  roleTypeIds?: any[];
 
   /** 任意合法数值 */
   [property: string]: any;
@@ -70,7 +70,7 @@ export type AuthorPageResponse = {
 /**
  *  类型定义 [AuthorDetailRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type AuthorDetailRequest = {
   /* 主键id */
@@ -85,7 +85,7 @@ export type AuthorDetailResponse = AuthorDetailResponseDto;
 /**
  *  类型定义 [AuthorUpdateRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type AuthorUpdateRequest = UpdateAuthorDto;
 
@@ -94,7 +94,7 @@ export type AuthorUpdateResponse = IdDto;
 /**
  *  类型定义 [AuthorBatchUpdateStatusRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type AuthorBatchUpdateStatusRequest = BatchEnabledDto;
 
@@ -103,7 +103,7 @@ export type AuthorBatchUpdateStatusResponse = CountDto;
 /**
  *  类型定义 [AuthorBatchUpdateFeaturedRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type AuthorBatchUpdateFeaturedRequest = UpdateAuthorFeaturedDto;
 
@@ -112,7 +112,7 @@ export type AuthorBatchUpdateFeaturedResponse = CountDto;
 /**
  *  类型定义 [AuthorDeleteRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type AuthorDeleteRequest = IdDto;
 
@@ -121,7 +121,7 @@ export type AuthorDeleteResponse = IdDto;
 /**
  *  类型定义 [CreateAuthorDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type CreateAuthorDto = {
   /* 作者姓名 */
@@ -130,8 +130,8 @@ export type CreateAuthorDto = {
   avatar?: string;
   /* 作者描述 */
   description?: string;
-  /* 作者身份角色（位运算：1=作家, 2=插画家, 4=漫画家, 8=模特） */
-  roles?: number;
+  /* 作者角色类型列表（角色ID数组） */
+  roleTypeIds?: number[];
   /* 国籍 */
   nationality?: string;
   /* 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他） */
@@ -148,7 +148,7 @@ export type CreateAuthorDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type IdDto = {
   /* 主键id */
@@ -161,7 +161,7 @@ export type IdDto = {
 /**
  *  类型定义 [AuthorPageResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type AuthorPageResponseDto = {
   /* 作者ID */
@@ -172,8 +172,8 @@ export type AuthorPageResponseDto = {
   avatar?: string;
   /* 启用状态（true: 启用, false: 禁用） */
   isEnabled: boolean;
-  /* 作者身份角色（位运算：1=作家, 2=插画家, 4=漫画家, 8=模特） */
-  roles?: number;
+  /* 作者角色类型列表（角色ID数组） */
+  roleTypeIds?: number[];
   /* 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他） */
   gender: 0 | 1 | 2 | 3;
   /* 创建时间 */
@@ -194,7 +194,7 @@ export type AuthorPageResponseDto = {
 /**
  *  类型定义 [AuthorDetailResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type AuthorDetailResponseDto = {
   /* 作者ID */
@@ -207,8 +207,8 @@ export type AuthorDetailResponseDto = {
   description?: string;
   /* 启用状态（true: 启用, false: 禁用） */
   isEnabled: boolean;
-  /* 作者身份角色（位运算：1=作家, 2=插画家, 4=漫画家, 8=模特） */
-  roles?: number;
+  /* 作者角色类型列表（角色ID数组） */
+  roleTypeIds?: number[];
   /* 国籍 */
   nationality?: string;
   /* 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他） */
@@ -235,7 +235,7 @@ export type AuthorDetailResponseDto = {
 /**
  *  类型定义 [UpdateAuthorDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UpdateAuthorDto = {
   /* 作者姓名 */
@@ -246,8 +246,8 @@ export type UpdateAuthorDto = {
   description?: string;
   /* 启用状态（true: 启用, false: 禁用） */
   isEnabled?: boolean;
-  /* 作者身份角色（位运算：1=作家, 2=插画家, 4=漫画家, 8=模特） */
-  roles?: number;
+  /* 作者角色类型列表（角色ID数组） */
+  roleTypeIds?: number[];
   /* 国籍 */
   nationality?: string;
   /* 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他） */
@@ -268,7 +268,7 @@ export type UpdateAuthorDto = {
 /**
  *  类型定义 [BatchEnabledDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type BatchEnabledDto = {
   /* 主键id集合 */
@@ -283,7 +283,7 @@ export type BatchEnabledDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type CountDto = {
   /* 操作成功的数据数量 */
@@ -296,7 +296,7 @@ export type CountDto = {
 /**
  *  类型定义 [UpdateAuthorFeaturedDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-25 02:20:02
+ *  @更新时间 2025-10-26 01:15:40
  */
 export type UpdateAuthorFeaturedDto = {
   /* 是否为推荐作者（用于前台推荐展示） */

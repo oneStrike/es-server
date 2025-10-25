@@ -1,41 +1,40 @@
 import type { VxeGridPropTypes } from '#/adapter/vxe-table';
-import type { RequestLogPageResponse } from '#/apis/types/requestLog';
+import type { RequestLogDto } from '#/apis/types/requestLog';
 import type { EsFormSchema } from '#/types';
 
 import { formatUTC } from '#/utils';
 
-export const loginHistortColumn: VxeGridPropTypes.Columns<RequestLogPageResponse> =
-  [
-    {
-      title: '序号',
-      type: 'seq',
-      width: 50,
-      fixed: 'left',
-    },
-    {
-      field: 'ip',
-      title: '登录IP',
-      width: 140,
-    },
-    {
-      field: 'device',
-      title: '浏览器',
-      minWidth: 200,
-      showOverflow: 'tooltip',
-    },
-    {
-      field: 'createdAt',
-      title: '登录时间',
-      width: 160,
-      formatter: ({ cellValue }) => formatUTC(cellValue),
-    },
-    {
-      field: 'isSuccess',
-      title: '登录结果',
-      width: 120,
-      slots: { default: 'isSuccess' },
-    },
-  ];
+export const loginHistortColumn: VxeGridPropTypes.Columns<RequestLogDto> = [
+  {
+    title: '序号',
+    type: 'seq',
+    width: 50,
+    fixed: 'left',
+  },
+  {
+    field: 'ip',
+    title: '登录IP',
+    width: 140,
+  },
+  {
+    field: 'device',
+    title: '浏览器',
+    minWidth: 200,
+    showOverflow: 'tooltip',
+  },
+  {
+    field: 'createdAt',
+    title: '登录时间',
+    width: 160,
+    formatter: ({ cellValue }) => formatUTC(cellValue),
+  },
+  {
+    field: 'isSuccess',
+    title: '登录结果',
+    width: 120,
+    slots: { default: 'isSuccess' },
+  },
+];
 
 // 编辑用户信息表单配置
 export const editFormSchema: EsFormSchema = [
