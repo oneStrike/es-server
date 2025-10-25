@@ -6,13 +6,14 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
+  ValidateBoolean,
   ValidateEnum,
   ValidateNumber,
   ValidateString,
 } from '@/common/decorators/validate.decorator'
 import { IdDto } from '@/common/dto/id.dto'
 import { PageDto } from '@/common/dto/page.dto'
-import { PageRuleEnum, PageStatusEnum } from '../page.constant'
+import { PageRuleEnum } from '../page.constant'
 
 /**
  * 页面配置基础字段DTO
@@ -59,14 +60,13 @@ export class BasePageConfigFieldsDto extends IdDto {
   })
   accessLevel!: PageRuleEnum
 
-  @ValidateEnum({
-    description: '页面状态',
-    example: PageStatusEnum.ENABLED,
+  @ValidateBoolean({
+    description: '页面启用状态',
+    example: true,
     required: true,
-    enum: PageStatusEnum,
-    default: PageStatusEnum.ENABLED,
+    default: true,
   })
-  pageStatus!: PageStatusEnum
+  isEnabled!: boolean
 
   @ValidateString({
     description: '页面描述信息',
@@ -100,7 +100,7 @@ export class QueryClientPageConfigDto extends IntersectionType(
     'pageName',
     'pageCode',
     'accessLevel',
-    'pageStatus',
+    'isEnabled',
   ]),
 ) {}
 

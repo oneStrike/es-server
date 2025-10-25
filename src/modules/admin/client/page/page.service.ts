@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { RepositoryService } from '@/common/services/repository.service'
-import { PageStatusEnum } from '@/modules/admin/client/page/page.constant'
 import { ClientPageConfigWhereInput } from '@/prisma/client/models/ClientPageConfig'
 import {
   BasePageConfigFieldsDto,
@@ -53,7 +52,7 @@ export class ClientPageConfigService extends RepositoryService {
    * @returns 分页的页面配置列表
    */
   async findPageConfigPage(queryPageConfigDto: QueryClientPageConfigDto) {
-    const { pageName, pageCode, accessLevel, pageStatus, ...other } =
+    const { pageName, pageCode, accessLevel, isEnabled, ...other } =
       queryPageConfigDto
 
     const where: ClientPageConfigWhereInput = {}
@@ -67,8 +66,8 @@ export class ClientPageConfigService extends RepositoryService {
     if (accessLevel !== undefined) {
       where.accessLevel = accessLevel
     }
-    if (pageStatus !== undefined) {
-      where.pageStatus = pageStatus
+    if (isEnabled !== undefined) {
+      where.isEnabled = isEnabled
     }
 
     return this.clientPageConfig.findPagination({
@@ -83,7 +82,7 @@ export class ClientPageConfigService extends RepositoryService {
    */
   async findActivePageConfigs(accessLevel?: string) {
     const where: ClientPageConfigWhereInput = {
-      pageStatus: PageStatusEnum.ENABLED, // 只返回启用的页面
+      isEnabled: true, // 只返回启用的页面
     }
 
     if (accessLevel) {
@@ -160,7 +159,7 @@ export class ClientPageConfigService extends RepositoryService {
     const pageConfig = await this.clientPageConfig.findFirst({
       where: {
         pageCode,
-        pageStatus: PageStatusEnum.ENABLED,
+        isEnabled: true,
       },
       select: {
         id: true,

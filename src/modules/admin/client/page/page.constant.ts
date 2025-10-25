@@ -9,15 +9,3 @@ export enum PageRuleEnum {
   /** 高级会员 */
   VIP = 3,
 }
-
-/// 页面状态枚举
-export enum PageStatusEnum {
-  /** 禁用 */
-  DISABLED = 0,
-  /** 启用 */
-  ENABLED = 1,
-  /** 开发中 */
-  DEVELOPING = 2,
-  /** 维护中 */
-  MAINTENANCE = 3,
-}

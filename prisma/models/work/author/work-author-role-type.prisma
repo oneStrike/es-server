@@ -20,6 +20,5 @@ model WorkAuthorRoleType {
 
   /// 索引优化
   @@index([isEnabled]) // 查询启用的角色
-  @@index([sortOrder]) // 按排序权重查询
   @@map("work_author_role_type")
 }

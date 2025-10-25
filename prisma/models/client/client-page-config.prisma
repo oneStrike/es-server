@@ -12,8 +12,8 @@ model ClientPageConfig {
   pageTitle   String?  @map("page_title") @db.VarChar(200)
   /// 访问权限级别（0:游客可访问, 1:需要登录, 2:需要会员, 3:需要VIP）
   accessLevel Int      @default(0) @map("access_level") @db.SmallInt
-  /// 页面状态（0:禁用, 1:启用, 2:开发中, 3:维护中）
-  pageStatus  Int      @default(1) @map("page_status") @db.SmallInt
+  /// 页面启用状态
+  isEnabled   Boolean  @default(true) @map("is_enabled")
   /// 页面描述信息
   description String?  @map("description") @db.VarChar(500)
   /// 访问次数统计
@@ -27,7 +27,7 @@ model ClientPageConfig {
   notices ClientNotice[] @relation("notices")
 
   /// 索引优化
-  @@index([accessLevel, pageStatus]) // 按权限级别和状态查询
+  @@index([accessLevel, isEnabled]) // 按权限级别和状态查询
   @@index([createdAt]) // 按创建时间查询
   @@index([accessCount]) // 热门页面查询
   @@map("client_page_config")
