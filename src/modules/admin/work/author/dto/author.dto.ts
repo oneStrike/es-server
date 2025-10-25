@@ -14,7 +14,7 @@ import {
 } from '@/common/decorators/validate.decorator'
 import { IdDto } from '@/common/dto/id.dto'
 import { PageDto } from '@/common/dto/page.dto'
-import { AuthorGenderEnum, AuthorRoleEnum } from '../author.constant'
+import { AuthorGenderEnum } from '../author.constant'
 
 /**
  * 作者基础DTO
@@ -57,14 +57,13 @@ export class BaseAuthorDto {
   })
   isEnabled!: boolean
 
-  @ValidateNumber({
-    description: '作者身份角色（位运算：1=作家, 2=插画家, 4=漫画家, 8=模特）',
-    example: AuthorRoleEnum.WRITER,
+  @ValidateArray({
+    description: '作者角色类型列表（角色ID数组）',
+    itemType: 'number',
+    example: [1, 2, 3],
     required: false,
-    min: 0,
-    default: 0,
   })
-  roles?: number
+  roleTypeIds?: number[]
 
   @ValidateString({
     description: '国籍',
@@ -174,7 +173,6 @@ export class QueryAuthorDto extends IntersectionType(
   PickType(PartialType(BaseAuthorDto), [
     'name',
     'isEnabled',
-    'roles',
     'nationality',
     'gender',
     'featured',
@@ -186,6 +184,14 @@ export class QueryAuthorDto extends IntersectionType(
     required: false,
   })
   name?: string
+
+  @ValidateArray({
+    description: '作者角色类型列表（角色ID数组，筛选包含指定角色的作者）',
+    itemType: 'number',
+    example: [1, 2, 3],
+    required: false,
+  })
+  roleTypeIds?: number[]
 }
 
 /**

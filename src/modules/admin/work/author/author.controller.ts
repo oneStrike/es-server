@@ -95,11 +95,11 @@ export class WorkAuthorController {
   }
 
   /**
-   * 软删除作者
+   * 删除作者
    */
   @Post('/delete')
   @ApiDoc({
-    summary: '软删除作者',
+    summary: '删除作者',
     model: IdDto,
   })
   async delete(@Body() body: IdDto) {

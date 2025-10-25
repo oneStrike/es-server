@@ -1,16 +1,28 @@
-import {
-  AuthorGenderEnum,
-  AuthorRoleEnum,
-} from '../../../modules/admin/work/author/author.constant'
+import type { PrismaClient } from '@prisma/client'
+import { AuthorGenderEnum } from '../../../modules/admin/work/author/author.constant'
 
-export async function createInitialAuthors(prisma: any) {
+export async function createInitialAuthors(prisma: PrismaClient) {
+  // 首先获取角色类型映射
+  const roleTypes = await prisma.workAuthorRoleType.findMany({
+    select: { id: true, code: true },
+  })
+  const roleTypeMap = Object.fromEntries(
+    roleTypes.map(rt => [rt.code, rt.id]),
+  )
+
+  // 确保所需角色类型存在
+  if (!roleTypeMap.WRITER || !roleTypeMap.NOVELIST || !roleTypeMap.MANGAKA || !roleTypeMap.DIRECTOR || !roleTypeMap.SCREENWRITER) {
+    console.error('⚠️  警告：角色类型数据不完整，跳过作者初始化')
+    return
+  }
+
   const initData = [
     {
       name: '村上春树',
       avatar: 'https://example.com/avatars/haruki-murakami.jpg',
       description: '日本著名小说家，代表作有《挪威的森林》、《海边的卡夫卡》等',
       isEnabled: true,
-      roles: AuthorRoleEnum.WRITER,
+      roleTypeIds: [roleTypeMap.WRITER, roleTypeMap.NOVELIST],
       nationality: '日本',
       gender: AuthorGenderEnum.MALE,
       socialLinks: JSON.stringify({
@@ -27,7 +39,7 @@ export async function createInitialAuthors(prisma: any) {
       avatar: 'https://example.com/avatars/keigo-higashino.jpg',
       description: '日本推理小说家，代表作有《白夜行》、《嫌疑人X的献身》等',
       isEnabled: true,
-      roles: AuthorRoleEnum.WRITER,
+      roleTypeIds: [roleTypeMap.WRITER, roleTypeMap.NOVELIST],
       nationality: '日本',
       gender: AuthorGenderEnum.MALE,
       socialLinks: JSON.stringify({
@@ -43,7 +55,7 @@ export async function createInitialAuthors(prisma: any) {
       avatar: 'https://example.com/avatars/eiichiro-oda.jpg',
       description: '日本漫画家，《海贼王》作者',
       isEnabled: true,
-      roles: AuthorRoleEnum.CARTOONIST,
+      roleTypeIds: [roleTypeMap.MANGAKA],
       nationality: '日本',
       gender: AuthorGenderEnum.MALE,
       socialLinks: JSON.stringify({
@@ -59,7 +71,7 @@ export async function createInitialAuthors(prisma: any) {
       avatar: 'https://example.com/avatars/akira-toriyama.jpg',
       description: '日本漫画家，《龙珠》、《阿拉蕾》作者',
       isEnabled: true,
-      roles: AuthorRoleEnum.CARTOONIST,
+      roleTypeIds: [roleTypeMap.MANGAKA],
       nationality: '日本',
       gender: AuthorGenderEnum.MALE,
       socialLinks: JSON.stringify({}),
@@ -73,7 +85,7 @@ export async function createInitialAuthors(prisma: any) {
       avatar: 'https://example.com/avatars/makoto-shinkai.jpg',
       description: '日本动画导演、编剧，代表作有《你的名字》、《天气之子》等',
       isEnabled: true,
-      roles: AuthorRoleEnum.WRITER | AuthorRoleEnum.ILLUSTRATOR,
+      roleTypeIds: [roleTypeMap.DIRECTOR, roleTypeMap.SCREENWRITER],
       nationality: '日本',
       gender: AuthorGenderEnum.MALE,
       socialLinks: JSON.stringify({
@@ -87,11 +99,28 @@ export async function createInitialAuthors(prisma: any) {
     },
   ]
 
-  for (const item of initData) {
+  for (const { roleTypeIds, ...authorData } of initData) {
     await prisma.workAuthor.upsert({
-      where: { name: item.name },
-      update: item,
-      create: item,
+      where: { name: authorData.name },
+      update: {
+        ...authorData,
+        authorRoles: {
+          deleteMany: {},
+          create: roleTypeIds.map((roleTypeId, index) => ({
+            roleTypeId,
+            isPrimary: index === 0,
+          })),
+        },
+      },
+      create: {
+        ...authorData,
+        authorRoles: {
+          create: roleTypeIds.map((roleTypeId, index) => ({
+            roleTypeId,
+            isPrimary: index === 0,
+          })),
+        },
+      },
     })
   }
 }

@@ -1,0 +1,25 @@
+/// 作者角色类型枚举表
+model WorkAuthorRoleType {
+  /// 角色ID
+  id          Int      @id @default(autoincrement())
+  /// 角色代码（唯一标识，如：MANGAKA、WRITER、ILLUSTRATOR）
+  code        String   @unique @db.VarChar(50)
+  /// 角色名称（中文名称）
+  name        String   @db.VarChar(50)
+  /// 角色描述
+  description String?  @db.VarChar(200)
+  /// 是否启用
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // 关联关系
+  authorRoles WorkAuthorRole[]
+
+  /// 索引优化
+  @@index([isEnabled]) // 查询启用的角色
+  @@index([sortOrder]) // 按排序权重查询
+  @@map("work_author_role_type")
+}
