@@ -1,4 +1,5 @@
 import { databaseConfig } from '@/config/database.config'
+import { jsonParse } from '@/utils'
 import { Prisma } from '../client/client'
 
 /**
@@ -6,9 +7,7 @@ import { Prisma } from '../client/client'
  */
 export async function findPagination<T, A>(
   this: T,
-  options: Prisma.Args<T, 'findMany'> & {
-    softDelete?: boolean
-  },
+  options: Prisma.Args<T, 'findMany'>,
 ): Promise<{
   list: Prisma.Result<T, A, 'findMany'>
   total: number
@@ -54,8 +53,9 @@ export async function findPagination<T, A>(
   )
 
   // 排序默认值
-  const effectiveOrderBy = orderBy ??
-    (databaseConfig as any)?.orderBy ?? { createdAt: 'desc' }
+  const effectiveOrderBy = orderBy
+    ? jsonParse(orderBy)
+    : databaseConfig?.orderBy
 
   // 日期区间过滤：仅在可解析时生效
   const hasStart = !!startDate

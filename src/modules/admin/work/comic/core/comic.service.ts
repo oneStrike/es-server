@@ -227,20 +227,6 @@ export class WorkComicService extends RepositoryService {
         },
       },
     })
-    pageData.list = pageData.list.map((item) => {
-      return {
-        ...item,
-        comicAuthors: item.comicAuthors.map((author) => ({
-          ...author.author,
-          roleType: author.roleType,
-          isPrimary: author.isPrimary,
-          sortOrder: author.sortOrder,
-        })),
-        comicCategories: item.comicCategories.map((category) => ({
-          ...category.category,
-        })),
-      }
-    })
     return pageData
   }
 

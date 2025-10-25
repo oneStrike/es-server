@@ -2,6 +2,7 @@ import type { WorkCategoryWhereInput } from '@/prisma/client/models'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { BatchEnabledDto } from '@/common/dto/batch.dto'
 
+import { OrderDto } from '@/common/dto/order.dto'
 import { RepositoryService } from '@/common/services/repository.service'
 import { jsonParse } from '@/utils'
 import {
@@ -234,6 +235,19 @@ export class WorkCategoryService extends RepositoryService {
   }
 
   /**
+   * 拖拽排序
+   */
+  async updateCategorySort(updateSortDto: OrderDto) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.workCategory.swapField(
+        { id: updateSortDto.dragId },
+        { id: updateSortDto.targetId },
+        'order',
+      )
+    })
+  }
+
+  /**
    * 批量删除分类
    * @param ids 分类ID列表
    * @returns 删除结果
@@ -246,7 +260,6 @@ export class WorkCategoryService extends RepositoryService {
     if (categories.length !== ids.length) {
       throw new BadRequestException('部分分类不存在')
     }
-
     // 检查是否有关联的作品
     for (const id of ids) {
       const hasWorks = await this.checkCategoryHasWorks()

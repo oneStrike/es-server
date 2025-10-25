@@ -4,7 +4,13 @@ import { Injectable, OnApplicationShutdown } from '@nestjs/common'
 import { PrismaPg } from '@prisma/adapter-pg'
 import dotenv from 'dotenv'
 import { PrismaClient } from '@/prisma/client/client'
-import { exists, findPagination, maxOrder, softDelete } from './extensions'
+import {
+  exists,
+  findPagination,
+  maxOrder,
+  softDelete,
+  swapField,
+} from './extensions'
 
 dotenv.config({
   path: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
@@ -17,6 +23,7 @@ export const prisma = new PrismaClient({ adapter }).$extends({
       ...softDelete,
       findPagination,
       maxOrder,
+      swapField,
     },
   },
 })

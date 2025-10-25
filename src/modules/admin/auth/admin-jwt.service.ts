@@ -3,7 +3,6 @@ import { JwtService } from '@nestjs/jwt'
 
 import { BaseJwtService } from '@/common/module/jwt/base-jwt.service'
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
-import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 import { ADMIN_AUTH_CONFIG } from '@/config/jwt.config'
 
 /**
@@ -18,9 +17,7 @@ export class AdminJwtService extends BaseJwtService {
   constructor(
     jwtService: JwtService,
     jwtBlacklistService: JwtBlacklistService,
-    loggerFactory: LoggerFactoryService,
   ) {
-    super(jwtService, jwtBlacklistService, loggerFactory)
-    this.logger = loggerFactory.createAdminLogger('AdminJwtService')
+    super(jwtService, jwtBlacklistService)
   }
 }

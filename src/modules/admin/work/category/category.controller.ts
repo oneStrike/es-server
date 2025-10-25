@@ -102,6 +102,6 @@ export class WorkCategoryController {
     model: OrderDto,
   })
   async categoryOrder(@Body() body: OrderDto) {
-    return this.categoryService.dragSort(body)
+    return this.categoryService.updateCategorySort(body)
   }
 }
