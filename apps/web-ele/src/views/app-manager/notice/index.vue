@@ -42,21 +42,21 @@ clientPagePageApi({
 }).then((res) => {
   const pageOptions =
     res.list?.map((pageItem) => {
-      clientPageObj.value[pageItem.pageCode!] = pageItem.pageName;
+      clientPageObj.value[pageItem.id!] = pageItem.pageName;
       return {
         label: pageItem.pageName,
-        value: pageItem.pageCode,
+        value: pageItem.pageId,
         ...pageItem,
       };
     }) || [];
 
   noticeFilter.forEach((item) => {
-    if (item.fieldName === 'pageCode' && item.componentProps) {
+    if (item.fieldName === 'pageId' && item.componentProps) {
       (item.componentProps as any).options = pageOptions;
     }
   });
   formSchema.forEach((item) => {
-    if (item.fieldName === 'pageCode' && item.componentProps) {
+    if (item.fieldName === 'pageId' && item.componentProps) {
       (item.componentProps as any).options = pageOptions;
     }
   });
@@ -70,6 +70,9 @@ const gridOptions: VxeGridProps<NoticePageResponseDto> = {
   proxyConfig: {
     ajax: {
       query: async ({ page }, formValues) => {
+        if (Array.isArray(formValues.enablePlatform)) {
+          formValues.enablePlatform = formValues.enablePlatform.join(',');
+        }
         return await noticePageApi({
           pageIndex: --page.currentPage,
           pageSize: page.pageSize,
@@ -191,11 +194,11 @@ const [DetailModal, detailApi] = useVbenModal({
         </el-text>
       </template>
 
-      <template #pageCode="{ row }">
+      <template #pageId="{ row }">
         <el-text>
           {{
-            row.pageCode && clientPageObj[row.pageCode]
-              ? clientPageObj[row.pageCode]
+            row.pageId && clientPageObj[row.pageId]
+              ? clientPageObj[row.pageId]
               : '-'
           }}
         </el-text>

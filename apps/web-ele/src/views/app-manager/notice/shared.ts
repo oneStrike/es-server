@@ -175,7 +175,7 @@ export const formSchema: EsFormSchema = [
   },
   {
     label: '跳转页面',
-    fieldName: 'pageCode',
+    fieldName: 'pageId',
     component: 'Select',
     componentProps: {
       placeholder: '请选择跳转页面',
@@ -293,8 +293,8 @@ export const noticeColumns =
     enablePlatform: {
       slots: { default: 'enablePlatform' },
     },
-    pageCode: {
-      slots: { default: 'pageCode' },
+    pageId: {
+      slots: { default: 'pageId' },
     },
   });
 
@@ -314,7 +314,7 @@ export const noticeFilter = formSchemaTransform.toSearchSchema(formSchema, {
   enablePlatform: {
     sort: 95,
   },
-  pageCode: {
+  pageId: {
     sort: 94,
   },
 });
