@@ -8,12 +8,11 @@ export async function createInitialClientNotice(prisma: any) {
       priorityLevel: 1, // 中等优先级
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2025-12-31T23:59:59Z'),
-      pageCode: 'home',
+      pageId: 1,
       isPublished: true,
       enablePlatform: 7, // 1+2+4 = H5+APP+小程序
       isPinned: true,
       showAsPopup: false,
-      order: 100,
     },
     {
       title: '平台功能更新公告',
@@ -23,12 +22,11 @@ export async function createInitialClientNotice(prisma: any) {
       priorityLevel: 2, // 高优先级
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2024-12-31T23:59:59Z'),
-      pageCode: 'home',
+      pageId: 1,
       isPublished: true,
       enablePlatform: 7, // 1+2+4 = H5+APP+小程序
       isPinned: false,
       showAsPopup: true,
-      order: 90,
     },
     {
       title: '用户行为规范提醒',
@@ -38,12 +36,11 @@ export async function createInitialClientNotice(prisma: any) {
       priorityLevel: 1, // 中等优先级
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2025-12-31T23:59:59Z'),
-      pageCode: 'terms',
+      pageId: 1,
       isPublished: true,
       enablePlatform: 7, // 1+2+4 = H5+APP+小程序
       isPinned: false,
       showAsPopup: false,
-      order: 80,
     },
     {
       title: 'VIP会员权益介绍',
@@ -53,12 +50,11 @@ export async function createInitialClientNotice(prisma: any) {
       priorityLevel: 2, // 高优先级
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2024-12-31T23:59:59Z'),
-      pageCode: 'vip_center',
+      pageId: 2,
       isPublished: true,
       enablePlatform: 7, // 1+2+4 = H5+APP+小程序
       isPinned: false,
       showAsPopup: false,
-      order: 70,
     },
     {
       title: '系统维护通知',
@@ -68,12 +64,11 @@ export async function createInitialClientNotice(prisma: any) {
       priorityLevel: 1, // 中等优先级
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2025-12-31T23:59:59Z'),
-      pageCode: null,
+      pageId: 3,
       isPublished: true,
       enablePlatform: 7, // 1+2+4 = H5+APP+小程序
       isPinned: false,
       showAsPopup: false,
-      order: 60,
     },
   ]
 

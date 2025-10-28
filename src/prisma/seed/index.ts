@@ -7,10 +7,9 @@ import { createInitialAdminAccount } from './modules/adminUser' // 管理员账�
 // ==================== 内容管理模块 ====================
 import { createInitialAuthors } from './modules/author' // 作者信息管理
 // ==================== 系统配置模块 ====================
-import { createInitialClientConfig } from './modules/clientConfig' // 客户端全局配置
 // ==================== 运营功能模块 ====================
 import { createInitialClientNotice } from './modules/clientNotice' // 客户端通知公告
-import { createInitialClientPageConfig } from './modules/clientPageConfig' // 页面访问配置
+import { createInitialClientPage } from './modules/clientPage' // 页面访问配置
 import { createInitialComics } from './modules/comic' // 漫画基础信息
 import { createInitialDataDictionary } from './modules/dataDictionary' // 数据字典（语言、国籍、出版社等）
 
@@ -33,8 +32,7 @@ async function runSeeds() {
     createInitialMediums(prisma), // 内容管理：作品媒介类型（先于分类）
     createInitialWorkCategory(prisma), // 内容管理：作品分类
     seedWorkAuthorRoleType(prisma), // 内容管理：作者角色类型（必须在作者之前）
-    createInitialClientConfig(prisma), // 系统配置：客户端配置
-    createInitialClientPageConfig(prisma), // 系统配置：页面配置
+    createInitialClientPage(prisma), // 系统配置：页面配置
   ])
 
   // 第二批：依赖于第一批数据的业务数据

@@ -79,12 +79,12 @@ export class BaseNoticeDto {
   })
   publishEndTime?: Date
 
-  @ValidateString({
-    description: '关联页面代码',
-    example: 'home',
+  @ValidateNumber({
+    description: '关联页面id',
+    example: 12,
     required: false,
   })
-  pageCode?: string
+  pageId?: number
 
   @ValidateString({
     description: '通知弹窗背景图片URL',
@@ -184,7 +184,7 @@ export class QueryNoticeDto extends IntersectionType(
     'isPublished',
     'isPinned',
     'showAsPopup',
-    'pageCode',
+    'pageId',
     'publishStartTime',
     'publishEndTime',
   ]),

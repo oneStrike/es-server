@@ -18,14 +18,14 @@ import { PageRuleEnum } from '../page.constant'
 /**
  * 页面配置基础字段DTO
  */
-export class BasePageConfigFieldsDto extends IdDto {
+export class BaseClientPageDto extends IdDto {
   @ValidateString({
     description: '页面编码（唯一标识）',
     example: 'home',
     required: true,
     maxLength: 50,
   })
-  pageCode!: string
+  code!: string
 
   @ValidateString({
     description: '页面路径（URL路径）',
@@ -33,7 +33,7 @@ export class BasePageConfigFieldsDto extends IdDto {
     required: true,
     maxLength: 300,
   })
-  pagePath!: string
+  path!: string
 
   @ValidateString({
     description: '页面名称',
@@ -41,15 +41,15 @@ export class BasePageConfigFieldsDto extends IdDto {
     required: true,
     maxLength: 100,
   })
-  pageName!: string
+  name!: string
 
   @ValidateString({
-    description: '页面标题（用于SEO）',
+    description: '页面标题',
     example: '首页 - 我的应用',
     required: false,
     maxLength: 200,
   })
-  pageTitle?: string
+  title?: string
 
   @ValidateEnum({
     description: '页面权限级别',
@@ -80,9 +80,7 @@ export class BasePageConfigFieldsDto extends IdDto {
 /**
  * 更新页面配置DTO
  */
-export class UpdateClientPageConfigDto extends PartialType(
-  BasePageConfigFieldsDto,
-) {
+export class UpdateClientPageDto extends PartialType(BaseClientPageDto) {
   @ValidateNumber({
     description: '页面ID',
     example: 1,
@@ -94,11 +92,11 @@ export class UpdateClientPageConfigDto extends PartialType(
 /**
  * 页面配置查询DTO
  */
-export class QueryClientPageConfigDto extends IntersectionType(
+export class QueryClientPageDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BasePageConfigFieldsDto), [
-    'pageName',
-    'pageCode',
+  PickType(PartialType(BaseClientPageDto), [
+    'name',
+    'code',
     'accessLevel',
     'isEnabled',
   ]),
@@ -107,16 +105,10 @@ export class QueryClientPageConfigDto extends IntersectionType(
 /**
  * 页面配置响应DTO
  */
-export class ClientPageConfigResponseDto extends IntersectionType(
-  BasePageConfigFieldsDto,
+export class ClientPageResponseDto extends IntersectionType(
+  BaseClientPageDto,
   IdDto,
 ) {
-  @ApiProperty({
-    description: '访问次数统计',
-    example: 100,
-  })
-  viewCount!: number
-
   @ApiProperty({
     description: '创建时间',
     example: '2021-01-01 00:00:00',
@@ -133,19 +125,6 @@ export class ClientPageConfigResponseDto extends IntersectionType(
 /**
  * 页面配置分页响应DTO
  */
-export class ClientPageConfigPageResponseDto extends OmitType(
-  ClientPageConfigResponseDto,
-  ['description'],
-) {}
-
-/**
- * 增加页面访问次数DTO
- */
-export class IncrementViewCountDto {
-  @ValidateString({
-    description: '页面编码',
-    example: 'home',
-    required: true,
-  })
-  pageCode!: string
-}
+export class ClientPagePageResponseDto extends OmitType(ClientPageResponseDto, [
+  'description',
+]) {}

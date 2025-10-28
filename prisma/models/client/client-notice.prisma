@@ -16,8 +16,8 @@ model ClientNotice {
   /// 发布结束时间
   publishEndTime       DateTime?         @map("publish_end_time") @db.Timestamptz
   /// 关联的页面
-  clientPageId         Int?              @map("client_page_id")
-  clientPage           ClientPageConfig? @relation("notices", fields: [clientPageId], references: [id], onDelete: SetNull)
+  pageId               Int?              @map("page_id")
+  clientPage           ClientPage? @relation("notices", fields: [pageId], references: [id], onDelete: SetNull)
   /// 通知弹窗的背景图片
   popupBackgroundImage String?           @map("popup_background_image") @db.VarChar(200)
   /// 发布状态（true:已发布, false:未发布）
@@ -28,8 +28,6 @@ model ClientNotice {
   isPinned             Boolean           @default(false) @map("is_pinned")
   /// 是否弹窗显示
   showAsPopup          Boolean           @default(false) @map("show_as_popup")
-  /// 排序权重（数值越大越靠前）
-  order                Int               @default(0) @map("order")
   /// 浏览次数
   readCount            Int               @default(0) @map("read_count")
   /// 创建时间
@@ -40,9 +38,9 @@ model ClientNotice {
   /// 索引优化
   @@index([isPublished, publishStartTime, publishEndTime]) // 查询已发布且在有效期内的通知
   @@index([noticeType, isPublished]) // 按类型和发布状态查询
-  @@index([priorityLevel, isPinned, order]) // 排序相关字段
+  @@index([priorityLevel, isPinned]) // 排序相关字段
   @@index([createdAt]) // 按创建时间查询
-  @@index([clientPageId]) // 外键索引
+  @@index([pageId]) // 外键索引
   @@index([showAsPopup, isPublished]) // 弹窗通知查询
   @@index([readCount]) // 热门通知查询
   @@map("client_notice")

@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { RepositoryService } from '@/common/services/repository.service'
 import { ClientNoticeWhereInput } from '@/prisma/client/models/ClientNotice'
-
 import { findCombinations } from '@/utils'
+
 import {
   CreateNoticeDto,
   QueryNoticeDto,
@@ -17,8 +17,8 @@ export class ClientNoticeService extends RepositoryService {
     return this.prisma.clientNotice
   }
 
-  get clientPageConfig() {
-    return this.prisma.clientPageConfig
+  get clientPage() {
+    return this.prisma.clientPage
   }
 
   /**
@@ -34,11 +34,11 @@ export class ClientNoticeService extends RepositoryService {
       }
     }
 
-    const { pageCode, ...others } = createNoticeDto // 明确移除 clientPage
-    if (pageCode) {
+    const { pageId, ...others } = createNoticeDto // 明确移除 clientPage
+    if (pageId) {
       const pageInfo = await this.clientNotice.findFirst({
         where: {
-          pageCode,
+          id: pageId,
         },
         select: {
           id: true,
@@ -76,7 +76,7 @@ export class ClientNoticeService extends RepositoryService {
       isPinned,
       isPublished,
       showAsPopup,
-      pageCode,
+      pageId,
       publishStartTime,
       publishEndTime,
       enablePlatform,
@@ -103,8 +103,8 @@ export class ClientNoticeService extends RepositoryService {
     if (showAsPopup !== undefined) {
       where.showAsPopup = showAsPopup
     }
-    if (pageCode !== undefined) {
-      where.pageCode = pageCode
+    if (pageId !== undefined) {
+      where.pageId = pageId
     }
     if (publishStartTime) {
       where.AND = [{ publishStartTime: { lte: publishStartTime } }]
@@ -120,8 +120,6 @@ export class ClientNoticeService extends RepositoryService {
         ? [...where.AND, { publishEndTime: { gte: publishEndTime } }]
         : [{ publishEndTime: { gte: publishEndTime } }]
     }
-
-    console.log('🚀 ~ ClientNoticeService ~ findNoticePage ~ where:', where)
 
     return this.clientNotice.findPagination({
       where: {
@@ -175,7 +173,6 @@ export class ClientNoticeService extends RepositoryService {
       orderBy: [
         { isPinned: 'desc' },
         { priorityLevel: 'desc' },
-        { order: 'desc' },
         { createdAt: 'desc' },
       ],
       omit: {
@@ -191,7 +188,7 @@ export class ClientNoticeService extends RepositoryService {
    * @returns 更新后的通知信息
    */
   async updateNotice(updateNoticeDto: UpdateNoticeDto) {
-    const { id, pageCode, ...updateData } = updateNoticeDto
+    const { id, pageId, ...updateData } = updateNoticeDto
 
     // 验证时间范围
     if (updateData.publishStartTime && updateData.publishEndTime) {
@@ -204,10 +201,10 @@ export class ClientNoticeService extends RepositoryService {
     if (!notice) {
       throw new BadRequestException('通知不存在')
     }
-    if (pageCode && notice.pageCode !== pageCode) {
-      const pageInfo = await this.clientPageConfig.findFirst({
+    if (pageId && notice.pageId !== pageId) {
+      const pageInfo = await this.clientPage.findFirst({
         where: {
-          pageCode,
+          id: pageId,
         },
         select: {
           id: true,

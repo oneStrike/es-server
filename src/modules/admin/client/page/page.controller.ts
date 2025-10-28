@@ -11,13 +11,13 @@ import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
 import { CountDto } from '@/common/dto/batch.dto'
 import { IdDto, IdsDto } from '@/common/dto/id.dto'
 import {
-  BasePageConfigFieldsDto,
-  ClientPageConfigPageResponseDto,
-  ClientPageConfigResponseDto,
-  QueryClientPageConfigDto,
-  UpdateClientPageConfigDto,
+  BaseClientPageDto,
+  ClientPagePageResponseDto,
+  ClientPageResponseDto,
+  QueryClientPageDto,
+  UpdateClientPageDto,
 } from './dto/page.dto'
-import { ClientPageConfigService } from './page.service'
+import { ClientPageService } from './page.service'
 
 /**
  * 客户端页面配置控制器
@@ -25,8 +25,8 @@ import { ClientPageConfigService } from './page.service'
  */
 @ApiTags('客户端页面配置模块')
 @Controller('admin/client-page')
-export class ClientPageConfigController {
-  constructor(private readonly pageConfigService: ClientPageConfigService) {}
+export class ClientPageController {
+  constructor(private readonly pageService: ClientPageService) {}
 
   /**
    * 创建页面配置
@@ -36,8 +36,8 @@ export class ClientPageConfigController {
     summary: '创建页面配置',
     model: IdDto,
   })
-  async create(@Body() body: BasePageConfigFieldsDto) {
-    return this.pageConfigService.createPageConfig(body)
+  async create(@Body() body: BaseClientPageDto) {
+    return this.pageService.createPage(body)
   }
 
   /**
@@ -46,10 +46,10 @@ export class ClientPageConfigController {
   @Get('/page')
   @ApiPageDoc({
     summary: '分页查询页面配置列表',
-    model: ClientPageConfigPageResponseDto,
+    model: ClientPagePageResponseDto,
   })
-  async findPage(@Query() query: QueryClientPageConfigDto) {
-    return this.pageConfigService.findPageConfigPage(query)
+  async findPage(@Query() query: QueryClientPageDto) {
+    return this.pageService.findPage(query)
   }
 
   /**
@@ -58,10 +58,10 @@ export class ClientPageConfigController {
   @Get('/detail-by-id')
   @ApiDoc({
     summary: '根据ID查询页面配置详情',
-    model: ClientPageConfigResponseDto,
+    model: ClientPageResponseDto,
   })
   async findDetail(@Query('id', ParseIntPipe) id: number) {
-    return this.pageConfigService.clientPageConfig.findUnique({ where: { id } })
+    return this.pageService.clientPage.findUnique({ where: { id } })
   }
 
   /**
@@ -70,11 +70,11 @@ export class ClientPageConfigController {
   @Get('/detail-by-code')
   @ApiDoc({
     summary: '根据页面编码查询页面配置详情',
-    model: ClientPageConfigResponseDto,
+    model: ClientPageResponseDto,
   })
-  async findByCode(@Query('pageCode') pageCode: string) {
-    return this.pageConfigService.clientPageConfig.findUnique({
-      where: { pageCode },
+  async findByCode(@Query('code') code: string) {
+    return this.pageService.clientPage.findUnique({
+      where: { code },
     })
   }
 
@@ -86,8 +86,8 @@ export class ClientPageConfigController {
     summary: '更新页面配置',
     model: IdDto,
   })
-  async update(@Body() body: UpdateClientPageConfigDto) {
-    return this.pageConfigService.updatePage(body)
+  async update(@Body() body: UpdateClientPageDto) {
+    return this.pageService.updatePage(body)
   }
 
   /**
@@ -99,7 +99,7 @@ export class ClientPageConfigController {
     model: CountDto,
   })
   async batchDelete(@Body() body: IdsDto) {
-    return this.pageConfigService.clientPageConfig.deleteMany({
+    return this.pageService.clientPage.deleteMany({
       where: { id: { in: body.ids } },
     })
   }
