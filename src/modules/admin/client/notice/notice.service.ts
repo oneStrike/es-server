@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { RepositoryService } from '@/common/services/repository.service'
 import { ClientNoticeWhereInput } from '@/prisma/client/models/ClientNotice'
 
+import { findCombinations } from '@/utils'
 import {
   CreateNoticeDto,
   QueryNoticeDto,
@@ -78,6 +79,7 @@ export class ClientNoticeService extends RepositoryService {
       pageCode,
       publishStartTime,
       publishEndTime,
+      enablePlatform,
       ...pageParams
     } = queryNoticeDto
 
@@ -107,12 +109,19 @@ export class ClientNoticeService extends RepositoryService {
     if (publishStartTime) {
       where.AND = [{ publishStartTime: { lte: publishStartTime } }]
     }
+    if (enablePlatform) {
+      where.enablePlatform = {
+        in: findCombinations(enablePlatform.split(','), [1, 2, 4]),
+      }
+    }
     if (publishEndTime) {
       // 确保 where.AND 是数组类型
       where.AND = Array.isArray(where.AND)
         ? [...where.AND, { publishEndTime: { gte: publishEndTime } }]
         : [{ publishEndTime: { gte: publishEndTime } }]
     }
+
+    console.log('🚀 ~ ClientNoticeService ~ findNoticePage ~ where:', where)
 
     return this.clientNotice.findPagination({
       where: {

@@ -188,7 +188,14 @@ export class QueryNoticeDto extends IntersectionType(
     'publishStartTime',
     'publishEndTime',
   ]),
-) {}
+) {
+  @ValidateString({
+    description: '所启用的平台',
+    example: '[1,2,3]',
+    required: false,
+  })
+  enablePlatform?: string
+}
 
 /**
  * 通知状态更新DTO
