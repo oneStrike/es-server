@@ -317,4 +317,7 @@ export const noticeFilter = formSchemaTransform.toSearchSchema(formSchema, {
   pageId: {
     sort: 94,
   },
+  isPinned: {
+    sort: 93,
+  },
 });

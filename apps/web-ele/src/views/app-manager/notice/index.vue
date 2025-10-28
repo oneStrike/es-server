@@ -45,7 +45,7 @@ clientPagePageApi({
       clientPageObj.value[pageItem.id!] = pageItem.pageName;
       return {
         label: pageItem.pageName,
-        value: pageItem.pageId,
+        value: pageItem.id,
         ...pageItem,
       };
     }) || [];
