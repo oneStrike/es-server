@@ -101,7 +101,7 @@ export class WorkCategoryService extends RepositoryService {
     }
 
     const types = jsonParse(contentType, [])
-    if (types.length) {
+    if (types?.length) {
       // 按内容类型代码筛选（多对多 some 查询）
       where.categoryContentTypes = {
         some: { contentType: { code: { in: types } } },

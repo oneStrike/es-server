@@ -21,10 +21,6 @@ export class WorkAuthorRoleTypeService extends RepositoryService {
         code: true,
         name: true,
         description: true,
-        sortOrder: true,
-      },
-      orderBy: {
-        sortOrder: 'asc',
       },
     })
   }

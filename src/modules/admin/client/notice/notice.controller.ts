@@ -63,9 +63,9 @@ export class ClientNoticeController {
         clientPage: {
           select: {
             id: true,
-            pageCode: true,
-            pageName: true,
-            pagePath: true,
+            code: true,
+            name: true,
+            path: true,
           },
         },
       },
