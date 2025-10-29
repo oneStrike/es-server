@@ -3,6 +3,7 @@ import type {
   DictionaryWhereInput,
 } from '@/prisma/client/models'
 import { Injectable } from '@nestjs/common'
+import { OrderDto } from '@/common/dto/order.dto'
 import { RepositoryService } from '@/common/services/repository.service'
 import { CreateDictionaryItemDto } from './dto/dictionary-item.dto'
 import {
@@ -30,7 +31,7 @@ export class DictionaryService extends RepositoryService {
    * @returns 分页数据
    */
   async findDictionaries(queryDto: QueryDictionaryDto) {
-    const { code, name, isEnabled } = queryDto
+    const { code, name, isEnabled, ...pageParams } = queryDto
 
     const where: DictionaryWhereInput = {}
 
@@ -44,7 +45,9 @@ export class DictionaryService extends RepositoryService {
       where.isEnabled = { equals: isEnabled }
     }
 
-    return this.dictionary.findPagination({ where })
+    return this.dictionary.findPagination({
+      where: { ...where, ...pageParams },
+    })
   }
 
   /**
@@ -53,7 +56,7 @@ export class DictionaryService extends RepositoryService {
    * @returns 分页数据
    */
   async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
-    const { dictionaryCode, name, code, isEnabled } = queryDto
+    const { dictionaryCode, name, code, isEnabled, ...pageParams } = queryDto
 
     const where: DictionaryItemWhereInput = {
       dictionaryCode: {
@@ -71,9 +74,8 @@ export class DictionaryService extends RepositoryService {
       where.isEnabled = { equals: isEnabled }
     }
 
-    return this.prisma.dictionaryItem.findMany({
-      where,
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+    return this.prisma.dictionaryItem.findPagination({
+      where: { ...where, ...pageParams },
     })
   }
 
@@ -115,6 +117,20 @@ export class DictionaryService extends RepositoryService {
           in: ids,
         },
       },
+    })
+  }
+
+  /**
+   * 更新字典项排序
+   * @param orderDto 排序数据
+   */
+  async updateDictionaryItemSort(orderDto: OrderDto) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.dictionaryItem.swapField(
+        { id: orderDto.dragId },
+        { id: orderDto.targetId },
+        'order',
+      )
     })
   }
 }

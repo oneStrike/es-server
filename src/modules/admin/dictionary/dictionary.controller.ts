@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
 import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto'
 import { IdDto, IdsDto } from '@/common/dto/id.dto'
+import { OrderDto } from '@/common/dto/order.dto'
 import { DictionaryService } from '@/modules/foundation/dictionary/dictionary.service'
 import { CreateDictionaryDto } from '@/modules/foundation/dictionary/dto/create-dictionary.dto'
 import {
@@ -89,10 +90,9 @@ export class DictionaryController {
   }
 
   @Get('items')
-  @ApiDoc({
+  @ApiPageDoc({
     summary: '获取字典项',
     model: DictionaryItemDto,
-    isArray: true,
   })
   async getItems(@Query() query: QueryDictionaryItemDto) {
     return this.dictionaryService.findDictionaryItems(query)
@@ -135,5 +135,17 @@ export class DictionaryController {
   })
   async enableItem(@Body() query: BatchEnabledDto) {
     return this.dictionaryService.updateDictionaryItem(query)
+  }
+
+  /**
+   * 拖拽排序
+   */
+  @Post('/item-order')
+  @ApiDoc({
+    summary: '分类拖拽排序',
+    model: OrderDto,
+  })
+  async categoryOrder(@Body() body: OrderDto) {
+    return this.dictionaryService.updateDictionaryItemSort(body)
   }
 }
