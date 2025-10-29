@@ -16,7 +16,7 @@
   },
   "type": "module",
   "scripts": {
-    "att": "pnpx tsx ./src/utils/openapi-generator/index.ts",
+    "att": "pnpx tsx ./src/utils/openapi-generator/index.ts && eslint --cache --fix ./src/apis --parser-options project:./tsconfig.json",
     "build": "pnpm vite build --mode production",
     "build:analyze": "pnpm vite build --mode analyze",
     "dev": "pnpm vite --mode development",

@@ -1,31 +1,23 @@
-import { requestClient } from '#/utils/request';
 import type {
-  ComicVersionCreateRequest,
-  ComicVersionCreateResponse,
-  ComicVersionPageRequest,
-  ComicVersionPageResponse,
-  ComicVersionDetailRequest,
-  ComicVersionDetailResponse,
-  ComicVersionUpdateRequest,
-  ComicVersionUpdateResponse,
+  ComicVersionBatchUpdateEnabledStatusRequest,
+  ComicVersionBatchUpdateEnabledStatusResponse,
   ComicVersionBatchUpdatePublishStatusRequest,
   ComicVersionBatchUpdatePublishStatusResponse,
   ComicVersionBatchUpdateRecommendedStatusRequest,
   ComicVersionBatchUpdateRecommendedStatusResponse,
-  ComicVersionBatchUpdateEnabledStatusRequest,
-  ComicVersionBatchUpdateEnabledStatusResponse,
+  ComicVersionCreateRequest,
+  ComicVersionCreateResponse,
   ComicVersionDeleteRequest,
   ComicVersionDeleteResponse,
-  CreateComicVersionDto,
-  IdDto,
-  BaseComicVersionDto,
-  ComicVersionDetailResponseDto,
-  UpdateComicVersionDto,
-  BatchPublishDto,
-  CountDto,
-  UpdateVersionRecommendedStatusDto,
-  UpdateVersionEnabledStatusDto,
+  ComicVersionDetailRequest,
+  ComicVersionDetailResponse,
+  ComicVersionPageRequest,
+  ComicVersionPageResponse,
+  ComicVersionUpdateRequest,
+  ComicVersionUpdateResponse,
 } from './types/comicVersion.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 创建漫画版本

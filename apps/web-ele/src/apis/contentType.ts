@@ -1,4 +1,3 @@
-import { requestClient } from '#/utils/request';
 import type {
   ContentTypeCreateRequest,
   ContentTypeCreateResponse,
@@ -6,11 +5,9 @@ import type {
   ContentTypeListResponse,
   ContentTypeUpdateRequest,
   ContentTypeUpdateResponse,
-  CreateContentTypeDto,
-  IdDto,
-  BaseContentTypeDto,
-  UpdateContentTypeDto,
 } from './types/contentType.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 创建内容类型

@@ -1,9 +1,9 @@
-import { requestClient } from '#/utils/request';
 import type {
   UploadUploadFileRequest,
   UploadUploadFileResponse,
-  UploadResponseDto,
 } from './types/upload.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 上传文件

@@ -1,26 +1,22 @@
-import { requestClient } from '#/utils/request';
 import type {
-  UserRegisterRequest,
-  UserRegisterResponse,
-  UserUpdateInfoRequest,
-  UserUpdateInfoResponse,
-  UserInfoResponse,
-  UserInfoByIdRequest,
-  UserInfoByIdResponse,
-  UserPageRequest,
-  UserPageResponse,
-  UserDeleteRequest,
-  UserDeleteResponse,
   UserChangePasswordRequest,
   UserChangePasswordResponse,
+  UserDeleteRequest,
+  UserDeleteResponse,
+  UserInfoByIdRequest,
+  UserInfoByIdResponse,
+  UserInfoResponse,
+  UserPageRequest,
+  UserPageResponse,
+  UserRegisterRequest,
+  UserRegisterResponse,
   UserUnlockRequest,
   UserUnlockResponse,
-  UserRegisterDto,
-  IdDto,
-  UpdateUserDto,
-  UserDto,
-  ChangePasswordDto,
+  UserUpdateInfoRequest,
+  UserUpdateInfoResponse,
 } from './types/user.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 用户注册

@@ -1,8 +1,6 @@
+import type { RoleTypeListResponse } from './types/roleType.d';
+
 import { requestClient } from '#/utils/request';
-import type {
-  RoleTypeListResponse,
-  RoleTypeListResponseDto,
-} from './types/roleType.d';
 
 /**
  * 获取角色类型列表

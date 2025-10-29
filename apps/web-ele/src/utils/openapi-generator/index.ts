@@ -4,9 +4,6 @@ import type { GeneratedFile } from './types';
 import path from 'node:path';
 import process from 'node:process';
 
-import { ESLint } from 'eslint';
-import prettier from 'prettier';
-
 import { defaultConfig } from './config';
 import { ensureDirectory, writeFile } from './file-utils';
 import { OpenAPIGenerator } from './generator';
@@ -36,62 +33,6 @@ export async function generateAPIFromOpenAPI(
   } catch (error) {
     console.error('生成API代码失败:', error);
     throw error;
-  }
-}
-
-/**
- * 使用本地 Prettier 配置格式化内容
- */
-async function formatWithPrettier(
-  content: string,
-  filePath: string,
-): Promise<string> {
-  try {
-    const options = await prettier.resolveConfig(process.cwd());
-    // 传入 filepath 以便 Prettier 自动选择合适的 parser
-    return prettier.format(content, { ...options, filepath: filePath });
-  } catch (error) {
-    console.warn('Prettier 格式化失败，写入原始内容:', error);
-    return content;
-  }
-}
-
-/**
- * 使用本地 ESLint 规则执行一次修复
- */
-async function eslintFix(targets: string[]): Promise<void> {
-  try {
-    // 将 ESLint 的工作目录指向仓库根目录，确保加载根级配置
-    const repoRoot = path.resolve(process.cwd(), '../..');
-    const eslint = new ESLint({
-      fix: true,
-      cwd: repoRoot,
-      // 启用所有可用类型的自动修复，确保建议型规则也会应用（如移除未使用代码）
-      fixTypes: ['problem', 'suggestion', 'layout'],
-      // 如生成目录可能被 .eslintignore 忽略，强制处理
-      ignore: false,
-    });
-    // 将传入的目标路径转换为相对仓库根目录的路径，匹配 ESLint 的 cwd 解析方式
-    const relativeTargets = targets.map((p) => {
-      const abs = path.isAbsolute(p) ? p : path.resolve(process.cwd(), p);
-      return path.relative(repoRoot, abs) || '.';
-    });
-    // 将目录转换为明确的 glob，确保命中生成的源文件与类型文件
-    const patterns = relativeTargets.flatMap((p) => [
-      `${p.replaceAll('\\\\', '/')}/**/*.{ts,tsx,js,jsx}`,
-      `${p.replaceAll('\\\\', '/')}/**/*.d.ts`,
-    ]);
-    console.log('ESLint cwd:', repoRoot);
-    console.log('ESLint patterns count:', patterns.length);
-    const results = await eslint.lintFiles(patterns);
-    // 统计修复信息（在写回前统计）
-    const fixedCount = results.filter(
-      (r) => typeof r.output === 'string' && r.output.length > 0,
-    ).length;
-    await ESLint.outputFixes(results);
-    console.log(`ESLint 修复统计：${fixedCount} 个文件已应用修复`);
-  } catch (error) {
-    console.warn('ESLint 修复失败（忽略，不阻断生成流程）:', error);
   }
 }
 
@@ -157,19 +98,17 @@ export async function generateAPI(
       });
     }
 
-    // 写入文件（写入前先用 Prettier 格式化）
+    // 写入文件
     for (const file of files) {
       // 写入API文件
       const apiFilePath = path.join(outputDir, file.fileName);
-      const formattedApi = await formatWithPrettier(file.content, apiFilePath);
-      await writeFile(apiFilePath, formattedApi);
+      await writeFile(apiFilePath, file.content);
 
       // 写入类型文件
       if (file.types) {
         const typeFileName = file.fileName.replace('.ts', '.d.ts');
         const typeFilePath = path.join(typesDir, typeFileName);
-        const formattedDts = await formatWithPrettier(file.types, typeFilePath);
-        await writeFile(typeFilePath, formattedDts);
+        await writeFile(typeFilePath, file.types);
       }
     }
 
@@ -184,12 +123,8 @@ export async function generateAPI(
 
     {
       const indexPath = path.join(outputDir, 'index.ts');
-      const formattedIndex = await formatWithPrettier(indexContent, indexPath);
-      await writeFile(indexPath, formattedIndex);
+      await writeFile(indexPath, indexContent);
     }
-
-    // 统一执行一次 ESLint 修复（不阻断流程）
-    await eslintFix([outputDir, typesDir]);
 
     console.log(`✅ API代码生成完成！共生成 ${files.length} 个模块`);
   } catch (error) {

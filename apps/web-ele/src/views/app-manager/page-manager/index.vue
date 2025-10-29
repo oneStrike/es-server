@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import type { VxeGridProps } from '#/adapter/vxe-table';
 import type {
-  BasePageConfigFieldsDto,
-  ClientPageConfigPageResponseDto,
-  UpdateClientPageConfigDto,
+  BaseClientPageDto,
+  ClientPagePageResponseDto,
+  UpdateClientPageDto,
 } from '#/apis/types/clientPage';
 
 import { Page, useVbenModal } from '@vben/common-ui';
@@ -23,7 +23,7 @@ import PageDetail from '#/views/app-manager/page-manager/detail.vue';
 
 import { accessLevelObj, formSchema, pageColumns, pageFilter } from './shared';
 
-const gridOptions: VxeGridProps<ClientPageConfigPageResponseDto> = {
+const gridOptions: VxeGridProps<ClientPagePageResponseDto> = {
   columns: pageColumns,
   height: 'auto',
   proxyConfig: {
@@ -49,7 +49,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions,
 });
 
-async function openFormModal(row?: ClientPageConfigPageResponseDto) {
+async function openFormModal(row?: ClientPagePageResponseDto) {
   let record;
   if (row) {
     record = await clientPageDetailByIdApi({ id: row.id });
@@ -57,18 +57,16 @@ async function openFormModal(row?: ClientPageConfigPageResponseDto) {
   formApi.setData({ title: '页面配置', record }).open();
 }
 
-async function handleSubmit(
-  values: BasePageConfigFieldsDto | UpdateClientPageConfigDto,
-) {
+async function handleSubmit(values: BaseClientPageDto | UpdateClientPageDto) {
   await (values?.id
-    ? clientPageUpdateApi(values as UpdateClientPageConfigDto)
-    : clientPageCreateApi(values as BasePageConfigFieldsDto));
+    ? clientPageUpdateApi(values as UpdateClientPageDto)
+    : clientPageCreateApi(values as BaseClientPageDto));
   formApi.close();
   useMessage.success('操作成功');
   gridApi.reload();
 }
 
-async function deletePage(record: ClientPageConfigPageResponseDto) {
+async function deletePage(record: ClientPagePageResponseDto) {
   await clientPageBatchDeleteApi({ ids: [record.id] });
   useMessage.success('操作成功');
   gridApi.reload();
@@ -78,7 +76,7 @@ const [DetailModal, detailApi] = useVbenModal({
   connectedComponent: PageDetail,
 });
 
-async function toggleEnableStatus(record: ClientPageConfigPageResponseDto) {
+async function toggleEnableStatus(record: ClientPagePageResponseDto) {
   record.loading = true;
   await clientPageUpdateApi({
     id: record.id,

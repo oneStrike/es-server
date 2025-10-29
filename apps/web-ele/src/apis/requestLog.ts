@@ -1,9 +1,9 @@
-import { requestClient } from '#/utils/request';
 import type {
   RequestLogPageRequest,
   RequestLogPageResponse,
-  RequestLogDto,
 } from './types/requestLog.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 分页获取请求日志列表

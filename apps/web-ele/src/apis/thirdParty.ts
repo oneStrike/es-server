@@ -1,11 +1,10 @@
-import { requestClient } from '#/utils/request';
 import type {
   ThirdPartyPlatformResponse,
   ThirdPartySearchRequest,
   ThirdPartySearchResponse,
-  PlatformResponseDto,
-  SearchComicItemDto,
 } from './types/thirdParty.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 获取第三方漫画平台列表

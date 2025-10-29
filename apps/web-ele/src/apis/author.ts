@@ -1,28 +1,21 @@
-import { requestClient } from '#/utils/request';
 import type {
-  AuthorCreateRequest,
-  AuthorCreateResponse,
-  AuthorPageRequest,
-  AuthorPageResponse,
-  AuthorDetailRequest,
-  AuthorDetailResponse,
-  AuthorUpdateRequest,
-  AuthorUpdateResponse,
-  AuthorBatchUpdateStatusRequest,
-  AuthorBatchUpdateStatusResponse,
   AuthorBatchUpdateFeaturedRequest,
   AuthorBatchUpdateFeaturedResponse,
+  AuthorBatchUpdateStatusRequest,
+  AuthorBatchUpdateStatusResponse,
+  AuthorCreateRequest,
+  AuthorCreateResponse,
   AuthorDeleteRequest,
   AuthorDeleteResponse,
-  CreateAuthorDto,
-  IdDto,
-  AuthorPageResponseDto,
-  AuthorDetailResponseDto,
-  UpdateAuthorDto,
-  BatchEnabledDto,
-  CountDto,
-  UpdateAuthorFeaturedDto,
+  AuthorDetailRequest,
+  AuthorDetailResponse,
+  AuthorPageRequest,
+  AuthorPageResponse,
+  AuthorUpdateRequest,
+  AuthorUpdateResponse,
 } from './types/author.d';
+
+import { requestClient } from '#/utils/request';
 
 /**
  * 创建作者

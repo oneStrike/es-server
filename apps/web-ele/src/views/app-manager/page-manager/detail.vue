@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ClientPageConfigPageResponseDto } from '#/apis/types/clientPage';
+import type { BaseClientPageDto } from '#/apis/types/clientPage';
 
 import { computed } from 'vue';
 
@@ -20,7 +20,7 @@ const [Modal, modalApi] = useVbenModal({
   },
 });
 
-const detail = ref<ClientPageConfigPageResponseDto>();
+const detail = ref<BaseClientPageDto>();
 const loading = ref(false);
 
 async function getDetail() {
@@ -47,17 +47,17 @@ const detailCards = computed(() => [
     fields: [
       {
         label: '页面名称',
-        value: detail.value?.pageName,
+        value: detail.value?.name,
         type: 'text',
       },
       {
         label: '页面路径',
-        value: detail.value?.pagePath,
+        value: detail.value?.path,
         type: 'text',
       },
       {
         label: '页面代码',
-        value: detail.value?.pageCode,
+        value: detail.value?.code,
         type: 'text',
       },
       {
@@ -78,7 +78,7 @@ const detailCards = computed(() => [
       },
       {
         label: '页面标题',
-        value: detail.value?.pageTitle || '-',
+        value: detail.value?.title || '-',
         type: 'text',
       },
       {

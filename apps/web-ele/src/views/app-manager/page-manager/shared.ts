@@ -1,4 +1,4 @@
-import type { ClientPageConfigPageResponseDto } from '#/apis/types/clientPage';
+import type { ClientPagePageResponseDto } from '#/apis/types/clientPage';
 import type { EsFormSchema } from '#/types';
 
 import { formSchemaTransform } from '#/utils';
@@ -43,7 +43,7 @@ export const formSchema: EsFormSchema = [
     componentProps: {
       placeholder: '请输入页面编码',
     },
-    fieldName: 'pageCode',
+    fieldName: 'code',
     label: '页面编码',
     rules: 'required',
   },
@@ -52,7 +52,7 @@ export const formSchema: EsFormSchema = [
     componentProps: {
       placeholder: '请输入页面路径',
     },
-    fieldName: 'pagePath',
+    fieldName: 'path',
     label: '页面路径',
     rules: 'required',
   },
@@ -61,7 +61,7 @@ export const formSchema: EsFormSchema = [
     componentProps: {
       placeholder: '请输入页面名称',
     },
-    fieldName: 'pageName',
+    fieldName: 'name',
     label: '页面名称',
     rules: 'required',
   },
@@ -70,7 +70,7 @@ export const formSchema: EsFormSchema = [
     componentProps: {
       placeholder: '请输入页面标题',
     },
-    fieldName: 'pageTitle',
+    fieldName: 'title',
     label: '页面标题',
   },
   {
@@ -120,44 +120,41 @@ export const formSchema: EsFormSchema = [
 
 // 表格列配置
 export const pageColumns =
-  formSchemaTransform.toTableColumns<ClientPageConfigPageResponseDto>(
-    formSchema,
-    {
-      description: {
-        hide: true,
-      },
-      actions: {
-        show: true,
-        width: 200,
-      },
-      pageName: {
-        sort: 1,
-      },
-      pageCode: {
-        sort: 2,
-      },
-      pageTitle: {
-        showOverflow: 'tooltip',
-        width: 150,
-      },
-      accessLevel: {
-        slots: { default: 'accessLevel' },
-        width: 140,
-      },
-      isEnabled: {
-        slots: { default: 'isEnabled' },
-        width: 100,
-      },
+  formSchemaTransform.toTableColumns<ClientPagePageResponseDto>(formSchema, {
+    description: {
+      hide: true,
     },
-  );
+    actions: {
+      show: true,
+      width: 200,
+    },
+    name: {
+      sort: 1,
+    },
+    code: {
+      sort: 2,
+    },
+    title: {
+      showOverflow: 'tooltip',
+      width: 150,
+    },
+    accessLevel: {
+      slots: { default: 'accessLevel' },
+      width: 140,
+    },
+    isEnabled: {
+      slots: { default: 'isEnabled' },
+      width: 100,
+    },
+  });
 
 // 搜索表单配置
 export const pageFilter = formSchemaTransform
   .toSearchSchema(formSchema, {
-    pageCode: {
+    code: {
       show: true,
     },
-    pageName: {
+    name: {
       show: true,
     },
     isEnabled: {
