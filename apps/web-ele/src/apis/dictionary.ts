@@ -11,6 +11,8 @@ import type {
   DictionaryDeleteResponse,
   DictionaryDetailRequest,
   DictionaryDetailResponse,
+  DictionaryItemOrderRequest,
+  DictionaryItemOrderResponse,
   DictionaryItemsRequest,
   DictionaryItemsResponse,
   DictionaryPageRequest,
@@ -153,6 +155,18 @@ export async function dictionaryUpdateItemStatusApi(
 ): Promise<DictionaryUpdateItemStatusResponse> {
   return requestClient.post<DictionaryUpdateItemStatusResponse>(
     '/api/admin/dictionary/update-item-status',
+    params,
+  );
+}
+
+/**
+ * 分类拖拽排序
+ */
+export async function dictionaryItemOrderApi(
+  params: DictionaryItemOrderRequest,
+): Promise<DictionaryItemOrderResponse> {
+  return requestClient.post<DictionaryItemOrderResponse>(
+    '/api/admin/dictionary/item-order',
     params,
   );
 }

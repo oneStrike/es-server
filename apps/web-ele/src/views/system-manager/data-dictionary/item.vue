@@ -4,10 +4,11 @@ import type { DictionaryDto, DictionaryItemDto } from '#/apis/types/dictionary';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { queryParams, useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   dictionaryCreateItemApi,
   dictionaryDeleteItemApi,
+  dictionaryItemOrderApi,
   dictionaryItemsApi,
   dictionaryUpdateItemApi,
   dictionaryUpdateItemStatusApi,
@@ -35,22 +36,33 @@ const shareData = ref<ShareData>();
 const gridOptions: VxeGridProps<DictionaryItemDto> = {
   columns: dictionaryItemColumns,
   height: 'auto',
+  rowConfig: {
+    drag: true,
+  },
+  sortConfig: {
+    remote: true,
+    multiple: true,
+  },
+  rowDragConfig: {
+    async dragEndMethod(params) {
+      await dictionaryItemOrderApi({
+        dragId: params.dragRow.id,
+        targetId: params.newRow.id,
+      });
+      await gridApi.reload();
+      return true;
+    },
+  },
   proxyConfig: {
+    sort: true,
     ajax: {
-      query: async ({ page }, formValues) => {
-        const data = await dictionaryItemsApi({
-          pageIndex: --page.currentPage,
-          pageSize: page.pageSize,
+      query: async ({ page, sorts }, formValues) => {
+        return await dictionaryItemsApi({
+          ...queryParams({ page, formValues, sorts }),
           dictionaryCode: shareData.value?.record.code,
-          ...formValues,
         });
-        return {
-          list: data,
-          total: data.length,
-        };
       },
     },
-    sort: true,
   },
 };
 

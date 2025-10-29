@@ -1,7 +1,7 @@
 /**
  *  类型定义 [ClientPageCreateRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ClientPageCreateRequest = BaseClientPageDto;
 
@@ -10,7 +10,7 @@ export type ClientPageCreateResponse = IdDto;
 /**
  *  类型定义 [ClientPagePageRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ClientPagePageRequest = {
   /** 任意合法数值 */
@@ -64,7 +64,7 @@ export type ClientPagePageResponse = {
 /**
  *  类型定义 [ClientPageDetailByIdRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ClientPageDetailByIdRequest = {
   /** 任意合法数值 */
@@ -78,7 +78,7 @@ export type ClientPageDetailByIdResponse = ClientPageResponseDto;
 /**
  *  类型定义 [ClientPageDetailByCodeRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ClientPageDetailByCodeRequest = {
   /** 任意合法数值 */
@@ -92,7 +92,7 @@ export type ClientPageDetailByCodeResponse = ClientPageResponseDto;
 /**
  *  类型定义 [ClientPageUpdateRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ClientPageUpdateRequest = UpdateClientPageDto;
 
@@ -101,7 +101,7 @@ export type ClientPageUpdateResponse = IdDto;
 /**
  *  类型定义 [ClientPageBatchDeleteRequest]
  *  @来源 客户端页面配置模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ClientPageBatchDeleteRequest = IdsDto;
 
@@ -110,7 +110,7 @@ export type ClientPageBatchDeleteResponse = CountDto;
 /**
  *  类型定义 [BaseClientPageDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type BaseClientPageDto = {
   /** 任意合法数值 */
@@ -137,7 +137,7 @@ export type BaseClientPageDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -150,7 +150,7 @@ export type IdDto = {
 /**
  *  类型定义 [ClientPagePageResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ClientPagePageResponseDto = {
   /** 任意合法数值 */
@@ -179,7 +179,7 @@ export type ClientPagePageResponseDto = {
 /**
  *  类型定义 [ClientPageResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ClientPageResponseDto = {
   /** 任意合法数值 */
@@ -210,7 +210,7 @@ export type ClientPageResponseDto = {
 /**
  *  类型定义 [UpdateClientPageDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type UpdateClientPageDto = {
   /** 任意合法数值 */
@@ -237,7 +237,7 @@ export type UpdateClientPageDto = {
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type IdsDto = {
   /** 任意合法数值 */
@@ -250,7 +250,7 @@ export type IdsDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type CountDto = {
   /** 任意合法数值 */

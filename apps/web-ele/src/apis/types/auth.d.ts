@@ -5,7 +5,7 @@ export type AuthCaptchaResponse = CaptchaDto;
 /**
  *  类型定义 [AuthLoginRequest]
  *  @来源 管理端认证模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthLoginRequest = UserLoginDto;
 
@@ -14,7 +14,7 @@ export type AuthLoginResponse = LoginResponseDto;
 /**
  *  类型定义 [AuthLogoutRequest]
  *  @来源 管理端认证模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthLogoutRequest = TokenDto;
 
@@ -23,7 +23,7 @@ export type AuthLogoutResponse = boolean;
 /**
  *  类型定义 [AuthRefreshTokenRequest]
  *  @来源 管理端认证模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthRefreshTokenRequest = RefreshTokenDto;
 
@@ -32,7 +32,7 @@ export type AuthRefreshTokenResponse = TokenDto;
 /**
  *  类型定义 [RsaPublicKeyDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type RsaPublicKeyDto = {
   /** 任意合法数值 */
@@ -45,7 +45,7 @@ export type RsaPublicKeyDto = {
 /**
  *  类型定义 [CaptchaDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type CaptchaDto = {
   /** 任意合法数值 */
@@ -60,7 +60,7 @@ export type CaptchaDto = {
 /**
  *  类型定义 [UserLoginDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type UserLoginDto = {
   /** 任意合法数值 */
@@ -79,7 +79,7 @@ export type UserLoginDto = {
 /**
  *  类型定义 [LoginResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type LoginResponseDto = {
   /** 任意合法数值 */
@@ -94,7 +94,7 @@ export type LoginResponseDto = {
 /**
  *  类型定义 [TokenDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type TokenDto = {
   /** 任意合法数值 */
@@ -109,7 +109,7 @@ export type TokenDto = {
 /**
  *  类型定义 [RefreshTokenDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type RefreshTokenDto = {
   /** 任意合法数值 */

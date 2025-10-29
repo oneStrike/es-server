@@ -87,6 +87,9 @@ export const dictionaryColumns =
 
 export const dictionaryItemColumns =
   formSchemaTransform.toTableColumns<DictionaryItemDto>(itemFormSchema, {
+    seq: {
+      dragSort: true,
+    },
     actions: {
       show: true,
     },
@@ -103,6 +106,7 @@ export const dictionaryItemColumns =
     },
     order: {
       width: 100,
+      sortable: true,
     },
     isEnabled: {
       show: true,

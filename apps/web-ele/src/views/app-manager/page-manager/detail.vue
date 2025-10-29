@@ -81,11 +81,6 @@ const detailCards = computed(() => [
         value: detail.value?.title || '-',
         type: 'text',
       },
-      {
-        label: '页面关键词',
-        value: detail.value?.pageKeywords || '-',
-        type: 'text',
-      },
     ],
   },
   {

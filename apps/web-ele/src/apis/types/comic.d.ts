@@ -1,7 +1,7 @@
 /**
  *  类型定义 [ComicCreateRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicCreateRequest = CreateComicDto;
 
@@ -10,7 +10,7 @@ export type ComicCreateResponse = IdDto;
 /**
  *  类型定义 [ComicPageRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicPageRequest = {
   /** 任意合法数值 */
@@ -88,7 +88,7 @@ export type ComicPageResponse = {
 /**
  *  类型定义 [ComicDetailRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicDetailRequest = {
   /** 任意合法数值 */
@@ -103,7 +103,7 @@ export type ComicDetailResponse = BaseComicDto;
 /**
  *  类型定义 [ComicUpdateRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicUpdateRequest = UpdateComicDto;
 
@@ -112,7 +112,7 @@ export type ComicUpdateResponse = IdDto;
 /**
  *  类型定义 [ComicBatchUpdateStatusRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicBatchUpdateStatusRequest = UpdateComicStatusDto;
 
@@ -121,7 +121,7 @@ export type ComicBatchUpdateStatusResponse = CountDto;
 /**
  *  类型定义 [ComicBatchUpdateRecommendedRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicBatchUpdateRecommendedRequest = UpdateComicRecommendedDto;
 
@@ -130,7 +130,7 @@ export type ComicBatchUpdateRecommendedResponse = CountDto;
 /**
  *  类型定义 [ComicBatchUpdateHotRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicBatchUpdateHotRequest = UpdateComicHotDto;
 
@@ -139,7 +139,7 @@ export type ComicBatchUpdateHotResponse = CountDto;
 /**
  *  类型定义 [ComicBatchUpdateNewRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicBatchUpdateNewRequest = UpdateComicNewDto;
 
@@ -148,7 +148,7 @@ export type ComicBatchUpdateNewResponse = CountDto;
 /**
  *  类型定义 [ComicDeleteRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicDeleteRequest = IdDto;
 
@@ -157,7 +157,7 @@ export type ComicDeleteResponse = IdDto;
 /**
  *  类型定义 [CreateComicDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type CreateComicDto = {
   /** 任意合法数值 */
@@ -222,7 +222,7 @@ export type CreateComicDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -235,7 +235,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseComicDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type BaseComicDto = {
   /** 任意合法数值 */
@@ -330,7 +330,7 @@ export type BaseComicDto = {
 /**
  *  类型定义 [ComicCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicCategoryDto = {
   /** 任意合法数值 */
@@ -345,7 +345,7 @@ export type ComicCategoryDto = {
 /**
  *  类型定义 [ComicAuthorDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type ComicAuthorDto = {
   /** 任意合法数值 */
@@ -364,7 +364,7 @@ export type ComicAuthorDto = {
 /**
  *  类型定义 [UpdateComicDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type UpdateComicDto = {
   /** 任意合法数值 */
@@ -443,7 +443,7 @@ export type UpdateComicDto = {
 /**
  *  类型定义 [UpdateComicStatusDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type UpdateComicStatusDto = {
   /** 任意合法数值 */
@@ -458,7 +458,7 @@ export type UpdateComicStatusDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type CountDto = {
   /** 任意合法数值 */
@@ -471,7 +471,7 @@ export type CountDto = {
 /**
  *  类型定义 [UpdateComicRecommendedDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type UpdateComicRecommendedDto = {
   /** 任意合法数值 */
@@ -486,7 +486,7 @@ export type UpdateComicRecommendedDto = {
 /**
  *  类型定义 [UpdateComicHotDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type UpdateComicHotDto = {
   /** 任意合法数值 */
@@ -501,7 +501,7 @@ export type UpdateComicHotDto = {
 /**
  *  类型定义 [UpdateComicNewDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type UpdateComicNewDto = {
   /** 任意合法数值 */

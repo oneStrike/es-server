@@ -1,7 +1,7 @@
 /**
  *  类型定义 [AuthorCreateRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthorCreateRequest = CreateAuthorDto;
 
@@ -10,7 +10,7 @@ export type AuthorCreateResponse = IdDto;
 /**
  *  类型定义 [AuthorPageRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthorPageRequest = {
   /** 任意合法数值 */
@@ -70,7 +70,7 @@ export type AuthorPageResponse = {
 /**
  *  类型定义 [AuthorDetailRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthorDetailRequest = {
   /** 任意合法数值 */
@@ -85,7 +85,7 @@ export type AuthorDetailResponse = AuthorDetailResponseDto;
 /**
  *  类型定义 [AuthorUpdateRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthorUpdateRequest = UpdateAuthorDto;
 
@@ -94,7 +94,7 @@ export type AuthorUpdateResponse = IdDto;
 /**
  *  类型定义 [AuthorBatchUpdateStatusRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthorBatchUpdateStatusRequest = BatchEnabledDto;
 
@@ -103,7 +103,7 @@ export type AuthorBatchUpdateStatusResponse = CountDto;
 /**
  *  类型定义 [AuthorBatchUpdateFeaturedRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthorBatchUpdateFeaturedRequest = UpdateAuthorFeaturedDto;
 
@@ -112,7 +112,7 @@ export type AuthorBatchUpdateFeaturedResponse = CountDto;
 /**
  *  类型定义 [AuthorDeleteRequest]
  *  @来源 作者管理模块
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthorDeleteRequest = IdDto;
 
@@ -121,7 +121,7 @@ export type AuthorDeleteResponse = IdDto;
 /**
  *  类型定义 [CreateAuthorDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type CreateAuthorDto = {
   /** 任意合法数值 */
@@ -148,7 +148,7 @@ export type CreateAuthorDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -161,7 +161,7 @@ export type IdDto = {
 /**
  *  类型定义 [AuthorPageResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthorPageResponseDto = {
   /** 任意合法数值 */
@@ -194,7 +194,7 @@ export type AuthorPageResponseDto = {
 /**
  *  类型定义 [AuthorDetailResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type AuthorDetailResponseDto = {
   /** 任意合法数值 */
@@ -235,7 +235,7 @@ export type AuthorDetailResponseDto = {
 /**
  *  类型定义 [UpdateAuthorDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type UpdateAuthorDto = {
   /** 任意合法数值 */
@@ -268,7 +268,7 @@ export type UpdateAuthorDto = {
 /**
  *  类型定义 [BatchEnabledDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type BatchEnabledDto = {
   /** 任意合法数值 */
@@ -283,7 +283,7 @@ export type BatchEnabledDto = {
 /**
  *  类型定义 [CountDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type CountDto = {
   /** 任意合法数值 */
@@ -296,7 +296,7 @@ export type CountDto = {
 /**
  *  类型定义 [UpdateAuthorFeaturedDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 08:54:44
+ *  @更新时间 2025-10-29 10:28:15
  */
 export type UpdateAuthorFeaturedDto = {
   /** 任意合法数值 */
