@@ -41,9 +41,8 @@ export class ContentTypeService extends RepositoryService {
     if (name) {
       where.name = { contains: name }
     }
-    if (isEnabled !== undefined) {
-      where.isEnabled = isEnabled
-    }
+    where.isEnabled = isEnabled || true
+
     return this.contentType.findMany({ where })
   }
 

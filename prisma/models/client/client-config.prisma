@@ -1,11 +1,11 @@
 /// 客户端系统配置
 model ClientConfig {
   /// 主键id
-  id             Int      @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   /// 创建时间
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   /// 更新时间
-  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("client_config")
 }
