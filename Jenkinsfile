@@ -6,7 +6,7 @@ pipeline {
         APP_NAME = 'akaiito-server'
         // Docker镜像仓库配置 - 腾讯云容器镜像服务
         DOCKER_REGISTRY = 'ccr.ccs.tencentyun.com'
-        DOCKER_IMAGE = '${DOCKER_REGISTRY}/akaiito/${APP_NAME}'  // 腾讯云镜像仓库完整路径
+        DOCKER_IMAGE = "${DOCKER_REGISTRY}/akaiito/${APP_NAME}"  // 使用双引号允许变量插值
     }
     
     stages {
@@ -230,11 +230,12 @@ pipeline {
 
 // 辅助函数
 def deployBlueGreen() {
-    // 获取当前活跃环境
-    def currentEnv = sh(
-        script: "docker service ls --filter name=${APP_NAME}-prod --format '{{.Name}}' | head -1",
-        returnStdout: true
-    ).trim()
+    node {
+        // 获取当前活跃环境
+        def currentEnv = sh(
+            script: "docker service ls --filter name=${APP_NAME}-prod --format '{{.Name}}' | head -1",
+            returnStdout: true
+        ).trim()
     
     def targetEnv = currentEnv.contains('blue') ? 'green' : 'blue'
     
@@ -258,6 +259,7 @@ def deployBlueGreen() {
     sh """
     docker-compose -f ${env.COMPOSE_FILE} -p ${APP_NAME}-${currentEnv} down
     """
+    }
 }
 
 def getHealthCheckUrl() {
@@ -269,24 +271,26 @@ def getAppUrl() {
 }
 
 def rollback() {
-    // 获取上一个成功版本
-    def lastSuccessfulBuild = currentBuild.previousBuild
-    while (lastSuccessfulBuild != null && lastSuccessfulBuild.result != 'SUCCESS') {
-        lastSuccessfulBuild = lastSuccessfulBuild.previousBuild
+    node {
+        // 获取上一个成功版本
+        def lastSuccessfulBuild = currentBuild.previousBuild
+        while (lastSuccessfulBuild != null && lastSuccessfulBuild.result != 'SUCCESS') {
+            lastSuccessfulBuild = lastSuccessfulBuild.previousBuild
+        }
+        
+        if (lastSuccessfulBuild == null) {
+            error "没有找到可回滚的版本"
+        }
+        
+        def lastVersion = "${lastSuccessfulBuild.number}-${lastSuccessfulBuild.getChangeSets()[0].getRevisions()[0].getRevision().substring(0, 7)}"
+        
+        echo "回滚到版本: ${lastVersion}"
+        
+        sh """
+        docker-compose -f ${env.COMPOSE_FILE} -p ${APP_NAME}-${env.DEPLOY_ENV} pull app:${lastVersion}
+        docker-compose -f ${env.COMPOSE_FILE} -p ${APP_NAME}-${env.DEPLOY_ENV} up -d --no-deps app
+        """
     }
-    
-    if (lastSuccessfulBuild == null) {
-        error "没有找到可回滚的版本"
-    }
-    
-    def lastVersion = "${lastSuccessfulBuild.number}-${lastSuccessfulBuild.getChangeSets()[0].getRevisions()[0].getRevision().substring(0, 7)}"
-    
-    echo "回滚到版本: ${lastVersion}"
-    
-    sh """
-    docker-compose -f ${env.COMPOSE_FILE} -p ${APP_NAME}-${env.DEPLOY_ENV} pull app:${lastVersion}
-    docker-compose -f ${env.COMPOSE_FILE} -p ${APP_NAME}-${env.DEPLOY_ENV} up -d --no-deps app
-    """
 }
 
 def sendNotification(message, status) {
