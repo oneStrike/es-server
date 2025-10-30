@@ -1,7 +1,7 @@
 # ========================================
 # 构建阶段 - 安装依赖
 # ========================================
-FROM node:20-alpine AS dependencies
+FROM node:22-alpine AS dependencies
 
 # 安装 pnpm
 RUN npm install -g pnpm@9.15.4
