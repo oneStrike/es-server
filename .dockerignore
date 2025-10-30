@@ -1,0 +1,103 @@
+# 依赖目录
+node_modules
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 构建产物
+dist
+build
+.tsbuildinfo
+
+# 测试和覆盖率
+coverage
+*.lcov
+.nyc_output
+test
+
+# 环境变量文件（敏感信息）
+.env
+.env.*
+!.env.production.example
+
+# 日志文件
+logs
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+
+# Git 相关
+.git
+.gitignore
+.github
+
+# IDE 配置
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.history
+
+# OS 文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker 相关
+Dockerfile
+.dockerignore
+docker
+docker-compose*.yml
+
+# CI/CD
+.gitlab-ci.yml
+.circleci
+.github/workflows
+
+# 文档
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+
+# 开发工具配置
+.husky
+.prettierrc
+.prettierignore
+.eslintrc
+eslint.config.mjs
+commitlint.config.js
+
+# Webpack 开发配置
+webpack.config.js
+
+# 上传文件（运行时生成）
+uploads
+
+# RSA 密钥（敏感）
+rsa
+*.key
+*.pem
+
+# 数据库文件
+*.sqlite
+*.db
+
+# MaxMind 数据库
+data
+
+# Prisma 迁移文件（生产环境应单独部署）
+prisma/migrations
+
+# 其他不必要的配置
+.editorconfig
+.nvmrc
+.npmrc
