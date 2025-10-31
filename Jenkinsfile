@@ -18,6 +18,12 @@ pipeline {
         APP_NAME = 'es-server'
         // 部署环境
         DEPLOY_ENV = 'production'
+        
+        // NVM 环境变量
+        NVM_SETUP = '''
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+        '''
     }
     
     // 注释掉 tools 部分，改为在脚本中安装 Node.js
@@ -52,29 +58,69 @@ pipeline {
             steps {
                 echo '🔧 设置构建环境...'
                 
-                // 安装 Node.js 和 PNPM (Linux 环境)
-                sh """
-                    # 检查并安装 Node.js
-                    if ! command -v node &> /dev/null; then
-                        echo "安装 Node.js ${NODE_VERSION}..."
-                        curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
-                        sudo apt-get install -y nodejs
-                    fi
+                // 使用 Docker 容器来运行构建任务
+                script {
+                    // 检查是否已有 Node.js 和 pnpm
+                    def nodeExists = sh(
+                        script: 'command -v node >/dev/null 2>&1',
+                        returnStatus: true
+                    ) == 0
                     
-                    # 显示版本信息
-                    node --version
-                    npm --version
+                    def pnpmExists = sh(
+                        script: 'command -v pnpm >/dev/null 2>&1',
+                        returnStatus: true
+                    ) == 0
                     
-                    # 安装 PNPM
-                    npm install -g pnpm@${PNPM_VERSION}
-                    pnpm --version
-                """
+                    if (!nodeExists) {
+                        echo '⚠️ Node.js 未安装，尝试使用 NVM 安装...'
+                        sh """
+                            # 安装 NVM
+                            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+                            export NVM_DIR="\$HOME/.nvm"
+                            [ -s "\$NVM_DIR/nvm.sh" ] && \\. "\$NVM_DIR/nvm.sh"
+                            
+                            # 安装 Node.js
+                            nvm install ${NODE_VERSION}
+                            nvm use ${NODE_VERSION}
+                            nvm alias default ${NODE_VERSION}
+                        """
+                    }
+                    
+                    if (!pnpmExists) {
+                        echo '📦 安装 PNPM...'
+                        sh """
+                            # 确保 Node.js 可用
+                            export NVM_DIR="\$HOME/.nvm"
+                            [ -s "\$NVM_DIR/nvm.sh" ] && \\. "\$NVM_DIR/nvm.sh"
+                            
+                            # 安装 PNPM
+                            npm install -g pnpm@${PNPM_VERSION}
+                        """
+                    }
+                    
+                    // 显示版本信息
+                    sh """
+                        export NVM_DIR="\$HOME/.nvm"
+                        [ -s "\$NVM_DIR/nvm.sh" ] && \\. "\$NVM_DIR/nvm.sh"
+                        
+                        echo "Node.js version:"
+                        node --version
+                        echo "NPM version:"
+                        npm --version
+                        echo "PNPM version:"
+                        pnpm --version
+                    """
+                }
                 
                 // 缓存依赖
                 script {
                     if (fileExists('pnpm-lock.yaml')) {
                         echo '📦 安装项目依赖...'
-                        sh 'pnpm install --frozen-lockfile'
+                        sh """
+                            export NVM_DIR="\$HOME/.nvm"
+                            [ -s "\$NVM_DIR/nvm.sh" ] && \\. "\$NVM_DIR/nvm.sh"
+                            pnpm install --frozen-lockfile
+                        """
                     } else {
                         error '❌ pnpm-lock.yaml 文件不存在'
                     }
@@ -87,21 +133,30 @@ pipeline {
                 stage('Lint') {
                     steps {
                         echo '🔍 运行代码检查...'
-                        sh 'pnpm run lint'
+                        sh """
+                            ${NVM_SETUP}
+                            pnpm run lint
+                        """
                     }
                 }
                 
                 stage('Type Check') {
                     steps {
                         echo '📝 运行类型检查...'
-                        sh 'pnpm run type-check'
+                        sh """
+                            ${NVM_SETUP}
+                            pnpm run type-check
+                        """
                     }
                 }
                 
                 stage('Format Check') {
                     steps {
-                        echo '💅 检查代码格式...'
-                        sh 'npx prettier --check "src/**/*.{ts,js,json}"'
+                        echo '🎨 检查代码格式...'
+                        sh """
+                            ${NVM_SETUP}
+                            npx prettier --check "src/**/*.{ts,js,json}"
+                        """
                     }
                 }
             }
@@ -112,10 +167,16 @@ pipeline {
                 echo '🗄️ 设置数据库...'
                 
                 // 生成 Prisma Client
-                sh 'pnpm run prisma:generate'
+                sh """
+                    ${NVM_SETUP}
+                    pnpm run prisma:generate
+                """
                 
                 // 格式化 Prisma schema
-                sh 'pnpm run prisma:format'
+                sh """
+                    ${NVM_SETUP}
+                    pnpm run prisma:format
+                """
             }
         }
         
@@ -124,7 +185,10 @@ pipeline {
                 stage('Unit Tests') {
                     steps {
                         echo '🧪 运行单元测试...'
-                        sh 'pnpm run test:cov'
+                        sh """
+                            ${NVM_SETUP}
+                            pnpm run test:cov
+                        """
                     }
                     post {
                         always {
@@ -149,7 +213,10 @@ pipeline {
                     }
                     steps {
                         echo '🔄 运行端到端测试...'
-                        sh 'pnpm run test:e2e'
+                        sh """
+                            ${NVM_SETUP}
+                            pnpm run test:e2e
+                        """
                     }
                 }
             }
@@ -160,7 +227,10 @@ pipeline {
                 echo '🏗️ 构建应用...'
                 
                 // 构建 NestJS 应用
-                sh 'pnpm run build'
+                sh """
+                    ${NVM_SETUP}
+                    pnpm run build
+                """
                 
                 // 验证构建产物
                 script {
@@ -243,7 +313,10 @@ pipeline {
                 stage('Dependency Check') {
                     steps {
                         echo '🔒 检查依赖安全性...'
-                        sh 'pnpm audit --audit-level moderate'
+                        sh """
+                            ${NVM_SETUP}
+                            pnpm audit --audit-level moderate
+                        """
                     }
                 }
                 
