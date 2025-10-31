@@ -30,7 +30,7 @@
     "prisma:seed": "prisma db seed",
     "prisma:update": "pnpm prisma:generate && pnpm prisma:push && pnpm prisma:seed",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "docker:build": "docker build -t akaiito-server .",
+    "docker:build": "docker build --cache-from akaiito-server:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t akaiito-server .",
     "docker:run": "docker run -p 3000:3000 --env-file .env.production akaiito-server",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",

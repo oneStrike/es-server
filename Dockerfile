@@ -1,49 +1,8 @@
 # ========================================
-# 多阶段构建 Dockerfile for NestJS 应用
+# 生产运行时 Dockerfile for NestJS 应用
+# 注意：此 Dockerfile 假设构建产物已由 Jenkins 生成
 # ========================================
 
-# 依赖安装阶段
-FROM node:22-alpine AS dependencies
-
-# 设置工作目录
-WORKDIR /app
-
-# 安装 pnpm
-RUN npm install -g pnpm@9.15.4
-
-# 复制依赖配置文件
-COPY package.json pnpm-lock.yaml ./
-
-# 安装所有依赖（包括 devDependencies，用于构建）
-RUN pnpm install --frozen-lockfile
-
-# ========================================
-# 构建阶段 - 编译 TypeScript
-FROM node:22-alpine AS builder
-
-# 设置工作目录
-WORKDIR /app
-
-# 安装 pnpm
-RUN npm install -g pnpm@9.15.4
-
-# 从依赖阶段复制 node_modules
-COPY --from=dependencies /app/node_modules ./node_modules
-
-# 复制源代码和配置文件
-COPY . .
-
-# 生成 Prisma Client
-RUN pnpm prisma:generate
-
-# 构建应用
-RUN pnpm run build
-
-# 清理开发依赖，仅保留生产依赖
-RUN pnpm install --prod --frozen-lockfile
-
-# ========================================
-# 生产运行阶段
 FROM node:22-alpine AS production
 
 # 安装 dumb-init 用于正确处理信号
@@ -60,12 +19,18 @@ WORKDIR /app
 RUN mkdir -p /app/logs /app/uploads && \
     chown -R nestjs:nodejs /app
 
-# 从构建阶段复制构建产物
-COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
-COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./
+# 首先复制 package.json（用于缓存优化）
+COPY --chown=nestjs:nodejs ./package.json ./
+
+# 复制生产依赖（这些文件变化频率较低，放在前面利于缓存）
+COPY --chown=nestjs:nodejs ./node_modules ./node_modules
+
+# 复制 Prisma 相关文件
+COPY --chown=nestjs:nodejs ./prisma ./prisma
+COPY --chown=nestjs:nodejs ./prisma.config.ts ./
+
+# 最后复制构建产物（这些文件变化频率最高）
+COPY --chown=nestjs:nodejs ./dist ./dist
 
 # 设置 node_modules/.bin 到 PATH
 ENV PATH=/app/node_modules/.bin:$PATH
