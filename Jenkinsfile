@@ -222,8 +222,12 @@ pipeline {
         }
         
         always {
-            // 清理工作空间
-            cleanWs()
+            script {
+                node {
+                    // 清理工作空间
+                    cleanWs()
+                }
+            }
         }
     }
 }
