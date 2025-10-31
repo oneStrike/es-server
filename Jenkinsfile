@@ -162,7 +162,6 @@ pipeline {
                 // 发送成功通知
                 def message = """
                 ✅ 部署成功!
-                📦 应用: ${APP_NAME}
                 🌍 环境: ${env.DEPLOY_ENV}
                 🏷️ 版本: ${env.BUILD_VERSION}
                 👤 作者: ${env.GIT_COMMIT_AUTHOR}
@@ -190,7 +189,6 @@ pipeline {
                 // 发送失败通知
                 def message = """
                 ❌ 部署失败!
-                📦 应用: ${APP_NAME}
                 🌍 环境: ${env.DEPLOY_ENV}
                 🏷️ 版本: ${env.BUILD_VERSION}
                 👤 作者: ${env.GIT_COMMIT_AUTHOR}
@@ -222,8 +220,12 @@ pipeline {
         }
         
         always {
-            // 清理工作空间
-            cleanWs()
+            script {
+                node {
+                    // 清理工作空间
+                    cleanWs()
+                }
+            }
         }
     }
 }
