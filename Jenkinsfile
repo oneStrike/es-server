@@ -184,6 +184,21 @@ pipeline {
                 echo '🐳 构建 Docker 镜像...'
                 
                 script {
+                    // 检查 Docker 是否可用
+                    def dockerAvailable = sh(
+                        script: 'command -v docker >/dev/null 2>&1',
+                        returnStatus: true
+                    ) == 0
+                    
+                    if (!dockerAvailable) {
+                        echo '⚠️ Docker 不可用，跳过 Docker 构建阶段'
+                        echo '💡 提示：请确保 Jenkins 容器已正确配置 Docker 访问权限'
+                        echo '   - 挂载 Docker socket: -v /var/run/docker.sock:/var/run/docker.sock'
+                        echo '   - 或使用 Docker-in-Docker (DinD) 配置'
+                        currentBuild.result = 'UNSTABLE'
+                        return
+                    }
+                    
                     // 构建 Docker 镜像
                     def imageTag = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
                     def fullImageName = "${DOCKER_IMAGE_FULL_PATH}:${imageTag}"
@@ -299,11 +314,28 @@ pipeline {
         always {
             echo '🧹 清理工作空间...'
             
-            // 清理 Docker 镜像（保留最新的）
-            sh '''
-                docker image prune -f
-                docker system prune -f --volumes
-            '''
+            // 清理 Docker 镜像（仅在 Docker 可用时）
+            script {
+                def dockerAvailable = sh(
+                    script: 'command -v docker >/dev/null 2>&1',
+                    returnStatus: true
+                ) == 0
+                
+                if (dockerAvailable) {
+                    try {
+                        sh '''
+                            docker image prune -f
+                            docker system prune -f --volumes
+                        '''
+                        echo '✅ Docker 清理完成'
+                    } catch (Exception e) {
+                        echo "⚠️ Docker 清理失败: ${e.getMessage()}"
+                        echo '💡 这通常不会影响构建结果'
+                    }
+                } else {
+                    echo '⚠️ Docker 不可用，跳过 Docker 清理'
+                }
+            }
             
             // 归档构建产物
             archiveArtifacts artifacts: 'dist/**/*', fingerprint: true, allowEmptyArchive: true
