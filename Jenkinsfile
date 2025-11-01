@@ -96,28 +96,6 @@ pipeline {
         }
         
         stage('Build and Push Docker Image') {
-            when {
-                expression {
-                    // 使用Git命令动态获取当前分支信息
-                    def currentBranch = sh(
-                        script: 'git rev-parse --abbrev-ref HEAD 2>/dev/null || git branch -r --contains HEAD | head -1 | sed "s/.*origin\\///" | xargs',
-                        returnStdout: true
-                    ).trim()
-                    
-                    echo "🔍 检测到的当前分支: ${currentBranch}"
-                    
-                    // 检查是否为目标分支
-                    def targetBranches = ['main', 'master', 'develop']
-                    def isTargetBranch = targetBranches.any { branch ->
-                        currentBranch.contains(branch)
-                    }
-                    
-                    echo "📋 目标分支列表: ${targetBranches}"
-                    echo "✅ 是否为目标分支: ${isTargetBranch}"
-                    
-                    return isTargetBranch
-                }
-            }
             steps {
                 script {
                     echo '🐳 构建 Docker 镜像...'
