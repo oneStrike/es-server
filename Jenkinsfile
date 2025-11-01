@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        node {
-            label 'any'
-        }
-    }
+    agent any
     
     tools {
         nodejs 'NodeJS-22'
@@ -12,14 +8,14 @@ pipeline {
     
     environment {
         REGISTRY_URL = 'ccr.ccs.tencentyun.com'
-        IMAGE_NAME = 'es-server'
-        NAMESPACE = 'es-namespace'
+        IMAGE_NAME = 'akaiito-server'
+        NAMESPACE = 'akaiito'
     }
     
     stages {
         stage('Setup Environment') {
             steps {
-                echo '🚀 Setting up environment...'
+                echo '🚀 设置构建环境...'
                 sh 'node --version'
                 sh 'npm --version'
                 
@@ -31,14 +27,14 @@ pipeline {
         
         stage('Install Dependencies') {
             steps {
-                echo '📦 Installing dependencies...'
+                echo '📦 安装项目依赖...'
                 sh 'pnpm install --frozen-lockfile'
             }
         }
         
         stage('Code Quality') {
             steps {
-                echo '🔍 Running code quality checks...'
+                echo '🔍 运行代码质量检查...'
                 
                 // ESLint 检查
                 sh 'pnpm run lint'
@@ -53,14 +49,14 @@ pipeline {
         
         stage('Test') {
             steps {
-                echo '🧪 Running tests...'
+                echo '🧪 运行单元测试...'
                 sh 'pnpm run test'
             }
         }
         
         stage('Build Application') {
             steps {
-                echo '🏗️ Building application...'
+                echo '🏗️ 构建应用程序...'
                 sh 'pnpm run build'
                 
                 // 验证构建结果
@@ -78,7 +74,7 @@ pipeline {
             }
             steps {
                 script {
-                    echo '🐳 Building Docker image...'
+                    echo '🐳 构建 Docker 镜像...'
                     
                     def imageTag = "${env.BUILD_NUMBER}"
                     def fullImageName = "${REGISTRY_URL}/${NAMESPACE}/${IMAGE_NAME}:${imageTag}"
@@ -92,7 +88,7 @@ pipeline {
                         dockerImage.push('latest')
                     }
                     
-                    echo "✅ Docker image pushed: ${fullImageName}"
+                    echo "✅ Docker 镜像推送完成: ${fullImageName}"
                 }
             }
         }
@@ -100,7 +96,7 @@ pipeline {
     
     post {
         always {
-            echo '🧹 Cleaning up...'
+            echo '🧹 清理工作空间...'
             
             // 清理 Docker 镜像（保留最新的几个版本）
             sh '''
@@ -110,15 +106,15 @@ pipeline {
         }
         
         success {
-            echo '✅ Pipeline completed successfully!'
+            echo '✅ 流水线执行成功！'
         }
         
         failure {
-            echo '❌ Pipeline failed!'
+            echo '❌ 流水线执行失败！'
         }
         
         unstable {
-            echo '⚠️ Pipeline completed with warnings!'
+            echo '⚠️ 流                                                                                                                                 告！'
         }
     }
 }
