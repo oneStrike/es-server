@@ -97,21 +97,25 @@ pipeline {
         
         stage('Build and Push Docker Image') {
             when {
-                anyOf {
-                    branch 'main'
-                    branch 'master'
-                    branch 'develop'
-                    branch 'origin/main'
-                    branch 'origin/master'
-                    branch 'origin/develop'
-                    expression { 
-                        return env.BRANCH_NAME?.contains('main') || 
-                               env.BRANCH_NAME?.contains('master') || 
-                               env.BRANCH_NAME?.contains('develop') ||
-                               env.GIT_BRANCH?.contains('main') ||
-                               env.GIT_BRANCH?.contains('master') ||
-                               env.GIT_BRANCH?.contains('develop')
+                expression {
+                    // 使用Git命令动态获取当前分支信息
+                    def currentBranch = sh(
+                        script: 'git rev-parse --abbrev-ref HEAD 2>/dev/null || git branch -r --contains HEAD | head -1 | sed "s/.*origin\\///" | xargs',
+                        returnStdout: true
+                    ).trim()
+                    
+                    echo "🔍 检测到的当前分支: ${currentBranch}"
+                    
+                    // 检查是否为目标分支
+                    def targetBranches = ['main', 'master', 'develop']
+                    def isTargetBranch = targetBranches.any { branch ->
+                        currentBranch.contains(branch)
                     }
+                    
+                    echo "📋 目标分支列表: ${targetBranches}"
+                    echo "✅ 是否为目标分支: ${isTargetBranch}"
+                    
+                    return isTargetBranch
                 }
             }
             steps {
