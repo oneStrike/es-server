@@ -24,13 +24,17 @@ pipeline {
                     def fullImageName = "${REGISTRY_URL}/${NAMESPACE}/${IMAGE_NAME}:${imageTag}"
                     
                     try {
-                        // 构建 Docker 镜像（包含所有构建步骤）
-                        def dockerImage = docker.build(fullImageName)
+                        // 启用 BuildKit 并构建 Docker 镜像
+                        sh """
+                            export DOCKER_BUILDKIT=1
+                            docker buildx build --platform linux/amd64 -t ${fullImageName} --load .
+                        """
                         
                         // 推送到镜像仓库
                         docker.withRegistry("https://${REGISTRY_URL}", 'tencent-cloud-registry') {
-                            dockerImage.push()
-                            dockerImage.push('latest')
+                            sh "docker push ${fullImageName}"
+                            sh "docker tag ${fullImageName} ${REGISTRY_URL}/${NAMESPACE}/${IMAGE_NAME}:latest"
+                            sh "docker push ${REGISTRY_URL}/${NAMESPACE}/${IMAGE_NAME}:latest"
                         }
                         
                         echo "✅ Docker 镜像推送完成: ${fullImageName}"
