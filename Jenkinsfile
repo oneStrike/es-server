@@ -188,18 +188,16 @@ pipeline {
     
     post {
         always {
-            node {
-                script {
-                    try {
-                        echo '🧹 清理工作空间...'
-                        // 清理 Docker 资源
-                        sh 'docker system prune -f || true'
-                        sh 'docker image prune -f || true'
-                        // 清理工作空间
-                        cleanWs()
-                    } catch (Exception e) {
-                        echo "清理过程中出现错误: ${e.getMessage()}"
-                    }
+            script {
+                try {
+                    echo '🧹 清理工作空间...'
+                    // 清理 Docker 资源
+                    sh 'docker system prune -f || true'
+                    sh 'docker image prune -f || true'
+                    // 清理工作空间
+                    cleanWs()
+                } catch (Exception e) {
+                    echo "清理过程中出现错误: ${e.getMessage()}"
                 }
             }
         }
