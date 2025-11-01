@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:22-alpine'
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.cache:/root/.cache'
-        }
-    }
+    agent any
     
     environment {
         // Node.js 版本（由 Docker 镜像提供）
@@ -56,11 +51,22 @@ pipeline {
                 echo '🔧 设置构建环境...'
                 
                 script {
-                    // 安装 Docker（用于后续 Docker 构建阶段）
-                    sh '''
-                        # 安装 Docker CLI（Alpine Linux）
-                        apk add --no-cache docker-cli
-                    '''
+                    // 检查并安装 Node.js（如果需要）
+                    def nodeInstalled = sh(
+                        script: 'command -v node >/dev/null 2>&1',
+                        returnStatus: true
+                    ) == 0
+                    
+                    if (!nodeInstalled) {
+                        echo '📦 安装 Node.js...'
+                        // 使用 NodeJS 插件或者直接下载安装
+                        sh '''
+                            # 下载并安装 Node.js 22
+                            curl -fsSL https://nodejs.org/dist/v22.12.0/node-v22.12.0-linux-x64.tar.xz | tar -xJ
+                            export PATH=$PWD/node-v22.12.0-linux-x64/bin:$PATH
+                            echo "export PATH=$PWD/node-v22.12.0-linux-x64/bin:$PATH" >> ~/.bashrc
+                        '''
+                    }
                     
                     // 安装 PNPM
                     sh """
@@ -72,10 +78,8 @@ pipeline {
                         echo "NPM version: \$(npm --version)"
                         echo "PNPM version: \$(pnpm --version)"
                     """
-                }
-                
-                // 安装项目依赖
-                script {
+                    
+                    // 安装项目依赖
                     if (fileExists('pnpm-lock.yaml')) {
                         echo '📦 安装项目依赖...'
                         sh 'pnpm install --frozen-lockfile'
