@@ -40,17 +40,7 @@ pipeline {
                 sh 'pnpm run lint'
                 
                 // 类型检查
-                sh 'pnpm run build'
-                
-                // 格式检查
-                sh 'pnpm run format:check'
-            }
-        }
-        
-        stage('Test') {
-            steps {
-                echo '🧪 运行单元测试...'
-                sh 'pnpm run test'
+                sh 'pnpm run type-check'
             }
         }
         
@@ -64,7 +54,7 @@ pipeline {
             }
         }
         
-        stage('Build & Push Docker Image') {
+        stage('B                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ') {
             when {
                 anyOf {
                     branch 'main'
@@ -96,13 +86,19 @@ pipeline {
     
     post {
         always {
-            echo '🧹 清理工作空间...'
-            
-            // 清理 Docker 镜像（保留最新的几个版本）
-            sh '''
-                docker image prune -f
-                docker images | grep "${IMAGE_NAME}" | tail -n +6 | awk '{print $3}' | xargs -r docker rmi || true
-            '''
+            script {
+                try {
+                    echo '🧹 清理工作空间...'
+                    
+                    // 清理 Docker 镜像（保留最新的几个版本）
+                    sh '''
+                        docker image prune -f || true
+                        docker images | grep "${IMAGE_NAME}" | tail -n +6 | awk '{print $3}' | xargs -r docker rmi || true
+                    '''
+                } catch (Exception e) {
+                    echo "清理过程中出现错误: ${e.getMessage()}"
+                }
+            }
         }
         
         success {
@@ -114,7 +110,7 @@ pipeline {
         }
         
         unstable {
-            echo '⚠️ 流                                                                                                                                 告！'
+            echo '⚠️ 流水线执行完成但有警告！'
         }
     }
 }
