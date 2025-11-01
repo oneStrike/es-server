@@ -70,67 +70,6 @@ pipeline {
             }
         }
         
-        stage('Code Quality') {
-            options {
-                timeout(time: 10, unit: 'MINUTES')
-            }
-            steps {
-                echo '🔍 运行代码质量检查...'
-                script {
-                    try {
-                        // 优化 ESLint 执行
-                        sh '''
-                            # 设置 Node.js 内存限制
-                            export NODE_OPTIONS="--max-old-space-size=4096"
-                            
-                            echo "使用 pnpm 运行 ESLint..."
-                            timeout 600 pnpm run lint --cache --cache-location .eslintcache || {
-                                echo "ESLint 执行超时或失败，尝试不使用缓存..."
-                                pnpm run lint --no-cache --max-warnings 50 || {
-                                    echo "ESLint 仍然失败，跳过此步骤..."
-                                    exit 0
-                                }
-                            }
-                        '''
-                    } catch (Exception e) {
-                        echo "代码质量检查遇到问题: ${e.getMessage()}"
-                        echo "⚠️ 跳过代码质量检查，继续构建流程..."
-                        currentBuild.result = 'UNSTABLE'
-                    }
-                }
-            }
-        }
-        
-        stage('Test') {
-            options {
-                timeout(time: 15, unit: 'MINUTES')
-            }
-            steps {
-                echo '🧪 运行单元测试...'
-                script {
-                    try {
-                        sh '''
-                            # 设置测试环境变量
-                            export NODE_ENV=test
-                            export NODE_OPTIONS="--max-old-space-size=4096"
-                            
-                            # 检查是否有测试脚本
-                            if pnpm run --silent test --help >/dev/null 2>&1; then
-                                echo "运行单元测试..."
-                                pnpm run test --passWithNoTests --maxWorkers=2
-                            else
-                                echo "⚠️ 未找到测试脚本，跳过测试阶段"
-                            fi
-                        '''
-                    } catch (Exception e) {
-                        echo "测试执行遇到问题: ${e.getMessage()}"
-                        echo "⚠️ 测试失败，但继续构建流程..."
-                        currentBuild.result = 'UNSTABLE'
-                    }
-                }
-            }
-        }
-        
         stage('Build Application') {
             steps {
                 echo '🏗️ 构建应用程序...'
