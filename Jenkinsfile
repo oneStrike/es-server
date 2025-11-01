@@ -73,6 +73,12 @@ pipeline {
             steps {
                 echo '🏗️ 构建应用程序...'
                 script {
+                    // 添加调试信息
+                    echo "当前分支信息："
+                    echo "BRANCH_NAME: ${env.BRANCH_NAME}"
+                    echo "GIT_BRANCH: ${env.GIT_BRANCH}"
+                    echo "GIT_COMMIT: ${env.GIT_COMMIT}"
+                    
                     try {
                         sh '''
                             export NODE_OPTIONS="--max-old-space-size=4096"
@@ -95,6 +101,17 @@ pipeline {
                     branch 'main'
                     branch 'master'
                     branch 'develop'
+                    branch 'origin/main'
+                    branch 'origin/master'
+                    branch 'origin/develop'
+                    expression { 
+                        return env.BRANCH_NAME?.contains('main') || 
+                               env.BRANCH_NAME?.contains('master') || 
+                               env.BRANCH_NAME?.contains('develop') ||
+                               env.GIT_BRANCH?.contains('main') ||
+                               env.GIT_BRANCH?.contains('master') ||
+                               env.GIT_BRANCH?.contains('develop')
+                    }
                 }
             }
             steps {
