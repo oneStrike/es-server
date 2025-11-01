@@ -1,6 +1,14 @@
 pipeline {
     agent any
     
+    options {
+        // 增加超时时间和重试机制
+        timeout(time: 30, unit: 'MINUTES')
+        retry(2)
+        // Git 克隆配置
+        skipDefaultCheckout(true)
+    }
+    
     tools {
         nodejs 'NodeJS-22'
         dockerTool 'docker-latest'
@@ -8,11 +16,25 @@ pipeline {
     
     environment {
         REGISTRY_URL = 'ccr.ccs.tencentyun.com'
-        IMAGE_NAME = 'akaiito-server'
         NAMESPACE = 'akaiito'
+        IMAGE_NAME = 'akaiito-server'
     }
     
     stages {
+        stage('Checkout') {
+            steps {
+                echo '📥 检出代码...'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [
+                        [$class: 'CloneOption', timeout: 20, shallow: true, depth: 1],
+                        [$class: 'CheckoutOption', timeout: 20]
+                    ],
+                    userRemoteConfigs: [[url: 'https://github.com/oneStrike/es-server.git']]
+                ])
+            }
+        }
         stage('Setup Environment') {
             steps {
                 echo '🚀 设置构建环境...'
@@ -28,7 +50,24 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo '📦 安装项目依赖...'
-                sh 'pnpm install --frozen-lockfile'
+                script {
+                    try {
+                        // 设置 npm 配置以提高稳定性
+                        sh '''
+                            npm config set registry https://registry.npmmirror.com/
+                            npm config set timeout 300000
+                            npm config set fetch-timeout 300000
+                            npm config set fetch-retry-mintimeout 20000
+                            npm config set fetch-retry-maxtimeout 120000
+                        '''
+                        sh 'npm install --production'
+                    } catch (Exception e) {
+                        echo "依赖安装失败，尝试清理缓存后重试..."
+                        sh 'npm cache clean --force'
+                        sh 'rm -rf node_modules package-lock.json'
+                        sh 'npm install --production'
+                    }
+                }
             }
         }
         
@@ -86,29 +125,27 @@ pipeline {
     
     post {
         always {
-            script {
-                try {
-                    echo '🧹 清理工作空间...'
-                    
-                    // 清理 Docker 镜像（保留最新的几个版本）
-                    sh '''
-                        docker image prune -f || true
-                        docker images | grep "${IMAGE_NAME}" | tail -n +6 | awk '{print $3}' | xargs -r docker rmi || true
-                    '''
-                } catch (Exception e) {
-                    echo "清理过程中出现错误: ${e.getMessage()}"
+            node {
+                script {
+                    try {
+                        echo '🧹 清理工作空间...'
+                        // 清理 Docker 资源
+                        sh 'docker system prune -f || true'
+                        sh 'docker image prune -f || true'
+                        // 清理工作空间
+                        cleanWs()
+                    } catch (Exception e) {
+                        echo "清理过程中出现错误: ${e.getMessage()}"
+                    }
                 }
             }
         }
-        
         success {
             echo '✅ 流水线执行成功！'
         }
-        
         failure {
             echo '❌ 流水线执行失败！'
         }
-        
         unstable {
             echo '⚠️ 流水线执行完成但有警告！'
         }
