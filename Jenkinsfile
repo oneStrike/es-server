@@ -65,11 +65,12 @@ pipeline {
                         sh 'pnpm store prune'
                         sh 'rm -rf node_modules pnpm-lock.yaml'
                         sh 'pnpm install'
+                        sh 'pnpm prisma:generate'
                     }
                 }
             }
         }
-        
+
         stage('Build Application') {
             steps {
                 echo '🏗️ 构建应用程序...'
