@@ -54,6 +54,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
+      args:
+        NODE_ENV: production
     container_name: akaiito-app
     restart: unless-stopped
     depends_on:
@@ -75,10 +77,10 @@ services:
       REDIS_DB: 0
 
       # JWT 配置（生产环境必须修改）
-      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
-      ADMIN_JWT_REFRESH_SECRET: ${ADMIN_JWT_REFRESH_SECRET}
-      CLIENT_JWT_SECRET: ${CLIENT_JWT_SECRET}
-      CLIENT_JWT_REFRESH_SECRET: ${CLIENT_JWT_REFRESH_SECRET}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET:-default_admin_jwt_secret_change_in_production}
+      ADMIN_JWT_REFRESH_SECRET: ${ADMIN_JWT_REFRESH_SECRET:-default_admin_refresh_secret_change_in_production}
+      CLIENT_JWT_SECRET: ${CLIENT_JWT_SECRET:-default_client_jwt_secret_change_in_production}
+      CLIENT_JWT_REFRESH_SECRET: ${CLIENT_JWT_REFRESH_SECRET:-default_client_refresh_secret_change_in_production}
 
       # RSA 密钥路径
       ADMIN_RSA_PRIVATE_KEY_PATH: /app/secrets/admin_private.key
@@ -104,7 +106,7 @@ services:
     networks:
       - akaiito-network
     healthcheck:
-      test: [CMD, node, -e, "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: [CMD, curl, -f, 'http://localhost:3000/api/health']
       interval: 30s
       timeout: 10s
       start_period: 40s

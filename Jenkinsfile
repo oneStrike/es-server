@@ -1,16 +1,6 @@
 pipeline {
     agent any
     
-    options {
-        // Git 克隆配置
-        skipDefaultCheckout(true)
-    }
-    
-    tools {
-        nodejs 'NodeJS-22'
-        dockerTool 'docker-latest'
-    }
-    
     environment {
         REGISTRY_URL = 'ccr.ccs.tencentyun.com'
         NAMESPACE = 'akaiito'
@@ -21,77 +11,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '📥 检出代码...'
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    extensions: [
-                        [$class: 'CloneOption', timeout: 20, shallow: true, depth: 1],
-                        [$class: 'CheckoutOption', timeout: 20]
-                    ],
-                    userRemoteConfigs: [[url: 'https://github.com/oneStrike/es-server.git']]
-                ])
-            }
-        }
-        
-        stage('Setup Environment') {
-            steps {
-                echo '🚀 设置构建环境...'
-                sh 'node --version'
-                sh 'npm --version'
-                
-                // 安装 PNPM
-                sh 'npm install -g pnpm'
-                sh 'pnpm --version'
-            }
-        }
-        
-        stage('Install Dependencies') {
-            steps {
-                echo '📦 安装项目依赖...'
-                script {
-                    try {
-                        // 设置 pnpm 配置以提高稳定性
-                        sh '''
-                            pnpm config set registry https://registry.npmmirror.com/
-                            pnpm config set network-timeout 300000
-                            pnpm config set fetch-timeout 300000
-                        '''
-                        sh 'pnpm install --frozen-lockfile'
-                        sh 'pnpm prisma:generate'
-                    } catch (Exception e) {
-                        echo "依赖安装失败，尝试清理缓存后重试..."
-                        sh 'pnpm store prune'
-                        sh 'rm -rf node_modules pnpm-lock.yaml'
-                        sh 'pnpm install'
-                        sh 'pnpm prisma:generate'
-                    }
-                }
-            }
-        }
-
-        stage('Build Application') {
-            steps {
-                echo '🏗️ 构建应用程序...'
-                script {
-                    // 添加调试信息
-                    echo "当前分支信息："
-                    echo "BRANCH_NAME: ${env.BRANCH_NAME}"
-                    echo "GIT_BRANCH: ${env.GIT_BRANCH}"
-                    echo "GIT_COMMIT: ${env.GIT_COMMIT}"
-                    
-                    try {
-                        sh '''
-                            export NODE_OPTIONS="--max-old-space-size=4096"
-                            pnpm run build
-                        '''
-                        
-                        // 验证构建结果
-                        sh 'ls -la dist/ || ls -la build/ || echo "构建目录未找到，但构建可能成功"'
-                    } catch (Exception e) {
-                        echo "构建失败: ${e.getMessage()}"
-                        error("应用程序构建失败")
-                    }
-                }
+                git branch: 'main', url: 'https://github.com/oneStrike/es-server.git'
             }
         }
         
@@ -104,7 +24,7 @@ pipeline {
                     def fullImageName = "${REGISTRY_URL}/${NAMESPACE}/${IMAGE_NAME}:${imageTag}"
                     
                     try {
-                        // 构建 Docker 镜像
+                        // 构建 Docker 镜像（包含所有构建步骤）
                         def dockerImage = docker.build(fullImageName)
                         
                         // 推送到镜像仓库
@@ -125,18 +45,9 @@ pipeline {
     
     post {
         always {
-            script {
-                try {
-                    echo '🧹 清理工作空间...'
-                    // 清理 Docker 资源
-                    sh 'docker system prune -f || true'
-                    sh 'docker image prune -f || true'
-                    // 清理工作空间
-                    cleanWs()
-                } catch (Exception e) {
-                    echo "清理过程中出现错误: ${e.getMessage()}"
-                }
-            }
+            echo '🧹 清理工作空间...'
+            sh 'docker system prune -f --volumes || true'
+            cleanWs()
         }
         success {
             echo '✅ 流水线执行成功！'
@@ -145,7 +56,7 @@ pipeline {
             echo '❌ 流水线执行失败！'
         }
         unstable {
-            echo '⚠️ 流水线执行完成但有警告！'
+            echo '⚠️ 流水线执行不稳定！'
         }
     }
 }
