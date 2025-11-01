@@ -24,25 +24,12 @@ pipeline {
                     def fullImageName = "${REGISTRY_URL}/${NAMESPACE}/${IMAGE_NAME}:${imageTag}"
                     
                     try {
-                        // 检查是否支持 buildx，如果不支持则使用传统 docker build
-                        def buildxSupported = sh(
-                            script: 'docker buildx version >/dev/null 2>&1',
-                            returnStatus: true
-                        ) == 0
-                        
-                        if (buildxSupported) {
-                            echo '🔧 使用 Docker Buildx 构建镜像...'
-                            sh """
-                                export DOCKER_BUILDKIT=1
-                                docker buildx build --platform linux/amd64 -t ${fullImageName} --load .
-                            """
-                        } else {
-                            echo '🔧 使用传统 Docker 构建镜像...'
-                            sh """
-                                export DOCKER_BUILDKIT=1
-                                docker build -t ${fullImageName} .
-                            """
-                        }
+                        // 使用传统 Docker 构建命令以确保兼容性
+                        echo '🔧 使用传统 Docker 构建镜像...'
+                        sh """
+                            export DOCKER_BUILDKIT=1
+                            docker build -t ${fullImageName} .
+                        """
                         
                         // 推送到镜像仓库
                         docker.withRegistry("https://${REGISTRY_URL}", 'tencent-cloud-registry') {

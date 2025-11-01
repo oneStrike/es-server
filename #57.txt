@@ -1,0 +1,96 @@
+Started by GitHub push by oneStrike
+Obtained Jenkinsfile from git https://github.com/oneStrike/es-server.git
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on Jenkins in /var/jenkins_home/workspace/es@2
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Declarative: Checkout SCM)
+[Pipeline] checkout
+The recommended git tool is: git
+No credentials specified
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/es@2/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/oneStrike/es-server.git # timeout=10
+Fetching upstream changes from https://github.com/oneStrike/es-server.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/oneStrike/es-server.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+Checking out Revision dcb70cceb1c37809640a04c74bb14b473276beff (refs/remotes/origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f dcb70cceb1c37809640a04c74bb14b473276beff # timeout=10
+Commit message: "ci(Jenkinsfile): 启用 BuildKit 并优化 Docker 构建推送流程"
+ > git rev-list --no-walk 20f4dae343bc05e801a0f18574abe52ee5654389 # timeout=10
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] withEnv
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] echo
+📥 检出代码...
+[Pipeline] git
+The recommended git tool is: git
+No credentials specified
+ > git rev-parse --resolve-git-dir /var/jenkins_home/workspace/es@2/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/oneStrike/es-server.git # timeout=10
+Fetching upstream changes from https://github.com/oneStrike/es-server.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/oneStrike/es-server.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+Checking out Revision dcb70cceb1c37809640a04c74bb14b473276beff (refs/remotes/origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f dcb70cceb1c37809640a04c74bb14b473276beff # timeout=10
+ > git branch -a -v --no-abbrev # timeout=10
+ > git checkout -b main dcb70cceb1c37809640a04c74bb14b473276beff # timeout=10
+Commit message: "ci(Jenkinsfile): 启用 BuildKit 并优化 Docker 构建推送流程"
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build and Push Docker Image)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] echo
+🐳 构建 Docker 镜像...
+[Pipeline] sh
++ export DOCKER_BUILDKIT=1
++ docker buildx build --platform linux/amd64 -t ccr.ccs.tencentyun.com/akaiito/akaiito-server:57 --load .
+unknown flag: --platform
+
+Usage:  docker [OPTIONS] COMMAND [ARG...]
+
+Run 'docker --help' for more information
+[Pipeline] echo
+Docker 构建或推送失败: script returned exit code 125
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] echo
+🧹 清理工作空间...
+[Pipeline] sh
++ docker system prune -f --volumes
+Total reclaimed space: 0B
+[Pipeline] cleanWs
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] done
+[Pipeline] echo
+⚠️ 流水线执行不稳定！
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // withEnv
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+Finished: UNSTABLE
