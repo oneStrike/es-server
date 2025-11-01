@@ -24,10 +24,9 @@ pipeline {
                     def fullImageName = "${REGISTRY_URL}/${NAMESPACE}/${IMAGE_NAME}:${imageTag}"
                     
                     try {
-                        // 使用传统 Docker 构建命令以确保兼容性
-                        echo '🔧 使用传统 Docker 构建镜像...'
+                        // 使用传统 Docker 构建命令，不启用 BuildKit 以确保最大兼容性
+                        echo '🔧 使用传统 Docker 构建镜像（禁用 BuildKit）...'
                         sh """
-                            export DOCKER_BUILDKIT=1
                             docker build -t ${fullImageName} .
                         """
                         
