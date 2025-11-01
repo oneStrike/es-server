@@ -2,9 +2,6 @@ pipeline {
     agent any
     
     options {
-        // 增加超时时间和重试机制
-        timeout(time: 30, unit: 'MINUTES')
-        retry(2)
         // Git 克隆配置
         skipDefaultCheckout(true)
     }
@@ -60,6 +57,7 @@ pipeline {
                             pnpm config set fetch-timeout 300000
                         '''
                         sh 'pnpm install --frozen-lockfile'
+                        sh 'pnpm prisma:generate'
                     } catch (Exception e) {
                         echo "依赖安装失败，尝试清理缓存后重试..."
                         sh 'pnpm store prune'
