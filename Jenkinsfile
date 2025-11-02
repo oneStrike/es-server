@@ -1,5 +1,10 @@
 pipeline {
     agent any
+
+    tools {
+        // 安装 Docker 插件
+        docker 'Docker'
+    }
     
     environment {
         REGISTRY_URL = 'ccr.ccs.tencentyun.com'
