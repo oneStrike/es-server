@@ -1,230 +1,88 @@
 version: '3.8'
 
-# ================================
-# Docker Compose 配置文件
-# 用于 NestJS 应用的容器化部署
-# ================================
-
 services:
-  # --------------------------------
-  # 应用服务
-  # --------------------------------
-  akaiito-server:
-    container_name: akaiito-server-app
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runtime
-      args:
-        - NODE_ENV=production
-
-    # 端口映射
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    hostname: gitlab
     ports:
-      - '${APP_PORT:-3000}:3000'
-
-    # 环境变量
+      - '7070:7070'
+      - '2222:22'
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      - TZ=Asia/Shanghai
-
-    # 环境变量文件
-    env_file:
-      - .env.production
-
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 120s
-
-    # 健康检查
-    healthcheck:
-      test: [CMD, curl, -f, 'http://localhost:3000/health']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-    # 重启策略
-    restart: unless-stopped
-
-    # 依赖服务
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://192.168.31.10:7070'
+        nginx['listen_https'] = true
+        nginx['listen_port'] = 7070
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        gitlab_rails['db_adapter'] = 'postgresql'
+        gitlab_rails['db_encoding'] = 'utf8'
+        gitlab_rails['db_host'] = 'postgres'
+        gitlab_rails['db_port'] = 5432
+        gitlab_rails['db_username'] = 'gitlab'
+        gitlab_rails['db_password'] = 'uxrG5Gls4YgOMk'
+        gitlab_rails['db_database'] = 'gitlab'
+        gitlab_rails['redis_host'] = 'redis'
+        gitlab_rails['redis_port'] = 6379
+        gitlab_rails['redis_database'] = 0
+        gitlab_rails['backup_path'] = '/var/opt/gitlab/backups'
+        gitlab_rails['backup_keep_time'] = 604800
+        puma['worker_processes'] = 2
+        sidekiq['concurrency'] = 10
+    shm_size: 256m
+    restart: always
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-    # 网络
-    networks:
-      - akaiito-network
-
-    # 卷挂载
+      - postgres
+      - redis
     volumes:
-      - app-logs:/app/logs
-      - /etc/localtime:/etc/localtime:ro
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
 
-    # 安全配置
-    security_opt:
-      - no-new-privileges:true
-
-    # 用户配置
-    user: '1001:1001'
-
-  # --------------------------------
-  # PostgreSQL 数据库服务
-  # --------------------------------
   postgres:
-    container_name: akaiito-postgres
     image: postgres:16-alpine
-
-    # 环境变量
+    container_name: gitlab-postgres
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-akaiito}
-      - POSTGRES_USER=${POSTGRES_USER:-akaiito}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - TZ=Asia/Shanghai
-
-    # 端口映射（仅开发环境）
-    ports:
-      - '${POSTGRES_PORT:-5432}:5432'
-
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
-
-    # 健康检查
+      POSTGRES_DB: gitlab
+      POSTGRES_USER: gitlab
+      POSTGRES_PASSWORD: uxrG5Gls4YgOMk
+    restart: always
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: [CMD-SHELL, 'pg_isready -U ${POSTGRES_USER:-akaiito} -d ${POSTGRES_DB:-akaiito}']
+      test: [CMD-SHELL, pg_isready -U gitlab]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
-    # 重启策略
-    restart: unless-stopped
-
-    # 网络
-    networks:
-      - akaiito-network
-
-    # 数据卷
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - /etc/localtime:/etc/localtime:ro
-
-    # 安全配置
-    security_opt:
-      - no-new-privileges:true
-
-  # --------------------------------
-  # Redis 缓存服务
-  # --------------------------------
   redis:
-    container_name: akaiito-redis
     image: redis:7-alpine
-
-    # 启动命令
-    command: >
-      redis-server
-      --appendonly yes
-      --appendfsync everysec
-      --maxmemory 128mb
-      --maxmemory-policy allkeys-lru
-      --save 900 1
-      --save 300 10
-      --save 60 10000
-
-    # 端口映射（仅开发环境）
-    ports:
-      - '${REDIS_PORT:-6379}:6379'
-
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: 128M
-        reservations:
-          cpus: '0.05'
-          memory: 64M
-
-    # 健康检查
+    container_name: gitlab-redis
+    command: [redis-server, --appendonly, yes, --appendfsync, everysec]
+    restart: always
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: [CMD, redis-cli, ping]
       interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
+      timeout: 5s
+      retries: 5
 
-    # 重启策略
-    restart: unless-stopped
-
-    # 网络
-    networks:
-      - akaiito-network
-
-    # 数据卷
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: always
+    depends_on:
+      - gitlab
+    environment:
+      - DOCKER_TLS_CERTDIR=
     volumes:
-      - redis-data:/data
-      - /etc/localtime:/etc/localtime:ro
+      - runner-config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
 
-    # 安全配置
-    security_opt:
-      - no-new-privileges:true
-
-# ================================
-# 网络配置
-# ================================
-networks:
-  akaiito-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-
-# ================================
-# 数据卷配置
-# ================================
 volumes:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:
   postgres-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_PATH:-./data}/postgres
-
   redis-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_PATH:-./data}/redis
-
-  app-logs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${LOGS_PATH:-./logs}
+  runner-config:

@@ -6,7 +6,7 @@
 # --------------------------------
 # 阶段1: 依赖安装阶段
 # --------------------------------
-FROM node:20-alpine AS dependencies
+FROM node:22-alpine AS dependencies
 
 # 设置工作目录
 WORKDIR /app
@@ -28,7 +28,7 @@ RUN pnpm install --frozen-lockfile --prod
 # --------------------------------
 # 阶段2: 构建阶段
 # --------------------------------
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -60,7 +60,7 @@ RUN pnpm install --frozen-lockfile --prod && \
 # --------------------------------
 # 阶段3: 运行时阶段
 # --------------------------------
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 
 # 设置环境变量
 ENV NODE_ENV=production \
