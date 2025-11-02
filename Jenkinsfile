@@ -11,7 +11,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '📥 检出代码...'
-                git branch: 'main', url: 'https://github.com/oneStrike/es-server.git'
+                checkout scm
             }
         }
         

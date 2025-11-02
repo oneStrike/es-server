@@ -11,9 +11,6 @@ FROM node:22-alpine AS builder
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update
 
-# 安装构建依赖（添加重试机制和超时设置）
-RUN apk add --no-cache --timeout 60 --retries 3 python3 make g++
-
 # 设置工作目录
 WORKDIR /app
 
@@ -48,9 +45,6 @@ FROM node:22-alpine AS production
 # 配置 Alpine 镜像源（使用阿里云镜像加速）
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
     apk update
-
-# 安装运行时依赖（添加重试机制和超时设置）
-RUN apk add --no-cache --timeout 60 --retries 3 dumb-init curl
 
 # 创建非 root 用户
 RUN addgroup -g 1001 -S nodejs && \
