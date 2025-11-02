@@ -7,10 +7,6 @@
 # ========================================
 FROM node:22-alpine AS builder
 
-# 配置 Alpine 镜像源（使用阿里云镜像加速）
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-    apk update
-
 # 设置工作目录
 WORKDIR /app
 
@@ -41,10 +37,6 @@ RUN pnpm run build
 # 生产运行时阶段 - 保持不变
 # ========================================
 FROM node:22-alpine AS production
-
-# 配置 Alpine 镜像源（使用阿里云镜像加速）
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-    apk update
 
 # 创建非 root 用户
 RUN addgroup -g 1001 -S nodejs && \
