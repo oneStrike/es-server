@@ -28,7 +28,7 @@ RUN pnpm prisma:generate
 
 # 最后复制源代码（变化最频繁的文件）
 COPY ./src ./src
-COPY ./nest-cli.json ./tsconfig*.json ./webpack.config.js ./
+COPY ./nest-cli.json ./tsconfig*.json
 
 # 构建应用
 RUN pnpm run build
