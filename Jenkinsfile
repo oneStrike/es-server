@@ -8,13 +8,6 @@ pipeline {
     }
     
     stages {
-        stage('Checkout') {
-            steps {
-                echo '📥 检出代码...'
-                checkout scm
-            }
-        }
-        
         stage('Build and Push Docker Image') {
             steps {
                 script {
