@@ -1,48 +1,106 @@
-# 依赖目录
+# ================================
+# Docker 构建忽略文件
+# 优化镜像大小，排除不必要文件
+# ================================
+
+# --------------------------------
+# 依赖和包管理
+# --------------------------------
 node_modules
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-store
+.yarn
+.npm
 
-# 构建产物
+# --------------------------------
+# 构建产物和缓存
+# --------------------------------
 dist
 build
 .tsbuildinfo
+.turbo
+.next
+.nuxt
+.cache
+.parcel-cache
+.swc
 
+# --------------------------------
 # 测试和覆盖率
+# --------------------------------
 coverage
 *.lcov
 .nyc_output
 test
+tests
+__tests__
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+jest.config.*
+vitest.config.*
 
+# --------------------------------
 # 环境变量文件（敏感信息）
+# --------------------------------
 .env
 .env.*
 !.env.production.example
+.env.local
+.env.development
+.env.test
 
+# --------------------------------
 # 日志文件
+# --------------------------------
 logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
+# --------------------------------
 # 临时文件
+# --------------------------------
 *.tmp
 *.temp
+.tmp
+.temp
+*.pid
+*.seed
+*.pid.lock
 
+# --------------------------------
 # Git 相关
+# --------------------------------
 .git
 .gitignore
+.gitattributes
 .github
+.gitlab-ci.yml
 
-# IDE 配置
+# --------------------------------
+# IDE 和编辑器配置
+# --------------------------------
 .vscode
 .idea
 *.swp
 *.swo
 *~
 .history
+.project
+.classpath
+.settings
+.metadata
 
+# --------------------------------
 # OS 文件
+# --------------------------------
 .DS_Store
 .DS_Store?
 ._*
@@ -50,54 +108,117 @@ logs
 .Trashes
 ehthumbs.db
 Thumbs.db
+Desktop.ini
 
+# --------------------------------
 # Docker 相关
-Dockerfile
+# --------------------------------
+Dockerfile*
 .dockerignore
 docker
 docker-compose*.yml
+.docker
 
-# CI/CD
-.gitlab-ci.yml
+# --------------------------------
+# CI/CD 配置
+# --------------------------------
 .circleci
+.travis.yml
+.appveyor.yml
+Jenkinsfile
+.jenkins
+jenkins-config
 .github/workflows
 
+# --------------------------------
 # 文档
+# --------------------------------
 README.md
 CHANGELOG.md
 LICENSE
 *.md
+docs
+documentation
 
+# --------------------------------
 # 开发工具配置
+# --------------------------------
 .husky
-.prettierrc
+.prettierrc*
 .prettierignore
-.eslintrc
-eslint.config.mjs
-commitlint.config.js
+.eslintrc*
+eslint.config.*
+commitlint.config.*
+.commitlintrc*
+.lintstagedrc*
+lint-staged.config.*
 
-# Webpack 开发配置
-webpack.config.js
+# --------------------------------
+# 构建工具配置
+# --------------------------------
+webpack.config.*
+vite.config.*
+rollup.config.*
+tsconfig.json
+tsconfig.*.json
+nest-cli.json
+.babelrc*
+babel.config.*
 
-# 上传文件（运行时生成）
+# --------------------------------
+# 包管理器配置
+# --------------------------------
+.npmrc
+.yarnrc*
+.pnpmfile.cjs
+pnpm-workspace.yaml
+
+# --------------------------------
+# 运行时生成文件
+# --------------------------------
 uploads
+public/uploads
+static/uploads
+assets/uploads
 
-# RSA 密钥（敏感）
+# --------------------------------
+# 安全相关文件
+# --------------------------------
 rsa
 *.key
 *.pem
+*.p12
+*.pfx
+secrets
+.secrets
 
+# --------------------------------
 # 数据库文件
+# --------------------------------
 *.sqlite
+*.sqlite3
 *.db
+*.mdb
 
-# MaxMind 数据库
+# --------------------------------
+# 数据目录
+# --------------------------------
 data
+storage
+.storage
 
-# Prisma 迁移文件（生产环境应单独部署）
+# --------------------------------
+# Prisma 相关
+# --------------------------------
 prisma/migrations
+prisma/dev.db*
 
-# 其他不必要的配置
+# --------------------------------
+# 其他配置文件
+# --------------------------------
 .editorconfig
 .nvmrc
-.npmrc
+.node-version
+.tool-versions
+.codebuddy
+.joycode
