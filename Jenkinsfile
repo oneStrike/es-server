@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    tools {
+        // 使用全局工具配置中的Docker
+        dockerTool 'docker'
+    }
+
     environment {
         REGISTRY_URL = 'ccr.ccs.tencentyun.com'
         NAMESPACE = 'akaiito'
