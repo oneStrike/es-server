@@ -7,8 +7,12 @@
 # ========================================
 FROM node:22-alpine AS builder
 
-# 安装构建依赖
-RUN apk add --no-cache python3 make g++
+# 配置 Alpine 镜像源（使用阿里云镜像加速）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk update
+
+# 安装构建依赖（添加重试机制和超时设置）
+RUN apk add --no-cache --timeout 60 --retries 3 python3 make g++
 
 # 设置工作目录
 WORKDIR /app
@@ -41,8 +45,12 @@ RUN pnpm run build
 # ========================================
 FROM node:22-alpine AS production
 
-# 安装运行时依赖
-RUN apk add --no-cache dumb-init curl
+# 配置 Alpine 镜像源（使用阿里云镜像加速）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk update
+
+# 安装运行时依赖（添加重试机制和超时设置）
+RUN apk add --no-cache --timeout 60 --retries 3 dumb-init curl
 
 # 创建非 root 用户
 RUN addgroup -g 1001 -S nodejs && \
