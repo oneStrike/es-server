@@ -8,8 +8,10 @@ services:
       - '2222:22'
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'https://www.weacgn.com'
-        nginx['listen_https'] = true
+        external_url 'http://www.weacgn.com:7070'
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        nginx['redirect_http_to_https'] = false
         gitlab_rails['backup_path'] = '/var/opt/gitlab/backups'
     restart: always
     # GitLab 使用自带的内置 PostgreSQL/Redis，不依赖外部服务
