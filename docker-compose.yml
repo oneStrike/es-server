@@ -77,7 +77,7 @@ services:
       test: [CMD, curl, -f, 'http://localhost:3000/api/healthz']
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 2
 
   # Gitea Actions Runner
   gitea-runner:
