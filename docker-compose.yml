@@ -8,7 +8,7 @@ services:
       - '2222:22'
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'https://www.weacgn.com:7070'
+        external_url 'https://www.weacgn.com'
         nginx['listen_https'] = true
         gitlab_rails['backup_path'] = '/var/opt/gitlab/backups'
     restart: always
