@@ -1,38 +1,18 @@
-version: '3.8'
-
 services:
   gitlab:
     image: gitlab/gitlab-ce:latest
     container_name: gitlab
     hostname: gitlab
     ports:
-      - '7070:7070'
+      - '7070:80'
       - '2222:22'
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://192.168.31.10:7070'
+        external_url 'https://weacgn.com:7070'
         nginx['listen_https'] = true
-        nginx['listen_port'] = 7070
-        gitlab_rails['gitlab_shell_ssh_port'] = 2222
-        gitlab_rails['db_adapter'] = 'postgresql'
-        gitlab_rails['db_encoding'] = 'utf8'
-        gitlab_rails['db_host'] = 'postgres'
-        gitlab_rails['db_port'] = 5432
-        gitlab_rails['db_username'] = 'gitlab'
-        gitlab_rails['db_password'] = 'uxrG5Gls4YgOMk'
-        gitlab_rails['db_database'] = 'gitlab'
-        gitlab_rails['redis_host'] = 'redis'
-        gitlab_rails['redis_port'] = 6379
-        gitlab_rails['redis_database'] = 0
         gitlab_rails['backup_path'] = '/var/opt/gitlab/backups'
-        gitlab_rails['backup_keep_time'] = 604800
-        puma['worker_processes'] = 2
-        sidekiq['concurrency'] = 10
-    shm_size: 256m
     restart: always
-    depends_on:
-      - postgres
-      - redis
+    # GitLab 使用自带的内置 PostgreSQL/Redis，不依赖外部服务
     volumes:
       - gitlab-config:/etc/gitlab
       - gitlab-logs:/var/log/gitlab
@@ -40,36 +20,50 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: gitlab-postgres
+    container_name: postgres
     environment:
-      POSTGRES_DB: gitlab
-      POSTGRES_USER: gitlab
-      POSTGRES_PASSWORD: uxrG5Gls4YgOMk
+      POSTGRES_DB: ${POSTGRES_DB:-gitlab}
+      POSTGRES_USER: ${POSTGRES_USER:-es}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     restart: always
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: [CMD-SHELL, pg_isready -U gitlab]
+      test: [CMD-SHELL, 'pg_isready -U ${POSTGRES_USER:-es}']
       interval: 10s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: gitlab-redis
-    command: [redis-server, --appendonly, yes, --appendfsync, everysec]
+    container_name: redis
+    command:
+      - redis-server
+      - --appendonly
+      - yes
+      - --appendfsync
+      - everysec
+      - --requirepass
+      - '${REDIS_PASSWORD:?REDIS_PASSWORD is required}'
+      - --bind
+      - 0.0.0.0
+      - --protected-mode
+      - yes
+
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     restart: always
     volumes:
       - redis-data:/data
     healthcheck:
-      test: [CMD, redis-cli, ping]
+      test: [CMD-SHELL, 'redis-cli -a $$REDIS_PASSWORD ping || exit 1']
       interval: 10s
       timeout: 5s
       retries: 5
 
   gitlab-runner:
     image: gitlab/gitlab-runner:latest
-    container_name: gitlab-runner
+    container_name: ${GITLAB_RUNNER_CONTAINER_NAME:-gitlab-runner}
     restart: always
     depends_on:
       - gitlab
