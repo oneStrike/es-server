@@ -39,10 +39,6 @@ jobs:
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
 
-      - name: Skip tar export
-        run: |
-          echo "Skipping tar export; running container for smoke test instead"
-
       - name: Run container (smoke test)
         run: |
           set -e
