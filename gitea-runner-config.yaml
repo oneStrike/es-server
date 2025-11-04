@@ -1,0 +1,17 @@
+log:
+  level: info
+
+# Gitea act_runner 配置：将 runs-on: es 映射到包含 Node 的作业容器
+runner:
+  name: es-runner
+  labels:
+    - 'es:docker://ghcr.io/catthehacker/ubuntu:act-latest'
+
+# 让作业容器可以访问宿主机 Docker 守护进程，支持 Buildx/构建等操作
+container:
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+
+cache:
+  enabled: true
+  dir: /data/cache/server

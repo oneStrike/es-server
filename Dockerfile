@@ -12,12 +12,7 @@ FROM node:22-alpine AS dependencies
 WORKDIR /app
 
 # 安装 pnpm 和必要的系统依赖
-RUN apk add --no-cache \
-    libc6-compat \
-    python3 \
-    make \
-    g++ \
-    && npm install -g pnpm@9.15.4
+RUN npm install -g pnpm@9.15.4
 
 # 复制依赖文件
 COPY package.json pnpm-lock.yaml ./
@@ -33,12 +28,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # 安装 pnpm 和构建依赖
-RUN apk add --no-cache \
-    libc6-compat \
-    python3 \
-    make \
-    g++ \
-    && npm install -g pnpm@9.15.4
+RUN npm install -g pnpm@9.15.4
 
 # 复制依赖文件和源代码
 COPY package.json pnpm-lock.yaml ./
