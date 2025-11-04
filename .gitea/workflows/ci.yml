@@ -57,10 +57,10 @@ jobs:
             -e ADMIN_RSA_PUBLIC_KEY_PATH="${{ secrets.ADMIN_RSA_PUBLIC_KEY_PATH }}" \
             ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
-          echo "Waiting for app to become healthy..."
+          echo "⏳ 正在等待应用变得健康..."
           for i in $(seq 1 3); do
             if docker exec "$CONTAINER_NAME" sh -lc 'wget -qO- http://127.0.0.1:8080/api/health >/dev/null'; then
-              echo "Health check passed."
+              echo "✅ 健康检查通过。"
               break
             fi
             sleep 2
@@ -68,7 +68,7 @@ jobs:
 
           # Re-check and fail if unhealthy
           if ! docker exec "$CONTAINER_NAME" sh -lc 'wget -qO- http://127.0.0.1:8080/api/health >/dev/null'; then
-            echo "Container did not become healthy in time. Logs:"
+            echo "❌ 容器未能在时间内变得健康。日志："
             docker logs "$CONTAINER_NAME" || true
             exit 1
           fi
