@@ -39,11 +39,38 @@ jobs:
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
 
-      - name: Save Docker image as tar
-        run: docker save ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }} -o ${{ env.IMAGE_NAME }}-${{ steps.vars.outputs.tag }}.tar
+      - name: Skip tar export
+        run: |
+          echo "Skipping tar export; running container for smoke test instead"
 
-      - name: Upload Docker image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image
-          path: ${{ env.IMAGE_NAME }}-${{ steps.vars.outputs.tag }}.tar
+      - name: Run container (smoke test)
+        run: |
+          set -e
+          CONTAINER_NAME=${{ env.IMAGE_NAME }}-${{ steps.vars.outputs.tag }}
+          docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+          docker run -d --name "$CONTAINER_NAME" \
+            -e NODE_ENV=production \
+            -e PORT=3000 \
+            ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+
+          echo "Waiting for app to become healthy..."
+          for i in $(seq 1 30); do
+            if docker exec "$CONTAINER_NAME" sh -lc 'curl -fsS http://127.0.0.1:3000/api/health >/dev/null'; then
+              echo "Health check passed."
+              break
+            fi
+            sleep 2
+          done
+
+          # Re-check and fail if unhealthy
+          if ! docker exec "$CONTAINER_NAME" sh -lc 'curl -fsS http://127.0.0.1:3000/api/health >/dev/null'; then
+            echo "Container did not become healthy in time. Logs:"
+            docker logs "$CONTAINER_NAME" || true
+            exit 1
+          fi
+
+      - name: Cleanup container
+        if: always()
+        run: |
+          CONTAINER_NAME=${{ env.IMAGE_NAME }}-${{ steps.vars.outputs.tag }}
+          docker rm -f "$CONTAINER_NAME" || true
