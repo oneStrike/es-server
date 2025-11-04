@@ -31,7 +31,7 @@ FROM node:22-alpine AS runtime
 
 # 设置环境变量
 ENV NODE_ENV=production \
-    PORT=3000
+    PORT=8080
 
 # 安装运行时必需的系统依赖
 RUN apk add --no-cache \
@@ -59,11 +59,11 @@ RUN mkdir -p /app/logs && \
 USER nestjs
 
 # 暴露端口
-EXPOSE 3000
+EXPOSE 8080
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # 使用 dumb-init 作为 PID 1 进程
 ENTRYPOINT ["dumb-init", "--"]

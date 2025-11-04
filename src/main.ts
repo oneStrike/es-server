@@ -24,7 +24,7 @@ async function bootstrap() {
     const logger = await setupApp(app, fastifyAdapter)
 
     // 启动应用
-    const port = process.env.PORT ?? 3000
+    const port = process.env.PORT ?? 8080
     await app.listen(port, '0.0.0.0') // 监听所有网络接口（Docker 容器必需）
 
     // 打印启动信息
