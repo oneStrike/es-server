@@ -1,11 +1,11 @@
-# --------------------------------
-# 依赖和包管理
-# --------------------------------
 node_modules
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-store
-.yarn
-.npm
+coverage
+*.log
+.git
+.husky
+.vscode
+.idea
+.env*
+!.env.production.example
+prisma/migrations
+*.tsbuildinfo
