@@ -17,9 +17,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
     pnpm install --frozen-lockfile
 
 # 复制 Prisma schema 并缓存引擎下载
-COPY prisma ./prisma
-RUN --mount=type=cache,target=/root/.cache/prisma \
-    pnpm prisma:generate
+RUN  pnpm prisma:generate
 
 # 复制源码
 COPY . .
