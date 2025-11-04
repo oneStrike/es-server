@@ -45,8 +45,16 @@ jobs:
           CONTAINER_NAME=${{ env.IMAGE_NAME }}-${{ steps.vars.outputs.tag }}
           docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
           docker run -d --name "$CONTAINER_NAME" \
-            -e NODE_ENV=production \
+            -e NODE_ENV="${{ secrets.NODE_ENV }}" \
             -e PORT=8080 \
+            -e ADMIN_JWT_SECRET="${{ secrets.ADMIN_JWT_SECRET }}" \
+            -e ADMIN_JWT_REFRESH_SECRET="${{ secrets.ADMIN_JWT_REFRESH_SECRET }}" \
+            -e CLIENT_JWT_SECRET="${{ secrets.CLIENT_JWT_SECRET }}" \
+            -e CLIENT_JWT_REFRESH_SECRET="${{ secrets.CLIENT_JWT_REFRESH_SECRET }}" \
+            -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            -e REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
+            -e ADMIN_RSA_PRIVATE_KEY_PATH="${{ secrets.ADMIN_RSA_PRIVATE_KEY_PATH }}" \
+            -e ADMIN_RSA_PUBLIC_KEY_PATH="${{ secrets.ADMIN_RSA_PUBLIC_KEY_PATH }}" \
             ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
           echo "Waiting for app to become healthy..."

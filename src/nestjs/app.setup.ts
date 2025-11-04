@@ -1,4 +1,7 @@
-import type { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify'
+import type {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify'
 import type { CustomLoggerService } from '@/common/module/logger/logger.service'
 import * as process from 'node:process'
 import fastifyCsrf from '@fastify/csrf-protection'
@@ -46,7 +49,11 @@ export async function setupApp(
   await app.register(fastifyCsrf as any)
 
   // 配置 Swagger 文档（生产环境可条件性禁用）
-  if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SWAGGER === 'true') {
+  console.log('🚀 ~ setupApp ~ process.env.NODE_ENV:', process.env.NODE_ENV)
+  if (
+    process.env.NODE_ENV !== 'production' ||
+    process.env.ENABLE_SWAGGER === 'true'
+  ) {
     setupSwagger(app)
   }
 
