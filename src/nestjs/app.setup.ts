@@ -49,7 +49,6 @@ export async function setupApp(
   await app.register(fastifyCsrf as any)
 
   // 配置 Swagger 文档（生产环境可条件性禁用）
-  console.log('🚀 ~ setupApp ~ process.env.NODE_ENV:', process.env.NODE_ENV)
   if (
     process.env.NODE_ENV !== 'production' ||
     process.env.ENABLE_SWAGGER === 'true'
