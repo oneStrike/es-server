@@ -9,3 +9,5 @@ coverage
 !.env.production.example
 prisma/migrations
 *.tsbuildinfo
+dist
+logs

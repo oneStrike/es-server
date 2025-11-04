@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.6
 # --------------------------------
 # 阶段1: 构建阶段
 # --------------------------------
@@ -5,21 +6,29 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# 使用 Corepack 管理 pnpm，避免重复安装
+# 使用 Corepack 管理 pnpm
 RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
-# 复制依赖文件和源代码
-COPY pnpm-lock.yaml package*.json ./
+# 先复制依赖清单以最大化缓存
+COPY pnpm-lock.yaml package.json ./
+
+# 使用 BuildKit 缓存加速依赖安装
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
+    pnpm install --frozen-lockfile
+
+# 复制 Prisma schema 并缓存引擎下载
+COPY prisma ./prisma
+RUN --mount=type=cache,target=/root/.cache/prisma \
+    pnpm prisma:generate
+
+# 复制源码
 COPY . .
-
-# 安装所有依赖（包括开发依赖）
-RUN pnpm install --frozen-lockfile
-
-# 生成 Prisma 客户端（输出到 src/prisma/client）
-RUN pnpm prisma:generate
 
 # 构建应用
 RUN pnpm build
+
+# 裁剪为生产依赖
+RUN pnpm prune --prod
 
 # --------------------------------
 # 阶段2: 运行时阶段
@@ -30,11 +39,8 @@ FROM node:22-alpine AS runtime
 ENV NODE_ENV=production \
     PORT=8080
 
-# 安装运行时必需的系统依赖
-RUN apk add --no-cache \
-    dumb-init \
-    curl \
-    && rm -rf /var/cache/apk/*
+# 安装运行时必需的系统依赖（移除 curl，使用 busybox wget）
+RUN apk add --no-cache dumb-init
 
 # 创建非root用户
 RUN addgroup -g 1001 -S nodejs && \
@@ -58,9 +64,9 @@ USER nestjs
 # 暴露端口
 EXPOSE 8080
 
-# 健康检查
+# 健康检查（使用 busybox wget）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/api/health || exit 1
+    CMD wget -qO- http://localhost:8080/api/health >/dev/null || exit 1
 
 # 使用 dumb-init 作为 PID 1 进程
 ENTRYPOINT ["dumb-init", "--"]
