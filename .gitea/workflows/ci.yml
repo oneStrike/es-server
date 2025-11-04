@@ -13,38 +13,22 @@ jobs:
   build:
     runs-on: es
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      # Gitea Runner 已自动将仓库克隆到工作目录，移除 checkout 与 setup-node 以避免 Node 依赖
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Setup PNPM via Corepack
+      - name: Build in Node container (pnpm install + type-check + build)
         run: |
-          corepack enable
-          corepack prepare pnpm@9.15.4 --activate
+          docker run --rm \
+            -v "$PWD":/workspace \
+            -w /workspace \
+            node:22 bash -lc '
+              corepack enable && \
+              corepack prepare pnpm@9.15.4 --activate && \
+              pnpm install --frozen-lockfile && \
+              pnpm type-check && \
+              pnpm build
+            '
 
-      - name: Install Docker CLI
-        run: |
-          apt-get update -y
-          apt-get install -y docker.io
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Type check
-        run: pnpm type-check
-
-      - name: Build
-        run: pnpm build
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: es-server-dist
-          path: dist
+      # 如需产物归档，可在 runner 主机侧压缩，或在后续加回上传逻辑
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
