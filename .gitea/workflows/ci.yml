@@ -50,12 +50,12 @@ jobs:
           docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
           docker run -d --name "$CONTAINER_NAME" \
             -e NODE_ENV=production \
-            -e PORT=3000 \
+            -e PORT=8080 \
             ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
           echo "Waiting for app to become healthy..."
           for i in $(seq 1 30); do
-            if docker exec "$CONTAINER_NAME" sh -lc 'curl -fsS http://127.0.0.1:3000/api/health >/dev/null'; then
+            if docker exec "$CONTAINER_NAME" sh -lc 'curl -fsS http://127.0.0.1:8080/api/health >/dev/null'; then
               echo "Health check passed."
               break
             fi
@@ -63,7 +63,7 @@ jobs:
           done
 
           # Re-check and fail if unhealthy
-          if ! docker exec "$CONTAINER_NAME" sh -lc 'curl -fsS http://127.0.0.1:3000/api/health >/dev/null'; then
+          if ! docker exec "$CONTAINER_NAME" sh -lc 'curl -fsS http://127.0.0.1:8080/api/health >/dev/null'; then
             echo "Container did not become healthy in time. Logs:"
             docker logs "$CONTAINER_NAME" || true
             exit 1
