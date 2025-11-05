@@ -19,7 +19,7 @@ jobs:
       NODE_VERSION: '22'
       IMAGE_NAME: es-server
       # 修改为服务器上 docker-compose.yml 的实际绝对路径
-      COMPOSE_FILE_PATH: /www/server/panel/data/compose/es/docker-compose.yml
+      COMPOSE_FILE_PATH: /www/server/panel/data/compose/es/docker-compose.yaml
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,30 +27,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 清理使用旧镜像的容器（若存在）
-        run: |
-          set -e
-          IMAGE_TAG="${{ env.IMAGE_NAME }}:latest"
-          CONTAINERS=$(docker ps -a --filter "ancestor=${IMAGE_TAG}" -q || true)
-          if [ -n "$CONTAINERS" ]; then
-            echo "Found containers using ${IMAGE_TAG}. Removing them..."
-            docker rm -f $CONTAINERS || true
-          else
-            echo "No containers are using ${IMAGE_TAG}."
-          fi
-
-      - name: 仅清理当前镜像的 latest 标签（若存在）
-        run: |
-          set -e
-          IMAGE_TAG="${{ env.IMAGE_NAME }}:latest"
-          IMAGE_ID=$(docker images -q "$IMAGE_TAG" || true)
-          if [ -n "$IMAGE_ID" ]; then
-            echo "Removing existing image $IMAGE_TAG..."
-            # 先确保没有容器在使用（前一步已处理），再删除该标签
-            docker rmi -f "$IMAGE_TAG" || true
-          else
-            echo "No existing $IMAGE_TAG found. Proceeding with normal build."
-          fi
+      # 为避免构建期间服务中断：不再提前删除旧容器/镜像
+      # 直接构建新镜像，随后用 Compose 强制重建并拉起服务，最后进行清理。
 
       - name: 打包镜像
         id: build_image
