@@ -28,7 +28,7 @@ RUN test -d "/app/${APP_PATH}/dist" || (echo "Build dist not found at /app/${APP
 RUN echo "Builder Success 🎉"
 
 FROM nginx:stable-alpine AS production
-
+ARG APP_PATH=apps/web-ele
 # 配置 nginx 及 mjs MIME 类型
 RUN echo "types { application/javascript js mjs; }" > /etc/nginx/conf.d/mjs.conf \
     && rm -rf /etc/nginx/conf.d/default.conf
