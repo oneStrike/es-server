@@ -27,7 +27,11 @@ jobs:
 
       - name: Set image tag
         id: vars
-        run: echo "tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: |
+          set -e
+          PKG_VERSION=$(awk -F\" '/"version":/ {print $4; exit}' package.json)
+          echo "tag=${PKG_VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${PKG_VERSION}" >> $GITHUB_OUTPUT
 
       - name: Build image with cache (Dockerfile)
         uses: docker/build-push-action@v5
