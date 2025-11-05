@@ -30,7 +30,7 @@ jobs:
         run: |
           set -e
           PKG_VERSION=$(node -p "require('./package.json').version || ''")
-          IMAGE_TAG=${GITHUB_REF_NAME:-$PKG_VERSION}
+          IMAGE_TAG="$PKG_VERSION"
           if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG=latest; fi
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
           echo "CONTAINER_NAME=${IMAGE_NAME}-${IMAGE_TAG}" >> $GITHUB_ENV
