@@ -25,24 +25,27 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 设置镜像名称
+      - name: 设置镜像标签与容器名
         id: vars
         run: |
           set -e
-          PKG_VERSION=$(node -p "require('./package.json').version || 'latest'")
-          CONTAINER_NAME=${{ env.IMAGE_NAME }}-${{ env.PKG_VERSION }}
+          PKG_VERSION=$(node -p "require('./package.json').version || ''")
+          IMAGE_TAG=${GITHUB_REF_NAME:-$PKG_VERSION}
+          if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG=latest; fi
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "CONTAINER_NAME=${IMAGE_NAME}-${IMAGE_TAG}" >> $GITHUB_ENV
 
       - name: 清理同名镜像
         run: |
-          echo "清理镜像 ${{ env.CONTAINER_NAME }}"
-          docker rmi -f ${{ env.CONTAINER_NAME }} || true
+          echo "清理镜像 ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+          docker rmi -f "${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}" || true
 
       - name: 打包镜像
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile
-          tags: ${{ env.CONTAINER_NAME }}
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           cache-from: type=local,src=/data/cache/server/buildx
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
@@ -50,14 +53,14 @@ jobs:
       - name: 运行镜像
         run: |
           set -e
-          docker run -d --name "$CONTAINER_NAME" \
+          docker run -d --name "${{ env.CONTAINER_NAME }}" \
             -e NODE_ENV=production \
             -e PORT=8080 \
-            ${{ env.CONTAINER_NAME }}
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
           echo "Waiting for app to become healthy..."
           for i in $(seq 1 3); do
-            if docker exec "$CONTAINER_NAME" sh -lc 'curl -fsS http://127.0.0.1:8080/api/health >/dev/null'; then
+            if docker exec "${{ env.CONTAINER_NAME }}" sh -lc 'curl -fsS http://127.0.0.1:8080/api/health >/dev/null'; then
               echo "Health check passed."
               break
             fi
