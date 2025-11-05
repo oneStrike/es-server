@@ -16,11 +16,11 @@ COPY pnpm-lock.yaml package.json ./
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
     pnpm install --frozen-lockfile
 
-# 复制 Prisma schema 并缓存引擎下载
-RUN  pnpm prisma:generate
-
 # 复制源码
 COPY . .
+
+# 复制 Prisma schema 并缓存引擎下载
+RUN  pnpm prisma:generate
 
 # 构建应用
 RUN pnpm build
