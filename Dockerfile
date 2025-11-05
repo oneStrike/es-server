@@ -16,7 +16,6 @@ COPY pnpm-lock.yaml package.json ./
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
     pnpm install --frozen-lockfile
 
-
 # 复制源码
 COPY . .
 
@@ -25,9 +24,6 @@ RUN  pnpm prisma:generate
 
 # 构建应用
 RUN pnpm build
-
-# 裁剪为生产依赖
-# RUN pnpm prune --prod
 
 # --------------------------------
 # 阶段2: 运行时阶段
