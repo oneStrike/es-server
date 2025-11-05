@@ -44,9 +44,28 @@ jobs:
       - name: 使用最新镜像重启服务（Compose）
         run: |
           set -e
-          COMPOSE_FILE="${{ env.COMPOSE_FILE_PATH }}"
-          if [ ! -f "$COMPOSE_FILE" ]; then
-            echo "未找到 Compose 文件: $COMPOSE_FILE"
+          # 兼容 .yaml/.yml，并在找不到时回退尝试常见文件名
+          PRIMARY_COMPOSE_FILE="${{ env.COMPOSE_FILE_PATH }}"
+          ALT_COMPOSE_FILE_YML="${PRIMARY_COMPOSE_FILE%.*}.yml"
+          ALT_COMPOSE_FILE_DEFAULT_YML="$(dirname "$PRIMARY_COMPOSE_FILE")/docker-compose.yml"
+          ALT_COMPOSE_FILE_DEFAULT_YAML="$(dirname "$PRIMARY_COMPOSE_FILE")/docker-compose.yaml"
+
+          if [ -f "$PRIMARY_COMPOSE_FILE" ]; then
+            COMPOSE_FILE="$PRIMARY_COMPOSE_FILE"
+          elif [ -f "$ALT_COMPOSE_FILE_YML" ]; then
+            COMPOSE_FILE="$ALT_COMPOSE_FILE_YML"
+          elif [ -f "$ALT_COMPOSE_FILE_DEFAULT_YML" ]; then
+            COMPOSE_FILE="$ALT_COMPOSE_FILE_DEFAULT_YML"
+          elif [ -f "$ALT_COMPOSE_FILE_DEFAULT_YAML" ]; then
+            COMPOSE_FILE="$ALT_COMPOSE_FILE_DEFAULT_YAML"
+          else
+            echo "未找到 Compose 文件: $PRIMARY_COMPOSE_FILE"
+            echo "尝试的备用文件:"
+            echo "- $ALT_COMPOSE_FILE_YML"
+            echo "- $ALT_COMPOSE_FILE_DEFAULT_YML"
+            echo "- $ALT_COMPOSE_FILE_DEFAULT_YAML"
+            echo "列出目录以便排查: $(dirname "$PRIMARY_COMPOSE_FILE")"
+            ls -al "$(dirname "$PRIMARY_COMPOSE_FILE")" || true
             exit 1
           fi
 
@@ -60,6 +79,7 @@ jobs:
             exit 1
           fi
 
+          echo "使用 Compose 文件: $COMPOSE_FILE"
           # 使用最新镜像强制重建并启动服务
           $COMPOSE_CMD -f "$COMPOSE_FILE" up -d --force-recreate --remove-orphans
 
