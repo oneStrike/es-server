@@ -47,7 +47,7 @@ export async function setupApp(
 
   // 配置 Swagger 文档（生产环境可条件性禁用）
   if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SWAGGER === 'true') {
-    setupSwagger(app)
+    await setupSwagger(app)
   }
 
   return logger
