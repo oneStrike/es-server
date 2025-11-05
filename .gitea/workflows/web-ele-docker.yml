@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - master
+      - dev
     paths:
       - 'apps/web-ele/**'
       - '.gitea/workflows/**'
