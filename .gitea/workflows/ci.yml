@@ -34,6 +34,7 @@ jobs:
 
       - name: 清理同名镜像
         run: |
+          echo "清理镜像 ${{ env.CONTAINER_NAME }}"
           docker rmi -f ${{ env.CONTAINER_NAME }} || true
 
       - name: 打包镜像
