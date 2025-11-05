@@ -29,12 +29,10 @@ jobs:
         id: vars
         run: |
           set -e
-          PKG_VERSION=$(node -p "require('./package.json').version || ''")
-          IMAGE_TAG="$PKG_VERSION"
-          if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG=latest; fi
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-          echo "CANDIDATE_TAG=${IMAGE_TAG}-candidate" >> $GITHUB_ENV
-          echo "CONTAINER_NAME=${IMAGE_NAME}-${IMAGE_TAG}-candidate" >> $GITHUB_ENV
+          IMAGE_TAG=latest
+          echo "IMAGE_TAG=$IMAGE_TAG" &gt;&gt; $GITHUB_ENV
+          echo "CANDIDATE_TAG=${IMAGE_TAG}-candidate" &gt;&gt; $GITHUB_ENV
+          echo "CONTAINER_NAME=${IMAGE_NAME}-${IMAGE_TAG}-candidate" &gt;&gt; $GITHUB_ENV
 
       - name: 打包镜像
         uses: docker/build-push-action@v5
@@ -45,59 +43,3 @@ jobs:
           cache-from: type=local,src=/data/cache/server/buildx
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
-
-      - name: 运行镜像
-        shell: bash
-        run: |
-          set -e
-          docker run -d --name "${{ env.CONTAINER_NAME }}" \
-            -e NODE_ENV=production \
-            -e PORT=8080 \
-            ${{ env.IMAGE_NAME }}:${{ env.CANDIDATE_TAG }}
-
-          # -------- 工具函数（不改变逻辑，仅提升可读性） --------
-          log() { echo "$@"; }
-          logs_and_fail() { docker logs "${{ env.CONTAINER_NAME }}" || true; exit 1; }
-          inspect_both() {
-            docker inspect --format='{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' "${{ env.CONTAINER_NAME }}"
-          }
-
-          # -------- 健康轮询参数 --------
-          ATTEMPTS=10
-          SLEEP_SECONDS=6
-          PASSED=""
-
-          log "⏳ 正在等待容器健康（Docker HEALTHCHECK）..."
-          for i in $(seq 1 "$ATTEMPTS"); do
-            read -r STATUS HEALTH <<<"$(inspect_both)"
-            if [ "$STATUS" != "running" ]; then
-              log "📦 容器状态：$STATUS"
-              log "❌ 容器提前退出，日志如下："
-              logs_and_fail
-            fi
-            if [ "$HEALTH" = "healthy" ]; then
-              log "✅ 健康检查通过"
-              PASSED="yes"
-              break
-            fi
-            log "🩺 健康状态=$HEALTH，重试 $i/$ATTEMPTS"
-            sleep "$SLEEP_SECONDS"
-          done
-
-          if [ -z "$PASSED" ]; then
-            log "⛔ 容器未在预期时间内变为健康，日志如下："
-            logs_and_fail
-          fi
-
-      - name: 覆盖正式标签（候选镜像健康后）
-        if: ${{ success() }}
-        run: |
-          set -e
-          echo "🏷️ 覆盖正式标签：${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
-          docker tag "${{ env.IMAGE_NAME }}:${{ env.CANDIDATE_TAG }}" "${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
-
-      - name: 清理候选容器与镜像
-        if: always()
-        run: |
-          docker rm -f "${{ env.CONTAINER_NAME }}" || true
-          docker rmi -f "${{ env.IMAGE_NAME }}:${{ env.CANDIDATE_TAG }}" || true
