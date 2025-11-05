@@ -25,9 +25,6 @@ RUN  pnpm prisma:generate
 # 构建应用
 RUN pnpm build
 
-# 裁剪为生产依赖
-RUN pnpm prune --prod
-
 # --------------------------------
 # 阶段2: 运行时阶段
 # --------------------------------
