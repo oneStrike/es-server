@@ -36,9 +36,6 @@ RUN echo "types { application/javascript js mjs; }" > /etc/nginx/conf.d/mjs.conf
 # 复制构建产物到 nginx 站点目录
 COPY --from=builder /app/${APP_PATH}/dist /usr/share/nginx/html
 
-# 使用项目自带的 nginx 配置
-COPY --from=builder /app/scripts/deploy/nginx.conf /etc/nginx/nginx.conf
-
 EXPOSE 8080
 
 # 启动 nginx
