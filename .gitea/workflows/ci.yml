@@ -25,6 +25,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: 替换已有镜像（若存在）
+        run: |
+          if docker image inspect ${{ env.IMAGE_NAME }}:latest > /dev/null 2>&1; then
+            echo "Found existing image ${{ env.IMAGE_NAME }}:latest. Removing to replace..."
+            docker rmi -f ${{ env.IMAGE_NAME }}:latest || echo "Force remove failed, will overwrite tag during load."
+          else
+            echo "No existing image with tag ${{ env.IMAGE_NAME }}:latest. Proceeding with normal build."
+          fi
+
       - name: 打包镜像
         uses: docker/build-push-action@v5
         with:
