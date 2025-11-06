@@ -1,7 +1,7 @@
 import type { INestApplication } from '@nestjs/common'
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
-export function setupSwagger(app: INestApplication<any>) {
+export async function setupSwagger(app: INestApplication<any>) {
+  const { DocumentBuilder, SwaggerModule } = await import('@nestjs/swagger')
   // 创建并处理客户端文档
   const clientConfig = new DocumentBuilder()
     .setTitle('客户端 API')
