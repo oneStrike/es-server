@@ -22,20 +22,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 提取 package 版本号
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: 构建前清理悬空镜像（安全）
-        run: |
-          set -e
-          # 仅清理悬空（dangling）镜像，避免误删正在使用的镜像或容器
-          DANGLING=$(docker images -f "dangling=true" -q | sort -u || true)
-          if [ -n "$DANGLING" ]; then
-            echo "Pruning dangling images before build..."
-            docker rmi -f $DANGLING || true
-          else
-            echo "No dangling images to prune."
-          fi
 
       - name: 打包镜像
         id: build_image
@@ -44,59 +43,11 @@ jobs:
           context: .
           file: Dockerfile
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:${{ steps.pkg.outputs.version }}
           cache-from: type=local,src=/data/cache/server/buildx
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
-  
-      - name: 构建后清理悬空镜像
+
+      - name: 清理悬空镜像
         run: |
-          # 清理构建过程中产生的悬空镜像，避免出现 <none> 标签占用空间
           docker image prune -f || true
-
-      - name: 仅保留最近 5 个提交镜像（安全清理）
-        run: |
-          set -e
-          REPO="${{ env.IMAGE_NAME }}"
-          KEEP=5
-
-          # 获取该仓库下按创建时间排序的提交哈希标签列表（不包含 latest 等非哈希标签）
-          COMMIT_TAGS=$(docker images --filter "reference=${REPO}:*" \
-            --format "{{.Repository}}:{{.Tag}}|{{.CreatedAt}}" \
-            | grep -E "^${REPO}:[0-9a-f]{7,40}\\|" \
-            | awk -F'|' '{print $2 " " $1}' \
-            | sort -r \
-            | awk '{print $2}'
-          )
-
-          if [ -z "$COMMIT_TAGS" ]; then
-            echo "No commit-tag images found for ${REPO}."
-            exit 0
-          fi
-
-          echo "All commit-tag images (newest first):"
-          echo "$COMMIT_TAGS" | sed -n '1,${p}'
-
-          # 需要删除的（跳过前 KEEP 个）
-          TO_DELETE=$(echo "$COMMIT_TAGS" | tail -n +$((KEEP+1)) || true)
-
-          if [ -z "$TO_DELETE" ]; then
-            echo "No old commit-tag images to prune (keeping latest ${KEEP})."
-            exit 0
-          fi
-
-          echo "Pruning old commit-tag images (keeping latest ${KEEP}):"
-          echo "$TO_DELETE" | while read -r TAG; do
-            if [ -z "$TAG" ]; then
-              continue
-            fi
-            # 安全检查：若有容器在使用则跳过
-            USING=$(docker ps -a --filter "ancestor=${TAG}" -q || true)
-            if [ -z "$USING" ]; then
-              echo "Removing image tag: $TAG"
-              docker rmi "$TAG" || true
-            else
-              echo "Skip $TAG because containers are using it."
-            fi
-          done
