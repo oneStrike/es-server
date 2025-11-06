@@ -13,5 +13,6 @@ generator client {
 
 datasource db {
   provider     = "postgresql"
+  url          = ""
   relationMode = "prisma"
 }
