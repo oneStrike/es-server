@@ -16,15 +16,16 @@ dotenv.config({
   path: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
 })
 
-const { POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD } = process.env
-console.log(
-  '🚀 ~  POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD:',
+const {
   POSTGRES_DB,
   POSTGRES_USER,
   POSTGRES_PASSWORD,
-)
+  POSTGRES_DB_HOST,
+  POSTGRES_DB_PORT,
+} = process.env
+
 const adapter = new PrismaPg({
-  connectionString: `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}`,
+  connectionString: `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_DB_HOST}:${POSTGRES_DB_PORT}/${POSTGRES_DB}`,
 })
 export const prisma = new PrismaClient({ adapter }).$extends({
   model: {

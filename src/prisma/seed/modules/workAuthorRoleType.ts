@@ -1,9 +1,9 @@
-// Converted to JS: removed TypeScript type imports
+import type { PrismaClientType } from '@/prisma/prisma.connect'
 
 /**
  * 作者角色类型种子数据
  */
-export async function seedWorkAuthorRoleType(prisma) {
+export async function seedWorkAuthorRoleType(prisma: PrismaClientType) {
   console.log('🌱 开始初始化作者角色类型数据...')
 
   const roleTypes = [

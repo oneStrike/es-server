@@ -3,7 +3,7 @@ import {
   ComicSerialStatusEnum,
 } from '../../../modules/admin/work/comic/core/comic.constant'
 
-export async function createInitialComics(prisma) {
+export async function createInitialComics(prisma: any) {
   const initData = [
     {
       name: '进击的巨人',

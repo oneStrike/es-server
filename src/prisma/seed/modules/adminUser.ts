@@ -1,4 +1,4 @@
-export async function createInitialAdminAccount(prisma) {
+export async function createInitialAdminAccount(prisma: any) {
   const accountInfo = {
     username: 'admin',
     mobile: '18888888888',
