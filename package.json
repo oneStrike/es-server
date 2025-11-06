@@ -24,12 +24,13 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
     "prisma:format": "prisma format",
-    "prisma:init": "pnpm prisma:push && pnpm prisma:seed",
+    "prisma:init": "pnpm prisma:migrate:dev && pnpm prisma:seed",
     "prisma:pull": "prisma db pull",
-    "prisma:push": "prisma db push --force-reset",
     "prisma:seed": "prisma db seed",
-    "prisma:update": "pnpm prisma:generate && pnpm prisma:push && pnpm prisma:seed",
-    "prisma:migrate:deploy": "prisma migrate deploy"
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:deploy": "pnpm prisma:migrate:deploy && pnpm prisma:seed",
+    "prisma:update": "pnpm prisma:generate && pnpm prisma:migrate:dev && pnpm prisma:seed"
   },
   "dependencies": {
     "@fastify/compress": "^8.1.0",

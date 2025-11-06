@@ -12,10 +12,18 @@ envFiles.forEach((file) => {
   config({ path: file, override: false })
 })
 
+// 在不同环境使用不同的 seed 命令：
+// - 开发：直接使用 tsx 运行 TS 源码
+// - 生产：使用构建后的 JS（dist）运行，避免容器内依赖 tsx/pnpm
+const seedCommand =
+  (process.env.NODE_ENV || 'development') === 'production'
+    ? 'node dist/prisma/seed/index.js'
+    : 'pnpm tsx src/prisma/seed/index.ts'
+
 export default defineConfig({
   schema: path.join('prisma'),
   migrations: {
     path: path.join('prisma', 'migrations'),
-    seed: 'pnpx tsx src/prisma/seed/index.ts',
+    seed: seedCommand,
   },
 })

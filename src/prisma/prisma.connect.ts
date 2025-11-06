@@ -22,11 +22,16 @@ const {
   POSTGRES_PASSWORD,
   POSTGRES_DB_HOST,
   POSTGRES_DB_PORT,
+  DATABASE_URL,
 } = process.env
 
-const adapter = new PrismaPg({
-  connectionString: `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_DB_HOST}:${POSTGRES_DB_PORT}/${POSTGRES_DB}`,
-})
+// 优先使用 DATABASE_URL（便于与 Prisma CLI 保持一致）；
+// 若未提供，则回退到基于 POSTGRES_* 变量拼接的连接字符串。
+const connectionString =
+  DATABASE_URL
+  ?? `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_DB_HOST}:${POSTGRES_DB_PORT}/${POSTGRES_DB}`
+
+const adapter = new PrismaPg({ connectionString })
 export const prisma = new PrismaClient({ adapter }).$extends({
   model: {
     $allModels: {
