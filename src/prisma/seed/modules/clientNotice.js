@@ -1,4 +1,4 @@
-export async function createInitialClientNotice(prisma: any) {
+export async function createInitialClientNotice(prisma) {
   const initData = [
     {
       title: '欢迎使用漫画阅读平台',

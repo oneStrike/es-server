@@ -52,6 +52,6 @@ async function runSeeds() {
 runSeeds()
   .catch((error) => {
     console.log('🚀 ~ error:', error)
-    void process.exit(1)
+    process.exit(1)
   })
-  .finally(() => void prisma.$disconnect())
+  .finally(() => prisma.$disconnect())

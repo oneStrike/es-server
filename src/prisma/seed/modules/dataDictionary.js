@@ -1,23 +1,12 @@
-/**
- * 数据字典种子数据接口
- */
-interface IDictionaryData {
-  name: string
-  code: string
-}
-
-interface IDictionaryItemData {
-  name: string
-  code: string
-}
+// 转为 JS：移除 TypeScript 接口定义
 
 /**
  * 创建初始数据字典数据
  * @param prisma Prisma客户端实例
  */
-export async function createInitialDataDictionary(prisma: any) {
+export async function createInitialDataDictionary(prisma) {
   // 初始化数据字典数据
-  const initData: IDictionaryData[] = [
+  const initData = [
     {
       name: '作品语言',
       code: 'work_language',
@@ -40,7 +29,7 @@ export async function createInitialDataDictionary(prisma: any) {
     },
   ]
   // 数据字典项数据
-  const itemData: Record<string, IDictionaryItemData[]> = {
+  const itemData = {
     work_language: [
       {
         name: '中文',

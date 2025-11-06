@@ -1,4 +1,4 @@
-export async function createInitialMediums(prisma: any) {
+export async function createInitialMediums(prisma) {
   const list = [
     { code: 'COMIC', name: '漫画' },
     { code: 'NOVEL', name: '小说' },

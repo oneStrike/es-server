@@ -1,4 +1,4 @@
-export async function createInitialWorkComicRelations(prisma: any) {
+export async function createInitialWorkComicRelations(prisma) {
   // 创建漫画作者关联关系
   const comicAuthorRelations = [
     {

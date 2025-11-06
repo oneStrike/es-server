@@ -1,18 +1,12 @@
-/**
- * 作品分类种子数据接口
- */
-interface IWorkCategoryData {
-  name: string
-  mediumCodes: string[]
-}
+// 转为 JS：移除 TypeScript 接口定义
 
 /**
  * 创建初始作品分类数据
  * @param prisma Prisma客户端实例
  */
-export async function createInitialWorkCategory(prisma: any) {
+export async function createInitialWorkCategory(prisma) {
   // 初始化作品分类数据
-  const INITIAL_WORK_CATEGORIES: IWorkCategoryData[] = [
+  const INITIAL_WORK_CATEGORIES = [
     { name: '百合', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
     { name: '热血', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
     { name: '温馨', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
@@ -41,7 +35,7 @@ export async function createInitialWorkCategory(prisma: any) {
         })
         if (mediums.length) {
           await prisma.workCategoryContentType.createMany({
-            data: mediums.map((m: any) => ({
+            data: mediums.map((m) => ({
               categoryId: created.id,
               contentTypeId: m.id,
             })),

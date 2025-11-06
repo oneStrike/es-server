@@ -1,4 +1,4 @@
-export async function createInitialWorkComicVersions(prisma: any) {
+export async function createInitialWorkComicVersions(prisma) {
   // 为一些漫画创建不同语言版本
   const versionData = [
     {

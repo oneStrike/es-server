@@ -1,4 +1,4 @@
-export async function createInitialWorkComicChapters(prisma: any) {
+export async function createInitialWorkComicChapters(prisma) {
   // 为每部漫画创建一些示例章节
   const chapterData = [
     {

@@ -1,7 +1,6 @@
-import type { PrismaClientType } from '@/prisma/prisma.connect'
 import { AuthorGenderEnum } from '../../../modules/admin/work/author/author.constant'
 
-export async function createInitialAuthors(prisma: PrismaClientType) {
+export async function createInitialAuthors(prisma) {
   // 首先获取角色类型映射
   const roleTypes = await prisma.workAuthorRoleType.findMany({
     select: { id: true, code: true },

@@ -1,4 +1,4 @@
-export async function createInitialClientPage(prisma: any) {
+export async function createInitialClientPage(prisma) {
   const initData = [
     {
       code: 'home',
