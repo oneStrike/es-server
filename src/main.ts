@@ -4,7 +4,11 @@ import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 
 import { AppModule } from '@/app.module'
-import { logStartupInfo, setupApp, setupHotReload } from '@/nestjs'
+import { logStartupInfo, setupApp } from '@/nestjs'
+
+// 为 Webpack HMR 声明模块类型，并在入口持有应用引用
+declare const module: any
+let appRef: NestFastifyApplication | null = null
 
 async function bootstrap() {
   return async function startApp() {
@@ -20,6 +24,9 @@ async function bootstrap() {
       },
     )
 
+    // 保存应用引用，供 HMR 释放资源时关闭
+    appRef = app
+
     // 配置应用（中间件、插件、日志等）
     const logger = await setupApp(app, fastifyAdapter)
 
@@ -29,10 +36,6 @@ async function bootstrap() {
 
     // 打印启动信息
     logStartupInfo(port, logger)
-
-    // 配置热重载（开发环境）
-    setupHotReload(app, logger)
-
     return app
   }
 }
@@ -45,3 +48,19 @@ void bootstrap()
     console.error('应用程序启动失败:', error)
     process.exit(1)
   })
+
+// 入口模块接受自身更新，并在替换时优雅关闭应用
+if (module?.hot) {
+  module.hot.accept()
+  module.hot.dispose(async () => {
+    try {
+      if (appRef) {
+        await appRef.close()
+        appRef = null
+        console.info('主入口已释放，等待应用热重载...')
+      }
+    } catch (e) {
+      console.error('热重载关闭应用失败:', e)
+    }
+  })
+}

@@ -1,27 +1,4 @@
-import type { INestApplication } from '@nestjs/common'
 import type { CustomLoggerService } from '@/common/module/logger/logger.service'
-
-declare const module: any
-
-/**
- * 配置热模块替换（HMR）
- * 仅在开发环境启用
- */
-export function setupHotReload(
-  app: INestApplication,
-  logger: CustomLoggerService,
-) {
-  // 检查是否支持热重载
-  if (!module.hot) {
-    return
-  }
-
-  module.hot.accept()
-  module.hot.dispose(async () => {
-    logger.info('应用程序正在热重载...')
-    await app.close()
-  })
-}
 
 /**
  * 打印应用启动信息
