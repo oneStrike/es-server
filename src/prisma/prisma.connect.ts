@@ -17,6 +17,12 @@ dotenv.config({
 })
 
 const { POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD } = process.env
+console.log(
+  '🚀 ~  POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD:',
+  POSTGRES_DB,
+  POSTGRES_USER,
+  POSTGRES_PASSWORD,
+)
 const adapter = new PrismaPg({
   connectionString: `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}`,
 })
