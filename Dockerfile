@@ -25,7 +25,6 @@ RUN  pnpm prisma:generate
 # 构建应用
 RUN pnpm build
 
-# 只打包生产依赖以减小运行时镜像体积
 # 仅保留生产依赖，剔除开发依赖
 RUN pnpm prune --prod
 
