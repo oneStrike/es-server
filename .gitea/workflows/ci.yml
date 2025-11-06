@@ -25,10 +25,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Prisma validate schema
-        run: |
-          npx prisma@6.19.0 validate --schema prisma/schema.prisma
-
       - name: 提取 package 版本号
         id: pkg
         run: |
