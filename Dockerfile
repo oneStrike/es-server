@@ -25,6 +25,9 @@ RUN  pnpm prisma:generate
 # 构建应用
 RUN pnpm build
 
+# 只打包生产依赖以减小运行时镜像体积
+RUN pnpm deploy --prod --no-optional /app/deploy
+
 # --------------------------------
 # 阶段2: 运行时阶段
 # --------------------------------
@@ -45,7 +48,7 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 
 # 从构建阶段复制生产依赖和构建产物
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/deploy/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
 
