@@ -83,7 +83,7 @@ module.exports = {
     // 聚合变化，减少重新构建次数
     aggregateTimeout: 300,
     // 轮询间隔（毫秒）
-    poll: 1000,
+    poll: 500,
   },
   // 性能优化
   optimization: {
