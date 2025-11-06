@@ -25,6 +25,9 @@ RUN  pnpm prisma:generate
 # 构建应用
 RUN pnpm build
 
+# 仅保留生产依赖，剔除开发依赖（替代 deploy）
+RUN pnpm prune --prod
+
 # --------------------------------
 # 阶段2: 运行时阶段
 # --------------------------------
