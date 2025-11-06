@@ -25,19 +25,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Set up pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@9.15.4 --activate
-
-      - name: Install deps and Prisma generate
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm prisma:generate
-
       - name: Prisma validate schema
         run: |
-          npx prisma validate
+          npx prisma@6.19.0 validate --schema prisma/schema.prisma
 
       - name: 提取 package 版本号
         id: pkg

@@ -7,7 +7,6 @@ coverage
 .idea
 .env*
 !.env.production.example
-prisma/migrations
 *.tsbuildinfo
 dist
 logs
