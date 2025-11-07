@@ -37,8 +37,11 @@ FROM node:22-alpine AS runtime
 ENV NODE_ENV=production \
     PORT=8080
 
-# 安装运行时必需的系统依赖（移除 curl，使用 busybox wget）
-RUN apk add --no-cache dumb-init
+# 安装运行时必需的系统依赖（使用 busybox wget）
+RUN apk add --no-cache wget
+
+# 安装 PM2 作为 Docker 运行时进程管理（pm2-runtime）
+RUN npm i -g pm2@latest
 
 # 创建非root用户
 RUN addgroup -g 1001 -S nodejs && \
@@ -53,6 +56,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder --chown=nestjs:nodejs /app/ecosystem.config.js ./ecosystem.config.js
 
 # 创建日志目录
 RUN mkdir -p /app/logs && \
@@ -61,15 +65,20 @@ RUN mkdir -p /app/logs && \
 # 切换到非root用户
 USER nestjs
 
+# 安装并配置 pm2-logrotate 插件（在非root用户下）
+RUN pm2 install pm2-logrotate \
+ && pm2 set pm2-logrotate:max_size 50M \
+ && pm2 set pm2-logrotate:retain 7 \
+ && pm2 set pm2-logrotate:compress true \
+ && pm2 set pm2-logrotate:dateFormat YYYY-MM-DD_HH-mm-ss \
+ && pm2 set pm2-logrotate:rotateInterval "0 */6 * * *"
+
 # 暴露端口
 EXPOSE 8080
 
 # 健康检查（使用 busybox wget）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD wget -qO- http://localhost:8080/api/health >/dev/null || exit 1
+    CMD wget -qO- http://localhost:8080/api/ready >/dev/null || exit 1
 
-# 使用 dumb-init 作为 PID 1 进程
-ENTRYPOINT ["dumb-init", "--"]
-
-# 启动应用
-CMD ["node", "dist/main.js"]
+# 使用 PM2 Runtime 作为容器进程管理器
+CMD ["pm2-runtime", "ecosystem.config.js"]

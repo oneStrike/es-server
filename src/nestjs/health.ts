@@ -15,49 +15,48 @@ export function setupHealthChecks(
   fastifyAdapter: FastifyAdapter,
   app: NestFastifyApplication,
 ) {
-  // 存活检查端1点（Liveness Probe）
-  fastifyAdapter.get('/api/health', async (req, reply) => {
-    reply.code(200).send({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: process.env.NODE_ENV,
-      memory: process.memoryUsage(),
-    })
-  })
+  type Status = 'ok' | 'not ok'
+  const HEALTH_ROUTE = '/api/health'
+  const READY_ROUTE = '/api/ready'
+  const PONG_VALUE = 'pong'
 
-  // 就绪检查端点（Readiness Probe）
-  fastifyAdapter.get('/api/ready', async (req, reply) => {
-    const timestamp = new Date().toISOString()
+  const nowISO = () => new Date().toISOString()
+  const isMemoryStore = (store: any) =>
+    !!store?.opts?.store?.constructor &&
+    store.opts.store.constructor.name === 'CacheableMemory'
+  const makePingKey = (label: string) =>
+    `health:cache:${label}:ping:${Math.random().toString(36).slice(2)}`
 
-    // 数据库健康检查
-    let dbStatus: 'ok' | 'not ok' = 'ok'
-    let memoryCacheStatus: 'ok' | 'not ok' = 'ok'
-    let redisCacheStatus: 'ok' | 'not ok' = 'ok'
-    const errors: Record<string, string> = {}
-
+  async function checkDatabase() {
+    let status: Status = 'ok'
+    let errorMessage: string | undefined
     try {
       await prisma.$queryRaw`SELECT 1`
     } catch (error) {
-      dbStatus = 'not ok'
-      errors.database = String(error)
+      status = 'not ok'
+      errorMessage = String(error)
     }
+    return { status, error: errorMessage }
+  }
 
-    // 使用 Nest 的 CacheManager 检测各缓存（优先逐个 store 检测）
+  async function checkCaches(cacheManager: any): Promise<{
+    memory: Status
+    redis: Status
+    errors: Record<string, string>
+  }> {
+    let memory: Status = 'ok'
+    let redis: Status = 'ok'
+    const errors: Record<string, string> = {}
+
     try {
-      const cache = app.get<Cache>(CACHE_MANAGER) as any
-      const stores: any[] | undefined = cache?.stores
-
+      const stores: any[] | undefined = cacheManager?.stores
       if (Array.isArray(stores) && stores.length > 0) {
         for (const store of stores) {
-          // 依据特征粗略判断 store 类型（内存/Redis）
-          const isMemory =
-            !!store?.opts?.store?.constructor &&
-            store.opts.store.constructor.name === 'CacheableMemory'
-          const storeLabel = isMemory ? 'memory' : 'redis'
+          const isMem = isMemoryStore(store)
+          const label = isMem ? 'memory' : 'redis'
           try {
-            const key = `health:cache:${storeLabel}:ping:${Math.random().toString(36).slice(2)}`
-            await store.set(key, 'pong', 10000)
+            const key = makePingKey(label)
+            await store.set(key, PONG_VALUE, 10000)
             const value = await store.get(key)
             if (typeof store.delete === 'function') {
               await store.delete(key)
@@ -65,21 +64,21 @@ export function setupHealthChecks(
               await store.del(key)
             }
 
-            if (value !== 'pong') {
-              throw new Error(`${storeLabel} cache ping value mismatch`)
+            if (value !== PONG_VALUE) {
+              throw new Error(`${label} cache ping value mismatch`)
             }
 
-            if (isMemory) {
-              memoryCacheStatus = 'ok'
+            if (isMem) {
+              memory = 'ok'
             } else {
-              redisCacheStatus = 'ok'
+              redis = 'ok'
             }
           } catch (err) {
-            if (isMemory) {
-              memoryCacheStatus = 'not ok'
+            if (isMem) {
+              memory = 'not ok'
               errors.memoryCache = String(err)
             } else {
-              redisCacheStatus = 'not ok'
+              redis = 'not ok'
               errors.redisCache = String(err)
             }
           }
@@ -87,23 +86,55 @@ export function setupHealthChecks(
       }
     } catch (error) {
       // 若逐个或聚合检测出错，根据已判定的类型记录错误
-      if (memoryCacheStatus === 'ok' && redisCacheStatus !== 'ok') {
+      if (memory === 'ok' && redis !== 'ok') {
         errors.redisCache = String(error)
-        redisCacheStatus = 'not ok'
-      } else if (redisCacheStatus === 'ok' && memoryCacheStatus !== 'ok') {
+        redis = 'not ok'
+      } else if (redis === 'ok' && memory !== 'ok') {
         errors.memoryCache = String(error)
-        memoryCacheStatus = 'not ok'
+        memory = 'not ok'
       } else {
         errors.cache = String(error)
-        memoryCacheStatus = 'not ok'
-        redisCacheStatus = 'not ok'
+        memory = 'not ok'
+        redis = 'not ok'
       }
+    }
+
+    return { memory, redis, errors }
+  }
+
+  // 存活检查端点（Liveness Probe）
+  fastifyAdapter.get(HEALTH_ROUTE, async (req, reply) => {
+    reply.code(200).send({
+      status: 'ok',
+      timestamp: nowISO(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV,
+      memory: process.memoryUsage(),
+    })
+  })
+
+  // 就绪检查端点（Readiness Probe）
+  fastifyAdapter.get(READY_ROUTE, async (req, reply) => {
+    const timestamp = nowISO()
+
+    const { status: dbStatus, error: dbError } = await checkDatabase()
+    const cache = app.get<Cache>(CACHE_MANAGER) as any
+    const {
+      memory: memoryCacheStatus,
+      redis: redisCacheStatus,
+      errors: cacheErrors,
+    } = await checkCaches(cache)
+
+    const errors: Record<string, string> = { ...cacheErrors }
+    if (dbError) {
+      errors.database = dbError
     }
 
     const ready =
       dbStatus === 'ok' &&
       memoryCacheStatus === 'ok' &&
       redisCacheStatus === 'ok'
+
     reply.code(ready ? 200 : 503).send({
       status: ready ? 'ready' : 'not ready',
       timestamp,
