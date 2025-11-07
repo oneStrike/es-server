@@ -39,8 +39,8 @@ export async function setupApp(
   // 配置响应压缩（gzip/brotli）
   await setupCompression(fastifyAdapter)
 
-  // 配置健康检查端点
-  setupHealthChecks(fastifyAdapter)
+  // 配置健康检查端点（包含数据库与 Redis 缓存校验）
+  setupHealthChecks(fastifyAdapter, app)
 
   // 配置文件上传
   await setupMultipart(fastifyAdapter, app)
