@@ -29,6 +29,9 @@ module.exports = {
       env: {
         NODE_ENV: process.env.NODE_ENV || 'production',
         PORT: process.env.PORT || 8080,
+        // 方案B：生产启用控制台告警输出到 stderr
+        LOG_ENABLE_CONSOLE: process.env.LOG_ENABLE_CONSOLE || 'true',
+        LOG_CONSOLE_LEVEL: process.env.LOG_CONSOLE_LEVEL || 'warn',
       },
       env_development: {
         NODE_ENV: 'development',

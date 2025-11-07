@@ -13,6 +13,8 @@
 - `PM2_INSTANCES`: 进程实例数，默认 `1`（容器中推荐单进程）。设置为 `max` 或具体数字启用多实例。
 - `PM2_EXEC_MODE`: 执行模式，`fork`（默认）或 `cluster`。
 - `PM2_MAX_MEMORY`: 超过该内存自动重启，默认 `512M`。
+ - `LOG_ENABLE_CONSOLE`: 是否在生产启用控制台日志，默认 `true`（方案B）。
+ - `LOG_CONSOLE_LEVEL`: 控制台日志级别，默认 `warn`。建议 `warn`/`error`，便于与 PM2 对接。
 
 ## 日志策略
 
@@ -25,6 +27,14 @@
   - 压缩：`compress=true`
   - 时间格式：`YYYY-MM-DD_HH-mm-ss`
   - 轮转间隔：`0 */6 * * *`（每 6 小时）
+
+### 方案B 行为说明（生产）
+
+- 应用日志仍以结构化 JSON 写入文件：`./logs/<module>/*.log`（按级别/组合/异常/拒绝分拆）。
+- 控制台仅输出 `warn`/`error`，并被路由到 `stderr`，因此：
+  - `pm2 logs` 可看到关键错误/告警摘要。
+  - 详细堆栈与上下文字段在对应文件日志中查询。
+- 如需关闭控制台输出，将 `LOG_ENABLE_CONSOLE=false`。
 
 如果需要在本地安装或调整，执行：
 

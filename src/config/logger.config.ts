@@ -29,10 +29,29 @@ export interface LoggerConfig {
   enableConsole: boolean
   enableFile: boolean
   enableColors: boolean
+  consoleLevel: LogLevel
   maxFiles: string
   maxSize: string
   datePattern: string
   dirname: string
+}
+
+/**
+ * 将字符串环境变量解析为 LogLevel
+ */
+function parseLogLevel(value: string | undefined, defaultLevel: LogLevel): LogLevel {
+  switch ((value || '').toLowerCase()) {
+    case 'error':
+      return LogLevel.ERROR
+    case 'warn':
+      return LogLevel.WARN
+    case 'info':
+      return LogLevel.INFO
+    case 'debug':
+      return LogLevel.DEBUG
+    default:
+      return defaultLevel
+  }
 }
 
 /**
@@ -43,9 +62,14 @@ function getLoggerConfig(): LoggerConfig {
 
   return {
     level: isDevelopment ? LogLevel.DEBUG : LogLevel.INFO,
-    enableConsole: isDevelopment,
+    // 生产采用方案B：支持控制台输出，默认仅警告及以上
+    // 可通过 LOG_ENABLE_CONSOLE 控制启用与否
+    enableConsole: isDevelopment || process.env.LOG_ENABLE_CONSOLE === 'true',
     enableFile: true,
     enableColors: isDevelopment,
+    consoleLevel: isDevelopment
+      ? LogLevel.DEBUG
+      : parseLogLevel(process.env.LOG_CONSOLE_LEVEL, LogLevel.WARN),
     maxFiles: process.env.LOG_MAX_FILES || '14d',
     maxSize: process.env.LOG_MAX_SIZE || '20m',
     datePattern: process.env.LOG_DATE_PATTERN || 'YYYY-MM-DD',
@@ -60,7 +84,9 @@ function createConsoleTransport(
   config: LoggerConfig,
 ): winston.transports.ConsoleTransportInstance {
   return new winston.transports.Console({
-    level: config.level,
+    level: config.consoleLevel,
+    // 将 warn/error 发送到 stderr，便于 PM2 收集到 error_file
+    stderrLevels: ['error', 'warn'],
     format: winston.format.combine(
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       winston.format.errors({ stack: true }),
@@ -100,6 +126,7 @@ function createConsoleExceptionTransport(
 ): winston.transports.ConsoleTransportInstance {
   return new winston.transports.Console({
     level: LogLevel.ERROR,
+    stderrLevels: ['error'],
     format: winston.format.combine(
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       winston.format.errors({ stack: true }),
