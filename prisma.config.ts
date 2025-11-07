@@ -1,7 +1,7 @@
 import path from 'node:path'
 import process from 'node:process'
 import { config } from 'dotenv'
-import { defineConfig, env } from 'prisma/config'
+import { defineConfig } from 'prisma/config'
 
 const envName = process.env.NODE_ENV || 'development'
 const envFiles = [
@@ -18,10 +18,6 @@ const seedCommand =
     : 'pnpm tsx src/prisma/seed/index.ts'
 
 export default defineConfig({
-  engine: 'classic',
-  datasource: {
-    url: env('DATABASE_URL'),
-  },
   schema: path.join('prisma'), // 多文件 schema 文件夹
   migrations: {
     path: path.join('prisma', 'migrations'),
