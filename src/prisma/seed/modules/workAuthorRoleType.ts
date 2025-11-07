@@ -4,8 +4,6 @@ import type { PrismaClientType } from '@/prisma/prisma.connect'
  * 作者角色类型种子数据
  */
 export async function seedWorkAuthorRoleType(prisma: PrismaClientType) {
-  console.log('🌱 开始初始化作者角色类型数据...')
-
   const roleTypes = [
     {
       code: 'MANGAKA',
@@ -37,6 +35,4 @@ export async function seedWorkAuthorRoleType(prisma: PrismaClientType) {
       create: roleType,
     })
   }
-
-  console.log(`✅ 作者角色类型数据初始化完成，共 ${roleTypes.length} 条记录`)
 }

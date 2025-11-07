@@ -19,7 +19,6 @@ const TIME_CONSTANTS = {
  * 获取指定类型的 JWT 基础配置
  */
 function getJwtConfig(type: 'ADMIN' | 'CLIENT') {
-  console.log("🚀 ~ getJwtConfig ~ type:", type)
   const env = process.env
 
   // 从环境变量中读取密钥配置
