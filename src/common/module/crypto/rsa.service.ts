@@ -1,12 +1,5 @@
 import { Buffer } from 'node:buffer'
-import {
-  constants,
-  generateKeyPairSync,
-  privateDecrypt,
-  publicEncrypt,
-} from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname } from 'node:path'
+import { constants, privateDecrypt, publicEncrypt } from 'node:crypto'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { RsaKeyType } from '@/common/enum/rsa'
@@ -28,14 +21,12 @@ export interface RsaKeyPair {
 export class RsaService implements OnModuleInit {
   private static instance: RsaService
   private keyPairs: Map<RsaKeyType, RsaKeyPair> = new Map()
-  private isDevelopment: boolean
   private logger: CustomLoggerService
 
   constructor(
     private configService: ConfigService,
     private loggerFactory: LoggerFactoryService,
   ) {
-    this.isDevelopment = configService.get<string>('NODE_ENV') === 'development'
     this.logger = this.loggerFactory.createGlobalLogger('RsaService')
   }
 
@@ -68,13 +59,6 @@ export class RsaService implements OnModuleInit {
    */
   private async initializeKeyPair(keyType: RsaKeyType): Promise<void> {
     const prefix = `${keyType}_RSA`
-
-    const privateKeyPath = this.configService.get<string>(
-      `${prefix}_PRIVATE_KEY_PATH`,
-    )
-    const publicKeyPath = this.configService.get<string>(
-      `${prefix}_PUBLIC_KEY_PATH`,
-    )
     const publicKeyEnv = this.configService.get<string>(`${prefix}_PUBLIC_KEY`)
     const privateKeyEnv = this.configService.get<string>(
       `${prefix}_PRIVATE_KEY`,
@@ -98,95 +82,23 @@ export class RsaService implements OnModuleInit {
       return
     }
 
-    // 如果配置了密钥路径，尝试从文件中读取
-    if (privateKeyPath && publicKeyPath) {
-      try {
-        // 确保目录存在
-        this.ensureDirectoryExists(privateKeyPath)
-        this.ensureDirectoryExists(publicKeyPath)
-
-        // 检查文件是否存在
-        if (existsSync(privateKeyPath) && existsSync(publicKeyPath)) {
-          const privateKey = readFileSync(privateKeyPath, 'utf8')
-          const publicKey = readFileSync(publicKeyPath, 'utf8')
-          this.keyPairs.set(keyType, { privateKey, publicKey })
-          this.logger.debug(`从文件加载 ${keyType} RSA密钥对成功`)
-          return
-        }
-      }
-      catch (error) {
-        this.logger.error(`读取${keyType} RSA密钥文件失败`, error.stack)
-      }
-    }
-
-    // 如果无法从文件或环境变量读取，则生成新的密钥对
-    this.logger.info(`生成新的 ${keyType} RSA密钥对`)
-    const newKeyPair = this.generateKeyPair()
-    this.keyPairs.set(keyType, newKeyPair)
-
-    // 根据环境决定如何保存密钥
-    if (this.isDevelopment) {
-      // 开发环境：保存到环境变量文件
-      if (privateKeyPath && publicKeyPath) {
-        try {
-          this.ensureDirectoryExists(privateKeyPath)
-          this.ensureDirectoryExists(publicKeyPath)
-          writeFileSync(privateKeyPath, newKeyPair.privateKey)
-          writeFileSync(publicKeyPath, newKeyPair.publicKey)
-          this.logger.info(`${keyType} RSA密钥对已保存到文件`)
-        }
-        catch (error) {
-          this.logger.error(`保存${keyType} RSA密钥文件失败`, error.stack)
-        }
-      }
-      else {
-        // 这里可以考虑将密钥写入.env.development文件
-        // 但需要额外的文件操作逻辑
-      }
-    }
-    else {
-      // 生产环境：记录日志，提示管理员设置环境变量
-      this.logger.logSecurity(
-        `${keyType} RSA密钥对已生成，但在生产环境中应通过环境变量配置`,
-        'warn',
-        { keyType },
-      )
-    }
+    // 如果无法从文件或环境变量读取，则抛出错误，要求外部提供密钥
+    const message = `${keyType} RSA密钥未配置。请通过环境变量 ${prefix}_PUBLIC_KEY / ${prefix}_PRIVATE_KEY 提供密钥。`
+    this.logger.logSecurity(message, 'error', { keyType })
+    throw new Error(message)
   }
 
   /**
    * 确保目录存在
    * @param filePath 文件路径
    */
-  private ensureDirectoryExists(filePath: string): void {
-    const dir = dirname(filePath)
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true })
-    }
-  }
+  // 统一仅从环境变量读取密钥，不进行任何文件系统操作
 
   /**
    * 生成RSA密钥对
    * @returns RSA密钥对
    */
-  private generateKeyPair(): RsaKeyPair {
-    const { publicKey, privateKey } = generateKeyPairSync('rsa', {
-      modulusLength: 2048,
-      publicKeyEncoding: {
-        type: 'spki',
-        format: 'pem',
-      },
-      privateKeyEncoding: {
-        type: 'pkcs8',
-        format: 'pem',
-      },
-    })
-
-    return {
-      publicKey,
-      privateKey,
-    }
-  }
+  // 统一仅从环境变量读取密钥，不进行运行时生成
 
   /**
    * 获取RSA公钥
