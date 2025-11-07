@@ -60,7 +60,7 @@ export class AdminAuthService extends RepositoryService {
         body.captchaId,
       )
       if (!exists) {
-        throw new BadRequestException('验证码已过期')
+        throw new BadRequestException('验证码错误')
       }
 
       // 验证验证码是否正确
