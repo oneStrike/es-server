@@ -2,11 +2,9 @@ import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
+import type { Cache } from 'cache-manager'
 import * as process from 'node:process'
-import KeyvRedis from '@keyv/redis'
-import { ConfigService } from '@nestjs/config'
-import { CacheableMemory } from 'cacheable'
-import { Keyv } from 'keyv'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { prisma } from '@/prisma/prisma.connect'
 
 /**
@@ -45,45 +43,61 @@ export function setupHealthChecks(
       errors.database = String(error)
     }
 
-    // 内存缓存健康检查（使用独立的 Keyv 内存存储）
+    // 使用 Nest 的 CacheManager 检测各缓存（优先逐个 store 检测）
     try {
-      const memoryKeyv = new Keyv({
-        store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
-      })
-      const key = `health:cache:memory:ping:${Math.random().toString(36).slice(2)}`
-      await memoryKeyv.set(key, 'pong', 10000)
-      const value = await memoryKeyv.get<string>(key)
-      await memoryKeyv.delete(key)
-      if (value !== 'pong') {
-        throw new Error('memory cache ping value mismatch')
+      const cache = app.get<Cache>(CACHE_MANAGER) as any
+      const stores: any[] | undefined = cache?.stores
+
+      if (Array.isArray(stores) && stores.length > 0) {
+        for (const store of stores) {
+          // 依据特征粗略判断 store 类型（内存/Redis）
+          const isMemory =
+            !!store?.opts?.store?.constructor &&
+            store.opts.store.constructor.name === 'CacheableMemory'
+          const storeLabel = isMemory ? 'memory' : 'redis'
+          try {
+            const key = `health:cache:${storeLabel}:ping:${Math.random().toString(36).slice(2)}`
+            await store.set(key, 'pong', 10000)
+            const value = await store.get(key)
+            if (typeof store.delete === 'function') {
+              await store.delete(key)
+            } else if (typeof store.del === 'function') {
+              await store.del(key)
+            }
+
+            if (value !== 'pong') {
+              throw new Error(`${storeLabel} cache ping value mismatch`)
+            }
+
+            if (isMemory) {
+              memoryCacheStatus = 'ok'
+            } else {
+              redisCacheStatus = 'ok'
+            }
+          } catch (err) {
+            if (isMemory) {
+              memoryCacheStatus = 'not ok'
+              errors.memoryCache = String(err)
+            } else {
+              redisCacheStatus = 'not ok'
+              errors.redisCache = String(err)
+            }
+          }
+        }
       }
     } catch (error) {
-      memoryCacheStatus = 'not ok'
-      errors.memoryCache = String(error)
-    }
-
-    // Redis 缓存健康检查（构建与 AppModule 相同的连接配置）
-    try {
-      const config = app.get(ConfigService)
-      const host = config.get<string>('REDIS_HOST') || 'localhost'
-      const port = (config.get<string>('REDIS_PORT') || '6379').toString()
-      const password = config.get<string>('REDIS_PASSWORD') || ''
-      const namespace = config.get<string>('REDIS_NAMESPACE') || 'Akaiito'
-      const encodedPassword = password ? encodeURIComponent(password) : ''
-      const authPart = encodedPassword ? `:${encodedPassword}@` : ''
-      const url = `redis://${authPart}${host}:${port}`
-
-      const redisKeyv = new Keyv({ store: new KeyvRedis(url, { namespace }) })
-      const key = `health:cache:redis:ping:${Math.random().toString(36).slice(2)}`
-      await redisKeyv.set(key, 'pong', 10000)
-      const value = await redisKeyv.get<string>(key)
-      await redisKeyv.delete(key)
-      if (value !== 'pong') {
-        throw new Error('redis cache ping value mismatch')
+      // 若逐个或聚合检测出错，根据已判定的类型记录错误
+      if (memoryCacheStatus === 'ok' && redisCacheStatus !== 'ok') {
+        errors.redisCache = String(error)
+        redisCacheStatus = 'not ok'
+      } else if (redisCacheStatus === 'ok' && memoryCacheStatus !== 'ok') {
+        errors.memoryCache = String(error)
+        memoryCacheStatus = 'not ok'
+      } else {
+        errors.cache = String(error)
+        memoryCacheStatus = 'not ok'
+        redisCacheStatus = 'not ok'
       }
-    } catch (error) {
-      redisCacheStatus = 'not ok'
-      errors.redisCache = String(error)
     }
 
     const ready =
