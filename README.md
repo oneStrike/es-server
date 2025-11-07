@@ -133,3 +133,31 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## 🧠 Redis 缓存接入
+
+本项目已通过 NestJS 的 CacheModule 集成 Redis 缓存（使用 Keyv 适配器）。默认以全局缓存方式启用，TTL 为 5 分钟。
+
+- 环境变量：
+  - `REDIS_HOST` 默认 `localhost`
+  - `REDIS_PORT` 默认 `6379`
+  - `REDIS_PASSWORD` 默认空字符串
+
+- 使用方式：在服务中注入 `CACHE_MANAGER` 即可：
+
+```ts
+import type { Cache } from 'cache-manager'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject } from '@nestjs/common'
+
+export class DemoService {
+  constructor(@Inject(CACHE_MANAGER) private cache: Cache) {}
+
+  async demo() {
+    await this.cache.set('key', { foo: 'bar' }, 60_000)
+    return this.cache.get('key')
+  }
+}
+```
+
+说明：Redis 连接字符串将根据上述环境变量动态生成，例如 `redis://:PASSWORD@HOST:PORT`。所有缓存键统一前缀为 `Akaiito` 命名空间。

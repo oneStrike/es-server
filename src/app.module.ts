@@ -1,7 +1,8 @@
 import * as process from 'node:process'
+import { createKeyv } from '@keyv/redis'
 import { CacheModule } from '@nestjs/cache-manager'
 import { BadRequestException, Module, ValidationPipe } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 
@@ -30,9 +31,25 @@ import { JwtAuthGuard } from './common/guards/auth.guard'
       name: 'PrismaService',
       useClass: PrismaService,
     }),
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
-      namespace: 'Akaiito',
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const host = config.get<string>('REDIS_HOST') || 'localhost'
+        const port = (config.get<string>('REDIS_PORT') || '6379').toString()
+        const password = config.get<string>('REDIS_PASSWORD') || ''
+        const authPart = password ? `:${password}@` : ''
+        const url = `redis://${authPart}${host}:${port}`
+
+        return {
+          ttl: 5 * 60 * 1000, // 默认TTL：5分钟，单位毫秒
+          stores: [
+            // 使用 Keyv 的 Redis 适配器作为缓存存储
+            createKeyv(url, { namespace: 'Akaiito' }),
+          ],
+        }
+      },
     }),
     ThrottlerModule.forRoot([
       {
