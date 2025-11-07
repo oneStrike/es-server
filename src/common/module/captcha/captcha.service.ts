@@ -34,7 +34,7 @@ export class CaptchaService {
     ignoreChars: '0o1i',
     noise: 3,
     color: true,
-    ttl: 60 * 1000, // 1分钟
+    ttl: 600 * 1000, // 1分钟
   }
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
