@@ -1,12 +1,12 @@
 # PM2 运行与运维指南
 
-本项目在 Docker 中采用 `pm2-runtime` 管理 Node 进程，配置文件位于 `ecosystem.config.mjs`。
+本项目在 Docker 中采用 `pm2-runtime` 管理 Node 进程，配置文件位于 `ecosystem.config.cjs`。
 
 ## 启动方式
 
 - 本地（生产模拟）：`pnpm run start:pm2`
 - 本地（开发）：`pnpm run pm2:start`，然后 `pnpm run pm2:logs`
-- Docker：镜像内默认 `CMD ["pm2-runtime", "ecosystem.config.mjs"]`
+- Docker：镜像内默认 `CMD ["pm2-runtime", "ecosystem.config.cjs"]`
 
 ## 关键环境项
 

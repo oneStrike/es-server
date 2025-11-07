@@ -56,7 +56,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder --chown=nestjs:nodejs /app/ecosystem.config.mjs ./ecosystem.config.mjs
+COPY --from=builder --chown=nestjs:nodejs /app/ecosystem.config.cjs ./ecosystem.config.cjs
 
 # 创建日志目录
 RUN mkdir -p /app/logs && \
@@ -81,4 +81,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget -qO- http://localhost:8080/api/ready >/dev/null || exit 1
 
 # 使用 PM2 Runtime 作为容器进程管理器
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema ./prisma/schema.prisma && node_modules/.bin/prisma db seed --schema ./prisma/schema.prisma && exec pm2-runtime ecosystem.config.mjs"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema ./prisma/schema.prisma && node_modules/.bin/prisma db seed --schema ./prisma/schema.prisma && exec pm2-runtime ecosystem.config.cjs"]

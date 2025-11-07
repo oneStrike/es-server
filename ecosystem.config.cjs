@@ -1,13 +1,11 @@
 /**
- * PM2 Ecosystem configuration for es-server
+ * PM2 Ecosystem configuration for es-server (CommonJS)
  * - Uses pm2-runtime in Docker
  * - Allows cluster via env (default fork:1 in container)
  * - Separates stdout/stderr logs and enables merge for multi-instances
  */
-// Use global `process` in CommonJS; avoid ESM import to prevent scope issues.
-import process from 'node:process'
 
-export default {
+module.exports = {
   apps: [
     {
       name: 'es-server',
