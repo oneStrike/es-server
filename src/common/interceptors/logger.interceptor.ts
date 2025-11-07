@@ -28,11 +28,9 @@ export class LoggerInterceptor implements NestInterceptor {
     // 根据路径选择对应的日志器
     if (path.includes('/admin/')) {
       return this.loggerFactory.createAdminLogger('HTTP')
-    }
-    else if (path.includes('/client/')) {
+    } else if (path.includes('/client/')) {
       return this.loggerFactory.createClientLogger('HTTP')
-    }
-    else {
+    } else {
       return this.loggerFactory.createGlobalLogger('HTTP')
     }
   }
@@ -42,10 +40,10 @@ export class LoggerInterceptor implements NestInterceptor {
    */
   private getClientIp(req: FastifyRequest): string {
     return (
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
-      || (req.headers['x-real-ip'] as string)
-      || req.ip
-      || 'unknown'
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      (req.headers['x-real-ip'] as string) ||
+      req.ip ||
+      'unknown'
     )
   }
 
@@ -60,6 +58,8 @@ export class LoggerInterceptor implements NestInterceptor {
     const ctx = context.switchToHttp()
     const req = ctx.getRequest<FastifyRequest>()
     const startTime = Date.now()
+    // 将开始时间保存在请求对象上，供异常过滤器使用
+    ;(req as any)._startTime = startTime
 
     // 选择合适的日志器
     const logger = this.selectLogger(req)
@@ -97,18 +97,8 @@ export class LoggerInterceptor implements NestInterceptor {
         logger.clearContext()
       }),
       catchError((error) => {
-        const responseTime = Date.now() - startTime
-        const statusCode = error.status || 500
-
-        // 记录请求失败
-        logger.logRequest(req.method, req.url, statusCode, responseTime, {
-          error: error.message,
-          stack: error.stack,
-        })
-
-        // 清除上下文
+        // 出错时不在拦截器中记录错误，避免与异常过滤器重复
         logger.clearContext()
-
         return throwError(() => error)
       }),
     )

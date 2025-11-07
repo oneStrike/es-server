@@ -67,16 +67,150 @@ function createConsoleTransport(
       config.enableColors
         ? winston.format.colorize()
         : winston.format.uncolorize(),
-      winston.format.printf(
-        ({ timestamp, level, message, context, trace, requestId, userId }) => {
-          const contextStr = context ? `[${context}]` : ''
-          const requestIdStr = requestId ? `[${requestId}]` : ''
-          const userIdStr = userId ? `[User:${userId}]` : ''
-          const traceStr = trace ? `\n${trace}` : ''
+      winston.format.printf((info) => {
+        const {
+          timestamp,
+          level,
+          message,
+          context,
+          trace,
+          requestId,
+          userId,
+          stack,
+          metadata,
+        } = info as any
 
-          return `${timestamp} ${level} ${contextStr}${requestIdStr}${userIdStr} ${message}${traceStr}`
-        },
-      ),
+        const contextStr = context ? `[${context}]` : ''
+        const requestIdStr = requestId ? `[${requestId}]` : ''
+        const userIdStr = userId ? `[User:${userId}]` : ''
+        const traceValue = trace || stack || metadata?.trace || metadata?.stack
+        const traceStr = traceValue ? `\n${traceValue}` : ''
+
+        return `${timestamp} ${level} ${contextStr}${requestIdStr}${userIdStr} ${message}${traceStr}`
+      }),
+    ),
+  })
+}
+
+/**
+ * 创建控制台异常处理传输器（未处理异常）
+ */
+function createConsoleExceptionTransport(
+  config: LoggerConfig,
+): winston.transports.ConsoleTransportInstance {
+  return new winston.transports.Console({
+    level: LogLevel.ERROR,
+    format: winston.format.combine(
+      winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      winston.format.errors({ stack: true }),
+      config.enableColors
+        ? winston.format.colorize()
+        : winston.format.uncolorize(),
+      winston.format.printf((info) => {
+        const {
+          timestamp,
+          level,
+          message,
+          context,
+          trace,
+          requestId,
+          userId,
+          stack,
+          metadata,
+        } = info as any
+
+        const contextStr = context ? `[${context}]` : ''
+        const requestIdStr = requestId ? `[${requestId}]` : ''
+        const userIdStr = userId ? `[User:${userId}]` : ''
+        const traceValue = trace || stack || metadata?.trace || metadata?.stack
+        const traceStr = traceValue ? `\n${traceValue}` : ''
+
+        return `${timestamp} ${level} ${contextStr}${requestIdStr}${userIdStr} ${message}${traceStr}`
+      }),
+    ),
+  })
+}
+
+/**
+ * 创建异常文件传输器（未处理异常）
+ */
+function createExceptionsFileTransport(
+  config: LoggerConfig,
+  module: LogModule,
+): InstanceType<typeof DailyRotateFile> {
+  return new DailyRotateFile({
+    level: LogLevel.ERROR,
+    filename: `${config.dirname}/${module}/exceptions-%DATE%.log`,
+    datePattern: config.datePattern,
+    maxSize: config.maxSize,
+    maxFiles: config.maxFiles,
+    format: winston.format.combine(
+      winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      winston.format.errors({ stack: true }),
+      winston.format.json(),
+      winston.format.printf((info) => {
+        const { timestamp, level, message, context, metadata, ...rest } = info
+
+        const logEntry: any = {
+          timestamp,
+          level,
+          message,
+          module,
+          type: 'UNCAUGHT_EXCEPTION',
+        }
+
+        if (context) {
+          logEntry.context = context
+        }
+        if (metadata) {
+          Object.assign(logEntry, metadata)
+        }
+        Object.assign(logEntry, rest)
+
+        return JSON.stringify(logEntry)
+      }),
+    ),
+  })
+}
+
+/**
+ * 创建未处理Promise拒绝文件传输器
+ */
+function createRejectionsFileTransport(
+  config: LoggerConfig,
+  module: LogModule,
+): InstanceType<typeof DailyRotateFile> {
+  return new DailyRotateFile({
+    level: LogLevel.ERROR,
+    filename: `${config.dirname}/${module}/rejections-%DATE%.log`,
+    datePattern: config.datePattern,
+    maxSize: config.maxSize,
+    maxFiles: config.maxFiles,
+    format: winston.format.combine(
+      winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      winston.format.errors({ stack: true }),
+      winston.format.json(),
+      winston.format.printf((info) => {
+        const { timestamp, level, message, context, metadata, ...rest } = info
+
+        const logEntry: any = {
+          timestamp,
+          level,
+          message,
+          module,
+          type: 'UNHANDLED_REJECTION',
+        }
+
+        if (context) {
+          logEntry.context = context
+        }
+        if (metadata) {
+          Object.assign(logEntry, metadata)
+        }
+        Object.assign(logEntry, rest)
+
+        return JSON.stringify(logEntry)
+      }),
     ),
   })
 }
@@ -192,10 +326,17 @@ function createCombinedFileTransport(
 export function createWinstonConfig(module: LogModule): WinstonModuleOptions {
   const config = getLoggerConfig()
   const transports: winston.transport[] = []
+  const exceptionHandlers: winston.transport[] = []
+  const rejectionHandlers: winston.transport[] = []
 
   // 添加控制台传输器（仅开发环境）
   if (config.enableConsole) {
     transports.push(createConsoleTransport(config))
+    // 仅在全局日志器上注册未处理异常/拒绝的控制台输出，避免重复
+    if (module === LogModule.GLOBAL) {
+      exceptionHandlers.push(createConsoleExceptionTransport(config))
+      rejectionHandlers.push(createConsoleExceptionTransport(config))
+    }
   }
 
   // 添加文件传输器
@@ -204,6 +345,11 @@ export function createWinstonConfig(module: LogModule): WinstonModuleOptions {
       createCombinedFileTransport(config, module),
       createErrorFileTransport(config, module),
     )
+    // 仅在全局日志器上注册未处理异常/拒绝的文件输出，避免重复
+    if (module === LogModule.GLOBAL) {
+      exceptionHandlers.push(createExceptionsFileTransport(config, module))
+      rejectionHandlers.push(createRejectionsFileTransport(config, module))
+    }
   }
 
   return {
@@ -211,11 +357,23 @@ export function createWinstonConfig(module: LogModule): WinstonModuleOptions {
     format: winston.format.combine(
       winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       winston.format.errors({ stack: true }),
+      // 保留常用字段在顶层，避免被移动到metadata中，方便控制台printf访问
       winston.format.metadata({
-        fillExcept: ['message', 'level', 'timestamp'],
+        fillExcept: [
+          'message',
+          'level',
+          'timestamp',
+          'trace',
+          'context',
+          'module',
+          'requestId',
+          'userId',
+        ],
       }),
     ),
     transports,
+    exceptionHandlers,
+    rejectionHandlers,
     // 生产环境可以添加远程日志传输器
     ...(process.env.NODE_ENV === 'production' &&
       {

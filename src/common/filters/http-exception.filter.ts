@@ -51,34 +51,26 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // 根据请求路径选择合适的日志器
     const logger = this.selectLogger(request)
 
-    // 记录异常信息
-    if (exception instanceof Error) {
-      logger.error(
-        `Exception caught: ${message}`,
-        exception.stack,
-        {
-          method: request.method,
-          url: request.url,
-          statusCode: status,
-          ip: request.ip,
-          userAgent: request.headers['user-agent'],
-          exceptionType: exception.constructor.name,
-        },
-      )
-    }
-    else {
-      logger.error(
-        `Exception caught: ${message}`,
-        undefined,
-        {
-          method: request.method,
-          url: request.url,
-          statusCode: status,
-          ip: request.ip,
-          userAgent: request.headers['user-agent'],
-        },
-      )
-    }
+    // 记录异常信息（尽可能包含堆栈）
+    const stack = this.getStackSafely(exception)
+    const exceptionType =
+      exception && typeof exception === 'object'
+        ? (exception as any)?.constructor?.name
+        : undefined
+
+    const startTime = (request as any)?._startTime
+    const responseTime =
+      typeof startTime === 'number' ? Date.now() - startTime : undefined
+
+    logger.error(`Exception caught: ${message}`, stack, {
+      method: request.method,
+      url: request.url,
+      statusCode: status,
+      responseTime,
+      ip: request.ip,
+      userAgent: request.headers['user-agent'],
+      exceptionType,
+    })
 
     const errorResponse = {
       code: status,
@@ -98,11 +90,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (path.includes('/admin/')) {
       return this.loggerFactory.createAdminLogger('ExceptionFilter')
-    }
-    else if (path.includes('/client/')) {
+    } else if (path.includes('/client/')) {
       return this.loggerFactory.createClientLogger('ExceptionFilter')
-    }
-    else {
+    } else {
       return this.logger
     }
   }
@@ -128,12 +118,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
-    // 处理数据库错误
+    // 处理数据库错误（Prisma等），对未知错误码提供合理回退
     if (exception instanceof Error && 'code' in exception) {
       const code = (exception as { code?: any }).code
+      const fallbackMessage =
+        this.errorMessageMap[code] || exception.message || '数据库错误'
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: this.errorMessageMap[code],
+        message: fallbackMessage,
+        details: { code },
       }
     }
 
@@ -150,5 +143,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       message: '未知错误',
     }
+  }
+
+  /**
+   * 安全获取堆栈信息
+   */
+  private getStackSafely(exception: unknown): string | undefined {
+    if (!exception) {
+      return undefined
+    }
+    if (exception instanceof Error) {
+      return exception.stack
+    }
+    if (typeof exception === 'object' && 'stack' in (exception as any)) {
+      const s = (exception as any).stack
+      return typeof s === 'string' ? s : undefined
+    }
+    return undefined
   }
 }

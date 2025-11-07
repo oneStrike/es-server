@@ -145,7 +145,10 @@ export class CustomLoggerService implements NestLoggerService {
     const message = `${method} ${url} ${statusCode} - ${responseTime}ms`
 
     if (statusCode >= 400) {
-      this.error(message, undefined, { type: 'HTTP_REQUEST', ...meta })
+      // 将meta中的stack/trace作为错误堆栈传递，避免丢失堆栈
+      const trace = meta?.trace || meta?.stack
+      const { stack, trace: metaTrace, ...restMeta } = meta || {}
+      this.error(message, trace, { type: 'HTTP_REQUEST', ...restMeta })
     } else {
       this.info(message, { type: 'HTTP_REQUEST', ...meta })
     }

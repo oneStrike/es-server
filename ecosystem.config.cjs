@@ -4,6 +4,7 @@
  * - Allows cluster via env (default fork:1 in container)
  * - Separates stdout/stderr logs and enables merge for multi-instances
  */
+const process = require('node:process')
 
 module.exports = {
   apps: [
