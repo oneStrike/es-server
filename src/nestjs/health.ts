@@ -1,4 +1,7 @@
-import type { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify'
+import type {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify'
 import type { Cache } from 'cache-manager'
 import * as process from 'node:process'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
@@ -34,8 +37,7 @@ export function setupHealthChecks(
 
     try {
       await prisma.$queryRaw`SELECT 1`
-    }
-    catch (error) {
+    } catch (error) {
       dbStatus = 'not ok'
       errors.database = String(error)
     }
@@ -50,8 +52,7 @@ export function setupHealthChecks(
       if (value !== 'pong') {
         throw new Error('cache ping value mismatch')
       }
-    }
-    catch (error) {
+    } catch (error) {
       cacheStatus = 'not ok'
       errors.cache = String(error)
     }

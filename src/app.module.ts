@@ -1,11 +1,13 @@
 import * as process from 'node:process'
-import { createKeyv } from '@keyv/redis'
+import KeyvRedis from '@keyv/redis'
 import { CacheModule } from '@nestjs/cache-manager'
 import { BadRequestException, Module, ValidationPipe } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 
+import { CacheableMemory } from 'cacheable'
+import { Keyv } from 'keyv'
 import { CustomPrismaModule } from 'nestjs-prisma/dist/custom'
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filter'
 import { LoggerInterceptor } from '@/common/interceptors/logger.interceptor'
@@ -39,14 +41,19 @@ import { JwtAuthGuard } from './common/guards/auth.guard'
         const host = config.get<string>('REDIS_HOST') || 'localhost'
         const port = (config.get<string>('REDIS_PORT') || '6379').toString()
         const password = config.get<string>('REDIS_PASSWORD') || ''
-        const authPart = password ? `:${password}@` : ''
+        const namespace = config.get<string>('REDIS_NAMESPACE') || 'Akaiito'
+        // 对密码进行 URL 编码，避免包含特殊字符（如 #、% 等）导致解析错误
+        const encodedPassword = password ? encodeURIComponent(password) : ''
+        const authPart = encodedPassword ? `:${encodedPassword}@` : ''
         const url = `redis://${authPart}${host}:${port}`
-
         return {
           ttl: 5 * 60 * 1000, // 默认TTL：5分钟，单位毫秒
           stores: [
             // 使用 Keyv 的 Redis 适配器作为缓存存储
-            createKeyv(url, { namespace: 'Akaiito' }),
+            new KeyvRedis(url, { namespace }),
+            new Keyv({
+              store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
+            }),
           ],
         }
       },
