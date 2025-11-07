@@ -2,9 +2,11 @@ import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
-import type { Cache } from 'cache-manager'
 import * as process from 'node:process'
-import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import KeyvRedis from '@keyv/redis'
+import { ConfigService } from '@nestjs/config'
+import { CacheableMemory } from 'cacheable'
+import { Keyv } from 'keyv'
 import { prisma } from '@/prisma/prisma.connect'
 
 /**
@@ -32,7 +34,8 @@ export function setupHealthChecks(
 
     // 数据库健康检查
     let dbStatus: 'ok' | 'not ok' = 'ok'
-    let cacheStatus: 'ok' | 'not ok' = 'ok'
+    let memoryCacheStatus: 'ok' | 'not ok' = 'ok'
+    let redisCacheStatus: 'ok' | 'not ok' = 'ok'
     const errors: Record<string, string> = {}
 
     try {
@@ -42,28 +45,60 @@ export function setupHealthChecks(
       errors.database = String(error)
     }
 
-    // Redis 缓存健康检查（通过 CacheManager 读写）
+    // 内存缓存健康检查（使用独立的 Keyv 内存存储）
     try {
-      const cache = app.get<Cache>(CACHE_MANAGER)
-      const key = 'health:cache:ping'
-      await cache.set(key, 'pong', 10000)
-      const value = await cache.get<string>(key)
-      await cache.del(key)
+      const memoryKeyv = new Keyv({
+        store: new CacheableMemory({ ttl: 60000, lruSize: 5000 }),
+      })
+      const key = `health:cache:memory:ping:${Math.random().toString(36).slice(2)}`
+      await memoryKeyv.set(key, 'pong', 10000)
+      const value = await memoryKeyv.get<string>(key)
+      await memoryKeyv.delete(key)
       if (value !== 'pong') {
-        throw new Error('cache ping value mismatch')
+        throw new Error('memory cache ping value mismatch')
       }
     } catch (error) {
-      cacheStatus = 'not ok'
-      errors.cache = String(error)
+      memoryCacheStatus = 'not ok'
+      errors.memoryCache = String(error)
     }
 
-    const ready = dbStatus === 'ok' && cacheStatus === 'ok'
+    // Redis 缓存健康检查（构建与 AppModule 相同的连接配置）
+    try {
+      const config = app.get(ConfigService)
+      const host = config.get<string>('REDIS_HOST') || 'localhost'
+      const port = (config.get<string>('REDIS_PORT') || '6379').toString()
+      const password = config.get<string>('REDIS_PASSWORD') || ''
+      const namespace = config.get<string>('REDIS_NAMESPACE') || 'Akaiito'
+      const encodedPassword = password ? encodeURIComponent(password) : ''
+      const authPart = encodedPassword ? `:${encodedPassword}@` : ''
+      const url = `redis://${authPart}${host}:${port}`
+
+      const redisKeyv = new Keyv({ store: new KeyvRedis(url, { namespace }) })
+      const key = `health:cache:redis:ping:${Math.random().toString(36).slice(2)}`
+      await redisKeyv.set(key, 'pong', 10000)
+      const value = await redisKeyv.get<string>(key)
+      await redisKeyv.delete(key)
+      if (value !== 'pong') {
+        throw new Error('redis cache ping value mismatch')
+      }
+    } catch (error) {
+      redisCacheStatus = 'not ok'
+      errors.redisCache = String(error)
+    }
+
+    const ready =
+      dbStatus === 'ok' &&
+      memoryCacheStatus === 'ok' &&
+      redisCacheStatus === 'ok'
     reply.code(ready ? 200 : 503).send({
       status: ready ? 'ready' : 'not ready',
       timestamp,
       checks: {
         database: dbStatus,
-        cache: cacheStatus,
+        cache: {
+          memory: memoryCacheStatus,
+          redis: redisCacheStatus,
+        },
       },
       ...(Object.keys(errors).length ? { errors } : {}),
     })
