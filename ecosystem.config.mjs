@@ -4,9 +4,10 @@
  * - Allows cluster via env (default fork:1 in container)
  * - Separates stdout/stderr logs and enables merge for multi-instances
  */
+// Use global `process` in CommonJS; avoid ESM import to prevent scope issues.
 import process from 'node:process'
 
-module.exports = {
+export default {
   apps: [
     {
       name: 'es-server',
