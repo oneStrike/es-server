@@ -228,15 +228,14 @@ export default registerAs('upload', (): UploadConfig => {
   })()
 
   const uploadDir = (() => {
-    if (isDocker) {
-      return '/app/uploads'
-    }
-    // 非容器环境：优先使用 UPLOAD_DIR，其次 APP_DATA_DIR + 'uploads'，最后默认 'uploads'
+    // 允许通过环境变量覆盖，即使在容器中
     const dirCandidate =
       process.env.UPLOAD_DIR ||
-      (process.env.APP_DATA_DIR
-        ? join(process.env.APP_DATA_DIR, 'uploads')
-        : 'uploads')
+      (isDocker
+        ? '/app/uploads'
+        : process.env.APP_DATA_DIR
+          ? join(process.env.APP_DATA_DIR, 'uploads')
+          : 'uploads')
 
     if (process.env.UPLOAD_ABSOLUTE_PATH === 'true') {
       return dirCandidate

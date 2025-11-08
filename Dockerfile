@@ -58,9 +58,10 @@ COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=nestjs:nodejs /app/ecosystem.config.cjs ./ecosystem.config.cjs
 
-# 创建日志目录
-RUN mkdir -p /app/logs && \
-    chown -R nestjs:nodejs /app/logs
+# 创建日志与上传目录，并设为 nestjs 可写
+RUN mkdir -p /app/logs /app/uploads && \
+    chown -R nestjs:nodejs /app/logs /app/uploads && \
+    chmod -R 775 /app/logs /app/uploads
 
 # 切换到非root用户
 USER nestjs
