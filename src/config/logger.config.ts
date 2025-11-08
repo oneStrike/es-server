@@ -74,7 +74,16 @@ function getLoggerConfig(): LoggerConfig {
     // 生产采用方案B：支持控制台输出，默认仅警告及以上
     // 可通过 LOG_ENABLE_CONSOLE 控制启用与否
     enableConsole: isDevelopment || process.env.LOG_ENABLE_CONSOLE === 'true',
-    enableFile: true,
+    enableFile: (() => {
+      // 在容器中默认不写文件日志，除非显式开启 LOG_ENABLE_FILE=true
+      if (isDocker) {
+        return process.env.LOG_ENABLE_FILE === 'true'
+      }
+      // 非容器环境默认写文件日志，可通过 LOG_ENABLE_FILE 控制
+      return process.env.LOG_ENABLE_FILE
+        ? process.env.LOG_ENABLE_FILE === 'true'
+        : true
+    })(),
     enableColors: isDevelopment,
     consoleLevel: isDevelopment
       ? LogLevel.DEBUG

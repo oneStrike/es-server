@@ -18,22 +18,23 @@
 
 ## 日志策略
 
-- 标准输出：`logs/app-out.log`
-- 错误输出：`logs/app-error.log`
+- 标准输出：容器 `stdout`（`/dev/stdout`），由 Docker 日志驱动管理。
+- 错误输出：容器 `stderr`（`/dev/stderr`），由 Docker 日志驱动管理。
 - 已启用 `merge_logs: true` 便于多实例合并查看。
-- 轮转通过 `pm2-logrotate` 插件实现（镜像内已安装）：
-  - 大小：`max_size=50M`
-  - 保留：`retain=7`（保留 7 份）
-  - 压缩：`compress=true`
-  - 时间格式：`YYYY-MM-DD_HH-mm-ss`
-  - 轮转间隔：`0 */6 * * *`（每 6 小时）
+- Compose 推荐开启日志轮转（json-file 驱动示例）：
+  ```yaml
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+  ```
+- 如需在容器内写文件日志（不推荐），设置 `LOG_ENABLE_FILE=true` 并挂载宿主机目录，同时确保权限正确；此时可使用 `pm2-logrotate` 或应用层轮转。
 
 ### 方案B 行为说明（生产）
 
-- 应用日志仍以结构化 JSON 写入文件：`./logs/<module>/*.log`（按级别/组合/异常/拒绝分拆）。
-- 控制台仅输出 `warn`/`error`，并被路由到 `stderr`，因此：
-  - `pm2 logs` 可看到关键错误/告警摘要。
-  - 详细堆栈与上下文字段在对应文件日志中查询。
+- 默认不写容器内文件日志；控制台输出级别由 `LOG_CONSOLE_LEVEL` 控制（默认 `warn`），并路由到 `stderr`。
+- 如需写入文件日志，显式设置 `LOG_ENABLE_FILE=true`，并将宿主机日志目录绑定到容器（确保 UID/GID 权限匹配）。
 - 如需关闭控制台输出，将 `LOG_ENABLE_CONSOLE=false`。
 
 如果需要在本地安装或调整，执行：

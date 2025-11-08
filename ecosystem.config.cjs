@@ -20,9 +20,9 @@ module.exports = {
       exp_backoff_restart_delay: 100,
       kill_timeout: 2000,
 
-      // Logging
-      out_file: 'logs/app-out.log',
-      error_file: 'logs/app-error.log',
+      // Logging: redirect to stdout/stderr in Docker; configurable via env
+      out_file: process.env.PM2_OUT_FILE || '/dev/stdout',
+      error_file: process.env.PM2_ERROR_FILE || '/dev/stderr',
       merge_logs: true,
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
 
