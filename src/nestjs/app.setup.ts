@@ -11,7 +11,6 @@ import { LoggerFactoryService } from '@/common/module/logger/logger-factory.serv
 import { AdminModule } from '@/modules/admin/admin.module'
 import { ClientModule } from '@/modules/client/client.module'
 import { setupCompression } from '@/nestjs/compression'
-import { setupHealthChecks } from '@/nestjs/health'
 import { setupMultipart } from '@/nestjs/multipart'
 import { setupSwagger } from '@/nestjs/swagger'
 
@@ -46,8 +45,7 @@ export async function setupApp(
   // 配置响应压缩（gzip/brotli）
   await setupCompression(fastifyAdapter)
 
-  // 配置健康检查端点（包含数据库与 Redis 缓存校验）
-  setupHealthChecks(fastifyAdapter, app)
+  // 健康检查由 Terminus 控制器提供（HealthModule），无需手动注册路由
 
   // 配置文件上传
   await setupMultipart(fastifyAdapter, app)

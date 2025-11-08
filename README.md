@@ -161,3 +161,54 @@ export class DemoService {
 ```
 
 说明：Redis 连接字符串将根据上述环境变量动态生成，例如 `redis://:PASSWORD@HOST:PORT`。所有缓存键统一前缀为 `Akaiito` 命名空间。
+
+## 💚 Terminus 健康检查
+
+项目已替换为 NestJS 官方推荐的 Terminus 健康检查方案，并提供以下端点（受全局前缀 `api` 影响）：
+
+- `GET /api/health`：存活检查（liveness）。返回进程内存指标，并附带 `uptime` 与 `environment` 元信息。
+- `GET /api/ready`：就绪检查（readiness）。检查数据库（Prisma `SELECT 1`）与缓存（内存与 Redis）的可用性。
+
+示例响应（成功）：
+
+```json
+{
+  "status": "ok",
+  "info": {
+    "memory_heap": { "status": "up" },
+    "memory_rss": { "status": "up" }
+  },
+  "error": {},
+  "details": {
+    "memory_heap": { "status": "up" },
+    "memory_rss": { "status": "up" }
+  },
+  "meta": {
+    "uptime": 123.45,
+    "environment": "development"
+  }
+}
+```
+
+### 部署与监控集成
+
+- Kubernetes Probe 建议：
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /api/ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+```
+
+- 关闭期间优雅退出：已启用应用 `Shutdown Hooks`，并配置 Terminus `gracefulShutdownTimeoutMs: 1000`，有助于在编排器下实现零停机切换。
+
+- 监控系统：Terminus 返回结构包含 `status`、`info`、`error`、`details`，便于 Prometheus/Grafana 或外部探针采集健康状态。

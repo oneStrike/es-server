@@ -5,7 +5,6 @@
 
 export { setupApp } from './app.setup'
 export { setupCompression } from './compression'
-export { setupHealthChecks } from './health'
 export { logStartupInfo } from './lifecycle'
 export { setupMultipart } from './multipart'
 export { setupSwagger } from './swagger'

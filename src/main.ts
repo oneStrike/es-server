@@ -23,6 +23,8 @@ async function bootstrap() {
         bufferLogs: true, // 缓冲日志，等待自定义logger初始化
       },
     )
+    // 允许优雅关闭钩子，以便 Terminus 在关闭期间报告状态
+    app.enableShutdownHooks()
 
     // 保存应用引用，供 HMR 释放资源时关闭
     appRef = app

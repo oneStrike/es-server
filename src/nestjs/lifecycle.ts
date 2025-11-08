@@ -13,5 +13,6 @@ export function logStartupInfo(
   logger.info(`📖 API 文档地址: http://localhost:${port}/api/docs`)
   logger.info(`🔧 管理后台 API: http://localhost:${port}/api/admin`)
   logger.info(`👥 客户端 API: http://localhost:${port}/api/client`)
-  logger.info(`💚 健康检查: http://localhost:${port}/api/health`)
+  logger.info(`💚 健康检查(liveness): http://localhost:${port}/api/health`)
+  logger.info(`💙 就绪检查(readiness): http://localhost:${port}/api/ready`)
 }
