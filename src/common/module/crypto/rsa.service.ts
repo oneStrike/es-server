@@ -39,7 +39,7 @@ export class RsaService implements OnModuleInit {
 
   /**
    * 初始化RSA密钥对
-   * 检查环境变量中是否有admin、client、login的公私钥配置
+   * 检查环境变量中是否有 admin、client 的公私钥配置
    * 如果没有则生成，开发环境写入环境变量文件，生产环境写入系统环境变量
    */
   public async initialize(): Promise<void> {
@@ -48,9 +48,6 @@ export class RsaService implements OnModuleInit {
 
     // 初始化Client RSA密钥对
     await this.initializeKeyPair(RsaKeyType.CLIENT)
-
-    // 初始化Login RSA密钥对
-    await this.initializeKeyPair(RsaKeyType.LOGIN)
   }
 
   /**
@@ -130,14 +127,6 @@ export class RsaService implements OnModuleInit {
   }
 
   /**
-   * 获取Login RSA公钥
-   * @returns Login RSA公钥
-   */
-  getLoginPublicKey(): string {
-    return this.getPublicKey(RsaKeyType.LOGIN)
-  }
-
-  /**
    * 使用RSA公钥加密数据
    * @param data 要加密的数据
    * @param keyType 密钥类型，默认为通用密钥
@@ -180,15 +169,6 @@ export class RsaService implements OnModuleInit {
    */
   encryptWithClient(data: string): string {
     return this.encrypt(data, RsaKeyType.CLIENT)
-  }
-
-  /**
-   * 使用Login RSA公钥加密数据
-   * @param data 要加密的数据
-   * @returns 加密后的数据
-   */
-  encryptWithLogin(data: string): string {
-    return this.encrypt(data, RsaKeyType.LOGIN)
   }
 
   /**
@@ -237,10 +217,6 @@ export class RsaService implements OnModuleInit {
 
   /**
    * 使用Login RSA私钥解密数据
-   * @param encryptedData 加密后的数据
-   * @returns 解密后的数据
+   * 已废弃：统一使用 Admin 或 Client 对应方法
    */
-  decryptWithLogin(encryptedData: string): string {
-    return this.decrypt(encryptedData, RsaKeyType.LOGIN)
-  }
 }

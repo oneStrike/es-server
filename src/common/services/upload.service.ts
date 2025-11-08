@@ -18,10 +18,7 @@ const pump = promisify(pipeline)
 @Injectable()
 export class UploadService {
   private readonly logger: CustomLoggerService
-  private readonly uploadPath = join(
-    process.cwd(),
-    process.env.UPLOAD_DIR || 'uploads',
-  )
+  private uploadPath: string
 
   private uploadConfig: UploadConfig | null = null
   private mimeTypeMap: Map<string, string> = new Map()
@@ -31,6 +28,7 @@ export class UploadService {
     private loggerFactory: LoggerFactoryService,
   ) {
     this.logger = this.loggerFactory.createGlobalLogger('UploadService')
+    this.uploadPath = this.getUploadConfig().uploadDir
   }
 
   /**

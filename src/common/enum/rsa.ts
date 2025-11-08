@@ -4,5 +4,4 @@
 export enum RsaKeyType {
   ADMIN = 'ADMIN',
   CLIENT = 'CLIENT',
-  LOGIN = 'LOGIN',
 }

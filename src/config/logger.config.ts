@@ -1,4 +1,6 @@
 import type { WinstonModuleOptions } from 'nest-winston'
+import { existsSync } from 'node:fs'
+import { isAbsolute, join } from 'node:path'
 import * as process from 'node:process'
 import * as winston from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'
@@ -39,7 +41,10 @@ export interface LoggerConfig {
 /**
  * 将字符串环境变量解析为 LogLevel
  */
-function parseLogLevel(value: string | undefined, defaultLevel: LogLevel): LogLevel {
+function parseLogLevel(
+  value: string | undefined,
+  defaultLevel: LogLevel,
+): LogLevel {
   switch ((value || '').toLowerCase()) {
     case 'error':
       return LogLevel.ERROR
@@ -59,6 +64,10 @@ function parseLogLevel(value: string | undefined, defaultLevel: LogLevel): LogLe
  */
 function getLoggerConfig(): LoggerConfig {
   const isDevelopment = process.env.NODE_ENV === 'development'
+  const isDocker =
+    process.cwd() === '/app' ||
+    existsSync('/.dockerenv') ||
+    process.env.DOCKER === 'true'
 
   return {
     level: isDevelopment ? LogLevel.DEBUG : LogLevel.INFO,
@@ -73,7 +82,14 @@ function getLoggerConfig(): LoggerConfig {
     maxFiles: process.env.LOG_MAX_FILES || '14d',
     maxSize: process.env.LOG_MAX_SIZE || '20m',
     datePattern: process.env.LOG_DATE_PATTERN || 'YYYY-MM-DD',
-    dirname: process.env.LOG_DIR || './logs',
+    dirname: (() => {
+      if (isDocker) {
+        // 在容器中固定使用挂载点，避免误用宿主机路径变量
+        return '/app/logs'
+      }
+      const dir = process.env.APP_LOG_DIR || process.env.LOG_DIR || './logs'
+      return isAbsolute(dir) ? dir : join(process.cwd(), dir)
+    })(),
   }
 }
 

@@ -1,4 +1,5 @@
-import { join } from 'node:path'
+import { existsSync } from 'node:fs'
+import { isAbsolute, join } from 'node:path'
 import process from 'node:process'
 import { registerAs } from '@nestjs/config'
 
@@ -136,6 +137,10 @@ export const archiveType = {
  * 注册上传配置
  */
 export default registerAs('upload', (): UploadConfig => {
+  const isDocker =
+    process.cwd() === '/app' ||
+    existsSync('/.dockerenv') ||
+    process.env.DOCKER === 'true'
   // 获取图片类型配置 - 优先使用环境变量
   const imageMimeTypes = process.env.UPLOAD_IMAGE_MIME_TYPES
     ? process.env.UPLOAD_IMAGE_MIME_TYPES.split(',')
@@ -221,11 +226,23 @@ export default registerAs('upload', (): UploadConfig => {
   })()
 
   const uploadDir = (() => {
-    const dir = process.env.UPLOAD_DIR || 'uploads'
-    // 确保路径是绝对路径
-    return process.env.UPLOAD_ABSOLUTE_PATH === 'true'
-      ? dir
-      : join(process.cwd(), dir)
+    if (isDocker) {
+      return '/app/uploads'
+    }
+    // 非容器环境：优先使用 UPLOAD_DIR，其次 APP_DATA_DIR + 'uploads'，最后默认 'uploads'
+    const dirCandidate =
+      process.env.UPLOAD_DIR ||
+      (process.env.APP_DATA_DIR
+        ? join(process.env.APP_DATA_DIR, 'uploads')
+        : 'uploads')
+
+    if (process.env.UPLOAD_ABSOLUTE_PATH === 'true') {
+      return dirCandidate
+    }
+
+    return isAbsolute(dirCandidate)
+      ? dirCandidate
+      : join(process.cwd(), dirCandidate)
   })()
 
   const preserveOriginalName = process.env.UPLOAD_PRESERVE_ORIGINAL_NAME
