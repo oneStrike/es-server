@@ -24,6 +24,8 @@ export interface UploadConfig {
   uploadDir: string
   /** 是否保留原始文件名 */
   preserveOriginalName: boolean
+  /** 文件名生成策略：uuid | uuid_original | hash | hash_original */
+  filenameStrategy: 'uuid' | 'uuid_original' | 'hash' | 'hash_original'
 }
 
 /**
@@ -251,6 +253,19 @@ export default registerAs('upload', (): UploadConfig => {
       )
     : true
 
+  const filenameStrategy = (() => {
+    const v = (process.env.UPLOAD_FILENAME_STRATEGY || 'uuid').toLowerCase()
+    switch (v) {
+      case 'uuid':
+      case 'uuid_original':
+      case 'hash':
+      case 'hash_original':
+        return v as any
+      default:
+        return 'uuid'
+    }
+  })()
+
   return {
     maxFileSize,
     maxFiles,
@@ -290,5 +305,6 @@ export default registerAs('upload', (): UploadConfig => {
     ],
     uploadDir,
     preserveOriginalName,
+    filenameStrategy,
   }
 })

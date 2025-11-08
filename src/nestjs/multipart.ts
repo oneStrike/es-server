@@ -3,6 +3,7 @@ import type {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
 import type { UploadConfig } from '@/config/upload.config'
+import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import * as process from 'node:process'
 import fastifyMultipart from '@fastify/multipart'
@@ -15,10 +16,18 @@ export async function setupMultipart(
 ) {
   const uploadConfig = app.get(ConfigService).get<UploadConfig>('upload')!
 
+  // 确保上传目录存在（在挂载的宿主机目录下递归创建）
+  await mkdir(uploadConfig.uploadDir, { recursive: true })
+
   // 注册静态文件服务
   await fastifyAdapter.register(fastifyStatic as any, {
-    root: join(process.cwd(), 'uploads'),
+    root: uploadConfig.uploadDir,
     prefix: '/uploads/',
+    index: false,
+    dotfiles: 'deny',
+    etag: true,
+    cacheControl: true,
+    maxAge: '1h',
   })
 
   // 注册multipart插件
