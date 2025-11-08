@@ -17,6 +17,10 @@ export class ClientPageService extends RepositoryService {
     return this.prisma.clientPage
   }
 
+  constructor() {
+    super()
+  }
+
   /**
    * 创建页面配置
    * @param createPageDto 创建页面配置的数据

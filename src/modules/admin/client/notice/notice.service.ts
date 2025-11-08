@@ -2,12 +2,13 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { RepositoryService } from '@/common/services/repository.service'
 import { ClientNoticeWhereInput } from '@/prisma/client/models/ClientNotice'
 import { findCombinations } from '@/utils'
-
+import { assertValidTimeRange } from '@/utils/timeRange'
 import {
   CreateNoticeDto,
   QueryNoticeDto,
   UpdateNoticeDto,
 } from './dto/notice.dto'
+
 /**
  * 客户端通知模块服务
  */
@@ -21,6 +22,8 @@ export class ClientNoticeService extends RepositoryService {
     return this.prisma.clientPage
   }
 
+  constructor() { super() }
+
   /**
    * 创建通知
    * @param createNoticeDto 创建通知的数据
@@ -28,15 +31,15 @@ export class ClientNoticeService extends RepositoryService {
    */
   async createNotice(createNoticeDto: CreateNoticeDto) {
     // 验证时间范围
-    if (createNoticeDto.publishStartTime && createNoticeDto.publishEndTime) {
-      if (createNoticeDto.publishStartTime >= createNoticeDto.publishEndTime) {
-        throw new BadRequestException('发布开始时间不能大于或等于结束时间')
-      }
-    }
+    assertValidTimeRange(
+      createNoticeDto.publishStartTime,
+      createNoticeDto.publishEndTime,
+      '发布开始时间不能大于或等于结束时间',
+    )
 
     const { pageId, ...others } = createNoticeDto // 明确移除 clientPage
     if (pageId) {
-      const pageInfo = await this.clientNotice.findFirst({
+      const pageInfo = await this.clientPage.findFirst({
         where: {
           id: pageId,
         },
@@ -191,11 +194,11 @@ export class ClientNoticeService extends RepositoryService {
     const { id, pageId, ...updateData } = updateNoticeDto
 
     // 验证时间范围
-    if (updateData.publishStartTime && updateData.publishEndTime) {
-      if (updateData.publishStartTime >= updateData.publishEndTime) {
-        throw new BadRequestException('发布开始时间不能大于或等于结束时间')
-      }
-    }
+    assertValidTimeRange(
+      updateData.publishStartTime,
+      updateData.publishEndTime,
+      '发布开始时间不能大于或等于结束时间',
+    )
 
     const notice = await this.clientNotice.findUnique({ where: { id } })
     if (!notice) {

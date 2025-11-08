@@ -5,6 +5,7 @@ import type {
 import type { CustomLoggerService } from '@/common/module/logger/logger.service'
 import * as process from 'node:process'
 import fastifyCsrf from '@fastify/csrf-protection'
+import fastifyHelmet from '@fastify/helmet'
 
 import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 import { AdminModule } from '@/modules/admin/admin.module'
@@ -47,6 +48,15 @@ export async function setupApp(
 
   // 注册 CSRF 保护插件
   await app.register(fastifyCsrf as any)
+
+  // 注册安全响应头（Helmet）
+  await app.register(fastifyHelmet as any, {
+    // 依据 API 服务特性开启常用安全策略
+    contentSecurityPolicy: false, // 若无模板渲染，可禁用以减少开销
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    xssFilter: true,
+    hidePoweredBy: true,
+  })
 
   // 配置 Swagger 文档（生产环境可条件性禁用）
   if (

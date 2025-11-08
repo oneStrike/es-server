@@ -15,6 +15,7 @@ import {
   UserPageDto,
   UserRegisterDto,
 } from './dto/user.dto'
+// 仓储层已移除，直接使用 Prisma 客户端
 
 @Injectable()
 export class AdminUserService extends RepositoryService {
@@ -277,5 +278,12 @@ export class AdminUserService extends RepositoryService {
       },
     })
     return userId
+  }
+
+  /**
+   * 删除用户
+   */
+  async deleteUser(id: number) {
+    return this.adminUser.delete({ where: { id } })
   }
 }
