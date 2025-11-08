@@ -61,11 +61,23 @@ export class RsaService implements OnModuleInit {
       `${prefix}_PRIVATE_KEY`,
     )
 
+    // 兼容 .env 中使用 "\n" 作为换行的单行 PEM 格式
+    const normalizePem = (pem?: string): string | undefined => {
+      if (!pem) {
+        return pem
+      }
+      // 统一换行，并将转义的 \n 恢复为真实换行
+      return pem
+        .replace(/\\r\\n/g, '\n')
+        .replace(/\\n/g, '\n')
+        .replace(/\r\n/g, '\n')
+    }
+
     // 如果环境变量中直接配置了公私钥，则使用环境变量中的公私钥
     if (publicKeyEnv && privateKeyEnv) {
       this.keyPairs.set(keyType, {
-        publicKey: publicKeyEnv,
-        privateKey: privateKeyEnv,
+        publicKey: normalizePem(publicKeyEnv)!,
+        privateKey: normalizePem(privateKeyEnv)!,
       })
       return
     }
@@ -73,7 +85,7 @@ export class RsaService implements OnModuleInit {
     // 如果只配置了公钥，则只能用于加密，不能用于解密
     if (publicKeyEnv) {
       this.keyPairs.set(keyType, {
-        publicKey: publicKeyEnv,
+        publicKey: normalizePem(publicKeyEnv)!,
         privateKey: '',
       })
       return
