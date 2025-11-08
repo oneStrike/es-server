@@ -4,7 +4,7 @@ import type {
 } from '@nestjs/platform-fastify'
 import type { UploadConfig } from '@/config/upload.config'
 import { mkdir } from 'node:fs/promises'
-import { join } from 'node:path'
+import { extname } from 'node:path'
 import * as process from 'node:process'
 import fastifyMultipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
@@ -28,6 +28,17 @@ export async function setupMultipart(
     etag: true,
     cacheControl: true,
     maxAge: '1h',
+    // 针对文档与压缩包类型强制以附件方式下载，降低 XSS 风险
+    setHeaders(res: any, filePath: string) {
+      try {
+        const ext = extname(filePath).toLowerCase()
+        const isDoc = uploadConfig.documentType.extensions.includes(ext)
+        const isArchive = uploadConfig.archiveType.extensions.includes(ext)
+        if (isDoc || isArchive) {
+          res.setHeader('Content-Disposition', 'attachment')
+        }
+      } catch {}
+    },
   })
 
   // 注册multipart插件
