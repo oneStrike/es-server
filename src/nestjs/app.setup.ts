@@ -37,6 +37,12 @@ export async function setupApp(
   // 设置全局前缀
   app.setGlobalPrefix('api')
 
+  // 处理浏览器自动请求的站点图标，避免 404 噪音日志
+  // 若需要自定义图标，可改为使用 @fastify/static 提供真实文件
+  fastifyAdapter.getInstance().get('/favicon.ico', async (_req, reply) => {
+    reply.type('image/x-icon').code(204).send()
+  })
+
   // 配置响应压缩（gzip/brotli）
   await setupCompression(fastifyAdapter)
 
