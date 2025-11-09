@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import process from 'node:process'
 import {
   ArgumentsHost,
   Catch,
@@ -105,6 +106,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     message: string | object
     details?: any
   } {
+    const isProduction = process.env.NODE_ENV === 'production'
+
     if (exception instanceof HttpException) {
       const code = exception.getStatus()
       const response = exception.getResponse() as any
@@ -121,8 +124,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // 处理数据库错误（Prisma等），对未知错误码提供合理回退
     if (exception instanceof Error && 'code' in exception) {
       const code = (exception as { code?: any }).code
-      const fallbackMessage =
-        this.errorMessageMap[code] || exception.message || '数据库错误'
+      const knownMessage = this.errorMessageMap[code]
+      const fallbackMessage = isProduction
+        ? knownMessage || '数据库错误'
+        : knownMessage || exception.message || '数据库错误'
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: fallbackMessage,
@@ -134,14 +139,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof Error) {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: exception.message || '内部服务器错误',
+        message: isProduction
+          ? '内部服务器错误'
+          : exception.message || '内部服务器错误',
       }
     }
 
     // 未知异常类型
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: '未知错误',
+      message: isProduction ? '内部服务器错误' : '未知错误',
     }
   }
 

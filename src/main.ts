@@ -52,7 +52,7 @@ void bootstrap()
   })
 
 // 入口模块接受自身更新，并在替换时优雅关闭应用
-if (module?.hot) {
+if (process.env.NODE_ENV !== 'production' && module?.hot) {
   module.hot.accept()
   module.hot.dispose(async () => {
     try {

@@ -26,9 +26,6 @@ export async function setupApp(
   const logger = loggerFactory.createGlobalLogger('Application')
   app.useLogger(logger)
 
-  // 启用跨域
-  app.enableCors()
-
   // 选择模块
   app.select(AdminModule)
   app.select(ClientModule)

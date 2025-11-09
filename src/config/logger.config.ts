@@ -87,7 +87,7 @@ function getLoggerConfig(): LoggerConfig {
     enableColors: isDevelopment,
     consoleLevel: isDevelopment
       ? LogLevel.DEBUG
-      : parseLogLevel(process.env.LOG_CONSOLE_LEVEL, LogLevel.WARN),
+      : parseLogLevel(process.env.LOG_CONSOLE_LEVEL, LogLevel.INFO),
     maxFiles: process.env.LOG_MAX_FILES || '14d',
     maxSize: process.env.LOG_MAX_SIZE || '20m',
     datePattern: process.env.LOG_DATE_PATTERN || 'YYYY-MM-DD',
