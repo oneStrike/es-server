@@ -9,6 +9,7 @@ import { CaptchaService } from '@/common/module/captcha'
 import { CryptoService } from '@/common/module/crypto/crypto.service'
 import { RsaService } from '@/common/module/crypto/rsa.service'
 import { RepositoryService } from '@/common/services/repository.service'
+import { ADMIN_LOGIN_POLICY } from '@/config/auth.config'
 import { RequestLogService } from '@/modules/foundation/request-log'
 import { AdminUser } from '@/prisma/client/client'
 import { extractIpAddress } from '@/utils'
@@ -93,16 +94,40 @@ export class AdminAuthService extends RepositoryService {
 
     // 检查账户是否被锁定
     if (user.isLocked) {
-      await this.requestLogService.createLoginFailureRequestLog(
-        {
-          content: `【${body.username}】登录失败，账户被锁定`,
-          username: body.username,
-          userId: user.id,
-        },
-        req,
-      )
-      await this.updateLoginFailInfo(user, requestIp)
-      throw new UnauthorizedException('失败次数过多，请稍后再试')
+      const failAt = user.loginFailAt ? new Date(user.loginFailAt).getTime() : 0
+      const now = Date.now()
+      const lockExpired =
+        !!failAt && now - failAt >= ADMIN_LOGIN_POLICY.lockDurationMs
+
+      if (lockExpired) {
+        // 锁定已到期，自动解锁并重置失败信息
+        await this.adminUser.update({
+          where: { id: user.id },
+          data: {
+            isLocked: false,
+            loginFailIp: null,
+            loginFailAt: null,
+            loginFailCount: 0,
+          },
+        })
+        // 同步本地对象，继续后续登录流程
+        user.isLocked = false
+        user.loginFailIp = null
+        user.loginFailAt = null
+        user.loginFailCount = 0
+      } else {
+        // 锁定未到期，记录失败并拒绝
+        await this.requestLogService.createLoginFailureRequestLog(
+          {
+            content: `【${body.username}】登录失败，账户被锁定`,
+            username: body.username,
+            userId: user.id,
+          },
+          req,
+        )
+        await this.updateLoginFailInfo(user, requestIp)
+        throw new UnauthorizedException('失败次数过多，请稍后再试')
+      }
     }
 
     // 解密密码
@@ -176,7 +201,7 @@ export class AdminAuthService extends RepositoryService {
         loginFailIp: requestIp || 'unknown',
         loginFailAt: new Date(),
         loginFailCount: user.loginFailCount + 1,
-        isLocked: user.loginFailCount + 1 >= 5, // 失败5次后锁定账户
+        isLocked: user.loginFailCount + 1 >= ADMIN_LOGIN_POLICY.maxFailCount, // 达到阈值后锁定账户
       },
     })
   }
