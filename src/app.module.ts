@@ -95,10 +95,15 @@ function createCacheConfig(config: ConfigService) {
       useValue: new ValidationPipe({
         transform: true, // 自动转换请求数据类型
         whitelist: true, // 过滤掉未在 DTO 中定义的属性
-        exceptionFactory: (errors) =>
-          new BadRequestException(
-            errors.map((error) => `${error.property}数据格式校验失败`),
-          ),
+        exceptionFactory: (errors) => new BadRequestException(
+          errors.map((error) => {
+            const errorMsg: string[] = []
+            if (error.constraints) {
+              errorMsg.push(...Object.values(error.constraints))
+            }
+            return `${error.property}${errorMsg.join('，')}`
+          }),
+        )
       }),
     },
 
