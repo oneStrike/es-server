@@ -3,6 +3,11 @@ import { isAbsolute, join } from 'node:path'
 import process from 'node:process'
 import { registerAs } from '@nestjs/config'
 
+interface fileTypeConfig {
+  mimeTypes: string[]
+  extensions: string[]
+}
+
 /**
  * 文件上传配置
  */
@@ -15,11 +20,11 @@ export interface UploadConfig {
   allowedMimeTypes: string[]
   /** 允许的文件扩展名 */
   allowedExtensions: string[]
-  imageType: { mimeTypes: string[], extensions: string[] }
-  audioType: { mimeTypes: string[], extensions: string[] }
-  videoType: { mimeTypes: string[], extensions: string[] }
-  documentType: { mimeTypes: string[], extensions: string[] }
-  archiveType: { mimeTypes: string[], extensions: string[] }
+  imageType: fileTypeConfig
+  audioType: fileTypeConfig
+  videoType: fileTypeConfig
+  documentType: fileTypeConfig
+  archiveType: fileTypeConfig
   /** 上传目录 */
   uploadDir: string
   /** 是否保留原始文件名 */
@@ -136,6 +141,112 @@ export const archiveType = {
 }
 
 /**
+ * 文件类型配置处理器 - 消除重复代码
+ */
+class FileTypeConfigProcessor {
+  private static readonly FILE_TYPE_CONFIGS: Record<
+    string,
+    {
+      defaultType: { mimeTypes: string[]; extensions: string[] }
+      mimeEnvKey: string
+      extEnvKey: string
+    }
+  > = {
+    image: {
+      defaultType: imageType,
+      mimeEnvKey: 'UPLOAD_IMAGE_MIME_TYPES',
+      extEnvKey: 'UPLOAD_IMAGE_EXTENSIONS',
+    },
+    audio: {
+      defaultType: audioType,
+      mimeEnvKey: 'UPLOAD_AUDIO_MIME_TYPES',
+      extEnvKey: 'UPLOAD_AUDIO_EXTENSIONS',
+    },
+    video: {
+      defaultType: videoType,
+      mimeEnvKey: 'UPLOAD_VIDEO_MIME_TYPES',
+      extEnvKey: 'UPLOAD_VIDEO_EXTENSIONS',
+    },
+    document: {
+      defaultType: documentType,
+      mimeEnvKey: 'UPLOAD_DOCUMENT_MIME_TYPES',
+      extEnvKey: 'UPLOAD_DOCUMENT_EXTENSIONS',
+    },
+    archive: {
+      defaultType: archiveType,
+      mimeEnvKey: 'UPLOAD_ARCHIVE_MIME_TYPES',
+      extEnvKey: 'UPLOAD_ARCHIVE_EXTENSIONS',
+    },
+  }
+
+  /**
+   * 处理单个文件类型的配置
+   */
+  private static processFileTypeConfig(typeName: string): {
+    mimeTypes: string[]
+    extensions: string[]
+  } {
+    const config = FileTypeConfigProcessor.FILE_TYPE_CONFIGS[typeName]
+
+    // 处理MIME类型配置
+    const mimeEnvValue = process.env[config.mimeEnvKey]
+    const mimeTypes = mimeEnvValue
+      ? mimeEnvValue
+          .split(',')
+          .map((mt) => mt.trim())
+          .filter((mt) => mt)
+      : [...config.defaultType.mimeTypes]
+
+    // 处理扩展名配置
+    const extEnvValue = process.env[config.extEnvKey]
+    const extensions = extEnvValue
+      ? extEnvValue
+          .split(',')
+          .map((ext) => ext.trim().toLowerCase())
+          .filter((ext) => ext.startsWith('.') && ext.length > 1)
+      : [...config.defaultType.extensions]
+
+    return { mimeTypes, extensions }
+  }
+
+  /**
+   * 处理所有文件类型配置
+   */
+  static processAllFileTypes() {
+    const result = {
+      imageType: this.processFileTypeConfig('image'),
+      audioType: this.processFileTypeConfig('audio'),
+      videoType: this.processFileTypeConfig('video'),
+      documentType: this.processFileTypeConfig('document'),
+      archiveType: this.processFileTypeConfig('archive'),
+    }
+
+    // 生成允许的MIME类型和扩展名列表
+    const allowedMimeTypes = [
+      ...result.imageType.mimeTypes,
+      ...result.audioType.mimeTypes,
+      ...result.videoType.mimeTypes,
+      ...result.documentType.mimeTypes,
+      ...result.archiveType.mimeTypes,
+    ]
+
+    const allowedExtensions = [
+      ...result.imageType.extensions,
+      ...result.audioType.extensions,
+      ...result.videoType.extensions,
+      ...result.documentType.extensions,
+      ...result.archiveType.extensions,
+    ]
+
+    return {
+      ...result,
+      allowedMimeTypes,
+      allowedExtensions,
+    }
+  }
+}
+
+/**
  * 注册上传配置
  */
 export default registerAs('upload', (): UploadConfig => {
@@ -143,70 +254,9 @@ export default registerAs('upload', (): UploadConfig => {
     process.cwd() === '/app' ||
     existsSync('/.dockerenv') ||
     process.env.DOCKER === 'true'
-  // 获取图片类型配置 - 优先使用环境变量
-  const imageMimeTypes = process.env.UPLOAD_IMAGE_MIME_TYPES
-    ? process.env.UPLOAD_IMAGE_MIME_TYPES.split(',')
-        .map((mt) => mt.trim())
-        .filter((mt) => mt)
-    : [...imageType.mimeTypes]
 
-  const imageExtensions = process.env.UPLOAD_IMAGE_EXTENSIONS
-    ? process.env.UPLOAD_IMAGE_EXTENSIONS.split(',')
-        .map((ext) => ext.trim().toLowerCase())
-        .filter((ext) => ext.startsWith('.') && ext.length > 1)
-    : [...imageType.extensions]
-
-  // 音频类型
-  const audioMimeTypes = process.env.UPLOAD_AUDIO_MIME_TYPES
-    ? process.env.UPLOAD_AUDIO_MIME_TYPES.split(',')
-        .map((mt) => mt.trim())
-        .filter((mt) => mt)
-    : [...audioType.mimeTypes]
-
-  const audioExtensions = process.env.UPLOAD_AUDIO_EXTENSIONS
-    ? process.env.UPLOAD_AUDIO_EXTENSIONS.split(',')
-        .map((ext) => ext.trim().toLowerCase())
-        .filter((ext) => ext.startsWith('.') && ext.length > 1)
-    : [...audioType.extensions]
-
-  // 视频类型
-  const videoMimeTypes = process.env.UPLOAD_VIDEO_MIME_TYPES
-    ? process.env.UPLOAD_VIDEO_MIME_TYPES.split(',')
-        .map((mt) => mt.trim())
-        .filter((mt) => mt)
-    : [...videoType.mimeTypes]
-
-  const videoExtensions = process.env.UPLOAD_VIDEO_EXTENSIONS
-    ? process.env.UPLOAD_VIDEO_EXTENSIONS.split(',')
-        .map((ext) => ext.trim().toLowerCase())
-        .filter((ext) => ext.startsWith('.') && ext.length > 1)
-    : [...videoType.extensions]
-
-  // 文档类型
-  const documentMimeTypes = process.env.UPLOAD_DOCUMENT_MIME_TYPES
-    ? process.env.UPLOAD_DOCUMENT_MIME_TYPES.split(',')
-        .map((mt) => mt.trim())
-        .filter((mt) => mt)
-    : [...documentType.mimeTypes]
-
-  const documentExtensions = process.env.UPLOAD_DOCUMENT_EXTENSIONS
-    ? process.env.UPLOAD_DOCUMENT_EXTENSIONS.split(',')
-        .map((ext) => ext.trim().toLowerCase())
-        .filter((ext) => ext.startsWith('.') && ext.length > 1)
-    : [...documentType.extensions]
-
-  // 压缩包类型
-  const archiveMimeTypes = process.env.UPLOAD_ARCHIVE_MIME_TYPES
-    ? process.env.UPLOAD_ARCHIVE_MIME_TYPES.split(',')
-        .map((mt) => mt.trim())
-        .filter((mt) => mt)
-    : [...archiveType.mimeTypes]
-
-  const archiveExtensions = process.env.UPLOAD_ARCHIVE_EXTENSIONS
-    ? process.env.UPLOAD_ARCHIVE_EXTENSIONS.split(',')
-        .map((ext) => ext.trim().toLowerCase())
-        .filter((ext) => ext.startsWith('.') && ext.length > 1)
-    : [...archiveType.extensions]
+  // 使用配置处理器统一处理所有文件类型
+  const fileTypeConfigs = FileTypeConfigProcessor.processAllFileTypes()
 
   // 获取基本配置
   const maxFileSize = (() => {
@@ -269,39 +319,27 @@ export default registerAs('upload', (): UploadConfig => {
     maxFileSize,
     maxFiles,
     imageType: {
-      mimeTypes: imageMimeTypes,
-      extensions: imageExtensions,
+      mimeTypes: fileTypeConfigs.imageType.mimeTypes,
+      extensions: fileTypeConfigs.imageType.extensions,
     },
     audioType: {
-      mimeTypes: audioMimeTypes,
-      extensions: audioExtensions,
+      mimeTypes: fileTypeConfigs.audioType.mimeTypes,
+      extensions: fileTypeConfigs.audioType.extensions,
     },
     videoType: {
-      mimeTypes: videoMimeTypes,
-      extensions: videoExtensions,
+      mimeTypes: fileTypeConfigs.videoType.mimeTypes,
+      extensions: fileTypeConfigs.videoType.extensions,
     },
     documentType: {
-      mimeTypes: documentMimeTypes,
-      extensions: documentExtensions,
+      mimeTypes: fileTypeConfigs.documentType.mimeTypes,
+      extensions: fileTypeConfigs.documentType.extensions,
     },
     archiveType: {
-      mimeTypes: archiveMimeTypes,
-      extensions: archiveExtensions,
+      mimeTypes: fileTypeConfigs.archiveType.mimeTypes,
+      extensions: fileTypeConfigs.archiveType.extensions,
     },
-    allowedMimeTypes: [
-      ...imageMimeTypes,
-      ...audioMimeTypes,
-      ...videoMimeTypes,
-      ...documentMimeTypes,
-      ...archiveMimeTypes,
-    ],
-    allowedExtensions: [
-      ...imageExtensions,
-      ...audioExtensions,
-      ...videoExtensions,
-      ...documentExtensions,
-      ...archiveExtensions,
-    ],
+    allowedMimeTypes: fileTypeConfigs.allowedMimeTypes,
+    allowedExtensions: fileTypeConfigs.allowedExtensions,
     uploadDir,
     preserveOriginalName,
     filenameStrategy,
