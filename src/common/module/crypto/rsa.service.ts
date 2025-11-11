@@ -2,7 +2,6 @@ import { Buffer } from 'node:buffer'
 import { constants, privateDecrypt, publicEncrypt } from 'node:crypto'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { RsaKeyType } from '@/common/enum/rsa'
 import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 import { CustomLoggerService } from '@/common/module/logger/logger.service'
 /**
@@ -11,6 +10,14 @@ import { CustomLoggerService } from '@/common/module/logger/logger.service'
 export interface RsaKeyPair {
   publicKey: string
   privateKey: string
+}
+
+/**
+ * RSA密钥类型
+ */
+export enum RsaKeyType {
+  ADMIN = 'ADMIN',
+  CLIENT = 'CLIENT',
 }
 
 /**
