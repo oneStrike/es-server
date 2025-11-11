@@ -26,7 +26,6 @@ export enum RsaKeyType {
  */
 @Injectable()
 export class RsaService implements OnModuleInit {
-  private static instance: RsaService
   private keyPairs: Map<RsaKeyType, RsaKeyPair> = new Map()
   private logger: CustomLoggerService
 
