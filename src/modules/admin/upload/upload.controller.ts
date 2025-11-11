@@ -4,7 +4,7 @@ import { FastifyRequest } from 'fastify'
 import { ApiDoc } from '@/common/decorators/api-doc.decorator'
 import { UploadFileDto, UploadResponseDto } from '@/common/dto/upload.dto'
 
-import { UploadService } from '@/common/services/upload.service'
+import { UploadService } from '@/modules/foundation/upload/upload.service'
 
 @ApiTags('管理端文件上传')
 @Controller('admin/upload')

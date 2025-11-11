@@ -3,14 +3,13 @@ import { isAbsolute, join } from 'node:path'
 import process from 'node:process'
 import { registerAs } from '@nestjs/config'
 
+/**
+ * 文件上传配置
+ */
 interface fileTypeConfig {
   mimeTypes: string[]
   extensions: string[]
 }
-
-/**
- * 文件上传配置
- */
 export interface UploadConfig {
   /** 最大文件大小 (字节) */
   maxFileSize: number
@@ -143,15 +142,16 @@ export const archiveType = {
 /**
  * 文件类型配置处理器 - 消除重复代码
  */
+type fileTypeConfigs = Record<
+  string,
+  {
+    defaultType: fileTypeConfig
+    mimeEnvKey: string
+    extEnvKey: string
+  }
+>
 class FileTypeConfigProcessor {
-  private static readonly FILE_TYPE_CONFIGS: Record<
-    string,
-    {
-      defaultType: { mimeTypes: string[]; extensions: string[] }
-      mimeEnvKey: string
-      extEnvKey: string
-    }
-  > = {
+  private static readonly FILE_TYPE_CONFIGS: fileTypeConfigs = {
     image: {
       defaultType: imageType,
       mimeEnvKey: 'UPLOAD_IMAGE_MIME_TYPES',
@@ -182,10 +182,7 @@ class FileTypeConfigProcessor {
   /**
    * 处理单个文件类型的配置
    */
-  private static processFileTypeConfig(typeName: string): {
-    mimeTypes: string[]
-    extensions: string[]
-  } {
+  private static processFileTypeConfig(typeName: string): fileTypeConfig {
     const config = FileTypeConfigProcessor.FILE_TYPE_CONFIGS[typeName]
 
     // 处理MIME类型配置
