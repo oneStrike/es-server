@@ -16,7 +16,7 @@ import { LoggerModule } from '@/common/module/logger/logger.module'
 import uploadConfig from '@/config/upload.config'
 import { AdminModule } from '@/modules/admin/admin.module'
 import { ClientModule } from '@/modules/client/client.module'
-import { HealthModule } from '@/modules/foundation/health/health.module'
+import { HealthModule } from '@/common/module/health/health.module'
 import { PrismaService } from '@/prisma/prisma.connect'
 import { JwtAuthGuard } from './common/guards/auth.guard'
 
