@@ -8,6 +8,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { CacheableMemory } from 'cacheable'
 import { Keyv } from 'keyv'
 import { CustomPrismaModule } from 'nestjs-prisma/dist/custom'
+import { LoggerModule } from '@/common/module/logger/logger.module'
 import uploadConfig from '@/config/upload.config'
 import { HttpExceptionFilter } from '@/filters/http-exception.filter'
 import { JwtAuthGuard } from '@/guards/auth.guard'
@@ -76,6 +77,7 @@ function createCacheConfig(config: ConfigService) {
 
     // 基础功能模块
     CryptoModule, // 加密模块
+    LoggerModule,
 
     // 业务功能模块
     AdminModule, // 管理模块

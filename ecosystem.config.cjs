@@ -32,6 +32,11 @@ module.exports = {
         // 方案B：生产启用控制台告警输出到 stderr
         LOG_ENABLE_CONSOLE: process.env.LOG_ENABLE_CONSOLE || 'true',
         LOG_CONSOLE_LEVEL: process.env.LOG_CONSOLE_LEVEL || 'warn',
+        LOG_LEVEL: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'development' ? 'debug' : 'info'),
+        LOG_PATH: process.env.LOG_PATH || '/app/logs',
+        LOG_MAX_SIZE: process.env.LOG_MAX_SIZE || '50m',
+        LOG_RETAIN_DAYS: process.env.LOG_RETAIN_DAYS || '30d',
+        LOG_COMPRESS: process.env.LOG_COMPRESS || 'true',
       },
       env_development: {
         NODE_ENV: 'development',

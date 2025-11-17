@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import type { Logger } from 'winston'
 import process from 'node:process'
 import {
   ArgumentsHost,
@@ -6,7 +7,11 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Inject,
 } from '@nestjs/common'
+import { v4 as uuidv4 } from 'uuid'
+import { ApiTypeEnum } from '@/modules/foundation/request-log/request-log.constant'
+import { parseRequestLogFields } from '@/utils'
 
 /**
  * HTTP异常过滤器
@@ -14,6 +19,12 @@ import {
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  constructor(
+    @Inject('SYSTEM_LOGGER') private readonly systemLogger: Logger,
+    @Inject('ADMIN_LOGGER') private readonly adminLogger: Logger,
+    @Inject('CLIENT_LOGGER') private readonly clientLogger: Logger,
+  ) {}
+
   /**
    * 数据库错误映射表
    */
@@ -32,16 +43,30 @@ export class HttpExceptionFilter implements ExceptionFilter {
    */
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp()
-    const request = ctx.getRequest<FastifyRequest>()
     const response = ctx.getResponse<FastifyReply>()
+    const request = ctx.getRequest<FastifyRequest>()
 
     const { status, message } = this.extractErrorInfo(exception)
+    const traceId = uuidv4()
+    const parsed = this.safeParse(request)
+    const logger = this.pickLogger(parsed?.apiType)
+    const payload = {
+      traceId,
+      status,
+      path: parsed?.path,
+      method: parsed?.method,
+      ip: parsed?.ip,
+      message,
+    }
+    const stack = exception instanceof Error ? exception.stack : undefined
+    logger.log({ level: 'error', message: JSON.stringify(payload), stack })
 
     const errorResponse = {
       code: status,
       message,
+      traceId,
     }
-    response.code(status).send(errorResponse)
+    response.header('X-Trace-Id', traceId).code(status).send(errorResponse)
   }
 
   /**
@@ -96,5 +121,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       message: isProduction ? '内部服务器错误' : '未知错误',
     }
+  }
+
+  private safeParse(req: FastifyRequest | undefined) {
+    try {
+      return req ? parseRequestLogFields(req) : undefined
+    } catch {
+      return undefined
+    }
+  }
+
+  private pickLogger(apiType?: ApiTypeEnum) {
+    if (apiType === ApiTypeEnum.ADMIN) {
+      return this.adminLogger
+    }
+    if (apiType === ApiTypeEnum.CLIENT) {
+      return this.clientLogger
+    }
+    return this.systemLogger
   }
 }

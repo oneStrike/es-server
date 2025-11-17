@@ -60,6 +60,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/ecosystem.config.cjs ./ecosystem.
 
 # 预创建上传目录并授予权限（供命名卷首次挂载继承）
 RUN install -d -m 0775 -o nestjs -g nodejs /app/uploads \
+ && install -d -m 0775 -o nestjs -g nodejs /app/logs \
  && chown -R nestjs:nodejs /app
 
 # 切换到非root用户
@@ -68,7 +69,7 @@ USER nestjs
 # 安装并配置 pm2-logrotate 插件（在非root用户下）
 RUN pm2 install pm2-logrotate \
  && pm2 set pm2-logrotate:max_size 50M \
- && pm2 set pm2-logrotate:retain 7 \
+ && pm2 set pm2-logrotate:retain 30 \
  && pm2 set pm2-logrotate:compress true \
  && pm2 set pm2-logrotate:dateFormat YYYY-MM-DD_HH-mm-ss \
  && pm2 set pm2-logrotate:rotateInterval "0 */6 * * *"

@@ -6,6 +6,7 @@ import type {
 import * as process from 'node:process'
 import fastifyCsrf from '@fastify/csrf-protection'
 import fastifyHelmet from '@fastify/helmet'
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 
 // import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 import { AdminModule } from '@/modules/admin/admin.module'
@@ -21,10 +22,7 @@ export async function setupApp(
   app: NestFastifyApplication,
   fastifyAdapter: FastifyAdapter,
 ): Promise<void> {
-  // 设置自定义日志服务已移除
-  // const loggerFactory = app.get(LoggerFactoryService)
-  // const logger = loggerFactory.createGlobalLogger('Application')
-  // app.useLogger(logger)
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER))
 
   // 选择模块
   app.select(AdminModule)

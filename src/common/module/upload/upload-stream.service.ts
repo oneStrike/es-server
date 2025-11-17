@@ -58,7 +58,6 @@ export class UploadStreamService {
    * 清理临时文件
    * @param filePath 文件路径
    * @param logger 日志服务
-   * @param filename 原始文件名（用于日志）
    */
   cleanupTempFile(filePath: string, logger: any): void {
     try {
