@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { IdDto, IdsDto } from '@/common/dto/base.dto'
-import { OrderDto } from '@/common/dto/order.dto'
+import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
 import {
   BatchEnabledDto,
   BatchOperationResponseDto,
@@ -146,9 +146,9 @@ export class DictionaryController {
   @Post('/item-order')
   @ApiDoc({
     summary: '分类拖拽排序',
-    model: OrderDto,
+    model: DragReorderDto,
   })
-  async categoryOrder(@Body() body: OrderDto) {
+  async categoryOrder(@Body() body: DragReorderDto) {
     return this.dictionaryService.updateDictionaryItemSort(body)
   }
 }

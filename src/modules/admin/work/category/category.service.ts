@@ -1,6 +1,6 @@
 import type { WorkCategoryWhereInput } from '@/prisma/client/models'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { OrderDto } from '@/common/dto/order.dto'
+import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
 
 import { BatchEnabledDto } from '@/common/dto/status.dto'
 import { RepositoryService } from '@/common/services/repository.service'
@@ -237,7 +237,7 @@ export class WorkCategoryService extends RepositoryService {
   /**
    * 拖拽排序
    */
-  async updateCategorySort(updateSortDto: OrderDto) {
+  async updateCategorySort(updateSortDto: DragReorderDto) {
     return this.prisma.$transaction(async (tx) => {
       await tx.workCategory.swapField(
         { id: updateSortDto.dragId },

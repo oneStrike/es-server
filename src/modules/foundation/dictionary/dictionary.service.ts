@@ -3,7 +3,7 @@ import type {
   DictionaryWhereInput,
 } from '@/prisma/client/models'
 import { Injectable } from '@nestjs/common'
-import { OrderDto } from '@/common/dto/order.dto'
+import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
 import { RepositoryService } from '@/common/services/repository.service'
 import { CreateDictionaryItemDto } from './dto/dictionary-item.dto'
 import {
@@ -124,7 +124,7 @@ export class DictionaryService extends RepositoryService {
    * 更新字典项排序
    * @param orderDto 排序数据
    */
-  async updateDictionaryItemSort(orderDto: OrderDto) {
+  async updateDictionaryItemSort(orderDto: DragReorderDto) {
     return this.prisma.$transaction(async (tx) => {
       await tx.dictionaryItem.swapField(
         { id: orderDto.dragId },

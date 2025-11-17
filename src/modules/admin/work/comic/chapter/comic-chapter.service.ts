@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { OrderDto } from '@/common/dto/order.dto'
+import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
 import { RepositoryService } from '@/common/services/repository.service'
 import { WorkComicChapterWhereInput } from '@/prisma/client/models/WorkComicChapter'
 import {
@@ -482,7 +482,7 @@ export class WorkComicChapterService extends RepositoryService {
    * @param swapChapterNumberDto 交换章节号的数据
    * @returns 交换结果
    */
-  async swapChapterNumbers(swapChapterNumberDto: OrderDto) {
+  async swapChapterNumbers(swapChapterNumberDto: DragReorderDto) {
     const { targetId, dragId } = swapChapterNumberDto
 
     // 验证两个章节ID不能相同

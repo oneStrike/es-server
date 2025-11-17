@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { IdDto, IdsDto } from '@/common/dto/base.dto'
-import { OrderDto } from '@/common/dto/order.dto'
+import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
 import { BatchOperationResponseDto } from '@/common/dto/status.dto'
 import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
 import { ComicChapterDetailDto } from '@/modules/admin/work/comic/chapter/dto/comic-chapter-response'
@@ -117,8 +117,8 @@ export class WorkComicChapterController {
    * 交换两个章节的章节号
    */
   @Post('swap-numbers')
-  @ApiDoc({ summary: '交换两个章节的章节号', model: OrderDto })
-  async swapChapterNumbers(@Body() swapChapterNumberDto: OrderDto) {
+  @ApiDoc({ summary: '交换两个章节的章节号', model: DragReorderDto })
+  async swapChapterNumbers(@Body() swapChapterNumberDto: DragReorderDto) {
     return this.comicChapterService.swapChapterNumbers(swapChapterNumberDto)
   }
 

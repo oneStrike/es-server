@@ -1,15 +1,15 @@
 import { ValidateNumber } from '@/decorators/validate.decorator'
 
-export class OrderDto {
+export class DragReorderDto {
   @ValidateNumber({
-    description: '拖拽的目标id',
+    description: '拖拽的目标位置id',
     required: true,
     example: 1,
   })
   targetId!: number
 
   @ValidateNumber({
-    description: '当前拖拽数据的id',
+    description: '当前拖拽元素的id',
     required: true,
     example: 2,
   })
