@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc } from '@/common/decorators/api-doc.decorator'
-import { IdDto } from '@/common/dto/id.dto'
+import { IdDto } from '@/common/dto/base.dto'
+import { ApiDoc } from '@/decorators/api-doc.decorator'
 import { ContentTypeService } from './content-type.service'
 import {
   BaseContentTypeDto,

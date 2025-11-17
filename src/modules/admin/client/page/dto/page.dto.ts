@@ -5,14 +5,14 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { IdDto } from '@/common/dto/base.dto'
+import { PageDto } from '@/common/dto/page.dto'
 import {
   ValidateBoolean,
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
-import { IdDto } from '@/common/dto/id.dto'
-import { PageDto } from '@/common/dto/page.dto'
+} from '@/decorators/validate.decorator'
 import { PageRuleEnum } from '../page.constant'
 
 /**

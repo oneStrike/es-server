@@ -5,7 +5,6 @@ import type {
 import type { UploadConfig } from '@/config/upload.config'
 import { mkdir } from 'node:fs/promises'
 import { extname } from 'node:path'
-import * as process from 'node:process'
 import fastifyMultipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import { ConfigService } from '@nestjs/config'

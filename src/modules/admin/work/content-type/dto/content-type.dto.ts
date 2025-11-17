@@ -4,13 +4,13 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { IdDto } from '@/common/dto/base.dto'
+import { PageDto } from '@/common/dto/page.dto'
 import {
   ValidateBoolean,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
-import { IdDto } from '@/common/dto/id.dto'
-import { PageDto } from '@/common/dto/page.dto'
+} from '@/decorators/validate.decorator'
 
 /**
  * 内容类型基础 DTO

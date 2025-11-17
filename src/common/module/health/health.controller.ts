@@ -1,7 +1,7 @@
 import * as process from 'node:process'
 import { Controller, Get } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ApiTags } from '@nestjs/swagger'
 import {
   DiskHealthIndicator,
   HealthCheck,

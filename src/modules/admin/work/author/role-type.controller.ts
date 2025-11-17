@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc } from '@/common/decorators/api-doc.decorator'
+import { ApiDoc } from '@/decorators/api-doc.decorator'
 import { RoleTypeListResponseDto } from './dto/role-type.dto'
 import { WorkAuthorRoleTypeService } from './role-type.service'
 

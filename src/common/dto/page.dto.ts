@@ -3,7 +3,7 @@ import {
   ValidateJson,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
+} from '@/decorators/validate.decorator'
 
 export class PageDto {
   @ValidateNumber({

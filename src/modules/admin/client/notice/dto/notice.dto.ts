@@ -5,6 +5,8 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { IdDto, IdsDto } from '@/common/dto/base.dto'
+import { PageDto } from '@/common/dto/page.dto'
 import {
   ValidateBitmask,
   ValidateBoolean,
@@ -12,9 +14,7 @@ import {
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
-import { IdDto, IdsDto } from '@/common/dto/id.dto'
-import { PageDto } from '@/common/dto/page.dto'
+} from '@/decorators/validate.decorator'
 import {
   EnablePlatformEnum,
   NoticePriorityEnum,

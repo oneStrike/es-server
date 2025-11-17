@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
-import { IS_PUBLIC_KEY } from '@/common/decorators/public.decorator'
 import { ADMIN_AUTH_CONFIG, CLIENT_AUTH_CONFIG } from '@/config/jwt.config'
+import { IS_PUBLIC_KEY } from '@/decorators/public.decorator'
 
 /**
  * AuthGuard 智能JWT认证守卫

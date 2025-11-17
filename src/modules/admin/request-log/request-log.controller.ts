@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiPageDoc } from '@/common/decorators/api-doc.decorator'
+import { ApiPageDoc } from '@/decorators/api-doc.decorator'
 import {
   RequestLogDto,
   RequestLogPageDto,

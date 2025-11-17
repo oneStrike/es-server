@@ -7,9 +7,9 @@ import {
   Query,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
-import { CountDto } from '@/common/dto/batch.dto'
-import { IdDto, IdsDto } from '@/common/dto/id.dto'
+import { IdDto, IdsDto } from '@/common/dto/base.dto'
+import { BatchOperationResponseDto } from '@/common/dto/status.dto'
+import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
 import {
   BaseClientPageDto,
   ClientPagePageResponseDto,
@@ -96,7 +96,7 @@ export class ClientPageController {
   @Post('/batch-delete')
   @ApiDoc({
     summary: '批量删除页面配置',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async batchDelete(@Body() body: IdsDto) {
     return this.pageService.clientPage.deleteMany({

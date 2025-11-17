@@ -1,4 +1,4 @@
-import { ValidateNumber } from '@/common/decorators/validate.decorator'
+import { ValidateNumber } from '@/decorators/validate.decorator'
 
 export class OrderDto {
   @ValidateNumber({

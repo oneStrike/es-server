@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc } from '@/common/decorators/api-doc.decorator'
+import { ApiDoc } from '@/decorators/api-doc.decorator'
 import {
   PlatformResponseDto,
   SearchComicItemDto,

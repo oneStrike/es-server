@@ -2,7 +2,7 @@ import {
   ValidateBoolean,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
+} from '@/decorators/validate.decorator'
 
 /**
  * 创建数据字典项DTO

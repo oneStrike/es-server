@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
-import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto'
-import { IdDto, IdsDto } from '@/common/dto/id.dto'
+import { IdDto, IdsDto } from '@/common/dto/base.dto'
 import { OrderDto } from '@/common/dto/order.dto'
+import { BatchEnabledDto, BatchOperationResponseDto } from '@/common/dto/status.dto'
+import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
 import { DictionaryService } from '@/modules/foundation/dictionary/dictionary.service'
 import { CreateDictionaryDto } from '@/modules/foundation/dictionary/dto/create-dictionary.dto'
 import {
@@ -80,7 +80,7 @@ export class DictionaryController {
   @Post('batch-update-status')
   @ApiDoc({
     summary: '批量启用禁用字典',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async enable(@Body() query: BatchEnabledDto) {
     return this.dictionaryService.dictionary.updateMany({
@@ -122,7 +122,7 @@ export class DictionaryController {
   @Post('delete-item')
   @ApiDoc({
     summary: '删除字典项',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async deleteItem(@Body() query: IdsDto) {
     return this.dictionaryService.deleteDictionaryItem(query.ids)
@@ -131,7 +131,7 @@ export class DictionaryController {
   @Post('update-item-status')
   @ApiDoc({
     summary: '启用禁用字典项',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async enableItem(@Body() query: BatchEnabledDto) {
     return this.dictionaryService.updateDictionaryItem(query)

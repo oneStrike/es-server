@@ -1,8 +1,8 @@
 import type { WorkCategoryWhereInput } from '@/prisma/client/models'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { BatchEnabledDto } from '@/common/dto/batch.dto'
-
 import { OrderDto } from '@/common/dto/order.dto'
+
+import { BatchEnabledDto } from '@/common/dto/status.dto'
 import { RepositoryService } from '@/common/services/repository.service'
 import { jsonParse } from '@/utils'
 import {

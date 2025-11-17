@@ -1,11 +1,17 @@
-import { ValidateBoolean } from '../decorators/validate.decorator'
-import { IdDto } from './id.dto'
+import { ApiProperty, IntersectionType } from '@nestjs/swagger'
+import { IdDto, IdsDto, PublishDto, StatusDto } from './base.dto'
 
-export class IdEnabledDto extends IdDto {
-  @ValidateBoolean({
-    description: '状态 true启用 false禁用',
+export class EnabledDto extends IntersectionType(IdDto, StatusDto) {}
+
+export class BatchOperationResponseDto {
+  @ApiProperty({
+    description: '操作成功的数据量',
     example: true,
-    required: true,
+    type: Number,
   })
-  isEnabled: boolean
+  count!: number
 }
+
+export class BatchEnabledDto extends IntersectionType(IdsDto, StatusDto) {}
+
+export class BatchPublishDto extends IntersectionType(IdsDto, PublishDto) {}

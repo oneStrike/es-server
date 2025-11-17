@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
-import { CurrentUser } from '@/common/decorators/current-user.decorator'
-import { Public } from '@/common/decorators/public.decorator'
-import { IdDto } from '@/common/dto/id.dto'
+import { IdDto } from '@/common/dto/base.dto'
+import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
+import { CurrentUser } from '@/decorators/current-user.decorator'
+import { Public } from '@/decorators/public.decorator'
 import {
   ChangePasswordDto,
   UpdateUserDto,

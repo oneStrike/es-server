@@ -1,8 +1,8 @@
+import { PageDto } from '@/common/dto/page.dto'
 import {
   ValidateBoolean,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
-import { PageDto } from '@/common/dto/page.dto'
+} from '@/decorators/validate.decorator'
 
 /**
  * 查询数据字典DTO

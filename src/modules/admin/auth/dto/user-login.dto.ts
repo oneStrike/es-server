@@ -1,5 +1,5 @@
 import { ApiProperty, PickType } from '@nestjs/swagger'
-import { ValidateString } from '@/common/decorators/validate.decorator'
+import { ValidateString } from '@/decorators/validate.decorator'
 import { TokenDto } from './token.dto'
 
 /**

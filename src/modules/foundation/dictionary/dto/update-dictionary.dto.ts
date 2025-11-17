@@ -1,8 +1,8 @@
+import { IdDto } from '@/common/dto/base.dto'
 import {
   ValidateBoolean,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
-import { IdDto } from '@/common/dto/id.dto'
+} from '@/decorators/validate.decorator'
 
 /**
  * 更新数据字典DTO

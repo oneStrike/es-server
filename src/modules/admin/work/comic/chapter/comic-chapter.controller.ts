@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
-import { CountDto } from '@/common/dto/batch.dto'
-import { IdDto, IdsDto } from '@/common/dto/id.dto'
+import { IdDto, IdsDto } from '@/common/dto/base.dto'
 import { OrderDto } from '@/common/dto/order.dto'
+import { BatchOperationResponseDto } from '@/common/dto/status.dto'
+import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
 import { ComicChapterDetailDto } from '@/modules/admin/work/comic/chapter/dto/comic-chapter-response'
 import { WorkComicVersionService } from '../version/comic-version.service'
 import { WorkComicChapterService } from './comic-chapter.service'
@@ -86,7 +86,7 @@ export class WorkComicChapterController {
   @Post('/batch-delete')
   @ApiDoc({
     summary: '批量软删除章节',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async batchDelete(@Body() body: IdsDto) {
     return this.comicChapterService.workComicChapter.deleteMany({
@@ -100,7 +100,7 @@ export class WorkComicChapterController {
   @Post('/batch-update-status')
   @ApiDoc({
     summary: '批量更新章节发布状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updatePublishStatus(@Body() body: UpdateChapterPublishStatusDto) {
     return this.comicChapterService.workComicChapter.updateMany({

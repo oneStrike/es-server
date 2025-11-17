@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
-import { Public } from '@/common/decorators/public.decorator'
-import { CountDto } from '@/common/dto/batch.dto'
-import { IdDto, IdsDto } from '@/common/dto/id.dto'
+import { IdDto, IdsDto } from '@/common/dto/base.dto'
+import { BatchOperationResponseDto } from '@/common/dto/status.dto'
+import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
+import { Public } from '@/decorators/public.decorator'
 import {
   BaseNoticeDto,
   CreateNoticeDto,
@@ -90,7 +90,7 @@ export class ClientNoticeController {
   @Post('batch-update-status')
   @ApiDoc({
     summary: '批量更新通知状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updateStatus(@Body() body: UpdateNoticeStatusDto) {
     return this.noticeService.clientNotice.updateMany({
@@ -105,7 +105,7 @@ export class ClientNoticeController {
   @Post('/batch-delete')
   @ApiDoc({
     summary: '批量删除通知',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async batchRemove(@Body() body: IdsDto) {
     return this.noticeService.clientNotice.deleteMany({

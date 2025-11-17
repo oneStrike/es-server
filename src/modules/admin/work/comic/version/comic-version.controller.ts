@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
-import { BatchPublishDto, CountDto } from '@/common/dto/batch.dto'
-import { IdDto } from '@/common/dto/id.dto'
+import { IdDto } from '@/common/dto/base.dto'
+import { BatchOperationResponseDto, BatchPublishDto } from '@/common/dto/status.dto'
+import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
 import { WorkComicVersionService } from './comic-version.service'
 import {
   BaseComicVersionDto,
@@ -77,7 +77,7 @@ export class WorkComicVersionController {
   @Post('/batch-update-publish-status')
   @ApiDoc({
     summary: '批量更新版本发布状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updatePublishStatus(@Body() body: BatchPublishDto) {
     return this.comicVersionService.workComicVersion.updateMany({
@@ -96,7 +96,7 @@ export class WorkComicVersionController {
   @Post('/batch-update-recommended-status')
   @ApiDoc({
     summary: '批量更新版本推荐状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updateRecommendedStatus(
     @Body() body: UpdateVersionRecommendedStatusDto,
@@ -110,7 +110,7 @@ export class WorkComicVersionController {
   @Post('/batch-update-enabled-status')
   @ApiDoc({
     summary: '批量更新版本启用状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updateEnabledStatus(@Body() body: UpdateVersionEnabledStatusDto) {
     return this.comicVersionService.workComicVersion.updateMany({

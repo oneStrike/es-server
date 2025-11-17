@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
-import { BatchEnabledDto, CountDto } from '@/common/dto/batch.dto'
-import { IdDto } from '@/common/dto/id.dto'
+import { IdDto } from '@/common/dto/base.dto'
+import { BatchEnabledDto, BatchOperationResponseDto } from '@/common/dto/status.dto'
+import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
 import { WorkAuthorService } from './author.service'
 import {
   AuthorDetailResponseDto,
@@ -76,7 +76,7 @@ export class WorkAuthorController {
   @Post('/batch-update-status')
   @ApiDoc({
     summary: '批量更新作者状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updateStatus(@Body() body: BatchEnabledDto) {
     return this.authorService.updateAuthorStatus(body)
@@ -88,7 +88,7 @@ export class WorkAuthorController {
   @Post('/batch-update-featured')
   @ApiDoc({
     summary: '批量更新作者推荐状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updateFeatured(@Body() body: UpdateAuthorFeaturedDto) {
     return this.authorService.updateAuthorFeatured(body)

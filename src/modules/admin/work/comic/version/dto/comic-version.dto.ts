@@ -4,6 +4,9 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { IdDto } from '@/common/dto/base.dto'
+import { PageDto } from '@/common/dto/page.dto'
+import { BatchEnabledDto } from '@/common/dto/status.dto'
 import {
   ValidateArray,
   ValidateBoolean,
@@ -11,10 +14,7 @@ import {
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
-import { BatchEnabledDto } from '@/common/dto/batch.dto'
-import { IdDto } from '@/common/dto/id.dto'
-import { PageDto } from '@/common/dto/page.dto'
+} from '@/decorators/validate.decorator'
 import { VersionReadRuleEnum } from '../comic-version.constant'
 
 /**

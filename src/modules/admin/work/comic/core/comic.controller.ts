@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@/common/decorators/api-doc.decorator'
-import { CountDto } from '@/common/dto/batch.dto'
-import { IdDto } from '@/common/dto/id.dto'
+import { IdDto } from '@/common/dto/base.dto'
+import { BatchOperationResponseDto } from '@/common/dto/status.dto'
+import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
 
 import { WorkComicService } from './comic.service'
 import {
@@ -79,7 +79,7 @@ export class WorkComicController {
   @Post('/batch-update-status')
   @ApiDoc({
     summary: '批量更新漫画发布状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updateStatus(@Body() body: UpdateComicStatusDto) {
     return this.comicService.workComic.updateMany({
@@ -96,7 +96,7 @@ export class WorkComicController {
   @Post('/batch-update-recommended')
   @ApiDoc({
     summary: '批量更新漫画推荐状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updateRecommended(@Body() body: UpdateComicRecommendedDto) {
     return this.comicService.workComic.updateMany({
@@ -113,7 +113,7 @@ export class WorkComicController {
   @Post('/batch-update-hot')
   @ApiDoc({
     summary: '批量更新漫画热门状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updateHot(@Body() body: UpdateComicHotDto) {
     return this.comicService.workComic.updateMany({
@@ -130,7 +130,7 @@ export class WorkComicController {
   @Post('/batch-update-new')
   @ApiDoc({
     summary: '批量更新漫画新作状态',
-    model: CountDto,
+    model: BatchOperationResponseDto,
   })
   async updateNew(@Body() body: UpdateComicNewDto) {
     return this.comicService.workComic.updateMany({

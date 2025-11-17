@@ -1,4 +1,4 @@
-import { ValidateString } from '@/common/decorators/validate.decorator'
+import { ValidateString } from '@/decorators/validate.decorator'
 
 export class SearchComicRequestDto {
   @ValidateString({

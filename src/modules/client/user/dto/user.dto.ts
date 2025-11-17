@@ -4,7 +4,7 @@ import { IsString, MaxLength } from 'class-validator'
 import {
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
+} from '@/decorators/validate.decorator'
 
 export class ClientUserDto {
   @ValidateNumber({

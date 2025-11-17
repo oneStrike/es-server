@@ -1,7 +1,7 @@
 import {
   ValidateNumber,
   ValidateString,
-} from '@/common/decorators/validate.decorator'
+} from '@/decorators/validate.decorator'
 
 /**
  * 角色类型响应DTO
