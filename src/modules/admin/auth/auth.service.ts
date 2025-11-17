@@ -5,13 +5,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { FastifyRequest } from 'fastify'
-import { CaptchaService } from '@/common/module/captcha'
-import { RepositoryService } from '@/common/services/repository.service'
 import { ADMIN_LOGIN_POLICY } from '@/config/auth.config'
 import { RequestLogService } from '@/modules/foundation/request-log'
 import { RsaService } from '@/modules/system/crypto/rsa.service'
 import { ScryptService } from '@/modules/system/crypto/scrypt.service'
 import { AdminUser } from '@/prisma/client/client'
+import { CaptchaService } from '@/service/captcha/captcha.service'
+import { RepositoryService } from '@/service/repository/repository.service'
 import { extractIpAddress } from '@/utils'
 import { AdminJwtService } from './admin-jwt.service'
 import { CacheKey } from './auth.constant'
@@ -55,15 +55,6 @@ export class AdminAuthService extends RepositoryService {
     }
 
     if (process.env.NODE_ENV === 'production') {
-      // 检查验证码是否存在
-      const exists = await this.captchaService.exists(
-        CacheKey.CAPTCHA,
-        body.captchaId,
-      )
-      if (!exists) {
-        throw new BadRequestException('验证码错误')
-      }
-
       // 验证验证码是否正确
       const isValid = await this.captchaService.verify(
         CacheKey.CAPTCHA,

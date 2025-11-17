@@ -1,7 +1,7 @@
 import type { RequestLogWhereInput } from '@/prisma/client/models'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { FastifyRequest } from 'fastify'
-import { RepositoryService } from '@/common/services/repository.service'
+import { RepositoryService } from '@/service/repository/repository.service'
 import { parseRequestLogFields } from '@/utils'
 import {
   CreateRequestLogDto,

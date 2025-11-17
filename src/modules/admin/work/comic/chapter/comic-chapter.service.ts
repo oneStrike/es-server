@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
-import { RepositoryService } from '@/common/services/repository.service'
 import { WorkComicChapterWhereInput } from '@/prisma/client/models/WorkComicChapter'
+import { RepositoryService } from '@/service/repository/repository.service'
 import {
   AddChapterContentDto,
   BatchUpdateChapterContentsDto,

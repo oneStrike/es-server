@@ -4,7 +4,7 @@ import type {
 } from '@/prisma/client/models'
 import { Injectable } from '@nestjs/common'
 import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
-import { RepositoryService } from '@/common/services/repository.service'
+import { RepositoryService } from '@/service/repository/repository.service'
 import { CreateDictionaryItemDto } from './dto/dictionary-item.dto'
 import {
   QueryDictionaryDto,

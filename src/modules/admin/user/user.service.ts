@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common'
 import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 import { CustomLoggerService } from '@/common/module/logger/logger.service'
-import { RepositoryService } from '@/common/services/repository.service'
 import { ScryptService } from '@/modules/system/crypto/scrypt.service'
+import { RepositoryService } from '@/service/repository/repository.service'
 import {
   ChangePasswordDto,
   UpdateUserDto,

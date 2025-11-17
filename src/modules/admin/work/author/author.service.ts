@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { BatchEnabledDto } from '@/common/dto/status.dto'
-import { RepositoryService } from '@/common/services/repository.service'
 import { WorkAuthorWhereInput } from '@/prisma/client/models/WorkAuthor'
+import { RepositoryService } from '@/service/repository/repository.service'
 import {
   CreateAuthorDto,
   QueryAuthorDto,

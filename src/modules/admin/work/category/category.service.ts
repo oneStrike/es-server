@@ -3,7 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
 
 import { BatchEnabledDto } from '@/common/dto/status.dto'
-import { RepositoryService } from '@/common/services/repository.service'
+import { RepositoryService } from '@/service/repository/repository.service'
 import { jsonParse } from '@/utils'
 import {
   CreateCategoryDto,

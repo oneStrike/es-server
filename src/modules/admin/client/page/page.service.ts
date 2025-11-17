@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { RepositoryService } from '@/common/services/repository.service'
 import { ClientPageWhereInput } from '@/prisma/client/models'
+import { RepositoryService } from '@/service/repository/repository.service'
 import {
   BaseClientPageDto,
   QueryClientPageDto,

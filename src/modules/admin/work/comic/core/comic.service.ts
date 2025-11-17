@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { RepositoryService } from '@/common/services/repository.service'
-
 import { WorkComicWhereInput } from '@/prisma/client/models/WorkComic'
+
+import { RepositoryService } from '@/service/repository/repository.service'
 import { isBoolean, isNotNil } from '@/utils'
 import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
 

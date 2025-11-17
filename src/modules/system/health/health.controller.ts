@@ -12,7 +12,7 @@ import { CacheHealthIndicator } from './indicators/cache.health.indicator'
 import { DatabaseHealthIndicator } from './indicators/database.health.indicator'
 
 @ApiTags('健康检查模块')
-@Controller()
+@Controller('system')
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { RepositoryService } from '@/common/services/repository.service'
+import { RepositoryService } from '@/service/repository/repository.service'
 
 /**
  * 作者角色类型服务类

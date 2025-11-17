@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { RepositoryService } from '@/common/services/repository.service'
 import { ClientNoticeWhereInput } from '@/prisma/client/models/ClientNotice'
+import { RepositoryService } from '@/service/repository/repository.service'
 import { findCombinations } from '@/utils'
 import { assertValidTimeRange } from '@/utils/timeRange'
 import {

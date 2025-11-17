@@ -45,10 +45,7 @@ export class CaptchaService {
    * @param config 验证码配置
    * @returns 包含验证码图片和ID的对象
    */
-  async generateSvgCaptcha(
-    prefix: string,
-    config?: CaptchaConfig,
-  ): Promise<{ data: string, id: string }> {
+  async generateSvgCaptcha(prefix: string, config?: CaptchaConfig) {
     const finalConfig = { ...this.defaultConfig, ...config }
 
     const captcha = svgCaptcha.create({
@@ -102,18 +99,6 @@ export class CaptchaService {
   }
 
   /**
-   * 获取验证码文本（用于校验）
-   * @param prefix 缓存key前缀
-   * @param id 验证码ID
-   * @returns 验证码文本，不存在返回null
-   */
-  async getCaptchaText(prefix: string, id: string): Promise<string | null> {
-    const cacheKey = prefix + id
-    const value = await this.cacheManager.get<string>(cacheKey)
-    return value ?? null
-  }
-
-  /**
    * 删除验证码（使用后应删除）
    * @param prefix 缓存key前缀
    * @param id 验证码ID
@@ -121,17 +106,5 @@ export class CaptchaService {
   async remove(prefix: string, id: string): Promise<void> {
     const cacheKey = prefix + id
     await this.cacheManager.del(cacheKey)
-  }
-
-  /**
-   * 检查验证码是否存在
-   * @param prefix 缓存key前缀
-   * @param id 验证码ID
-   * @returns 是否存在
-   */
-  async exists(prefix: string, id: string): Promise<boolean> {
-    const cacheKey = prefix + id
-    const value = await this.cacheManager.get(cacheKey)
-    return value !== null && value !== undefined
   }
 }
