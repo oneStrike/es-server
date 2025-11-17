@@ -30,14 +30,14 @@ async function bootstrap() {
     appRef = app
 
     // 配置应用（中间件、插件、日志等）
-    const logger = await setupApp(app, fastifyAdapter)
+    await setupApp(app, fastifyAdapter)
 
     // 启动应用
     const port = process.env.PORT ?? 8080
     await app.listen(port, '0.0.0.0') // 监听所有网络接口（Docker 容器必需）
 
     // 打印启动信息
-    logStartupInfo(port, logger)
+    logStartupInfo(port)
     return app
   }
 }

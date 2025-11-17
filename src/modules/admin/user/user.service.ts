@@ -5,8 +5,8 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
-import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
-import { CustomLoggerService } from '@/common/module/logger/logger.service'
+// import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
+// import { CustomLoggerService } from '@/common/module/logger/logger.service'
 import { ScryptService } from '@/modules/system/crypto/scrypt.service'
 import { RepositoryService } from '@/service/repository/repository.service'
 import {
@@ -19,7 +19,7 @@ import {
 
 @Injectable()
 export class AdminUserService extends RepositoryService {
-  private readonly logger: CustomLoggerService
+  // private readonly logger: CustomLoggerService
 
   get adminUser() {
     return this.prisma.adminUser
@@ -27,10 +27,10 @@ export class AdminUserService extends RepositoryService {
 
   constructor(
     private readonly scryptService: ScryptService,
-    private readonly loggerFactory: LoggerFactoryService,
+    // private readonly loggerFactory: LoggerFactoryService,
   ) {
     super()
-    this.logger = this.loggerFactory.createAdminLogger('AdminUserService')
+    // this.logger = this.loggerFactory.createAdminLogger('AdminUserService')
   }
 
   /**
@@ -46,7 +46,7 @@ export class AdminUserService extends RepositoryService {
       select: { id: true, username: true }, // 优化：只查询需要的字段
     })
     if (!user) {
-      this.logger.warn('用户不存在', { userId })
+      console.warn('用户不存在', { userId })
       throw new NotFoundException('用户不存在')
     }
 
@@ -58,7 +58,7 @@ export class AdminUserService extends RepositoryService {
       })
 
       if (existingUser) {
-        this.logger.warn('用户名已存在', {
+        console.warn('用户名已存在', {
           userId,
           username: updateData.username,
         })
@@ -76,7 +76,7 @@ export class AdminUserService extends RepositoryService {
     })
 
     const duration = Date.now() - startTime
-    this.logger.logBusiness('update_user_info', 'success', {
+    console.log('update_user_info success', {
       userId,
       duration,
     })
@@ -92,7 +92,7 @@ export class AdminUserService extends RepositoryService {
     const { username, password, confirmPassword, avatar, role, mobile } = body
 
     if (password !== confirmPassword) {
-      this.logger.warn('密码和确认密码不一致', { username })
+      console.warn('密码和确认密码不一致', { username })
       throw new BadRequestException('密码和确认密码不一致')
     }
 
@@ -105,7 +105,7 @@ export class AdminUserService extends RepositoryService {
     })
 
     if (existingUser) {
-      this.logger.warn('用户名或手机号已被使用', {
+      console.warn('用户名或手机号已被使用', {
         username,
         mobile,
       })
@@ -131,7 +131,7 @@ export class AdminUserService extends RepositoryService {
     })
 
     const duration = Date.now() - startTime
-    this.logger.logBusiness('register_user', 'success', {
+    console.log('register_user success', {
       userId: result.id,
       username,
       duration,
@@ -204,13 +204,13 @@ export class AdminUserService extends RepositoryService {
 
     // 检查新密码和确认密码是否一致
     if (newPassword !== confirmPassword) {
-      this.logger.warn('新密码和确认密码不一致', { userId })
+      console.warn('新密码和确认密码不一致', { userId })
       throw new BadRequestException('新密码和确认密码不一致')
     }
 
     // 检查新密码与旧密码是否相同
     if (oldPassword === newPassword) {
-      this.logger.warn('新密码与旧密码相同', { userId })
+      console.warn('新密码与旧密码相同', { userId })
       throw new BadRequestException('新密码不能与旧密码相同')
     }
 
@@ -220,7 +220,7 @@ export class AdminUserService extends RepositoryService {
       select: { id: true, password: true },
     })
     if (!user) {
-      this.logger.warn('用户不存在', { userId })
+      console.warn('用户不存在', { userId })
       throw new NotFoundException('用户不存在')
     }
 
@@ -230,7 +230,7 @@ export class AdminUserService extends RepositoryService {
       user.password,
     )
     if (!isPasswordValid) {
-      this.logger.logSecurity('wrong_old_password', 'warn', { userId })
+      console.warn('wrong_old_password', { userId })
       throw new UnauthorizedException('旧密码错误')
     }
 
@@ -247,7 +247,7 @@ export class AdminUserService extends RepositoryService {
     })
 
     const duration = Date.now() - startTime
-    this.logger.logBusiness('change_password', 'success', {
+    console.log('change_password success', {
       userId,
       duration,
     })

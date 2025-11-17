@@ -8,8 +8,6 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
 import { UploadResponseDto } from '@/common/dto/upload.dto'
-import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
-import { CustomLoggerService } from '@/common/module/logger/logger.service'
 import { UploadPathService } from './upload-path.service'
 import { UploadSignatureService } from './upload-signature.service'
 import { UploadStreamService } from './upload-stream.service'
@@ -23,7 +21,6 @@ const pump = promisify(pipeline)
  */
 @Injectable()
 export class UploadService {
-  private readonly logger: CustomLoggerService
   private uploadPath: string
 
   private uploadConfig: UploadConfig | null = null
@@ -36,14 +33,12 @@ export class UploadService {
 
   constructor(
     private configService: ConfigService,
-    private loggerFactory: LoggerFactoryService,
     // 注入子服务
     validator: UploadValidatorService,
     streamProcessor: UploadStreamService,
     signatureValidator: UploadSignatureService,
     pathManager: UploadPathService,
   ) {
-    this.logger = this.loggerFactory.createGlobalLogger('UploadService')
     this.uploadPath = this.getUploadConfig().uploadDir
 
     // 初始化子服务
@@ -102,7 +97,7 @@ export class UploadService {
 
     // 如果有部分失败，记录警告
     if (errors.length > 0) {
-      this.logger.warn(
+      console.warn(
         `${errors.length} 个文件上传失败，${successResults.length} 个文件上传成功`,
       )
     }
@@ -167,7 +162,7 @@ export class UploadService {
         // 检查文件是否被截断（超出大小限制）
         if (file.file.truncated) {
           // 删除已写入的部分文件
-          this.streamProcessor.cleanupTempFile(tempPath, this.logger)
+          this.streamProcessor.cleanupTempFile(tempPath, null)
           throw new BadRequestException(
             `文件 ${file.filename} 超出大小限制 ${config.maxFileSize} 字节`,
           )
@@ -198,7 +193,7 @@ export class UploadService {
             const altName = `${finalName.replace(ext, '')}-${uuidv4().slice(0, 6)}${ext}`
             const altPath = join(savePath, altName)
             this.streamProcessor.renameFile(tempPath, altPath)
-            this.logger.warn(`目标文件已存在，已改名为: ${altName}`)
+            console.warn(`目标文件已存在，已改名为: ${altName}`)
             finalName = altName
             finalPath = altPath
           } else {
@@ -206,11 +201,11 @@ export class UploadService {
           }
         } catch (renameError: any) {
           // 重命名失败则清理临时文件并抛出错误
-          this.streamProcessor.cleanupTempFile(tempPath, this.logger)
+          this.streamProcessor.cleanupTempFile(tempPath, null)
           throw renameError
         }
 
-        this.logger.log(
+        console.log(
           `文件上传成功: ${file.filename} -> ${finalName} (${fileSize} bytes, ${processingTime}ms, hash: ${fileHash})`,
         )
         // 计算公开路径（相对于 uploads 静态前缀）
@@ -231,11 +226,11 @@ export class UploadService {
         }
       } catch (error) {
         // 如果上传失败，尝试删除已创建的文件
-        this.streamProcessor.cleanupTempFile(tempPath, this.logger)
+        this.streamProcessor.cleanupTempFile(tempPath, null)
         throw error
       }
     } catch (error) {
-      this.logger.error(
+      console.error(
         `文件上传失败: ${file.filename} - ${error.message}`,
         error.stack,
       )

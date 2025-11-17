@@ -74,7 +74,6 @@
     "fastify": "^5.6.1",
     "fastify-plugin": "^5.1.0",
     "keyv": "^5.5.3",
-    "nest-winston": "^1.10.2",
     "nestjs-cls": "^6.0.1",
     "nestjs-prisma": "^0.26.0",
     "node-cron": "^4.2.1",
@@ -88,7 +87,6 @@
     "svg-captcha": "^1.4.0",
     "tar": "^7.5.2",
     "uuid": "^13.0.0",
-    "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {

@@ -8,11 +8,9 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { CacheableMemory } from 'cacheable'
 import { Keyv } from 'keyv'
 import { CustomPrismaModule } from 'nestjs-prisma/dist/custom'
-import { LoggerModule } from '@/common/module/logger/logger.module'
 import uploadConfig from '@/config/upload.config'
 import { HttpExceptionFilter } from '@/filters/http-exception.filter'
 import { JwtAuthGuard } from '@/guards/auth.guard'
-import { LoggerInterceptor } from '@/interceptors/logger.interceptor'
 import { TransformInterceptor } from '@/interceptors/transform.interceptor'
 import { AdminModule } from '@/modules/admin/admin.module'
 import { ClientModule } from '@/modules/client/client.module'
@@ -77,7 +75,6 @@ function createCacheConfig(config: ConfigService) {
     ]),
 
     // 基础功能模块
-    LoggerModule, // 日志模块
     CryptoModule, // 加密模块
 
     // 业务功能模块
@@ -109,10 +106,6 @@ function createCacheConfig(config: ConfigService) {
     },
 
     // 全局拦截器
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: LoggerInterceptor, // 日志拦截器（最先执行）
-    },
     {
       provide: APP_INTERCEPTOR,
       useClass: TransformInterceptor, // 响应转换拦截器

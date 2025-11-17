@@ -6,10 +6,7 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
-  Inject,
 } from '@nestjs/common'
-import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
-import { CustomLoggerService } from '@/common/module/logger/logger.service'
 
 /**
  * HTTP异常过滤器
@@ -17,15 +14,6 @@ import { CustomLoggerService } from '@/common/module/logger/logger.service'
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  private logger: CustomLoggerService
-
-  constructor(
-    @Inject(LoggerFactoryService)
-    private readonly loggerFactory: LoggerFactoryService,
-  ) {
-    this.logger = this.loggerFactory.createGlobalLogger('ExceptionFilter')
-  }
-
   /**
    * 数据库错误映射表
    */
@@ -49,53 +37,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const { status, message } = this.extractErrorInfo(exception)
 
-    // 根据请求路径选择合适的日志器
-    const logger = this.selectLogger(request)
-
-    // 记录异常信息（尽可能包含堆栈）
-    const stack = this.getStackSafely(exception)
-    const exceptionType =
-      exception && typeof exception === 'object'
-        ? (exception as any)?.constructor?.name
-        : undefined
-
-    const startTime = (request as any)?._startTime
-    const responseTime =
-      typeof startTime === 'number' ? Date.now() - startTime : undefined
-
-    logger.error(`Exception caught: ${message}`, stack, {
-      method: request.method,
-      url: request.url,
-      statusCode: status,
-      responseTime,
-      ip: request.ip,
-      userAgent: request.headers['user-agent'],
-      exceptionType,
-    })
-
     const errorResponse = {
       code: status,
       message,
     }
-    // 将完整的错误响应添加到response对象上，供日志拦截器使用
-    // @ts-expect-error ignore
-    response.errorResponse = errorResponse
     response.code(status).send(errorResponse)
-  }
-
-  /**
-   * 根据请求路径选择合适的日志器
-   */
-  private selectLogger(req: FastifyRequest): CustomLoggerService {
-    const path = req.url
-
-    if (path.includes('/admin/')) {
-      return this.loggerFactory.createAdminLogger('ExceptionFilter')
-    } else if (path.includes('/client/')) {
-      return this.loggerFactory.createClientLogger('ExceptionFilter')
-    } else {
-      return this.logger
-    }
   }
 
   /**
@@ -150,22 +96,5 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       message: isProduction ? '内部服务器错误' : '未知错误',
     }
-  }
-
-  /**
-   * 安全获取堆栈信息
-   */
-  private getStackSafely(exception: unknown): string | undefined {
-    if (!exception) {
-      return undefined
-    }
-    if (exception instanceof Error) {
-      return exception.stack
-    }
-    if (typeof exception === 'object' && 'stack' in (exception as any)) {
-      const s = (exception as any).stack
-      return typeof s === 'string' ? s : undefined
-    }
-    return undefined
   }
 }

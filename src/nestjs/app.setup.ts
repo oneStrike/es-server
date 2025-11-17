@@ -2,12 +2,12 @@ import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
-import type { CustomLoggerService } from '@/common/module/logger/logger.service'
+// import type { CustomLoggerService } from '@/common/module/logger/logger.service'
 import * as process from 'node:process'
 import fastifyCsrf from '@fastify/csrf-protection'
 import fastifyHelmet from '@fastify/helmet'
 
-import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
+// import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 import { AdminModule } from '@/modules/admin/admin.module'
 import { ClientModule } from '@/modules/client/client.module'
 import { setupCompression } from '@/nestjs/compression'
@@ -20,11 +20,11 @@ import { setupSwagger } from '@/nestjs/swagger'
 export async function setupApp(
   app: NestFastifyApplication,
   fastifyAdapter: FastifyAdapter,
-): Promise<CustomLoggerService> {
-  // 设置自定义日志服务
-  const loggerFactory = app.get(LoggerFactoryService)
-  const logger = loggerFactory.createGlobalLogger('Application')
-  app.useLogger(logger)
+): Promise<void> {
+  // 设置自定义日志服务已移除
+  // const loggerFactory = app.get(LoggerFactoryService)
+  // const logger = loggerFactory.createGlobalLogger('Application')
+  // app.useLogger(logger)
 
   // 选择模块
   app.select(AdminModule)
@@ -67,5 +67,5 @@ export async function setupApp(
     setupSwagger(app)
   }
 
-  return logger
+  // return logger // 已移除日志服务
 }

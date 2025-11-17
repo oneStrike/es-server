@@ -3,21 +3,19 @@ import { JwtService } from '@nestjs/jwt'
 import { v4 as uuid } from 'uuid'
 
 import { JwtBlacklistService } from '@/common/module/jwt/jwt-blacklist.service'
-import { CustomLoggerService } from '@/common/module/logger/logger.service'
 import { ADMIN_AUTH_CONFIG, CLIENT_AUTH_CONFIG } from '@/config/jwt.config'
 
 type AuthConfig = typeof ADMIN_AUTH_CONFIG | typeof CLIENT_AUTH_CONFIG
 
 @Injectable()
 export abstract class BaseJwtService {
-  protected logger: CustomLoggerService
   protected abstract readonly config: AuthConfig
 
   constructor(
     protected readonly jwtService: JwtService,
     protected readonly jwtBlacklistService: JwtBlacklistService,
   ) {
-    // 子类会设置具体的logger
+    // 日志功能已移除
   }
 
   async generateTokens(payload) {
