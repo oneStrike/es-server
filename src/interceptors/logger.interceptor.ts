@@ -9,6 +9,7 @@ import { Observable, throwError } from 'rxjs'
 import { catchError, tap } from 'rxjs/operators'
 import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 import { CustomLoggerService } from '@/common/module/logger/logger.service'
+import { extractIpAddress } from '@/utils'
 
 /**
  * 日志拦截器
@@ -36,18 +37,6 @@ export class LoggerInterceptor implements NestInterceptor {
   }
 
   /**
-   * 获取客户端IP地址
-   */
-  private getClientIp(req: FastifyRequest): string {
-    return (
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-      (req.headers['x-real-ip'] as string) ||
-      req.ip ||
-      'unknown'
-    )
-  }
-
-  /**
    * 获取请求ID（如果有的话）
    */
   private getRequestId(req: FastifyRequest): string | undefined {
@@ -59,27 +48,19 @@ export class LoggerInterceptor implements NestInterceptor {
     const req = ctx.getRequest<FastifyRequest>()
     const startTime = Date.now()
     // 将开始时间保存在请求对象上，供异常过滤器使用
-    ;(req as any)._startTime = startTime
+    req._startTime = startTime
 
     // 选择合适的日志器
     const logger = this.selectLogger(req)
 
     // 设置请求上下文
     const requestId = this.getRequestId(req)
-    const ip = this.getClientIp(req)
+    const ip = extractIpAddress(req)
 
     logger.setLogContext({
       requestId,
       ip,
       userAgent: req.headers['user-agent'],
-    })
-
-    // 记录请求开始
-    logger.debug(`Incoming request: ${req.method} ${req.url}`, {
-      method: req.method,
-      url: req.url,
-      query: req.query,
-      headers: this.filterSensitiveHeaders(req.headers),
     })
 
     return next.handle().pipe(
@@ -102,21 +83,5 @@ export class LoggerInterceptor implements NestInterceptor {
         return throwError(() => error)
       }),
     )
-  }
-
-  /**
-   * 过滤敏感请求头（如Authorization）
-   */
-  private filterSensitiveHeaders(headers: any): any {
-    const filtered = { ...headers }
-    const sensitiveKeys = ['authorization', 'cookie', 'x-api-key']
-
-    sensitiveKeys.forEach((key) => {
-      if (filtered[key]) {
-        filtered[key] = '***'
-      }
-    })
-
-    return filtered
   }
 }

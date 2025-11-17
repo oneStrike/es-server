@@ -6,11 +6,11 @@ import {
 } from '@nestjs/common'
 import { FastifyRequest } from 'fastify'
 import { CaptchaService } from '@/common/module/captcha'
-import { CryptoService } from '@/common/module/crypto/crypto.service'
-import { RsaService } from '@/common/module/crypto/rsa.service'
 import { RepositoryService } from '@/common/services/repository.service'
 import { ADMIN_LOGIN_POLICY } from '@/config/auth.config'
 import { RequestLogService } from '@/modules/foundation/request-log'
+import { RsaService } from '@/modules/system/crypto/rsa.service'
+import { ScryptService } from '@/modules/system/crypto/scrypt.service'
 import { AdminUser } from '@/prisma/client/client'
 import { extractIpAddress } from '@/utils'
 import { AdminJwtService } from './admin-jwt.service'
@@ -29,8 +29,8 @@ export class AdminAuthService extends RepositoryService {
   }
 
   constructor(
-    private readonly rsa: RsaService,
-    private readonly crypto: CryptoService,
+    private readonly rsaService: RsaService,
+    private readonly scryptService: ScryptService,
     private readonly adminJwtService: AdminJwtService,
     private readonly requestLogService: RequestLogService,
     private readonly captchaService: CaptchaService,
@@ -133,14 +133,14 @@ export class AdminAuthService extends RepositoryService {
     // 解密密码
     let password = body.password
     try {
-      password = this.rsa.decryptWithAdmin(body.password)
+      password = this.rsaService.decryptWithAdmin(body.password)
     } catch {
       await this.updateLoginFailInfo(user, requestIp)
       throw new BadRequestException('账号或密码错误')
     }
 
     // 验证密码
-    const isPasswordValid = await this.crypto.verifyPassword(
+    const isPasswordValid = await this.scryptService.verifyPassword(
       password,
       user.password,
     )

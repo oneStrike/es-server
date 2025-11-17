@@ -5,10 +5,10 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
-import { CryptoService } from '@/common/module/crypto/crypto.service'
 import { LoggerFactoryService } from '@/common/module/logger/logger-factory.service'
 import { CustomLoggerService } from '@/common/module/logger/logger.service'
 import { RepositoryService } from '@/common/services/repository.service'
+import { ScryptService } from '@/modules/system/crypto/scrypt.service'
 import {
   ChangePasswordDto,
   UpdateUserDto,
@@ -26,7 +26,7 @@ export class AdminUserService extends RepositoryService {
   }
 
   constructor(
-    private readonly crypto: CryptoService,
+    private readonly scryptService: ScryptService,
     private readonly loggerFactory: LoggerFactoryService,
   ) {
     super()
@@ -113,7 +113,7 @@ export class AdminUserService extends RepositoryService {
     }
 
     // 加密密码
-    const encryptedPassword = await this.crypto.encryptPassword(password)
+    const encryptedPassword = await this.scryptService.encryptPassword(password)
 
     // 创建用户
     const result = await this.adminUser.create({
@@ -225,7 +225,7 @@ export class AdminUserService extends RepositoryService {
     }
 
     // 验证旧密码
-    const isPasswordValid = await this.crypto.verifyPassword(
+    const isPasswordValid = await this.scryptService.verifyPassword(
       oldPassword,
       user.password,
     )
@@ -235,7 +235,8 @@ export class AdminUserService extends RepositoryService {
     }
 
     // 加密新密码
-    const encryptedPassword = await this.crypto.encryptPassword(newPassword)
+    const encryptedPassword =
+      await this.scryptService.encryptPassword(newPassword)
 
     // 更新密码
     await this.adminUser.update({

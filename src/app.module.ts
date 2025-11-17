@@ -8,17 +8,17 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { CacheableMemory } from 'cacheable'
 import { Keyv } from 'keyv'
 import { CustomPrismaModule } from 'nestjs-prisma/dist/custom'
-import { HttpExceptionFilter } from '@/common/filters/http-exception.filter'
-import { LoggerInterceptor } from '@/common/interceptors/logger.interceptor'
-import { TransformInterceptor } from '@/common/interceptors/transform.interceptor'
-import { CryptoModule } from '@/common/module/crypto/crypto.module'
-import { HealthModule } from '@/common/module/health/health.module'
 import { LoggerModule } from '@/common/module/logger/logger.module'
 import uploadConfig from '@/config/upload.config'
+import { HttpExceptionFilter } from '@/filters/http-exception.filter'
+import { JwtAuthGuard } from '@/guards/auth.guard'
+import { LoggerInterceptor } from '@/interceptors/logger.interceptor'
+import { TransformInterceptor } from '@/interceptors/transform.interceptor'
 import { AdminModule } from '@/modules/admin/admin.module'
 import { ClientModule } from '@/modules/client/client.module'
+import { CryptoModule } from '@/modules/system/crypto/crypto.module'
+import { HealthModule } from '@/modules/system/health/health.module'
 import { PrismaService } from '@/prisma/prisma.connect'
-import { JwtAuthGuard } from './common/guards/auth.guard'
 
 // 缓存配置工厂函数
 function createCacheConfig(config: ConfigService) {
@@ -95,15 +95,16 @@ function createCacheConfig(config: ConfigService) {
       useValue: new ValidationPipe({
         transform: true, // 自动转换请求数据类型
         whitelist: true, // 过滤掉未在 DTO 中定义的属性
-        exceptionFactory: (errors) => new BadRequestException(
-          errors.map((error) => {
-            const errorMsg: string[] = []
-            if (error.constraints) {
-              errorMsg.push(...Object.values(error.constraints))
-            }
-            return `${error.property}${errorMsg.join('，')}`
-          }),
-        )
+        exceptionFactory: (errors) =>
+          new BadRequestException(
+            errors.map((error) => {
+              const errorMsg: string[] = []
+              if (error.constraints) {
+                errorMsg.push(...Object.values(error.constraints))
+              }
+              return `${error.property}${errorMsg.join('，')}`
+            }),
+          ),
       }),
     },
 

@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { CryptoService } from '@/common/module/crypto/crypto.service'
-import { RsaService } from '@/common/module/crypto/rsa.service'
+import { RsaService } from '@/modules/system/crypto/rsa.service'
+import { ScryptService } from '@/modules/system/crypto/scrypt.service'
 
 /**
  * 加密模块
@@ -10,7 +10,7 @@ import { RsaService } from '@/common/module/crypto/rsa.service'
 @Global()
 @Module({
   imports: [ConfigModule],
-  providers: [RsaService, CryptoService],
-  exports: [RsaService, CryptoService],
+  providers: [RsaService, ScryptService],
+  exports: [RsaService, ScryptService],
 })
 export class CryptoModule {}
