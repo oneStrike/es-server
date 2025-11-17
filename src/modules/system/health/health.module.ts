@@ -10,6 +10,7 @@ import { DatabaseHealthIndicator } from './indicators/database.health.indicator'
     TerminusModule.forRoot({
       errorLogStyle: 'json',
       gracefulShutdownTimeoutMs: 1000,
+      logger: false, // 禁用Terminus内置的日志记录，避免与HttpExceptionFilter重复
     }),
   ],
   controllers: [HealthController],
