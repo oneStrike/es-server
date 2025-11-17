@@ -4,7 +4,7 @@ import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
 import { IsEnum, IsOptional } from 'class-validator'
-import { isNumberEnum } from './utils'
+import { isNumberEnum } from '@/utils'
 
 /**
  * 枚举验证装饰器
@@ -77,8 +77,8 @@ export function ValidateEnum(options: ValidateEnumOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null)
-        && options.default !== undefined
+        (value === undefined || value === null) &&
+        options.default !== undefined
       ) {
         return options.default
       }
@@ -96,8 +96,8 @@ export function ValidateEnum(options: ValidateEnumOptions) {
         }
         const numValue = Number(trimmedValue)
         if (
-          !Number.isNaN(numValue)
-          && Object.values(options.enum).includes(numValue)
+          !Number.isNaN(numValue) &&
+          Object.values(options.enum).includes(numValue)
         ) {
           return numValue
         }

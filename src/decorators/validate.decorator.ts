@@ -1,7 +1,5 @@
 // 导出类型定义
 export * from './validate/types';
-// 导出工具函数
-export * from './validate/utils';
 
 // 导出验证装饰器
 export * from './validate/validate-array';

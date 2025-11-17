@@ -11,8 +11,8 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator'
+import { isNumberEnum } from '@/utils'
 import { NumberEnumLike } from './types'
-import { isNumberEnum } from './utils'
 
 /**
  * 位掩码验证器
@@ -82,7 +82,7 @@ export class BitmaskValidator implements ValidatorConstraintInterface {
 
     const validBits = enumValues.reduce((acc, enumValue) => acc | enumValue, 0)
     const enumNames = Object.keys(enumObject).filter(
-      key => typeof enumObject[key] === 'number',
+      (key) => typeof enumObject[key] === 'number',
     )
 
     return `位掩码值无效，有效范围: 0-${validBits}，可用选项: ${enumNames.join(', ')}`
@@ -129,15 +129,15 @@ export class BitmaskValidator implements ValidatorConstraintInterface {
 export function ValidateBitmask(options: ValidateBitmaskOptions) {
   // 参数验证
   if (!options.description) {
-    throw new Error('ValidateBitmask: description is required')
+    throw new Error('ValidateBitmask: 描述信息不能为空')
   }
 
   if (!options.enum) {
-    throw new Error('ValidateBitmask: enum is required')
+    throw new Error('ValidateBitmask: 枚举对象不能为空')
   }
 
   if (!isNumberEnum(options.enum)) {
-    throw new Error('ValidateBitmask: enum must be a number enum')
+    throw new Error('ValidateBitmask: 枚举对象必须为数字枚举')
   }
 
   // 计算有效范围
@@ -177,8 +177,8 @@ export function ValidateBitmask(options: ValidateBitmaskOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null)
-        && options.default !== undefined
+        (value === undefined || value === null) &&
+        options.default !== undefined
       ) {
         return options.default
       }

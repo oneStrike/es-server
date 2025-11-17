@@ -64,9 +64,7 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
     options.maxLength !== undefined &&
     options.minLength > options.maxLength
   ) {
-    throw new Error(
-      'ValidateArray: minLength should not be greater than maxLength',
-    )
+    throw new Error('ValidateArray: minLength 不能大于 maxLength')
   }
 
   // 根据itemType确定API文档中的类型

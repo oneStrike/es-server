@@ -28,14 +28,6 @@ import {
  *     required: true
  *   })
  *   username: string
- *
- *   @ValidateString({
- *     description: '用户密码',
- *     password: true,
- *     required: true
- *   })
- *   password: string
- * }
  * ```
  *
  * @param options 验证选项配置
@@ -48,7 +40,7 @@ export function ValidateString(options: ValidateStringOptions) {
     && options.minLength > options.maxLength
   ) {
     throw new Error(
-      'ValidateString: minLength should not be greater than maxLength',
+      'ValidateString: minLength 不能大于 maxLength',
     )
   }
 

@@ -2,7 +2,10 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { IdDto, IdsDto } from '@/common/dto/base.dto'
 import { OrderDto } from '@/common/dto/order.dto'
-import { BatchEnabledDto, BatchOperationResponseDto } from '@/common/dto/status.dto'
+import {
+  BatchEnabledDto,
+  BatchOperationResponseDto,
+} from '@/common/dto/status.dto'
 import { ApiDoc, ApiPageDoc } from '@/decorators/api-doc.decorator'
 import { DictionaryService } from '@/modules/foundation/dictionary/dictionary.service'
 import { CreateDictionaryDto } from '@/modules/foundation/dictionary/dto/create-dictionary.dto'

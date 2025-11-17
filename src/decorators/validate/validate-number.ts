@@ -42,7 +42,7 @@ export function ValidateNumber(options: ValidateNumberOptions) {
     && options.max !== undefined
     && options.min > options.max
   ) {
-    throw new Error('ValidateNumber: min should not be greater than max')
+    throw new Error('ValidateNumber: min 不能大于 max')
   }
 
   // 构建API属性配置
