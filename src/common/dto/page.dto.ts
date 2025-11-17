@@ -1,4 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger'
 import {
   ValidateJson,
   ValidateNumber,
@@ -28,7 +27,7 @@ export class PageDto {
   @ValidateJson({
     description: '排序字段，json格式',
     // prettier ignore
-    example: '{id:\'desc\'}',
+    example: "{id:'desc'}",
     required: false,
   })
   orderBy?: string
@@ -48,27 +47,4 @@ export class PageDto {
     type: 'ISO8601',
   })
   endDate?: string
-}
-
-export class PageResponseDto {
-  @ApiProperty({
-    description: '当前页码',
-    example: 0,
-    required: true,
-  })
-  pageIndex!: number
-
-  @ApiProperty({
-    description: '单页大小，最大500，默认15',
-    example: 0,
-    required: true,
-  })
-  pageSize!: number
-
-  @ApiProperty({
-    description: '符合条件的总记录数',
-    example: 0,
-    required: true,
-  })
-  total!: number
 }
