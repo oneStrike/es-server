@@ -8,10 +8,28 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
 import { UploadResponseDto } from '@/common/dto/upload.dto'
-import { UploadPathService } from './upload-path.service'
-import { UploadSignatureService } from './upload-signature.service'
-import { UploadStreamService } from './upload-stream.service'
-import { UploadValidatorService } from './upload-validator.service'
+import {
+  ensureUploadDirectory,
+  generateFilePath,
+  generateFinalFilename,
+  sanitizeOriginalName,
+  sanitizeScene,
+  toPublicPath,
+} from './utils/upload-path.util'
+import { createSignatureCheckStream } from './utils/upload-signature.util'
+import {
+  cleanupTempFile,
+  createFileProcessingStream,
+  createWriteStream,
+  fileExists,
+  getFileExtension,
+  renameFile,
+} from './utils/upload-stream.util'
+import {
+  getFileTypeCategory,
+  validateFile,
+  validateFileSize,
+} from './utils/upload-validator.util'
 
 const pump = promisify(pipeline)
 
@@ -25,27 +43,10 @@ export class UploadService {
 
   private uploadConfig: UploadConfig | null = null
 
-  // 注入子服务
-  private readonly validator: UploadValidatorService
-  private readonly streamProcessor: UploadStreamService
-  private readonly signatureValidator: UploadSignatureService
-  private readonly pathManager: UploadPathService
+  // 注入子服务已抽离为utils
 
-  constructor(
-    private configService: ConfigService,
-    // 注入子服务
-    validator: UploadValidatorService,
-    streamProcessor: UploadStreamService,
-    signatureValidator: UploadSignatureService,
-    pathManager: UploadPathService,
-  ) {
+  constructor(private configService: ConfigService) {
     this.uploadPath = this.getUploadConfig().uploadDir
-
-    // 初始化子服务
-    this.validator = validator
-    this.streamProcessor = streamProcessor
-    this.signatureValidator = signatureValidator
-    this.pathManager = pathManager
   }
 
   private getUploadConfig(): UploadConfig {
@@ -71,7 +72,7 @@ export class UploadService {
     const filePromises: Promise<UploadResponseDto | null>[] = []
     const errors: Error[] = []
 
-    scene = this.pathManager.sanitizeScene(scene)
+    scene = sanitizeScene(scene)
 
     // 收集所有文件处理任务
     for await (const file of files) {
@@ -121,39 +122,34 @@ export class UploadService {
 
     try {
       // 验证文件
-      this.validator.validateFile(file, config)
+      validateFile(file, config)
 
       // 获取文件类型分类
-      const fileType = this.validator.getFileTypeCategory(file.mimetype, config)
+      const fileType = getFileTypeCategory(file.mimetype, config)
 
       // 生成保存路径
-      const savePath = this.pathManager.generateFilePath(
-        this.uploadPath,
-        fileType,
-        scene,
-      )
-      this.pathManager.ensureUploadDirectory(savePath)
+      const savePath = generateFilePath(this.uploadPath, fileType, scene)
+      ensureUploadDirectory(savePath)
 
       // 生成文件名（保留原扩展，规范化小写）
-      const ext = this.streamProcessor.getFileExtension(file.filename)
+      const ext = getFileExtension(file.filename)
       const tempName = `.${uuidv4()}.uploading`
       const tempPath = join(savePath, tempName)
-      const writeStream = this.streamProcessor.createWriteStream(tempPath)
+      const writeStream = createWriteStream(tempPath)
 
       // 创建文件处理流
       const {
         stream: processingStream,
         getSize,
         getHash,
-      } = this.streamProcessor.createFileProcessingStream(config, file.filename)
+      } = createFileProcessingStream(config, file.filename)
 
       // 签名校验流（防伪造 Content-Type）
-      const signatureStream =
-        this.signatureValidator.createSignatureCheckStream(
-          file.mimetype,
-          ext,
-          file.filename,
-        )
+      const signatureStream = createSignatureCheckStream(
+        file.mimetype,
+        ext,
+        file.filename,
+      )
 
       try {
         // 使用管道流式处理文件
@@ -162,7 +158,7 @@ export class UploadService {
         // 检查文件是否被截断（超出大小限制）
         if (file.file.truncated) {
           // 删除已写入的部分文件
-          this.streamProcessor.cleanupTempFile(tempPath, null)
+          cleanupTempFile(tempPath, null)
           throw new BadRequestException(
             `文件 ${file.filename} 超出大小限制 ${config.maxFileSize} 字节`,
           )
@@ -173,14 +169,10 @@ export class UploadService {
         const fileHash = getHash()
 
         // 二次验证文件大小（防止流处理过程中的边界情况）
-        this.validator.validateFileSize(
-          fileSize,
-          config.maxFileSize,
-          file.filename,
-        )
+        validateFileSize(fileSize, config.maxFileSize, file.filename)
 
         // 生成最终文件名并重命名临时文件
-        let finalName = this.pathManager.generateFinalFilename(
+        let finalName = generateFinalFilename(
           file.filename,
           ext,
           config.filenameStrategy,
@@ -189,19 +181,19 @@ export class UploadService {
         let finalPath = join(savePath, finalName)
         try {
           // 若发生同名冲突（如重复上传同 hash），添加短 uuid 后缀
-          if (this.streamProcessor.fileExists(finalPath)) {
+          if (fileExists(finalPath)) {
             const altName = `${finalName.replace(ext, '')}-${uuidv4().slice(0, 6)}${ext}`
             const altPath = join(savePath, altName)
-            this.streamProcessor.renameFile(tempPath, altPath)
+            renameFile(tempPath, altPath)
             console.warn(`目标文件已存在，已改名为: ${altName}`)
             finalName = altName
             finalPath = altPath
           } else {
-            this.streamProcessor.renameFile(tempPath, finalPath)
+            renameFile(tempPath, finalPath)
           }
         } catch (renameError: any) {
           // 重命名失败则清理临时文件并抛出错误
-          this.streamProcessor.cleanupTempFile(tempPath, null)
+          cleanupTempFile(tempPath, null)
           throw renameError
         }
 
@@ -209,14 +201,11 @@ export class UploadService {
           `文件上传成功: ${file.filename} -> ${finalName} (${fileSize} bytes, ${processingTime}ms, hash: ${fileHash})`,
         )
         // 计算公开路径（相对于 uploads 静态前缀）
-        const filePath = this.pathManager.toPublicPath(
-          finalPath,
-          this.uploadPath,
-        )
+        const filePath = toPublicPath(finalPath, this.uploadPath)
 
         return {
           filename: finalName,
-          originalName: this.pathManager.sanitizeOriginalName(file.filename),
+          originalName: sanitizeOriginalName(file.filename),
           filePath,
           fileSize,
           mimeType: file.mimetype,
@@ -226,7 +215,7 @@ export class UploadService {
         }
       } catch (error) {
         // 如果上传失败，尝试删除已创建的文件
-        this.streamProcessor.cleanupTempFile(tempPath, null)
+        cleanupTempFile(tempPath, null)
         throw error
       }
     } catch (error) {

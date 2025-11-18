@@ -4,7 +4,7 @@ model AdminUser {
   /// 账号
   username       String    @unique @db.VarChar(20)
   /// 密码
-  password       String    @db.VarChar(100)
+  password       String    @db.VarChar(200)
   /// 头像
   avatar         String?   @db.VarChar(200)
   /// 手机号码

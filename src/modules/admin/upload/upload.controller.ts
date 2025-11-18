@@ -2,7 +2,7 @@ import { Controller, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { FastifyRequest } from 'fastify'
 import { UploadFileDto, UploadResponseDto } from '@/common/dto/upload.dto'
-import { UploadService } from '@/common/module/upload/upload.service'
+import { UploadService } from '@/modules/system/upload/upload.service'
 
 import { ApiDoc } from '@/decorators/api-doc.decorator'
 
