@@ -8,7 +8,7 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
-import { LoggerService } from '@/common/module/logger/logger.service'
+import { LoggerService } from '@/modules/system/logger/logger.service'
 import { parseRequestLogFields } from '@/utils'
 
 /**

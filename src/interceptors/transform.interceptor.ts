@@ -2,7 +2,7 @@ import type { CallHandler, ExecutionContext } from '@nestjs/common'
 import type { Observable } from 'rxjs'
 import { Injectable, NestInterceptor } from '@nestjs/common'
 import { map } from 'rxjs/operators'
-import { LoggerService } from '@/common/module/logger/logger.service'
+import { LoggerService } from '@/modules/system/logger/logger.service'
 import { parseRequestLogFields } from '@/utils'
 
 export interface Response<T> {
