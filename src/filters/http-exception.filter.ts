@@ -1,5 +1,4 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import type { Logger } from 'winston'
 import process from 'node:process'
 import {
   ArgumentsHost,
@@ -7,10 +6,9 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
-  Inject,
 } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
-import { ApiTypeEnum } from '@/modules/foundation/request-log/request-log.constant'
+import { LoggerService } from '@/common/module/logger/logger.service'
 import { parseRequestLogFields } from '@/utils'
 
 /**
@@ -19,11 +17,7 @@ import { parseRequestLogFields } from '@/utils'
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  constructor(
-    @Inject('SYSTEM_LOGGER') private readonly systemLogger: Logger,
-    @Inject('ADMIN_LOGGER') private readonly adminLogger: Logger,
-    @Inject('CLIENT_LOGGER') private readonly clientLogger: Logger,
-  ) {}
+  constructor(private readonly loggerService: LoggerService) {}
 
   /**
    * 数据库错误映射表
@@ -49,7 +43,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const { status, message } = this.extractErrorInfo(exception)
     const traceId = uuidv4()
     const parsed = this.safeParse(request)
-    const logger = this.pickLogger(parsed?.apiType)
+    const logger = this.loggerService.pickLogger(parsed?.apiType)
     const payload = {
       traceId,
       status,
@@ -129,15 +123,5 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } catch {
       return undefined
     }
-  }
-
-  private pickLogger(apiType?: ApiTypeEnum) {
-    if (apiType === ApiTypeEnum.ADMIN) {
-      return this.adminLogger
-    }
-    if (apiType === ApiTypeEnum.CLIENT) {
-      return this.clientLogger
-    }
-    return this.systemLogger
   }
 }

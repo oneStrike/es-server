@@ -1,9 +1,8 @@
 import type { CallHandler, ExecutionContext } from '@nestjs/common'
 import type { Observable } from 'rxjs'
-import type { Logger } from 'winston'
-import { Inject, Injectable, NestInterceptor } from '@nestjs/common'
+import { Injectable, NestInterceptor } from '@nestjs/common'
 import { map } from 'rxjs/operators'
-import { ApiTypeEnum } from '@/modules/foundation/request-log/request-log.constant'
+import { LoggerService } from '@/common/module/logger/logger.service'
 import { parseRequestLogFields } from '@/utils'
 
 export interface Response<T> {
@@ -16,11 +15,7 @@ export interface Response<T> {
 export class TransformInterceptor<T>
   implements NestInterceptor<T, Response<T>>
 {
-  constructor(
-    @Inject('SYSTEM_LOGGER') private readonly systemLogger: Logger,
-    @Inject('ADMIN_LOGGER') private readonly adminLogger: Logger,
-    @Inject('CLIENT_LOGGER') private readonly clientLogger: Logger,
-  ) {}
+  constructor(private readonly loggerService: LoggerService) {}
 
   intercept(
     context: ExecutionContext,
@@ -60,7 +55,7 @@ export class TransformInterceptor<T>
   ): void {
     try {
       const parsed = parseRequestLogFields(request)
-      const logger = this.pickLogger(parsed.apiType)
+      const logger = this.loggerService.pickLogger(parsed.apiType)
       const duration = Date.now() - startTime
 
       const payload = {
@@ -82,18 +77,5 @@ export class TransformInterceptor<T>
       // 记录日志失败不应该影响正常请求处理
       console.warn('记录请求日志失败:', error)
     }
-  }
-
-  /**
-   * 根据API类型选择合适的日志器
-   */
-  private pickLogger(apiType?: ApiTypeEnum): Logger {
-    if (apiType === ApiTypeEnum.ADMIN) {
-      return this.adminLogger
-    }
-    if (apiType === ApiTypeEnum.CLIENT) {
-      return this.clientLogger
-    }
-    return this.systemLogger
   }
 }
