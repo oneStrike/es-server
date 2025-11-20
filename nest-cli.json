@@ -1,10 +1,104 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/admin-api/src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": false,
-    "tsConfigPath": "tsconfig.build.json"
+    "webpack": true,
+    "tsConfigPath": "apps/admin-api/tsconfig.json"
+  },
+  "monorepo": true,
+  "root": "apps/admin-api",
+  "projects": {
+    "admin-api": {
+      "type": "application",
+      "root": "apps/admin-api",
+      "entryFile": "main",
+      "sourceRoot": "apps/admin-api/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/admin-api/tsconfig.json"
+      }
+    },
+    "captcha": {
+      "type": "library",
+      "root": "libs/captcha",
+      "entryFile": "index",
+      "sourceRoot": "libs/captcha/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/captcha/tsconfig.lib.json"
+      }
+    },
+    "client-api": {
+      "type": "application",
+      "root": "apps/client-api",
+      "entryFile": "main",
+      "sourceRoot": "apps/client-api/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/client-api/tsconfig.app.json"
+      }
+    },
+    "crypto": {
+      "type": "library",
+      "root": "libs/crypto",
+      "entryFile": "index",
+      "sourceRoot": "libs/crypto/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/crypto/tsconfig.lib.json"
+      }
+    },
+    "database": {
+      "type": "library",
+      "root": "libs/database",
+      "entryFile": "index",
+      "sourceRoot": "libs/database/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/database/tsconfig.json"
+      }
+    },
+    "decorators": {
+      "type": "library",
+      "root": "libs/decorators",
+      "entryFile": "index",
+      "sourceRoot": "libs/decorators/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/decorators/tsconfig.lib.json"
+      }
+    },
+    "dto": {
+      "type": "library",
+      "root": "libs/dto",
+      "entryFile": "index",
+      "sourceRoot": "libs/dto/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/dto/tsconfig.lib.json"
+      }
+    },
+    "logger": {
+      "type": "library",
+      "root": "libs/logger",
+      "entryFile": "index",
+      "sourceRoot": "libs/logger/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/logger/tsconfig.lib.json"
+      }
+    },
+    "upload": {
+      "type": "library",
+      "root": "libs/upload",
+      "entryFile": "index",
+      "sourceRoot": "libs/upload/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/upload/tsconfig.lib.json"
+      }
+    },
+    "utils": {
+      "type": "library",
+      "root": "libs/utils",
+      "entryFile": "index",
+      "sourceRoot": "libs/utils/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/utils/tsconfig.lib.json"
+      }
+    }
   }
 }

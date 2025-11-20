@@ -1,0 +1,69 @@
+import type {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify'
+// import type { CustomLoggerService } from './common/module/logger/logger.service'
+import * as process from 'node:process'
+import fastifyCsrf from '@fastify/csrf-protection'
+import fastifyHelmet from '@fastify/helmet'
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
+
+// import { LoggerFactoryService } from './common/module/logger/logger-factory.service'
+import { AdminModule } from '../modules/admin/admin.module'
+import { ClientModule } from '../modules/client/client.module'
+import { setupCompression } from './compression'
+import { setupMultipart } from './multipart'
+import { setupSwagger } from './swagger'
+
+/**
+ * 配置应用的所有中间件和插件
+ */
+export async function setupApp(
+  app: NestFastifyApplication,
+  fastifyAdapter: FastifyAdapter,
+): Promise<void> {
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER))
+
+  // 选择模块
+  app.select(AdminModule)
+  app.select(ClientModule)
+
+  // 设置全局前缀
+  app.setGlobalPrefix('api')
+
+  // 处理浏览器自动请求的站点图标，避免 404 噪音日志
+  // 若需要自定义图标，可改为使用 @fastify/static 提供真实文件
+  fastifyAdapter.getInstance().get('/favicon.ico', async (_req, reply) => {
+    reply.type('image/x-icon').code(204).send()
+  })
+
+  // 配置响应压缩（gzip/brotli）
+  await setupCompression(fastifyAdapter)
+
+  // 健康检查由 Terminus 控制器提供（HealthModule），无需手动注册路由
+
+  // 配置文件上传
+  await setupMultipart(fastifyAdapter, app)
+
+  // 注册 CSRF 保护插件
+  await app.register(fastifyCsrf as any)
+
+  // 注册安全响应头（Helmet）
+  await app.register(fastifyHelmet as any, {
+    // 依据 API 服务特性开启常用安全策略
+    contentSecurityPolicy: false, // 若无模板渲染，可禁用以减少开销
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    xssFilter: true,
+    hidePoweredBy: true,
+  })
+
+  // 配置 Swagger 文档（生产环境可条件性禁用）
+  if (
+    process.env.NODE_ENV !== 'production' ||
+    process.env.ENABLE_SWAGGER === 'true'
+  ) {
+    setupSwagger(app)
+  }
+
+  // return logger // 已移除日志服务
+}

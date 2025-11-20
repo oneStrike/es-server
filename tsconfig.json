@@ -7,7 +7,57 @@
     "baseUrl": "./",
     "module": "commonjs",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@libs/captcha": [
+        "libs/captcha/src"
+      ],
+      "@libs/captcha/*": [
+        "libs/captcha/src/*"
+      ],
+      "@libs/crypto": [
+        "libs/crypto/src"
+      ],
+      "@libs/crypto/*": [
+        "libs/crypto/src/*"
+      ],
+      "@libs/database": [
+        "./libs/database/src"
+      ],
+      "@libs/database/*": [
+        "./libs/database/src/*"
+      ],
+      "@libs/decorators": [
+        "libs/decorators/src"
+      ],
+      "@libs/decorators/*": [
+        "libs/decorators/src/*"
+      ],
+      "@libs/dto": [
+        "libs/dto/src"
+      ],
+      "@libs/dto/*": [
+        "libs/dto/src/*"
+      ],
+      "@libs/logger": [
+        "libs/logger/src"
+      ],
+      "@libs/logger/*": [
+        "libs/logger/src/*"
+      ],
+      "@libs/upload": [
+        "libs/upload/src"
+      ],
+      "@libs/upload/*": [
+        "libs/upload/src/*"
+      ],
+      "@libs/utils": [
+        "libs/utils/src"
+      ],
+      "@libs/utils/*": [
+        "libs/utils/src/*"
+      ]
     },
     "resolveJsonModule": true,
     "allowJs": true,
@@ -24,6 +74,15 @@
     "forceConsistentCasingInFileNames": false,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "test/**/*", "*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "apps/**/*",
+    "libs/**/*",
+    "src/**/*",
+    "test/**/*",
+    "*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
