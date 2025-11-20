@@ -10,6 +10,12 @@
       "@/*": [
         "./src/*"
       ],
+      "@libs/cache": [
+        "libs/cache/src"
+      ],
+      "@libs/cache/*": [
+        "libs/cache/src/*"
+      ],
       "@libs/captcha": [
         "libs/captcha/src"
       ],
@@ -39,6 +45,12 @@
       ],
       "@libs/dto/*": [
         "libs/dto/src/*"
+      ],
+      "@libs/health": [
+        "libs/health/src"
+      ],
+      "@libs/health/*": [
+        "libs/health/src/*"
       ],
       "@libs/logger": [
         "libs/logger/src"

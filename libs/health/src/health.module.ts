@@ -1,9 +1,8 @@
+import { PrismaService } from '@libs/database'
 import { Module } from '@nestjs/common'
 import { TerminusModule } from '@nestjs/terminus'
-import { PrismaService } from '@libs/database'
 import { HealthController } from './health.controller'
-import { CacheHealthIndicator } from './indicators/cache.health.indicator'
-import { DatabaseHealthIndicator } from './indicators/database.health.indicator'
+import { HealthService } from './health.service'
 
 @Module({
   imports: [
@@ -14,6 +13,6 @@ import { DatabaseHealthIndicator } from './indicators/database.health.indicator'
     }),
   ],
   controllers: [HealthController],
-  providers: [CacheHealthIndicator, DatabaseHealthIndicator, PrismaService],
+  providers: [HealthService, PrismaService],
 })
 export class HealthModule {}

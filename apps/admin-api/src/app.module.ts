@@ -1,6 +1,9 @@
 import * as process from 'node:process'
 import KeyvRedis from '@keyv/redis'
+import { CryptoModule } from '@libs/crypto'
 import { CustomPrismaModule, PrismaService } from '@libs/database'
+import { LoggerModule } from '@libs/logger'
+import { UploadConfig } from '@libs/upload'
 import { CacheModule } from '@nestjs/cache-manager'
 import { BadRequestException, Module, ValidationPipe } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
@@ -8,15 +11,12 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { CacheableMemory } from 'cacheable'
 import { Keyv } from 'keyv'
-import uploadConfig from '../../../libs/upload/src/upload.config'
 import { HttpExceptionFilter } from './filters/http-exception.filter'
 import { JwtAuthGuard } from './guards/auth.guard'
 import { TransformInterceptor } from './interceptors/transform.interceptor'
 import { AdminModule } from './modules/admin/admin.module'
 import { ClientModule } from './modules/client/client.module'
-import { CryptoModule } from '../../../libs/crypto/src/crypto.module'
 import { HealthModule } from './modules/system/health/health.module'
-import { LoggerModule } from '../../../libs/logger/src/logger.module'
 
 // 缓存配置工厂函数
 function createCacheConfig(config: ConfigService) {
@@ -48,7 +48,7 @@ function createCacheConfig(config: ConfigService) {
     ConfigModule.forRoot({
       isGlobal: true, // 设置为全局模块，其他模块可直接使用
       envFilePath: ['.env', `.env.${process.env.NODE_ENV || 'development'}`], // 指定环境变量文件路径
-      load: [uploadConfig], // 加载上传配置
+      load: [UploadConfig], // 加载上传配置
       cache: true, // 缓存配置
     }),
 

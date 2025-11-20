@@ -10,7 +10,7 @@ interface fileTypeConfig {
   mimeTypes: string[]
   extensions: string[]
 }
-export interface UploadConfig {
+export interface UploadConfigInterface {
   /** 最大文件大小 (字节) */
   maxFileSize: number
   /** 最大文件数量 */
@@ -246,7 +246,7 @@ class FileTypeConfigProcessor {
 /**
  * 注册上传配置
  */
-export default registerAs('upload', (): UploadConfig => {
+export const UploadConfig = registerAs('upload', (): UploadConfigInterface => {
   const isDocker =
     process.cwd() === '/app' ||
     existsSync('/.dockerenv') ||

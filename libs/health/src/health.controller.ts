@@ -8,8 +8,7 @@ import {
   HealthCheckService,
   MemoryHealthIndicator,
 } from '@nestjs/terminus'
-import { CacheHealthIndicator } from './indicators/cache.health.indicator'
-import { DatabaseHealthIndicator } from './indicators/database.health.indicator'
+import { HealthService } from './health.service'
 
 @ApiTags('健康检查模块')
 @Controller('system')
@@ -18,8 +17,7 @@ export class HealthController {
     private readonly health: HealthCheckService,
     private readonly memory: MemoryHealthIndicator,
     private readonly disk: DiskHealthIndicator,
-    private readonly cacheIndicator: CacheHealthIndicator,
-    private readonly dbIndicator: DatabaseHealthIndicator,
+    private readonly healthService: HealthService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -46,9 +44,9 @@ export class HealthController {
     const upload = this.configService.get('upload')
     const uploadPath = upload?.uploadDir || process.cwd()
     return this.health.check([
-      async () => this.dbIndicator.ping('database'),
-      async () => this.cacheIndicator.checkMemory('cache_memory'),
-      async () => this.cacheIndicator.checkRedis('cache_redis'),
+      async () => this.healthService.ping('database'),
+      async () => this.healthService.checkMemory('cache_memory'),
+      async () => this.healthService.checkRedis('cache_redis'),
       async () =>
         this.disk.checkStorage('disk', {
           path: uploadPath,

@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import process from 'node:process'
+import { LoggerService } from '@libs/logger'
 import { parseRequestLogFields } from '@libs/utils'
 import {
   ArgumentsHost,
@@ -9,7 +10,6 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { v4 as uuidv4 } from 'uuid'
-import { LoggerService } from '../../../../libs/logger/src/logger.service'
 
 /**
  * HTTP异常过滤器
@@ -43,7 +43,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const { status, message } = this.extractErrorInfo(exception)
     const traceId = uuidv4()
     const parsed = this.safeParse(request)
-    const logger = this.loggerService.pickLogger(parsed?.apiType)
+    const logger = this.loggerService.getLogger()
     const payload = {
       traceId,
       status,

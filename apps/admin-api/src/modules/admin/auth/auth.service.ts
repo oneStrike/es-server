@@ -1,4 +1,5 @@
 import * as process from 'node:process'
+import { RsaService } from '@libs/crypto'
 import { AdminUser, RepositoryService } from '@libs/database'
 import { extractIpAddress } from '@libs/utils'
 import {
@@ -7,11 +8,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { FastifyRequest } from 'fastify'
+import { ScryptService } from '../../../../../../libs/crypto/src/scrypt.service'
 import { ADMIN_LOGIN_POLICY } from '../../../config/auth.config'
 import { CaptchaService } from '../../../service/captcha/captcha.service'
 import { RequestLogService } from '../../foundation/request-log'
-import { RsaService } from '../../../../../../libs/crypto/src/rsa.service'
-import { ScryptService } from '../../../../../../libs/crypto/src/scrypt.service'
 
 import { AdminJwtService } from './admin-jwt.service'
 import { CacheKey } from './auth.constant'

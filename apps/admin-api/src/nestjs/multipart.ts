@@ -1,8 +1,8 @@
+import type { UploadConfigInterface } from '@libs/upload'
 import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
-import type { UploadConfig } from '../../../../libs/upload/src/upload.config'
 import { mkdir } from 'node:fs/promises'
 import { extname } from 'node:path'
 import fastifyMultipart from '@fastify/multipart'
@@ -13,7 +13,9 @@ export async function setupMultipart(
   fastifyAdapter: FastifyAdapter,
   app: NestFastifyApplication,
 ) {
-  const uploadConfig = app.get(ConfigService).get<UploadConfig>('upload')!
+  const uploadConfig = app
+    .get(ConfigService)
+    .get<UploadConfigInterface>('upload')!
 
   // 确保上传目录存在（在挂载的宿主机目录下递归创建）
   await mkdir(uploadConfig.uploadDir, { recursive: true })

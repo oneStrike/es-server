@@ -19,6 +19,15 @@
         "tsConfigPath": "apps/admin-api/tsconfig.json"
       }
     },
+    "cache": {
+      "type": "library",
+      "root": "libs/cache",
+      "entryFile": "index",
+      "sourceRoot": "libs/cache/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/cache/tsconfig.lib.json"
+      }
+    },
     "captcha": {
       "type": "library",
       "root": "libs/captcha",
@@ -71,6 +80,15 @@
       "sourceRoot": "libs/dto/src",
       "compilerOptions": {
         "tsConfigPath": "libs/dto/tsconfig.lib.json"
+      }
+    },
+    "health": {
+      "type": "library",
+      "root": "libs/health",
+      "entryFile": "index",
+      "sourceRoot": "libs/health/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/health/tsconfig.lib.json"
       }
     },
     "logger": {
