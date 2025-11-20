@@ -2,7 +2,7 @@ import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
-import type { UploadConfig } from '../config/upload.config'
+import type { UploadConfig } from '../../../../libs/upload/src/upload.config'
 import { mkdir } from 'node:fs/promises'
 import { extname } from 'node:path'
 import fastifyMultipart from '@fastify/multipart'

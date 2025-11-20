@@ -2,32 +2,24 @@ import type { Logger } from 'winston'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
-import { Injectable } from '@nestjs/common'
 import { createLogger, format, transports } from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'
 
 /**
- * LoggerService - NestJS日志服务
+ * LoggerService - 简化的日志服务
  *
- * 提供统一的日志管理功能，包括：
+ * 提供一个默认的日志器实例，包含：
  * - 目录创建和管理
  * - 日志格式构建
  * - 环境配置管理
- * - 各类日志器的创建和管理
- * - 根据API类型选择合适的日志器
  */
-@Injectable()
 export class LoggerService {
-  // 日志器实例
-  private systemLogger: Logger
-  private adminLogger: Logger
-  private clientLogger: Logger
+  // 默认日志器实例
+  private logger: Logger
 
   constructor() {
-    // 初始化各类日志器
-    this.systemLogger = createLogger(this.systemLoggerOptions())
-    this.adminLogger = this.buildCategoryLogger('admin')
-    this.clientLogger = this.buildCategoryLogger('client')
+    // 初始化默认日志器
+    this.logger = createLogger(this.buildLoggerOptions())
   }
 
   /**
@@ -44,7 +36,7 @@ export class LoggerService {
    * 构建日志格式化器
    * @returns 包含基础格式和控制台格式的对象
    */
-  buildFormats(): { base: any; consoleFmt: any } {
+  buildFormats(): { base: any, consoleFmt: any } {
     const base = format.combine(
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),
@@ -116,14 +108,14 @@ export class LoggerService {
   }
 
   /**
-   * 构建系统级日志器配置
+   * 构建默认日志器配置
    * @returns Winston日志器配置选项
    */
-  systemLoggerOptions() {
+  buildLoggerOptions() {
     const { level, rootPath, maxSize, retainDays, compress, consoleLevel } =
       this.envConfig()
-    const systemDir = path.join(rootPath, 'system')
-    this.ensureDir(systemDir)
+    const logDir = path.join(rootPath, 'default')
+    this.ensureDir(logDir)
     const { base, consoleFmt } = this.buildFormats()
     return {
       level,
@@ -134,17 +126,9 @@ export class LoggerService {
           format: consoleFmt,
           handleExceptions: true,
         }),
+        this.rotate(logDir, 'app', 'info', base, maxSize, retainDays, compress),
         this.rotate(
-          systemDir,
-          'app',
-          'info',
-          base,
-          maxSize,
-          retainDays,
-          compress,
-        ),
-        this.rotate(
-          systemDir,
+          logDir,
           'error',
           'error',
           base,
@@ -155,7 +139,7 @@ export class LoggerService {
       ],
       exceptionHandlers: [
         this.rotate(
-          systemDir,
+          logDir,
           'exceptions',
           'error',
           base,
@@ -166,7 +150,7 @@ export class LoggerService {
       ],
       rejectionHandlers: [
         this.rotate(
-          systemDir,
+          logDir,
           'rejections',
           'error',
           base,
@@ -179,111 +163,11 @@ export class LoggerService {
   }
 
   /**
-   * 构建分类日志器（管理员或客户端）
-   * @param category 日志类别（admin或client）
-   * @returns Winston日志器实例
+   * 获取默认日志器实例
+   * @returns 默认日志器
    */
-  buildCategoryLogger(category: 'admin' | 'client'): Logger {
-    const { level, rootPath, maxSize, retainDays, compress, consoleLevel } =
-      this.envConfig()
-    const dir = path.join(rootPath, category)
-    this.ensureDir(dir)
-    const { base, consoleFmt } = this.buildFormats()
-    return createLogger({
-      level,
-      defaultMeta: { category },
-      exitOnError: false,
-      transports: [
-        new transports.Console({
-          level: consoleLevel,
-          format: consoleFmt,
-          handleExceptions: true,
-        }),
-        this.rotate(dir, 'app', 'info', base, maxSize, retainDays, compress),
-        this.rotate(dir, 'error', 'error', base, maxSize, retainDays, compress),
-      ],
-      exceptionHandlers: [
-        this.rotate(
-          dir,
-          'exceptions',
-          'error',
-          base,
-          maxSize,
-          retainDays,
-          compress,
-        ),
-      ],
-      rejectionHandlers: [
-        this.rotate(
-          dir,
-          'rejections',
-          'error',
-          base,
-          maxSize,
-          retainDays,
-          compress,
-        ),
-      ],
-    })
-  }
-
-  /**
-   * 创建自定义日志器
-   * @param options 日志器选项
-   * @returns Winston日志器实例
-   */
-  createCustomLogger(options: {
-    level?: string
-    defaultMeta?: Record<string, any>
-    category?: string
-    transports?: any[]
-    exceptionHandlers?: any[]
-    rejectionHandlers?: any[]
-  }): Logger {
-    const { level, rootPath, maxSize, retainDays, compress, consoleLevel } =
-      this.envConfig()
-    const { base, consoleFmt } = this.buildFormats()
-
-    const config = {
-      level: options.level || level,
-      exitOnError: false,
-      defaultMeta: {
-        ...options.defaultMeta,
-        ...(options.category && { category: options.category }),
-      },
-      transports: [
-        new transports.Console({
-          level: consoleLevel,
-          format: consoleFmt,
-          handleExceptions: true,
-        }),
-        ...(options.transports || []),
-      ],
-      exceptionHandlers: options.exceptionHandlers || [
-        this.rotate(
-          rootPath,
-          'exceptions',
-          'error',
-          base,
-          maxSize,
-          retainDays,
-          compress,
-        ),
-      ],
-      rejectionHandlers: options.rejectionHandlers || [
-        this.rotate(
-          rootPath,
-          'rejections',
-          'error',
-          base,
-          maxSize,
-          retainDays,
-          compress,
-        ),
-      ],
-    }
-
-    return createLogger(config)
+  getLogger(): Logger {
+    return this.logger
   }
 
   /**
@@ -303,49 +187,7 @@ export class LoggerService {
       },
     }
   }
-
-  /**
-   * 根据API类型选择合适的日志器
-   * @param apiType API类型（admin/client/system）
-   * @returns 对应的日志器实例
-   */
-  pickLogger(apiType?: ApiTypeEnum): Logger {
-    if (!apiType) {
-      return this.systemLogger
-    }
-    switch (apiType) {
-      case ApiTypeEnum.ADMIN:
-        return this.adminLogger
-      case ApiTypeEnum.CLIENT:
-        return this.clientLogger
-      case ApiTypeEnum.SYSTEM:
-      case ApiTypeEnum.PUBLIC:
-      default:
-        return this.systemLogger
-    }
-  }
-
-  /**
-   * 获取系统日志器实例
-   * @returns 系统日志器
-   */
-  getSystemLogger(): Logger {
-    return this.systemLogger
-  }
-
-  /**
-   * 获取管理员日志器实例
-   * @returns 管理员日志器
-   */
-  getAdminLogger(): Logger {
-    return this.adminLogger
-  }
-
-  /**
-   * 获取客户端日志器实例
-   * @returns 客户端日志器
-   */
-  getClientLogger(): Logger {
-    return this.clientLogger
-  }
 }
+
+// 创建默认实例并导出
+export default new LoggerService()
