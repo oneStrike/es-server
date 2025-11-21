@@ -9,6 +9,8 @@ export interface AuthConfig {
   refreshExpiresIn: number
   // JWT 受众（aud）
   aud: string
+  // 发行者（iss）
+  iss?: string
   // 策略键（strategyKey）
   strategyKey: string
 }

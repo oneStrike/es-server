@@ -24,6 +24,8 @@ export const AuthConfig = {
   refreshExpiresIn: 7 * TIME_CONSTANTS.DAY,
   // 令牌类型标识
   aud: 'admin',
+  // 发行者标识（可通过环境变量覆盖）
+  iss: process.env.JWT_ISSUER || 'es-admin',
   // Passport策略名称
   strategyKey: 'admin-auth',
 }

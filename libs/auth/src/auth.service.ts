@@ -30,6 +30,7 @@ export class AuthService {
       ...payload,
       jti: uuid(),
       aud: this.config.aud,
+      iss: this.config.iss,
     }
 
     const [accessToken, refreshToken] = await Promise.all([
@@ -96,7 +97,7 @@ export class AuthService {
    */
   async addToBlacklist(token: string, secret: string): Promise<void> {
     const { jti, ttlMs } = await this.tokenTtlMsAndJti(token, secret)
-    if (!jti || typeof ttlMs !== 'number') {
+    if (!jti || typeof ttlMs !== 'number' || ttlMs <= 0) {
       return
     }
     await this.blacklistService.addBlacklist(jti, ttlMs)
