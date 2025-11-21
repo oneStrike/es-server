@@ -1,5 +1,5 @@
+import { jsonParse } from '@libs/utils'
 import { databaseConfig } from '@/config/database.config'
-import { jsonParse } from '@/utils'
 import { Prisma } from '../prisma-client/client'
 
 /**

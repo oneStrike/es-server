@@ -1,7 +1,7 @@
+import type { WorkComicChapterWhereInput } from '@libs/database'
+import { RepositoryService } from '@libs/database'
+import { DragReorderDto } from '@libs/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
-import { WorkComicChapterWhereInput } from '@libs/database/prisma-client/models/WorkComicChapter'
-import { RepositoryService } from '@/service/repository/repository.service'
 import {
   AddChapterContentDto,
   BatchUpdateChapterContentsDto,

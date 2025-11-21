@@ -70,6 +70,12 @@
       "@libs/logger/*": [
         "libs/logger/src/*"
       ],
+      "@libs/types": [
+        "libs/types/src"
+      ],
+      "@libs/types/*": [
+        "libs/types/src/*"
+      ],
       "@libs/upload": [
         "libs/upload/src"
       ],

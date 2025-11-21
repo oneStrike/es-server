@@ -1,8 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import {
-  ApiTypeEnum,
-  HttpMethodEnum,
-} from '@/modules/foundation/request-log/request-log.constant'
+import { ApiTypeEnum, HttpMethodEnum } from '@libs/types'
 
 /**
  * 设备信息接口

@@ -11,8 +11,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { FastifyRequest } from 'fastify'
-import { ADMIN_LOGIN_POLICY } from '../../../config/auth.config'
-import { AuditService } from '../../system/audit/audit.service'
+import { ADMIN_LOGIN_POLICY } from '../../config/auth.config'
+import { AuditService } from '../system/audit/audit.service'
 import { CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto } from './dto/token.dto'
 import { UserLoginDto } from './dto/user-login.dto'
