@@ -14,12 +14,12 @@ function match(buf: Buffer, sig: number[] | Buffer, offset = 0): boolean {
 
 function validateByMagic(buf: Buffer, mimetype: string, ext: string): boolean {
   if (mimetype === 'image/jpeg' && ['.jpg', '.jpeg'].includes(ext)) {
-    return match(buf, [0xff, 0xd8, 0xff], 0)
+    return match(buf, [0xFF, 0xD8, 0xFF], 0)
   }
   if (mimetype === 'image/png' && ext === '.png') {
     return match(
       buf,
-      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
       0,
     )
   }
@@ -43,7 +43,7 @@ function validateByMagic(buf: Buffer, mimetype: string, ext: string): boolean {
     return match(buf, Buffer.from('PK\x03\x04'), 0)
   }
   if (mimetype === 'application/gzip' && ext === '.gz') {
-    return match(buf, Buffer.from([0x1f, 0x8b]), 0)
+    return match(buf, Buffer.from([0x1F, 0x8B]), 0)
   }
   if (mimetype === 'video/mp4' && ext === '.mp4') {
     return buf.includes(Buffer.from('ftyp'))
@@ -52,7 +52,7 @@ function validateByMagic(buf: Buffer, mimetype: string, ext: string): boolean {
     return match(buf, Buffer.from('OggS'), 0)
   }
   if (mimetype === 'video/webm' && ext === '.webm') {
-    return match(buf, Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), 0)
+    return match(buf, Buffer.from([0x1A, 0x45, 0xDF, 0xA3]), 0)
   }
   return true
 }

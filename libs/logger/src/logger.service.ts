@@ -36,7 +36,7 @@ export class LoggerService {
    * 构建日志格式化器
    * @returns 包含基础格式和控制台格式的对象
    */
-  buildFormats(): { base: any; consoleFmt: any } {
+  buildFormats(): { base: any, consoleFmt: any } {
     const base = format.combine(
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),

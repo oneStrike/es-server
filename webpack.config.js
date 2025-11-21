@@ -5,7 +5,6 @@ const nodeExternals = require('webpack-node-externals')
 
 module.exports = (env) => {
   const projectName = env.project
-  console.log(env)
   const projectPath = path.resolve(__dirname, `apps/${projectName}`)
   return {
     entry: ['webpack/hot/poll?100', `${projectPath}/src/main.ts`],
