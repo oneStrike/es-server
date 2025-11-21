@@ -62,6 +62,7 @@ module.exports = (env) => {
         '@libs/logger': path.resolve(__dirname, 'libs/logger/src'),
         '@libs/upload': path.resolve(__dirname, 'libs/upload/src'),
         '@libs/utils': path.resolve(__dirname, 'libs/utils/src'),
+        '@libs/types': path.resolve(__dirname, 'libs/types/src'),
       },
       // 优化模块解析
       modules: ['node_modules', path.resolve(projectPath, 'src')],
