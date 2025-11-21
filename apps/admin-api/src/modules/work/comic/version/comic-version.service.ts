@@ -202,8 +202,8 @@ export class WorkComicVersionService extends RepositoryService {
     if (
       (updateData.versionName !== undefined &&
         updateData.versionName !== existingVersion.versionName) ||
-      (updateData.language !== undefined &&
-        updateData.language !== existingVersion.language)
+        (updateData.language !== undefined &&
+          updateData.language !== existingVersion.language)
     ) {
       const duplicateVersion = await this.workComicVersion.findFirst({
         where: {

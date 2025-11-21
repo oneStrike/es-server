@@ -41,7 +41,7 @@ import { LoggerService } from './logger.service'
   imports: [
     WinstonModule.forRootAsync({
       useFactory: (loggerService: LoggerService) =>
-        loggerService.systemLoggerOptions(),
+        loggerService.buildLoggerOptions(),
       inject: [LoggerService],
     }),
   ],

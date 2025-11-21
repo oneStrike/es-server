@@ -1,5 +1,10 @@
 import { IS_PUBLIC_KEY } from '@libs/decorators'
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
 
@@ -7,8 +12,10 @@ import { AuthGuard } from '@nestjs/passport'
  * AuthGuard JWT认证守卫
  */
 @Injectable()
-export class JwtAuthGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+export class JwtAuthGuard extends AuthGuard() implements CanActivate {
+  constructor(private reflector: Reflector) {
+    super()
+  }
 
   /**
    * 判断当前请求是否可以激活
@@ -27,7 +34,13 @@ export class JwtAuthGuard implements CanActivate {
       return true
     }
 
-    const adminGuard = new (AuthGuard())()
-    return adminGuard.canActivate(context) as Promise<boolean>
+    return (await super.canActivate(context)) as boolean
+  }
+
+  handleRequest(err: any, user: any) {
+    if (err || !user) {
+      throw new UnauthorizedException('登录失效，请重新登录！')
+    }
+    return user
   }
 }

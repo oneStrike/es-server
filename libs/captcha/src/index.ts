@@ -35,3 +35,5 @@ export enum ActionTypeEnum {
   EXPORT = '数据导出',
   IMPORT = '数据导入',
 }
+
+export * from './captcha.service'

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { JwtModule as NestjsJwtModule } from '@nestjs/jwt/dist/jwt.module'
 import { PassportModule } from '@nestjs/passport'
 import { AuthService } from './auth.service'
+import { AuthStrategy } from './auth.strategy'
 import { JwtBlacklistService } from './jwt-blacklist.service'
 
 @Module({
@@ -23,7 +24,7 @@ import { JwtBlacklistService } from './jwt-blacklist.service'
       }),
     }),
   ],
-  providers: [AuthService, JwtBlacklistService],
+  providers: [AuthService, JwtBlacklistService, AuthStrategy],
   exports: [AuthService, JwtBlacklistService],
 })
 export class BaseAuthModule {}

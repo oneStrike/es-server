@@ -1,8 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { ClientApiController } from './client-api.controller';
 import { ClientApiService } from './client-api.service';
 
-describe('ClientApiController', () => {
+describe('clientApiController', () => {
   let clientApiController: ClientApiController;
 
   beforeEach(async () => {
