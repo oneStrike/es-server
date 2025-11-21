@@ -56,8 +56,7 @@ export function ApiDoc<TModel extends Type<any>>(
     if (isClass(model)) {
       decorators.push(ApiExtraModels(model))
       dataSchema = { $ref: getSchemaPath(model) }
-    }
-    else {
+    } else {
       dataSchema = model
     }
 
@@ -100,8 +99,7 @@ export function ApiPageDoc<TModel extends Type<any>>(
     if (isClass(model)) {
       decorators.push(ApiExtraModels(model))
       dataSchema = { $ref: getSchemaPath(model) }
-    }
-    else {
+    } else {
       dataSchema = model
     }
   }

@@ -4,10 +4,11 @@ import { CryptoModule } from '@libs/crypto'
 import { HealthModule } from '@libs/health'
 import { LoggerModule } from '@libs/logger'
 import { UploadConfig } from '@libs/upload'
-import { BadRequestException, Module, ValidationPipe } from '@nestjs/common'
+import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
 import { ThrottlerGuard } from '@nestjs/throttler'
+import { AuthConfig } from './config/jwt.config'
 import { HttpExceptionFilter } from './filters/http-exception.filter'
 import { JwtAuthGuard } from './guards/auth.guard'
 import { TransformInterceptor } from './interceptors/transform.interceptor'
@@ -19,7 +20,7 @@ import { AdminModule } from './modules/admin/admin.module'
     ConfigModule.forRoot({
       isGlobal: true, // 设置为全局模块，其他模块可直接使用
       envFilePath: ['.env', `.env.${process.env.NODE_ENV || 'development'}`], // 指定环境变量文件路径
-      load: [UploadConfig], // 加载上传配置
+      load: [UploadConfig, AuthConfig], // 加载上传配置
       cache: true, // 缓存配置
     }),
 
@@ -39,25 +40,6 @@ import { AdminModule } from './modules/admin/admin.module'
   controllers: [],
 
   providers: [
-    // 全局验证管道 - 数据格式校验
-    {
-      provide: APP_PIPE,
-      useValue: new ValidationPipe({
-        transform: true, // 自动转换请求数据类型
-        whitelist: true, // 过滤掉未在 DTO 中定义的属性
-        exceptionFactory: (errors) =>
-          new BadRequestException(
-            errors.map((error) => {
-              const errorMsg: string[] = []
-              if (error.constraints) {
-                errorMsg.push(...Object.values(error.constraints))
-              }
-              return `${error.property}${errorMsg.join('，')}`
-            }),
-          ),
-      }),
-    },
-
     // 全局拦截器
     {
       provide: APP_INTERCEPTOR,

@@ -5,25 +5,39 @@ import { v4 as uuidv4 } from 'uuid'
 
 export function sanitizeScene(scene?: string): string {
   const fallback = 'shared'
-  if (!scene)
-{ return fallback }
-  let s = String(scene).replace(/[/\\]/g, '-').replace(/\.+/g, '-').trim().toLowerCase()
-  if (!s)
-{ return fallback }
+  if (!scene) {
+    return fallback
+  }
+  let s = String(scene)
+    .replace(/[/\\]/g, '-')
+    .replace(/\.+/g, '-')
+    .trim()
+    .toLowerCase()
+  if (!s) {
+    return fallback
+  }
   s = s.replace(/[^a-z0-9._-]/g, '-')
-  if (s.length > 64)
-{ s = s.slice(0, 64) }
+  if (s.length > 64) {
+    s = s.slice(0, 64)
+  }
   return s || fallback
 }
 
 export function sanitizeOriginalName(name: string): string {
-  let n = String(name).replace(/[\r\n]/g, ' ').trim()
-  if (n.length > 128)
-{ n = n.slice(0, 128) }
+  let n = String(name)
+    .replace(/[\r\n]/g, ' ')
+    .trim()
+  if (n.length > 128) {
+    n = n.slice(0, 128)
+  }
   return n
 }
 
-export function generateFilePath(uploadPath: string, fileType: string, scene: string): string {
+export function generateFilePath(
+  uploadPath: string,
+  fileType: string,
+  scene: string,
+): string {
   const today = new Date()
   const year = today.getFullYear()
   const month = String(today.getMonth() + 1).padStart(2, '0')
@@ -41,11 +55,15 @@ export function generateFinalFilename(
   const base = (() => {
     const e = path.extname(originalName)
     const raw = originalName.slice(0, originalName.length - e.length)
-    let b = sanitizeOriginalName(raw).toLowerCase().replace(/[^a-z0-9._-]/g, '-')
-    if (b.length > 32)
-{ b = b.slice(0, 32) }
-    if (!b)
-{ b = 'file' }
+    let b = sanitizeOriginalName(raw)
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]/g, '-')
+    if (b.length > 32) {
+      b = b.slice(0, 32)
+    }
+    if (!b) {
+      b = 'file'
+    }
     return b
   })()
 

@@ -38,9 +38,9 @@ import { IsNumber, IsOptional, Max, Min } from 'class-validator'
  */
 export function ValidateNumber(options: ValidateNumberOptions) {
   if (
-    options.min !== undefined
-    && options.max !== undefined
-    && options.min > options.max
+    options.min !== undefined &&
+    options.max !== undefined &&
+    options.min > options.max
   ) {
     throw new Error('ValidateNumber: min 不能大于 max')
   }
@@ -96,8 +96,8 @@ export function ValidateNumber(options: ValidateNumberOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null)
-        && options.default !== undefined
+        (value === undefined || value === null) &&
+        options.default !== undefined
       ) {
         return options.default
       }

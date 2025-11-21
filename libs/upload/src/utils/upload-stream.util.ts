@@ -5,7 +5,10 @@ import { extname } from 'node:path'
 import { Transform } from 'node:stream'
 import { BadRequestException } from '@nestjs/common'
 
-export function createFileProcessingStream(config: UploadConfigInterface, filename: string) {
+export function createFileProcessingStream(
+  config: UploadConfigInterface,
+  filename: string,
+) {
   let totalSize = 0
   const hash = createHash('md5')
 

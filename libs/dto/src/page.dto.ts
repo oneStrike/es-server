@@ -1,8 +1,4 @@
-import {
-  ValidateJson,
-  ValidateNumber,
-  ValidateString,
-} from '@libs/decorators'
+import { ValidateJson, ValidateNumber, ValidateString } from '@libs/decorators'
 
 export class PageDto {
   @ValidateNumber({

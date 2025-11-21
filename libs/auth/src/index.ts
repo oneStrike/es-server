@@ -1,2 +1,5 @@
-export * from './auth.module';
-export * from './auth.service';
+export * from './auth.module'
+export * from './auth.service'
+export * from './auth.strategy'
+export * from './jwt-blacklist.service'
+export * from './types'

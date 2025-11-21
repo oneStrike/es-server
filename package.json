@@ -151,6 +151,7 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
+      "^@libs/audit(|/.*)$": "<rootDir>/libs/audit/src/$1",
       "^@libs/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
       "^@libs/base(|/.*)$": "<rootDir>/libs/base/src/$1",
       "^@libs/cache(|/.*)$": "<rootDir>/libs/cache/src/$1",

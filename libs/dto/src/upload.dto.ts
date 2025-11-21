@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger'
 import { ValidateString } from '@libs/decorators'
+import { ApiProperty } from '@nestjs/swagger'
 
 export class UploadFileDto {
   @ValidateString({

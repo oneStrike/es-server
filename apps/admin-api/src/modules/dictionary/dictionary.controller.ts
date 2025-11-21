@@ -8,21 +8,17 @@ import {
 } from '@libs/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { DictionaryService } from '../../foundation/dictionary/dictionary.service'
-import { CreateDictionaryDto } from '../../foundation/dictionary/dto/create-dictionary.dto'
+import { DictionaryService } from './dictionary.service'
 import {
+  BaseDictionaryDto,
+  BaseDictionaryItemDto,
+  CreateDictionaryDto,
   CreateDictionaryItemDto,
-  UpdateDictionaryItemDto,
-} from '../../foundation/dictionary/dto/dictionary-item.dto'
-import {
-  DictionaryDto,
-  DictionaryItemDto,
-} from '../../foundation/dictionary/dto/dictionary.dto'
-import {
   QueryDictionaryDto,
   QueryDictionaryItemDto,
-} from '../../foundation/dictionary/dto/query-dictionary.dto'
-import { UpdateDictionaryDto } from '../../foundation/dictionary/dto/update-dictionary.dto'
+  UpdateDictionaryDto,
+  UpdateDictionaryItemDto,
+} from './dto/dictionary.dto'
 
 @ApiTags('字典管理')
 @Controller('/admin/dictionary')
@@ -32,7 +28,7 @@ export class DictionaryController {
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询字典',
-    model: DictionaryDto,
+    model: BaseDictionaryDto,
   })
   async getPage(@Query() query: QueryDictionaryDto) {
     return this.dictionaryService.findDictionaries(query)
@@ -41,7 +37,7 @@ export class DictionaryController {
   @Get('detail')
   @ApiDoc({
     summary: '获取字典详情',
-    model: DictionaryDto,
+    model: BaseDictionaryDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.dictionaryService.dictionary.findUnique({ where: query })
@@ -96,7 +92,7 @@ export class DictionaryController {
   @Get('items')
   @ApiPageDoc({
     summary: '获取字典项',
-    model: DictionaryItemDto,
+    model: BaseDictionaryItemDto,
   })
   async getItems(@Query() query: QueryDictionaryItemDto) {
     return this.dictionaryService.findDictionaryItems(query)

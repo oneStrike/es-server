@@ -1,22 +1,18 @@
 import {
-  ApiProperty,
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
-import { PageDto } from '@/common/dto/page.dto'
-import {
   ValidateBoolean,
   ValidateEnum,
   ValidateJson,
   ValidateNumber,
   ValidateString,
 } from '@libs/decorators'
+import { PageDto } from '@libs/dto'
 import {
-  ActionTypeEnum,
-  ApiTypeEnum,
-  HttpMethodEnum,
-} from '../request-log.constant'
+  ApiProperty,
+  IntersectionType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
+import { ActionTypeEnum, ApiTypeEnum, HttpMethodEnum } from '../audit.constant'
 
 export class RequestLogDto {
   @ValidateNumber({

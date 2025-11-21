@@ -61,8 +61,8 @@ export function ValidateJson(options: ValidateJsonOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null)
-        && options.default !== undefined
+        (value === undefined || value === null) &&
+        options.default !== undefined
       ) {
         return options.default
       }
@@ -71,8 +71,7 @@ export function ValidateJson(options: ValidateJsonOptions) {
       if (typeof value === 'object' && value !== null) {
         try {
           return JSON.stringify(value)
-        }
-        catch {
+        } catch {
           return value // 保持原值，让验证器处理错误
         }
       }

@@ -52,7 +52,8 @@ export class UploadService {
   private getUploadConfig(): UploadConfigInterface {
     // 缓存配置以避免重复获取
     if (!this.uploadConfig) {
-      this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
+      this.uploadConfig =
+        this.configService.get<UploadConfigInterface>('upload')!
     }
     return this.uploadConfig
   }

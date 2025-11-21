@@ -133,10 +133,10 @@ export type EnumLike = Record<string | number, string | number>
  * 专门用于位掩码验证，支持TypeScript数字枚举的双向映射
  * 允许字符串键映射到数字值，数字键映射到字符串值（反向映射）
  */
-export type NumberEnumLike
-  = | Record<string, number>
-    | Record<number, string>
-    | (Record<string, number> & Record<number, string>)
+export type NumberEnumLike =
+  | Record<string, number>
+  | Record<number, string>
+  | (Record<string, number> & Record<number, string>)
 
 /**
  * 枚举验证选项

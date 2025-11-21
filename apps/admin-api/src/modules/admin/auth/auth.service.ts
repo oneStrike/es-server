@@ -1,5 +1,8 @@
 import * as process from 'node:process'
-import { RsaService } from '@libs/crypto'
+import { AuthService as BaseAuthService } from '@libs/auth'
+import { CaptchaService } from '@libs/captcha'
+
+import { RsaService, ScryptService } from '@libs/crypto'
 import { AdminUser, RepositoryService } from '@libs/database'
 import { extractIpAddress } from '@libs/utils'
 import {
@@ -8,12 +11,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { FastifyRequest } from 'fastify'
-import { ScryptService } from '../../../../../../libs/crypto/src/scrypt.service'
 import { ADMIN_LOGIN_POLICY } from '../../../config/auth.config'
-import { CaptchaService } from '../../../service/captcha/captcha.service'
 import { RequestLogService } from '../../foundation/request-log'
-
-import { AdminJwtService } from './admin-jwt.service'
 import { CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto } from './dto/token.dto'
 import { UserLoginDto } from './dto/user-login.dto'
@@ -23,7 +22,7 @@ import { UserLoginDto } from './dto/user-login.dto'
  * 负责登录、登出、令牌刷新、验证码生成等认证相关业务逻辑
  */
 @Injectable()
-export class AdminAuthService extends RepositoryService {
+export class AuthService extends RepositoryService {
   get adminUser() {
     return this.prisma.adminUser
   }
@@ -31,7 +30,7 @@ export class AdminAuthService extends RepositoryService {
   constructor(
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
-    private readonly adminJwtService: AdminJwtService,
+    private readonly adminJwtService: BaseAuthService,
     private readonly requestLogService: RequestLogService,
     private readonly captchaService: CaptchaService,
   ) {

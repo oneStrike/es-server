@@ -35,13 +35,11 @@ import {
  */
 export function ValidateString(options: ValidateStringOptions) {
   if (
-    options.minLength
-    && options.maxLength
-    && options.minLength > options.maxLength
+    options.minLength &&
+    options.maxLength &&
+    options.minLength > options.maxLength
   ) {
-    throw new Error(
-      'ValidateString: minLength 不能大于 maxLength',
-    )
+    throw new Error('ValidateString: minLength 不能大于 maxLength')
   }
 
   // 构建API属性配置
@@ -115,8 +113,8 @@ export function ValidateString(options: ValidateStringOptions) {
     Transform(({ value }) => {
       // 处理默认值
       if (
-        (value === undefined || value === null)
-        && options.default !== undefined
+        (value === undefined || value === null) &&
+        options.default !== undefined
       ) {
         return options.default
       }

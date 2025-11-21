@@ -1,15 +1,15 @@
 import type {
   DictionaryItemWhereInput,
   DictionaryWhereInput,
-} from '@libs/database/prisma-client/models'
+} from '@libs/database'
+import { RepositoryService } from '@libs/database'
+import { DragReorderDto } from '@libs/dto'
 import { Injectable } from '@nestjs/common'
-import { DragReorderDto } from '@/common/dto/drag-reorder.dto'
-import { RepositoryService } from '@/service/repository/repository.service'
-import { CreateDictionaryItemDto } from './dto/dictionary-item.dto'
 import {
+  CreateDictionaryItemDto,
   QueryDictionaryDto,
   QueryDictionaryItemDto,
-} from './dto/query-dictionary.dto'
+} from './dto/dictionary.dto'
 
 /**
  * 数据字典服务类
