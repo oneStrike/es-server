@@ -7,12 +7,16 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
+import { AuthConfig } from '../config/jwt.config'
 
 /**
  * AuthGuard JWT认证守卫
  */
 @Injectable()
-export class JwtAuthGuard extends AuthGuard() implements CanActivate {
+export class JwtAuthGuard
+  extends AuthGuard(AuthConfig.strategyKey)
+  implements CanActivate
+{
   constructor(private reflector: Reflector) {
     super()
   }

@@ -11,7 +11,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { FastifyRequest } from 'fastify'
-import { ADMIN_LOGIN_POLICY } from '../../config/auth.config'
 import { AuditService } from '../system/audit/audit.service'
 import { CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto } from './dto/token.dto'
@@ -87,7 +86,7 @@ export class AuthService extends RepositoryService {
       const failAt = user.loginFailAt ? new Date(user.loginFailAt).getTime() : 0
       const now = Date.now()
       const lockExpired =
-        !!failAt && now - failAt >= ADMIN_LOGIN_POLICY.lockDurationMs
+        !!failAt && now - failAt >= 1000 * 60 * 30
 
       if (lockExpired) {
         // 锁定已到期，自动解锁并重置失败信息
@@ -191,7 +190,7 @@ export class AuthService extends RepositoryService {
         loginFailIp: requestIp || 'unknown',
         loginFailAt: new Date(),
         loginFailCount: user.loginFailCount + 1,
-        isLocked: user.loginFailCount + 1 >= ADMIN_LOGIN_POLICY.maxFailCount, // 达到阈值后锁定账户
+        isLocked: user.loginFailCount + 1 >= 5, // 达到阈值后锁定账户
       },
     })
   }

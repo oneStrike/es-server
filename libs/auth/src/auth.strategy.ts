@@ -19,7 +19,7 @@ interface JwtPayload {
  * 使用 passport-jwt 库提供的 Strategy 类
  */
 @Injectable()
-export class AuthStrategy extends PassportStrategy(Strategy) {
+export class AuthStrategy extends PassportStrategy(Strategy, 'admin-auth') {
   // 错误消息常量
   private static readonly UNAUTHORIZED_MESSAGE = '登录失效，请重新登录！'
 

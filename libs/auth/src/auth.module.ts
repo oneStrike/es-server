@@ -9,7 +9,12 @@ import { JwtBlacklistService } from './jwt-blacklist.service'
 @Global()
 @Module({
   imports: [
-    PassportModule,
+    PassportModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        defaultStrategy: configService.get<string>('auth.strategyKey'),
+      }),
+    }),
     NestjsJwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({

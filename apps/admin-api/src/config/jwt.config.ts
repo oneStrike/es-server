@@ -16,7 +16,7 @@ const TIME_CONSTANTS = {
   DAY: 24 * 60 * 60,
 } as const
 
-export const AuthConfig = registerAs('auth', () => ({
+export const AuthConfig = {
   secret: process.env.JWT_SECRET,
   refreshSecret: process.env.JWT_REFRESH_SECRET,
   expiresIn: 4 * TIME_CONSTANTS.HOUR,
@@ -26,4 +26,6 @@ export const AuthConfig = registerAs('auth', () => ({
   aud: 'admin',
   // Passport策略名称
   strategyKey: 'admin-auth',
-}))
+}
+
+export const AuthConfigRegister = registerAs('auth', () => AuthConfig)
