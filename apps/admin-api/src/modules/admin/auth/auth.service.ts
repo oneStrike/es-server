@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common'
 import { FastifyRequest } from 'fastify'
 import { ADMIN_LOGIN_POLICY } from '../../../config/auth.config'
-import { RequestLogService } from '../../foundation/request-log'
+import { AuditService } from '../../system/audit/audit.service'
 import { CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto } from './dto/token.dto'
 import { UserLoginDto } from './dto/user-login.dto'
@@ -31,7 +31,7 @@ export class AuthService extends RepositoryService {
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
     private readonly adminJwtService: BaseAuthService,
-    private readonly requestLogService: RequestLogService,
+    private readonly auditService: AuditService,
     private readonly captchaService: CaptchaService,
   ) {
     super()
@@ -107,7 +107,7 @@ export class AuthService extends RepositoryService {
         user.loginFailCount = 0
       } else {
         // 锁定未到期，记录失败并拒绝
-        await this.requestLogService.createLoginFailureRequestLog(
+        await this.auditService.createLoginFailureRequestLog(
           {
             content: `【${body.username}】登录失败，账户被锁定`,
             username: body.username,
@@ -166,7 +166,7 @@ export class AuthService extends RepositoryService {
       isLocked,
       ...userWithoutPassword
     } = user
-    await this.requestLogService.createLoginSuccessRequestLog(
+    await this.auditService.createLoginSuccessRequestLog(
       {
         content: `【${body.username}】登录成功`,
         username: body.username,

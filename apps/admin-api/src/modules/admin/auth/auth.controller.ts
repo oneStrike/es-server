@@ -1,9 +1,9 @@
+import { RsaService } from '@libs/crypto'
 import { ApiDoc, Public } from '@libs/decorators'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { FastifyRequest } from 'fastify'
-import { RsaService } from '../../../../../../libs/crypto/src/rsa.service'
-import { AdminAuthService } from './auth.service'
+import { AuthService } from './auth.service'
 import { CaptchaDto } from './dto/captcha.dto'
 import { RsaPublicKeyDto } from './dto/rsa-public-key.dto'
 import { RefreshTokenDto, TokenDto } from './dto/token.dto'
@@ -15,10 +15,10 @@ import { LoginResponseDto, UserLoginDto } from './dto/user-login.dto'
  */
 @ApiTags('管理端认证模块')
 @Controller('admin/auth')
-export class AdminAuthController {
+export class AuthController {
   constructor(
     private readonly rsaService: RsaService,
-    private readonly authService: AdminAuthService,
+    private readonly authService: AuthService,
   ) {}
 
   /**
