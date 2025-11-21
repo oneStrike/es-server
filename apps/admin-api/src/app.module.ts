@@ -9,7 +9,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
 import { ThrottlerGuard } from '@nestjs/throttler'
-import { AuthConfig } from './config/jwt.config'
+import { AuthConfigRegister } from './config/jwt.config'
 import { HttpExceptionFilter } from './filters/http-exception.filter'
 import { JwtAuthGuard } from './guards/auth.guard'
 import { TransformInterceptor } from './interceptors/transform.interceptor'
@@ -21,10 +21,9 @@ import { AdminModule } from './modules/admin.module'
     ConfigModule.forRoot({
       isGlobal: true, // 设置为全局模块，其他模块可直接使用
       envFilePath: ['.env', `.env.${process.env.NODE_ENV || 'development'}`], // 指定环境变量文件路径
-      load: [UploadConfig, AuthConfig], // 加载上传配置
+      load: [UploadConfig, AuthConfigRegister], // 加载上传配置
       cache: true, // 缓存配置
     }),
-
 
     BaseModule.forRoot({
       enableDatabase: true,
