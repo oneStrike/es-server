@@ -19,7 +19,8 @@ interface JwtPayload {
  * 使用 passport-jwt 库提供的 Strategy 类
  */
 @Injectable()
-export class AuthStrategy extends PassportStrategy(Strategy, 'admin-auth') {
+export class AuthStrategy extends PassportStrategy(Strategy) {
+  name: string
   // 错误消息常量
   private static readonly UNAUTHORIZED_MESSAGE = '登录失效，请重新登录！'
 
@@ -42,6 +43,7 @@ export class AuthStrategy extends PassportStrategy(Strategy, 'admin-auth') {
     }
 
     super(options)
+    this.name = this.configService.get<string>('auth.strategyKey') || 'jwt'
   }
 
   /**
@@ -56,6 +58,17 @@ export class AuthStrategy extends PassportStrategy(Strategy, 'admin-auth') {
     // 验证 audience
     const expectedAud = this.configService.get<string>('auth.aud')
     if (expectedAud && payload.aud !== expectedAud) {
+      throw new UnauthorizedException(AuthStrategy.UNAUTHORIZED_MESSAGE)
+    }
+
+    // 验证令牌类型必须为 access
+    if (payload.type !== 'access') {
+      throw new UnauthorizedException(AuthStrategy.UNAUTHORIZED_MESSAGE)
+    }
+
+    // 验证发行者（可选）
+    const expectedIss = this.configService.get<string>('auth.iss')
+    if (expectedIss && payload.iss !== expectedIss) {
       throw new UnauthorizedException(AuthStrategy.UNAUTHORIZED_MESSAGE)
     }
 
