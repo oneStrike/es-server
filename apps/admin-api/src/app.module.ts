@@ -12,7 +12,7 @@ import { AuthConfig } from './config/jwt.config'
 import { HttpExceptionFilter } from './filters/http-exception.filter'
 import { JwtAuthGuard } from './guards/auth.guard'
 import { TransformInterceptor } from './interceptors/transform.interceptor'
-import { AdminModule } from './modules/admin/admin.module'
+import { AdminModule } from './modules/admin.module'
 
 @Module({
   imports: [
