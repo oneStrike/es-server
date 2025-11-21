@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Global, Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtModule as NestjsJwtModule } from '@nestjs/jwt/dist/jwt.module'
 import { PassportModule } from '@nestjs/passport'
@@ -6,14 +6,10 @@ import { AuthService } from './auth.service'
 import { AuthStrategy } from './auth.strategy'
 import { JwtBlacklistService } from './jwt-blacklist.service'
 
+@Global()
 @Module({
   imports: [
-    PassportModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        defaultStrategy: configService.get<string>('auth.strategyKey'),
-      }),
-    }),
+    PassportModule,
     NestjsJwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({

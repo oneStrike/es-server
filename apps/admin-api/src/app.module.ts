@@ -1,4 +1,5 @@
 import * as process from 'node:process'
+import { BaseAuthModule } from '@libs/auth'
 import { BaseModule } from '@libs/base'
 import { CryptoModule } from '@libs/crypto'
 import { HealthModule } from '@libs/health'
@@ -24,10 +25,12 @@ import { AdminModule } from './modules/admin.module'
       cache: true, // 缓存配置
     }),
 
+
     BaseModule.forRoot({
       enableDatabase: true,
     }),
 
+    BaseAuthModule,
     // 基础功能模块
     CryptoModule, // 加密模块
     LoggerModule,
