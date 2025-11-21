@@ -24,8 +24,6 @@ export const AuthConfig = registerAs('auth', () => ({
   refreshExpiresIn: 7 * TIME_CONSTANTS.DAY,
   // 令牌类型标识
   aud: 'admin',
-  // 需要 JWT 认证保护的管理端路径前缀
-  guardPathPrefixes: ['/admin', '/api/admin'],
   // Passport策略名称
   strategyKey: 'admin-auth',
 }))

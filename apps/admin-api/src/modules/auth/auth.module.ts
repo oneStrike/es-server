@@ -1,4 +1,3 @@
-import { BaseAuthModule } from '@libs/auth'
 import { CaptchaService } from '@libs/captcha'
 import { Module } from '@nestjs/common'
 import { AuditModule } from '../system/audit/audit.module'
@@ -7,7 +6,7 @@ import { AuthService } from './auth.service'
 
 @Module({
   controllers: [AuthController],
-  imports: [BaseAuthModule, AuditModule],
+  imports: [AuditModule],
   providers: [AuthService, CaptchaService],
   exports: [AuthService],
 })
