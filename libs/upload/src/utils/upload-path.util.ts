@@ -1,4 +1,4 @@
-import type { UploadConfig } from '@/config/upload.config'
+import type { UploadConfigInterface } from '../upload.config'
 import fs from 'node:fs'
 import path, { join } from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
@@ -35,7 +35,7 @@ export function generateFilePath(uploadPath: string, fileType: string, scene: st
 export function generateFinalFilename(
   originalName: string,
   ext: string,
-  strategy: UploadConfig['filenameStrategy'],
+  strategy: UploadConfigInterface['filenameStrategy'],
   hash: string,
 ): string {
   const base = (() => {

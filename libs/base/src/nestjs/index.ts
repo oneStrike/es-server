@@ -5,6 +5,6 @@
 
 export { setupApp } from './app.setup'
 export { setupCompression } from './compression'
-export { logStartupInfo } from './lifecycle'
+export { logStartupInfo } from './logStartupInfo'
 export { setupMultipart } from './multipart'
 export { setupSwagger } from './swagger'

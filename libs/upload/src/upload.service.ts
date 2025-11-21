@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import type { UploadConfig } from './upload.config'
+import type { UploadConfigInterface } from './upload.config'
 
 import { join } from 'node:path'
 import { pipeline } from 'node:stream'
@@ -41,7 +41,7 @@ const pump = promisify(pipeline)
 export class UploadService {
   private uploadPath: string
 
-  private uploadConfig: UploadConfig | null = null
+  private uploadConfig: UploadConfigInterface | null = null
 
   // 注入子服务已抽离为utils
 
@@ -49,10 +49,10 @@ export class UploadService {
     this.uploadPath = this.getUploadConfig().uploadDir
   }
 
-  private getUploadConfig(): UploadConfig {
+  private getUploadConfig(): UploadConfigInterface {
     // 缓存配置以避免重复获取
     if (!this.uploadConfig) {
-      this.uploadConfig = this.configService.get<UploadConfig>('upload')!
+      this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
     }
     return this.uploadConfig
   }
@@ -115,7 +115,7 @@ export class UploadService {
    */
   private async processSingleFile(
     file: any,
-    config: UploadConfig,
+    config: UploadConfigInterface,
     scene: string,
   ): Promise<UploadResponseDto | null> {
     const startTime = Date.now()

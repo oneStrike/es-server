@@ -1,11 +1,11 @@
-import type { UploadConfig } from '@/config/upload.config'
+import type { UploadConfigInterface } from '../upload.config'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import { extname } from 'node:path'
 import { Transform } from 'node:stream'
 import { BadRequestException } from '@nestjs/common'
 
-export function createFileProcessingStream(config: UploadConfig, filename: string) {
+export function createFileProcessingStream(config: UploadConfigInterface, filename: string) {
   let totalSize = 0
   const hash = createHash('md5')
 

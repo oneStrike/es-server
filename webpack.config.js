@@ -5,6 +5,7 @@ const nodeExternals = require('webpack-node-externals')
 
 module.exports = (env) => {
   const projectName = env.project
+  console.log(env)
   const projectPath = path.resolve(__dirname, `apps/${projectName}`)
   return {
     entry: ['webpack/hot/poll?100', `${projectPath}/src/main.ts`],
@@ -49,7 +50,18 @@ module.exports = (env) => {
       extensions: ['.tsx', '.ts', '.js', '.json'],
       alias: {
         '@': path.resolve(projectPath, 'src'),
+        '@libs/auth': path.resolve(__dirname, 'libs/auth/src'),
+        '@libs/base': path.resolve(__dirname, 'libs/base/src'),
+        '@libs/cache': path.resolve(__dirname, 'libs/cache/src'),
+        '@libs/captcha': path.resolve(__dirname, 'libs/captcha/src'),
+        '@libs/crypto': path.resolve(__dirname, 'libs/crypto/src'),
         '@libs/database': path.resolve(__dirname, 'libs/database/src'),
+        '@libs/decorators': path.resolve(__dirname, 'libs/decorators/src'),
+        '@libs/dto': path.resolve(__dirname, 'libs/dto/src'),
+        '@libs/health': path.resolve(__dirname, 'libs/health/src'),
+        '@libs/logger': path.resolve(__dirname, 'libs/logger/src'),
+        '@libs/upload': path.resolve(__dirname, 'libs/upload/src'),
+        '@libs/utils': path.resolve(__dirname, 'libs/utils/src'),
       },
       // 优化模块解析
       modules: ['node_modules', path.resolve(projectPath, 'src')],

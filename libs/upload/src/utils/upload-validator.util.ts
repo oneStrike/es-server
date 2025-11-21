@@ -1,12 +1,13 @@
-import type { UploadConfig } from '@/config/upload.config'
+import type { UploadConfigInterface } from '../upload.config'
 import { extname } from 'node:path'
 import { BadRequestException } from '@nestjs/common'
 
 const mimeTypeMap: Map<string, string> = new Map()
 
-function initMimeTypeMap(config: UploadConfig): void {
-  if (mimeTypeMap.size > 0)
-{ return }
+function initMimeTypeMap(config: UploadConfigInterface): void {
+  if (mimeTypeMap.size > 0) {
+    return
+  }
   const typeCategories = [
     { category: 'image', types: config.imageType.mimeTypes },
     { category: 'audio', types: config.audioType.mimeTypes },
@@ -19,14 +20,19 @@ function initMimeTypeMap(config: UploadConfig): void {
   })
 }
 
-export function getFileTypeCategory(mimeType: string, config: UploadConfig): string {
+export function getFileTypeCategory(
+  mimeType: string,
+  config: UploadConfigInterface,
+): string {
   initMimeTypeMap(config)
   return mimeTypeMap.get(mimeType) || 'other'
 }
 
-export function validateFile(file: any, config: UploadConfig): void {
+export function validateFile(file: any, config: UploadConfigInterface): void {
   if (!config.allowedMimeTypes.includes(file.mimetype)) {
-    throw new BadRequestException(`文件 ${file.filename} 类型不支持: ${file.mimetype}`)
+    throw new BadRequestException(
+      `文件 ${file.filename} 类型不支持: ${file.mimetype}`,
+    )
   }
   const ext = extname(file.filename).toLowerCase()
   if (!config.allowedExtensions.includes(ext)) {
@@ -49,7 +55,11 @@ export function validateFile(file: any, config: UploadConfig): void {
   }
 }
 
-export function validateFileSize(fileSize: number, maxSize: number, filename: string): void {
+export function validateFileSize(
+  fileSize: number,
+  maxSize: number,
+  filename: string,
+): void {
   if (fileSize > maxSize) {
     throw new BadRequestException(
       `文件 ${filename} 大小 ${fileSize} 字节超出限制 ${maxSize} 字节`,

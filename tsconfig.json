@@ -10,6 +10,18 @@
       "@/*": [
         "./src/*"
       ],
+      "@libs/auth": [
+        "libs/auth/src"
+      ],
+      "@libs/auth/*": [
+        "libs/auth/src/*"
+      ],
+      "@libs/base": [
+        "libs/base/src"
+      ],
+      "@libs/base/*": [
+        "libs/base/src/*"
+      ],
       "@libs/cache": [
         "libs/cache/src"
       ],

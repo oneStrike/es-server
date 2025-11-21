@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "declaration": false,
-    "outDir": "../../dist/apps/akaiito-server-nestjs"
-  },
-  "include": ["src/**/*", "../../libs/database/src/repository.service.ts", "../../libs/decorators/src/validate", "../../libs/decorators/src/api-doc.decorator.ts", "../../libs/decorators/src/current-user.decorator.ts", "../../libs/decorators/src/public.decorator.ts", "../../libs/decorators/src/validate.decorator.ts", "../../libs/dto/src/page.dto.ts", "../../libs/dto/src/status.dto.ts", "../../libs/dto/src/upload.dto.ts", "../../libs/crypto/src/crypto.module.ts", "../../libs/crypto/src/rsa.service.ts", "../../libs/crypto/src/scrypt.service.ts", "../../libs/logger/src/logger.module.ts", "../../libs/logger/src/logger.service.ts", "../../libs/upload/src/upload.config.ts"],
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
-}

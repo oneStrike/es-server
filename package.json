@@ -10,7 +10,7 @@
     "reinstall": "rimraf ./node_modules && pnpm install && pnpm prisma:update",
     "build": "cross-env NODE_ENV=production nest build",
     "start": "cross-env NODE_ENV=production nest start",
-    "start:dev": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch",
+    "start:dev": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=admin-api",
     "start:admin": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=admin-api",
     "start:nest-dev": "nest start --watch",
     "start:debug": "cross-env NODE_ENV=development nest start --debug --watch",
@@ -151,6 +151,8 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
+      "^@libs/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
+      "^@libs/base(|/.*)$": "<rootDir>/libs/base/src/$1",
       "^@libs/cache(|/.*)$": "<rootDir>/libs/cache/src/$1",
       "^@libs/captcha(|/.*)$": "<rootDir>/libs/captcha/src/$1",
       "^@libs/crypto(|/.*)$": "<rootDir>/libs/crypto/src/$1",

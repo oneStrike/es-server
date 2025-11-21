@@ -2,8 +2,11 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { v4 as uuid } from 'uuid'
 
-import { ADMIN_AUTH_CONFIG, CLIENT_AUTH_CONFIG } from '../../../config/jwt.config'
-import { JwtBlacklistService } from '../../module/jwt/jwt-blacklist.service'
+import {
+  ADMIN_AUTH_CONFIG,
+  CLIENT_AUTH_CONFIG,
+} from '../../../config/jwt.config'
+import { JwtBlacklistService } from './jwt-blacklist.service'
 
 type AuthConfig = typeof ADMIN_AUTH_CONFIG | typeof CLIENT_AUTH_CONFIG
 

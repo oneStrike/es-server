@@ -5,7 +5,7 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true,
-    "tsConfigPath": "apps/admin-api/tsconfig.json"
+    "tsConfigPath": "apps/admin-api/tsconfig.app.json"
   },
   "monorepo": true,
   "root": "apps/admin-api",
@@ -16,7 +16,25 @@
       "entryFile": "main",
       "sourceRoot": "apps/admin-api/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/admin-api/tsconfig.json"
+        "tsConfigPath": "apps/admin-api/tsconfig.app.json"
+      }
+    },
+    "auth": {
+      "type": "library",
+      "root": "libs/auth",
+      "entryFile": "index",
+      "sourceRoot": "libs/auth/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/auth/tsconfig.lib.json"
+      }
+    },
+    "base": {
+      "type": "library",
+      "root": "libs/base",
+      "entryFile": "index",
+      "sourceRoot": "libs/base/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/base/tsconfig.lib.json"
       }
     },
     "cache": {
