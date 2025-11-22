@@ -6,7 +6,7 @@ const {
   DB_PORT,
   DB_USER,
   DB_PASSWORD,
-  DB_DATABASE,
+  DB_NAME,
   MAX_QUERY_LIST_LIMIT,
   PAGINATION_PAGE_SIZE,
   PAGINATION_PAGE_INDEX,
@@ -19,8 +19,8 @@ export const DbConfig = {
     port: DB_PORT,
     username: DB_USER,
     password: DB_PASSWORD,
-    database: DB_DATABASE,
-    url: `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}`,
+    database: DB_NAME,
+    url: `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`,
   },
 
   // 单次列表查询的最大条数上线
