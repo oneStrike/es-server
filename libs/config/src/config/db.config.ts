@@ -7,9 +7,9 @@ const {
   DB_USER,
   DB_PASSWORD,
   DB_NAME,
-  MAX_QUERY_LIST_LIMIT,
-  PAGINATION_PAGE_SIZE,
-  PAGINATION_PAGE_INDEX,
+  DB_MAX_QUERY_LIST_LIMIT,
+  DB_PAGINATION_PAGE_SIZE,
+  DB_PAGINATION_PAGE_INDEX,
 } = process.env
 
 export const DbConfig = {
@@ -24,11 +24,11 @@ export const DbConfig = {
   },
 
   // 单次列表查询的最大条数上线
-  maxListItemLimit: MAX_QUERY_LIST_LIMIT || 500,
+  maxListItemLimit: DB_MAX_QUERY_LIST_LIMIT || 500,
   // 分页列表的查询参数默认列表
   pagination: {
-    pageSize: PAGINATION_PAGE_SIZE || 15,
-    pageIndex: PAGINATION_PAGE_INDEX || 0,
+    pageSize: DB_PAGINATION_PAGE_SIZE || 15,
+    pageIndex: DB_PAGINATION_PAGE_INDEX || 0,
   },
 
   // 默认排序字段

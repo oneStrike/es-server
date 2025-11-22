@@ -156,6 +156,7 @@
       "^@libs/base(|/.*)$": "<rootDir>/libs/base/src/$1",
       "^@libs/cache(|/.*)$": "<rootDir>/libs/cache/src/$1",
       "^@libs/captcha(|/.*)$": "<rootDir>/libs/captcha/src/$1",
+      "^@libs/config(|/.*)$": "<rootDir>/libs/config/src/$1",
       "^@libs/crypto(|/.*)$": "<rootDir>/libs/crypto/src/$1",
       "^@libs/database(|/.*)$": "<rootDir>/libs/database/src/$1",
       "^@libs/decorators(|/.*)$": "<rootDir>/libs/decorators/src/$1",

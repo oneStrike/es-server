@@ -34,6 +34,12 @@
       "@libs/captcha/*": [
         "libs/captcha/src/*"
       ],
+      "@libs/config": [
+        "libs/config/src"
+      ],
+      "@libs/config/*": [
+        "libs/config/src/*"
+      ],
       "@libs/crypto": [
         "libs/crypto/src"
       ],

@@ -1,6 +1,11 @@
 import process from 'node:process'
 import { BaseAuthModule } from '@libs/auth'
 import { BaseModule } from '@libs/base'
+import {
+  AuthConfigRegister,
+  DbConfigRegister,
+  RedisConfigRegister,
+} from '@libs/config'
 import { CryptoModule } from '@libs/crypto'
 import { HealthModule } from '@libs/health'
 import { LoggerModule } from '@libs/logger'
@@ -10,9 +15,6 @@ import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
 import { ThrottlerGuard } from '@nestjs/throttler'
 import { AppConfigRegister } from './config/app.config'
-import { AuthConfigRegister } from './config/auth.config'
-import { DbConfigRegister } from './config/db.config'
-import { RedisConfigRegister } from './config/redis.config'
 import { HttpExceptionFilter } from './filters/http-exception.filter'
 import { JwtAuthGuard } from './guards/auth.guard'
 import { TransformInterceptor } from './interceptors/transform.interceptor'
