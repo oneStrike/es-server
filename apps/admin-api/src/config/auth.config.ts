@@ -5,20 +5,13 @@ import { registerAs } from '@nestjs/config'
 const { JWT_SECRET, JWT_REFRESH_SECRET, EXPIRATION_IN, REFRESH_EXPIRATION_IN } =
   process.env
 
-/**
- * 时间常量定义（秒）
- */
-const TIME_CONSTANTS = {
-  HOUR: 60 * 60,
-  DAY: 24 * 60 * 60,
-} as const
-
 export const AuthConfig: IAuthConfig = {
   secret: JWT_SECRET!,
   refreshSecret: JWT_REFRESH_SECRET!,
-  expiresIn: Number(EXPIRATION_IN) || 4 * TIME_CONSTANTS.HOUR,
+  expiresIn: (EXPIRATION_IN as IAuthConfig['expiresIn']) || '4h',
   // 刷新令牌过期时间：默认 7 天
-  refreshExpiresIn: Number(REFRESH_EXPIRATION_IN) || 7 * TIME_CONSTANTS.DAY,
+  refreshExpiresIn:
+    (REFRESH_EXPIRATION_IN as IAuthConfig['refreshExpiresIn']) || '7d',
   // 令牌类型标识
   aud: 'admin',
   // 发行者标识（可通过环境变量覆盖）

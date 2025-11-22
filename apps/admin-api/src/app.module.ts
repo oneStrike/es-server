@@ -9,6 +9,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
 import { ThrottlerGuard } from '@nestjs/throttler'
+import { AppConfigRegister } from './config/app.config'
 import { AuthConfigRegister } from './config/auth.config'
 import { DbConfigRegister } from './config/db.config'
 import { RedisConfigRegister } from './config/redis.config'
@@ -24,9 +25,10 @@ import { AdminModule } from './modules/admin.module'
       isGlobal: true, // 设置为全局模块，其他模块可直接使用
       envFilePath: ['.env', `.env.${process.env.NODE_ENV || 'development'}`], // 指定环境变量文件路径
       load: [
-        UploadConfigRegister,
+        AppConfigRegister,
         AuthConfigRegister,
         DbConfigRegister,
+        UploadConfigRegister,
         RedisConfigRegister,
       ], // 加载上传配置
       cache: true, // 缓存配置

@@ -1,12 +1,14 @@
+import type { JwtSignOptions } from '@nestjs/jwt'
+
 export interface IAuthConfig {
   // JWT 配置
   secret: string
   // 刷新令牌 JWT 配置
   refreshSecret: string
   // JWT 过期时间（秒）
-  expiresIn: number
+  expiresIn: JwtSignOptions['expiresIn']
   // 刷新令牌 JWT 过期时间（秒）
-  refreshExpiresIn: number
+  refreshExpiresIn: JwtSignOptions['expiresIn']
   // JWT 受众（aud）
   aud: string
   // 发行者（iss）
