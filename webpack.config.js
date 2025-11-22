@@ -16,11 +16,6 @@ module.exports = (env) => {
   return {
     entry: ['webpack/hot/poll?100', `${projectPath}/src/main.ts`],
     target: 'node',
-    experiments: {
-      asyncWebAssembly: true, // 推荐使用异步 WebAssembly
-      // 或者使用 syncWebAssembly（已弃用）
-      // syncWebAssembly: true,
-    },
     externals: [
       nodeExternals({
         allowlist: ['webpack/hot/poll?100'],
@@ -78,35 +73,11 @@ module.exports = (env) => {
       new RunScriptWebpackPlugin({
         name: `${projectName}-server.js`,
         autoRestart: false,
-        // 添加信号处理，确保优雅重启
-        signal: 'SIGUSR2',
-        keyboard: true,
-      }),
-      // 添加环境变量插件
-      new webpack.DefinePlugin({
-        'process.env.NODE_ENV': JSON.stringify('development'),
-      }),
-      // 忽略不必要的文件变化
-      new webpack.WatchIgnorePlugin({
-        paths: [/\.git/, /node_modules/, /dist/, /\.tsbuildinfo$/],
       }),
     ],
     output: {
       path: path.join(projectPath, 'dist'),
       filename: `${projectName}-server.js`,
-      // 清理输出目录
-      clean: true,
-    },
-    // 优化开发体验
-    devtool: 'eval-source-map',
-    // 监听配置
-    watchOptions: {
-      // 忽略文件
-      ignored: /node_modules/,
-      // 聚合变化，减少重新构建次数
-      aggregateTimeout: 300,
-      // 轮询间隔（毫秒）
-      poll: 500,
     },
     // 性能优化
     optimization: {
@@ -116,16 +87,6 @@ module.exports = (env) => {
       splitChunks: false,
       // 不压缩代码（开发模式）
       minimize: false,
-    },
-    // 统计信息配置
-    stats: {
-      colors: true,
-      modules: false,
-      chunks: false,
-      chunkModules: false,
-      children: false,
-      warnings: true,
-      errors: true,
     },
   }
 }
