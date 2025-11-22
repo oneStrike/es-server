@@ -1,4 +1,4 @@
-import * as process from 'node:process'
+import process from 'node:process'
 import { BaseAuthModule } from '@libs/auth'
 import { BaseModule } from '@libs/base'
 import { CryptoModule } from '@libs/crypto'
