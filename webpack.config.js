@@ -1,4 +1,5 @@
 const path = require('node:path')
+const dotenv = require('dotenv')
 const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin')
 const webpack = require('webpack')
 const nodeExternals = require('webpack-node-externals')
@@ -6,6 +7,12 @@ const nodeExternals = require('webpack-node-externals')
 module.exports = (env) => {
   const projectName = env.project
   const projectPath = path.resolve(__dirname, `apps/${projectName}`)
+  dotenv.config({
+    path: [
+      path.resolve(projectPath, `.env.development`),
+      path.resolve(projectPath, `.env`),
+    ],
+  })
   return {
     entry: ['webpack/hot/poll?100', `${projectPath}/src/main.ts`],
     target: 'node',

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
-import { AuthConfig } from '../config/jwt.config'
+import { AuthConfig } from '../config/auth.config'
 
 /**
  * AuthGuard JWT认证守卫

@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { JwtModule as NestjsJwtModule } from '@nestjs/jwt/dist/jwt.module'
+import { JwtModule as NestjsJwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { AuthService } from './auth.service'
 import { AuthStrategy } from './auth.strategy'

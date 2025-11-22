@@ -1,4 +1,4 @@
-export interface AuthConfig {
+export interface IAuthConfig {
   // JWT 配置
   secret: string
   // 刷新令牌 JWT 配置

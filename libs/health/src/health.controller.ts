@@ -1,4 +1,5 @@
 import * as process from 'node:process'
+import { Public } from '@libs/decorators'
 import { Controller, Get } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'
@@ -22,6 +23,7 @@ export class HealthController {
   ) {}
 
   @Get('health')
+  @Public()
   @HealthCheck()
   async healthCheck() {
     const result = await this.health.check([
@@ -40,6 +42,7 @@ export class HealthController {
 
   @Get('ready')
   @HealthCheck()
+  @Public()
   async readinessCheck() {
     const upload = this.configService.get('upload')
     const uploadPath = upload?.uploadDir || process.cwd()

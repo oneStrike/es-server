@@ -34,14 +34,7 @@ export class CustomCacheModule {
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => {
-          // 使用 ConfigService 获取环境变量
-          const host = configService.get<string>('REDIS_HOST', 'localhost')
-          const port = configService.get<string>('REDIS_PORT', '6379')
-          const password = configService.get<string>('REDIS_PASSWORD', '')
-          const namespace = configService.get<string>(
-            'REDIS_NAMESPACE',
-            'Akaiito',
-          )
+          const {host, port, password, namespace} = configService.get('redis')
 
           // 构建 Redis URL
           // 对密码进行URL编码，避免包含特殊字符导致解析错误

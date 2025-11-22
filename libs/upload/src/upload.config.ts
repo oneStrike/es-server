@@ -246,7 +246,7 @@ class FileTypeConfigProcessor {
 /**
  * 注册上传配置
  */
-export const UploadConfig = registerAs('upload', (): UploadConfigInterface => {
+export const UploadConfigRegister = registerAs('upload', (): UploadConfigInterface => {
   const isDocker =
     process.cwd() === '/app' ||
     existsSync('/.dockerenv') ||

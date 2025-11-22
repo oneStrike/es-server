@@ -4,12 +4,14 @@ import { BaseModule } from '@libs/base'
 import { CryptoModule } from '@libs/crypto'
 import { HealthModule } from '@libs/health'
 import { LoggerModule } from '@libs/logger'
-import { UploadConfig } from '@libs/upload'
+import { UploadConfigRegister } from '@libs/upload'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
 import { ThrottlerGuard } from '@nestjs/throttler'
-import { AuthConfigRegister } from './config/jwt.config'
+import { AuthConfigRegister } from './config/auth.config'
+import { DbConfigRegister } from './config/db.config'
+import { RedisConfigRegister } from './config/redis.config'
 import { HttpExceptionFilter } from './filters/http-exception.filter'
 import { JwtAuthGuard } from './guards/auth.guard'
 import { TransformInterceptor } from './interceptors/transform.interceptor'
@@ -21,7 +23,12 @@ import { AdminModule } from './modules/admin.module'
     ConfigModule.forRoot({
       isGlobal: true, // 设置为全局模块，其他模块可直接使用
       envFilePath: ['.env', `.env.${process.env.NODE_ENV || 'development'}`], // 指定环境变量文件路径
-      load: [UploadConfig, AuthConfigRegister], // 加载上传配置
+      load: [
+        UploadConfigRegister,
+        AuthConfigRegister,
+        DbConfigRegister,
+        RedisConfigRegister,
+      ], // 加载上传配置
       cache: true, // 缓存配置
     }),
 
