@@ -1,4 +1,3 @@
-import * as process from 'node:process'
 import { AuthService as BaseAuthService } from '@libs/auth'
 import { CaptchaService } from '@libs/captcha'
 
@@ -10,6 +9,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { FastifyRequest } from 'fastify'
 import { AuditService } from '../system/audit/audit.service'
 import { CacheKey } from './auth.constant'
@@ -32,6 +32,7 @@ export class AuthService extends RepositoryService {
     private readonly adminJwtService: BaseAuthService,
     private readonly auditService: AuditService,
     private readonly captchaService: CaptchaService,
+    private readonly configService: ConfigService,
   ) {
     super()
   }
@@ -52,7 +53,7 @@ export class AuthService extends RepositoryService {
       throw new BadRequestException('请输入验证码')
     }
 
-    if (process.env.NODE_ENV === 'production') {
+    if (this.configService.get('NODE_ENV') === 'production') {
       // 验证验证码是否正确
       const isValid = await this.captchaService.verify(
         CacheKey.CAPTCHA,
@@ -85,8 +86,7 @@ export class AuthService extends RepositoryService {
     if (user.isLocked) {
       const failAt = user.loginFailAt ? new Date(user.loginFailAt).getTime() : 0
       const now = Date.now()
-      const lockExpired =
-        !!failAt && now - failAt >= 1000 * 60 * 30
+      const lockExpired = !!failAt && now - failAt >= 1000 * 60 * 30
 
       if (lockExpired) {
         // 锁定已到期，自动解锁并重置失败信息
