@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy, StrategyOptions } from 'passport-jwt'
 import { JwtBlacklistService } from './jwt-blacklist.service'
+import { IAuthConfig } from './types'
 
 /**
  * JWT负载接口定义
@@ -29,8 +30,8 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
     private readonly configService: ConfigService,
   ) {
     // 获取并验证必要的配置
-    const secret = configService.get<string>('auth.secret')
-    if (!secret) {
+    const authConfig = configService.get<IAuthConfig>('auth')
+    if (!authConfig || !authConfig.secret) {
       throw new Error('AuthStrategy：缺少 JWT 密钥配置')
     }
 
@@ -38,12 +39,12 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
     const options: StrategyOptions = {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: secret,
+      secretOrKey: authConfig.secret,
       passReqToCallback: true,
     }
 
     super(options)
-    this.name = this.configService.get<string>('auth.strategyKey') || 'jwt'
+    this.name = authConfig.strategyKey
   }
 
   /**

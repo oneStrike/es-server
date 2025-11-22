@@ -1,8 +1,6 @@
-import process from 'node:process'
-
 import { Injectable, OnApplicationShutdown } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { PrismaPg } from '@prisma/adapter-pg'
-import dotenv from 'dotenv'
 import {
   exists,
   findPagination,
@@ -12,42 +10,30 @@ import {
 } from './extensions'
 import { PrismaClient } from './prisma-client/client'
 
-dotenv.config({
-  path: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
-})
-
-const {
-  POSTGRES_DB,
-  POSTGRES_USER,
-  POSTGRES_PASSWORD,
-  POSTGRES_DB_HOST,
-  POSTGRES_DB_PORT,
-  DATABASE_URL,
-} = process.env
-
-// 优先使用 DATABASE_URL（便于与 Prisma CLI 保持一致）；
-// 若未提供，则回退到基于 POSTGRES_* 变量拼接的连接字符串。
-const connectionString =
-  DATABASE_URL ??
-  `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_DB_HOST}:${POSTGRES_DB_PORT}/${POSTGRES_DB}`
-
-const adapter = new PrismaPg({ connectionString })
-export const prisma = new PrismaClient({ adapter }).$extends({
-  model: {
-    $allModels: {
-      exists,
-      ...softDelete,
-      findPagination,
-      maxOrder,
-      swapField,
+export function makePrismaClient(connectionString: string) {
+  const adapter = new PrismaPg({ connectionString })
+  return new PrismaClient({ adapter }).$extends({
+    model: {
+      $allModels: {
+        exists,
+        ...softDelete,
+        findPagination,
+        maxOrder,
+        swapField,
+      },
     },
-  },
-})
-export type PrismaClientType = typeof prisma
+  })
+}
+export type PrismaClientType = ReturnType<typeof makePrismaClient>
 
 @Injectable()
 export class PrismaService implements OnApplicationShutdown {
-  public readonly client: PrismaClientType = prisma
+  public readonly client: PrismaClientType
+
+  constructor(private readonly configService: ConfigService) {
+    const DATABASE_URL = this.configService.get('db.connection.url')
+    this.client = makePrismaClient(DATABASE_URL)
+  }
 
   createPrismaClient(): PrismaClientType {
     return this.client

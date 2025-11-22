@@ -1,4 +1,4 @@
-import type { AuthConfig } from './types'
+import type { IAuthConfig } from './types'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 
@@ -10,7 +10,7 @@ import { JwtBlacklistService } from './jwt-blacklist.service'
 
 @Injectable()
 export class AuthService {
-  protected readonly config: AuthConfig
+  protected readonly config: IAuthConfig
 
   constructor(
     protected readonly jwtService: JwtService,
@@ -18,7 +18,7 @@ export class AuthService {
     protected readonly blacklistService: JwtBlacklistService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
-    const config = this.configService.get<AuthConfig>('auth')
+    const config = this.configService.get<IAuthConfig>('auth')
     if (!config) {
       throw new Error('AuthService：缺少 auth 配置')
     }
