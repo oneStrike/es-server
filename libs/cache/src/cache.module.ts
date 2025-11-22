@@ -34,7 +34,8 @@ export class CustomCacheModule {
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => {
-          const {host, port, password, namespace} = configService.get('redis')
+          const { host, port, password, namespace } =
+            configService.get('redis.connection')
 
           // 构建 Redis URL
           // 对密码进行URL编码，避免包含特殊字符导致解析错误
