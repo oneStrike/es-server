@@ -1,5 +1,4 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import process from 'node:process'
 import { LoggerService } from '@libs/logger'
 import { parseRequestLogFields } from '@libs/utils'
 import {
@@ -9,6 +8,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -17,7 +17,10 @@ import { v4 as uuidv4 } from 'uuid'
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  constructor(private readonly loggerService: LoggerService) {}
+  constructor(
+    private readonly loggerService: LoggerService,
+    private readonly configService: ConfigService,
+  ) {}
 
   /**
    * 数据库错误映射表
@@ -71,7 +74,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     message: string | object
     details?: any
   } {
-    const isProduction = process.env.NODE_ENV === 'production'
+    const isProduction = this.configService.get('NODE_ENV') === 'production'
 
     if (exception instanceof HttpException) {
       const code = exception.getStatus()
