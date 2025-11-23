@@ -1,5 +1,5 @@
+import { DbConfig } from '@libs/config'
 import { jsonParse } from '@libs/utils'
-import { databaseConfig } from '../database.config'
 import { Prisma } from '../prisma-client/client'
 
 /**
@@ -20,42 +20,25 @@ export async function findPagination<T, A>(
   let { pageIndex, pageSize, orderBy, startDate, endDate, ...otherWhere } =
     rawWhere
 
-  // 默认值与边界：项目当前默认 pageIndex=0（0 基），保留兼容
-  const defaultPageIndex = Number.isFinite(
-    Number(databaseConfig?.pagination?.pageIndex),
-  )
-    ? Math.floor(Number(databaseConfig.pagination.pageIndex))
-    : 0
-  const defaultPageSize = Number.isFinite(
-    Number(databaseConfig?.pagination?.pageSize),
-  )
-    ? Math.max(1, Math.floor(Number(databaseConfig.pagination.pageSize)))
-    : 10
-  const maxPageSize = Number.isFinite(
-    Number((databaseConfig as any)?.maxListItemLimit),
-  )
-    ? Math.max(1, Math.floor(Number((databaseConfig as any).maxListItemLimit)))
-    : 500
-
   // 规范化分页参数，并智能识别 0 基/1 基传参：
   // - 若传入 pageIndex=0，则按 0 基；若传入 >=1，则按 1 基
   const rawPageIndex = Number.isFinite(Number(pageIndex))
     ? Math.floor(Number(pageIndex))
-    : defaultPageIndex
+    : DbConfig.query.pageIndex
   const normalizedPageIndex =
     rawPageIndex >= 1 ? rawPageIndex : Math.max(0, rawPageIndex)
   const normalizedPageSizeBase = Number.isFinite(Number(pageSize))
     ? Math.floor(Number(pageSize))
-    : defaultPageSize
+    : DbConfig.query.pageSize
   const normalizedPageSize = Math.min(
     Math.max(1, normalizedPageSizeBase),
-    maxPageSize,
+    DbConfig.query.maxListItemLimit,
   )
 
   // 排序默认值
   const effectiveOrderBy = orderBy
     ? jsonParse(orderBy)
-    : databaseConfig?.orderBy
+    : DbConfig?.query.orderBy
 
   // 日期区间过滤：仅在可解析时生效
   const hasStart = !!startDate

@@ -6,6 +6,7 @@ import {
   DbConfigRegister,
   LoggerConfigRegister,
   RedisConfigRegister,
+  RsaConfigRegister,
 } from '@libs/config'
 import { CryptoModule } from '@libs/crypto'
 import { HealthModule } from '@libs/health'
@@ -34,6 +35,7 @@ import { AdminModule } from './modules/admin.module'
         UploadConfigRegister,
         RedisConfigRegister,
         LoggerConfigRegister,
+        RsaConfigRegister,
       ], // 加载上传配置
       cache: true, // 缓存配置
     }),
