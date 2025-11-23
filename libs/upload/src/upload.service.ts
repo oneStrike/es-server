@@ -11,7 +11,6 @@ import { v4 as uuidv4 } from 'uuid'
 import {
   ensureUploadDirectory,
   generateFilePath,
-  generateFinalFilename,
   sanitizeOriginalName,
   sanitizeScene,
   toPublicPath,
@@ -172,13 +171,8 @@ export class UploadService {
         // 二次验证文件大小（防止流处理过程中的边界情况）
         validateFileSize(fileSize, config.maxFileSize, file.filename)
 
-        // 生成最终文件名并重命名临时文件
-        let finalName = generateFinalFilename(
-          file.filename,
-          ext,
-          config.filenameStrategy,
-          fileHash,
-        )
+        // 生成最终文件名并重命名临时文件 - 固定使用uuid策略
+        let finalName = `${uuidv4()}${ext}`
         let finalPath = join(savePath, finalName)
         try {
           // 若发生同名冲突（如重复上传同 hash），添加短 uuid 后缀
