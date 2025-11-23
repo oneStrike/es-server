@@ -4,6 +4,7 @@ import { BaseModule } from '@libs/base'
 import {
   AuthConfigRegister,
   DbConfigRegister,
+  LoggerConfigRegister,
   RedisConfigRegister,
 } from '@libs/config'
 import { CryptoModule } from '@libs/crypto'
@@ -32,6 +33,7 @@ import { AdminModule } from './modules/admin.module'
         DbConfigRegister,
         UploadConfigRegister,
         RedisConfigRegister,
+        LoggerConfigRegister,
       ], // 加载上传配置
       cache: true, // 缓存配置
     }),
