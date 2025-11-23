@@ -1,6 +1,5 @@
-import type { UploadConfigInterface } from '../upload.config'
 import fs from 'node:fs'
-import path, { join } from 'node:path'
+import { join } from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
 
 export function sanitizeScene(scene?: string): string {
@@ -44,45 +43,6 @@ export function generateFilePath(
   const day = String(today.getDate()).padStart(2, '0')
   const dateStr = `${year}-${month}-${day}`
   return join(uploadPath, dateStr, fileType, scene)
-}
-
-export function generateFinalFilename(
-  originalName: string,
-  ext: string,
-  strategy: UploadConfigInterface['filenameStrategy'],
-  hash: string,
-): string {
-  const base = (() => {
-    const e = path.extname(originalName)
-    const raw = originalName.slice(0, originalName.length - e.length)
-    let b = sanitizeOriginalName(raw)
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]/g, '-')
-    if (b.length > 32) {
-      b = b.slice(0, 32)
-    }
-    if (!b) {
-      b = 'file'
-    }
-    return b
-  })()
-
-  switch (strategy) {
-    case 'uuid':
-      return `${uuidv4()}${ext}`
-    case 'uuid_original': {
-      const shortUuid = uuidv4().slice(0, 8)
-      return `${base}-${shortUuid}${ext}`
-    }
-    case 'hash':
-      return `${hash}${ext}`
-    case 'hash_original': {
-      const shortHash = hash.slice(0, 8)
-      return `${base}-${shortHash}${ext}`
-    }
-    default:
-      return `${uuidv4()}${ext}`
-  }
 }
 
 export function toPublicPath(fullPath: string, uploadPath: string): string {
