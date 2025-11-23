@@ -10,30 +10,10 @@ const {
   DB_NAME,
   DB_PAGINATION_PAGE_SIZE = 15,
   DB_PAGINATION_PAGE_INDEX = 0,
+  DB_PAGINATION_MAX_LIST_ITEM_LIMIT = 500,
 } = process.env
 
-if (!DB_HOST) {
-  throw new Error('缺少环境变量 DB_HOST 环境变量')
-}
-
-if (!DB_PORT) {
-  throw new Error('缺少环境变量 DB_PORT 环境变量')
-}
-
-if (!DB_USER) {
-  throw new Error('缺少环境变量 DB_USER 环境变量')
-}
-
-if (!DB_PASSWORD) {
-  throw new Error('缺少环境变量 DB_PASSWORD 环境变量')
-}
-
-if (!DB_NAME) {
-  throw new Error('缺少环境变量 DB_NAME 环境变量')
-}
-
-// 创建数据库配置对象
-const dbConfig = {
+export const DbConfig = {
   // 数据库连接配置
   connection: {
     host: DB_HOST,
@@ -41,20 +21,22 @@ const dbConfig = {
     username: DB_USER,
     password: DB_PASSWORD,
     database: DB_NAME,
-    url: `postgresql://${encodeURIComponent(DB_USER)}:${encodeURIComponent(DB_PASSWORD)}@${DB_HOST}:${DB_PORT}/${DB_NAME}`,
+    url: `postgresql://${encodeURIComponent(DB_USER!)}:${encodeURIComponent(DB_PASSWORD!)}@${DB_HOST}:${DB_PORT}/${DB_NAME}`,
   },
+  query: {
+    pageSize: Number.isFinite(DB_PAGINATION_PAGE_SIZE)
+      ? Math.floor(Number(DB_PAGINATION_PAGE_SIZE))
+      : 15,
 
-  // 分页列表的查询参数默认值
-  pagination: {
-    pageSize: DB_PAGINATION_PAGE_SIZE,
-    pageIndex: DB_PAGINATION_PAGE_INDEX,
-  },
-
-  // 默认排序字段
-  orderBy: {
-    id: 'desc',
+    pageIndex: Number.isFinite(DB_PAGINATION_PAGE_INDEX)
+      ? Math.floor(Number(DB_PAGINATION_PAGE_INDEX))
+      : 0,
+    maxListItemLimit: Number.isFinite(DB_PAGINATION_MAX_LIST_ITEM_LIMIT)
+      ? Math.floor(Number(DB_PAGINATION_MAX_LIST_ITEM_LIMIT))
+      : 500,
+    orderBy: {
+      id: 'desc',
+    },
   },
 }
-
-export const DbConfig = dbConfig
 export const DbConfigRegister = registerAs('db', () => DbConfig)
