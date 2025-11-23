@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
 import { WinstonModule } from 'nest-winston'
 import { LoggerService } from './logger.service'
 
@@ -39,6 +40,7 @@ import { LoggerService } from './logger.service'
 @Global()
 @Module({
   imports: [
+    ConfigModule,
     WinstonModule.forRootAsync({
       useFactory: (loggerService: LoggerService) =>
         loggerService.buildLoggerOptions(),

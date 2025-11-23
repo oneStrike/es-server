@@ -1,5 +1,4 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import * as process from 'node:process'
 import { logStartupInfo, setupApp } from '@libs/base/nestjs'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'

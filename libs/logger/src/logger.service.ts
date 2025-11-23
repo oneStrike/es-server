@@ -1,7 +1,9 @@
 import type { Logger } from 'winston'
+import type { LoggerConfig } from './types'
 import fs from 'node:fs'
 import path from 'node:path'
-import process from 'node:process'
+import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { createLogger, format, transports } from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'
 
@@ -13,11 +15,12 @@ import DailyRotateFile from 'winston-daily-rotate-file'
  * - 日志格式构建
  * - 环境配置管理
  */
+@Injectable()
 export class LoggerService {
   // 默认日志器实例
   private logger: Logger
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     // 初始化默认日志器
     this.logger = createLogger(this.buildLoggerOptions())
   }
@@ -50,29 +53,6 @@ export class LoggerService {
     )
     const consoleFmt = format.combine(format.colorize(), base)
     return { base, consoleFmt }
-  }
-
-  /**
-   * 从环境变量获取日志配置
-   * @returns 日志配置对象
-   */
-  envConfig() {
-    const isProd = process.env.NODE_ENV === 'production'
-    const level = process.env.LOG_LEVEL || (isProd ? 'info' : 'debug')
-    const rootPath = process.env.LOG_PATH || path.resolve(process.cwd(), 'logs')
-    const maxSize = process.env.LOG_MAX_SIZE || '50m'
-    const retainDays = process.env.LOG_RETAIN_DAYS || '30d'
-    const compress = String(process.env.LOG_COMPRESS || 'true') === 'true'
-    const consoleLevel = process.env.LOG_CONSOLE_LEVEL || level
-    return {
-      isProd,
-      level,
-      rootPath,
-      maxSize,
-      retainDays,
-      compress,
-      consoleLevel,
-    }
   }
 
   /**
@@ -112,8 +92,14 @@ export class LoggerService {
    * @returns Winston日志器配置选项
    */
   buildLoggerOptions() {
-    const { level, rootPath, maxSize, retainDays, compress, consoleLevel } =
-      this.envConfig()
+    const {
+      level,
+      path: rootPath,
+      maxSize,
+      retainDays,
+      compress,
+      consoleLevel,
+    } = this.configService.get<LoggerConfig>('logger')!
     const logDir = path.join(rootPath, 'default')
     this.ensureDir(logDir)
     const { base, consoleFmt } = this.buildFormats()
@@ -169,25 +155,4 @@ export class LoggerService {
   getLogger(): Logger {
     return this.logger
   }
-
-  /**
-   * 获取日志器配置说明
-   * @returns 配置说明对象
-   */
-  getConfigDocumentation() {
-    return {
-      description: '日志系统环境变量配置说明',
-      variables: {
-        LOG_LEVEL: '日志级别（默认：production环境为info，开发环境为debug）',
-        LOG_PATH: '日志文件存储路径（默认：项目logs目录）',
-        LOG_MAX_SIZE: '单个日志文件最大大小（默认：50m）',
-        LOG_RETAIN_DAYS: '日志文件保留天数（默认：30天）',
-        LOG_COMPRESS: '是否压缩历史日志文件（默认：true）',
-        LOG_CONSOLE_LEVEL: '控制台输出日志级别（默认：与LOG_LEVEL相同）',
-      },
-    }
-  }
 }
-
-// 创建默认实例并导出
-export default new LoggerService()
