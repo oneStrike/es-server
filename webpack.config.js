@@ -55,6 +55,7 @@ module.exports = (env) => {
         '@libs/base': path.resolve(__dirname, 'libs/base/src'),
         '@libs/cache': path.resolve(__dirname, 'libs/cache/src'),
         '@libs/captcha': path.resolve(__dirname, 'libs/captcha/src'),
+        '@libs/config': path.resolve(__dirname, 'libs/config/src'),
         '@libs/crypto': path.resolve(__dirname, 'libs/crypto/src'),
         '@libs/database': path.resolve(__dirname, 'libs/database/src'),
         '@libs/decorators': path.resolve(__dirname, 'libs/decorators/src'),
@@ -64,7 +65,6 @@ module.exports = (env) => {
         '@libs/upload': path.resolve(__dirname, 'libs/upload/src'),
         '@libs/utils': path.resolve(__dirname, 'libs/utils/src'),
         '@libs/types': path.resolve(__dirname, 'libs/types/src'),
-        '@libs/config': path.resolve(__dirname, 'libs/config/src'),
       },
       // 优化模块解析
       modules: ['node_modules', path.resolve(projectPath, 'src')],

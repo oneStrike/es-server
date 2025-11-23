@@ -2,6 +2,7 @@ import type { Logger } from 'winston'
 import type { LoggerConfig } from './types'
 import fs from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { createLogger, format, transports } from 'winston'
@@ -39,8 +40,8 @@ export class LoggerService {
    * 构建日志格式化器
    * @returns 包含基础格式和控制台格式的对象
    */
-  buildFormats(): { base: any, consoleFmt: any } {
-    const base = format.combine(
+  buildFormats(): { consoleFmt: any, fileFmt: any } {
+    const consoleBase = format.combine(
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),
       format.printf(({ timestamp, level, message, context, stack }) => {
@@ -51,8 +52,14 @@ export class LoggerService {
         return `${timestamp} ${level} ${ctx}${msg}${s}`
       }),
     )
-    const consoleFmt = format.combine(format.colorize(), base)
-    return { base, consoleFmt }
+    const consoleFmt = format.combine(format.colorize(), consoleBase)
+    const fileFmt = format.combine(
+      format.timestamp(),
+      format.errors({ stack: true }),
+      format.metadata(),
+      format.json(),
+    )
+    return { consoleFmt, fileFmt }
   }
 
   /**
@@ -92,32 +99,43 @@ export class LoggerService {
    * @returns Winston日志器配置选项
    */
   buildLoggerOptions() {
-    const {
-      level,
-      path: rootPath,
-      maxSize,
-      retainDays,
-      compress,
-      consoleLevel,
-    } = this.configService.get<LoggerConfig>('logger')!
-    const logDir = path.join(rootPath, 'default')
+    const conf = this.configService.get<LoggerConfig>('logger')!
+    const level = conf.level
+    const consoleLevel = conf.consoleLevel || level
+    const basePath = conf.path
+    const rootPath = path.isAbsolute(basePath)
+      ? basePath
+      : path.resolve(process.cwd(), basePath)
+    const maxSize = conf.maxSize
+    const retainDays = conf.retainDays
+    const compress = conf.compress
+    const logDir = rootPath
     this.ensureDir(logDir)
-    const { base, consoleFmt } = this.buildFormats()
+    const { consoleFmt, fileFmt } = this.buildFormats()
+    const isDev = this.configService.get('NODE_ENV') !== 'production'
     return {
       level,
       exitOnError: false,
       transports: [
         new transports.Console({
           level: consoleLevel,
-          format: consoleFmt,
+          format: isDev ? consoleFmt : fileFmt,
           handleExceptions: true,
         }),
-        this.rotate(logDir, 'app', 'info', base, maxSize, retainDays, compress),
+        this.rotate(
+          logDir,
+          'app',
+          'info',
+          fileFmt,
+          maxSize,
+          retainDays,
+          compress,
+        ),
         this.rotate(
           logDir,
           'error',
           'error',
-          base,
+          fileFmt,
           maxSize,
           retainDays,
           compress,
@@ -128,7 +146,7 @@ export class LoggerService {
           logDir,
           'exceptions',
           'error',
-          base,
+          fileFmt,
           maxSize,
           retainDays,
           compress,
@@ -139,7 +157,7 @@ export class LoggerService {
           logDir,
           'rejections',
           'error',
-          base,
+          fileFmt,
           maxSize,
           retainDays,
           compress,
@@ -154,5 +172,9 @@ export class LoggerService {
    */
   getLogger(): Logger {
     return this.logger
+  }
+
+  getLoggerWithContext(context: string): Logger {
+    return this.logger.child({ context })
   }
 }
