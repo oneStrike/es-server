@@ -74,7 +74,7 @@ export class UploadService {
 
     // 如果有错误且没有成功的文件，抛出第一个错误
     if (errors.length > 0 && successResults.length === 0) {
-      throw errors[0]
+      throw new BadRequestException('文件上传失败')
     }
 
     // 如果有部分失败，记录警告
