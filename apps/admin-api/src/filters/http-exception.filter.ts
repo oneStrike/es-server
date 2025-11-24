@@ -61,7 +61,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     })
 
     const errorResponse = {
-      code: status,
+      status,
       message,
       traceId,
     }
@@ -76,18 +76,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     message: string | object
     details?: any
   } {
-    const isProduction = this.configService.get('NODE_ENV') === 'production'
-
     if (exception instanceof HttpException) {
       const code = exception.getStatus()
       const response = exception.getResponse() as any
       return {
         status: code,
-        message: Array.isArray(response?.message)
-          ? response.message.join('，')
-          : response.message
-            ? response.message
-            : response,
+        message: response.message ? response.message : response,
       }
     }
 
@@ -95,9 +89,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof Error && 'code' in exception) {
       const code = (exception as { code?: any }).code
       const knownMessage = this.errorMessageMap[code]
-      const fallbackMessage = isProduction
-        ? knownMessage || '数据库错误'
-        : knownMessage || exception.message || '数据库错误'
+      const fallbackMessage = knownMessage || exception.message
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: fallbackMessage,
@@ -109,16 +101,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof Error) {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: isProduction
-          ? '内部服务器错误'
-          : exception.message || '内部服务器错误',
+        message: exception.message || '内部服务器错误',
       }
     }
 
     // 未知异常类型
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: isProduction ? '内部服务器错误' : '未知错误',
+      message: '内部服务器错误',
     }
   }
 

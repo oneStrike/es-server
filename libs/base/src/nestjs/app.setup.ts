@@ -1,40 +1,16 @@
+import type { AppConfigInterface } from '@libs/types'
 import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
 import fastifyCsrf from '@fastify/csrf-protection'
 import fastifyHelmet from '@fastify/helmet'
-import { isProduction } from '@libs/utils'
 
+import { isDevelopment } from '@libs/utils'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { setupCompression } from './compression'
 import { setupMultipart } from './multipart'
 import { setupSwagger } from './swagger'
-
-export interface AppSetupConfig {
-  // 全局路由前缀
-  globalPrefix?: string
-  // 端口号
-  port?: number
-  // swagger 文档是否启用
-  enableSwagger?: boolean
-  // swagger文档配置
-  swaggerConfig?: {
-    // 文档标题
-    title?: string
-    // 文档描述
-    description?: string
-    // 文档版本
-    version?: string
-    // 文档路径
-    path?: string
-  }
-}
-
-const defaultConfig: AppSetupConfig = {
-  globalPrefix: 'api',
-  port: 8080,
-}
 
 /**
  * 配置应用的所有中间件和插件
@@ -42,14 +18,12 @@ const defaultConfig: AppSetupConfig = {
 export async function setupApp(
   app: NestFastifyApplication,
   fastifyAdapter: FastifyAdapter,
-  config?: AppSetupConfig,
+  config: AppConfigInterface,
 ): Promise<void> {
-  const mergedConfig = { ...defaultConfig, ...config }
-
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER))
 
   // 设置全局路由前缀
-  app.setGlobalPrefix(mergedConfig.globalPrefix!)
+  app.setGlobalPrefix(config.globalApiPrefix)
 
   // 处理浏览器自动请求的站点图标，避免 404 噪音日志
   // 若需要自定义图标，可改为使用 @fastify/static 提供真实文件
@@ -76,7 +50,7 @@ export async function setupApp(
   })
 
   // 配置 Swagger 文档（生产环境可条件性禁用）
-  if (isProduction() || mergedConfig.enableSwagger) {
-    setupSwagger(app, mergedConfig.swaggerConfig)
+  if (isDevelopment() || config.swaggerConfig.enable) {
+    setupSwagger(app, config.swaggerConfig)
   }
 }

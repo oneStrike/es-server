@@ -1,14 +1,9 @@
+import type { AppConfigInterface } from '@libs/types'
 import process from 'node:process'
+import { isDevelopment } from '@libs/utils'
 import { registerAs } from '@nestjs/config'
 
-export interface AppConfigInterface {
-  name: string
-  version: string
-  port: number
-  fileUrlPrefix: string
-}
-
-export const AppConfigRegister = registerAs('app', () => {
+export const AppConfigRegister = registerAs('app', (): AppConfigInterface => {
   const {
     APP_NAME = 'admin-api',
     APP_PORT = '8080',
@@ -19,6 +14,14 @@ export const AppConfigRegister = registerAs('app', () => {
     name: APP_NAME,
     version: APP_VERSION,
     port: Number(APP_PORT),
+    globalApiPrefix: 'api',
     fileUrlPrefix: APP_FILE_URL_PREFIX,
+    swaggerConfig: {
+      enable: isDevelopment(),
+      title: 'API文档',
+      description: 'API文档',
+      version: APP_VERSION,
+      path: 'api-doc',
+    },
   }
 })
