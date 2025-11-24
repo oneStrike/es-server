@@ -1,6 +1,6 @@
+import { isAbsolute, resolve } from 'node:path'
 import process from 'node:process'
 import { registerAs } from '@nestjs/config'
-
 /**
  * 文件上传配置
  */
@@ -267,11 +267,10 @@ const {
 const maxFileSize =
   Number(UPLOAD_MAX_FILE_SIZE.slice(0, -2)) * fileSizeMap[sizeUnit]
 const maxFiles = Number(UPLOAD_MAX_FILES)
-
 export const UploadConfig = {
   maxFileSize,
   maxFiles,
-  uploadDir: UPLOAD_DIR!,
+  uploadDir: isAbsolute(UPLOAD_DIR!) ? UPLOAD_DIR : resolve(UPLOAD_DIR!),
   allowFile: {
     image: {
       mimeTypes: allowedImageType.mimeTypes,
@@ -297,7 +296,6 @@ export const UploadConfig = {
   allowedMimeTypes,
   allowedExtensions,
 }
-
 /**
  * 注册上传配置
  */
