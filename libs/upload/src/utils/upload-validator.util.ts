@@ -1,4 +1,4 @@
-import type { UploadConfigInterface } from '../upload.config'
+import type { UploadConfigInterface } from '@libs/config'
 import { extname } from 'node:path'
 import { BadRequestException } from '@nestjs/common'
 
@@ -8,27 +8,22 @@ function initMimeTypeMap(config: UploadConfigInterface): void {
   if (mimeTypeMap.size > 0) {
     return
   }
-  const typeCategories = [
-    { category: 'image', types: config.imageType.mimeTypes },
-    { category: 'audio', types: config.audioType.mimeTypes },
-    { category: 'video', types: config.videoType.mimeTypes },
-    { category: 'document', types: config.documentType.mimeTypes },
-    { category: 'archive', types: config.archiveType.mimeTypes },
-  ]
-  typeCategories.forEach(({ category, types }) => {
-    types.forEach((t) => mimeTypeMap.set(t, category))
-  })
+
+  for (const allowFileKey in config.allowFile) {
+    const fileTypeConfig = config.allowFile[allowFileKey]
+    fileTypeConfig.mimeTypes.forEach((t) => mimeTypeMap.set(t, allowFileKey))
+  }
 }
 
 export function getFileTypeCategory(
   mimeType: string,
   config: UploadConfigInterface,
-): string {
+) {
   initMimeTypeMap(config)
-  return mimeTypeMap.get(mimeType) || 'other'
+  return mimeTypeMap.get(mimeType)!
 }
 
-export function validateFile(file: any, config: UploadConfigInterface): void {
+export function validateFile(file: any, config: UploadConfigInterface) {
   if (!config.allowedMimeTypes.includes(file.mimetype)) {
     throw new BadRequestException(
       `文件 ${file.filename} 类型不支持: ${file.mimetype}`,
@@ -39,20 +34,14 @@ export function validateFile(file: any, config: UploadConfigInterface): void {
     throw new BadRequestException(`文件 ${file.filename} 扩展名不支持: ${ext}`)
   }
   const category = getFileTypeCategory(file.mimetype, config)
-  const categoryExtsMap: Record<string, string[]> = {
-    image: config.imageType.extensions,
-    audio: config.audioType.extensions,
-    video: config.videoType.extensions,
-    document: config.documentType.extensions,
-    archive: config.archiveType.extensions,
-    other: [],
-  }
-  const exts = categoryExtsMap[category] || []
+
+  const exts = config.allowFile[category] || []
   if (exts.length > 0 && !exts.includes(ext)) {
     throw new BadRequestException(
       `文件扩展名与类型不匹配: ${file.mimetype} 不应为 ${ext}`,
     )
   }
+  return { fileType: category }
 }
 
 export function validateFileSize(

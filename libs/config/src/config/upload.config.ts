@@ -1,5 +1,3 @@
-import { existsSync } from 'node:fs'
-import { isAbsolute, join } from 'node:path'
 import process from 'node:process'
 import { registerAs } from '@nestjs/config'
 
@@ -19,11 +17,13 @@ export interface UploadConfigInterface {
   allowedMimeTypes: string[]
   /** 允许的文件扩展名 */
   allowedExtensions: string[]
-  imageType: fileTypeConfig
-  audioType: fileTypeConfig
-  videoType: fileTypeConfig
-  documentType: fileTypeConfig
-  archiveType: fileTypeConfig
+  allowFile: {
+    image: fileTypeConfig
+    audio: fileTypeConfig
+    video: fileTypeConfig
+    document: fileTypeConfig
+    archive: fileTypeConfig
+  }
   /** 上传目录 */
   uploadDir: string
 }
@@ -207,28 +207,28 @@ class FileTypeConfigProcessor {
    */
   static processAllFileTypes() {
     const result = {
-      imageType: this.processFileTypeConfig('image'),
-      audioType: this.processFileTypeConfig('audio'),
-      videoType: this.processFileTypeConfig('video'),
-      documentType: this.processFileTypeConfig('document'),
-      archiveType: this.processFileTypeConfig('archive'),
+      allowedImageType: this.processFileTypeConfig('image'),
+      allowedAudioType: this.processFileTypeConfig('audio'),
+      allowedVideoType: this.processFileTypeConfig('video'),
+      allowedDocumentType: this.processFileTypeConfig('document'),
+      allowedArchiveType: this.processFileTypeConfig('archive'),
     }
 
     // 生成允许的MIME类型和扩展名列表
     const allowedMimeTypes = [
-      ...result.imageType.mimeTypes,
-      ...result.audioType.mimeTypes,
-      ...result.videoType.mimeTypes,
-      ...result.documentType.mimeTypes,
-      ...result.archiveType.mimeTypes,
+      ...result.allowedImageType.mimeTypes,
+      ...result.allowedAudioType.mimeTypes,
+      ...result.allowedVideoType.mimeTypes,
+      ...result.allowedDocumentType.mimeTypes,
+      ...result.allowedArchiveType.mimeTypes,
     ]
 
     const allowedExtensions = [
-      ...result.imageType.extensions,
-      ...result.audioType.extensions,
-      ...result.videoType.extensions,
-      ...result.documentType.extensions,
-      ...result.archiveType.extensions,
+      ...result.allowedImageType.extensions,
+      ...result.allowedAudioType.extensions,
+      ...result.allowedVideoType.extensions,
+      ...result.allowedDocumentType.extensions,
+      ...result.allowedArchiveType.extensions,
     ]
 
     return {
@@ -239,84 +239,66 @@ class FileTypeConfigProcessor {
   }
 }
 
+const fileSizeMap = {
+  KB: 1024,
+  MB: 1024 * 1024,
+  GB: 1024 * 1024 * 1024,
+}
+
+const {
+  UPLOAD_DIR,
+  UPLOAD_MAX_FILE_SIZE = '100MB',
+  UPLOAD_MAX_FILES = 10,
+} = process.env
+// 解析上传文件大小配置
+const sizeUnit = UPLOAD_MAX_FILE_SIZE.slice(-2) as keyof typeof fileSizeMap
+
+// 使用配置处理器统一处理所有文件类型
+const {
+  allowedImageType,
+  allowedAudioType,
+  allowedVideoType,
+  allowedDocumentType,
+  allowedArchiveType,
+  allowedMimeTypes,
+  allowedExtensions,
+} = FileTypeConfigProcessor.processAllFileTypes()
+
+const maxFileSize =
+  Number(UPLOAD_MAX_FILE_SIZE.slice(0, -2)) * fileSizeMap[sizeUnit]
+const maxFiles = Number(UPLOAD_MAX_FILES)
+
+export const UploadConfig = {
+  maxFileSize,
+  maxFiles,
+  uploadDir: UPLOAD_DIR!,
+  allowFile: {
+    image: {
+      mimeTypes: allowedImageType.mimeTypes,
+      extensions: allowedImageType.extensions,
+    },
+    audio: {
+      mimeTypes: allowedAudioType.mimeTypes,
+      extensions: allowedAudioType.extensions,
+    },
+    video: {
+      mimeTypes: allowedVideoType.mimeTypes,
+      extensions: allowedVideoType.extensions,
+    },
+    document: {
+      mimeTypes: allowedDocumentType.mimeTypes,
+      extensions: allowedDocumentType.extensions,
+    },
+    archive: {
+      mimeTypes: allowedArchiveType.mimeTypes,
+      extensions: allowedArchiveType.extensions,
+    },
+  },
+  allowedMimeTypes,
+  allowedExtensions,
+}
+
 /**
  * 注册上传配置
  */
-export const UploadConfigRegister = registerAs(
-  'upload',
-  (): UploadConfigInterface => {
-    const isDocker =
-      process.cwd() === '/app' ||
-      existsSync('/.dockerenv') ||
-      process.env.DOCKER === 'true'
-
-    // 使用配置处理器统一处理所有文件类型
-    const fileTypeConfigs = FileTypeConfigProcessor.processAllFileTypes()
-
-    // 获取基本配置
-    const maxFileSize = (() => {
-      const value = process.env.UPLOAD_MAX_FILE_SIZE
-      if (value) {
-        const num = Number.parseInt(value, 10)
-        return Number.isNaN(num) || num <= 0 ? 100 * 1024 * 1024 : num
-      }
-      return 100 * 1024 * 1024
-    })()
-
-    const maxFiles = (() => {
-      const value = process.env.UPLOAD_MAX_FILES
-      if (value) {
-        const num = Number.parseInt(value, 10)
-        return Number.isNaN(num) || num <= 0 ? 50 : num
-      }
-      return 50
-    })()
-
-    const uploadDir = (() => {
-      // 允许通过环境变量覆盖，即使在容器中
-      const dirCandidate =
-        process.env.UPLOAD_DIR ||
-        (isDocker
-          ? '/app/uploads'
-          : process.env.APP_DATA_DIR
-            ? join(process.env.APP_DATA_DIR, 'uploads')
-            : 'uploads')
-
-      if (process.env.UPLOAD_ABSOLUTE_PATH === 'true') {
-        return dirCandidate
-      }
-
-      return isAbsolute(dirCandidate)
-        ? dirCandidate
-        : join(process.cwd(), dirCandidate)
-    })()
-
-    return {
-      maxFileSize,
-      maxFiles,
-      imageType: {
-        mimeTypes: fileTypeConfigs.imageType.mimeTypes,
-        extensions: fileTypeConfigs.imageType.extensions,
-      },
-      audioType: {
-        mimeTypes: fileTypeConfigs.audioType.mimeTypes,
-        extensions: fileTypeConfigs.audioType.extensions,
-      },
-      videoType: {
-        mimeTypes: fileTypeConfigs.videoType.mimeTypes,
-        extensions: fileTypeConfigs.videoType.extensions,
-      },
-      documentType: {
-        mimeTypes: fileTypeConfigs.documentType.mimeTypes,
-        extensions: fileTypeConfigs.documentType.extensions,
-      },
-      archiveType: {
-        mimeTypes: fileTypeConfigs.archiveType.mimeTypes,
-        extensions: fileTypeConfigs.archiveType.extensions,
-      },
-      allowedMimeTypes: fileTypeConfigs.allowedMimeTypes,
-      allowedExtensions: fileTypeConfigs.allowedExtensions,
-      uploadDir,
-    }
-  },
-)
+export const UploadConfigRegister = registerAs('upload', () => UploadConfig)

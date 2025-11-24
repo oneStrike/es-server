@@ -1,4 +1,4 @@
-import type { UploadConfigInterface } from '@libs/upload'
+import type { UploadConfigInterface } from '@libs/config'
 import type {
   FastifyAdapter,
   NestFastifyApplication,
@@ -13,9 +13,9 @@ export async function setupMultipart(
   fastifyAdapter: FastifyAdapter,
   app: NestFastifyApplication,
 ) {
-  const uploadConfig = app
-    .get(ConfigService)
-    .get<UploadConfigInterface>('upload')!
+  const configService = app.get(ConfigService)
+  const uploadConfig = configService.get<UploadConfigInterface>('upload')!
+  const appConfig = configService.get('app')!
 
   // 确保上传目录存在（在挂载的宿主机目录下递归创建）
   await mkdir(uploadConfig.uploadDir, { recursive: true })
@@ -23,7 +23,7 @@ export async function setupMultipart(
   // 注册静态文件服务
   await fastifyAdapter.register(fastifyStatic as any, {
     root: uploadConfig.uploadDir,
-    prefix: '/uploads/',
+    prefix: appConfig.fileUrlPrefix,
     index: false,
     dotfiles: 'deny',
     etag: true,
@@ -43,7 +43,7 @@ export async function setupMultipart(
   })
 
   // 注册multipart插件
-  await fastifyAdapter.register(fastifyMultipart as any, {
+  await fastifyAdapter.register(fastifyMultipart, {
     throwFileSizeLimit: true, // 启用文件大小限制异常抛出
     limits: {
       fieldNameSize: 100, // 字段名称最大长度

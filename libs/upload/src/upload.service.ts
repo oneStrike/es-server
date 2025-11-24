@@ -1,6 +1,5 @@
+import type { UploadConfigInterface } from '@libs/config'
 import type { FastifyRequest } from 'fastify'
-import type { UploadConfigInterface } from './upload.config'
-
 import { join } from 'node:path'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
@@ -9,26 +8,18 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
 import {
-  ensureUploadDirectory,
   generateFilePath,
   sanitizeOriginalName,
-  sanitizeScene,
-  toPublicPath,
 } from './utils/upload-path.util'
 import { createSignatureCheckStream } from './utils/upload-signature.util'
 import {
   cleanupTempFile,
   createFileProcessingStream,
   createWriteStream,
-  fileExists,
   getFileExtension,
   renameFile,
 } from './utils/upload-stream.util'
-import {
-  getFileTypeCategory,
-  validateFile,
-  validateFileSize,
-} from './utils/upload-validator.util'
+import { validateFile, validateFileSize } from './utils/upload-validator.util'
 
 const pump = promisify(pipeline)
 
@@ -38,23 +29,12 @@ const pump = promisify(pipeline)
  */
 @Injectable()
 export class UploadService {
-  private uploadPath: string
-
-  private uploadConfig: UploadConfigInterface | null = null
-
-  // 注入子服务已抽离为utils
+  private readonly uploadConfig: UploadConfigInterface
+  private readonly fileUrlPrefix: string
 
   constructor(private configService: ConfigService) {
-    this.uploadPath = this.getUploadConfig().uploadDir
-  }
-
-  private getUploadConfig(): UploadConfigInterface {
-    // 缓存配置以避免重复获取
-    if (!this.uploadConfig) {
-      this.uploadConfig =
-        this.configService.get<UploadConfigInterface>('upload')!
-    }
-    return this.uploadConfig
+    this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
+    this.fileUrlPrefix = this.configService.get('app.fileUrlPrefix')!
   }
 
   /**
@@ -67,17 +47,18 @@ export class UploadService {
     data: FastifyRequest,
     scene?: string,
   ): Promise<UploadResponseDto[]> {
-    const config = this.getUploadConfig()
     const files = data.files()
     const filePromises: Promise<UploadResponseDto | null>[] = []
     const errors: Error[] = []
 
-    scene = sanitizeScene(scene)
+    if (!scene || !/^[a-z0-9]+$/i.test(scene) || scene.length > 10) {
+      throw new BadRequestException('未知的上传场景')
+    }
 
     // 收集所有文件处理任务
     for await (const file of files) {
       // 内联文件处理逻辑以提高性能
-      const filePromise = this.processSingleFile(file, config, scene)
+      const filePromise = this.processSingleFile(file, scene)
       filePromises.push(filePromise)
     }
 
@@ -109,28 +90,23 @@ export class UploadService {
   /**
    * 处理单个文件的完整流程
    * @param file 文件对象
-   * @param config 上传配置
    * @param scene 场景
    * @returns 上传结果
    */
   private async processSingleFile(
     file: any,
-    config: UploadConfigInterface,
     scene: string,
   ): Promise<UploadResponseDto | null> {
-    const startTime = Date.now()
-
     try {
       // 验证文件
-      validateFile(file, config)
-
-      // 获取文件类型分类
-      const fileType = getFileTypeCategory(file.mimetype, config)
+      const { fileType } = validateFile(file, this.uploadConfig)
 
       // 生成保存路径
-      const savePath = generateFilePath(this.uploadPath, fileType, scene)
-      ensureUploadDirectory(savePath)
-
+      const savePath = generateFilePath(
+        this.uploadConfig.uploadDir,
+        fileType,
+        scene,
+      )
       // 生成文件名（保留原扩展，规范化小写）
       const ext = getFileExtension(file.filename)
       const tempName = `.${uuidv4()}.uploading`
@@ -138,11 +114,10 @@ export class UploadService {
       const writeStream = createWriteStream(tempPath)
 
       // 创建文件处理流
-      const {
-        stream: processingStream,
-        getSize,
-        getHash,
-      } = createFileProcessingStream(config, file.filename)
+      const { stream: processingStream, getSize } = createFileProcessingStream(
+        this.uploadConfig,
+        file.filename,
+      )
 
       // 签名校验流（防伪造 Content-Type）
       const signatureStream = createSignatureCheckStream(
@@ -160,48 +135,29 @@ export class UploadService {
           // 删除已写入的部分文件
           cleanupTempFile(tempPath, null)
           throw new BadRequestException(
-            `文件 ${file.filename} 超出大小限制 ${config.maxFileSize} 字节`,
+            `文件 ${file.filename} 超出大小限制 ${this.uploadConfig.maxFileSize} 字节`,
           )
         }
 
-        const processingTime = Date.now() - startTime
         const fileSize = getSize()
-        const fileHash = getHash()
-
         // 二次验证文件大小（防止流处理过程中的边界情况）
-        validateFileSize(fileSize, config.maxFileSize, file.filename)
+        validateFileSize(fileSize, this.uploadConfig.maxFileSize, file.filename)
 
         // 生成最终文件名并重命名临时文件 - 固定使用uuid策略
-        let finalName = `${uuidv4()}${ext}`
-        let finalPath = join(savePath, finalName)
+        const finalName = `${uuidv4()}${ext}`
+        const finalPath = join(savePath, finalName)
         try {
-          // 若发生同名冲突（如重复上传同 hash），添加短 uuid 后缀
-          if (fileExists(finalPath)) {
-            const altName = `${finalName.replace(ext, '')}-${uuidv4().slice(0, 6)}${ext}`
-            const altPath = join(savePath, altName)
-            renameFile(tempPath, altPath)
-            console.warn(`目标文件已存在，已改名为: ${altName}`)
-            finalName = altName
-            finalPath = altPath
-          } else {
-            renameFile(tempPath, finalPath)
-          }
+          renameFile(tempPath, finalPath)
         } catch (renameError: any) {
           // 重命名失败则清理临时文件并抛出错误
           cleanupTempFile(tempPath, null)
           throw renameError
         }
 
-        console.log(
-          `文件上传成功: ${file.filename} -> ${finalName} (${fileSize} bytes, ${processingTime}ms, hash: ${fileHash})`,
-        )
-        // 计算公开路径（相对于 uploads 静态前缀）
-        const filePath = toPublicPath(finalPath, this.uploadPath)
-
         return {
           filename: finalName,
           originalName: sanitizeOriginalName(file.filename),
-          filePath,
+          filePath: `${this.fileUrlPrefix}${finalPath}`,
           fileSize,
           mimeType: file.mimetype,
           fileType,
