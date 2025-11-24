@@ -68,13 +68,15 @@ export class BaseModule {
           whitelist: true, // 过滤掉未在 DTO 中定义的属性
           exceptionFactory: (errors) =>
             new BadRequestException(
-              errors.map((error) => {
-                const errorMsg: string[] = []
-                if (error.constraints) {
-                  errorMsg.push(...Object.values(error.constraints))
-                }
-                return `${error.property}${errorMsg.join('，')}`
-              }),
+              errors
+                .map((error) => {
+                  const errorMsg: string[] = []
+                  if (error.constraints) {
+                    errorMsg.push(...Object.values(error.constraints))
+                  }
+                  return `${error.property}${errorMsg.join('，')}`
+                })
+                .join(','),
             ),
         }),
       },
