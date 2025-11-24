@@ -76,7 +76,6 @@ export class AuthService extends RepositoryService {
         isEnabled: true, // 只查找启用的用户
       },
     })
-    console.log(user)
     if (!user) {
       throw new BadRequestException('账号或密码错误')
     }

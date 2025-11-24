@@ -47,22 +47,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const traceId = uuidv4()
     const parsed = this.safeParse(request)
     const logger = this.loggerService.getLoggerWithContext('http-exception')
-    const payload = {
+
+    logger.log({
+      level: 'error',
+      message: 'http_exception',
       traceId,
+      errorMessage: message,
+      stack: exception instanceof Error ? exception.stack : undefined,
       status,
       path: parsed?.path,
       method: parsed?.method,
       ip: parsed?.ip,
-      message,
-    }
-    const stack = exception instanceof Error ? exception.stack : undefined
-    const { message: errorMessage, ...rest } = payload
-    logger.log({
-      level: 'error',
-      message: 'http_exception',
-      errorMessage: message,
-      stack,
-      ...rest,
     })
 
     const errorResponse = {
