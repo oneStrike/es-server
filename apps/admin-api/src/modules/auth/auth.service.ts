@@ -122,7 +122,7 @@ export class AuthService extends RepositoryService {
     // 解密密码
     let password = body.password
     try {
-      password = this.rsaService.decryptWithAdmin(body.password)
+      password = this.rsaService.decryptWith(body.password)
     } catch {
       await this.updateLoginFailInfo(user, requestIp)
       throw new BadRequestException('账号或密码错误')

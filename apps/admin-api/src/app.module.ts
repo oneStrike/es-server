@@ -7,11 +7,11 @@ import {
   LoggerConfigRegister,
   RedisConfigRegister,
   RsaConfigRegister,
+  UploadConfigRegister,
 } from '@libs/config'
 import { CryptoModule } from '@libs/crypto'
 import { HealthModule } from '@libs/health'
 import { LoggerModule } from '@libs/logger'
-import { UploadConfigRegister } from '@libs/upload'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'

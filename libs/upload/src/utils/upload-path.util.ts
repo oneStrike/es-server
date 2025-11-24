@@ -1,57 +1,65 @@
 import fs from 'node:fs'
 import { join } from 'node:path'
-import { v4 as uuidv4 } from 'uuid'
 
-export function sanitizeScene(scene?: string): string {
-  const fallback = 'shared'
-  if (!scene) {
-    return fallback
-  }
-  let s = String(scene)
-    .replace(/[/\\]/g, '-')
-    .replace(/\.+/g, '-')
-    .trim()
-    .toLowerCase()
-  if (!s) {
-    return fallback
-  }
-  s = s.replace(/[^a-z0-9._-]/g, '-')
-  if (s.length > 64) {
-    s = s.slice(0, 64)
-  }
-  return s || fallback
-}
-
+/**
+ * 清理原始文件名，确保其安全有效
+ * @param name 原始文件名
+ * @returns 清理后的文件名
+ */
 export function sanitizeOriginalName(name: string): string {
-  let n = String(name)
+  // 替换换行符为空格，移除控制字符，处理特殊情况
+  let sanitized = String(name)
+    // 替换换行符和回车符为空格
     .replace(/[\r\n]/g, ' ')
+    // 压缩多个空格为单个
+    .replace(/\s+/g, ' ')
+    // 去除首尾空白
     .trim()
-  if (n.length > 128) {
-    n = n.slice(0, 128)
+
+  // 处理空文件名情况
+  if (!sanitized) {
+    return 'unnamed-file'
   }
-  return n
+
+  // 长度限制
+  if (sanitized.length > 128) {
+    sanitized = sanitized.slice(0, 128)
+  }
+
+  return sanitized
 }
 
+/**
+ * 生成文件保存路径
+ * @param uploadPath 基础上传路径
+ * @param fileType 文件类型分类
+ * @param scene 场景名称
+ * @returns 完整的文件保存路径
+ */
 export function generateFilePath(
   uploadPath: string,
   fileType: string,
   scene: string,
-): string {
+) {
+  // 参数验证
+  if (!uploadPath || !fileType || !scene) {
+    throw new Error('上传失败')
+  }
+
+  // 使用现代日期处理方式生成日期字符串
   const today = new Date()
   const year = today.getFullYear()
   const month = String(today.getMonth() + 1).padStart(2, '0')
   const day = String(today.getDate()).padStart(2, '0')
   const dateStr = `${year}-${month}-${day}`
-  return join(uploadPath, dateStr, fileType, scene)
-}
-
-export function toPublicPath(fullPath: string, uploadPath: string): string {
-  const relative = fullPath.replace(uploadPath, '').replace(/^[/\\]/, '')
-  return `/uploads/${relative.replace(/\\/g, '/')}`
-}
-
-export function ensureUploadDirectory(dirPath: string): void {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true })
+  const savePath = join(uploadPath, dateStr, fileType, scene)
+  if (!fs.existsSync(savePath)) {
+    try {
+      fs.mkdirSync(savePath, { recursive: true, mode: 0o755 })
+    } catch {
+      throw new Error(`上传失败`)
+    }
   }
+  // 安全地拼接路径
+  return join(uploadPath, dateStr, fileType, scene)
 }

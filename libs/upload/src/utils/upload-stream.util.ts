@@ -1,4 +1,4 @@
-import type { UploadConfigInterface } from '../upload.config'
+import type { UploadConfigInterface } from '@libs/config'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import { extname } from 'node:path'
