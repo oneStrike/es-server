@@ -32,9 +32,10 @@ export async function setupMultipart(
     // 针对文档与压缩包类型强制以附件方式下载，降低 XSS 风险
     setHeaders(res: any, filePath: string) {
       try {
+        const { document, archive } = uploadConfig.allowFile
         const ext = extname(filePath).toLowerCase()
-        const isDoc = uploadConfig.documentType.extensions.includes(ext)
-        const isArchive = uploadConfig.archiveType.extensions.includes(ext)
+        const isDoc = document.extensions.includes(ext)
+        const isArchive = archive.extensions.includes(ext)
         if (isDoc || isArchive) {
           res.setHeader('Content-Disposition', 'attachment')
         }
