@@ -13,22 +13,15 @@ import {
   UserPageDto,
   UserRegisterDto,
 } from './dto/user.dto'
-// 仓储层已移除，直接使用 Prisma 客户端
 
 @Injectable()
-export class AdminUserService extends RepositoryService {
-  // private readonly logger: CustomLoggerService
-
+export class UserService extends RepositoryService {
   get adminUser() {
     return this.prisma.adminUser
   }
 
-  constructor(
-    private readonly scryptService: ScryptService,
-    // private readonly loggerFactory: LoggerFactoryService,
-  ) {
+  constructor(private readonly scryptService: ScryptService) {
     super()
-    // this.logger = this.loggerFactory.createAdminLogger('AdminUserService')
   }
 
   /**
@@ -86,35 +79,28 @@ export class AdminUserService extends RepositoryService {
    * 注册管理员用户
    */
   async register(body: UserRegisterDto) {
-    const startTime = Date.now()
     const { username, password, confirmPassword, avatar, role, mobile } = body
 
     if (password !== confirmPassword) {
-      console.warn('密码和确认密码不一致', { username })
       throw new BadRequestException('密码和确认密码不一致')
     }
 
     // 检查用户名是否已存在（优化：使用索引查询）
     const existingUser = await this.adminUser.findFirst({
       where: {
-        OR: [{ username }, { mobile: body.mobile }],
+        OR: [{ username }, { mobile }],
       },
-      select: { id: true, username: true, mobile: true }, // 优化：只选择需要的字段
+      select: { id: true, username: true, mobile: true },
     })
 
     if (existingUser) {
-      console.warn('用户名或手机号已被使用', {
-        username,
-        mobile,
-      })
       throw new BadRequestException('用户名或手机号已被使用')
     }
 
     // 加密密码
     const encryptedPassword = await this.scryptService.encryptPassword(password)
 
-    // 创建用户
-    const result = await this.adminUser.create({
+    return this.adminUser.create({
       data: {
         username,
         password: encryptedPassword,
@@ -127,15 +113,6 @@ export class AdminUserService extends RepositoryService {
         id: true,
       },
     })
-
-    const duration = Date.now() - startTime
-    console.log('register_user success', {
-      userId: result.id,
-      username,
-      duration,
-    })
-
-    return result
   }
 
   /**

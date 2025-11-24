@@ -90,7 +90,7 @@ export class AuthController {
   @Public()
   getAdminPublicKey(): RsaPublicKeyDto {
     return {
-      publicKey: this.rsaService.getAdminPublicKey(),
+      publicKey: this.rsaService.getPublicKey(),
     }
   }
 }

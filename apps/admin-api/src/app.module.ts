@@ -39,23 +39,14 @@ import { AdminModule } from './modules/admin.module'
       ], // 加载上传配置
       cache: true, // 缓存配置
     }),
-
-    BaseModule.forRoot({
-      enableDatabase: true,
-    }),
-
+    BaseModule.forRoot(),
     BaseAuthModule,
-    // 基础功能模块
-    CryptoModule, // 加密模块
+    CryptoModule,
     LoggerModule,
-
     // 业务功能模块
     AdminModule, // 管理模块
     HealthModule, // 健康检查模块
   ],
-
-  controllers: [],
-
   providers: [
     // 全局拦截器
     {
