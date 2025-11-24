@@ -1,6 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ValidateEnumOptions } from './types'
-import { isNumberEnum } from '@libs/utils'
+import { isDevelopment, isNumberEnum } from '@libs/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
@@ -49,19 +49,8 @@ import { IsEnum, IsOptional } from 'class-validator'
  * @returns 装饰器函数
  */
 export function ValidateEnum(options: ValidateEnumOptions) {
-  // 构建API属性配置
-  const apiPropertyOptions: ApiPropertyOptions = {
-    description: options.description,
-    example: options.example,
-    required: options.required ?? true,
-    default: options.default,
-    nullable: !(options.required ?? true),
-    enum: options.enum,
-  }
-
   // 基础装饰器
   const decorators = [
-    ApiProperty(apiPropertyOptions),
     IsEnum(options.enum, {
       message: `必须是有效的枚举值: ${Object.values(options.enum).join(', ')}`,
     }),
@@ -115,6 +104,19 @@ export function ValidateEnum(options: ValidateEnumOptions) {
   // 自定义转换函数
   if (options.transform) {
     decorators.push(Transform(options.transform))
+  }
+
+  if (isDevelopment()) {
+    // 构建API属性配置
+    const apiPropertyOptions: ApiPropertyOptions = {
+      description: options.description,
+      example: options.example,
+      required: options.required ?? true,
+      default: options.default,
+      nullable: !(options.required ?? true),
+      enum: options.enum,
+    }
+    decorators.push(ApiProperty(apiPropertyOptions))
   }
 
   return applyDecorators(...decorators)

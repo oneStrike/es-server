@@ -1,4 +1,3 @@
-import process from 'node:process'
 import { BaseAuthModule } from '@libs/auth'
 import { BaseModule } from '@libs/base'
 import {
@@ -12,6 +11,7 @@ import {
 import { CryptoModule } from '@libs/crypto'
 import { HealthModule } from '@libs/health'
 import { LoggerModule } from '@libs/logger'
+import { getEnv } from '@libs/utils'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
@@ -27,7 +27,7 @@ import { AdminModule } from './modules/admin.module'
     // 配置模块 - 全局环境变量管理
     ConfigModule.forRoot({
       isGlobal: true, // 设置为全局模块，其他模块可直接使用
-      envFilePath: ['.env', `.env.${process.env.NODE_ENV || 'development'}`], // 指定环境变量文件路径
+      envFilePath: ['.env', `.env.${getEnv()}`], // 指定环境变量文件路径
       load: [
         AppConfigRegister,
         AuthConfigRegister,

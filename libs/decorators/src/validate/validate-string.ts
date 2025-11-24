@@ -1,5 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ValidateStringOptions } from './types'
+import { isDevelopment } from '@libs/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
@@ -42,27 +43,8 @@ export function ValidateString(options: ValidateStringOptions) {
     throw new Error('ValidateString: minLength 不能大于 maxLength')
   }
 
-  // 构建API属性配置
-  const apiPropertyOptions: ApiPropertyOptions = {
-    description: options.description,
-    example: options.example,
-    required: options.required ?? true,
-    default: options.default,
-    nullable: !(options.required ?? true),
-    type: String,
-  }
-
-  // 添加长度限制到API文档
-  if (options.minLength !== undefined || options.maxLength !== undefined) {
-    apiPropertyOptions.minLength = options.minLength
-    apiPropertyOptions.maxLength = options.maxLength
-  }
-
   // 基础装饰器
-  const decorators = [
-    ApiProperty(apiPropertyOptions),
-    IsString({ message: '必须是字符串类型' }),
-  ]
+  const decorators = [IsString({ message: '必须是字符串类型' })]
 
   // 密码强度验证
   if (options.password) {
@@ -131,6 +113,26 @@ export function ValidateString(options: ValidateStringOptions) {
   // 自定义转换函数
   if (options.transform) {
     decorators.push(Transform(options.transform))
+  }
+
+  if (isDevelopment()) {
+    // 构建API属性配置
+    const apiPropertyOptions: ApiPropertyOptions = {
+      description: options.description,
+      example: options.example,
+      required: options.required ?? true,
+      default: options.default,
+      nullable: !(options.required ?? true),
+      type: String,
+    }
+
+    // 添加长度限制到API文档
+    if (options.minLength !== undefined || options.maxLength !== undefined) {
+      apiPropertyOptions.minLength = options.minLength
+      apiPropertyOptions.maxLength = options.maxLength
+    }
+
+    decorators.push(ApiProperty(apiPropertyOptions))
   }
 
   return applyDecorators(...decorators)

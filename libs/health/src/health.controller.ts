@@ -1,5 +1,6 @@
 import * as process from 'node:process'
 import { Public } from '@libs/decorators'
+import { getEnv } from '@libs/utils'
 import { Controller, Get } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'
@@ -35,7 +36,7 @@ export class HealthController {
       ...result,
       meta: {
         uptime: process.uptime(),
-        environment: process.env.NODE_ENV,
+        environment: getEnv(),
       },
     }
   }

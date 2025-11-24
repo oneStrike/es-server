@@ -1,5 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ValidateRegexOptions } from './types'
+import { isDevelopment } from '@libs/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
@@ -37,20 +38,8 @@ import { IsOptional, IsString, Matches } from 'class-validator'
  * @returns 装饰器函数
  */
 export function ValidateByRegex(options: ValidateRegexOptions) {
-  // 构建API属性配置
-  const apiPropertyOptions: ApiPropertyOptions = {
-    description: options.description,
-    example: options.example,
-    required: options.required ?? true,
-    default: options.default,
-    nullable: !(options.required ?? true),
-    type: String,
-    pattern: options.regex.source,
-  }
-
   // 基础装饰器
   const decorators = [
-    ApiProperty(apiPropertyOptions),
     IsString({ message: '必须是字符串类型' }),
     Matches(options.regex, {
       message: options.message || '格式不正确',
@@ -85,6 +74,20 @@ export function ValidateByRegex(options: ValidateRegexOptions) {
   // 自定义转换函数
   if (options.transform) {
     decorators.push(Transform(options.transform))
+  }
+
+  if (isDevelopment()) {
+    // 构建API属性配置
+    const apiPropertyOptions: ApiPropertyOptions = {
+      description: options.description,
+      example: options.example,
+      required: options.required ?? true,
+      default: options.default,
+      nullable: !(options.required ?? true),
+      type: String,
+      pattern: options.regex.source,
+    }
+    decorators.push(ApiProperty(apiPropertyOptions))
   }
 
   return applyDecorators(...decorators)
