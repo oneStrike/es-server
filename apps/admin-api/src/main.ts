@@ -1,8 +1,9 @@
+import type { AppConfigInterface } from '@libs/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { logStartupInfo, setupApp } from '@libs/base/nestjs'
+import { logStartupInfo, setupApp } from '@libs/base'
+
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
-
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { AppModule } from './app.module'
 
@@ -24,17 +25,14 @@ async function bootstrap() {
   // 允许优雅关闭钩子，以便 Terminus 在关闭期间报告状态
   app.enableShutdownHooks()
 
+  const appConfig = app.get(ConfigService).get<AppConfigInterface>('app')!
   // 配置应用（中间件、插件、日志等）
-  await setupApp(app, fastifyAdapter)
+  await setupApp(app, fastifyAdapter, appConfig)
 
-  // 启动应用
-  const configService = app.get(ConfigService)
-
-  const port = configService.get('app.port')
-  await app.listen(port, '0.0.0.0') // 监听所有网络接口（Docker 容器必需）
+  await app.listen(appConfig.port, '0.0.0.0') // 监听所有网络接口（Docker 容器必需）
 
   // 打印启动信息
-  logStartupInfo(port)
+  logStartupInfo(appConfig.port, appConfig.swaggerConfig.path)
 
   if (module.hot) {
     module.hot.accept()

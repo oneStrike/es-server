@@ -1,8 +1,4 @@
 /**
- * 请求日志模块常量定义
- */
-
-/**
  * API类型枚举
  */
 export enum ApiTypeEnum {
@@ -38,4 +34,55 @@ export enum ActionTypeEnum {
   DOWNLOAD = '文件下载',
   EXPORT = '数据导出',
   IMPORT = '数据导入',
+}
+
+/**
+ * 应用配置接口
+ */
+export interface AppConfigInterface {
+  /**
+   * 应用名称
+   */
+  name: string
+  /**
+   * 应用版本
+   */
+  version: string
+  /**
+   * 应用端口
+   */
+  port: number
+  /**
+   * 文件访问URL前缀
+   */
+  fileUrlPrefix: string
+  /**
+   * 全局API前缀
+   */
+  globalApiPrefix: string
+  /**
+   * Swagger配置
+   */
+  swaggerConfig: {
+    /**
+     * 是否启用Swagger
+     */
+    enable: boolean
+    /**
+     * Swagger文档标题
+     */
+    title: string
+    /**
+     * Swagger文档描述
+     */
+    description: string
+    /**
+     * Swagger文档版本
+     */
+    version: string
+    /**
+     * Swagger文档路径
+     */
+    path: string
+  }
 }
