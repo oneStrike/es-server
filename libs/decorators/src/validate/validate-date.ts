@@ -1,5 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ValidateDateTimeOptions } from './types'
+import { isDevelopment } from '@libs/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
@@ -34,22 +35,8 @@ import { IsDate, IsOptional } from 'class-validator'
  * @returns 装饰器函数
  */
 export function ValidateDate(options: ValidateDateTimeOptions) {
-  // 构建API属性配置
-  const apiPropertyOptions: ApiPropertyOptions = {
-    description: options.description,
-    example: options.example,
-    required: options.required ?? true,
-    default: options.default,
-    nullable: !(options.required ?? true),
-    type: Date,
-    format: 'date-time',
-  }
-
   // 基础装饰器
-  const decorators = [
-    ApiProperty(apiPropertyOptions),
-    IsDate({ message: '必须是有效的日期格式' }),
-  ]
+  const decorators = [IsDate({ message: '必须是有效的日期格式' })]
 
   // 可选字段处理
   if (!(options.required ?? true)) {
@@ -90,6 +77,20 @@ export function ValidateDate(options: ValidateDateTimeOptions) {
   // 自定义转换函数
   if (options.transform) {
     decorators.push(Transform(options.transform))
+  }
+
+  if (isDevelopment()) {
+    // 构建API属性配置
+    const apiPropertyOptions: ApiPropertyOptions = {
+      description: options.description,
+      example: options.example,
+      required: options.required ?? true,
+      default: options.default,
+      nullable: !(options.required ?? true),
+      type: Date,
+      format: 'date-time',
+    }
+    decorators.push(ApiProperty(apiPropertyOptions))
   }
 
   return applyDecorators(...decorators)

@@ -2,11 +2,11 @@ import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
-import * as process from 'node:process'
 import fastifyCsrf from '@fastify/csrf-protection'
 import fastifyHelmet from '@fastify/helmet'
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
+import { isProduction } from '@libs/utils'
 
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { setupCompression } from './compression'
 import { setupMultipart } from './multipart'
 import { setupSwagger } from './swagger'
@@ -76,7 +76,7 @@ export async function setupApp(
   })
 
   // 配置 Swagger 文档（生产环境可条件性禁用）
-  if (process.env.NODE_ENV !== 'production' || mergedConfig.enableSwagger) {
+  if (isProduction() || mergedConfig.enableSwagger) {
     setupSwagger(app, mergedConfig.swaggerConfig)
   }
 }

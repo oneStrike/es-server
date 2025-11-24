@@ -1,5 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ValidateNumberOptions } from './types'
+import { isDevelopment } from '@libs/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
@@ -45,29 +46,8 @@ export function ValidateNumber(options: ValidateNumberOptions) {
     throw new Error('ValidateNumber: min 不能大于 max')
   }
 
-  // 构建API属性配置
-  const apiPropertyOptions: ApiPropertyOptions = {
-    description: options.description,
-    example: options.example,
-    required: options.required ?? true,
-    default: options.default,
-    nullable: !(options.required ?? true),
-    type: Number,
-  }
-
-  // 添加范围限制到API文档
-  if (options.min !== undefined) {
-    apiPropertyOptions.minimum = options.min
-  }
-  if (options.max !== undefined) {
-    apiPropertyOptions.maximum = options.max
-  }
-
   // 基础装饰器
-  const decorators = [
-    ApiProperty(apiPropertyOptions),
-    IsNumber({}, { message: '必须是数字类型' }),
-  ]
+  const decorators = [IsNumber({}, { message: '必须是数字类型' })]
 
   // 范围验证
   if (options.max !== undefined) {
@@ -119,6 +99,27 @@ export function ValidateNumber(options: ValidateNumberOptions) {
   // 自定义转换函数
   if (options.transform) {
     decorators.push(Transform(options.transform))
+  }
+
+  if (isDevelopment()) {
+    // 构建API属性配置
+    const apiPropertyOptions: ApiPropertyOptions = {
+      description: options.description,
+      example: options.example,
+      required: options.required ?? true,
+      default: options.default,
+      nullable: !(options.required ?? true),
+      type: Number,
+    }
+
+    // 添加范围限制到API文档
+    if (options.min !== undefined) {
+      apiPropertyOptions.minimum = options.min
+    }
+    if (options.max !== undefined) {
+      apiPropertyOptions.maximum = options.max
+    }
+    decorators.push(ApiProperty(apiPropertyOptions))
   }
 
   return applyDecorators(...decorators)

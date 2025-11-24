@@ -1,5 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ValidateArrayOptions } from './types'
+import { isDevelopment } from '@libs/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
@@ -66,42 +67,6 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
   ) {
     throw new Error('ValidateArray: minLength 不能大于 maxLength')
   }
-
-  // 根据itemType确定API文档中的类型
-  const getApiType = () => {
-    switch (options.itemType) {
-      case 'string':
-        return String
-      case 'number':
-        return Number
-      case 'boolean':
-        return Boolean
-      case 'object':
-        return Object
-      default:
-        return String
-    }
-  }
-
-  // 构建API属性配置
-  const apiPropertyOptions: ApiPropertyOptions = {
-    description: options.description,
-    example: options.example,
-    required: options.required ?? true,
-    default: options.default,
-    nullable: !(options.required ?? true),
-    type: getApiType(),
-    isArray: true,
-  }
-
-  // 添加长度限制到API文档
-  if (options.minLength !== undefined) {
-    apiPropertyOptions.minItems = options.minLength
-  }
-  if (options.maxLength !== undefined) {
-    apiPropertyOptions.maxItems = options.maxLength
-  }
-
   // 根据itemType获取相应的验证器
   const getItemValidator = () => {
     switch (options.itemType) {
@@ -143,7 +108,6 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
 
   // 基础装饰器
   const decorators = [
-    ApiProperty(apiPropertyOptions),
     IsArray({ message: '必须是数组类型' }),
     getItemValidator(),
   ]
@@ -256,6 +220,45 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
   // 自定义转换函数
   if (options.transform) {
     decorators.push(Transform(options.transform))
+  }
+
+  if (isDevelopment()) {
+    // 根据itemType确定API文档中的类型
+    const getApiType = () => {
+      switch (options.itemType) {
+        case 'string':
+          return String
+        case 'number':
+          return Number
+        case 'boolean':
+          return Boolean
+        case 'object':
+          return Object
+        default:
+          return String
+      }
+    }
+
+    // 构建API属性配置
+    const apiPropertyOptions: ApiPropertyOptions = {
+      description: options.description,
+      example: options.example,
+      required: options.required ?? true,
+      default: options.default,
+      nullable: !(options.required ?? true),
+      type: getApiType(),
+      isArray: true,
+    }
+
+    // 添加长度限制到API文档
+    if (options.minLength !== undefined) {
+      apiPropertyOptions.minItems = options.minLength
+    }
+    if (options.maxLength !== undefined) {
+      apiPropertyOptions.maxItems = options.maxLength
+    }
+
+    decorators.push(ApiProperty(apiPropertyOptions))
   }
 
   return applyDecorators(...decorators)

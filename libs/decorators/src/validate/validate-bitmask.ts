@@ -1,6 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ValidateBitmaskOptions } from './types'
-import { isNumberEnum } from '@libs/utils'
+import { isDevelopment, isNumberEnum } from '@libs/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
@@ -127,40 +127,12 @@ export class BitmaskValidator implements ValidatorConstraintInterface {
  * @returns 装饰器函数
  */
 export function ValidateBitmask(options: ValidateBitmaskOptions) {
-  // 参数验证
-  if (!options.description) {
-    throw new Error('ValidateBitmask: 描述信息不能为空')
-  }
-
   if (!options.enum) {
     throw new Error('ValidateBitmask: 枚举对象不能为空')
   }
 
-  if (!isNumberEnum(options.enum)) {
-    throw new Error('ValidateBitmask: 枚举对象必须为数字枚举')
-  }
-
-  // 计算有效范围
-  const enumValues = Object.values(options.enum).filter(
-    (value): value is number => typeof value === 'number',
-  )
-  const maxValue = enumValues.reduce((acc, value) => acc | value, 0)
-
-  // 构建API属性配置
-  const apiPropertyOptions: ApiPropertyOptions = {
-    description: options.description,
-    example: options.example,
-    required: options.required ?? true,
-    default: options.default,
-    nullable: !(options.required ?? true),
-    type: Number,
-    minimum: 0,
-    maximum: maxValue,
-  }
-
   // 基础装饰器
   const decorators = [
-    ApiProperty(apiPropertyOptions),
     IsNumber({}, { message: '必须是数字类型' }),
     Validate(BitmaskValidator, [options.enum], {
       message: '位掩码值无效',
@@ -205,6 +177,32 @@ export function ValidateBitmask(options: ValidateBitmaskOptions) {
   // 自定义转换函数
   if (options.transform) {
     decorators.push(Transform(options.transform))
+  }
+
+  if (isDevelopment()) {
+    if (!isNumberEnum(options.enum)) {
+      throw new Error('ValidateBitmask: 枚举对象必须为数字枚举')
+    }
+
+    // 计算有效范围
+    const enumValues = Object.values(options.enum).filter(
+      (value): value is number => typeof value === 'number',
+    )
+    const maxValue = enumValues.reduce((acc, value) => acc | value, 0)
+
+    // 构建API属性配置
+    const apiPropertyOptions: ApiPropertyOptions = {
+      description: options.description,
+      example: options.example,
+      required: options.required ?? true,
+      default: options.default,
+      nullable: !(options.required ?? true),
+      type: Number,
+      minimum: 0,
+      maximum: maxValue,
+    }
+
+    decorators.push(ApiProperty(apiPropertyOptions))
   }
 
   return applyDecorators(...decorators)

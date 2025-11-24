@@ -1,5 +1,6 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { ValidateBooleanOptions } from './types'
+import { isDevelopment } from '@libs/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
@@ -34,21 +35,8 @@ import { IsBoolean, IsOptional } from 'class-validator'
  * @returns 装饰器函数
  */
 export function ValidateBoolean(options: ValidateBooleanOptions) {
-  // 构建API属性配置
-  const apiPropertyOptions: ApiPropertyOptions = {
-    description: options.description,
-    example: options.example,
-    required: options.required ?? true,
-    default: options.default,
-    nullable: !(options.required ?? true),
-    type: Boolean,
-  }
-
   // 基础装饰器
-  const decorators = [
-    ApiProperty(apiPropertyOptions),
-    IsBoolean({ message: '必须是布尔类型' }),
-  ]
+  const decorators = [IsBoolean({ message: '必须是布尔类型' })]
 
   // 可选字段处理
   if (!(options.required ?? true)) {
@@ -90,6 +78,19 @@ export function ValidateBoolean(options: ValidateBooleanOptions) {
   // 自定义转换函数
   if (options.transform) {
     decorators.push(Transform(options.transform))
+  }
+
+  if (isDevelopment()) {
+    // 构建API属性配置
+    const apiPropertyOptions: ApiPropertyOptions = {
+      description: options.description,
+      example: options.example,
+      required: options.required ?? true,
+      default: options.default,
+      nullable: !(options.required ?? true),
+      type: Boolean,
+    }
+    decorators.push(ApiProperty(apiPropertyOptions))
   }
 
   return applyDecorators(...decorators)

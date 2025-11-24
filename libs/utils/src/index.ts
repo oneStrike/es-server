@@ -1,4 +1,5 @@
 export * from './bitmask'
+export * from './env'
 export * from './is'
 export * from './jsonParse'
 export * from './regExp'
