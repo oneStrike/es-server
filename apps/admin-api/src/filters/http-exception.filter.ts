@@ -57,7 +57,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
     const stack = exception instanceof Error ? exception.stack : undefined
     const { message: errorMessage, ...rest } = payload
-    logger.log({ level: 'error', message: 'http_exception', stack, errorMessage, ...rest })
+    logger.log({
+      level: 'error',
+      message: 'http_exception',
+      errorMessage: message,
+      stack,
+      ...rest,
+    })
 
     const errorResponse = {
       code: status,

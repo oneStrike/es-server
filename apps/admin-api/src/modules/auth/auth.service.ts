@@ -3,7 +3,7 @@ import { CaptchaService } from '@libs/captcha'
 
 import { RsaService, ScryptService } from '@libs/crypto'
 import { AdminUser, RepositoryService } from '@libs/database'
-import { extractIpAddress } from '@libs/utils'
+import { extractIpAddress, isProduction } from '@libs/utils'
 import {
   BadRequestException,
   Injectable,
@@ -53,7 +53,7 @@ export class AuthService extends RepositoryService {
       throw new BadRequestException('请输入验证码')
     }
 
-    if (this.configService.get('NODE_ENV') === 'production') {
+    if (isProduction()) {
       // 验证验证码是否正确
       const isValid = await this.captchaService.verify(
         CacheKey.CAPTCHA,
@@ -76,6 +76,7 @@ export class AuthService extends RepositoryService {
         isEnabled: true, // 只查找启用的用户
       },
     })
+    console.log(user)
     if (!user) {
       throw new BadRequestException('账号或密码错误')
     }

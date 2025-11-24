@@ -10,7 +10,7 @@ import {
   UserPageDto,
   UserRegisterDto,
 } from './dto/user.dto'
-import { AdminUserService } from './user.service'
+import { UserService } from './user.service'
 
 /**
  * 管理端用户控制器
@@ -18,8 +18,8 @@ import { AdminUserService } from './user.service'
  */
 @ApiTags('管理端用户模块')
 @Controller('admin/user')
-export class AdminUserController {
-  constructor(private readonly userService: AdminUserService) {}
+export class UserController {
+  constructor(private readonly userService: UserService) {}
 
   /**
    * 用户注册接口
