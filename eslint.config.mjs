@@ -2,7 +2,12 @@ import antfu from '@antfu/eslint-config'
 
 export default antfu(
   {
-    ignores: ['test/**'],
+    ignores: [
+      'test/**',
+      'dist/**',
+      'build/**',
+      'libs/database/src/prisma-client/**',
+    ],
 
     formatters: {
       prettier: true,
