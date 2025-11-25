@@ -7,12 +7,14 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import {
   ChangePasswordDto,
   UpdateUserDto,
   UserPageDto,
   UserRegisterDto,
 } from './dto/user.dto'
+import { EXCLUDE_USER_FIELDS, UserRoleEnum } from './user.constant'
 
 @Injectable()
 export class UserService extends RepositoryService {
@@ -20,59 +22,60 @@ export class UserService extends RepositoryService {
     return this.prisma.adminUser
   }
 
-  constructor(private readonly scryptService: ScryptService) {
+  constructor(
+    private readonly scryptService: ScryptService,
+    private readonly configService: ConfigService,
+  ) {
     super()
+  }
+
+  async isSuperAdmin(userId: number) {
+    const adminUser = await this.adminUser.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    })
+    if (!adminUser) {
+      throw new NotFoundException('用户不存在')
+    }
+    if (adminUser.role !== UserRoleEnum.NORMAL_ADMIN) {
+      throw new UnauthorizedException('权限不足')
+    }
   }
 
   /**
    * 更新用户信息
    */
   async updateUserInfo(userId: number, updateData: UpdateUserDto) {
-    const startTime = Date.now()
-    userId = updateData.id || userId
-
+    await this.isSuperAdmin(userId)
     // 查找用户
     const user = await this.adminUser.findUnique({
-      where: { id: userId },
+      where: { id: updateData.id },
       select: { id: true, username: true }, // 优化：只查询需要的字段
     })
     if (!user) {
-      console.warn('用户不存在', { userId })
       throw new NotFoundException('用户不存在')
     }
 
     // 如果要更新用户名，检查是否已存在
     if (updateData.username && updateData.username !== user.username) {
-      const existingUser = await this.adminUser.findUnique({
-        where: { username: updateData.username },
-        select: { id: true }, // 优化：只查询ID
+      const existingUser = await this.adminUser.exists({
+        username: updateData.username,
       })
 
       if (existingUser) {
-        console.warn('用户名已存在', {
-          userId,
-          username: updateData.username,
-        })
         throw new BadRequestException('用户名已存在')
       }
     }
 
     // 返回更新后的用户信息（不包含密码）
-    const result = await this.adminUser.update({
+
+    return this.adminUser.update({
       where: { id: userId },
       data: updateData,
       select: {
         id: true,
       },
     })
-
-    const duration = Date.now() - startTime
-    console.log('update_user_info success', {
-      userId,
-      duration,
-    })
-
-    return result
   }
 
   /**
@@ -85,16 +88,13 @@ export class UserService extends RepositoryService {
       throw new BadRequestException('密码和确认密码不一致')
     }
 
-    // 检查用户名是否已存在（优化：使用索引查询）
-    const existingUser = await this.adminUser.findFirst({
-      where: {
-        OR: [{ username }, { mobile }],
-      },
-      select: { id: true, username: true, mobile: true },
-    })
-
-    if (existingUser) {
-      throw new BadRequestException('用户名或手机号已被使用')
+    // 检查用户名是否已存在
+    if (await this.adminUser.exists({ username })) {
+      throw new BadRequestException('用户名已存在')
+    }
+    // 检查手机号是否已存在
+    if (await this.adminUser.exists({ mobile })) {
+      throw new BadRequestException('手机号已存在')
     }
 
     // 加密密码
@@ -121,15 +121,7 @@ export class UserService extends RepositoryService {
   async getUserInfo(userId: number) {
     const user = await this.adminUser.findUnique({
       where: { id: userId },
-      omit: {
-        password: true,
-        isLocked: true,
-        loginFailCount: true,
-        lastLoginIp: true,
-        lastLoginAt: true,
-        loginFailAt: true,
-        loginFailIp: true,
-      },
+      omit: EXCLUDE_USER_FIELDS,
     })
 
     if (!user) {
@@ -144,12 +136,14 @@ export class UserService extends RepositoryService {
    * 获取用户列表（分页）
    */
   async getUsers(queryDto: UserPageDto) {
-    const { username, isEnabled, role } = queryDto
-
+    const { username, isEnabled, mobile, role, ...pageDto } = queryDto
     const where: AdminUserWhereInput = {}
 
     if (username) {
       where.username = { contains: username }
+    }
+    if (mobile) {
+      where.mobile = { contains: mobile }
     }
     if (isEnabled !== undefined) {
       where.isEnabled = { equals: isEnabled }
@@ -159,14 +153,8 @@ export class UserService extends RepositoryService {
     }
 
     return this.adminUser.findPagination({
-      where: { ...where, ...queryDto },
-      omit: {
-        password: true,
-        isLocked: true,
-        loginFailCount: true,
-        lastLoginIp: true,
-        lastLoginAt: true,
-      },
+      where: { ...pageDto, ...where },
+      omit: EXCLUDE_USER_FIELDS,
     })
   }
 
@@ -174,18 +162,15 @@ export class UserService extends RepositoryService {
    * 修改密码
    */
   async changePassword(userId: number, changePasswordDto: ChangePasswordDto) {
-    const startTime = Date.now()
     const { oldPassword, newPassword, confirmPassword } = changePasswordDto
 
     // 检查新密码和确认密码是否一致
     if (newPassword !== confirmPassword) {
-      console.warn('新密码和确认密码不一致', { userId })
       throw new BadRequestException('新密码和确认密码不一致')
     }
 
     // 检查新密码与旧密码是否相同
     if (oldPassword === newPassword) {
-      console.warn('新密码与旧密码相同', { userId })
       throw new BadRequestException('新密码不能与旧密码相同')
     }
 
@@ -195,7 +180,6 @@ export class UserService extends RepositoryService {
       select: { id: true, password: true },
     })
     if (!user) {
-      console.warn('用户不存在', { userId })
       throw new NotFoundException('用户不存在')
     }
 
@@ -205,31 +189,17 @@ export class UserService extends RepositoryService {
       user.password,
     )
     if (!isPasswordValid) {
-      console.warn('wrong_old_password', { userId })
       throw new UnauthorizedException('旧密码错误')
     }
 
-    // 加密新密码
-    const encryptedPassword =
-      await this.scryptService.encryptPassword(newPassword)
-
     // 更新密码
-    await this.adminUser.update({
+    return this.adminUser.update({
       where: { id: userId },
       data: {
-        password: encryptedPassword,
+        password: await this.scryptService.encryptPassword(newPassword),
       },
+      select: { id: true },
     })
-
-    const duration = Date.now() - startTime
-    console.log('change_password success', {
-      userId,
-      duration,
-    })
-
-    return {
-      id: userId,
-    }
   }
 
   /**
@@ -237,10 +207,7 @@ export class UserService extends RepositoryService {
    */
   async unlockUser(userId: number) {
     // 检查用户是否存在
-    const user = await this.adminUser.findUnique({
-      where: { id: userId },
-      select: { id: true, isLocked: true },
-    })
+    const user = await this.adminUser.exists({ id: userId })
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
@@ -257,9 +224,20 @@ export class UserService extends RepositoryService {
   }
 
   /**
-   * 删除用户
+   * 重置用户密码为默认密码（Aa@123456）
    */
-  async deleteUser(id: number) {
-    return this.adminUser.delete({ where: { id } })
+  async resetPassword(userId: number, id: number) {
+    await this.isSuperAdmin(userId)
+    // 重置密码为默认密码（Aa@123456）
+    const defaultPassword = await this.scryptService.encryptPassword(
+      this.configService.get<string>('app.defaultPassword')!,
+    )
+    await this.adminUser.update({
+      where: { id },
+      data: {
+        password: defaultPassword,
+      },
+    })
+    return userId
   }
 }

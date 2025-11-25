@@ -9,16 +9,13 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
 import { FastifyRequest } from 'fastify'
 import { AuditService } from '../system/audit/audit.service'
 import { CacheKey } from './auth.constant'
-import { RefreshTokenDto, TokenDto } from './dto/token.dto'
-import { UserLoginDto } from './dto/user-login.dto'
+import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
 
 /**
  * 管理端认证服务
- * 负责登录、登出、令牌刷新、验证码生成等认证相关业务逻辑
  */
 @Injectable()
 export class AuthService extends RepositoryService {
@@ -29,10 +26,9 @@ export class AuthService extends RepositoryService {
   constructor(
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
-    private readonly adminJwtService: BaseAuthService,
+    private readonly baseJwtService: BaseAuthService,
     private readonly auditService: AuditService,
     private readonly captchaService: CaptchaService,
-    private readonly configService: ConfigService,
   ) {
     super()
   }
@@ -151,7 +147,7 @@ export class AuthService extends RepositoryService {
       },
     })
     // 生成令牌
-    const tokens = await this.adminJwtService.generateTokens({
+    const tokens = await this.baseJwtService.generateTokens({
       sub: String(user.id),
       username: user.username,
     })
@@ -201,13 +197,13 @@ export class AuthService extends RepositoryService {
   async logout(body: TokenDto) {
     const { accessToken, refreshToken } = body
     // 将令牌添加到黑名单
-    return this.adminJwtService.logout(accessToken, refreshToken)
+    return this.baseJwtService.logout(accessToken, refreshToken)
   }
 
   /**
    * 刷新访问令牌
    */
   async refreshToken(body: RefreshTokenDto) {
-    return this.adminJwtService.refreshAccessToken(body.refreshToken)
+    return this.baseJwtService.refreshAccessToken(body.refreshToken)
   }
 }

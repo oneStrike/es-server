@@ -1,12 +1,13 @@
 import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/decorators'
 
 import { IdDto } from '@libs/dto'
+import { JwtUserInfoInterface } from '@libs/types'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
+  BaseUserDto,
   ChangePasswordDto,
   UpdateUserDto,
-  UserDto,
   UserPageDto,
   UserRegisterDto,
 } from './dto/user.dto'
@@ -40,10 +41,79 @@ export class UserController {
   @Post('update-info')
   @ApiDoc({
     summary: '更新用户信息',
-    model: UserDto,
+    model: BaseUserDto,
   })
-  async updateUserInfo(@Body() body: UpdateUserDto, @CurrentUser() user) {
-    return this.userService.updateUserInfo(Number.parseInt(user.sub), body)
+  async updateUserInfo(
+    @Body() body: UpdateUserDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.userService.updateUserInfo(user.sub, body)
+  }
+
+  /**
+   * 获取当前用户信息接口
+   */
+  @Get('info')
+  @ApiDoc({
+    summary: '获取当前用户信息',
+    model: BaseUserDto,
+  })
+  async getUserInfo(@CurrentUser() user: JwtUserInfoInterface) {
+    return this.userService.getUserInfo(user.sub)
+  }
+
+  /**
+   * 根据ID获取用户信息接口
+   */
+  @Get('info-by-id')
+  @ApiDoc({
+    summary: '根据ID获取用户信息',
+    model: BaseUserDto,
+  })
+  async getUserById(@Query() query: IdDto) {
+    return this.userService.getUserInfo(query.id)
+  }
+
+  /**
+   * 获取管理端用户分页列表接口
+   */
+  @Get('page')
+  @ApiPageDoc({
+    summary: '获取管理端用户分页列表',
+    model: BaseUserDto,
+  })
+  async getUsers(@Query() query: UserPageDto) {
+    return this.userService.getUsers(query)
+  }
+
+  /**
+   * 修改密码接口
+   */
+  @Post('change-password')
+  @ApiDoc({
+    summary: '修改密码',
+    model: IdDto,
+  })
+  async changePassword(
+    @Body() body: ChangePasswordDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.userService.changePassword(user.sub, body)
+  }
+
+  /*
+   * 重置用户密码为默认密码接口
+   */
+  @Post('reset-password')
+  @ApiDoc({
+    summary: '重置用户密码为默认密码',
+    model: IdDto,
+  })
+  async resetPassword(
+    @Body() query: IdDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.userService.resetPassword(user.sub, query.id)
   }
 
   /**
@@ -56,65 +126,5 @@ export class UserController {
   })
   async unlockUser(@Body() query: IdDto) {
     return this.userService.unlockUser(query.id)
-  }
-
-  /**
-   * 获取当前用户信息接口
-   */
-  @Get('info')
-  @ApiDoc({
-    summary: '获取当前用户信息',
-    model: UserDto,
-  })
-  async getUserInfo(@CurrentUser() user) {
-    return this.userService.getUserInfo(Number.parseInt(user.sub))
-  }
-
-  /**
-   * 根据ID获取用户信息接口
-   */
-  @Get('info-by-id')
-  @ApiDoc({
-    summary: '根据ID获取用户信息',
-    model: UserDto,
-  })
-  async getUserById(@Query() query: IdDto) {
-    return this.userService.getUserInfo(query.id)
-  }
-
-  /**
-   * 获取管理端用户分页列表接口
-   */
-  @Get('page')
-  @ApiPageDoc({
-    summary: '获取管理端用户分页列表',
-    model: UserDto,
-  })
-  async getUsers(@Query() query: UserPageDto) {
-    return this.userService.getUsers(query)
-  }
-
-  /**
-   * 删除用户接口
-   */
-  @Post('delete')
-  @ApiDoc({
-    summary: '删除用户',
-    model: IdDto,
-  })
-  async deleteUser(@Body() query: IdDto) {
-    return this.userService.deleteUser(query.id)
-  }
-
-  /**
-   * 修改密码接口
-   */
-  @Post('change-password')
-  @ApiDoc({
-    summary: '修改密码',
-    model: IdDto,
-  })
-  async changePassword(@Body() body: ChangePasswordDto, @CurrentUser() user) {
-    return this.userService.changePassword(Number.parseInt(user.sub), body)
   }
 }

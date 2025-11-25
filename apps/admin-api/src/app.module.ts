@@ -1,4 +1,4 @@
-import { BaseAuthModule } from '@libs/auth'
+import { JwtAuthGuard, JwtAuthModule } from '@libs/auth'
 import { BaseModule } from '@libs/base'
 import {
   AuthConfigRegister,
@@ -9,17 +9,14 @@ import {
   UploadConfigRegister,
 } from '@libs/config'
 import { CryptoModule } from '@libs/crypto'
+import { HttpExceptionFilter } from '@libs/filters'
 import { HealthModule } from '@libs/health'
 import { LoggerModule } from '@libs/logger'
 import { getEnv } from '@libs/utils'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
-import { ThrottlerGuard } from '@nestjs/throttler'
+import { APP_FILTER, APP_GUARD } from '@nestjs/core'
 import { AppConfigRegister } from './config/app.config'
-import { HttpExceptionFilter } from './filters/http-exception.filter'
-import { JwtAuthGuard } from './guards/auth.guard'
-import { TransformInterceptor } from './interceptors/transform.interceptor'
 import { AdminModule } from './modules/admin.module'
 
 @Module({
@@ -40,7 +37,7 @@ import { AdminModule } from './modules/admin.module'
       cache: true, // 缓存配置
     }),
     BaseModule.forRoot(),
-    BaseAuthModule,
+    JwtAuthModule,
     CryptoModule,
     LoggerModule,
     // 业务功能模块
@@ -48,22 +45,10 @@ import { AdminModule } from './modules/admin.module'
     HealthModule, // 健康检查模块
   ],
   providers: [
-    // 全局拦截器
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TransformInterceptor, // 响应转换拦截器
-    },
-
     // 全局异常过滤器
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
-    },
-
-    // 全局守卫
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard, // 限流守卫
     },
     {
       provide: APP_GUARD,

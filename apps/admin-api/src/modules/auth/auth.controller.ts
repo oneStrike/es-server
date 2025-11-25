@@ -1,13 +1,17 @@
+import { CaptchaDto } from '@libs/captcha/dto/captcha.dto'
 import { RsaService } from '@libs/crypto'
 import { ApiDoc, Public } from '@libs/decorators'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { FastifyRequest } from 'fastify'
 import { AuthService } from './auth.service'
-import { CaptchaDto } from './dto/captcha.dto'
-import { RsaPublicKeyDto } from './dto/rsa-public-key.dto'
-import { RefreshTokenDto, TokenDto } from './dto/token.dto'
-import { LoginResponseDto, UserLoginDto } from './dto/user-login.dto'
+import {
+  LoginResponseDto,
+  RefreshTokenDto,
+  RsaPublicKeyDto,
+  TokenDto,
+  UserLoginDto,
+} from './dto/auth.dto'
 
 /**
  * 管理端认证控制器
@@ -88,7 +92,7 @@ export class AuthController {
     model: RsaPublicKeyDto,
   })
   @Public()
-  getAdminPublicKey(): RsaPublicKeyDto {
+  getAdminPublicKey() {
     return {
       publicKey: this.rsaService.getPublicKey(),
     }

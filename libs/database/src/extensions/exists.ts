@@ -6,6 +6,9 @@ export async function exists<T>(
 ): Promise<boolean> {
   const context = Prisma.getExtensionContext(this)
 
-  const result = await (context as any).findFirst({ where })
+  const result = await (context as any).findFirst({
+    where,
+    select: { id: true },
+  })
   return result !== null
 }

@@ -1,20 +1,14 @@
+import { ValidateBoolean, ValidateEnum, ValidateString } from '@libs/decorators'
+import { BaseDto, PageDto } from '@libs/dto'
 import {
-  ValidateBoolean,
-  ValidateNumber,
-  ValidateString,
-} from '@libs/decorators'
-import { PageDto } from '@libs/dto'
-import { ApiProperty, OmitType } from '@nestjs/swagger'
+  ApiProperty,
+  IntersectionType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
+import { UserRoleEnum } from '../user.constant'
 
-export class UserDto {
-  @ValidateNumber({
-    description: '用户ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  id!: number
-
+export class BaseUserDto extends BaseDto {
   @ValidateString({
     description: '用户名',
     example: 'admin001',
@@ -43,16 +37,15 @@ export class UserDto {
     example: true,
     default: true,
   })
-  isEnabled: boolean
+  isEnabled?: boolean
 
-  @ValidateNumber({
+  @ValidateEnum({
     description: '角色 0普通管理员 1超级管理员',
     example: 0,
     default: 0,
-    min: 0,
-    max: 1,
+    enum: UserRoleEnum,
   })
-  role: number
+  role: UserRoleEnum
 
   @ApiProperty({
     description: '最后登录时间',
@@ -68,48 +61,25 @@ export class UserDto {
   })
   lastLoginIp?: string
 
-  @ValidateNumber({
-    description: '登录失败次数',
-    example: 0,
-    default: 0,
-    min: 0,
-  })
-  loginFailCount: number
-
   @ValidateBoolean({
     description: '是否锁定',
     example: false,
     default: false,
   })
   isLocked: boolean
-
-  @ApiProperty({
-    description: '创建时间',
-    example: '2021-01-01 00:00:00',
-  })
-  createdAt: Date
-
-  @ApiProperty({
-    description: '更新时间',
-    example: '2021-01-01 00:00:00',
-  })
-  updatedAt: Date
 }
 
-export class UserRegisterDto extends OmitType(UserDto, [
-  'id',
-  'isEnabled',
-  'lastLoginAt',
-  'lastLoginIp',
-  'loginFailCount',
-  'isLocked',
-  'createdAt',
-  'updatedAt',
+export class UserRegisterDto extends PickType(BaseUserDto, [
+  'username',
+  'mobile',
+  'avatar',
+  'role',
 ]) {
   @ValidateString({
     description: '密码',
     example: 'Aa@123456',
     required: true,
+    password: true,
   })
   password!: string
 
@@ -117,79 +87,33 @@ export class UserRegisterDto extends OmitType(UserDto, [
     description: '密码',
     example: 'Aa@123456',
     required: true,
+    password: true,
   })
   confirmPassword!: string
 }
 
-export class UpdateUserDto extends OmitType(UserDto, [
+export class UpdateUserDto extends PickType(BaseUserDto, [
   'id',
-  'lastLoginAt',
-  'lastLoginIp',
-  'loginFailCount',
-  'isLocked',
-  'createdAt',
-  'updatedAt',
+  'username',
+  'avatar',
+  'mobile',
   'isEnabled',
   'role',
-]) {
-  @ValidateNumber({
-    description: '用户ID',
-    example: 1,
-    required: false,
-    min: 1,
-  })
-  id?: number
+]) {}
 
-  @ValidateBoolean({
-    description: '是否启用',
-    example: true,
-    default: true,
-    required: false,
-  })
-  isEnabled?: boolean
-
-  @ValidateNumber({
-    description: '角色 0普通管理员 1超级管理员',
-    example: 0,
-    default: 0,
-    min: 0,
-    max: 1,
-    required: false,
-  })
-  role?: number
-}
-
-export class UserPageDto extends PageDto {
-  @ValidateString({
-    description: '用户名',
-    example: 'admin001',
-    required: false,
-    maxLength: 20,
-  })
-  username?: string
-
-  @ValidateBoolean({
-    description: '是否启用',
-    example: true,
-    required: false,
-  })
-  isEnabled?: boolean
-
-  @ValidateNumber({
-    description: '角色 0普通管理员 1超级管理员',
-    example: 0,
-    required: false,
-    min: 0,
-    max: 1,
-  })
-  role?: number
-}
+export class UserPageDto extends IntersectionType(
+  PartialType(
+    PickType(BaseUserDto, ['username', 'mobile', 'isEnabled', 'role']),
+  ),
+  PageDto,
+) {}
 
 export class ChangePasswordDto {
   @ValidateString({
     description: '旧密码',
     example: 'Aa@123456',
     required: true,
+    password: true,
   })
   oldPassword!: string
 
@@ -197,6 +121,7 @@ export class ChangePasswordDto {
     description: '新密码',
     example: 'Aa@654321',
     required: true,
+    password: true,
   })
   newPassword!: string
 
@@ -204,6 +129,7 @@ export class ChangePasswordDto {
     description: '确认新密码',
     example: 'Aa@654321',
     required: true,
+    password: true,
   })
   confirmPassword!: string
 }
