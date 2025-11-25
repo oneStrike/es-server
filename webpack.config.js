@@ -1,24 +1,33 @@
 const path = require('node:path')
+const process = require('node:process')
 const dotenv = require('dotenv')
 const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin')
 const webpack = require('webpack')
 const nodeExternals = require('webpack-node-externals')
+const workspace = require('./nest-cli.json')
 
-module.exports = (env) => {
-  const projectName = env.project
-  const projectPath = path.resolve(__dirname, `apps/${projectName}`)
-  dotenv.config({
-    path: [
-      path.resolve(projectPath, `.env.development`),
-      path.resolve(projectPath, `.env`),
-    ],
-  })
+function createConfig(projectName, mode) {
+  const isDev = mode !== 'production'
+  const projectPath = path.resolve(__dirname, 'apps', projectName)
+
+  if (isDev) {
+    dotenv.config({
+      path: [
+        path.resolve(projectPath, `.env.development`),
+        path.resolve(projectPath, `.env`),
+      ],
+    })
+  }
+
   return {
-    entry: ['webpack/hot/poll?100', `${projectPath}/src/main.ts`],
+    name: projectName,
+    entry: isDev
+      ? ['webpack/hot/poll?100', path.join(projectPath, 'src', 'main.ts')]
+      : path.join(projectPath, 'src', 'main.ts'),
     target: 'node',
     externals: [
       nodeExternals({
-        allowlist: ['webpack/hot/poll?100'],
+        allowlist: isDev ? ['webpack/hot/poll?100'] : [],
       }),
     ],
     module: {
@@ -28,25 +37,15 @@ module.exports = (env) => {
           use: {
             loader: 'ts-loader',
             options: {
-              // 启用转译模式，提高编译速度
-              transpileOnly: true,
-              // 获取类型检查信息但不阻塞编译
-              getCustomTransformers: () => ({
-                before: [],
-              }),
-              // 编译器选项
-              compilerOptions: {
-                // 保持与tsconfig.json一致，但优化热重载
-                incremental: true,
-                tsBuildInfoFile: path.resolve(projectPath, '.tsbuildinfo'),
-              },
+              transpileOnly: isDev,
+              configFile: path.join(projectPath, 'tsconfig.app.json'),
             },
           },
           exclude: /node_modules/,
         },
       ],
     },
-    mode: 'development',
+    mode: isDev ? 'development' : 'production',
     resolve: {
       extensions: ['.tsx', '.ts', '.js', '.json'],
       alias: {
@@ -67,28 +66,53 @@ module.exports = (env) => {
         '@libs/types': path.resolve(__dirname, 'libs/types/src'),
         '@libs/filters': path.resolve(__dirname, 'libs/filters/src'),
       },
-      // 优化模块解析
       modules: ['node_modules', path.resolve(projectPath, 'src')],
     },
     plugins: [
-      new webpack.HotModuleReplacementPlugin(),
-      new RunScriptWebpackPlugin({
-        name: `${projectName}-server.js`,
-        autoRestart: false,
+      ...(isDev
+        ? [
+            new webpack.HotModuleReplacementPlugin(),
+            new RunScriptWebpackPlugin({ name: 'main.js', autoRestart: true }),
+          ]
+        : []),
+      new webpack.DefinePlugin({
+        'process.env.NODE_ENV': JSON.stringify(
+          process.env.NODE_ENV || (isDev ? 'development' : 'production'),
+        ),
       }),
     ],
     output: {
-      path: path.join(projectPath, 'dist'),
-      filename: `${projectName}-server.js`,
+      path: path.join(__dirname, 'dist', 'apps', projectName),
+      filename: 'main.js',
     },
-    // 性能优化
+    devtool: isDev ? 'inline-source-map' : false,
     optimization: {
-      // 移除未使用的导出
       usedExports: true,
-      // 不进行代码分割（Node.js不需要）
       splitChunks: false,
-      // 不压缩代码（开发模式）
-      minimize: false,
+      minimize: !isDev,
     },
+    watchOptions: {
+      ignored: /node_modules/,
+    },
+    stats: 'errors-warnings',
   }
+}
+
+module.exports = (env = {}) => {
+  const mode = process.env.NODE_ENV || 'development'
+  const projects = Object.keys(workspace.projects).filter(
+    (n) => workspace.projects[n].type === 'application',
+  )
+  const requested = env.project
+
+  if (requested === 'all') {
+    return projects.map((p) => createConfig(p, mode))
+  }
+
+  if (requested && projects.includes(requested)) {
+    return createConfig(requested, mode)
+  }
+
+  const defaultProject = path.basename(workspace.root)
+  return createConfig(defaultProject, mode)
 }
