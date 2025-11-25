@@ -9,7 +9,7 @@ model ClientPage {
   /// 页面名称
   name        String   @map("name") @db.VarChar(100)
   /// 页面标题（用于SEO）
-  title       String?  @map("title") @db.VarChar(200)
+  title       String   @map("title") @db.VarChar(200)
   /// 访问权限级别（0:游客可访问, 1:需要登录, 2:需要会员, 3:需要VIP）
   accessLevel Int      @default(0) @map("access_level") @db.SmallInt
   /// 页面启用状态

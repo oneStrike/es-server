@@ -12,7 +12,6 @@ import { ApiTags } from '@nestjs/swagger'
 import {
   BaseClientPageDto,
   ClientPagePageResponseDto,
-  ClientPageResponseDto,
   QueryClientPageDto,
   UpdateClientPageDto,
 } from './dto/page.dto'
@@ -57,7 +56,7 @@ export class ClientPageController {
   @Get('/detail-by-id')
   @ApiDoc({
     summary: '根据ID查询页面配置详情',
-    model: ClientPageResponseDto,
+    model: BaseClientPageDto,
   })
   async findDetail(@Query('id', ParseIntPipe) id: number) {
     return this.pageService.clientPage.findUnique({ where: { id } })
@@ -69,7 +68,7 @@ export class ClientPageController {
   @Get('/detail-by-code')
   @ApiDoc({
     summary: '根据页面编码查询页面配置详情',
-    model: ClientPageResponseDto,
+    model: BaseClientPageDto,
   })
   async findByCode(@Query('code') code: string) {
     return this.pageService.clientPage.findUnique({
@@ -90,7 +89,7 @@ export class ClientPageController {
   }
 
   /**
-   * 批量软删除页面配置
+   * 批量删除页面配置
    */
   @Post('/batch-delete')
   @ApiDoc({

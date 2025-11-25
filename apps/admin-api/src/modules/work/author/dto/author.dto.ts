@@ -1,12 +1,11 @@
 import {
   ValidateArray,
   ValidateBoolean,
-  ValidateDate,
   ValidateEnum,
   ValidateNumber,
   ValidateString,
 } from '@libs/decorators'
-import { IdDto, PageDto } from '@libs/dto'
+import { BaseDto, PageDto } from '@libs/dto'
 import {
   IntersectionType,
   OmitType,
@@ -18,15 +17,7 @@ import { AuthorGenderEnum } from '../author.constant'
 /**
  * 作者基础DTO
  */
-export class BaseAuthorDto {
-  @ValidateNumber({
-    description: '作者ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  id!: number
-
+export class BaseAuthorDto extends BaseDto {
   @ValidateString({
     description: '作者姓名',
     example: '村上春树',
@@ -94,20 +85,6 @@ export class BaseAuthorDto {
   })
   remark?: string
 
-  @ValidateDate({
-    description: '创建时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: true,
-  })
-  createdAt!: Date
-
-  @ValidateDate({
-    description: '更新时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: true,
-  })
-  updatedAt!: Date
-
   @ValidateNumber({
     description: '作品数量（冗余字段，用于提升查询性能）',
     example: 10,
@@ -151,17 +128,13 @@ export class CreateAuthorDto extends OmitType(BaseAuthorDto, [
 /**
  * 更新作者DTO
  */
-export class UpdateAuthorDto extends IntersectionType(
-  PartialType(
-    OmitType(BaseAuthorDto, [
-      'id',
-      'createdAt',
-      'updatedAt',
-      'worksCount',
-      'followersCount',
-    ]),
-  ),
-  IdDto,
+export class UpdateAuthorDto extends PartialType(
+  OmitType(BaseAuthorDto, [
+    'createdAt',
+    'updatedAt',
+    'worksCount',
+    'followersCount',
+  ]),
 ) {}
 
 /**

@@ -6,9 +6,8 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/decorators'
-import { IdDto, IdsDto, PageDto } from '@libs/dto'
+import { BaseDto, IdDto, IdsDto, PageDto } from '@libs/dto'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -23,15 +22,7 @@ import {
 /**
  * 通知基础DTO
  */
-export class BaseNoticeDto {
-  @ValidateNumber({
-    description: '通知ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  id!: number
-
+export class BaseNoticeDto extends BaseDto {
   @ValidateString({
     description: '通知标题',
     example: '系统维护通知',
@@ -141,18 +132,6 @@ export class BaseNoticeDto {
     default: 0,
   })
   readCount?: number
-
-  @ApiProperty({
-    description: '创建时间',
-    example: '2024-01-01T00:00:00.000Z',
-  })
-  createdAt?: Date
-
-  @ApiProperty({
-    description: '更新时间',
-    example: '2024-01-01T00:00:00.000Z',
-  })
-  updatedAt?: Date
 }
 
 /**
@@ -176,17 +155,19 @@ export class UpdateNoticeDto extends IntersectionType(CreateNoticeDto, IdDto) {}
  */
 export class QueryNoticeDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BaseNoticeDto), [
-    'title',
-    'noticeType',
-    'priorityLevel',
-    'isPublished',
-    'isPinned',
-    'showAsPopup',
-    'pageId',
-    'publishStartTime',
-    'publishEndTime',
-  ]),
+  PartialType(
+    PickType(BaseNoticeDto, [
+      'title',
+      'noticeType',
+      'priorityLevel',
+      'isPublished',
+      'isPinned',
+      'showAsPopup',
+      'pageId',
+      'publishStartTime',
+      'publishEndTime',
+    ]),
+  ),
 ) {
   @ValidateString({
     description: '所启用的平台',
