@@ -481,8 +481,5 @@ export function validateConfig<T extends object = EnvironmentVariables>(
       // 3. 合并两个验证结果
       return { ...baseConfig, ...externalConfig } as T & EnvironmentVariables
     }
-
-    // 如果没有提供外部验证类，只返回基本配置验证结果
-    return baseConfig as T & EnvironmentVariables
   }
 }
