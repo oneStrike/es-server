@@ -73,23 +73,16 @@ enum LogLevel {
 /**
  * 环境变量验证类
  * 用于验证应用配置的有效性和类型安全
+ * 包含所有应用程序所需的环境变量的定义和验证规则
  */
 class EnvironmentVariables {
   /**
    * 应用运行环境
    * 用于区分开发、测试、预发布和生产环境
+   * 决定应用的行为模式、日志级别、调试选项等
    */
   @IsEnum(Environment)
   NODE_ENV: Environment
-
-  /**
-   * 应用服务端口
-   * 应用监听的端口号，范围0-65535
-   */
-  @IsNumber()
-  @Min(0)
-  @Max(65535)
-  APP_PORT: number
 
   /**
    * 兼容端口配置
@@ -100,22 +93,6 @@ class EnvironmentVariables {
   @Max(65535)
   @IsOptional()
   PORT?: number
-
-  /**
-   * 应用名称
-   * 应用的唯一标识符，用于日志、监控等场景
-   */
-  @IsString()
-  @IsNotEmpty()
-  APP_NAME: string
-
-  /**
-   * 应用版本
-   * 应用的当前版本号，遵循语义化版本规范
-   */
-  @IsString()
-  @IsNotEmpty()
-  APP_VERSION: string
 
   // 数据库配置
   /**
@@ -160,28 +137,55 @@ class EnvironmentVariables {
   DB_NAME: string
 
   /**
-   * 查询列表最大限制
+   * 数据库查询列表最大限制
    * 限制数据库查询结果的最大记录数，防止查询过大导致性能问题
    */
   @IsNumber()
   @Min(1)
-  MAX_QUERY_LIST_LIMIT: number
+  DB_MAX_QUERY_LIST_LIMIT: number
 
   /**
-   * 分页大小
+   * 数据库分页大小
    * 每页返回的数据条数，控制单次API响应的数据量
    */
   @IsNumber()
   @Min(1)
-  PAGINATION_PAGE_SIZE: number
+  DB_PAGINATION_PAGE_SIZE: number
 
   /**
-   * 分页起始索引
+   * 数据库分页起始索引
    * 分页的起始页码，通常从0开始，用于计算数据偏移量
    */
   @IsNumber()
   @Min(0)
-  PAGINATION_PAGE_INDEX: number
+  DB_PAGINATION_PAGE_INDEX: number
+
+  /**
+   * 查询列表最大限制（兼容旧配置）
+   * 限制数据库查询结果的最大记录数，防止查询过大导致性能问题
+   */
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  MAX_QUERY_LIST_LIMIT?: number
+
+  /**
+   * 分页大小（兼容旧配置）
+   * 每页返回的数据条数，控制单次API响应的数据量
+   */
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  PAGINATION_PAGE_SIZE?: number
+
+  /**
+   * 分页起始索引（兼容旧配置）
+   * 分页的起始页码，通常从0开始，用于计算数据偏移量
+   */
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  PAGINATION_PAGE_INDEX?: number
 
   /**
    * Redis主机地址
@@ -237,19 +241,19 @@ class EnvironmentVariables {
 
   /**
    * JWT访问令牌过期时间
-   * 访问令牌的有效期，以字符串形式表示
+   * 访问令牌的有效期，以字符串形式表示（如'4h'）
    */
   @IsString()
   @IsNotEmpty()
-  EXPIRATION_IN: string
+  JWT_EXPIRATION_IN: string
 
   /**
    * JWT刷新令牌过期时间
-   * 刷新令牌的有效期，以字符串形式表示，通常设置比访问令牌更长的时间
+   * 刷新令牌的有效期，以字符串形式表示，通常设置比访问令牌更长的时间（如'7d'）
    */
   @IsString()
   @IsNotEmpty()
-  REFRESH_EXPIRATION_IN: string
+  JWT_REFRESH_EXPIRATION_IN: string
 
   /**
    * JWT签发者
@@ -257,7 +261,7 @@ class EnvironmentVariables {
    */
   @IsString()
   @IsNotEmpty()
-  JWT_ISSUER: string
+  JWT_JWT_ISSUER: string
 
   /**
    * JWT接收者
@@ -265,7 +269,7 @@ class EnvironmentVariables {
    */
   @IsString()
   @IsOptional()
-  JWT_AUD?: string
+  JWT_JWT_AUD?: string
 
   /**
    * JWT认证策略键名
@@ -275,11 +279,51 @@ class EnvironmentVariables {
   @IsOptional()
   JWT_STRATEGY_KEY?: string
 
+  /**
+   * 访问令牌过期时间（兼容旧配置）
+   * 访问令牌的有效期，以字符串形式表示
+   */
+  @IsString()
+  @IsOptional()
+  EXPIRATION_IN?: string
+
+  /**
+   * 刷新令牌过期时间（兼容旧配置）
+   * 刷新令牌的有效期，以字符串形式表示
+   */
+  @IsString()
+  @IsOptional()
+  REFRESH_EXPIRATION_IN?: string
+
+  /**
+   * JWT签发者（兼容旧配置）
+   * 标识签发JWT的实体
+   */
+  @IsString()
+  @IsOptional()
+  JWT_ISSUER?: string
+
+  /**
+   * JWT接收者（兼容旧配置）
+   * 标识JWT的预期接收者
+   */
+  @IsString()
+  @IsOptional()
+  JWT_AUD?: string
+
   // RSA密钥配置
+  /**
+   * RSA公钥
+   * 用于加密数据或验证签名的公钥
+   */
   @IsString()
   @IsNotEmpty()
   RSA_PUBLIC_KEY: string
 
+  /**
+   * RSA私钥
+   * 用于解密数据或生成签名的私钥，必须妥善保管
+   */
   @IsString()
   @IsNotEmpty()
   RSA_PRIVATE_KEY: string
@@ -297,7 +341,39 @@ class EnvironmentVariables {
    */
   @IsString()
   @IsNotEmpty()
-  LOG_DIR: string
+  LOG_PATH: string
+
+  /**
+   * 日志文件保留天数
+   * 指定日志文件的保留时间，过期日志会被自动清理
+   */
+  @IsString()
+  @IsNotEmpty()
+  LOG_RETAIN_DAYS: string
+
+  /**
+   * 日志文件最大大小
+   * 单个日志文件的最大大小限制，超过后会创建新的日志文件
+   */
+  @IsString()
+  @IsNotEmpty()
+  LOG_MAX_SIZE: string
+
+  /**
+   * 日志压缩标志
+   * 是否压缩归档的日志文件，节省存储空间
+   */
+  @IsString()
+  @IsNotEmpty()
+  LOG_COMPRESS: string
+
+  /**
+   * 控制台日志级别
+   * 控制控制台输出的日志级别，可与文件日志级别不同
+   */
+  @IsString()
+  @IsNotEmpty()
+  LOG_CONSOLE_LEVEL: string
 
   /**
    * 日志格式
@@ -307,17 +383,21 @@ class EnvironmentVariables {
   @IsOptional()
   LOG_FORMAT?: string
 
+  /**
+   * 日志文件最大数量
+   * 限制保留的日志文件数量，超过后会删除最旧的日志文件
+   */
   @IsString()
-  @IsNotEmpty()
-  LOG_MAX_FILES: string
+  @IsOptional()
+  LOG_MAX_FILES?: string
 
+  /**
+   * 日志日期格式
+   * 定义日志文件名中的日期格式
+   */
   @IsString()
-  @IsNotEmpty()
-  LOG_MAX_SIZE: string
-
-  @IsString()
-  @IsNotEmpty()
-  LOG_DATE_PATTERN: string
+  @IsOptional()
+  LOG_DATE_PATTERN?: string
 
   /**
    * 文件上传目录
@@ -331,12 +411,28 @@ class EnvironmentVariables {
    * 最大文件上传大小
    * 限制单个文件上传的最大字节数，防止恶意上传过大文件
    */
+  @IsString()
+  @IsNotEmpty()
+  UPLOAD_MAX_FILE_SIZE: string
+
+  /**
+   * 最大文件上传数量
+   * 限制单次请求可上传的文件数量
+   */
+  @IsNumber()
+  @Min(1)
+  UPLOAD_MAX_FILES: number
+
+  /**
+   * 最大文件上传大小（兼容旧配置）
+   * 限制单个文件上传的最大字节数，防止恶意上传过大文件
+   */
   @IsNumber()
   @IsOptional()
   MAX_UPLOAD_SIZE?: number
 
   /**
-   * 允许的文件类型
+   * 允许的文件类型（兼容旧配置）
    * 定义允许上传的文件MIME类型，格式为逗号分隔的字符串
    */
   @IsString()
@@ -344,14 +440,49 @@ class EnvironmentVariables {
   ALLOWED_FILE_TYPES?: string
 }
 
-export function validate(config: Record<string, unknown>) {
-  const validatedConfig = plainToInstance(EnvironmentVariables, config, {
-    enableImplicitConversion: true,
-  })
-  const errors = validateSync(validatedConfig, { skipMissingProperties: false })
+/**
+ * 验证配置对象是否符合指定的验证类规则
+ * 支持将外部传入的验证类与默认的EnvironmentVariables组合进行校验
+ *
+ * @template T - 外部验证类的类型
+ * @param config - 待验证的配置对象
+ * @param externalValidationClass - 可选的外部验证类，将与EnvironmentVariables组合进行校验
+ * @returns 验证通过后的配置对象，包含两个验证类的所有属性
+ */
+export function validateConfig<T extends object = EnvironmentVariables>(
+  externalValidationClass?: new () => T,
+) {
+  return (config: Record<string, unknown>) => {
+    // 1. 先验证EnvironmentVariables基本配置
+    const baseConfig = plainToInstance(EnvironmentVariables, config, {
+      enableImplicitConversion: true,
+    })
+    const baseErrors = validateSync(baseConfig, {
+      skipMissingProperties: false,
+    })
 
-  if (errors.length > 0) {
-    throw new Error(errors.toString())
+    if (baseErrors.length > 0) {
+      throw new Error(baseErrors.toString())
+    }
+
+    // 2. 如果提供了外部验证类，则进行组合验证
+    if (externalValidationClass) {
+      const externalConfig = plainToInstance(externalValidationClass, config, {
+        enableImplicitConversion: true,
+      })
+      const externalErrors = validateSync(externalConfig, {
+        skipMissingProperties: false,
+      })
+
+      if (externalErrors.length > 0) {
+        throw new Error(externalErrors.toString())
+      }
+
+      // 3. 合并两个验证结果
+      return { ...baseConfig, ...externalConfig } as T & EnvironmentVariables
+    }
+
+    // 如果没有提供外部验证类，只返回基本配置验证结果
+    return baseConfig as T & EnvironmentVariables
   }
-  return validatedConfig
 }

@@ -7,6 +7,7 @@ import {
   RedisConfigRegister,
   RsaConfigRegister,
   UploadConfigRegister,
+  validateConfig,
 } from '@libs/config'
 import { CryptoModule } from '@libs/crypto'
 import { HttpExceptionFilter } from '@libs/filters'
@@ -17,6 +18,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD } from '@nestjs/core'
 import { AppConfigRegister } from './config/app.config'
+import { ValidateAppConfig } from './config/validation.config'
 import { AdminModule } from './modules/admin.module'
 
 @Module({
@@ -24,6 +26,7 @@ import { AdminModule } from './modules/admin.module'
     // 配置模块 - 全局环境变量管理
     ConfigModule.forRoot({
       isGlobal: true, // 设置为全局模块，其他模块可直接使用
+      cache: true, // 缓存配置
       envFilePath: ['.env', `.env.${getEnv()}`], // 指定环境变量文件路径
       load: [
         AppConfigRegister,
@@ -34,7 +37,7 @@ import { AdminModule } from './modules/admin.module'
         LoggerConfigRegister,
         RsaConfigRegister,
       ], // 加载上传配置
-      cache: true, // 缓存配置
+      validate: validateConfig(ValidateAppConfig),
     }),
     BaseModule.forRoot(),
     JwtAuthModule,
