@@ -1,12 +1,14 @@
 import process from 'node:process'
 import { registerAs } from '@nestjs/config'
 
-const { RSA_PUBLIC_KEY, RSA_PRIVATE_KEY } = process.env
+const { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_NAMESPACE } = process.env
 
-export const RsaConfig = {
+export const RedisConfig = {
   // 数据库连接配置
-  publicKey: RSA_PUBLIC_KEY,
-  privateKey: RSA_PRIVATE_KEY,
+  host: REDIS_HOST,
+  port: REDIS_PORT,
+  password: REDIS_PASSWORD,
+  namespace: REDIS_NAMESPACE || 'ES',
 }
 
-export const RsaConfigRegister = registerAs('rsa', () => RsaConfig)
+export const RedisConfigRegister = registerAs('redis', () => RedisConfig)
