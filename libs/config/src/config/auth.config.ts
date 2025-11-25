@@ -13,20 +13,11 @@ const {
   JWT_STRATEGY_KEY = 'jwt',
 } = process.env
 
-// 验证必需的配置项
-if (!JWT_SECRET) {
-  throw new Error('缺少环境变量 JWT_SECRET 环境变量')
-}
-
-if (!JWT_REFRESH_SECRET) {
-  throw new Error('缺少环境变量 JWT_REFRESH_SECRET 环境变量')
-}
-
 // 创建认证配置对象，使用更优雅的方式合并默认值和环境变量
 export const AuthConfig: IAuthConfig = {
   // 必需的配置项，已在上面验证
-  secret: JWT_SECRET,
-  refreshSecret: JWT_REFRESH_SECRET,
+  secret: JWT_SECRET!,
+  refreshSecret: JWT_REFRESH_SECRET!,
   // 使用类型安全的方式合并其他配置项
   expiresIn: EXPIRATION_IN as IAuthConfig['expiresIn'],
   refreshExpiresIn: REFRESH_EXPIRATION_IN as IAuthConfig['refreshExpiresIn'],

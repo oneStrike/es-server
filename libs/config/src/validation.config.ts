@@ -1,4 +1,3 @@
-import { plainToInstance } from 'class-transformer'
 import {
   IsEnum,
   IsNotEmpty,
@@ -7,7 +6,6 @@ import {
   IsString,
   Max,
   Min,
-  validateSync,
 } from 'class-validator'
 
 /**
@@ -75,7 +73,7 @@ enum LogLevel {
  * 用于验证应用配置的有效性和类型安全
  * 包含所有应用程序所需的环境变量的定义和验证规则
  */
-class EnvironmentVariables {
+export class EnvironmentVariables {
   /**
    * 应用运行环境
    * 用于区分开发、测试、预发布和生产环境
@@ -438,48 +436,4 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   ALLOWED_FILE_TYPES?: string
-}
-
-/**
- * 验证配置对象是否符合指定的验证类规则
- * 支持将外部传入的验证类与默认的EnvironmentVariables组合进行校验
- *
- * @template T - 外部验证类的类型
- * @param config - 待验证的配置对象
- * @param externalValidationClass - 可选的外部验证类，将与EnvironmentVariables组合进行校验
- * @returns 验证通过后的配置对象，包含两个验证类的所有属性
- */
-export function validateConfig<T extends object = EnvironmentVariables>(
-  externalValidationClass?: new () => T,
-) {
-  return (config: Record<string, unknown>) => {
-    // 1. 先验证EnvironmentVariables基本配置
-    const baseConfig = plainToInstance(EnvironmentVariables, config, {
-      enableImplicitConversion: true,
-    })
-    const baseErrors = validateSync(baseConfig, {
-      skipMissingProperties: false,
-    })
-
-    if (baseErrors.length > 0) {
-      throw new Error(baseErrors.toString())
-    }
-
-    // 2. 如果提供了外部验证类，则进行组合验证
-    if (externalValidationClass) {
-      const externalConfig = plainToInstance(externalValidationClass, config, {
-        enableImplicitConversion: true,
-      })
-      const externalErrors = validateSync(externalConfig, {
-        skipMissingProperties: false,
-      })
-
-      if (externalErrors.length > 0) {
-        throw new Error(externalErrors.toString())
-      }
-
-      // 3. 合并两个验证结果
-      return { ...baseConfig, ...externalConfig } as T & EnvironmentVariables
-    }
-  }
 }
