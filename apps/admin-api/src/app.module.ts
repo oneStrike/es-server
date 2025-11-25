@@ -3,11 +3,11 @@ import { BaseModule } from '@libs/base'
 import {
   AuthConfigRegister,
   DbConfigRegister,
+  EnvironmentVariables,
   LoggerConfigRegister,
   RedisConfigRegister,
   RsaConfigRegister,
   UploadConfigRegister,
-  validateConfig,
 } from '@libs/config'
 import { CryptoModule } from '@libs/crypto'
 import { HttpExceptionFilter } from '@libs/filters'
@@ -17,8 +17,10 @@ import { getEnv } from '@libs/utils'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD } from '@nestjs/core'
+import { plainToInstance } from 'class-transformer'
+import { validateSync } from 'class-validator'
 import { AppConfigRegister } from './config/app.config'
-import { ValidateAppConfig } from './config/validation.config'
+import { AppConfigVariables } from './config/validation.config'
 import { AdminModule } from './modules/admin.module'
 
 @Module({
@@ -37,7 +39,24 @@ import { AdminModule } from './modules/admin.module'
         LoggerConfigRegister,
         RsaConfigRegister,
       ], // 加载上传配置
-      validate: validateConfig(ValidateAppConfig),
+      validate: (config: Record<string, unknown>) => {
+        const validatedConfig = {
+          ...plainToInstance(EnvironmentVariables, config, {
+            enableImplicitConversion: true,
+          }),
+          ...plainToInstance(AppConfigVariables, config, {
+            enableImplicitConversion: true,
+          }),
+        }
+        const errors = validateSync(validatedConfig, {
+          skipMissingProperties: false,
+        })
+
+        if (errors.length > 0) {
+          throw new Error(errors.toString())
+        }
+        return validatedConfig
+      },
     }),
     BaseModule.forRoot(),
     JwtAuthModule,

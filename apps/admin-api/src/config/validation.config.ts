@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber, IsString, Max, Min } from 'class-validator'
 
-export class ValidateAppConfig {
+export class AppConfigVariables {
   /**
    * 应用服务端口
    * 应用监听的端口号，范围0-65535

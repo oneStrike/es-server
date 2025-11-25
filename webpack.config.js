@@ -24,6 +24,12 @@ function createConfig(projectName, mode) {
     entry: isDev
       ? ['webpack/hot/poll?100', path.join(projectPath, 'src', 'main.ts')]
       : path.join(projectPath, 'src', 'main.ts'),
+    cache: {
+      type: 'filesystem',
+      cacheDirectory: path.resolve(__dirname, '.cache/webpack', projectName),
+    },
+    externalsPresets: { node: true },
+    externalsType: 'commonjs',
     target: 'node',
     externals: [
       nodeExternals({
@@ -48,6 +54,7 @@ function createConfig(projectName, mode) {
     mode: isDev ? 'development' : 'production',
     resolve: {
       extensions: ['.tsx', '.ts', '.js', '.json'],
+      symlinks: false,
       alias: {
         '@': path.resolve(projectPath, 'src'),
         '@libs/auth': path.resolve(__dirname, 'libs/auth/src'),
@@ -74,25 +81,40 @@ function createConfig(projectName, mode) {
             new webpack.HotModuleReplacementPlugin(),
             new RunScriptWebpackPlugin({ name: 'main.js', autoRestart: true }),
           ]
-        : []),
+        : [
+            new webpack.BannerPlugin({
+              banner: 'require("source-map-support").install();',
+              raw: true,
+            }),
+          ]),
       new webpack.DefinePlugin({
         'process.env.NODE_ENV': JSON.stringify(
           process.env.NODE_ENV || (isDev ? 'development' : 'production'),
         ),
       }),
+      new webpack.ProgressPlugin(),
     ],
     output: {
       path: path.join(__dirname, 'dist', 'apps', projectName),
+      clean: true,
       filename: 'main.js',
     },
-    devtool: isDev ? 'inline-source-map' : false,
+    devtool: isDev ? 'inline-source-map' : 'source-map',
     optimization: {
       usedExports: true,
       splitChunks: false,
       minimize: !isDev,
+      moduleIds: isDev ? 'named' : 'deterministic',
+      chunkIds: isDev ? 'named' : 'deterministic',
     },
     watchOptions: {
       ignored: /node_modules/,
+      aggregateTimeout: 150,
+    },
+    performance: { hints: false },
+    snapshot: {
+      managedPaths: [/^(.+)[\\\/]node_modules[\\\/]/],
+      immutablePaths: [/^(.+)[\\\/]node_modules[\\\/]\.pnpm[\\\/]/],
     },
     stats: 'errors-warnings',
   }
