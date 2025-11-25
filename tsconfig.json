@@ -64,6 +64,12 @@
       "@libs/dto/*": [
         "libs/dto/src/*"
       ],
+      "@libs/filters": [
+        "libs/filters/src"
+      ],
+      "@libs/filters/*": [
+        "libs/filters/src/*"
+      ],
       "@libs/health": [
         "libs/health/src"
       ],

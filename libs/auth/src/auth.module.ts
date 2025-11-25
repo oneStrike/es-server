@@ -28,4 +28,4 @@ import { JwtBlacklistService } from './jwt-blacklist.service'
   providers: [AuthService, JwtBlacklistService, AuthStrategy],
   exports: [AuthService, JwtBlacklistService],
 })
-export class BaseAuthModule {}
+export class JwtAuthModule {}

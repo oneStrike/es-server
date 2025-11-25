@@ -62,8 +62,8 @@ export class CaptchaService {
     await this.cacheManager.set(cacheKey, captcha.text, finalConfig.ttl)
 
     return {
-      data: `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`,
-      id: uniqueId,
+      captcha: `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`,
+      captchaId: uniqueId,
     }
   }
 

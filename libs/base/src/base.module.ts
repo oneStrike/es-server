@@ -7,8 +7,9 @@ import {
   ValidationPipe,
 } from '@nestjs/common'
 
-import { APP_PIPE } from '@nestjs/core'
-import { ThrottlerModule } from '@nestjs/throttler'
+import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { TransformInterceptor } from './transform.interceptor'
 
 // 定义 BaseModule 可接受的配置接口
 export interface BaseModuleOptions {
@@ -61,6 +62,14 @@ export class BaseModule {
 
     // 全局验证管道 - 数据格式校验
     const providers = [
+      {
+        provide: APP_GUARD,
+        useClass: ThrottlerGuard, // 限流守卫
+      },
+      {
+        provide: APP_INTERCEPTOR,
+        useClass: TransformInterceptor, // 响应转换拦截器
+      },
       {
         provide: APP_PIPE,
         useValue: new ValidationPipe({

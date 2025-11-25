@@ -61,6 +61,10 @@ export interface AppConfigInterface {
    */
   globalApiPrefix: string
   /**
+   * 普通管理员用户重置时的默认密码
+   */
+  defaultPassword: string
+  /**
    * Swagger配置
    */
   swaggerConfig: {
@@ -85,4 +89,18 @@ export interface AppConfigInterface {
      */
     path: string
   }
+}
+
+/**
+ * token中包含的用户信息
+ */
+export interface JwtUserInfoInterface {
+  /**
+   * 用户ID
+   */
+  sub: number
+  /**
+   * 用户名
+   */
+  username: string
 }
