@@ -5,24 +5,11 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/decorators'
-import { PageDto } from '@libs/dto'
-import {
-  ApiProperty,
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
-import { ActionTypeEnum, ApiTypeEnum, HttpMethodEnum } from '../audit.constant'
+import { BaseDto, PageDto } from '@libs/dto'
+import { ActionTypeEnum, ApiTypeEnum, HttpMethodEnum } from '@libs/types'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
-export class RequestLogDto {
-  @ValidateNumber({
-    description: '主键ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  id!: number
-
+export class AuditDto extends BaseDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1001,
@@ -114,24 +101,12 @@ export class RequestLogDto {
     required: true,
   })
   content!: string
-
-  @ApiProperty({
-    description: '创建时间',
-    example: '2024-01-01T00:00:00.000Z',
-  })
-  createdAt!: Date
-
-  @ApiProperty({
-    description: '更新时间',
-    example: '2024-01-01T00:00:00.000Z',
-  })
-  updatedAt!: Date
 }
 
 /**
  * 创建请求日志DTO
  */
-export class CreateRequestLogDto extends PickType(RequestLogDto, [
+export class CreateRequestLogDto extends PickType(AuditDto, [
   'userId',
   'content',
   'username',
@@ -140,8 +115,8 @@ export class CreateRequestLogDto extends PickType(RequestLogDto, [
 ]) {}
 
 export class CreateRequestLogSimpleDto extends IntersectionType(
-  PickType(RequestLogDto, ['content']),
-  PartialType(PickType(RequestLogDto, ['username', 'userId'])),
+  PickType(AuditDto, ['content']),
+  PartialType(PickType(AuditDto, ['username', 'userId'])),
 ) {}
 
 /**
@@ -149,7 +124,7 @@ export class CreateRequestLogSimpleDto extends IntersectionType(
  */
 export class RequestLogPageDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(RequestLogDto), [
+  PickType(PartialType(AuditDto), [
     'userId',
     'username',
     'ip',

@@ -1,14 +1,14 @@
 import type { RequestLogWhereInput } from '@libs/database'
 import type { FastifyRequest } from 'fastify'
 import { RepositoryService } from '@libs/database'
+import { ActionTypeEnum } from '@libs/types'
 import { parseRequestLogFields } from '@libs/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { ActionTypeEnum } from './audit.constant'
 import {
   CreateRequestLogDto,
   CreateRequestLogSimpleDto,
   RequestLogPageDto,
-} from './dto/request-log.dto'
+} from './dto/audit.dto'
 
 @Injectable()
 export class AuditService extends RepositoryService {
@@ -18,8 +18,6 @@ export class AuditService extends RepositoryService {
 
   /**
    * 创建请求日志
-   * @param createDto 创建请求日志的数据
-   * @returns 创建的请求日志ID
    */
   async createRequestLog(createDto: CreateRequestLogDto, req: FastifyRequest) {
     // 处理JSON字段的转换

@@ -1,12 +1,6 @@
+import { ValidateBoolean, ValidateEnum, ValidateString } from '@libs/decorators'
+import { BaseDto, PageDto } from '@libs/dto'
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
-} from '@libs/decorators'
-import { IdDto, PageDto } from '@libs/dto'
-import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -17,7 +11,7 @@ import { PageRuleEnum } from '../page.constant'
 /**
  * 页面配置基础字段DTO
  */
-export class BaseClientPageDto extends IdDto {
+export class BaseClientPageDto extends BaseDto {
   @ValidateString({
     description: '页面编码（唯一标识）',
     example: 'home',
@@ -45,10 +39,10 @@ export class BaseClientPageDto extends IdDto {
   @ValidateString({
     description: '页面标题',
     example: '首页 - 我的应用',
-    required: false,
+    required: true,
     maxLength: 200,
   })
-  title?: string
+  title!: string
 
   @ValidateEnum({
     description: '页面权限级别',
@@ -79,51 +73,23 @@ export class BaseClientPageDto extends IdDto {
 /**
  * 更新页面配置DTO
  */
-export class UpdateClientPageDto extends PartialType(BaseClientPageDto) {
-  @ValidateNumber({
-    description: '页面ID',
-    example: 1,
-    required: true,
-  })
-  id!: number
-}
+export class UpdateClientPageDto extends PartialType(
+  OmitType(BaseClientPageDto, ['createdAt', 'updatedAt']),
+) {}
 
 /**
  * 页面配置查询DTO
  */
 export class QueryClientPageDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BaseClientPageDto), [
-    'name',
-    'code',
-    'accessLevel',
-    'isEnabled',
-  ]),
+  PartialType(
+    PickType(BaseClientPageDto, ['name', 'code', 'accessLevel', 'isEnabled']),
+  ),
 ) {}
-
-/**
- * 页面配置响应DTO
- */
-export class ClientPageResponseDto extends IntersectionType(
-  BaseClientPageDto,
-  IdDto,
-) {
-  @ApiProperty({
-    description: '创建时间',
-    example: '2021-01-01 00:00:00',
-  })
-  createdAt!: Date
-
-  @ApiProperty({
-    description: '更新时间',
-    example: '2021-01-01 00:00:00',
-  })
-  updatedAt!: Date
-}
 
 /**
  * 页面配置分页响应DTO
  */
-export class ClientPagePageResponseDto extends OmitType(ClientPageResponseDto, [
+export class ClientPagePageResponseDto extends OmitType(BaseClientPageDto, [
   'description',
 ]) {}
