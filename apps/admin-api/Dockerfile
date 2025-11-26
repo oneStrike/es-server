@@ -15,26 +15,26 @@ RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
 # 先复制依赖清单以最大化缓存
 # 复制根目录的依赖文件（共享依赖）
-COPY ../../*.json ./
-COPY ../../*-lock.* ./
+COPY ./*.json ./
+COPY ./*-lock.* ./
 
 # 使用 BuildKit 缓存加速依赖安装
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
     pnpm install --frozen-lockfile
 
 # 复制源码 - 只复制 admin-api 相关的代码
-COPY ../../webpack.config.js ./
-COPY ../../nest-cli.json ./
-COPY ../../tsconfig*.json ./
+COPY ./webpack.config.js ./
+COPY ./nest-cli.json ./
+COPY ./tsconfig*.json ./
 COPY ./apps/admin-api/src ./src
-COPY ./apps/admin-api/test ./test || true || true
+COPY ./apps/admin-api/test ./test
 
 # 复制 Prisma schema 并缓存引擎下载
-COPY ../../prisma ./prisma
-COPY ../../prisma.config.ts ./
+COPY ./prisma ./prisma
+COPY ./prisma.config.ts ./
 
 # 复制共享模块
-COPY ../../libs ./libs
+COPY ./libs ./libs
 
 # 构建 admin-api 应用
 RUN pnpm build
