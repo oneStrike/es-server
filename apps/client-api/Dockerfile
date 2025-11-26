@@ -76,7 +76,7 @@ RUN pm2 install pm2-logrotate \
  && pm2 set pm2-logrotate:rotateInterval "0 */6 * * *"
 
 # 暴露端口
-EXPOSE 8080
+EXPOSE 8081
 
 # 健康检查（使用 busybox wget）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \

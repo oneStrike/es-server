@@ -1,0 +1,116 @@
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  uploads-data:
+    driver: local
+
+services:
+  # PostgreSQL 数据库服务 - 用于现有项目
+  postgres:
+    image: postgres:16-alpine
+    container_name: es-postgres
+    restart: unless-stopped
+    env_file:
+      - ./.db.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$DB_USER" -d "$DB_NAME"']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis 缓存服务 - 用于现有项目
+  redis:
+    image: redis:7-alpine
+    container_name: es-redis
+    restart: unless-stopped
+    env_file:
+      - ./.redis.env
+    command: sh -c 'redis-server --requirepass "$REDIS_PASSWORD" --appendonly yes'
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: [CMD-SHELL, 'redis-cli -a "$REDIS_PASSWORD" ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Web 后端端服务
+  admin-server:
+    image: es-admin-server:0.0.2
+    container_name: es-admin-server
+    user: '1001:1001'
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '8080:8080'
+    env_file:
+      - ./.db.env
+      - ./.redis.env
+      - ./.admin-server.env
+    volumes:
+      - uploads-data:/app/uploads
+    logging:
+      driver: json-file
+      options:
+        max-size: '50m'
+        max-file: '5'
+    networks:
+      - app-network
+
+  # Web 后端端服务
+  client-server:
+    image: es-client-server:0.0.2
+    container_name: es-client-server
+    user: '1001:1001'
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '8081:8081'
+    env_file:
+      - ./.db.env
+      - ./.redis.env
+      - ./.client-server.env
+    volumes:
+      - uploads-data:/app/uploads
+    logging:
+      driver: json-file
+      options:
+        max-size: '50m'
+        max-file: '5'
+    networks:
+      - app-network
+
+  # Web 前端服务
+  admin:
+    image: es-admin:latest
+    container_name: es-admin
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '8082:8082'
+    networks:
+      - app-network
