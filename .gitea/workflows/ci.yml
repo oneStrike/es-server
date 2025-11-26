@@ -1,4 +1,4 @@
-name: Build and Package Services
+name: Build and Package
 
 on:
   push:
@@ -10,15 +10,12 @@ on:
     branches:
       - main
 
-env:
-  NODE_VERSION: '22'
-  VERSION: ${{ steps.pkg.outputs.version }}
-
 jobs:
-  # Admin API Service
-  build-admin-api:
+  docker-build:
     runs-on: es
-    name: Build Admin API
+    env:
+      NODE_VERSION: '22'
+      IMAGE_NAME: es-server
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,70 +34,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 创建缓存目录
-        run: mkdir -p /data/cache/admin-api/buildx
-
-      - name: 构建 Admin API 镜像
-        id: build_admin_image
+      - name: 打包镜像
+        id: build_image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: apps/admin-api/Dockerfile
+          file: Dockerfile
           tags: |
-            admin-api:${{ steps.pkg.outputs.version }}
-            admin-api:latest
-          cache-from: type=local,src=/data/cache/admin-api/buildx
-          cache-to: type=local,dest=/data/cache/admin-api/buildx,mode=max
+            ${{ env.IMAGE_NAME }}:${{ steps.pkg.outputs.version }}
+          cache-from: type=local,src=/data/cache/server/buildx
+          cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
-          no-cache: false
-
-  # Client API Service
-  build-client-api:
-    runs-on: es
-    name: Build Client API
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: 提取 package 版本号
-        id: pkg
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 创建缓存目录
-        run: mkdir -p /data/cache/client-api/buildx
-
-      - name: 构建 Client API 镜像
-        id: build_client_image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/client-api/Dockerfile
-          tags: |
-            client-api:${{ steps.pkg.outputs.version }}
-            client-api:latest
-          cache-from: type=local,src=/data/cache/client-api/buildx
-          cache-to: type=local,dest=/data/cache/client-api/buildx,mode=max
-          load: true
-          no-cache: false
-
-  # 并行执行两个服务的构建
-  build-all:
-    runs-on: es
-    name: Build All Services
-    needs: [build-admin-api, build-client-api]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: 清理悬空镜像
         run: |
