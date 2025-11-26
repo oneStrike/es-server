@@ -34,14 +34,26 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 打包镜像
-        id: build_image
+      - name: 打包admin镜像
+        id: build_admin_image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile
+          file: /apps/admin-api/Dockerfile
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ steps.pkg.outputs.version }}
+            es-admin-server:${{ steps.pkg.outputs.version }}
+          cache-from: type=local,src=/data/cache/server/buildx
+          cache-to: type=local,dest=/data/cache/server/buildx,mode=max
+          load: true
+
+      - name: 打包client镜像
+        id: build_client_image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: /apps/client-api/Dockerfile
+          tags: |
+            es-client-server:${{ steps.pkg.outputs.version }}
           cache-from: type=local,src=/data/cache/server/buildx
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
