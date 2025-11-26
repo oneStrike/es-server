@@ -26,7 +26,9 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
 COPY ../../webpack.config.js ./
 COPY ../../nest-cli.json ./
 COPY ../../tsconfig*.json ./
-COPY src ./src
+COPY ./apps/admin-api/src ./src
+COPY ./apps/admin-api/test ./test || true || true
+
 # 复制 Prisma schema 并缓存引擎下载
 COPY ../../prisma ./prisma
 COPY ../../prisma.config.ts ./
