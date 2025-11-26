@@ -48,7 +48,7 @@ services:
 
   # Web 后端端服务
   admin-server:
-    image: es-admin-server:0.0.2
+    image: es/admin/server:0.0.2
     container_name: es-admin-server
     user: '1001:1001'
     restart: unless-stopped
@@ -75,7 +75,7 @@ services:
 
   # Web 后端端服务
   client-server:
-    image: es-client-server:0.0.2
+    image: es/client/server:0.0.2
     container_name: es-client-server
     user: '1001:1001'
     restart: unless-stopped
