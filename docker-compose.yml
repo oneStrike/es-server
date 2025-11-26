@@ -16,10 +16,14 @@ services:
     image: postgres:16-alpine
     container_name: es-postgres
     restart: unless-stopped
-    env_file:
-      - ./.db.env
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_NAME}
     networks:
       - app-network
     healthcheck:
@@ -33,13 +37,13 @@ services:
     image: redis:7-alpine
     container_name: es-redis
     restart: unless-stopped
-    env_file:
-      - ./.redis.env
     command: sh -c 'redis-server --requirepass "$REDIS_PASSWORD" --appendonly yes'
     volumes:
       - redis-data:/data
     networks:
       - app-network
+    env_file:
+      - ./.env
     healthcheck:
       test: [CMD-SHELL, 'redis-cli -a "$REDIS_PASSWORD" ping']
       interval: 30s
@@ -60,9 +64,10 @@ services:
     ports:
       - '8080:8080'
     env_file:
-      - ./.db.env
-      - ./.redis.env
+      - ./.env
       - ./.admin-server.env
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
     volumes:
       - uploads-data:/app/uploads
     logging:
@@ -87,9 +92,10 @@ services:
     ports:
       - '8081:8081'
     env_file:
-      - ./.db.env
-      - ./.redis.env
+      - ./.env
       - ./.client-server.env
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
     volumes:
       - uploads-data:/app/uploads
     logging:
