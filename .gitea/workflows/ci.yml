@@ -39,7 +39,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: /apps/admin-api/Dockerfile
+          file: ./apps/admin-api/Dockerfile
           tags: |
             es-admin-server:${{ steps.pkg.outputs.version }}
           cache-from: type=local,src=/data/cache/server/buildx
@@ -51,7 +51,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: /apps/client-api/Dockerfile
+          file: ./apps/client-api/Dockerfile
           tags: |
             es-client-server:${{ steps.pkg.outputs.version }}
           cache-from: type=local,src=/data/cache/server/buildx
