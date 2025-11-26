@@ -270,7 +270,11 @@ const maxFiles = Number(UPLOAD_MAX_FILES)
 export const UploadConfig = {
   maxFileSize,
   maxFiles,
-  uploadDir: isAbsolute(UPLOAD_DIR!) ? UPLOAD_DIR : resolve(UPLOAD_DIR!),
+  uploadDir: UPLOAD_DIR
+    ? isAbsolute(UPLOAD_DIR)
+      ? UPLOAD_DIR
+      : resolve(UPLOAD_DIR)
+    : undefined,
   allowFile: {
     image: {
       mimeTypes: allowedImageType.mimeTypes,
