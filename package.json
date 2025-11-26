@@ -10,6 +10,15 @@
     "reinstall": "rimraf ./node_modules && pnpm install && pnpm prisma:update",
     "build": "cross-env NODE_ENV=production  webpack --config webpack.config.js --env project=admin-api",
     "build:client": "cross-env NODE_ENV=production  webpack --config webpack.config.js --env project=client-api",
+    "build:all": "pnpm build && pnpm build:client",
+
+    "docker:build:admin": "docker build -f apps/admin-api/Dockerfile -t admin-api:latest .",
+    "docker:build:client": "docker build -f apps/client-api/Dockerfile -t client-api:latest .",
+    "docker:build:all": "pnpm docker:build:admin && pnpm docker:build:client",
+
+    "docker:run:admin": "docker run -d -p 8080:8080 --name admin-api admin-api:latest",
+    "docker:run:client": "docker run -d -p 8081:8081 --name client-api client-api:latest",
+
     "start": "cross-env NODE_ENV=production nest start",
     "start:dev": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=admin-api",
     "start:admin": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=admin-api",
@@ -18,8 +27,11 @@
     "start:nest-dev": "nest start --watch",
     "start:debug": "cross-env NODE_ENV=development nest start --debug --watch",
     "start:prod": "node dist/apps/admin-api/main.js",
-    "start:pm2": "cross-env NODE_ENV=production pm2-runtime start ecosystem.config.cjs --env production",
-    "pm2:start": "pm2 start ecosystem.config.cjs --env development",
+
+    "pm2:start:admin": "cd apps/admin-api && cross-env NODE_ENV=production pm2-runtime start ecosystem.config.cjs --env production",
+    "pm2:start:client": "cd apps/client-api && cross-env NODE_ENV=production pm2-runtime start ecosystem.config.cjs --env production",
+    "pm2:start:dev:admin": "cd apps/admin-api && pm2 start ecosystem.config.cjs --env development",
+    "pm2:start:dev:client": "cd apps/client-api && pm2 start ecosystem.config.cjs --env development",
     "pm2:status": "pm2 status",
     "pm2:logs": "pm2 logs --lines 200",
     "pm2:flush": "pm2 flush",

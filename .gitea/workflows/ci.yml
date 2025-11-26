@@ -1,4 +1,4 @@
-name: Build and Package
+name: Build and Package Services
 
 on:
   push:
@@ -10,12 +10,15 @@ on:
     branches:
       - main
 
+env:
+  NODE_VERSION: '22'
+  VERSION: ${{ steps.pkg.outputs.version }}
+
 jobs:
-  docker-build:
+  # Admin API Service
+  build-admin-api:
     runs-on: es
-    env:
-      NODE_VERSION: '22'
-      IMAGE_NAME: es-server
+    name: Build Admin API
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,17 +37,115 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 打包镜像
-        id: build_image
+      - name: 构建 Admin API 镜像
+        id: build_admin_image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile
+          file: apps/admin-api/Dockerfile
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ steps.pkg.outputs.version }}
-          cache-from: type=local,src=/data/cache/server/buildx
-          cache-to: type=local,dest=/data/cache/server/buildx,mode=max
+            admin-api:${{ steps.pkg.outputs.version }}
+            admin-api:latest
+          cache-from: type=local,src=/data/cache/admin-api/buildx
+          cache-to: type=local,dest=/data/cache/admin-api/buildx,mode=max
           load: true
+
+      - name: 保存 Admin API 镜像
+        run: |
+          docker save admin-api:${{ steps.pkg.outputs.version }} > /data/images/admin-api-${{ steps.pkg.outputs.version }}.tar
+
+      - name: 清理 Admin API 镜像
+        run: |
+          docker rmi admin-api:${{ steps.pkg.outputs.version }} admin-api:latest || true
+
+  # Client API Service
+  build-client-api:
+    runs-on: es
+    name: Build Client API
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 提取 package 版本号
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 构建 Client API 镜像
+        id: build_client_image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/client-api/Dockerfile
+          tags: |
+            client-api:${{ steps.pkg.outputs.version }}
+            client-api:latest
+          cache-from: type=local,src=/data/cache/client-api/buildx
+          cache-to: type=local,dest=/data/cache/client-api/buildx,mode=max
+          load: true
+
+      - name: 保存 Client API 镜像
+        run: |
+          docker save client-api:${{ steps.pkg.outputs.version }} > /data/images/client-api-${{ steps.pkg.outputs.version }}.tar
+
+      - name: 清理 Client API 镜像
+        run: |
+          docker rmi client-api:${{ steps.pkg.outputs.version }} client-api:latest || true
+
+  # 并行执行两个服务的构建
+  build-all:
+    runs-on: es
+    name: Build All Services
+    needs: [build-admin-api, build-client-api]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 提取 package 版本号
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: 加载 Admin API 镜像
+        run: |
+          docker load < /data/images/admin-api-${{ steps.pkg.outputs.version }}.tar
+
+      - name: 加载 Client API 镜像
+        run: |
+          docker load < /data/images/client-api-${{ steps.pkg.outputs.version }}.tar
+
+      - name: 验证镜像构建
+        run: |
+          echo "=== Admin API 镜像信息 ==="
+          docker images admin-api
+          echo "=== Client API 镜像信息 ==="
+          docker images client-api
+
+      - name: 测试 Admin API 容器
+        run: |
+          docker run -d --name admin-api-test -p 8080:8080 admin-api:${{ steps.pkg.outputs.version }}
+          sleep 10
+          docker ps | grep admin-api-test
+          docker stop admin-api-test
+          docker rm admin-api-test
+
+      - name: 测试 Client API 容器
+        run: |
+          docker run -d --name client-api-test -p 8081:8081 client-api:${{ steps.pkg.outputs.version }}
+          sleep 10
+          docker ps | grep client-api-test
+          docker stop client-api-test
+          docker rm client-api-test
 
       - name: 清理悬空镜像
         run: |

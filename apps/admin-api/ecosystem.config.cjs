@@ -1,16 +1,17 @@
 /**
- * PM2 Ecosystem configuration for es-server (CommonJS)
+ * Admin API PM2 Ecosystem configuration (CommonJS)
  * - Uses pm2-runtime in Docker
  * - Allows cluster via env (default fork:1 in container)
  * - Separates stdout/stderr logs and enables merge for multi-instances
+ * - Admin API specific configuration
  */
 const process = require('node:process')
 
 module.exports = {
   apps: [
     {
-      name: 'es-server',
-      script: 'dist/main.js',
+      name: 'admin-api',
+      script: 'dist/apps/admin-api/main.js',
       // Default one process per container; allow enabling cluster by env
       instances: process.env.PM2_INSTANCES || 1,
       exec_mode: process.env.PM2_EXEC_MODE || 'fork', // set 'cluster' to enable cluster mode
@@ -29,6 +30,8 @@ module.exports = {
       env: {
         NODE_ENV: process.env.NODE_ENV || 'production',
         PORT: process.env.PORT || 8080,
+        // Admin API specific environment variables
+        API_PREFIX: process.env.API_PREFIX || '/api',
         // 方案B：生产启用控制台告警输出到 stderr
         LOG_ENABLE_CONSOLE: process.env.LOG_ENABLE_CONSOLE || 'true',
         LOG_CONSOLE_LEVEL: process.env.LOG_CONSOLE_LEVEL || 'warn',
@@ -37,9 +40,23 @@ module.exports = {
         LOG_MAX_SIZE: process.env.LOG_MAX_SIZE || '50m',
         LOG_RETAIN_DAYS: process.env.LOG_RETAIN_DAYS || '30d',
         LOG_COMPRESS: process.env.LOG_COMPRESS || 'true',
+        // Admin API specific configurations
+        ADMIN_API_HOST: process.env.ADMIN_API_HOST || '0.0.0.0',
+        ADMIN_API_PORT: process.env.ADMIN_API_PORT || 8080,
+        JWT_SECRET: process.env.JWT_SECRET,
+        JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '24h',
       },
       env_development: {
         NODE_ENV: 'development',
+        PORT: 8080,
+        LOG_LEVEL: 'debug',
+        LOG_ENABLE_CONSOLE: 'true',
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 8080,
+        LOG_LEVEL: 'info',
+        LOG_ENABLE_CONSOLE: 'false',
       },
     },
   ],
