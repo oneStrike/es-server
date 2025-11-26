@@ -29,7 +29,7 @@ module.exports = {
 
       env: {
         NODE_ENV: process.env.NODE_ENV || 'production',
-        PORT: process.env.PORT || 8081,
+        PORT: process.env.APP_PORT || 8081,
         // Client API specific environment variables
         API_PREFIX: process.env.API_PREFIX || '/api',
         // 方案B：生产启用控制台告警输出到 stderr
