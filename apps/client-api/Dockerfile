@@ -30,7 +30,7 @@ COPY ../../webpack.config.js ./
 COPY ../../nest-cli.json ./
 COPY ../../tsconfig*.json ./
 COPY src ./src
-COPY test ./test
+COPY test ./test || true
 
 # 复制 Prisma schema 并缓存引擎下载
 COPY ../../prisma ./prisma
