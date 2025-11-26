@@ -41,7 +41,7 @@ jobs:
           context: .
           file: ./apps/admin-api/Dockerfile
           tags: |
-            es-admin-server:${{ steps.pkg.outputs.version }}
+            es/admin/server:${{ steps.pkg.outputs.version }}
           cache-from: type=local,src=/data/cache/server/buildx
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
@@ -53,7 +53,7 @@ jobs:
           context: .
           file: ./apps/client-api/Dockerfile
           tags: |
-            es-client-server:${{ steps.pkg.outputs.version }}
+            es/client/server:${{ steps.pkg.outputs.version }}
           cache-from: type=local,src=/data/cache/server/buildx
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
