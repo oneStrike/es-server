@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1.6
 # --------------------------------
-# Client API 专用 Dockerfile
 # 构建独立的 client-api 服务镜像
 # --------------------------------
 # --------------------------------
@@ -15,30 +14,14 @@ RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
 # 先复制依赖清单以最大化缓存
 # 复制根目录的依赖文件（共享依赖）
-COPY ../../*.json ./
-COPY ../../*-lock.* ./
-
-# 复制 client-api 特定的 package.json
-COPY package.json ./
+COPY ./*.json ./
+COPY ./*-lock.* ./
 
 # 使用 BuildKit 缓存加速依赖安装
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
     pnpm install --frozen-lockfile
 
-# 复制源码 - 只复制 client-api 相关的代码
-COPY ../../webpack.config.js ./
-COPY ../../nest-cli.json ./
-COPY ../../tsconfig*.json ./
-COPY src ./src
-COPY test ./test || true
-
-# 复制 Prisma schema 并缓存引擎下载
-COPY ../../prisma ./prisma
-COPY ../../prisma.config.ts ./
-
-# 复制共享模块
-COPY ../../src ../src
-COPY ../../libs ../libs
+COPY . .
 
 # 构建 client-api 应用
 RUN pnpm build:client
@@ -70,11 +53,11 @@ WORKDIR /app
 
 # 从构建阶段复制生产依赖和构建产物
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/client-api ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
-COPY --from=builder --chown=nestjs:nodejs /app/prisma ../prisma
+COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./
-COPY --from=builder --chown=nestjs:nodejs /app/ecosystem.config.cjs ./
+COPY --from=builder --chown=nestjs:nodejs /app/apps/client-api/ecosystem.config.cjs ./
 
 # 预创建上传目录并授予权限（供命名卷首次挂载继承）
 RUN install -d -m 0775 -o nestjs -g nodejs /app/uploads \
@@ -93,11 +76,11 @@ RUN pm2 install pm2-logrotate \
  && pm2 set pm2-logrotate:rotateInterval "0 */6 * * *"
 
 # 暴露端口
-EXPOSE 8081
+EXPOSE 8080
 
 # 健康检查（使用 busybox wget）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD wget -qO- http://localhost:8081/api/health >/dev/null || exit 1
+    CMD wget -qO- http://localhost:8080/api/ready >/dev/null || exit 1
 
 # 使用 PM2 Runtime 作为容器进程管理器
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema ../prisma/schema.prisma && node_modules/.bin/prisma db seed --schema ../prisma/schema.prisma && exec pm2-runtime ecosystem.config.cjs"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema ./prisma/schema.prisma && node_modules/.bin/prisma db seed --schema ./prisma/schema.prisma && exec pm2-runtime ecosystem.config.cjs"]
