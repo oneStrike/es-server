@@ -37,6 +37,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: 检查构建环境
+        run: |
+          echo "=== 检查 admin-api 目录结构 ==="
+          ls -la apps/admin-api/
+          echo "=== 检查根目录结构 ==="
+          ls -la | grep -E "(src|libs|test|prisma)"
+
+      - name: 创建缓存目录
+        run: mkdir -p /data/cache/admin-api/buildx
+
       - name: 构建 Admin API 镜像
         id: build_admin_image
         uses: docker/build-push-action@v5
@@ -49,6 +59,7 @@ jobs:
           cache-from: type=local,src=/data/cache/admin-api/buildx
           cache-to: type=local,dest=/data/cache/admin-api/buildx,mode=max
           load: true
+          no-cache: false
 
       - name: 保存 Admin API 镜像
         run: |
@@ -80,6 +91,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: 检查构建环境
+        run: |
+          echo "=== 检查 client-api 目录结构 ==="
+          ls -la apps/client-api/
+          echo "=== 检查根目录结构 ==="
+          ls -la | grep -E "(src|libs|test|prisma)"
+
+      - name: 创建缓存目录
+        run: mkdir -p /data/cache/client-api/buildx
+
       - name: 构建 Client API 镜像
         id: build_client_image
         uses: docker/build-push-action@v5
@@ -92,6 +113,7 @@ jobs:
           cache-from: type=local,src=/data/cache/client-api/buildx
           cache-to: type=local,dest=/data/cache/client-api/buildx,mode=max
           load: true
+          no-cache: false
 
       - name: 保存 Client API 镜像
         run: |
