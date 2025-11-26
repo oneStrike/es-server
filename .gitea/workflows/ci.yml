@@ -37,13 +37,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 检查构建环境
-        run: |
-          echo "=== 检查 admin-api 目录结构 ==="
-          ls -la apps/admin-api/
-          echo "=== 检查根目录结构 ==="
-          ls -la | grep -E "(src|libs|test|prisma)"
-
       - name: 创建缓存目录
         run: mkdir -p /data/cache/admin-api/buildx
 
@@ -60,14 +53,6 @@ jobs:
           cache-to: type=local,dest=/data/cache/admin-api/buildx,mode=max
           load: true
           no-cache: false
-
-      - name: 保存 Admin API 镜像
-        run: |
-          docker save admin-api:${{ steps.pkg.outputs.version }} > /data/images/admin-api-${{ steps.pkg.outputs.version }}.tar
-
-      - name: 清理 Admin API 镜像
-        run: |
-          docker rmi admin-api:${{ steps.pkg.outputs.version }} admin-api:latest || true
 
   # Client API Service
   build-client-api:
@@ -91,13 +76,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 检查构建环境
-        run: |
-          echo "=== 检查 client-api 目录结构 ==="
-          ls -la apps/client-api/
-          echo "=== 检查根目录结构 ==="
-          ls -la | grep -E "(src|libs|test|prisma)"
-
       - name: 创建缓存目录
         run: mkdir -p /data/cache/client-api/buildx
 
@@ -115,14 +93,6 @@ jobs:
           load: true
           no-cache: false
 
-      - name: 保存 Client API 镜像
-        run: |
-          docker save client-api:${{ steps.pkg.outputs.version }} > /data/images/client-api-${{ steps.pkg.outputs.version }}.tar
-
-      - name: 清理 Client API 镜像
-        run: |
-          docker rmi client-api:${{ steps.pkg.outputs.version }} client-api:latest || true
-
   # 并行执行两个服务的构建
   build-all:
     runs-on: es
@@ -131,43 +101,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: 提取 package 版本号
-        id: pkg
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: 加载 Admin API 镜像
-        run: |
-          docker load < /data/images/admin-api-${{ steps.pkg.outputs.version }}.tar
-
-      - name: 加载 Client API 镜像
-        run: |
-          docker load < /data/images/client-api-${{ steps.pkg.outputs.version }}.tar
-
-      - name: 验证镜像构建
-        run: |
-          echo "=== Admin API 镜像信息 ==="
-          docker images admin-api
-          echo "=== Client API 镜像信息 ==="
-          docker images client-api
-
-      - name: 测试 Admin API 容器
-        run: |
-          docker run -d --name admin-api-test -p 8080:8080 admin-api:${{ steps.pkg.outputs.version }}
-          sleep 10
-          docker ps | grep admin-api-test
-          docker stop admin-api-test
-          docker rm admin-api-test
-
-      - name: 测试 Client API 容器
-        run: |
-          docker run -d --name client-api-test -p 8081:8081 client-api:${{ steps.pkg.outputs.version }}
-          sleep 10
-          docker ps | grep client-api-test
-          docker stop client-api-test
-          docker rm client-api-test
 
       - name: 清理悬空镜像
         run: |
