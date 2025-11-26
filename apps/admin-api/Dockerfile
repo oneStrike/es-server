@@ -37,7 +37,6 @@ COPY ../../prisma ./prisma
 COPY ../../prisma.config.ts ./
 
 # 复制共享模块
-COPY ../../src ../src
 COPY ../../libs ../libs
 
 # 构建 admin-api 应用
