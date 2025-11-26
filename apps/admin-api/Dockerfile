@@ -58,7 +58,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./
-COPY --from=builder --chown=nestjs:nodejs /app/ecosystem.config.cjs ./
+COPY --from=builder --chown=nestjs:nodejs /app/apps/admin-api/ecosystem.config.cjs ./
 
 # 预创建上传目录并授予权限（供命名卷首次挂载继承）
 RUN install -d -m 0775 -o nestjs -g nodejs /app/uploads \
