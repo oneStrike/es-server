@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
 COPY . .
 
 # 构建 admin-api 应用
-RUN pnpm build
+RUN pnpm build:all
 
 # 仅保留生产依赖，剔除开发依赖
 RUN pnpm prune --prod
