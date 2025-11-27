@@ -83,4 +83,4 @@ EXPOSE 8081
    # CMD wget -qO- http://localhost:8081/api/ready >/dev/null || exit 1
 
 # 使用 PM2 Runtime 作为容器进程管理器
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema ./prisma/schema.prisma && node_modules/.bin/prisma db seed --schema ./prisma/schema.prisma && exec pm2-runtime ecosystem.config.cjs"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed && exec pm2-runtime ecosystem.config.cjs"]
