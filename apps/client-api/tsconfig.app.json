@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declaration": false,
-    "outDir": "../../dist/app/client-api"
+    "outDir": "../../dist/app"
   },
   "include": ["src/**/*", "../../libs/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
