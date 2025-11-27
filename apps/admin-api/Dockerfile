@@ -39,9 +39,6 @@ FROM node:22-alpine AS runtime
 ENV NODE_ENV=production \
     PORT=8080
 
-# 安装运行时必需的系统依赖（使用 busybox wget）
-RUN apk add --no-cache wget
-
 # 安装 PM2 作为 Docker 运行时进程管理（pm2-runtime）
 RUN npm i -g pm2@latest
 
