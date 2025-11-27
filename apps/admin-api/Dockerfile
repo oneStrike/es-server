@@ -24,7 +24,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
 
 COPY . .
 
-# 仅构建 admin-api 应用，减少构建时间
+# 构建 admin-api 应用
 RUN pnpm build:admin
 
 # 仅保留生产依赖，剔除开发依赖
@@ -38,6 +38,9 @@ FROM node:22-alpine AS runtime
 # 设置环境变量
 ENV NODE_ENV=production \
     PORT=8080
+
+# 安装运行时必需的系统依赖（使用 busybox wget）
+RUN apk add --no-cache wget
 
 # 安装 PM2 作为 Docker 运行时进程管理（pm2-runtime）
 RUN npm i -g pm2@latest
@@ -53,9 +56,7 @@ WORKDIR /app
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
-# 仅复制必要的 Prisma 文件，精简镜像体积
-COPY --from=builder --chown=nestjs:nodejs /app/prisma/schema.prisma ./prisma/
-COPY --from=builder --chown=nestjs:nodejs /app/prisma/migrations ./prisma/migrations
+COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./
 COPY --from=builder --chown=nestjs:nodejs /app/apps/admin-api/ecosystem.config.cjs ./
 
@@ -78,5 +79,9 @@ RUN pm2 install pm2-logrotate \
 # 暴露端口
 EXPOSE 8080
 
+# 健康检查（使用 busybox wget）
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD wget -qO- http://localhost:8080/api/ready >/dev/null || exit 1
+
 # 使用 PM2 Runtime 作为容器进程管理器
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed && exec pm2-runtime ecosystem.config.cjs"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema ./prisma/schema.prisma && node_modules/.bin/prisma db seed --schema ./prisma/schema.prisma && exec pm2-runtime ecosystem.config.cjs"]
