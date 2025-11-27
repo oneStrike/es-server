@@ -79,9 +79,5 @@ RUN pm2 install pm2-logrotate \
 # 暴露端口
 EXPOSE 8080
 
-# 健康检查（使用 busybox wget）
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD wget -qO- http://localhost:8080/api/ready >/dev/null || exit 1
-
 # 使用 PM2 Runtime 作为容器进程管理器
 CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema ./prisma/schema.prisma && node_modules/.bin/prisma db seed --schema ./prisma/schema.prisma && exec pm2-runtime ecosystem.config.cjs"]
