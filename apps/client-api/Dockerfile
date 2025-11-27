@@ -37,7 +37,8 @@ FROM node:22-alpine AS runtime
 
 # 设置环境变量
 ENV NODE_ENV=production \
-    PORT=8080
+    PORT=8080 \
+    PM2_HOME=/app/.pm2
 
 # 安装 PM2 作为 Docker 运行时进程管理（pm2-runtime）
 RUN npm i -g pm2@latest
@@ -58,8 +59,9 @@ COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./
 COPY --from=builder --chown=nestjs:nodejs /app/apps/client-api/ecosystem.config.cjs ./
 
 # 预创建上传目录并授予权限（供命名卷首次挂载继承）
-RUN install -d -m 0775 -o nestjs -g nodejs /app/uploads \
- && install -d -m 0775 -o nestjs -g nodejs /app/logs \
+RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads \
+ && install -d -m 0755 -o nestjs -g nodejs /app/logs \
+ && install -d -m 0755 -o nestjs -g nodejs /app/.pm2 \
  && chown -R nestjs:nodejs /app
 
 # 切换到非root用户
