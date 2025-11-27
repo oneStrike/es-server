@@ -1,7 +1,4 @@
-import type { PrismaClientType } from '@/prisma/prisma.connect'
-import { AuthorGenderEnum } from '../../../../../apps/admin-api/src/modules/admin/work/author/author.constant'
-
-export async function createInitialAuthors(prisma: PrismaClientType) {
+export async function createInitialAuthors(prisma: any) {
   // 首先获取角色类型映射
   const roleTypes = await prisma.workAuthorRoleType.findMany({
     select: { id: true, code: true },
@@ -18,7 +15,7 @@ export async function createInitialAuthors(prisma: PrismaClientType) {
       isEnabled: true,
       roleTypeIds: [roleTypeMap.WRITER],
       nationality: '日本',
-      gender: AuthorGenderEnum.MALE,
+      gender: 1,
       socialLinks: JSON.stringify({
         twitter: '@haruki_murakami',
         instagram: '@murakami_official',
@@ -35,7 +32,7 @@ export async function createInitialAuthors(prisma: PrismaClientType) {
       isEnabled: true,
       roleTypeIds: [roleTypeMap.WRITER],
       nationality: '日本',
-      gender: AuthorGenderEnum.MALE,
+      gender: 1,
       socialLinks: JSON.stringify({
         website: 'https://higashino-keigo.com',
       }),
@@ -51,7 +48,7 @@ export async function createInitialAuthors(prisma: PrismaClientType) {
       isEnabled: true,
       roleTypeIds: [roleTypeMap.MANGAKA],
       nationality: '日本',
-      gender: AuthorGenderEnum.MALE,
+      gender: 1,
       socialLinks: JSON.stringify({
         twitter: '@Eiichiro_Staff',
       }),
@@ -67,7 +64,7 @@ export async function createInitialAuthors(prisma: PrismaClientType) {
       isEnabled: true,
       roleTypeIds: [roleTypeMap.MANGAKA],
       nationality: '日本',
-      gender: AuthorGenderEnum.MALE,
+      gender: 1,
       socialLinks: JSON.stringify({}),
       remark: '传奇漫画家，影响了一代人',
       worksCount: 0,

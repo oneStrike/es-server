@@ -8,8 +8,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "reinstall": "rimraf ./node_modules && pnpm install && pnpm prisma:update",
-    "build:admin": "cross-env NODE_ENV=production  webpack --config webpack.config.js --env project=admin-api",
-    "build:client": "cross-env NODE_ENV=production  webpack --config webpack.config.js --env project=client-api",
+    "build:admin": "cross-env NODE_ENV=production nest build admin-api",
+    "build:client": "cross-env NODE_ENV=production nest build client-api",
     "build:all": "pnpm build:admin && pnpm build:client",
     "start": "cross-env NODE_ENV=production nest start",
     "start:dev": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=admin-api",
