@@ -35,12 +35,17 @@ export class CustomCacheModule {
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => {
           const { host, port, password, namespace } = configService.get('redis')
+          console.log(
+            `🚀 ~ CustomCacheModule ~ register ~ { host, port, password, namespace }:`,
+            { host, port, password, namespace },
+          )
 
           // 构建 Redis URL
           // 对密码进行URL编码，避免包含特殊字符导致解析错误
           const encodedPassword = password ? encodeURIComponent(password) : ''
           const authPart = encodedPassword ? `:${encodedPassword}@` : ''
           const redisUrl = `redis://${authPart}${host}:${port}`
+          console.log('🚀 ~ CustomCacheModule ~ register ~ redisUrl:', redisUrl)
 
           return {
             ttl: config.ttl,
