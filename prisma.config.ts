@@ -4,7 +4,7 @@ import { defineConfig, env } from 'prisma/config'
 
 const seedCommand =
   process.env.NODE_ENV === 'production'
-    ? 'node dist/libs/database/seed/index.js'
+    ? 'node dist/libs/database/src/seed/index.js'
     : 'pnpm tsx src/prisma/seed/index.ts'
 
 export default defineConfig({
