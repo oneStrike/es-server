@@ -1,13 +1,14 @@
 import process from 'node:process'
+import { isProduction } from '@libs/utils'
 import { registerAs } from '@nestjs/config'
 
 const {
-  LOG_LEVEL = 'info',
+  LOG_LEVEL = isProduction() ? 'warn' : 'info',
   LOG_PATH = './logs',
   LOG_MAX_SIZE = '20m',
   LOG_RETAIN_DAYS = '7d',
   LOG_COMPRESS = 'true',
-  LOG_CONSOLE_LEVEL = 'info',
+  LOG_CONSOLE_LEVEL = isProduction() ? 'warn' : 'info',
 } = process.env
 
 export const LoggerConfig = {
