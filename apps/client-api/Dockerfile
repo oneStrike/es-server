@@ -37,7 +37,7 @@ FROM node:22-alpine AS runtime
 
 # 设置环境变量
 ENV NODE_ENV=production \
-    PORT=8081
+    PORT=8080
 
 # 安装 PM2 作为 Docker 运行时进程管理（pm2-runtime）
 RUN npm i -g pm2@latest
@@ -74,7 +74,7 @@ RUN pm2 install pm2-logrotate \
  && pm2 set pm2-logrotate:rotateInterval "0 */6 * * *"
 
 # 暴露端口
-EXPOSE 8081
+EXPOSE 8080
 
 # 使用 PM2 Runtime 作为容器进程管理器
 CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema ./prisma/schema.prisma && node_modules/.bin/prisma db seed --schema ./prisma/schema.prisma && exec pm2-runtime ecosystem.config.cjs"]
