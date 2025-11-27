@@ -5,8 +5,7 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": false,
-    "tsConfigPath": "apps/admin-api/tsconfig.app.json",
-    "builder": "swc"
+    "tsConfigPath": "apps/admin-api/tsconfig.app.json"
   },
   "monorepo": true,
   "root": "apps/admin-api",
