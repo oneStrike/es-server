@@ -67,13 +67,7 @@ RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads \
 # 切换到非root用户
 USER nestjs
 
-# 安装并配置 pm2-logrotate 插件（在非root用户下）
-RUN pm2 install pm2-logrotate \
- && pm2 set pm2-logrotate:max_size 50M \
- && pm2 set pm2-logrotate:retain 30 \
- && pm2 set pm2-logrotate:compress true \
- && pm2 set pm2-logrotate:dateFormat YYYY-MM-DD_HH-mm-ss \
- && pm2 set pm2-logrotate:rotateInterval "0 */6 * * *"
+
 
 # 暴露端口
 EXPOSE 8080
