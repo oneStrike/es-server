@@ -11,7 +11,7 @@ module.exports = {
   apps: [
     {
       name: 'admin-api',
-      script: 'dist/apps/admin-api/main.js',
+      script: 'dist/apps/main.js',
       // Default one process per container; allow enabling cluster by env
       instances: process.env.PM2_INSTANCES || 1,
       exec_mode: process.env.PM2_EXEC_MODE || 'fork', // set 'cluster' to enable cluster mode
