@@ -1,9 +1,7 @@
-import type { PrismaClientType } from '@/prisma/prisma.connect'
-
 /**
  * 作者角色类型种子数据
  */
-export async function seedWorkAuthorRoleType(prisma: PrismaClientType) {
+export async function seedWorkAuthorRoleType(prisma: any) {
   const roleTypes = [
     {
       code: 'MANGAKA',
