@@ -1,4 +1,4 @@
-import { CacheModuleConfig, CustomCacheModule } from '@libs/cache'
+import { CustomCacheModule } from '@libs/cache'
 import { CustomPrismaModule, PrismaService } from '@libs/database'
 import {
   BadRequestException,
@@ -17,8 +17,6 @@ export interface BaseModuleOptions {
   enableDatabase?: boolean
   // 是否启用缓存模块
   enableCache?: boolean
-  // 缓存配置
-  cacheConfig?: CacheModuleConfig
 }
 
 @Module({})
@@ -57,7 +55,7 @@ export class BaseModule {
 
     // 缓存模块
     if (mergedOptions.enableCache) {
-      imports.push(CustomCacheModule.forRoot(options.cacheConfig))
+      imports.push(CustomCacheModule.forRoot())
     }
 
     // 全局验证管道 - 数据格式校验

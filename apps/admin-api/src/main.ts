@@ -8,7 +8,6 @@ import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { AppModule } from './app.module'
 
 // 为 Webpack HMR 声明模块类型，并在入口持有应用引用
-declare const module: any
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
@@ -33,11 +32,6 @@ async function bootstrap() {
 
   // 打印启动信息
   logStartupInfo(appConfig.port, appConfig.swaggerConfig.path)
-
-  if (module.hot) {
-    module.hot.accept()
-    module.hot.dispose(async () => app.close())
-  }
 }
 
 void bootstrap()
