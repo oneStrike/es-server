@@ -28,7 +28,7 @@ export class AuditInterceptor implements NestInterceptor {
     )
 
     // 如果标记为忽略审计，则直接跳过
-    if (!metadata || metadata?.ignore) {
+    if (!metadata) {
       return next.handle()
     }
     return next.handle().pipe(

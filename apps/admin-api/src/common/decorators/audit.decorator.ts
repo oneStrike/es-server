@@ -13,10 +13,6 @@ export interface AuditMetadata {
    * 自定义内容模板
    */
   content: string
-  /**
-   * 是否忽略审计
-   */
-  ignore?: boolean
 }
 
 /**
