@@ -1,6 +1,7 @@
+import type { FastifyRequest } from 'fastify'
 import { AuthService as BaseAuthService } from '@libs/auth'
-import { CaptchaService } from '@libs/captcha'
 
+import { CaptchaService } from '@libs/captcha'
 import { RsaService, ScryptService } from '@libs/crypto'
 import { AdminUser, RepositoryService } from '@libs/database'
 import { extractIpAddress, isProduction } from '@libs/utils'
@@ -9,7 +10,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
-import { FastifyRequest } from 'fastify'
 import { AuditService } from '../system/audit/audit.service'
 import { CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
