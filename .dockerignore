@@ -8,5 +8,5 @@ coverage
 .env*
 !.env.production.example
 *.tsbuildinfo
-dist
+#dist
 logs
