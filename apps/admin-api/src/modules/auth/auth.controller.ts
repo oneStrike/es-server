@@ -2,8 +2,10 @@ import type { FastifyRequest } from 'fastify'
 import { CaptchaDto } from '@libs/captcha/dto/captcha.dto'
 import { RsaService } from '@libs/crypto'
 import { ApiDoc, Public } from '@libs/decorators'
+import { ActionTypeEnum } from '@libs/types'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../common/decorators/audit.decorator'
 import { AuthService } from './auth.service'
 import {
   LoginResponseDto,
@@ -47,6 +49,10 @@ export class AuthController {
     model: LoginResponseDto,
   })
   @Public()
+  @Audit({
+    actionType: ActionTypeEnum.LOGIN,
+    content: '用户登录',
+  })
   async login(@Body() body: UserLoginDto, @Req() req: FastifyRequest) {
     return this.authService.login(body, req)
   }

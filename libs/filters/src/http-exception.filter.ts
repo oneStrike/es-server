@@ -8,7 +8,6 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -17,10 +16,7 @@ import { v4 as uuidv4 } from 'uuid'
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  constructor(
-    private readonly loggerService: LoggerService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly loggerService: LoggerService) {}
 
   /**
    * 数据库错误映射表

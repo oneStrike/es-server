@@ -9,17 +9,16 @@ import {
   RsaConfigRegister,
   UploadConfigRegister,
 } from '@libs/config'
-import { CryptoModule } from '@libs/crypto'
 import { HttpExceptionFilter } from '@libs/filters'
-import { HealthModule } from '@libs/health'
-import { LoggerModule } from '@libs/logger'
 import { getEnv } from '@libs/utils'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { APP_FILTER, APP_GUARD } from '@nestjs/core'
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
+import { AuditInterceptor } from './common/interceptors/audit.interceptor'
 import { AppConfigRegister } from './config/app.config'
 import { appConfigValidationSchema } from './config/validation.config'
 import { AdminModule } from './modules/admin.module'
+import { AuditModule } from './modules/system/audit/audit.module'
 
 @Module({
   imports: [
@@ -43,11 +42,9 @@ import { AdminModule } from './modules/admin.module'
     }),
     BaseModule.forRoot(),
     JwtAuthModule,
-    CryptoModule,
-    LoggerModule,
     // 业务功能模块
+    AuditModule, // 业务审计模块
     AdminModule, // 管理模块
-    HealthModule, // 健康检查模块
   ],
   providers: [
     // 全局异常过滤器
@@ -58,6 +55,10 @@ import { AdminModule } from './modules/admin.module'
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard, // JWT 认证守卫
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor, // 全局审计日志拦截器
     },
   ],
 })

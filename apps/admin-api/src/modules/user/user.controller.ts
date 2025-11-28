@@ -1,9 +1,10 @@
-import type { JwtUserInfoInterface } from '@libs/types'
-
 import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/decorators'
+
 import { IdDto } from '@libs/dto'
+import { ActionTypeEnum, JwtUserInfoInterface } from '@libs/types'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../common/decorators/audit.decorator'
 import {
   BaseUserDto,
   ChangePasswordDto,
@@ -93,6 +94,10 @@ export class UserController {
   @ApiDoc({
     summary: '修改密码',
     model: IdDto,
+  })
+  @Audit({
+    actionType: ActionTypeEnum.UPDATE,
+    content: '用户修改账户密码',
   })
   async changePassword(
     @Body() body: ChangePasswordDto,

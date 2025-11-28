@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common'
+import { Global, Module } from '@nestjs/common'
 import { AuditService } from './audit.service'
 
 /**
  * 请求日志模块
  * 提供系统请求日志的完整功能，包括日志记录、查询、统计等
  */
+@Global()
 @Module({
   controllers: [],
   providers: [AuditService],
