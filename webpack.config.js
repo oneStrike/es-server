@@ -77,7 +77,7 @@ function createConfig(projectName) {
     plugins: [
       // 只保留开发环境的插件
       new webpack.HotModuleReplacementPlugin(),
-      new RunScriptWebpackPlugin({ name: 'main.js', autoRestart: true }),
+      new RunScriptWebpackPlugin({ name: 'main.js', autoRestart: false }),
       new webpack.DefinePlugin({
         'process.env.NODE_ENV': JSON.stringify('development'),
       }),
@@ -88,10 +88,11 @@ function createConfig(projectName) {
       clean: true,
       filename: 'main.js',
     },
-    devtool: 'inline-source-map',
+    devtool: 'eval-source-map',
     optimization: {
       usedExports: true,
       splitChunks: false, // 开发环境关闭代码分割
+      minimize: false,
     },
     watchOptions: {
       ignored: /node_modules/,
