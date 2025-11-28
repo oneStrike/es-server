@@ -10,7 +10,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
-import { AuditService } from '../system/audit/audit.service'
 import { CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
 
@@ -27,7 +26,6 @@ export class AuthService extends RepositoryService {
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
-    private readonly auditService: AuditService,
     private readonly captchaService: CaptchaService,
   ) {
     super()
@@ -102,14 +100,6 @@ export class AuthService extends RepositoryService {
         user.loginFailCount = 0
       } else {
         // 锁定未到期，记录失败并拒绝
-        await this.auditService.createLoginFailureRequestLog(
-          {
-            content: `【${body.username}】登录失败，账户被锁定`,
-            username: body.username,
-            userId: user.id,
-          },
-          req,
-        )
         await this.updateLoginFailInfo(user, requestIp)
         throw new UnauthorizedException('失败次数过多，请稍后再试')
       }
@@ -161,14 +151,6 @@ export class AuthService extends RepositoryService {
       isLocked,
       ...userWithoutPassword
     } = user
-    await this.auditService.createLoginSuccessRequestLog(
-      {
-        content: `【${body.username}】登录成功`,
-        username: body.username,
-        userId: user.id,
-      },
-      req,
-    )
 
     return {
       user: userWithoutPassword,

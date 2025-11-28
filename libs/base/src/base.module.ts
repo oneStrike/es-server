@@ -1,22 +1,36 @@
+import type { Type } from '@nestjs/common/interfaces/type.interface'
+
 import { CustomCacheModule } from '@libs/cache'
 import { CustomPrismaModule, PrismaService } from '@libs/database'
+import { HealthModule } from '@libs/health'
+import { LoggerModule } from '@libs/logger'
 import {
   BadRequestException,
   DynamicModule,
   Module,
   ValidationPipe,
 } from '@nestjs/common'
-
+import { Provider } from '@nestjs/common/interfaces/modules/provider.interface'
 import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { TransformInterceptor } from './transform.interceptor'
 
 // 定义 BaseModule 可接受的配置接口
 export interface BaseModuleOptions {
+  // 是否启用日志模块
+  enableLogger?: boolean
   // 是否启用数据库模块
   enableDatabase?: boolean
   // 是否启用缓存模块
   enableCache?: boolean
+  // 是否启用限流模块
+  enableThrottler?: boolean
+  // 是否启用健康检查模块
+  enableHealth?: boolean
+  // 是否启用全局验证管道
+  enableGlobalValidationPipe?: boolean
+  // 是否启用全局响应转换拦截器
+  enableGlobalTransformInterceptor?: boolean
 }
 
 @Module({})
@@ -25,22 +39,28 @@ export class BaseModule {
   static register(options: BaseModuleOptions = {}): DynamicModule {
     // 默认配置
     const defaultOptions = {
+      enableLogger: true,
       enableDatabase: true,
       enableCache: true,
+      enableThrottler: true,
+      enableHealth: true,
+      enableGlobalValidationPipe: true,
+      enableGlobalTransformInterceptor: true,
     }
 
     // 合并用户配置和默认配置
     const mergedOptions = { ...defaultOptions, ...options }
 
     // 构建导入模块列表
-    const imports: DynamicModule[] = [
-      // 限流模块
-      ThrottlerModule.forRoot([
-        { name: 'short', ttl: 1000, limit: 10 }, // 短时间限流：1秒最多10次请求
-        { name: 'medium', ttl: 10000, limit: 30 }, // 中等时间限流：10秒最多30次请求
-        { name: 'long', ttl: 60000, limit: 100 }, // 长时间限流：1分钟最多100次请求
-      ]),
-    ]
+    const imports: (DynamicModule | Type<any>)[] = []
+
+    // 全局验证管道 - 数据格式校验
+    const providers: Provider[] = []
+
+    // 日志模块
+    if (mergedOptions.enableLogger) {
+      imports.push(LoggerModule)
+    }
 
     // 数据库模块
     if (mergedOptions.enableDatabase) {
@@ -58,17 +78,37 @@ export class BaseModule {
       imports.push(CustomCacheModule.forRoot())
     }
 
-    // 全局验证管道 - 数据格式校验
-    const providers = [
-      {
+    // 限流模块
+    if (mergedOptions.enableThrottler) {
+      imports.push(
+        ThrottlerModule.forRoot([
+          { name: 'short', ttl: 1000, limit: 10 }, // 短时间限流：1秒最多10次请求
+          { name: 'medium', ttl: 10000, limit: 30 }, // 中等时间限流：10秒最多30次请求
+          { name: 'long', ttl: 60000, limit: 100 }, // 长时间限流：1分钟最多100次请求
+        ]),
+      )
+      providers.push({
         provide: APP_GUARD,
         useClass: ThrottlerGuard, // 限流守卫
-      },
-      {
+      })
+    }
+
+    // 健康检查模块
+    if (mergedOptions.enableHealth) {
+      imports.push(HealthModule)
+    }
+
+    // 全局响应转换拦截器
+    if (mergedOptions.enableGlobalTransformInterceptor) {
+      providers.push({
         provide: APP_INTERCEPTOR,
         useClass: TransformInterceptor, // 响应转换拦截器
-      },
-      {
+      })
+    }
+
+    // 全局验证管道
+    if (mergedOptions.enableGlobalValidationPipe) {
+      providers.push({
         provide: APP_PIPE,
         useValue: new ValidationPipe({
           transform: true, // 自动转换请求数据类型
@@ -86,8 +126,8 @@ export class BaseModule {
                 .join(','),
             ),
         }),
-      },
-    ]
+      })
+    }
 
     return {
       module: BaseModule,
