@@ -37,12 +37,12 @@ RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads \
  && install -d -m 0755 -o nestjs -g nodejs /app/.pm2 \
  && chown -R nestjs:nodejs /app
 
+RUN apk add --no-cache tzdata
+ENV TZ="Asia/Shanghai"
+
 # 切换到非root用户
 USER nestjs
 
-RUN apk add --no-cache tzdata
-
-ENV TZ="Asia/Shanghai"
 
 # 暴露端口
 EXPOSE 8080
