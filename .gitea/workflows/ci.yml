@@ -25,9 +25,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: 安装 pnpm
-        run: npm install -g pnpm
-
       - name: 安装项目依赖
         run: pnpm install --frozen-lockfile
 
