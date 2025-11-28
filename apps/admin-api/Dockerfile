@@ -48,4 +48,4 @@ USER nestjs
 EXPOSE 8080
 
 # 使用 PM2 Runtime 作为容器进程管理器
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed && node dist/apps/admin-api/src/main.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed && exec pm2-runtime ecosystem.config.cjs"]
