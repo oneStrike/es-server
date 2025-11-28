@@ -9,6 +9,8 @@ volumes:
     driver: local
   uploads-data:
     driver: local
+  logs-data:
+    driver: local
 
 services:
   # PostgreSQL 数据库服务 - 用于现有项目
@@ -70,11 +72,7 @@ services:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
     volumes:
       - uploads-data:/app/uploads
-    logging:
-      driver: json-file
-      options:
-        max-size: '50m'
-        max-file: '5'
+      - logs-data:/app/logs
     networks:
       - app-network
 
@@ -101,7 +99,7 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: '50m'
+        max-size: 50m
         max-file: '5'
     networks:
       - app-network
