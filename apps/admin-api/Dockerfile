@@ -4,34 +4,7 @@
 # 构建独立的 admin-api 服务镜像
 # --------------------------------
 # --------------------------------
-# 阶段1: 构建阶段
-# --------------------------------
-FROM node:22-alpine AS builder
-
-WORKDIR /app
-
-# 使用 Corepack 管理 pnpm
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
-
-# 先复制依赖清单以最大化缓存
-# 复制根目录的依赖文件（共享依赖）
-COPY ./*.json ./
-COPY ./*-lock.* ./
-
-# 使用 BuildKit 缓存加速依赖安装
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
-    pnpm install --frozen-lockfile
-
-COPY . .
-
-# 构建 admin-api 应用
-RUN pnpm build:admin
-
-# 仅保留生产依赖，剔除开发依赖
-RUN pnpm prune --prod
-
-# --------------------------------
-# 阶段2: 运行时阶段
+# 运行时阶段
 # --------------------------------
 FROM node:22-alpine AS runtime
 
@@ -50,13 +23,13 @@ RUN addgroup -g 1001 -S nodejs && \
 # 设置工作目录
 WORKDIR /app
 
-# 从构建阶段复制生产依赖和构建产物
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api ./dist
-COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
-COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./
-COPY --from=builder --chown=nestjs:nodejs /app/apps/admin-api/ecosystem.config.cjs ./
+# 从构建上下文复制生产依赖和构建产物
+COPY --chown=nestjs:nodejs ./node_modules ./node_modules
+COPY --chown=nestjs:nodejs ./dist/apps/admin-api ./dist
+COPY --chown=nestjs:nodejs ./package.json ./
+COPY --chown=nestjs:nodejs ./prisma ./prisma
+COPY --chown=nestjs:nodejs ./prisma.config.ts ./
+COPY --chown=nestjs:nodejs ./apps/admin-api/ecosystem.config.cjs ./
 
 # 预创建上传目录并授予权限（供命名卷首次挂载继承）
 RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads \
