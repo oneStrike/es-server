@@ -8,7 +8,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "reinstall": "rimraf ./node_modules && pnpm install && pnpm prisma:update",
-    "build:admin": "cross-env NODE_ENV=production nest build admin-api",
+    "build:admin": "node --enable-source-maps cross-env NODE_ENV=production nest build admin-api",
     "build:client": "cross-env NODE_ENV=production nest build client-api",
     "build:all": "pnpm build:admin && pnpm build:client",
     "start": "cross-env NODE_ENV=production nest start",
