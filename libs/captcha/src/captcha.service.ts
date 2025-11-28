@@ -1,7 +1,7 @@
+import type { Cache } from 'cache-manager'
 import { Buffer } from 'node:buffer'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
-import { Cache } from 'cache-manager'
 import * as svgCaptcha from 'svg-captcha'
 import { v4 as uuid } from 'uuid'
 

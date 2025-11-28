@@ -1,9 +1,9 @@
+import type { FastifyRequest } from 'fastify'
 import { CaptchaDto } from '@libs/captcha/dto/captcha.dto'
 import { RsaService } from '@libs/crypto'
 import { ApiDoc, Public } from '@libs/decorators'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { FastifyRequest } from 'fastify'
 import { AuthService } from './auth.service'
 import {
   LoginResponseDto,
