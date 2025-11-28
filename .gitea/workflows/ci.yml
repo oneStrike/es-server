@@ -67,6 +67,6 @@ jobs:
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true
 
-      - name: 清理悬空镜像
-        run: |
-          docker image prune -f || true
+      # - name: 清理悬空镜像
+      #   run: |
+      #     docker image prune -f || true
