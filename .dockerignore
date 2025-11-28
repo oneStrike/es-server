@@ -1,4 +1,3 @@
-node_modules
 coverage
 *.log
 .git
@@ -8,5 +7,4 @@ coverage
 .env*
 !.env.production.example
 *.tsbuildinfo
-#dist
 logs
