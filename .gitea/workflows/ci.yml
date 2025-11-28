@@ -25,25 +25,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Check if package files changed
-        uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            deps:
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
       - name: 安装项目依赖
-        if: ${{ steps.changes.outputs.deps == 'true' }}
         run: pnpm install --frozen-lockfile
 
       - name: 构建所有应用

@@ -37,13 +37,15 @@ RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads \
  && install -d -m 0755 -o nestjs -g nodejs /app/.pm2 \
  && chown -R nestjs:nodejs /app
 
+RUN apk add --no-cache tzdata
+ENV TZ="Asia/Shanghai"
+
 # 切换到非root用户
 USER nestjs
-
 
 
 # 暴露端口
 EXPOSE 8080
 
 # 使用 PM2 Runtime 作为容器进程管理器
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema ./prisma/schema.prisma && node_modules/.bin/prisma db seed --schema ./prisma/schema.prisma && exec pm2-runtime ecosystem.config.cjs"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed && exec pm2-runtime ecosystem.config.cjs"]
