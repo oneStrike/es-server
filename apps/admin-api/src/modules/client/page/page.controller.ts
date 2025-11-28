@@ -1,5 +1,6 @@
 import { ApiDoc, ApiPageDoc } from '@libs/decorators'
 import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/dto'
+import { ActionTypeEnum } from '@libs/types'
 import {
   Body,
   Controller,
@@ -9,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { Audit } from '../../../common/decorators/audit.decorator'
 import {
   BaseClientPageDto,
   ClientPagePageResponseDto,
@@ -83,6 +85,10 @@ export class ClientPageController {
   @ApiDoc({
     summary: '更新页面配置',
     model: IdDto,
+  })
+  @Audit({
+    actionType: ActionTypeEnum.UPDATE,
+    content: '更新页面配置',
   })
   async update(@Body() body: UpdateClientPageDto) {
     return this.pageService.updatePage(body)

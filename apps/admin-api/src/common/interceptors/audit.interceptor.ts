@@ -28,7 +28,7 @@ export class AuditInterceptor implements NestInterceptor {
     )
 
     // 如果标记为忽略审计，则直接跳过
-    if (metadata?.ignore) {
+    if (!metadata || metadata?.ignore) {
       return next.handle()
     }
     return next.handle().pipe(
@@ -59,9 +59,8 @@ export class AuditInterceptor implements NestInterceptor {
     try {
       // 从请求中获取用户信息
       const user = request.user
-      const userId = user?.id
+      const userId = Number(user?.sub)
       const username = user?.username
-
       // 构建审计日志内容
       const content = `${metadata.content}${isSuccess ? '成功' : '失败'}`
       const actionType = metadata.actionType
