@@ -1,8 +1,6 @@
 import type {
   UserChangePasswordRequest,
   UserChangePasswordResponse,
-  UserDeleteRequest,
-  UserDeleteResponse,
   UserInfoByIdRequest,
   UserInfoByIdResponse,
   UserInfoResponse,
@@ -10,6 +8,8 @@ import type {
   UserPageResponse,
   UserRegisterRequest,
   UserRegisterResponse,
+  UserResetPasswordRequest,
+  UserResetPasswordResponse,
   UserUnlockRequest,
   UserUnlockResponse,
   UserUpdateInfoRequest,
@@ -72,18 +72,6 @@ export async function userPageApi(
 }
 
 /**
- * 删除用户
- */
-export async function userDeleteApi(
-  params: UserDeleteRequest,
-): Promise<UserDeleteResponse> {
-  return requestClient.post<UserDeleteResponse>(
-    '/api/admin/user/delete',
-    params,
-  );
-}
-
-/**
  * 修改密码
  */
 export async function userChangePasswordApi(
@@ -103,6 +91,18 @@ export async function userUnlockApi(
 ): Promise<UserUnlockResponse> {
   return requestClient.post<UserUnlockResponse>(
     '/api/admin/user/unlock',
+    params,
+  );
+}
+
+/**
+ * 重置用户密码为默认密码
+ */
+export async function userResetPasswordApi(
+  params: UserResetPasswordRequest,
+): Promise<UserResetPasswordResponse> {
+  return requestClient.post<UserResetPasswordResponse>(
+    '/api/admin/user/reset-password',
     params,
   );
 }

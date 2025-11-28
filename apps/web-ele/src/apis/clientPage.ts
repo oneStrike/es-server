@@ -67,7 +67,7 @@ export async function clientPageDetailByCodeApi(
  * 更新页面配置
  */
 export async function clientPageUpdateApi(
-  params: ClientPageUpdateRequest,
+  params?: ClientPageUpdateRequest,
 ): Promise<ClientPageUpdateResponse> {
   return requestClient.post<ClientPageUpdateResponse>(
     '/api/admin/client-page/update',

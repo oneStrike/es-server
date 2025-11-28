@@ -1,7 +1,7 @@
 /**
  *  类型定义 [ContentTypeCreateRequest]
  *  @来源 内容类型管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ContentTypeCreateRequest = CreateContentTypeDto;
 
@@ -10,7 +10,7 @@ export type ContentTypeCreateResponse = IdDto;
 /**
  *  类型定义 [ContentTypeListRequest]
  *  @来源 内容类型管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ContentTypeListRequest = {
   /** 任意合法数值 */
@@ -46,7 +46,7 @@ export type ContentTypeListResponse = BaseContentTypeDto[];
 /**
  *  类型定义 [ContentTypeUpdateRequest]
  *  @来源 内容类型管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ContentTypeUpdateRequest = UpdateContentTypeDto;
 
@@ -55,7 +55,7 @@ export type ContentTypeUpdateResponse = IdDto;
 /**
  *  类型定义 [CreateContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CreateContentTypeDto = {
   /** 任意合法数值 */
@@ -72,7 +72,7 @@ export type CreateContentTypeDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -85,7 +85,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type BaseContentTypeDto = {
   /** 任意合法数值 */
@@ -108,7 +108,7 @@ export type BaseContentTypeDto = {
 /**
  *  类型定义 [UpdateContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateContentTypeDto = {
   /** 任意合法数值 */

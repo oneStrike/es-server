@@ -52,7 +52,7 @@ const formSchema = computed((): VbenFormSchema[] => {
           [
             // 验证码图片
             h('img', {
-              src: captchaData.value?.data,
+              src: captchaData.value?.captcha,
               alt: '验证码',
               class: 'h-14 w-30 cursor-pointer',
               onClick: fetchCaptcha,
@@ -68,7 +68,7 @@ const formSchema = computed((): VbenFormSchema[] => {
 });
 
 async function onSubmit(values: any) {
-  values.captchaId = captchaData.value?.id;
+  values.captchaId = captchaData.value?.captchaId;
   await authStore.authLogin(values);
 }
 </script>

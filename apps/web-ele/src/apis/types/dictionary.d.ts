@@ -1,22 +1,22 @@
 /**
  *  类型定义 [DictionaryPageRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryPageRequest = {
   /** 任意合法数值 */
   [property: string]: any;
 
-  /* 字典编码（模糊查询） */
+  /* 字典编码 */
   code?: string;
 
   /* 结束时间 */
   endDate?: string;
 
-  /* 状态筛选 */
+  /* 状态 true启用 false禁用 */
   isEnabled?: boolean;
 
-  /* 字典名称（模糊查询） */
+  /* 字典名称 */
   name?: string;
 
   /* 排序字段，json格式 */
@@ -37,7 +37,7 @@ export type DictionaryPageResponse = {
   [property: string]: any;
 
   /* 列表数据 */
-  list?: DictionaryDto[];
+  list?: BaseDictionaryDto[];
 
   /* 当前页码 */
   pageIndex?: number;
@@ -52,7 +52,7 @@ export type DictionaryPageResponse = {
 /**
  *  类型定义 [DictionaryDetailRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryDetailRequest = {
   /** 任意合法数值 */
@@ -62,12 +62,12 @@ export type DictionaryDetailRequest = {
   id: number;
 };
 
-export type DictionaryDetailResponse = DictionaryDto;
+export type DictionaryDetailResponse = BaseDictionaryDto;
 
 /**
  *  类型定义 [DictionaryCreateRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryCreateRequest = CreateDictionaryDto;
 
@@ -76,7 +76,7 @@ export type DictionaryCreateResponse = IdDto;
 /**
  *  类型定义 [DictionaryUpdateRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryUpdateRequest = UpdateDictionaryDto;
 
@@ -85,7 +85,7 @@ export type DictionaryUpdateResponse = IdDto;
 /**
  *  类型定义 [DictionaryDeleteRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryDeleteRequest = IdsDto;
 
@@ -94,22 +94,22 @@ export type DictionaryDeleteResponse = IdsDto;
 /**
  *  类型定义 [DictionaryBatchUpdateStatusRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryBatchUpdateStatusRequest = BatchEnabledDto;
 
-export type DictionaryBatchUpdateStatusResponse = CountDto;
+export type DictionaryBatchUpdateStatusResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [DictionaryItemsRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryItemsRequest = {
   /** 任意合法数值 */
   [property: string]: any;
 
-  /* 字典编码（模糊查询） */
+  /* 字典编码 */
   code?: string;
 
   /* 字典编码 */
@@ -118,10 +118,10 @@ export type DictionaryItemsRequest = {
   /* 结束时间 */
   endDate?: string;
 
-  /* 状态筛选 */
+  /* 状态 true启用 false禁用 */
   isEnabled?: boolean;
 
-  /* 字典名称（模糊查询） */
+  /* 字典名称 */
   name?: string;
 
   /* 排序字段，json格式 */
@@ -142,7 +142,7 @@ export type DictionaryItemsResponse = {
   [property: string]: any;
 
   /* 列表数据 */
-  list?: DictionaryItemDto[];
+  list?: BaseDictionaryItemDto[];
 
   /* 当前页码 */
   pageIndex?: number;
@@ -157,7 +157,7 @@ export type DictionaryItemsResponse = {
 /**
  *  类型定义 [DictionaryCreateItemRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryCreateItemRequest = CreateDictionaryItemDto;
 
@@ -166,7 +166,7 @@ export type DictionaryCreateItemResponse = IdDto;
 /**
  *  类型定义 [DictionaryUpdateItemRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryUpdateItemRequest = UpdateDictionaryItemDto;
 
@@ -175,36 +175,36 @@ export type DictionaryUpdateItemResponse = IdDto;
 /**
  *  类型定义 [DictionaryDeleteItemRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryDeleteItemRequest = IdsDto;
 
-export type DictionaryDeleteItemResponse = CountDto;
+export type DictionaryDeleteItemResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [DictionaryUpdateItemStatusRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type DictionaryUpdateItemStatusRequest = BatchEnabledDto;
 
-export type DictionaryUpdateItemStatusResponse = CountDto;
+export type DictionaryUpdateItemStatusResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [DictionaryItemOrderRequest]
  *  @来源 字典管理
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type DictionaryItemOrderRequest = OrderDto;
+export type DictionaryItemOrderRequest = DragReorderDto;
 
-export type DictionaryItemOrderResponse = OrderDto;
+export type DictionaryItemOrderResponse = DragReorderDto;
 
 /**
- *  类型定义 [DictionaryDto]
+ *  类型定义 [BaseDictionaryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type DictionaryDto = {
+export type BaseDictionaryDto = {
   /** 任意合法数值 */
   [property: string]: any;
   /* 字典编码 */
@@ -215,7 +215,7 @@ export type DictionaryDto = {
   createdAt: string;
   /* 备注信息 */
   description?: string;
-  /* 字典ID */
+  /* 主键id */
   id: number;
   /* 状态 true启用 false禁用 */
   isEnabled: boolean;
@@ -229,7 +229,7 @@ export type DictionaryDto = {
 /**
  *  类型定义 [CreateDictionaryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CreateDictionaryDto = {
   /** 任意合法数值 */
@@ -241,7 +241,7 @@ export type CreateDictionaryDto = {
   /* 备注信息 */
   description?: string;
   /* 状态 true启用 false禁用 */
-  isEnabled?: boolean;
+  isEnabled: boolean;
 
   /* 字典名称 */
   name: string;
@@ -250,7 +250,7 @@ export type CreateDictionaryDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -263,13 +263,13 @@ export type IdDto = {
 /**
  *  类型定义 [UpdateDictionaryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateDictionaryDto = {
   /** 任意合法数值 */
   [property: string]: any;
   /* 字典编码 */
-  code?: string;
+  code: string;
   /* 字典封面 */
   cover?: string;
   /* 备注信息 */
@@ -277,16 +277,16 @@ export type UpdateDictionaryDto = {
   /* 主键id */
   id: number;
   /* 状态 true启用 false禁用 */
-  isEnabled?: boolean;
+  isEnabled: boolean;
 
   /* 字典名称 */
-  name?: string;
+  name: string;
 };
 
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type IdsDto = {
   /** 任意合法数值 */
@@ -299,7 +299,7 @@ export type IdsDto = {
 /**
  *  类型定义 [BatchEnabledDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type BatchEnabledDto = {
   /** 任意合法数值 */
@@ -307,34 +307,34 @@ export type BatchEnabledDto = {
   /* 主键id集合 */
   ids: number[];
 
-  /* 启用或者禁用 */
+  /* 状态 true启用 false禁用 */
   isEnabled: boolean;
 };
 
 /**
- *  类型定义 [CountDto]
+ *  类型定义 [BatchOperationResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type CountDto = {
+export type BatchOperationResponseDto = {
   /** 任意合法数值 */
   [property: string]: any;
 
-  /* 操作成功的数据数量 */
+  /* 操作成功的数据量 */
   count: number;
 };
 
 /**
- *  类型定义 [DictionaryItemDto]
+ *  类型定义 [BaseDictionaryItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type DictionaryItemDto = {
+export type BaseDictionaryItemDto = {
   /** 任意合法数值 */
   [property: string]: any;
-  /* 字典项编码 */
+  /* 字典编码 */
   code: string;
-  /* 字典项封面 */
+  /* 字典封面 */
   cover?: string;
   /* 创建时间 */
   createdAt: string;
@@ -342,14 +342,12 @@ export type DictionaryItemDto = {
   description?: string;
   /* 字典编码 */
   dictionaryCode: string;
-  /* 字典项ID */
+  /* 主键id */
   id: number;
   /* 状态 true启用 false禁用 */
   isEnabled: boolean;
-  /* 字典项名称 */
+  /* 字典名称 */
   name: string;
-  /* 排序 */
-  order?: number;
 
   /* 更新时间 */
   updatedAt: string;
@@ -358,66 +356,62 @@ export type DictionaryItemDto = {
 /**
  *  类型定义 [CreateDictionaryItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CreateDictionaryItemDto = {
   /** 任意合法数值 */
   [property: string]: any;
-  /* 字典项编码 */
+  /* 字典编码 */
   code: string;
-  /* 字典项封面 */
+  /* 字典封面 */
   cover?: string;
   /* 备注信息 */
   description?: string;
   /* 字典编码 */
   dictionaryCode: string;
   /* 状态 true启用 false禁用 */
-  isEnabled?: boolean;
-  /* 字典项名称 */
-  name: string;
+  isEnabled: boolean;
 
-  /* 排序 */
-  order?: number;
+  /* 字典名称 */
+  name: string;
 };
 
 /**
  *  类型定义 [UpdateDictionaryItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateDictionaryItemDto = {
   /** 任意合法数值 */
   [property: string]: any;
-  /* 字典项编码 */
+  /* 字典编码 */
   code: string;
-  /* 字典项封面 */
+  /* 字典封面 */
   cover?: string;
   /* 备注信息 */
   description?: string;
   /* 字典编码 */
   dictionaryCode: string;
-  /* 字典项ID */
+  /* 主键id */
   id: number;
   /* 状态 true启用 false禁用 */
-  isEnabled?: boolean;
-  /* 字典项名称 */
-  name: string;
+  isEnabled: boolean;
 
-  /* 排序 */
-  order?: number;
+  /* 字典名称 */
+  name: string;
 };
 
 /**
- *  类型定义 [OrderDto]
+ *  类型定义 [DragReorderDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type OrderDto = {
+export type DragReorderDto = {
   /** 任意合法数值 */
   [property: string]: any;
-  /* 当前拖拽数据的id */
+  /* 当前拖拽元素的id */
   dragId: number;
 
-  /* 拖拽的目标id */
+  /* 拖拽的目标位置id */
   targetId: number;
 };

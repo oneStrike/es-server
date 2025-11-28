@@ -1,7 +1,7 @@
 /**
  *  类型定义 [CategoryCreateRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CategoryCreateRequest = CreateCategoryDto;
 
@@ -10,7 +10,7 @@ export type CategoryCreateResponse = IdDto;
 /**
  *  类型定义 [CategoryPageRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CategoryPageRequest = {
   /** 任意合法数值 */
@@ -61,7 +61,7 @@ export type CategoryPageResponse = {
 /**
  *  类型定义 [CategoryDetailRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CategoryDetailRequest = {
   /** 任意合法数值 */
@@ -76,7 +76,7 @@ export type CategoryDetailResponse = BaseCategoryDto;
 /**
  *  类型定义 [CategoryUpdateRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CategoryUpdateRequest = UpdateCategoryDto;
 
@@ -85,34 +85,34 @@ export type CategoryUpdateResponse = IdDto;
 /**
  *  类型定义 [CategoryBatchUpdateStatusRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CategoryBatchUpdateStatusRequest = BatchEnabledDto;
 
-export type CategoryBatchUpdateStatusResponse = CountDto;
+export type CategoryBatchUpdateStatusResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [CategoryBatchDeleteRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CategoryBatchDeleteRequest = IdsDto;
 
-export type CategoryBatchDeleteResponse = CountDto;
+export type CategoryBatchDeleteResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [CategoryOrderRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type CategoryOrderRequest = OrderDto;
+export type CategoryOrderRequest = DragReorderDto;
 
-export type CategoryOrderResponse = OrderDto;
+export type CategoryOrderResponse = DragReorderDto;
 
 /**
  *  类型定义 [CreateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CreateCategoryDto = {
   /** 任意合法数值 */
@@ -135,7 +135,7 @@ export type CreateCategoryDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -148,7 +148,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type BaseCategoryDto = {
   /** 任意合法数值 */
@@ -179,7 +179,7 @@ export type BaseCategoryDto = {
 /**
  *  类型定义 [CategoryContentTypeItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CategoryContentTypeItemDto = {
   /** 任意合法数值 */
@@ -196,7 +196,7 @@ export type CategoryContentTypeItemDto = {
 /**
  *  类型定义 [BaseContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type BaseContentTypeDto = {
   /** 任意合法数值 */
@@ -219,7 +219,7 @@ export type BaseContentTypeDto = {
 /**
  *  类型定义 [UpdateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateCategoryDto = {
   /** 任意合法数值 */
@@ -244,7 +244,7 @@ export type UpdateCategoryDto = {
 /**
  *  类型定义 [BatchEnabledDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type BatchEnabledDto = {
   /** 任意合法数值 */
@@ -252,27 +252,27 @@ export type BatchEnabledDto = {
   /* 主键id集合 */
   ids: number[];
 
-  /* 启用或者禁用 */
+  /* 状态 true启用 false禁用 */
   isEnabled: boolean;
 };
 
 /**
- *  类型定义 [CountDto]
+ *  类型定义 [BatchOperationResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type CountDto = {
+export type BatchOperationResponseDto = {
   /** 任意合法数值 */
   [property: string]: any;
 
-  /* 操作成功的数据数量 */
+  /* 操作成功的数据量 */
   count: number;
 };
 
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type IdsDto = {
   /** 任意合法数值 */
@@ -283,16 +283,16 @@ export type IdsDto = {
 };
 
 /**
- *  类型定义 [OrderDto]
+ *  类型定义 [DragReorderDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type OrderDto = {
+export type DragReorderDto = {
   /** 任意合法数值 */
   [property: string]: any;
-  /* 当前拖拽数据的id */
+  /* 当前拖拽元素的id */
   dragId: number;
 
-  /* 拖拽的目标id */
+  /* 拖拽的目标位置id */
   targetId: number;
 };

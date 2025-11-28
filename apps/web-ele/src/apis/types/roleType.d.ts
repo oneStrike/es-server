@@ -3,7 +3,7 @@ export type RoleTypeListResponse = RoleTypeListResponseDto[];
 /**
  *  类型定义 [RoleTypeListResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type RoleTypeListResponseDto = {
   /** 任意合法数值 */

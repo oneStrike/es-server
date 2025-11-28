@@ -56,7 +56,7 @@ export async function authorDetailApi(
  * 更新作者信息
  */
 export async function authorUpdateApi(
-  params: AuthorUpdateRequest,
+  params?: AuthorUpdateRequest,
 ): Promise<AuthorUpdateResponse> {
   return requestClient.post<AuthorUpdateResponse>(
     '/api/admin/work/author/update',

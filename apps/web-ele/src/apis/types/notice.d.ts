@@ -1,7 +1,7 @@
 /**
  *  类型定义 [NoticeCreateRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type NoticeCreateRequest = CreateNoticeDto;
 
@@ -10,7 +10,7 @@ export type NoticeCreateResponse = IdDto;
 /**
  *  类型定义 [NoticePageRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type NoticePageRequest = {
   /** 任意合法数值 */
@@ -82,7 +82,7 @@ export type NoticePageResponse = {
 /**
  *  类型定义 [NoticeDetailRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type NoticeDetailRequest = {
   /** 任意合法数值 */
@@ -97,7 +97,7 @@ export type NoticeDetailResponse = BaseNoticeDto;
 /**
  *  类型定义 [NoticeUpdateRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type NoticeUpdateRequest = UpdateNoticeDto;
 
@@ -106,25 +106,25 @@ export type NoticeUpdateResponse = IdDto;
 /**
  *  类型定义 [NoticeBatchUpdateStatusRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type NoticeBatchUpdateStatusRequest = UpdateNoticeStatusDto;
 
-export type NoticeBatchUpdateStatusResponse = CountDto;
+export type NoticeBatchUpdateStatusResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [NoticeBatchDeleteRequest]
  *  @来源 客户端通知模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type NoticeBatchDeleteRequest = IdsDto;
 
-export type NoticeBatchDeleteResponse = CountDto;
+export type NoticeBatchDeleteResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [CreateNoticeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CreateNoticeDto = {
   /** 任意合法数值 */
@@ -159,7 +159,7 @@ export type CreateNoticeDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -172,7 +172,7 @@ export type IdDto = {
 /**
  *  类型定义 [NoticePageResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type NoticePageResponseDto = {
   /** 任意合法数值 */
@@ -181,7 +181,7 @@ export type NoticePageResponseDto = {
   createdAt: string;
   /* 启用的平台 */
   enablePlatform: number;
-  /* 通知ID */
+  /* 主键id */
   id: number;
   /* 是否置顶 */
   isPinned?: boolean;
@@ -215,7 +215,7 @@ export type NoticePageResponseDto = {
 /**
  *  类型定义 [BaseNoticeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type BaseNoticeDto = {
   /** 任意合法数值 */
@@ -226,7 +226,7 @@ export type BaseNoticeDto = {
   createdAt: string;
   /* 启用的平台 */
   enablePlatform: number;
-  /* 通知ID */
+  /* 主键id */
   id: number;
   /* 是否置顶 */
   isPinned?: boolean;
@@ -260,7 +260,7 @@ export type BaseNoticeDto = {
 /**
  *  类型定义 [UpdateNoticeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateNoticeDto = {
   /** 任意合法数值 */
@@ -297,7 +297,7 @@ export type UpdateNoticeDto = {
 /**
  *  类型定义 [UpdateNoticeStatusDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateNoticeStatusDto = {
   /** 任意合法数值 */
@@ -310,22 +310,22 @@ export type UpdateNoticeStatusDto = {
 };
 
 /**
- *  类型定义 [CountDto]
+ *  类型定义 [BatchOperationResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type CountDto = {
+export type BatchOperationResponseDto = {
   /** 任意合法数值 */
   [property: string]: any;
 
-  /* 操作成功的数据数量 */
+  /* 操作成功的数据量 */
   count: number;
 };
 
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type IdsDto = {
   /** 任意合法数值 */

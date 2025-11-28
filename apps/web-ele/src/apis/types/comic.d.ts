@@ -1,7 +1,7 @@
 /**
  *  类型定义 [ComicCreateRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicCreateRequest = CreateComicDto;
 
@@ -10,7 +10,7 @@ export type ComicCreateResponse = IdDto;
 /**
  *  类型定义 [ComicPageRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicPageRequest = {
   /** 任意合法数值 */
@@ -88,7 +88,7 @@ export type ComicPageResponse = {
 /**
  *  类型定义 [ComicDetailRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicDetailRequest = {
   /** 任意合法数值 */
@@ -103,7 +103,7 @@ export type ComicDetailResponse = BaseComicDto;
 /**
  *  类型定义 [ComicUpdateRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicUpdateRequest = UpdateComicDto;
 
@@ -112,43 +112,43 @@ export type ComicUpdateResponse = IdDto;
 /**
  *  类型定义 [ComicBatchUpdateStatusRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicBatchUpdateStatusRequest = UpdateComicStatusDto;
 
-export type ComicBatchUpdateStatusResponse = CountDto;
+export type ComicBatchUpdateStatusResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [ComicBatchUpdateRecommendedRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicBatchUpdateRecommendedRequest = UpdateComicRecommendedDto;
 
-export type ComicBatchUpdateRecommendedResponse = CountDto;
+export type ComicBatchUpdateRecommendedResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [ComicBatchUpdateHotRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicBatchUpdateHotRequest = UpdateComicHotDto;
 
-export type ComicBatchUpdateHotResponse = CountDto;
+export type ComicBatchUpdateHotResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [ComicBatchUpdateNewRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicBatchUpdateNewRequest = UpdateComicNewDto;
 
-export type ComicBatchUpdateNewResponse = CountDto;
+export type ComicBatchUpdateNewResponse = BatchOperationResponseDto;
 
 /**
  *  类型定义 [ComicDeleteRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicDeleteRequest = IdDto;
 
@@ -157,7 +157,7 @@ export type ComicDeleteResponse = IdDto;
 /**
  *  类型定义 [CreateComicDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type CreateComicDto = {
   /** 任意合法数值 */
@@ -222,7 +222,7 @@ export type CreateComicDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -235,7 +235,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseComicDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type BaseComicDto = {
   /** 任意合法数值 */
@@ -330,7 +330,7 @@ export type BaseComicDto = {
 /**
  *  类型定义 [ComicCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicCategoryDto = {
   /** 任意合法数值 */
@@ -345,7 +345,7 @@ export type ComicCategoryDto = {
 /**
  *  类型定义 [ComicAuthorDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type ComicAuthorDto = {
   /** 任意合法数值 */
@@ -364,7 +364,7 @@ export type ComicAuthorDto = {
 /**
  *  类型定义 [UpdateComicDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateComicDto = {
   /** 任意合法数值 */
@@ -443,7 +443,7 @@ export type UpdateComicDto = {
 /**
  *  类型定义 [UpdateComicStatusDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateComicStatusDto = {
   /** 任意合法数值 */
@@ -456,22 +456,22 @@ export type UpdateComicStatusDto = {
 };
 
 /**
- *  类型定义 [CountDto]
+ *  类型定义 [BatchOperationResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
-export type CountDto = {
+export type BatchOperationResponseDto = {
   /** 任意合法数值 */
   [property: string]: any;
 
-  /* 操作成功的数据数量 */
+  /* 操作成功的数据量 */
   count: number;
 };
 
 /**
  *  类型定义 [UpdateComicRecommendedDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateComicRecommendedDto = {
   /** 任意合法数值 */
@@ -486,7 +486,7 @@ export type UpdateComicRecommendedDto = {
 /**
  *  类型定义 [UpdateComicHotDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateComicHotDto = {
   /** 任意合法数值 */
@@ -501,7 +501,7 @@ export type UpdateComicHotDto = {
 /**
  *  类型定义 [UpdateComicNewDto]
  *  @来源 components.schemas
- *  @更新时间 2025-10-29 10:28:15
+ *  @更新时间 2025-11-28 23:47:20
  */
 export type UpdateComicNewDto = {
   /** 任意合法数值 */
