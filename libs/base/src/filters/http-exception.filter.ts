@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import { LoggerService } from '@libs/base/modules/logger'
+import { LoggerService } from '@libs/base/modules'
 import { parseRequestLogFields } from '@libs/base/utils'
 import {
   ArgumentsHost,
@@ -61,6 +61,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message,
       traceId,
     }
+    // @ts-expect-error ignore TODO response类型问题待处理
     response.header('X-Trace-Id', traceId).code(status).send(errorResponse)
   }
 

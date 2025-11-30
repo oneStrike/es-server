@@ -1,4 +1,4 @@
-import type { AuthConfigInterface } from '@libs/base/modules/auth'
+import type { AuthConfigInterface } from '@libs/base/modules'
 import process from 'node:process'
 import { registerAs } from '@nestjs/config'
 
