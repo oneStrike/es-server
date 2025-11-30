@@ -1,5 +1,5 @@
-import { ApiDoc } from '@libs/decorators'
-import { IdDto } from '@libs/dto'
+import { ApiDoc } from '@libs/base/decorators'
+import { IdDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { ContentTypeService } from './content-type.service'

@@ -1,4 +1,4 @@
-import type { AppConfigInterface } from '@libs/types'
+import type { AppConfigInterface } from '@libs/base/types'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { logStartupInfo, setupApp } from '@libs/base'
 

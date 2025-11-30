@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/database'
+import { RepositoryService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 
 /**

@@ -1,6 +1,6 @@
-import { ApiDoc, ApiPageDoc } from '@libs/decorators'
-import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/dto'
-import { ActionTypeEnum } from '@libs/types'
+import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
+import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
+import { ActionTypeEnum } from '@libs/base/types'
 import {
   Body,
   Controller,

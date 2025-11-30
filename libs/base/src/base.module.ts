@@ -1,19 +1,19 @@
-import type { Type } from '@nestjs/common/interfaces/type.interface'
+import type { Provider } from '@nestjs/common/interfaces/modules/provider.interface'
 
-import { CustomCacheModule } from '@libs/cache'
-import { CustomPrismaModule, PrismaService } from '@libs/database'
-import { HealthModule } from '@libs/health'
-import { LoggerModule } from '@libs/logger'
+import type { Type } from '@nestjs/common/interfaces/type.interface'
+import { CustomPrismaModule, PrismaService } from '@libs/base/database'
+import { LoggerModule } from '@libs/base/modules/logger'
 import {
   BadRequestException,
   DynamicModule,
   Module,
   ValidationPipe,
 } from '@nestjs/common'
-import { Provider } from '@nestjs/common/interfaces/modules/provider.interface'
 import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
-import { TransformInterceptor } from './transform.interceptor'
+import { TransformInterceptor } from './interceptors'
+import { CustomCacheModule } from './modules/cache'
+import { HealthModule } from './modules/health'
 
 // 定义 BaseModule 可接受的配置接口
 export interface BaseModuleOptions {

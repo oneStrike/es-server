@@ -1,7 +1,7 @@
-import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/base/decorators'
 
-import { IdDto } from '@libs/dto'
-import { ActionTypeEnum, JwtUserInfoInterface } from '@libs/types'
+import { IdDto } from '@libs/base/dto'
+import { ActionTypeEnum, JwtUserInfoInterface } from '@libs/base/types'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../common/decorators/audit.decorator'

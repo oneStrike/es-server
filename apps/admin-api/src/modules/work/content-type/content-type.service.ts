@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/database'
+import { RepositoryService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateContentTypeDto,

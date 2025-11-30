@@ -2,8 +2,8 @@ import {
   ValidateBoolean,
   ValidateNumber,
   ValidateString,
-} from '@libs/decorators'
-import { IdDto, PageDto } from '@libs/dto'
+} from '@libs/base/decorators'
+import { IdDto, PageDto } from '@libs/base/dto'
 import {
   IntersectionType,
   OmitType,

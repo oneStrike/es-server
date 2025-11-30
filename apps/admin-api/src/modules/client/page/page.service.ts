@@ -1,5 +1,5 @@
-import { RepositoryService } from '@libs/database'
-import { ClientPageWhereInput } from '@libs/database/prisma-client/models'
+import { RepositoryService } from '@libs/base/database'
+import { ClientPageWhereInput } from '@libs/base/database/prisma-client/models'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   BaseClientPageDto,

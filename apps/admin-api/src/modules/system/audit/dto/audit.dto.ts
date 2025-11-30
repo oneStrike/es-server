@@ -4,9 +4,9 @@ import {
   ValidateJson,
   ValidateNumber,
   ValidateString,
-} from '@libs/decorators'
-import { BaseDto, PageDto } from '@libs/dto'
-import { ActionTypeEnum, ApiTypeEnum, HttpMethodEnum } from '@libs/types'
+} from '@libs/base/decorators'
+import { BaseDto, PageDto } from '@libs/base/dto'
+import { ActionTypeEnum, ApiTypeEnum, HttpMethodEnum } from '@libs/base/types'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class AuditDto extends BaseDto {

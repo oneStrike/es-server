@@ -1,6 +1,6 @@
-import { ClientNoticeWhereInput, RepositoryService } from '@libs/database'
-import { findCombinations } from '@libs/utils'
-import { assertValidTimeRange } from '@libs/utils/timeRange'
+import { ClientNoticeWhereInput, RepositoryService } from '@libs/base/database'
+import { findCombinations } from '@libs/base/utils'
+import { assertValidTimeRange } from '@libs/base/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateNoticeDto,

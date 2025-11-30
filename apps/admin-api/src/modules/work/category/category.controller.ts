@@ -1,11 +1,11 @@
-import { ApiDoc, ApiPageDoc } from '@libs/decorators'
+import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import {
   BatchEnabledDto,
   BatchOperationResponseDto,
   DragReorderDto,
   IdDto,
   IdsDto,
-} from '@libs/dto'
+} from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { WorkCategoryService } from './category.service'

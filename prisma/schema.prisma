@@ -5,10 +5,9 @@
 generator client {
   provider        = "prisma-client"
   previewFeatures = ["relationJoins"]
-  output          = "../libs/database/src/prisma-client"
+  output          = "../libs/base/src/database/prisma-client"
 }
 datasource db {
   provider     = "postgresql"
   relationMode = "prisma"
 }
-

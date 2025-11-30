@@ -1,8 +1,8 @@
-import type { WorkCategoryWhereInput } from '@libs/database/prisma-client/models'
-import { RepositoryService } from '@libs/database'
-import { BatchEnabledDto, DragReorderDto } from '@libs/dto'
+import type { WorkCategoryWhereInput } from '@libs/base/database/prisma-client/models'
+import { RepositoryService } from '@libs/base/database'
+import { BatchEnabledDto, DragReorderDto } from '@libs/base/dto'
 
-import { jsonParse } from '@libs/utils'
+import { jsonParse } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateCategoryDto,
