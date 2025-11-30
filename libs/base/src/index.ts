@@ -1,3 +1,7 @@
 export * from './base.module'
-export * from './nestjs/index'
-export * from './transform.interceptor'
+
+export * from './bootstrap'
+
+export * from './interceptors'
+
+export * from './modules/auth'

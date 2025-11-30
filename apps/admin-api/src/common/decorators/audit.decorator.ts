@@ -1,4 +1,4 @@
-import type { ActionTypeEnum } from '@libs/types'
+import type { ActionTypeEnum } from '@libs/base/types'
 import { SetMetadata } from '@nestjs/common'
 
 /**
@@ -19,6 +19,6 @@ export interface AuditMetadata {
  * 审计日志装饰器
  * @param metadata 审计日志元数据
  */
-export function Audit (metadata?: AuditMetadata) {
+export function Audit(metadata?: AuditMetadata) {
   return SetMetadata('audit', metadata || {})
 }

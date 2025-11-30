@@ -1,6 +1,6 @@
-import type { WorkAuthorWhereInput } from '@libs/database'
-import { RepositoryService } from '@libs/database'
-import { BatchEnabledDto } from '@libs/dto'
+import type { WorkAuthorWhereInput } from '@libs/base/database'
+import { RepositoryService } from '@libs/base/database'
+import { BatchEnabledDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateAuthorDto,

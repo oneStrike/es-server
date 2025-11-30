@@ -1,11 +1,22 @@
 import path from 'node:path'
 import process from 'node:process'
+import { configDotenv } from 'dotenv'
 import { defineConfig, env } from 'prisma/config'
 
-const seedCommand =
-  process.env.NODE_ENV === 'production'
-    ? 'node dist/libs/database/src/seed/index.js'
-    : 'pnpm tsx libs/database/src/seed/index.ts'
+let seedCommand = ''
+
+if (process.env.NODE_ENV === 'production') {
+  seedCommand = 'node libs/base/src/database/seed/index.js'
+} else {
+  configDotenv({
+    path: [
+      path.resolve(__dirname, `.env.development`),
+      path.resolve(__dirname, `.env`),
+    ],
+  })
+
+  seedCommand = 'pnpm tsx libs/base/src/database/seed/index.ts'
+}
 
 export default defineConfig({
   schema: path.join('prisma'),

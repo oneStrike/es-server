@@ -1,5 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
-import { ClientApiService } from './client-api.service';
+import { Controller, Get } from '@nestjs/common'
+import { ClientApiService } from './client-api.service'
 
 @Controller()
 export class ClientApiController {
@@ -7,6 +7,6 @@ export class ClientApiController {
 
   @Get()
   getHello(): string {
-    return this.clientApiService.getHello();
+    return this.clientApiService.getHello()
   }
 }

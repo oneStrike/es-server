@@ -1,4 +1,4 @@
-import { ApiDoc } from '@libs/decorators'
+import { ApiDoc } from '@libs/base/decorators'
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { RoleTypeListResponseDto } from './dto/role-type.dto'

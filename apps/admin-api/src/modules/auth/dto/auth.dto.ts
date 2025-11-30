@@ -1,4 +1,4 @@
-import { ValidateString } from '@libs/decorators'
+import { ValidateString } from '@libs/base/decorators'
 import { ApiProperty, OmitType } from '@nestjs/swagger'
 import { BaseUserDto } from '../../user/dto/user.dto'
 

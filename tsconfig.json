@@ -8,36 +8,8 @@
     "module": "commonjs",
     "paths": {
       "@/*": ["./src/*"],
-      "@libs/auth": ["libs/auth/src"],
-      "@libs/auth/*": ["libs/auth/src/*"],
       "@libs/base": ["libs/base/src"],
-      "@libs/base/*": ["libs/base/src/*"],
-      "@libs/cache": ["libs/cache/src"],
-      "@libs/cache/*": ["libs/cache/src/*"],
-      "@libs/captcha": ["libs/captcha/src"],
-      "@libs/captcha/*": ["libs/captcha/src/*"],
-      "@libs/config": ["libs/config/src"],
-      "@libs/config/*": ["libs/config/src/*"],
-      "@libs/crypto": ["libs/crypto/src"],
-      "@libs/crypto/*": ["libs/crypto/src/*"],
-      "@libs/database": ["./libs/database/src"],
-      "@libs/database/*": ["./libs/database/src/*"],
-      "@libs/decorators": ["libs/decorators/src"],
-      "@libs/decorators/*": ["libs/decorators/src/*"],
-      "@libs/dto": ["libs/dto/src"],
-      "@libs/dto/*": ["libs/dto/src/*"],
-      "@libs/filters": ["libs/filters/src"],
-      "@libs/filters/*": ["libs/filters/src/*"],
-      "@libs/health": ["libs/health/src"],
-      "@libs/health/*": ["libs/health/src/*"],
-      "@libs/logger": ["libs/logger/src"],
-      "@libs/logger/*": ["libs/logger/src/*"],
-      "@libs/types": ["libs/types/src"],
-      "@libs/types/*": ["libs/types/src/*"],
-      "@libs/upload": ["libs/upload/src"],
-      "@libs/upload/*": ["libs/upload/src/*"],
-      "@libs/utils": ["libs/utils/src"],
-      "@libs/utils/*": ["libs/utils/src/*"]
+      "@libs/base/*": ["libs/base/src/*"]
     },
     "resolveJsonModule": true,
     "allowJs": true,
@@ -60,6 +32,6 @@
     "test",
     "dist",
     "**/*spec.ts",
-    "libs/database/src/prisma-client/**"
+    "libs/base/src/database/prisma-client/**/*"
   ]
 }

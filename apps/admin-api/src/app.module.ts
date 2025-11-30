@@ -1,4 +1,3 @@
-import { JwtAuthGuard, JwtAuthModule } from '@libs/auth'
 import { BaseModule } from '@libs/base'
 import {
   AuthConfigRegister,
@@ -8,9 +7,10 @@ import {
   RedisConfigRegister,
   RsaConfigRegister,
   UploadConfigRegister,
-} from '@libs/config'
-import { HttpExceptionFilter } from '@libs/filters'
-import { getEnv } from '@libs/utils'
+} from '@libs/base/config'
+import { HttpExceptionFilter } from '@libs/base/filters'
+import { JwtAuthGuard, JwtAuthModule } from '@libs/base/modules/auth'
+import { getEnv } from '@libs/base/utils'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'

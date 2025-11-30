@@ -1,10 +1,10 @@
 import type { FastifyRequest } from 'fastify'
-import { AuthService as BaseAuthService } from '@libs/auth'
+import { AdminUser, RepositoryService } from '@libs/base/database'
 
-import { CaptchaService } from '@libs/captcha'
-import { RsaService, ScryptService } from '@libs/crypto'
-import { AdminUser, RepositoryService } from '@libs/database'
-import { extractIpAddress, isProduction } from '@libs/utils'
+import { AuthService as BaseAuthService } from '@libs/base/modules/auth'
+import { CaptchaService } from '@libs/base/modules/captcha'
+import { RsaService, ScryptService } from '@libs/base/modules/crypto'
+import { extractIpAddress, isProduction } from '@libs/base/utils'
 import {
   BadRequestException,
   Injectable,

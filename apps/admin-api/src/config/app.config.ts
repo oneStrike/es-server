@@ -1,6 +1,6 @@
-import type { AppConfigInterface } from '@libs/types'
+import type { AppConfigInterface } from '@libs/base/types'
 import process from 'node:process'
-import { isDevelopment } from '@libs/utils'
+import { isDevelopment } from '@libs/base/utils'
 import { registerAs } from '@nestjs/config'
 
 export const AppConfigRegister = registerAs('app', (): AppConfigInterface => {

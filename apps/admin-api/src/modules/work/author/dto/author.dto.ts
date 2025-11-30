@@ -4,8 +4,8 @@ import {
   ValidateEnum,
   ValidateNumber,
   ValidateString,
-} from '@libs/decorators'
-import { BaseDto, PageDto } from '@libs/dto'
+} from '@libs/base/decorators'
+import { BaseDto, PageDto } from '@libs/base/dto'
 import {
   IntersectionType,
   OmitType,

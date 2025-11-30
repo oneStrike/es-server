@@ -1,10 +1,10 @@
-import { ApiDoc, ApiPageDoc } from '@libs/decorators'
+import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import {
   BatchOperationResponseDto,
   DragReorderDto,
   IdDto,
   IdsDto,
-} from '@libs/dto'
+} from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { WorkComicVersionService } from '../version/comic-version.service'

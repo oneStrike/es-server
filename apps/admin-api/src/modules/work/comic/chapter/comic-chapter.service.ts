@@ -1,6 +1,6 @@
-import type { WorkComicChapterWhereInput } from '@libs/database'
-import { RepositoryService } from '@libs/database'
-import { DragReorderDto } from '@libs/dto'
+import type { WorkComicChapterWhereInput } from '@libs/base/database'
+import { RepositoryService } from '@libs/base/database'
+import { DragReorderDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   AddChapterContentDto,

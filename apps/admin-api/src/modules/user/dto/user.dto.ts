@@ -1,5 +1,9 @@
-import { ValidateBoolean, ValidateEnum, ValidateString } from '@libs/decorators'
-import { BaseDto, PageDto } from '@libs/dto'
+import {
+  ValidateBoolean,
+  ValidateEnum,
+  ValidateString,
+} from '@libs/base/decorators'
+import { BaseDto, PageDto } from '@libs/base/dto'
 import {
   ApiProperty,
   IntersectionType,

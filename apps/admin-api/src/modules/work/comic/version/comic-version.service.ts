@@ -1,5 +1,5 @@
-import { RepositoryService } from '@libs/database'
-import { WorkComicVersionWhereInput } from '@libs/database/prisma-client/models/WorkComicVersion'
+import { RepositoryService } from '@libs/base/database'
+import { WorkComicVersionWhereInput } from '@libs/base/database/prisma-client/models/WorkComicVersion'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateComicVersionDto,

@@ -1,9 +1,9 @@
 import type {
   DictionaryItemWhereInput,
   DictionaryWhereInput,
-} from '@libs/database'
-import { RepositoryService } from '@libs/database'
-import { DragReorderDto } from '@libs/dto'
+} from '@libs/base/database'
+import { RepositoryService } from '@libs/base/database'
+import { DragReorderDto } from '@libs/base/dto'
 import { Injectable } from '@nestjs/common'
 import {
   CreateDictionaryItemDto,

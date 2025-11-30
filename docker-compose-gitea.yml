@@ -1,0 +1,55 @@
+networks:
+  gitea-network:
+    driver: bridge
+
+volumes:
+  gitea-data:
+    driver: local
+  gitea-runner-data:
+    driver: local
+
+services:
+  # Gitea Git 代码仓库服务 - 独立服务
+  gitea:
+    image: docker.gitea.com/gitea:latest-rootless
+    container_name: gitea-server
+    restart: unless-stopped
+    environment:
+      # 用户和权限配置
+      - USER_UID=${GITEA_USER_UID}
+      - USER_GID=${GITEA_USER_GID}
+      # 服务器配置
+      - GITEA__server__ROOT_URL=${GITEA_ROOT_URL}
+      - GITEA__server__SSH_LISTEN_PORT=2222
+      - GITEA__server__SSH_PORT=${GITEA_SSH_PORT}
+    volumes:
+      - gitea-data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - '${GITEA_HTTP_PORT}:3000' # HTTP
+      - '${GITEA_SSH_PORT}:2222' # SSH (rootless 镜像内部为 2222)
+    networks:
+      - gitea-network
+    healthcheck:
+      test: [CMD, curl, -f, 'http://localhost:3000/api/healthz']
+      interval: 30s
+      timeout: 10s
+      retries: 2
+
+  # Gitea Actions Runner
+  gitea-runner:
+    image: docker.io/gitea/act_runner:latest
+    container_name: gitea-runner
+    restart: unless-stopped
+    depends_on:
+      gitea:
+        condition: service_healthy
+    volumes:
+      - gitea-runner-data:/data
+      - ./gitea-runner-config.yaml:/data/config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - CONFIG_FILE=/data/config.yaml
+    networks:
+      - gitea-network

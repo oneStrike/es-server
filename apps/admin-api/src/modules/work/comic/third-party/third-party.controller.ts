@@ -1,4 +1,4 @@
-import { ApiDoc } from '@libs/decorators'
+import { ApiDoc } from '@libs/base/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {

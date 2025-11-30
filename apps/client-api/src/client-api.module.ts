@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { ClientApiController } from './client-api.controller';
-import { ClientApiService } from './client-api.service';
+import { Module } from '@nestjs/common'
+import { ClientApiController } from './client-api.controller'
+import { ClientApiService } from './client-api.service'
 
 @Module({
   imports: [],

@@ -1,7 +1,4 @@
-import {
-  ValidateNumber,
-  ValidateString,
-} from '@libs/decorators'
+import { ValidateNumber, ValidateString } from '@libs/base/decorators'
 
 /**
  * 角色类型响应DTO

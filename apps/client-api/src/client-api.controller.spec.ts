@@ -1,23 +1,23 @@
-import type { TestingModule } from '@nestjs/testing';
-import { Test } from '@nestjs/testing';
-import { ClientApiController } from './client-api.controller';
-import { ClientApiService } from './client-api.service';
+import type { TestingModule } from '@nestjs/testing'
+import { Test } from '@nestjs/testing'
+import { ClientApiController } from './client-api.controller'
+import { ClientApiService } from './client-api.service'
 
 describe('clientApiController', () => {
-  let clientApiController: ClientApiController;
+  let clientApiController: ClientApiController
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [ClientApiController],
       providers: [ClientApiService],
-    }).compile();
+    }).compile()
 
-    clientApiController = app.get<ClientApiController>(ClientApiController);
-  });
+    clientApiController = app.get<ClientApiController>(ClientApiController)
+  })
 
   describe('root', () => {
     it('should return "Hello World!"', () => {
-      expect(clientApiController.getHello()).toBe('Hello World!');
-    });
-  });
-});
+      expect(clientApiController.getHello()).toBe('Hello World!')
+    })
+  })
+})

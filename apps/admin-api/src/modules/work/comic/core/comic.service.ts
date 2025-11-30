@@ -1,7 +1,7 @@
-import { RepositoryService } from '@libs/database'
-import { WorkComicWhereInput } from '@libs/database/prisma-client/models/WorkComic'
+import { RepositoryService } from '@libs/base/database'
+import { WorkComicWhereInput } from '@libs/base/database/prisma-client/models/WorkComic'
 
-import { isBoolean, isNotNil } from '@libs/utils'
+import { isBoolean, isNotNil } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
 
