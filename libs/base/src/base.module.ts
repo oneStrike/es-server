@@ -2,7 +2,7 @@ import type { Provider } from '@nestjs/common/interfaces/modules/provider.interf
 
 import type { Type } from '@nestjs/common/interfaces/type.interface'
 import { CustomPrismaModule, PrismaService } from '@libs/base/database'
-import { LoggerModule } from '@libs/base/modules/logger'
+import { LoggerModule } from '@libs/base/modules'
 import {
   BadRequestException,
   DynamicModule,

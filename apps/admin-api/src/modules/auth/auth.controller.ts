@@ -1,7 +1,6 @@
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc, Public } from '@libs/base/decorators'
-import { CaptchaDto } from '@libs/base/modules/captcha/dto/captcha.dto'
-import { RsaService } from '@libs/base/modules/crypto'
+import { CaptchaDto, RsaService } from '@libs/base/modules'
 import { ActionTypeEnum } from '@libs/base/types'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

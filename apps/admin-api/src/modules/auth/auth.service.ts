@@ -1,9 +1,9 @@
 import type { FastifyRequest } from 'fastify'
 import { AdminUser, RepositoryService } from '@libs/base/database'
 
+import { CaptchaService, RsaService, ScryptService } from '@libs/base/modules'
 import { AuthService as BaseAuthService } from '@libs/base/modules/auth'
-import { CaptchaService } from '@libs/base/modules/captcha'
-import { RsaService, ScryptService } from '@libs/base/modules/crypto'
+
 import { extractIpAddress, isProduction } from '@libs/base/utils'
 import {
   BadRequestException,

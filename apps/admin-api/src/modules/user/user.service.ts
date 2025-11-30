@@ -1,6 +1,6 @@
 import type { AdminUserWhereInput } from '@libs/base/database/prisma-client/models'
 import { RepositoryService } from '@libs/base/database'
-import { ScryptService } from '@libs/base/modules/crypto'
+import { ScryptService } from '@libs/base/modules'
 import {
   BadRequestException,
   Injectable,
