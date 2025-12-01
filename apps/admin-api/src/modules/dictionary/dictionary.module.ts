@@ -1,10 +1,10 @@
-import { DictionaryModule } from '@libs/dictionary'
+import { LibsDictionaryModule } from '@libs/dictionary'
 import { Module } from '@nestjs/common'
-import { AdminDictionaryController } from './dictionary.controller'
+import { DictionaryController } from './dictionary.controller'
 
 @Module({
-  imports: [DictionaryModule],
-  controllers: [AdminDictionaryController],
+  imports: [LibsDictionaryModule],
+  controllers: [DictionaryController],
   providers: [],
 })
-export class AdminDictionaryModule {}
+export class DictionaryModule {}

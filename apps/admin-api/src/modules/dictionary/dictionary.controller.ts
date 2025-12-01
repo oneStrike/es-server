@@ -11,7 +11,7 @@ import {
   BaseDictionaryItemDto,
   CreateDictionaryDto,
   CreateDictionaryItemDto,
-  DictionaryService,
+  LibsDictionaryService,
   QueryDictionaryDto,
   QueryDictionaryItemDto,
   UpdateDictionaryDto,
@@ -22,8 +22,8 @@ import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('字典管理')
 @Controller('/admin/dictionary')
-export class AdminDictionaryController {
-  constructor(private readonly dictionaryService: DictionaryService) {}
+export class DictionaryController {
+  constructor(private readonly libsDictionaryService: LibsDictionaryService) {}
 
   @Get('page')
   @ApiPageDoc({
@@ -31,7 +31,7 @@ export class AdminDictionaryController {
     model: BaseDictionaryDto,
   })
   async getPage(@Query() query: QueryDictionaryDto) {
-    return this.dictionaryService.findDictionaries(query)
+    return this.libsDictionaryService.findDictionaries(query)
   }
 
   @Get('detail')
@@ -40,7 +40,7 @@ export class AdminDictionaryController {
     model: BaseDictionaryDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.dictionaryService.dictionary.findUnique({ where: query })
+    return this.libsDictionaryService.dictionary.findUnique({ where: query })
   }
 
   @Post('create')
@@ -49,7 +49,7 @@ export class AdminDictionaryController {
     model: IdDto,
   })
   async create(@Body() createDictionaryDto: CreateDictionaryDto) {
-    return this.dictionaryService.dictionary.create({
+    return this.libsDictionaryService.dictionary.create({
       data: createDictionaryDto,
     })
   }
@@ -60,7 +60,7 @@ export class AdminDictionaryController {
     model: IdDto,
   })
   async update(@Body() updateDictionaryDto: UpdateDictionaryDto) {
-    return this.dictionaryService.dictionary.update({
+    return this.libsDictionaryService.dictionary.update({
       where: updateDictionaryDto,
       data: updateDictionaryDto,
     })
@@ -72,7 +72,7 @@ export class AdminDictionaryController {
     model: IdsDto,
   })
   async delete(@Body() query: IdsDto) {
-    return this.dictionaryService.dictionary.deleteMany({
+    return this.libsDictionaryService.dictionary.deleteMany({
       where: { id: { in: query.ids } },
     })
   }
@@ -83,7 +83,7 @@ export class AdminDictionaryController {
     model: BatchOperationResponseDto,
   })
   async enable(@Body() query: BatchEnabledDto) {
-    return this.dictionaryService.dictionary.updateMany({
+    return this.libsDictionaryService.dictionary.updateMany({
       where: { id: { in: query.ids } },
       data: { isEnabled: query.isEnabled },
     })
@@ -95,7 +95,7 @@ export class AdminDictionaryController {
     model: BaseDictionaryItemDto,
   })
   async getItems(@Query() query: QueryDictionaryItemDto) {
-    return this.dictionaryService.findDictionaryItems(query)
+    return this.libsDictionaryService.findDictionaryItems(query)
   }
 
   @Post('create-item')
@@ -104,7 +104,9 @@ export class AdminDictionaryController {
     model: IdDto,
   })
   async createItem(@Body() createDictionaryItemDto: CreateDictionaryItemDto) {
-    return this.dictionaryService.createDictionaryItem(createDictionaryItemDto)
+    return this.libsDictionaryService.createDictionaryItem(
+      createDictionaryItemDto,
+    )
   }
 
   @Post('update-item')
@@ -113,7 +115,7 @@ export class AdminDictionaryController {
     model: IdDto,
   })
   async updateItem(@Body() updateDictionaryItemDto: UpdateDictionaryItemDto) {
-    return this.dictionaryService.updateDictionaryItem({
+    return this.libsDictionaryService.updateDictionaryItem({
       ids: [updateDictionaryItemDto.id],
       ...updateDictionaryItemDto,
     })
@@ -125,7 +127,7 @@ export class AdminDictionaryController {
     model: BatchOperationResponseDto,
   })
   async deleteItem(@Body() query: IdsDto) {
-    return this.dictionaryService.deleteDictionaryItem(query.ids)
+    return this.libsDictionaryService.deleteDictionaryItem(query.ids)
   }
 
   @Post('update-item-status')
@@ -134,7 +136,7 @@ export class AdminDictionaryController {
     model: BatchOperationResponseDto,
   })
   async enableItem(@Body() query: BatchEnabledDto) {
-    return this.dictionaryService.updateDictionaryItem(query)
+    return this.libsDictionaryService.updateDictionaryItem(query)
   }
 
   /**
@@ -146,6 +148,6 @@ export class AdminDictionaryController {
     model: DragReorderDto,
   })
   async categoryOrder(@Body() body: DragReorderDto) {
-    return this.dictionaryService.updateDictionaryItemSort(body)
+    return this.libsDictionaryService.updateDictionaryItemSort(body)
   }
 }

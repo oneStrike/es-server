@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { ClientNoticeService } from './notice.service'
+import { LibsClientNoticeService } from './notice.service'
 
 /**
  * 客户端通知模块
@@ -7,7 +7,7 @@ import { ClientNoticeService } from './notice.service'
  */
 @Module({
   controllers: [],
-  providers: [ClientNoticeService],
-  exports: [ClientNoticeService], // 导出服务供其他模块使用
+  providers: [LibsClientNoticeService],
+  exports: [LibsClientNoticeService], // 导出服务供其他模块使用
 })
-export class ClientNoticeModule {}
+export class LibsClientNoticeModule {}

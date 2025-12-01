@@ -1,4 +1,4 @@
-import { ClientPageModule as BaseClientPageModule } from '@libs/client-config/page'
+import { LibsClientPageModule } from '@libs/client-config/page'
 import { Module } from '@nestjs/common'
 import { ClientPageController } from './page.controller'
 
@@ -7,7 +7,7 @@ import { ClientPageController } from './page.controller'
  * 提供页面配置相关的功能模块
  */
 @Module({
-  imports: [BaseClientPageModule],
+  imports: [LibsClientPageModule],
   controllers: [ClientPageController],
   providers: [],
   exports: [], // 导出服务供其他模块使用
