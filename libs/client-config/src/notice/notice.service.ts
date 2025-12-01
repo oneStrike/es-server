@@ -12,7 +12,7 @@ import {
  * 客户端通知模块服务
  */
 @Injectable()
-export class LibsClientNoticeService extends RepositoryService {
+export class LibClientNoticeService extends RepositoryService {
   get clientNotice() {
     return this.prisma.clientNotice
   }

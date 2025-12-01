@@ -1,6 +1,6 @@
 import { ApiPageDoc, Public } from '@libs/base/decorators'
 
-import { BaseDictionaryItemDto, LibsDictionaryService } from '@libs/dictionary'
+import { BaseDictionaryItemDto, LibDictionaryService } from '@libs/dictionary'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { QueryDictionaryItemDto } from './dto/dictionary.dto'
@@ -8,7 +8,7 @@ import { QueryDictionaryItemDto } from './dto/dictionary.dto'
 @ApiTags('字典管理')
 @Controller('/client/dictionary')
 export class DictionaryController {
-  constructor(private readonly libsDictionaryService: LibsDictionaryService) {}
+  constructor(private readonly libDictionaryService: LibDictionaryService) {}
 
   @Get('items')
   @ApiPageDoc({
@@ -17,6 +17,6 @@ export class DictionaryController {
   })
   @Public()
   async getItems(@Query() query: QueryDictionaryItemDto) {
-    return this.libsDictionaryService.findDictionaryItems(query)
+    return this.libDictionaryService.findDictionaryItems(query)
   }
 }

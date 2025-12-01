@@ -12,7 +12,7 @@ import {
  * 提供页面配置的增删改查等核心业务逻辑
  */
 @Injectable()
-export class LibsClientPageService extends RepositoryService {
+export class LibClientPageService extends RepositoryService {
   get clientPage() {
     return this.prisma.clientPage
   }
