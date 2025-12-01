@@ -1,4 +1,5 @@
 import { ValidateString } from '@libs/base/decorators'
+import { CaptchaDto } from '@libs/base/modules'
 import { ApiProperty, OmitType } from '@nestjs/swagger'
 import { BaseUserDto } from '../../user/dto/user.dto'
 
@@ -35,7 +36,7 @@ export class RefreshTokenDto extends OmitType(TokenDto, ['accessToken']) {}
 /**
  * 用户登录 DTO
  */
-export class UserLoginDto {
+export class UserLoginDto extends CaptchaDto {
   @ValidateString({
     description: '用户名',
     example: 'admin001',
@@ -52,20 +53,6 @@ export class UserLoginDto {
     password: true,
   })
   password!: string
-
-  @ValidateString({
-    description: '验证码',
-    example: '1234',
-    required: true,
-  })
-  captcha!: string
-
-  @ValidateString({
-    description: '验证码ID',
-    example: 'a1b2c3d4',
-    required: true,
-  })
-  captchaId!: string
 }
 
 /**

@@ -65,7 +65,7 @@ export interface AppConfigInterface {
   /**
    * 普通管理员用户重置时的默认密码
    */
-  defaultPassword: string
+  defaultPassword?: string
   /**
    * Swagger配置
    */

@@ -94,6 +94,6 @@ export class QueryClientPageDto extends IntersectionType(
 /**
  * 页面配置分页响应DTO
  */
-export class ClientPagePageResponseDto extends OmitType(BaseClientPageDto, [
+export class ClientPageResponseDto extends OmitType(BaseClientPageDto, [
   'description',
 ]) {}

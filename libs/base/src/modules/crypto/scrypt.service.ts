@@ -70,7 +70,6 @@ export class ScryptService {
       // 使用常量时间比较防止时序攻击
       const inputBuffer = Buffer.from(inputHash, 'hex')
       const storedBuffer = Buffer.from(storedHash, 'hex')
-
       return timingSafeEqual(inputBuffer, storedBuffer)
     } catch {
       return false
