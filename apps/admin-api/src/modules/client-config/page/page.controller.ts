@@ -3,7 +3,7 @@ import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
 import { ActionTypeEnum } from '@libs/base/types'
 import {
   BaseClientPageDto,
-  ClientPagePageResponseDto,
+  ClientPageResponseDto,
   ClientPageService,
   QueryClientPageDto,
   UpdateClientPageDto,
@@ -46,7 +46,7 @@ export class ClientPageController {
   @Get('/page')
   @ApiPageDoc({
     summary: '分页查询页面配置列表',
-    model: ClientPagePageResponseDto,
+    model: ClientPageResponseDto,
   })
   async findPage(@Query() query: QueryClientPageDto) {
     return this.pageService.findPage(query)
