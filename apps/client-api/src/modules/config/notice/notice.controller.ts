@@ -1,6 +1,6 @@
 import { ApiPageDoc, Public } from '@libs/base/decorators'
 import {
-  ClientNoticeService,
+  LibsClientNoticeService,
   NoticePageResponseDto,
   QueryNoticeDto,
 } from '@libs/client-config/notice'
@@ -14,7 +14,10 @@ import { ApiTags } from '@nestjs/swagger'
 @ApiTags('客户端通知模块')
 @Controller('Client/notice')
 export class ClientNoticeController {
-  constructor(private readonly noticeService: ClientNoticeService) {}
+  constructor(
+    private readonly libsClientNoticeService: LibsClientNoticeService,
+  ) {}
+
   /**
    * 分页查询通知列表
    */
@@ -25,6 +28,6 @@ export class ClientNoticeController {
   })
   @Public()
   async getPage(@Query() query: QueryNoticeDto) {
-    return this.noticeService.findNoticePage(query)
+    return this.libsClientNoticeService.findNoticePage(query)
   }
 }

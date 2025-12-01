@@ -4,7 +4,7 @@ import { ActionTypeEnum } from '@libs/base/types'
 import {
   BaseClientPageDto,
   ClientPageResponseDto,
-  ClientPageService,
+  LibsClientPageService,
   QueryClientPageDto,
   UpdateClientPageDto,
 } from '@libs/client-config/page'
@@ -26,7 +26,7 @@ import { Audit } from '../../../common/decorators/audit.decorator'
 @ApiTags('客户端页面配置模块')
 @Controller('admin/client-page')
 export class ClientPageController {
-  constructor(private readonly pageService: ClientPageService) {}
+  constructor(private readonly libsClientPageService: LibsClientPageService) {}
 
   /**
    * 创建页面配置
@@ -37,7 +37,7 @@ export class ClientPageController {
     model: IdDto,
   })
   async create(@Body() body: BaseClientPageDto) {
-    return this.pageService.createPage(body)
+    return this.libsClientPageService.createPage(body)
   }
 
   /**
@@ -49,7 +49,7 @@ export class ClientPageController {
     model: ClientPageResponseDto,
   })
   async findPage(@Query() query: QueryClientPageDto) {
-    return this.pageService.findPage(query)
+    return this.libsClientPageService.findPage(query)
   }
 
   /**
@@ -61,7 +61,7 @@ export class ClientPageController {
     model: BaseClientPageDto,
   })
   async findDetail(@Query('id', ParseIntPipe) id: number) {
-    return this.pageService.clientPage.findUnique({ where: { id } })
+    return this.libsClientPageService.clientPage.findUnique({ where: { id } })
   }
 
   /**
@@ -73,7 +73,7 @@ export class ClientPageController {
     model: BaseClientPageDto,
   })
   async findByCode(@Query('code') code: string) {
-    return this.pageService.clientPage.findUnique({
+    return this.libsClientPageService.clientPage.findUnique({
       where: { code },
     })
   }
@@ -91,7 +91,7 @@ export class ClientPageController {
     content: '更新页面配置',
   })
   async update(@Body() body: UpdateClientPageDto) {
-    return this.pageService.updatePage(body)
+    return this.libsClientPageService.updatePage(body)
   }
 
   /**
@@ -103,7 +103,7 @@ export class ClientPageController {
     model: BatchOperationResponseDto,
   })
   async batchDelete(@Body() body: IdsDto) {
-    return this.pageService.clientPage.deleteMany({
+    return this.libsClientPageService.clientPage.deleteMany({
       where: { id: { in: body.ids } },
     })
   }
