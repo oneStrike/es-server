@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { makePrismaClient } from '@libs/base/database' // 漫画多语言版本
+import { isProduction } from '@libs/base/utils'
 import { DbConfig } from '../../config'
 // ==================== 用户管理模块 ====================
 import { createInitialAdminAccount } from './modules/adminUser' // 管理员账户初始化
@@ -18,7 +19,10 @@ import { createInitialWorkComicChapters } from './modules/workComicChapter' // �
 import { createInitialWorkComicRelations } from './modules/workComicRelations' // 作品关联关系（作者-漫画-分类）
 import { createInitialWorkComicVersions } from './modules/workComicVersion'
 
-const prisma = makePrismaClient(DbConfig.connection.url)
+const connectUrl = isProduction()
+  ? DbConfig.connection.url
+  : 'postgresql://postgres:259158@localhost:5432/foo'
+const prisma = makePrismaClient(connectUrl)
 /**
  * 执行数据库种子数据初始化
  */

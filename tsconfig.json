@@ -7,9 +7,21 @@
     "baseUrl": "./",
     "module": "commonjs",
     "paths": {
-      "@/*": ["./src/*"],
-      "@libs/base": ["libs/base/src"],
-      "@libs/base/*": ["libs/base/src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@libs/base": [
+        "libs/base/src"
+      ],
+      "@libs/base/*": [
+        "libs/base/src/*"
+      ],
+      "@libs/dictionary": [
+        "libs/dictionary/src"
+      ],
+      "@libs/dictionary/*": [
+        "libs/dictionary/src/*"
+      ]
     },
     "resolveJsonModule": true,
     "allowJs": true,
@@ -26,7 +38,13 @@
     "forceConsistentCasingInFileNames": false,
     "skipLibCheck": true
   },
-  "include": ["apps/**/*", "libs/**/*", "src/**/*", "test/**/*", "*.ts"],
+  "include": [
+    "apps/**/*",
+    "libs/**/*",
+    "src/**/*",
+    "test/**/*",
+    "*.ts"
+  ],
   "exclude": [
     "node_modules",
     "test",
