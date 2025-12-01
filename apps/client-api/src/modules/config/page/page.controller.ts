@@ -1,7 +1,7 @@
 import { ApiPageDoc } from '@libs/base/decorators'
 import {
   ClientPageResponseDto,
-  LibsClientPageService,
+  LibClientPageService,
 } from '@libs/client-config/page'
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -13,7 +13,7 @@ import { ApiTags } from '@nestjs/swagger'
 @ApiTags('客户端页面配置模块')
 @Controller('client/page-config')
 export class ClientPageController {
-  constructor(private readonly libsClientPageService: LibsClientPageService) {}
+  constructor(private readonly libClientPageService: LibClientPageService) {}
 
   /**
    * 分页查询页面配置列表
@@ -24,6 +24,6 @@ export class ClientPageController {
     model: ClientPageResponseDto,
   })
   async findPage() {
-    return this.libsClientPageService.findActivePages()
+    return this.libClientPageService.findActivePages()
   }
 }

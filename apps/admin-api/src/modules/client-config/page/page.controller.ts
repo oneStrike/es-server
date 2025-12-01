@@ -4,7 +4,7 @@ import { ActionTypeEnum } from '@libs/base/types'
 import {
   BaseClientPageDto,
   ClientPageResponseDto,
-  LibsClientPageService,
+  LibClientPageService,
   QueryClientPageDto,
   UpdateClientPageDto,
 } from '@libs/client-config/page'
@@ -26,7 +26,7 @@ import { Audit } from '../../../common/decorators/audit.decorator'
 @ApiTags('客户端页面配置模块')
 @Controller('admin/client-page')
 export class ClientPageController {
-  constructor(private readonly libsClientPageService: LibsClientPageService) {}
+  constructor(private readonly libClientPageService: LibClientPageService) {}
 
   /**
    * 创建页面配置
@@ -37,7 +37,7 @@ export class ClientPageController {
     model: IdDto,
   })
   async create(@Body() body: BaseClientPageDto) {
-    return this.libsClientPageService.createPage(body)
+    return this.libClientPageService.createPage(body)
   }
 
   /**
@@ -49,7 +49,7 @@ export class ClientPageController {
     model: ClientPageResponseDto,
   })
   async findPage(@Query() query: QueryClientPageDto) {
-    return this.libsClientPageService.findPage(query)
+    return this.libClientPageService.findPage(query)
   }
 
   /**
@@ -61,7 +61,7 @@ export class ClientPageController {
     model: BaseClientPageDto,
   })
   async findDetail(@Query('id', ParseIntPipe) id: number) {
-    return this.libsClientPageService.clientPage.findUnique({ where: { id } })
+    return this.libClientPageService.clientPage.findUnique({ where: { id } })
   }
 
   /**
@@ -73,7 +73,7 @@ export class ClientPageController {
     model: BaseClientPageDto,
   })
   async findByCode(@Query('code') code: string) {
-    return this.libsClientPageService.clientPage.findUnique({
+    return this.libClientPageService.clientPage.findUnique({
       where: { code },
     })
   }
@@ -91,7 +91,7 @@ export class ClientPageController {
     content: '更新页面配置',
   })
   async update(@Body() body: UpdateClientPageDto) {
-    return this.libsClientPageService.updatePage(body)
+    return this.libClientPageService.updatePage(body)
   }
 
   /**
@@ -103,7 +103,7 @@ export class ClientPageController {
     model: BatchOperationResponseDto,
   })
   async batchDelete(@Body() body: IdsDto) {
-    return this.libsClientPageService.clientPage.deleteMany({
+    return this.libClientPageService.clientPage.deleteMany({
       where: { id: { in: body.ids } },
     })
   }

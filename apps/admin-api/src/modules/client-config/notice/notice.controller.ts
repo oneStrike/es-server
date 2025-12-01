@@ -3,7 +3,7 @@ import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
 import {
   BaseNoticeDto,
   CreateNoticeDto,
-  LibsClientNoticeService,
+  LibClientNoticeService,
   NoticePageResponseDto,
   QueryNoticeDto,
   UpdateNoticeDto,
@@ -20,7 +20,7 @@ import { ApiTags } from '@nestjs/swagger'
 @Controller('admin/notice')
 export class ClientNoticeController {
   constructor(
-    private readonly libsClientNoticeService: LibsClientNoticeService,
+    private readonly libClientNoticeService: LibClientNoticeService,
   ) {}
 
   /**
@@ -32,7 +32,7 @@ export class ClientNoticeController {
     model: IdDto,
   })
   async create(@Body() body: CreateNoticeDto) {
-    return this.libsClientNoticeService.createNotice(body)
+    return this.libClientNoticeService.createNotice(body)
   }
 
   /**
@@ -45,7 +45,7 @@ export class ClientNoticeController {
   })
   @Public()
   async getPage(@Query() query: QueryNoticeDto) {
-    return this.libsClientNoticeService.findNoticePage(query)
+    return this.libClientNoticeService.findNoticePage(query)
   }
 
   /**
@@ -57,7 +57,7 @@ export class ClientNoticeController {
     model: BaseNoticeDto,
   })
   async findOne(@Query() query: IdDto) {
-    return this.libsClientNoticeService.clientNotice.findUnique({
+    return this.libClientNoticeService.clientNotice.findUnique({
       where: query,
       include: {
         clientPage: {
@@ -81,7 +81,7 @@ export class ClientNoticeController {
     model: IdDto,
   })
   async update(@Body() body: UpdateNoticeDto) {
-    return this.libsClientNoticeService.updateNotice(body)
+    return this.libClientNoticeService.updateNotice(body)
   }
 
   /**
@@ -93,7 +93,7 @@ export class ClientNoticeController {
     model: BatchOperationResponseDto,
   })
   async updateStatus(@Body() body: UpdateNoticeStatusDto) {
-    return this.libsClientNoticeService.clientNotice.updateMany({
+    return this.libClientNoticeService.clientNotice.updateMany({
       where: { id: { in: body.ids } },
       data: { isPublished: body.isPublished },
     })
@@ -108,7 +108,7 @@ export class ClientNoticeController {
     model: BatchOperationResponseDto,
   })
   async batchRemove(@Body() body: IdsDto) {
-    return this.libsClientNoticeService.clientNotice.deleteMany({
+    return this.libClientNoticeService.clientNotice.deleteMany({
       where: { id: { in: body.ids } },
     })
   }

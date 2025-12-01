@@ -1,4 +1,4 @@
-import { LibsClientNoticeModule } from '@libs/client-config/notice'
+import { LibClientNoticeModule } from '@libs/client-config/notice'
 import { Module } from '@nestjs/common'
 import { ClientNoticeController } from './notice.controller'
 
@@ -7,7 +7,7 @@ import { ClientNoticeController } from './notice.controller'
  * 提供通知相关的功能模块
  */
 @Module({
-  imports: [LibsClientNoticeModule],
+  imports: [LibClientNoticeModule],
   controllers: [ClientNoticeController],
   providers: [],
   exports: [], // 导出服务供其他模块使用

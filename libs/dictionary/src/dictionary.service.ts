@@ -16,7 +16,7 @@ import {
  * 提供字典和字典项的增删改查功能
  */
 @Injectable()
-export class LibsDictionaryService extends RepositoryService {
+export class LibDictionaryService extends RepositoryService {
   get dictionary() {
     return this.prisma.dictionary
   }

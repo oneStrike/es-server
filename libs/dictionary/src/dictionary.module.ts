@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { LibsDictionaryService } from './dictionary.service'
+import { LibDictionaryService } from './dictionary.service'
 
 /**
  * 数据字典模块
@@ -7,7 +7,7 @@ import { LibsDictionaryService } from './dictionary.service'
  */
 @Module({
   controllers: [],
-  providers: [LibsDictionaryService],
-  exports: [LibsDictionaryService],
+  providers: [LibDictionaryService],
+  exports: [LibDictionaryService],
 })
-export class LibsDictionaryModule {}
+export class LibDictionaryModule {}
