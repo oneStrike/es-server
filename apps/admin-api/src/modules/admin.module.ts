@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common'
 import { AuthModule } from './auth/auth.module'
-import { ClientNoticeModule } from './client/notice/notice.module'
-import { ClientPageModule } from './client/page/page.module'
-import { DictionaryModule } from './dictionary/dictionary.module'
+import { AdminClientNoticeModule } from './client-config/notice/notice.module'
+import { AdminClientPageModule } from './client-config/page/page.module'
+import { AdminDictionaryModule } from './dictionary/dictionary.module'
 import { UploadModule } from './system/upload/upload.module'
 import { UserModule } from './user/user.module'
 import { WorkModule } from './work/work.module'
@@ -12,10 +12,10 @@ import { WorkModule } from './work/work.module'
     AuthModule,
     UserModule,
     UploadModule,
-    ClientNoticeModule,
-    ClientPageModule,
     WorkModule,
-    DictionaryModule,
+    AdminClientPageModule,
+    AdminDictionaryModule,
+    AdminClientNoticeModule,
   ],
   controllers: [],
   providers: [],

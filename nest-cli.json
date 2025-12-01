@@ -19,15 +19,6 @@
         "tsConfigPath": "apps/admin-api/tsconfig.app.json"
       }
     },
-    "auth": {
-      "type": "library",
-      "root": "libs/auth",
-      "entryFile": "index",
-      "sourceRoot": "libs/auth/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/auth/tsconfig.lib.json"
-      }
-    },
     "base": {
       "type": "library",
       "root": "libs/base",
@@ -35,24 +26,6 @@
       "sourceRoot": "libs/base/src",
       "compilerOptions": {
         "tsConfigPath": "libs/base/tsconfig.lib.json"
-      }
-    },
-    "cache": {
-      "type": "library",
-      "root": "libs/cache",
-      "entryFile": "index",
-      "sourceRoot": "libs/cache/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/cache/tsconfig.lib.json"
-      }
-    },
-    "captcha": {
-      "type": "library",
-      "root": "libs/captcha",
-      "entryFile": "index",
-      "sourceRoot": "libs/captcha/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/captcha/tsconfig.lib.json"
       }
     },
     "client-api": {
@@ -64,40 +37,13 @@
         "tsConfigPath": "apps/client-api/tsconfig.app.json"
       }
     },
-    "config": {
+    "client-config": {
       "type": "library",
-      "root": "libs/config",
+      "root": "libs/client-config",
       "entryFile": "index",
-      "sourceRoot": "libs/config/src",
+      "sourceRoot": "libs/client-config/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/config/tsconfig.lib.json"
-      }
-    },
-    "crypto": {
-      "type": "library",
-      "root": "libs/crypto",
-      "entryFile": "index",
-      "sourceRoot": "libs/crypto/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/crypto/tsconfig.lib.json"
-      }
-    },
-    "database": {
-      "type": "library",
-      "root": "libs/database",
-      "entryFile": "index",
-      "sourceRoot": "libs/database/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/database/tsconfig.json"
-      }
-    },
-    "decorators": {
-      "type": "library",
-      "root": "libs/decorators",
-      "entryFile": "index",
-      "sourceRoot": "libs/decorators/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/decorators/tsconfig.lib.json"
+        "tsConfigPath": "libs/client-config/tsconfig.lib.json"
       }
     },
     "dictionary": {
@@ -107,69 +53,6 @@
       "sourceRoot": "libs/dictionary/src",
       "compilerOptions": {
         "tsConfigPath": "libs/dictionary/tsconfig.lib.json"
-      }
-    },
-    "dto": {
-      "type": "library",
-      "root": "libs/dto",
-      "entryFile": "index",
-      "sourceRoot": "libs/dto/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/dto/tsconfig.lib.json"
-      }
-    },
-    "filters": {
-      "type": "library",
-      "root": "libs/filters",
-      "entryFile": "index",
-      "sourceRoot": "libs/filters/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/filters/tsconfig.lib.json"
-      }
-    },
-    "health": {
-      "type": "library",
-      "root": "libs/health",
-      "entryFile": "index",
-      "sourceRoot": "libs/health/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/health/tsconfig.lib.json"
-      }
-    },
-    "logger": {
-      "type": "library",
-      "root": "libs/logger",
-      "entryFile": "index",
-      "sourceRoot": "libs/logger/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/logger/tsconfig.lib.json"
-      }
-    },
-    "types": {
-      "type": "library",
-      "root": "libs/types",
-      "entryFile": "index",
-      "sourceRoot": "libs/types/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/types/tsconfig.lib.json"
-      }
-    },
-    "upload": {
-      "type": "library",
-      "root": "libs/upload",
-      "entryFile": "index",
-      "sourceRoot": "libs/upload/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/upload/tsconfig.lib.json"
-      }
-    },
-    "utils": {
-      "type": "library",
-      "root": "libs/utils",
-      "entryFile": "index",
-      "sourceRoot": "libs/utils/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/utils/tsconfig.lib.json"
       }
     }
   }

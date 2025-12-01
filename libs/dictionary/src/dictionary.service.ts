@@ -1,4 +1,136 @@
-import { Injectable } from '@nestjs/common';
+import type {
+  DictionaryItemWhereInput,
+  DictionaryWhereInput,
+} from '@libs/base/database'
+import { RepositoryService } from '@libs/base/database'
+import { DragReorderDto } from '@libs/base/dto'
+import { Injectable } from '@nestjs/common'
+import {
+  CreateDictionaryItemDto,
+  QueryDictionaryDto,
+  QueryDictionaryItemDto,
+} from './dto/dictionary.dto'
 
+/**
+ * 数据字典服务类
+ * 提供字典和字典项的增删改查功能
+ */
 @Injectable()
-export class DictionaryService {}
+export class DictionaryService extends RepositoryService {
+  get dictionary() {
+    return this.prisma.dictionary
+  }
+
+  get dictionaryItem() {
+    return this.prisma.dictionaryItem
+  }
+
+  /**
+   * 分页查询字典列表
+   * @param queryDto 查询条件
+   * @returns 分页数据
+   */
+  async findDictionaries(queryDto: QueryDictionaryDto) {
+    const { code, name, isEnabled, ...pageParams } = queryDto
+
+    const where: DictionaryWhereInput = {}
+
+    if (code) {
+      where.code = { contains: code }
+    }
+    if (name) {
+      where.name = { contains: name }
+    }
+    if (isEnabled !== undefined) {
+      where.isEnabled = { equals: isEnabled }
+    }
+
+    return this.dictionary.findPagination({
+      where: { ...where, ...pageParams },
+    })
+  }
+
+  /**
+   * 分页查询字典项列表
+   * @param queryDto 查询条件
+   * @returns 分页数据
+   */
+  async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
+    const { dictionaryCode, name, code, isEnabled, ...pageParams } = queryDto
+
+    const where: DictionaryItemWhereInput = {
+      dictionaryCode: {
+        in: dictionaryCode.split(','),
+      },
+    }
+
+    if (code) {
+      where.code = { contains: code }
+    }
+    if (name) {
+      where.name = { contains: name }
+    }
+    if (isEnabled !== undefined) {
+      where.isEnabled = { equals: isEnabled }
+    }
+
+    return this.prisma.dictionaryItem.findPagination({
+      where: { ...where, ...pageParams },
+    })
+  }
+
+  /**
+   * 创建字典项
+   * @param createDictionaryItemDto 创建字典项数据
+   * @returns 创建的字典项信息
+   */
+  async createDictionaryItem(createDictionaryItemDto: CreateDictionaryItemDto) {
+    return this.prisma.dictionaryItem.create({
+      data: {
+        ...createDictionaryItemDto,
+        isEnabled: createDictionaryItemDto.isEnabled ?? true,
+      },
+    })
+  }
+
+  /**
+   * 批量更新字典项
+   * @param updateDictionaryItemDto 更新数据
+   * @returns 更新后的字典项信息
+   */
+  async updateDictionaryItem(updateDictionaryItemDto: Record<string, any>) {
+    const { ids, isEnabled } = updateDictionaryItemDto
+    return this.prisma.dictionaryItem.updateMany({
+      where: { id: { in: ids } },
+      data: { isEnabled },
+    })
+  }
+
+  /**
+   * 删除字典项
+   * @param ids 字典项ID
+   */
+  async deleteDictionaryItem(ids: number[]) {
+    return this.prisma.dictionaryItem.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    })
+  }
+
+  /**
+   * 更新字典项排序
+   * @param orderDto 排序数据
+   */
+  async updateDictionaryItemSort(orderDto: DragReorderDto) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.dictionaryItem.swapField(
+        { id: orderDto.dragId },
+        { id: orderDto.targetId },
+        'order',
+      )
+    })
+  }
+}
