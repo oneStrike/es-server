@@ -16,6 +16,12 @@
       "@libs/base/*": [
         "libs/base/src/*"
       ],
+      "@libs/client-config": [
+        "libs/client-config/src"
+      ],
+      "@libs/client-config/*": [
+        "libs/client-config/src/*"
+      ],
       "@libs/dictionary": [
         "libs/dictionary/src"
       ],

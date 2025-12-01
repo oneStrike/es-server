@@ -2,6 +2,13 @@ import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
 import { ActionTypeEnum } from '@libs/base/types'
 import {
+  BaseClientPageDto,
+  ClientPagePageResponseDto,
+  ClientPageService,
+  QueryClientPageDto,
+  UpdateClientPageDto,
+} from '@libs/client-config/page'
+import {
   Body,
   Controller,
   Get,
@@ -11,13 +18,6 @@ import {
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
-import {
-  BaseClientPageDto,
-  ClientPagePageResponseDto,
-  QueryClientPageDto,
-  UpdateClientPageDto,
-} from './dto/page.dto'
-import { ClientPageService } from './page.service'
 
 /**
  * 客户端页面配置控制器

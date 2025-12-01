@@ -6,23 +6,23 @@ import {
   IdDto,
   IdsDto,
 } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { DictionaryService } from './dictionary.service'
 import {
   BaseDictionaryDto,
   BaseDictionaryItemDto,
   CreateDictionaryDto,
   CreateDictionaryItemDto,
+  DictionaryService,
   QueryDictionaryDto,
   QueryDictionaryItemDto,
   UpdateDictionaryDto,
   UpdateDictionaryItemDto,
-} from './dto/dictionary.dto'
+} from '@libs/dictionary'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('字典管理')
 @Controller('/admin/dictionary')
-export class DictionaryController {
+export class AdminDictionaryController {
   constructor(private readonly dictionaryService: DictionaryService) {}
 
   @Get('page')

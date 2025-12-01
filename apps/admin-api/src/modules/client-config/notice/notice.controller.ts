@@ -1,16 +1,16 @@
 import { ApiDoc, ApiPageDoc, Public } from '@libs/base/decorators'
 import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
   BaseNoticeDto,
+  ClientNoticeService,
   CreateNoticeDto,
   NoticePageResponseDto,
   QueryNoticeDto,
   UpdateNoticeDto,
   UpdateNoticeStatusDto,
-} from './dto/notice.dto'
-import { ClientNoticeService } from './notice.service'
+} from '@libs/client-config/notice'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 /**
  * 客户端通知控制器

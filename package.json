@@ -155,6 +155,7 @@
       "^@libs/base/modules/health(|/.*)$": "<rootDir>/libs/health/src/$1",
       "^@libs/cache(|/.*)$": "<rootDir>/libs/cache/src/$1",
       "^@libs/captcha(|/.*)$": "<rootDir>/libs/captcha/src/$1",
+      "^@libs/client-config(|/.*)$": "<rootDir>/libs/client-config/src/$1",
       "^@libs/config(|/.*)$": "<rootDir>/libs/config/src/$1",
       "^@libs/crypto(|/.*)$": "<rootDir>/libs/crypto/src/$1",
       "^@libs/database(|/.*)$": "<rootDir>/libs/database/src/$1",
