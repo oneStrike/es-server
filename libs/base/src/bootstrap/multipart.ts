@@ -21,7 +21,7 @@ export async function setupMultipart(
   await mkdir(uploadConfig.uploadDir, { recursive: true })
 
   // 注册静态文件服务
-  await fastifyAdapter.register(fastifyStatic as any, {
+  await fastifyAdapter.register(fastifyStatic, {
     root: uploadConfig.uploadDir,
     prefix: appConfig.fileUrlPrefix,
     index: false,
