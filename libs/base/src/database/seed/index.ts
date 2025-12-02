@@ -18,6 +18,7 @@ import { createInitialWorkCategory } from './modules/workCategory' // 作品分�
 import { createInitialWorkComicChapters } from './modules/workComicChapter' // 漫画章节内容
 import { createInitialWorkComicRelations } from './modules/workComicRelations' // 作品关联关系（作者-漫画-分类）
 import { createInitialWorkComicVersions } from './modules/workComicVersion'
+import { createInitialWorkTag } from './modules/workTag' // 作品标签管理
 
 const connectUrl = isProduction()
   ? DbConfig.connection.url
@@ -33,6 +34,7 @@ async function runSeeds() {
     createInitialDataDictionary(prisma), // 系统配置：数据字典
     createInitialMediums(prisma), // 内容管理：作品媒介类型（先于分类）
     createInitialWorkCategory(prisma), // 内容管理：作品分类
+    createInitialWorkTag(prisma), // 内容管理：作品标签
     seedWorkAuthorRoleType(prisma), // 内容管理：作者角色类型（必须在作者之前）
     createInitialClientPage(prisma), // 系统配置：页面配置
   ])

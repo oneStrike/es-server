@@ -6,7 +6,7 @@ export default antfu(
       'test/**',
       'dist/**',
       'build/**',
-      'libs/database/src/prisma-client/**',
+      'libs/base/src/database/prisma-client/**',
     ],
 
     formatters: {

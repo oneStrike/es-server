@@ -76,6 +76,27 @@ export class ComicCategoryDto {
 }
 
 /**
+ * 漫画标签DTO
+ */
+export class ComicTagDto {
+  @ApiProperty({
+    description: '标签ID',
+    example: 1,
+    required: true,
+    type: Number,
+  })
+  id!: IdDto
+
+  @ApiProperty({
+    description: '标签名称',
+    example: '热血',
+    required: true,
+    type: String,
+  })
+  name!: string
+}
+
+/**
  * 漫画基础DTO
  */
 export class BaseComicDto {
@@ -148,6 +169,23 @@ export class BaseComicDto {
     type: [ComicAuthorDto], // 明确指定类型为 ComicAuthorDto 数组
   })
   comicAuthors!: ComicAuthorDto[]
+
+  @ApiProperty({
+    description: '漫画标签',
+    example: [
+      {
+        id: 1,
+        name: '热血',
+      },
+      {
+        id: 2,
+        name: '战斗',
+      },
+    ],
+    required: true,
+    type: [ComicTagDto], // 明确指定类型为 ComicTagDto 数组
+  })
+  comicTags!: ComicTagDto[]
 
   @ValidateNumber({
     description: '热度值（用于排序）',
@@ -461,6 +499,7 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
   'isNew',
   'comicCategories',
   'comicAuthors',
+  'comicTags',
 ]) {
   @ValidateArray({
     description: '关联的作者ID列表',
@@ -477,6 +516,14 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
     required: true,
   })
   categoryIds!: number[]
+
+  @ValidateArray({
+    description: '关联的标签ID列表',
+    itemType: 'number',
+    example: [1, 2],
+    required: false,
+  })
+  tagIds?: number[]
 }
 
 /**
@@ -496,6 +543,7 @@ export class UpdateComicDto extends IntersectionType(
       'ratingCount',
       'comicCategories',
       'comicAuthors',
+      'comicTags',
     ]),
   ),
   IdDto,
@@ -515,6 +563,14 @@ export class UpdateComicDto extends IntersectionType(
     required: false,
   })
   categoryIds?: number[]
+
+  @ValidateArray({
+    description: '关联的标签ID列表（可选，传入则更新关联关系）',
+    itemType: 'number',
+    example: [1, 2],
+    required: false,
+  })
+  tagIds?: number[]
 }
 
 /**
@@ -555,6 +611,14 @@ export class QueryComicDto extends IntersectionType(
     required: false,
   })
   publisher?: string
+
+  @ValidateArray({
+    description: '标签ID列表',
+    itemType: 'number',
+    example: [1, 2],
+    required: false,
+  })
+  tagIds?: number[]
 }
 
 /**

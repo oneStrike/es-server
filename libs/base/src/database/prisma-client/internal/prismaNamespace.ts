@@ -398,11 +398,13 @@ export const ModelName = {
   WorkComicAuthor: 'WorkComicAuthor',
   WorkComicCategory: 'WorkComicCategory',
   WorkComicChapter: 'WorkComicChapter',
+  WorkComicTag: 'WorkComicTag',
   WorkComicVersion: 'WorkComicVersion',
   WorkComic: 'WorkComic',
   WorkCategory: 'WorkCategory',
   WorkCategoryContentType: 'WorkCategoryContentType',
-  WorkContentType: 'WorkContentType'
+  WorkContentType: 'WorkContentType',
+  WorkTag: 'WorkTag'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -418,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthorRoleType" | "workAuthorRole" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicVersion" | "workComic" | "workCategory" | "workCategoryContentType" | "workContentType"
+    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthorRoleType" | "workAuthorRole" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComicVersion" | "workComic" | "workCategory" | "workCategoryContentType" | "workContentType" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1458,6 +1460,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WorkComicTag: {
+      payload: Prisma.$WorkComicTagPayload<ExtArgs>
+      fields: Prisma.WorkComicTagFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkComicTagFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkComicTagFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkComicTagFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkComicTagFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload>
+        }
+        findMany: {
+          args: Prisma.WorkComicTagFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload>[]
+        }
+        create: {
+          args: Prisma.WorkComicTagCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload>
+        }
+        createMany: {
+          args: Prisma.WorkComicTagCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkComicTagCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkComicTagDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload>
+        }
+        update: {
+          args: Prisma.WorkComicTagUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkComicTagDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkComicTagUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkComicTagUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkComicTagUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicTagPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkComicTagAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComicTag>
+        }
+        groupBy: {
+          args: Prisma.WorkComicTagGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicTagGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkComicTagCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicTagCountAggregateOutputType> | number
+        }
+      }
+    }
     WorkComicVersion: {
       payload: Prisma.$WorkComicVersionPayload<ExtArgs>
       fields: Prisma.WorkComicVersionFieldRefs
@@ -1828,6 +1904,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WorkTag: {
+      payload: Prisma.$WorkTagPayload<ExtArgs>
+      fields: Prisma.WorkTagFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkTagFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkTagFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkTagFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkTagFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload>
+        }
+        findMany: {
+          args: Prisma.WorkTagFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload>[]
+        }
+        create: {
+          args: Prisma.WorkTagCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload>
+        }
+        createMany: {
+          args: Prisma.WorkTagCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkTagCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkTagDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload>
+        }
+        update: {
+          args: Prisma.WorkTagUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkTagDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkTagUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkTagUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkTagUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkTagPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkTagAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkTag>
+        }
+        groupBy: {
+          args: Prisma.WorkTagGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkTagGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkTagCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkTagCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2113,6 +2263,16 @@ export const WorkComicChapterScalarFieldEnum = {
 export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFieldEnum)[keyof typeof WorkComicChapterScalarFieldEnum]
 
 
+export const WorkComicTagScalarFieldEnum = {
+  comicId: 'comicId',
+  tagId: 'tagId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkComicTagScalarFieldEnum = (typeof WorkComicTagScalarFieldEnum)[keyof typeof WorkComicTagScalarFieldEnum]
+
+
 export const WorkComicVersionScalarFieldEnum = {
   id: 'id',
   comicId: 'comicId',
@@ -2224,6 +2384,21 @@ export const WorkContentTypeScalarFieldEnum = {
 } as const
 
 export type WorkContentTypeScalarFieldEnum = (typeof WorkContentTypeScalarFieldEnum)[keyof typeof WorkContentTypeScalarFieldEnum]
+
+
+export const WorkTagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  icon: 'icon',
+  popularity: 'popularity',
+  popularityWeight: 'popularityWeight',
+  order: 'order',
+  isEnabled: 'isEnabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkTagScalarFieldEnum = (typeof WorkTagScalarFieldEnum)[keyof typeof WorkTagScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2442,11 +2617,13 @@ export type GlobalOmitConfig = {
   workComicAuthor?: Prisma.WorkComicAuthorOmit
   workComicCategory?: Prisma.WorkComicCategoryOmit
   workComicChapter?: Prisma.WorkComicChapterOmit
+  workComicTag?: Prisma.WorkComicTagOmit
   workComicVersion?: Prisma.WorkComicVersionOmit
   workComic?: Prisma.WorkComicOmit
   workCategory?: Prisma.WorkCategoryOmit
   workCategoryContentType?: Prisma.WorkCategoryContentTypeOmit
   workContentType?: Prisma.WorkContentTypeOmit
+  workTag?: Prisma.WorkTagOmit
 }
 
 /* Types for Logging */

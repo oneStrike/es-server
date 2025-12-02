@@ -1,0 +1,29 @@
+model WorkTag {
+  /// 主键ID
+  id                   Int                @id @default(autoincrement())
+  /// 标签名称（唯一）
+  name                 String             @unique @db.VarChar(20)
+  /// 标签图标URL
+  icon                 String?            @db.VarChar(255)
+  /// 人气值（用于展示和排序）
+  popularity           Int                @default(0)
+  /// 自定义人气权重
+  popularityWeight     Int                @default(0) @map("popularity_weight") @db.Integer
+  /// 排序值（数值越小越靠前）
+  order                Int                @default(0) @db.SmallInt
+  /// 是否启用
+  isEnabled            Boolean            @default(true) @map("is_enabled")
+  /// 创建时间
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  // 关联关系 - 多对多关系通过中间表
+  comicTags WorkComicTag[]
+
+  /// 索引优化
+  @@index([order])
+  @@index([name]) // 支持快速查找标签名
+  @@index([isEnabled]) // 支持快速查找启用的标签
+  @@map("work_tag")
+}

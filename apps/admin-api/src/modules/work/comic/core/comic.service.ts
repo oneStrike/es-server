@@ -21,7 +21,7 @@ export class WorkComicService extends RepositoryService {
    * @returns 创建的漫画信息
    */
   async createComic(createComicDto: CreateComicDto) {
-    const { authorIds, categoryIds, ...comicData } = createComicDto
+    const { authorIds, categoryIds, tagIds, ...comicData } = createComicDto
 
     // 验证漫画名称是否已存在
     const existingComic = await this.workComic.findFirst({
@@ -61,6 +61,21 @@ export class WorkComicService extends RepositoryService {
       throw new BadRequestException('部分分类不存在或已禁用')
     }
 
+    // 验证标签是否存在
+    let existingTags: any[] = []
+    if (Array.isArray(tagIds) && tagIds.length > 0) {
+      existingTags = await this.prisma.workTag.findMany({
+        where: {
+          id: { in: tagIds },
+          isEnabled: true,
+        },
+      })
+
+      if (existingTags.length !== tagIds.length) {
+        throw new BadRequestException('部分标签不存在或已禁用')
+      }
+    }
+
     return this.workComic.create({
       data: {
         ...comicData,
@@ -81,6 +96,15 @@ export class WorkComicService extends RepositoryService {
             weight: categoryIds.length - index, // 权重递减
           })),
         },
+        // 创建标签关联关系
+        comicTags:
+          tagIds && tagIds.length > 0
+            ? {
+                create: tagIds.map((tagId) => ({
+                  tagId,
+                })),
+              }
+            : undefined,
       },
     })
   }
@@ -104,6 +128,7 @@ export class WorkComicService extends RepositoryService {
       isNew,
       publisher,
       author,
+      tagIds,
       ...pageDto
     } = queryComicDto
 
@@ -185,6 +210,17 @@ export class WorkComicService extends RepositoryService {
       }
     }
 
+    // 标签筛选
+    if (Array.isArray(tagIds) && tagIds.length > 0) {
+      where.comicTags = {
+        some: {
+          tagId: {
+            in: tagIds,
+          },
+        },
+      }
+    }
+
     const pageData = await this.workComic.findPagination({
       where: { ...where, ...pageDto },
       select: {
@@ -218,6 +254,17 @@ export class WorkComicService extends RepositoryService {
         comicCategories: {
           select: {
             category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        // 标签关联
+        comicTags: {
+          select: {
+            tag: {
               select: {
                 id: true,
                 name: true,
@@ -264,6 +311,16 @@ export class WorkComicService extends RepositoryService {
             weight: 'desc',
           },
         },
+        comicTags: {
+          include: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     })
 
@@ -281,6 +338,9 @@ export class WorkComicService extends RepositoryService {
       comicCategories: comic.comicCategories?.map((category) => ({
         ...category.category,
       })),
+      comicTags: comic.comicTags?.map((tag) => ({
+        ...tag.tag,
+      })),
     }
   }
 
@@ -290,7 +350,7 @@ export class WorkComicService extends RepositoryService {
    * @returns 更新后的漫画信息
    */
   async updateComic(updateComicDto: UpdateComicDto) {
-    const { id, authorIds, categoryIds, ...updateData } = updateComicDto
+    const { id, authorIds, categoryIds, tagIds, ...updateData } = updateComicDto
 
     // 验证漫画是否存在
     const existingComic = await this.workComic.findUnique({ where: { id } })
@@ -339,12 +399,27 @@ export class WorkComicService extends RepositoryService {
       }
     }
 
+    // 验证标签是否存在（如果提供了tagIds）
+    if (tagIds && tagIds.length > 0) {
+      const existingTags = await this.prisma.workTag.findMany({
+        where: {
+          id: { in: tagIds },
+          isEnabled: true,
+        },
+      })
+
+      if (existingTags.length !== tagIds.length) {
+        throw new BadRequestException('部分标签不存在或已禁用')
+      }
+    }
+
     // 使用事务更新漫画及其关联关系
     return this.prisma.$transaction(async (tx) => {
-      // 更新漫画基本信息
+      // 更新漫画基本信息，确保不包含关联属性
+      const { comicTags, ...basicUpdateData } = updateData as any
       const updatedComic = await tx.workComic.update({
         where: { id },
-        data: updateData,
+        data: basicUpdateData,
       })
 
       // 更新作者关联关系（如果提供了authorIds）
@@ -383,6 +458,24 @@ export class WorkComicService extends RepositoryService {
               categoryId,
               isPrimary: index === 0, // 第一个分类设为主要分类
               weight: categoryIds.length - index, // 权重递减
+            })),
+          })
+        }
+      }
+
+      // 更新标签关联关系（如果提供了tagIds）
+      if (tagIds !== undefined) {
+        // 删除现有的标签关联
+        await tx.workComicTag.deleteMany({
+          where: { comicId: id },
+        })
+
+        // 创建新的标签关联
+        if (tagIds.length > 0) {
+          await tx.workComicTag.createMany({
+            data: tagIds.map((tagId) => ({
+              comicId: id,
+              tagId,
             })),
           })
         }

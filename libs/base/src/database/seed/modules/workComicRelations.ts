@@ -72,6 +72,58 @@ export async function createInitialWorkComicRelations(prisma: any) {
     },
   ]
 
+  // 创建漫画标签关联关系
+  const comicTagRelations = [
+    {
+      comicName: '进击的巨人',
+      tagName: '热血',
+    },
+    {
+      comicName: '进击的巨人',
+      tagName: '冒险',
+    },
+    {
+      comicName: '进击的巨人',
+      tagName: '科幻',
+    },
+    {
+      comicName: '进击的巨人',
+      tagName: '悬疑',
+    },
+    {
+      comicName: '海贼王',
+      tagName: '热血',
+    },
+    {
+      comicName: '海贼王',
+      tagName: '冒险',
+    },
+    {
+      comicName: '鬼灭之刃',
+      tagName: '热血',
+    },
+    {
+      comicName: '鬼灭之刃',
+      tagName: '冒险',
+    },
+    {
+      comicName: '你的名字',
+      tagName: '爱情',
+    },
+    {
+      comicName: '你的名字',
+      tagName: '科幻',
+    },
+    {
+      comicName: '龙珠',
+      tagName: '热血',
+    },
+    {
+      comicName: '龙珠',
+      tagName: '冒险',
+    },
+  ]
+
   // 处理作者关联
   for (const relation of comicAuthorRelations) {
     const comic = await prisma.workComic.findFirst({
@@ -127,6 +179,34 @@ export async function createInitialWorkComicRelations(prisma: any) {
             categoryId: category.id,
             isPrimary: relation.isPrimary,
             weight: relation.weight,
+          },
+        })
+      }
+    }
+  }
+
+  // 处理标签关联
+  for (const relation of comicTagRelations) {
+    const comic = await prisma.workComic.findFirst({
+      where: { name: relation.comicName },
+    })
+    const tag = await prisma.workTag.findFirst({
+      where: { name: relation.tagName },
+    })
+
+    if (comic && tag) {
+      const existingRelation = await prisma.workComicTag.findFirst({
+        where: {
+          comicId: comic.id,
+          tagId: tag.id,
+        },
+      })
+
+      if (!existingRelation) {
+        await prisma.workComicTag.create({
+          data: {
+            comicId: comic.id,
+            tagId: tag.id,
           },
         })
       }
