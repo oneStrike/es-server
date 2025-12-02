@@ -85,6 +85,8 @@ model WorkComic {
   relatedChapters  WorkComicChapter[]
   /// 分类关系 - 多对多关系通过中间表
   comicCategories  WorkComicCategory[]
+  /// 标签关系 - 多对多关系通过中间表
+  comicTags        WorkComicTag[]
   /// 版本关系 - 一对多关系
   comicVersions    WorkComicVersion[]
 

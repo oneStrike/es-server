@@ -12,3 +12,4 @@ yarn.lock
 .git/
 *.min.js
 *.min.css
+libs/base/src/database/prisma-client/

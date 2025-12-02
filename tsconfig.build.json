@@ -7,6 +7,6 @@
     "dist",
     "**/*spec.ts",
     "libs/database/src/seed/**",
-    "libs/database/src/prisma-client/**"
+    "libs/base/src/database/prisma-client/**"
   ]
 }

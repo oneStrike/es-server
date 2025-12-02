@@ -65,11 +65,13 @@ export const ModelName = {
   WorkComicAuthor: 'WorkComicAuthor',
   WorkComicCategory: 'WorkComicCategory',
   WorkComicChapter: 'WorkComicChapter',
+  WorkComicTag: 'WorkComicTag',
   WorkComicVersion: 'WorkComicVersion',
   WorkComic: 'WorkComic',
   WorkCategory: 'WorkCategory',
   WorkCategoryContentType: 'WorkCategoryContentType',
-  WorkContentType: 'WorkContentType'
+  WorkContentType: 'WorkContentType',
+  WorkTag: 'WorkTag'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -334,6 +336,16 @@ export const WorkComicChapterScalarFieldEnum = {
 export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFieldEnum)[keyof typeof WorkComicChapterScalarFieldEnum]
 
 
+export const WorkComicTagScalarFieldEnum = {
+  comicId: 'comicId',
+  tagId: 'tagId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkComicTagScalarFieldEnum = (typeof WorkComicTagScalarFieldEnum)[keyof typeof WorkComicTagScalarFieldEnum]
+
+
 export const WorkComicVersionScalarFieldEnum = {
   id: 'id',
   comicId: 'comicId',
@@ -445,6 +457,21 @@ export const WorkContentTypeScalarFieldEnum = {
 } as const
 
 export type WorkContentTypeScalarFieldEnum = (typeof WorkContentTypeScalarFieldEnum)[keyof typeof WorkContentTypeScalarFieldEnum]
+
+
+export const WorkTagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  icon: 'icon',
+  popularity: 'popularity',
+  popularityWeight: 'popularityWeight',
+  order: 'order',
+  isEnabled: 'isEnabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkTagScalarFieldEnum = (typeof WorkTagScalarFieldEnum)[keyof typeof WorkTagScalarFieldEnum]
 
 
 export const SortOrder = {
