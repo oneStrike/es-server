@@ -4,7 +4,7 @@ import { IdDto, IdsDto, PublishDto, StatusDto } from './base.dto'
 /**
  * 启用禁用
  */
-export class EnabledDto extends IntersectionType(IdDto, StatusDto) {}
+export class UpdateStatusDto extends IntersectionType(IdDto, StatusDto) {}
 
 /**
  * 批量操作响应

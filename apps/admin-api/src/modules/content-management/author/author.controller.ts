@@ -1,8 +1,8 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import {
-  BatchEnabledDto,
   BatchOperationResponseDto,
   IdDto,
+  UpdateStatusDto,
 } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -76,25 +76,39 @@ export class WorkAuthorController {
   /**
    * 批量更新作者状态
    */
-  @Post('/batch-update-status')
+  @Post('/update-status')
   @ApiDoc({
-    summary: '批量更新作者状态',
+    summary: '更新作者状态',
     model: BatchOperationResponseDto,
   })
-  async updateStatus(@Body() body: BatchEnabledDto) {
-    return this.authorService.updateAuthorStatus(body)
+  async updateStatus(@Body() body: UpdateStatusDto) {
+    return this.authorService.workAuthor.update({
+      where: {
+        id: body.id,
+      },
+      data: {
+        isEnabled: body.isEnabled,
+      },
+    })
   }
 
   /**
    * 批量更新作者推荐状态
    */
-  @Post('/batch-update-featured')
+  @Post('/update-featured')
   @ApiDoc({
-    summary: '批量更新作者推荐状态',
+    summary: '更新作者推荐状态',
     model: BatchOperationResponseDto,
   })
   async updateFeatured(@Body() body: UpdateAuthorFeaturedDto) {
-    return this.authorService.updateAuthorFeatured(body)
+    return this.authorService.workAuthor.update({
+      where: {
+        id: body.id,
+      },
+      data: {
+        featured: body.featured,
+      },
+    })
   }
 
   /**

@@ -5,7 +5,7 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
   IntersectionType,
   OmitType,
@@ -116,9 +116,7 @@ export class BaseAuthorDto extends BaseDto {
  * 创建作者DTO
  */
 export class CreateAuthorDto extends OmitType(BaseAuthorDto, [
-  'id',
-  'createdAt',
-  'updatedAt',
+  ...OMIT_BASE_FIELDS,
   'worksCount',
   'isEnabled',
   'featured',

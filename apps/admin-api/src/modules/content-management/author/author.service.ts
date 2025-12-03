@@ -27,14 +27,6 @@ export class WorkAuthorService extends RepositoryService {
   async createAuthor(createAuthorDto: CreateAuthorDto) {
     const { roleTypeIds, ...authorData } = createAuthorDto
 
-    // 验证作者姓名是否已存在
-    const existingAuthor = await this.workAuthor.findUnique({
-      where: { name: authorData.name },
-    })
-    if (existingAuthor) {
-      throw new BadRequestException('作者姓名已存在')
-    }
-
     // 验证社交媒体链接格式
     if (createAuthorDto.socialLinks) {
       try {
@@ -87,8 +79,15 @@ export class WorkAuthorService extends RepositoryService {
    * @returns 分页作者列表
    */
   async getAuthorPage(queryAuthorDto: QueryAuthorDto) {
-    const { name, isEnabled, roleTypeIds, nationality, gender, featured } =
-      queryAuthorDto
+    const {
+      name,
+      isEnabled,
+      roleTypeIds,
+      nationality,
+      gender,
+      featured,
+      ...pageDto
+    } = queryAuthorDto
 
     // 构建查询条件
     const where: WorkAuthorWhereInput = {}
@@ -133,7 +132,10 @@ export class WorkAuthorService extends RepositoryService {
     }
 
     return this.workAuthor.findPagination({
-      where,
+      where: {
+        ...where,
+        ...pageDto,
+      },
       omit: {
         remark: true,
         socialLinks: true,
@@ -208,19 +210,6 @@ export class WorkAuthorService extends RepositoryService {
       throw new BadRequestException('作者不存在')
     }
 
-    // 如果更新姓名，验证是否与其他作者重复
-    if (updateData.name && updateData.name !== existingAuthor.name) {
-      const duplicateAuthor = await this.workAuthor.findFirst({
-        where: {
-          name: updateData.name,
-          id: { not: id },
-        },
-      })
-      if (duplicateAuthor) {
-        throw new BadRequestException('作者姓名已存在')
-      }
-    }
-
     // 验证社交媒体链接格式
     if (updateData.socialLinks) {
       try {
@@ -272,41 +261,6 @@ export class WorkAuthorService extends RepositoryService {
     })
   }
 
-  /**
-   * 批量更新作者状态
-   * @param updateAuthorStatusDto 批量更新状态的数据
-   * @returns 更新结果
-   */
-  async updateAuthorStatus(updateAuthorStatusDto: BatchEnabledDto) {
-    const { ids, isEnabled } = updateAuthorStatusDto
-
-    return this.workAuthor.updateMany({
-      where: {
-        id: { in: ids },
-      },
-      data: {
-        isEnabled,
-      },
-    })
-  }
-
-  /**
-   * 批量更新作者推荐状态
-   * @param updateAuthorFeaturedDto 批量更新推荐状态的数据
-   * @returns 更新结果
-   */
-  async updateAuthorFeatured(updateAuthorFeaturedDto: UpdateAuthorFeaturedDto) {
-    const { id, featured } = updateAuthorFeaturedDto
-
-    return this.workAuthor.updateMany({
-      where: {
-        id,
-      },
-      data: {
-        featured,
-      },
-    })
-  }
 
   /**
    * 软删除作者
