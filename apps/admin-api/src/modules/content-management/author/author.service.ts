@@ -29,7 +29,7 @@ export class WorkAuthorService extends RepositoryService {
 
     // 验证作者姓名是否已存在
     const existingAuthor = await this.workAuthor.findUnique({
-      where: { name: createAuthorDto.name },
+      where: { name: authorData.name },
     })
     if (existingAuthor) {
       throw new BadRequestException('作者姓名已存在')
@@ -64,14 +64,12 @@ export class WorkAuthorService extends RepositoryService {
     return this.workAuthor.create({
       data: {
         ...authorData,
-        authorRoles: roleTypeIds
-          ? {
-              create: roleTypeIds.map((roleTypeId, index) => ({
-                roleTypeId,
-                isPrimary: index === 0, // 第一个角色为主要角色
-              })),
-            }
-          : undefined,
+        authorRoles: {
+          create: roleTypeIds.map((roleTypeId, index) => ({
+            roleTypeId,
+            isPrimary: index === 0, // 第一个角色为主要角色
+          })),
+        },
       },
       include: {
         authorRoles: {
@@ -113,7 +111,7 @@ export class WorkAuthorService extends RepositoryService {
       where.authorRoles = {
         some: {
           roleTypeId: {
-            in: roleTypeIds,
+            in: roleTypeIds.split(',').map(Number),
           },
         },
       }
@@ -298,11 +296,11 @@ export class WorkAuthorService extends RepositoryService {
    * @returns 更新结果
    */
   async updateAuthorFeatured(updateAuthorFeaturedDto: UpdateAuthorFeaturedDto) {
-    const { ids, featured } = updateAuthorFeaturedDto
+    const { id, featured } = updateAuthorFeaturedDto
 
     return this.workAuthor.updateMany({
       where: {
-        id: { in: ids },
+        id,
       },
       data: {
         featured,
