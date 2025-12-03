@@ -57,3 +57,12 @@ export class BaseDto extends IdDto {
   })
   updatedAt: Date
 }
+
+/**
+ * 去除的默认字段
+ */
+export const OMIT_BASE_FIELDS: (keyof BaseDto)[] = [
+  'id',
+  'createdAt',
+  'updatedAt',
+]

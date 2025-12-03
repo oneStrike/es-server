@@ -1,16 +1,11 @@
-import { ValidateNumber, ValidateString } from '@libs/base/decorators'
+import { ValidateString } from '@libs/base/decorators'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/base/dto'
+import { IntersectionType, OmitType } from '@nestjs/swagger'
 
 /**
  * 角色类型响应DTO
  */
-export class RoleTypeListResponseDto {
-  @ValidateNumber({
-    description: '角色类型ID',
-    example: 1,
-    required: true,
-  })
-  id!: number
-
+export class RoleTypeListResponseDto extends BaseDto {
   @ValidateString({
     description: '角色代码',
     example: 'MANGAKA',
@@ -32,3 +27,13 @@ export class RoleTypeListResponseDto {
   })
   description?: string
 }
+
+export class RoleTypeCreateRequestDto extends OmitType(
+  RoleTypeListResponseDto,
+  OMIT_BASE_FIELDS,
+) {}
+
+export class RoleTypeUpdateRequestDto extends IntersectionType(
+  RoleTypeCreateRequestDto,
+  IdDto,
+) {}
