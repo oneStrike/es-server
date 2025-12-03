@@ -14,7 +14,7 @@ import {
  * 内容类型管理
  */
 @ApiTags('内容类型管理模块')
-@Controller('admin/work/content-type')
+@Controller('admin/content-type')
 export class ContentTypeController {
   constructor(private readonly contentTypeService: ContentTypeService) {}
 
@@ -33,7 +33,7 @@ export class ContentTypeController {
    */
   @Get('/list')
   @ApiDoc({ summary: '内容类型列表', model: BaseContentTypeDto, isArray: true })
-  async getPage(@Query() query?: QueryContentTypeDto) {
+  async getPage(@Query() query: QueryContentTypeDto) {
     return this.contentTypeService.getContentTypeList(query)
   }
 

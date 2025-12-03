@@ -5,7 +5,7 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import { IdDto, PageDto } from '@libs/base/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
   ApiProperty,
   IntersectionType,
@@ -13,7 +13,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { BaseContentTypeDto } from '../../content-type/dto/content-type.dto'
+import { BaseContentTypeDto } from '../../../work/content-type/dto/content-type.dto'
 
 /**
  * 分类-内容类型 关系项 DTO
@@ -46,15 +46,7 @@ export class CategoryContentTypeItemDto {
 /**
  * 分类基础 DTO
  */
-export class BaseCategoryDto {
-  @ValidateNumber({
-    description: '分类ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  id!: number
-
+export class BaseCategoryDto extends BaseDto {
   @ValidateString({
     description: '分类名称',
     example: '科幻',
@@ -121,29 +113,13 @@ export class BaseCategoryDto {
     ],
   })
   categoryContentTypes!: CategoryContentTypeItemDto[]
-
-  @ValidateString({
-    description: '创建时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: false,
-  })
-  createdAt!: string
-
-  @ValidateString({
-    description: '更新时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: false,
-  })
-  updatedAt!: string
 }
 
 /**
  * 创建分类 DTO
  */
 export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
-  'id',
-  'createdAt',
-  'updatedAt',
+  ...OMIT_BASE_FIELDS,
   'popularity',
   'categoryContentTypes',
 ]) {

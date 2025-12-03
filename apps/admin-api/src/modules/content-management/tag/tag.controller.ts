@@ -1,11 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import {
-  BatchEnabledDto,
-  BatchOperationResponseDto,
-  DragReorderDto,
-  IdDto,
-  IdsDto,
-} from '@libs/base/dto'
+import { DragReorderDto, IdDto, UpdateStatusDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
@@ -76,25 +70,28 @@ export class WorkTagController {
   /**
    * 批量更新标签状态
    */
-  @Post('/batch-update-status')
+  @Post('/update-status')
   @ApiDoc({
-    summary: '批量更新标签状态',
-    model: BatchOperationResponseDto,
+    summary: '更新标签状态',
+    model: IdDto,
   })
-  async updateStatus(@Body() body: BatchEnabledDto) {
-    return this.tagService.updateTagStatus(body)
+  async updateStatus(@Body() body: UpdateStatusDto) {
+    return this.tagService.workTag.update({
+      where: { id: body.id },
+      data: { isEnabled: body.isEnabled },
+    })
   }
 
   /**
    * 批量删除标签
    */
-  @Post('/batch-delete')
+  @Post('/delete')
   @ApiDoc({
-    summary: '批量删除标签',
-    model: BatchOperationResponseDto,
+    summary: '删除标签',
+    model: IdDto,
   })
-  async deleteBatch(@Body() body: IdsDto) {
-    return this.tagService.deleteTagBatch(body.ids)
+  async deleteBatch(@Body() body: IdDto) {
+    return this.tagService.deleteTagBatch(body)
   }
 
   /**

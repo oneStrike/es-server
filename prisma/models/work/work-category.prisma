@@ -13,6 +13,8 @@ model WorkCategory {
   order                Int                       @default(0) @db.SmallInt
   /// 是否启用
   isEnabled            Boolean                   @default(true) @map("is_enabled")
+  /// 分类描述
+  description          String?                   @db.VarChar(200)
   // 内容类型多对多关联
   categoryContentTypes WorkCategoryContentType[]
   /// 创建时间
@@ -24,7 +26,6 @@ model WorkCategory {
   categoryComics WorkComicCategory[]
 
   /// 索引优化
-
   @@index([order])
   @@index([name]) // 支持快速查找分类名
   @@map("work_category")
