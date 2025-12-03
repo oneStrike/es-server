@@ -8,8 +8,8 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { WorkAuthorService } from './author.service'
 import {
-  AuthorDetailResponseDto,
   AuthorPageResponseDto,
+  BaseAuthorDto,
   CreateAuthorDto,
   QueryAuthorDto,
   UpdateAuthorDto,
@@ -55,7 +55,7 @@ export class WorkAuthorController {
   @Get('/detail')
   @ApiDoc({
     summary: '获取作者详情',
-    model: AuthorDetailResponseDto,
+    model: BaseAuthorDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.authorService.getAuthorDetail(query.id)

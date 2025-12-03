@@ -5,7 +5,7 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
+import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
 import {
   IntersectionType,
   OmitType,
@@ -51,9 +51,9 @@ export class BaseAuthorDto extends BaseDto {
     description: '作者角色类型列表（角色ID数组）',
     itemType: 'number',
     example: [1, 2, 3],
-    required: false,
+    required: true,
   })
-  roleTypeIds?: number[]
+  roleTypeIds!: number[]
 
   @ValidateString({
     description: '国籍',
@@ -128,14 +128,7 @@ export class CreateAuthorDto extends OmitType(BaseAuthorDto, [
 /**
  * 更新作者DTO
  */
-export class UpdateAuthorDto extends PartialType(
-  OmitType(BaseAuthorDto, [
-    'createdAt',
-    'updatedAt',
-    'worksCount',
-    'followersCount',
-  ]),
-) {}
+export class UpdateAuthorDto extends IntersectionType(CreateAuthorDto, IdDto) {}
 
 /**
  * 查询作者DTO
@@ -151,35 +144,21 @@ export class QueryAuthorDto extends IntersectionType(
   ]),
 ) {
   @ValidateString({
-    description: '作者姓名（模糊搜索）',
-    example: '村上',
+    description:
+      '作者角色类型列表（角色ID数组，筛选包含指定角色的作者,逗号分割）',
+    example: '1,2,3',
     required: false,
   })
-  name?: string
-
-  @ValidateArray({
-    description: '作者角色类型列表（角色ID数组，筛选包含指定角色的作者）',
-    itemType: 'number',
-    example: [1, 2, 3],
-    required: false,
-  })
-  roleTypeIds?: number[]
+  roleTypeIds?: string
 }
 
 /**
  * 更新作者推荐状态DTO
  */
-export class UpdateAuthorFeaturedDto extends PickType(BaseAuthorDto, [
-  'featured',
-]) {
-  @ValidateArray({
-    description: '作者ID列表',
-    itemType: 'number',
-    example: [1, 2, 3],
-    required: true,
-  })
-  ids!: number[]
-}
+export class UpdateAuthorFeaturedDto extends IntersectionType(
+  PickType(BaseAuthorDto, ['featured']),
+  IdDto,
+) {}
 
 /**
  * 作者分页响应DTO
@@ -187,11 +166,5 @@ export class UpdateAuthorFeaturedDto extends PickType(BaseAuthorDto, [
 export class AuthorPageResponseDto extends OmitType(BaseAuthorDto, [
   'remark',
   'socialLinks',
-  'nationality',
   'description',
 ]) {}
-
-/**
- * 作者详情响应DTO
- */
-export class AuthorDetailResponseDto extends BaseAuthorDto {}
