@@ -1,4 +1,4 @@
-import type { FastifyRequest } from 'fastify/fastify'
+import type { FastifyRequest } from 'fastify'
 import { AdminUser, RepositoryService } from '@libs/base/database'
 
 import { CaptchaService, RsaService, ScryptService } from '@libs/base/modules'

@@ -1,4 +1,4 @@
-import type { FastifyReply, FastifyRequest } from 'fastify/fastify'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import { LoggerService } from '@libs/base/modules'
 import { parseRequestLogFields } from '@libs/base/utils'
 import {
