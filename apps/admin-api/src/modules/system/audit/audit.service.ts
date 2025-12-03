@@ -1,5 +1,5 @@
 import type { RequestLogWhereInput } from '@libs/base/database'
-import type { FastifyRequest } from 'fastify/fastify'
+import type { FastifyRequest } from 'fastify'
 import { RepositoryService } from '@libs/base/database'
 import { ActionTypeEnum } from '@libs/base/types'
 import { parseRequestLogFields } from '@libs/base/utils'
