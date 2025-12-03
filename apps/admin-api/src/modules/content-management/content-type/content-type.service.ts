@@ -20,8 +20,7 @@ export class ContentTypeService extends RepositoryService {
    */
   async createContentType(body: CreateContentTypeDto) {
     const { code, name, isEnabled = true } = body
-    const exists = await this.contentType.findUnique({ where: { code } })
-    if (exists) {
+    if (await this.contentType.exists({ code })) {
       throw new BadRequestException('内容类型编码已存在')
     }
     return this.prisma.workContentType.create({
@@ -32,8 +31,8 @@ export class ContentTypeService extends RepositoryService {
   /**
    * 列表查询
    */
-  async getContentTypeList(query?: QueryContentTypeDto) {
-    const { code, name, isEnabled } = query as any
+  async getContentTypeList(query: QueryContentTypeDto) {
+    const { code, name, isEnabled } = query
     const where: any = {}
     if (code) {
       where.code = { contains: code }
@@ -41,7 +40,9 @@ export class ContentTypeService extends RepositoryService {
     if (name) {
       where.name = { contains: name }
     }
-    where.isEnabled = isEnabled || true
+    if (typeof isEnabled === 'boolean') {
+      where.isEnabled = isEnabled
+    }
 
     return this.contentType.findMany({ where })
   }
@@ -49,19 +50,24 @@ export class ContentTypeService extends RepositoryService {
   /**
    * 更新
    */
-  async updateContentType(body: UpdateContentTypeDto) {
-    const { id, code, ...rest } = body as any
-    const exists = await this.contentType.findUnique({ where: { id } })
-    if (!exists) {
-      throw new BadRequestException('内容类型不存在')
+  async updateContentType(dto: UpdateContentTypeDto) {
+    const { id, code, ...rest } = dto
+    const exists = await this.contentType.findFirst({
+      where: {
+        OR: [{ code: dto.code }, { name: dto.name }],
+        NOT: { id: dto.id },
+      },
+      select: { id: true, code: true, name: true },
+    })
+
+    if (exists?.code === dto.code) {
+      throw new BadRequestException('内容类型代码已存在')
     }
 
-    if (code && code !== exists.code) {
-      const dup = await this.contentType.findUnique({ where: { code } })
-      if (dup) {
-        throw new BadRequestException('内容类型编码已存在')
-      }
+    if (exists?.name === dto.name) {
+      throw new BadRequestException('内容类型名称已存在')
     }
+
     return this.contentType.update({ where: { id }, data: { code, ...rest } })
   }
 }
