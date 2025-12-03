@@ -1,4 +1,4 @@
-import type { FastifyRequest } from 'fastify'
+import type { FastifyRequest } from 'fastify/fastify'
 import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/types'
 
 /**
