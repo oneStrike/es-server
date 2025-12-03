@@ -1,9 +1,7 @@
-declare module 'fastify' {
+declare module 'fastify/fastify' {
+  import type { JwtUserInfoInterface } from '@libs/base/types'
+
   interface FastifyRequest {
-    user?: any
-    /**
-     * 请求开始时间（毫秒级时间戳）
-     */
-    _startTime?: number
+    user?: JwtUserInfoInterface
   }
 }

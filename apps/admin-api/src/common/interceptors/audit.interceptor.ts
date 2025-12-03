@@ -1,4 +1,4 @@
-import type { FastifyRequest } from 'fastify'
+import type { FastifyRequest } from 'fastify/fastify'
 // 导入 AuditMetadata 类型
 import type { AuditMetadata } from '../decorators/audit.decorator'
 import { ActionTypeEnum } from '@libs/base/types'
@@ -59,7 +59,7 @@ export class AuditInterceptor implements NestInterceptor {
     try {
       // 从请求中获取用户信息
       const user = request.user
-      const userId = Number(user?.sub)
+      const userId = user?.sub
       const username = user?.username
       // 构建审计日志内容
       const content = `${metadata.content}${isSuccess ? '成功' : '失败'}`

@@ -1,4 +1,4 @@
-import type { FastifyRequest } from 'fastify'
+import type { FastifyRequest } from 'fastify/fastify'
 import { ApiDoc, Public } from '@libs/base/decorators'
 import { CaptchaDto, RsaService } from '@libs/base/modules'
 import { ActionTypeEnum } from '@libs/base/types'
