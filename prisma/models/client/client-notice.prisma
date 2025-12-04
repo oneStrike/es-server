@@ -28,8 +28,6 @@ model ClientNotice {
   isPinned             Boolean     @default(false) @map("is_pinned")
   /// 是否弹窗显示
   showAsPopup          Boolean     @default(false) @map("show_as_popup")
-  /// 浏览次数
-  readCount            Int         @default(0) @map("read_count")
   /// 创建时间
   createdAt            DateTime    @default(now()) @map("created_at") @db.Timestamptz
   /// 更新时间

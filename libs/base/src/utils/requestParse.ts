@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/types'
+import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/enum'
 
 /**
  * 设备信息接口

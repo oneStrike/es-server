@@ -6,18 +6,21 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import { BaseDto, IdDto, IdsDto, PageDto } from '@libs/base/dto'
+import {
+  BaseDto,
+  IdDto,
+  IdsDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/base/dto'
+import { EnablePlatformEnum } from '@libs/base/enum'
 import {
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import {
-  EnablePlatformEnum,
-  NoticePriorityEnum,
-  NoticeTypeEnum,
-} from '../notice.constant'
+import { NoticePriorityEnum, NoticeTypeEnum } from '../notice.constant'
 
 /**
  * 通知基础DTO
@@ -116,15 +119,6 @@ export class BaseNoticeDto extends BaseDto {
   showAsPopup?: boolean
 
   @ValidateNumber({
-    description: '排序权重（数值越大越靠前）',
-    example: 0,
-    required: false,
-    min: 0,
-    default: 0,
-  })
-  order?: number
-
-  @ValidateNumber({
     description: '阅读次数',
     example: 0,
     required: false,
@@ -138,11 +132,9 @@ export class BaseNoticeDto extends BaseDto {
  * 创建通知DTO
  */
 export class CreateNoticeDto extends OmitType(BaseNoticeDto, [
-  'id',
+  ...OMIT_BASE_FIELDS,
   'isPublished',
   'readCount',
-  'createdAt',
-  'updatedAt',
 ]) {}
 
 /**

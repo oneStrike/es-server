@@ -1,4 +1,4 @@
-import type { ActionTypeEnum } from '@libs/base/types'
+import type { ActionTypeEnum } from '../../modules/system/audit/audit.constant'
 import { SetMetadata } from '@nestjs/common'
 
 /**

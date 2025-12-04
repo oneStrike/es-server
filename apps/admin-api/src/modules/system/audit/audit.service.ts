@@ -1,9 +1,9 @@
 import type { RequestLogWhereInput } from '@libs/base/database'
 import type { FastifyRequest } from 'fastify'
 import { RepositoryService } from '@libs/base/database'
-import { ActionTypeEnum } from '@libs/base/types'
 import { parseRequestLogFields } from '@libs/base/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { ActionTypeEnum } from './audit.constant'
 import {
   CreateRequestLogDto,
   CreateRequestLogSimpleDto,

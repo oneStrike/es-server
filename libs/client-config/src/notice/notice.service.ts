@@ -1,4 +1,9 @@
-import { ClientNoticeWhereInput, RepositoryService } from '@libs/base/database'
+import type { EnablePlatformEnum } from '@libs/base/enum'
+import {
+  ClientNoticeCreateInput,
+  ClientNoticeWhereInput,
+  RepositoryService,
+} from '@libs/base/database'
 import { findCombinations } from '@libs/base/utils'
 import { assertValidTimeRange } from '@libs/base/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -39,32 +44,22 @@ export class LibClientNoticeService extends RepositoryService {
     )
 
     const { pageId, ...others } = createNoticeDto // 明确移除 clientPage
+    const createData: ClientNoticeCreateInput = {
+      ...others,
+    }
     if (pageId) {
-      const pageInfo = await this.clientPage.findFirst({
-        where: {
-          id: pageId,
-        },
-        select: {
-          id: true,
-        },
-      })
-      if (!pageInfo) {
+      if (!(await this.clientPage.exists({ id: pageId }))) {
         throw new BadRequestException('关联页面不存在')
       } else {
-        return this.clientNotice.create({
-          data: {
-            ...others,
-            clientPage: {
-              connect: {
-                id: pageInfo.id, // 使用 Prisma 的 connect 方法
-              },
-            },
+        createData.clientPage = {
+          connect: {
+            id: pageId,
           },
-        })
+        }
       }
     }
 
-    return this.clientNotice.create({ data: others }) // 确保 others 不包含非法字段
+    return this.clientNotice.create({ data: createData }) // 确保 others 不包含非法字段
   }
 
   /**
@@ -142,20 +137,15 @@ export class LibClientNoticeService extends RepositoryService {
    * @param platform 平台类型：applet | web | app
    * @returns 有效的通知列表
    */
-  async findActiveNotices(platform: 'applet' | 'web' | 'app' = 'web') {
+  async findActiveNotices(platform: EnablePlatformEnum[]) {
     const now = new Date()
-
-    // 构建平台筛选条件
-    const platformCondition = {
-      applet: { enableApplet: true },
-      web: { enableWeb: true },
-      app: { enableApp: true },
-    }[platform]
 
     return this.clientNotice.findMany({
       where: {
         isPublished: true, // 已发布
-        ...platformCondition,
+        enablePlatform: {
+          in: platform,
+        },
         OR: [
           {
             AND: [
@@ -201,72 +191,32 @@ export class LibClientNoticeService extends RepositoryService {
       '发布开始时间不能大于或等于结束时间',
     )
 
-    const notice = await this.clientNotice.findUnique({ where: { id } })
+    const notice = await this.clientNotice.findUnique({
+      where: { id },
+      select: { id: true, pageId: true },
+    })
     if (!notice) {
       throw new BadRequestException('通知不存在')
     }
+    const createData: ClientNoticeCreateInput = {
+      ...updateData,
+    }
     if (pageId && notice.pageId !== pageId) {
-      const pageInfo = await this.clientPage.findFirst({
-        where: {
-          id: pageId,
-        },
-        select: {
-          id: true,
-        },
-      })
-      if (!pageInfo) {
+      if (!(await this.clientPage.exists({ id: pageId }))) {
         throw new BadRequestException('关联页面不存在')
       } else {
-        return this.clientNotice.update({
-          where: { id },
-          data: {
-            ...updateData,
-            clientPage: {
-              connect: {
-                id: pageInfo.id,
-              },
-            },
+        createData.clientPage = {
+          connect: {
+            id: pageId,
           },
-        })
+        }
       }
     }
 
     return this.clientNotice.update({
       where: { id },
-      data: updateData,
-    })
-  }
-
-  /**
-   * 增加通知阅读次数
-   * @param id 通知ID
-   * @returns 更新后的阅读次数
-   */
-  async incrementViewCount(id: number) {
-    // 验证通知是否存在且已发布
-    const notice = await this.clientNotice.findFirst({
-      where: {
-        id,
-        isPublished: true,
-      },
-    })
-
-    if (!notice) {
-      throw new BadRequestException('通知不存在或未发布')
-    }
-
-    // 原子性更新阅读次数
-    return this.clientNotice.update({
-      where: { id },
-      data: {
-        readCount: {
-          increment: 1,
-        },
-      },
-      select: {
-        id: true,
-        readCount: true,
-      },
+      data: createData,
+      select: { id: true },
     })
   }
 }
