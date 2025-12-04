@@ -1,5 +1,5 @@
 import { ApiDoc, ApiPageDoc, Public } from '@libs/base/decorators'
-import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
+import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
 import {
   BaseNoticeDto,
   CreateNoticeDto,
@@ -87,14 +87,14 @@ export class ClientNoticeController {
   /**
    * 更新通知状态
    */
-  @Post('batch-update-status')
+  @Post('update-status')
   @ApiDoc({
-    summary: '批量更新通知状态',
+    summary: '更新通知状态',
     model: BatchOperationResponseDto,
   })
   async updateStatus(@Body() body: UpdateNoticeStatusDto) {
-    return this.libClientNoticeService.clientNotice.updateMany({
-      where: { id: { in: body.ids } },
+    return this.libClientNoticeService.clientNotice.update({
+      where: { id: body.id },
       data: { isPublished: body.isPublished },
     })
   }
@@ -102,14 +102,14 @@ export class ClientNoticeController {
   /**
    * 批量删除通知
    */
-  @Post('/batch-delete')
+  @Post('/delete')
   @ApiDoc({
-    summary: '批量删除通知',
+    summary: '删除通知',
     model: BatchOperationResponseDto,
   })
-  async batchRemove(@Body() body: IdsDto) {
-    return this.libClientNoticeService.clientNotice.deleteMany({
-      where: { id: { in: body.ids } },
+  async batchRemove(@Body() body: IdDto) {
+    return this.libClientNoticeService.clientNotice.delete({
+      where: { id: body.id },
     })
   }
 }
