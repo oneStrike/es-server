@@ -1,7 +1,7 @@
 /**
  *  类型定义 [UserRegisterRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UserRegisterRequest = UserRegisterDto;
 
@@ -10,7 +10,7 @@ export type UserRegisterResponse = IdDto;
 /**
  *  类型定义 [UserUpdateInfoRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UserUpdateInfoRequest = UpdateUserDto;
 
@@ -21,7 +21,7 @@ export type UserInfoResponse = BaseUserDto;
 /**
  *  类型定义 [UserInfoByIdRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UserInfoByIdRequest = {
   /** 任意合法数值 */
@@ -36,7 +36,7 @@ export type UserInfoByIdResponse = BaseUserDto;
 /**
  *  类型定义 [UserPageRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UserPageRequest = {
   /** 任意合法数值 */
@@ -90,7 +90,7 @@ export type UserPageResponse = {
 /**
  *  类型定义 [UserChangePasswordRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UserChangePasswordRequest = ChangePasswordDto;
 
@@ -99,7 +99,7 @@ export type UserChangePasswordResponse = IdDto;
 /**
  *  类型定义 [UserUnlockRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UserUnlockRequest = IdDto;
 
@@ -108,7 +108,7 @@ export type UserUnlockResponse = IdDto;
 /**
  *  类型定义 [UserResetPasswordRequest]
  *  @来源 管理端用户模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UserResetPasswordRequest = IdDto;
 
@@ -117,7 +117,7 @@ export type UserResetPasswordResponse = IdDto;
 /**
  *  类型定义 [UserRegisterDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UserRegisterDto = {
   /** 任意合法数值 */
@@ -140,7 +140,7 @@ export type UserRegisterDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -153,7 +153,7 @@ export type IdDto = {
 /**
  *  类型定义 [UpdateUserDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateUserDto = {
   /** 任意合法数值 */
@@ -176,7 +176,7 @@ export type UpdateUserDto = {
 /**
  *  类型定义 [BaseUserDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BaseUserDto = {
   /** 任意合法数值 */
@@ -209,7 +209,7 @@ export type BaseUserDto = {
 /**
  *  类型定义 [ChangePasswordDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ChangePasswordDto = {
   /** 任意合法数值 */

@@ -137,7 +137,7 @@ const detailCards = computed(() => [
       {
         label: '发布结束时间',
         value: detail.value?.publishEndTime
-          ? formatUTC(detail.value.publishEndTime, 'YYYY-MM-DD HH:mm:ss')
+          ? `${formatUTC(detail.value.publishEndTime, 'YYYY-MM-DD')} 23:59:59`
           : '-',
         type: 'text',
       },
@@ -159,27 +159,27 @@ const detailCards = computed(() => [
   },
   {
     title: '关联页面',
-    show: !!(detail.value?.pageCode || detail.value?.clientPage),
+    show: !!(detail.value?.pageId || detail.value?.clientPage),
     fields: [
       {
         label: '页面代码',
-        value: detail.value?.pageCode,
+        value: detail.value?.clientPage?.code,
         type: 'text',
-        show: !!detail.value?.pageCode,
+        show: !!detail.value?.clientPage?.code,
       },
       {
         label: '页面名称',
-        value: detail.value?.clientPage?.pageName,
+        value: detail.value?.clientPage?.name,
         type: 'text',
-        show: !!detail.value?.clientPage?.pageName,
+        show: !!detail.value?.clientPage?.name,
       },
       {
         label: '页面路径',
-        value: detail.value?.clientPage?.pagePath,
+        value: detail.value?.clientPage?.path,
         type: 'text',
-        show: !!detail.value?.clientPage?.pagePath,
+        show: !!detail.value?.clientPage?.path,
       },
-    ].filter((field) => field.show !== false),
+    ].filter((field) => field.show),
   },
   {
     title: '弹窗背景图',

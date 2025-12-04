@@ -1,7 +1,7 @@
 /**
  *  类型定义 [ComicVersionCreateRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicVersionCreateRequest = CreateComicVersionDto;
 
@@ -10,7 +10,7 @@ export type ComicVersionCreateResponse = IdDto;
 /**
  *  类型定义 [ComicVersionPageRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicVersionPageRequest = {
   /** 任意合法数值 */
@@ -73,7 +73,7 @@ export type ComicVersionPageResponse = {
 /**
  *  类型定义 [ComicVersionDetailRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicVersionDetailRequest = {
   /** 任意合法数值 */
@@ -88,7 +88,7 @@ export type ComicVersionDetailResponse = ComicVersionDetailResponseDto;
 /**
  *  类型定义 [ComicVersionUpdateRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicVersionUpdateRequest = UpdateComicVersionDto;
 
@@ -97,7 +97,7 @@ export type ComicVersionUpdateResponse = IdDto;
 /**
  *  类型定义 [ComicVersionBatchUpdatePublishStatusRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicVersionBatchUpdatePublishStatusRequest = BatchPublishDto;
 
@@ -107,7 +107,7 @@ export type ComicVersionBatchUpdatePublishStatusResponse =
 /**
  *  类型定义 [ComicVersionBatchUpdateRecommendedStatusRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicVersionBatchUpdateRecommendedStatusRequest =
   UpdateVersionRecommendedStatusDto;
@@ -118,7 +118,7 @@ export type ComicVersionBatchUpdateRecommendedStatusResponse =
 /**
  *  类型定义 [ComicVersionBatchUpdateEnabledStatusRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicVersionBatchUpdateEnabledStatusRequest =
   UpdateVersionEnabledStatusDto;
@@ -129,7 +129,7 @@ export type ComicVersionBatchUpdateEnabledStatusResponse =
 /**
  *  类型定义 [ComicVersionDeleteRequest]
  *  @来源 漫画版本管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicVersionDeleteRequest = IdDto;
 
@@ -138,7 +138,7 @@ export type ComicVersionDeleteResponse = IdDto;
 /**
  *  类型定义 [CreateComicVersionDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CreateComicVersionDto = {
   /** 任意合法数值 */
@@ -175,7 +175,7 @@ export type CreateComicVersionDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -188,7 +188,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseComicVersionDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BaseComicVersionDto = {
   /** 任意合法数值 */
@@ -245,7 +245,7 @@ export type BaseComicVersionDto = {
 /**
  *  类型定义 [ComicVersionDetailResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicVersionDetailResponseDto = {
   /** 任意合法数值 */
@@ -302,7 +302,7 @@ export type ComicVersionDetailResponseDto = {
 /**
  *  类型定义 [UpdateComicVersionDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateComicVersionDto = {
   /** 任意合法数值 */
@@ -343,7 +343,7 @@ export type UpdateComicVersionDto = {
 /**
  *  类型定义 [BatchPublishDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BatchPublishDto = {
   /** 任意合法数值 */
@@ -358,7 +358,7 @@ export type BatchPublishDto = {
 /**
  *  类型定义 [BatchOperationResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BatchOperationResponseDto = {
   /** 任意合法数值 */
@@ -371,7 +371,7 @@ export type BatchOperationResponseDto = {
 /**
  *  类型定义 [UpdateVersionRecommendedStatusDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateVersionRecommendedStatusDto = {
   /** 任意合法数值 */
@@ -388,7 +388,7 @@ export type UpdateVersionRecommendedStatusDto = {
 /**
  *  类型定义 [UpdateVersionEnabledStatusDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateVersionEnabledStatusDto = {
   /** 任意合法数值 */

@@ -1,8 +1,4 @@
 import type {
-  AuthorBatchUpdateFeaturedRequest,
-  AuthorBatchUpdateFeaturedResponse,
-  AuthorBatchUpdateStatusRequest,
-  AuthorBatchUpdateStatusResponse,
   AuthorCreateRequest,
   AuthorCreateResponse,
   AuthorDeleteRequest,
@@ -11,8 +7,12 @@ import type {
   AuthorDetailResponse,
   AuthorPageRequest,
   AuthorPageResponse,
+  AuthorUpdateFeaturedRequest,
+  AuthorUpdateFeaturedResponse,
   AuthorUpdateRequest,
   AuthorUpdateResponse,
+  AuthorUpdateStatusRequest,
+  AuthorUpdateStatusResponse,
 } from './types/author.d';
 
 import { requestClient } from '#/utils/request';
@@ -56,34 +56,10 @@ export async function authorDetailApi(
  * 更新作者信息
  */
 export async function authorUpdateApi(
-  params?: AuthorUpdateRequest,
+  params: AuthorUpdateRequest,
 ): Promise<AuthorUpdateResponse> {
   return requestClient.post<AuthorUpdateResponse>(
     '/api/admin/work/author/update',
-    params,
-  );
-}
-
-/**
- * 批量更新作者状态
- */
-export async function authorBatchUpdateStatusApi(
-  params: AuthorBatchUpdateStatusRequest,
-): Promise<AuthorBatchUpdateStatusResponse> {
-  return requestClient.post<AuthorBatchUpdateStatusResponse>(
-    '/api/admin/work/author/batch-update-status',
-    params,
-  );
-}
-
-/**
- * 批量更新作者推荐状态
- */
-export async function authorBatchUpdateFeaturedApi(
-  params: AuthorBatchUpdateFeaturedRequest,
-): Promise<AuthorBatchUpdateFeaturedResponse> {
-  return requestClient.post<AuthorBatchUpdateFeaturedResponse>(
-    '/api/admin/work/author/batch-update-featured',
     params,
   );
 }
@@ -96,6 +72,30 @@ export async function authorDeleteApi(
 ): Promise<AuthorDeleteResponse> {
   return requestClient.post<AuthorDeleteResponse>(
     '/api/admin/work/author/delete',
+    params,
+  );
+}
+
+/**
+ * 更新作者状态
+ */
+export async function authorUpdateStatusApi(
+  params: AuthorUpdateStatusRequest,
+): Promise<AuthorUpdateStatusResponse> {
+  return requestClient.post<AuthorUpdateStatusResponse>(
+    '/api/admin/work/author/update-status',
+    params,
+  );
+}
+
+/**
+ * 更新作者推荐状态
+ */
+export async function authorUpdateFeaturedApi(
+  params: AuthorUpdateFeaturedRequest,
+): Promise<AuthorUpdateFeaturedResponse> {
+  return requestClient.post<AuthorUpdateFeaturedResponse>(
+    '/api/admin/work/author/update-featured',
     params,
   );
 }

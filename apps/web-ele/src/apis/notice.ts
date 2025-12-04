@@ -1,16 +1,16 @@
 import type {
-  NoticeBatchDeleteRequest,
-  NoticeBatchDeleteResponse,
-  NoticeBatchUpdateStatusRequest,
-  NoticeBatchUpdateStatusResponse,
   NoticeCreateRequest,
   NoticeCreateResponse,
+  NoticeDeleteRequest,
+  NoticeDeleteResponse,
   NoticeDetailRequest,
   NoticeDetailResponse,
   NoticePageRequest,
   NoticePageResponse,
   NoticeUpdateRequest,
   NoticeUpdateResponse,
+  NoticeUpdateStatusRequest,
+  NoticeUpdateStatusResponse,
 } from './types/notice.d';
 
 import { requestClient } from '#/utils/request';
@@ -62,13 +62,13 @@ export async function noticeUpdateApi(
 }
 
 /**
- * 批量更新通知状态
+ * 更新通知状态
  */
-export async function noticeBatchUpdateStatusApi(
-  params: NoticeBatchUpdateStatusRequest,
-): Promise<NoticeBatchUpdateStatusResponse> {
-  return requestClient.post<NoticeBatchUpdateStatusResponse>(
-    '/api/admin/notice/batch-update-status',
+export async function noticeUpdateStatusApi(
+  params: NoticeUpdateStatusRequest,
+): Promise<NoticeUpdateStatusResponse> {
+  return requestClient.post<NoticeUpdateStatusResponse>(
+    '/api/admin/notice/update-status',
     params,
   );
 }
@@ -76,11 +76,11 @@ export async function noticeBatchUpdateStatusApi(
 /**
  * 批量删除通知
  */
-export async function noticeBatchDeleteApi(
-  params: NoticeBatchDeleteRequest,
-): Promise<NoticeBatchDeleteResponse> {
-  return requestClient.post<NoticeBatchDeleteResponse>(
-    '/api/admin/notice/batch-delete',
+export async function noticeDeleteApi(
+  params: NoticeDeleteRequest,
+): Promise<NoticeDeleteResponse> {
+  return requestClient.post<NoticeDeleteResponse>(
+    '/api/admin/notice/delete',
     params,
   );
 }

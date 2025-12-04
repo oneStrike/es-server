@@ -11,12 +11,12 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   clientPagePageApi,
-  noticeBatchDeleteApi,
-  noticeBatchUpdateStatusApi,
   noticeCreateApi,
+  noticeDeleteApi,
   noticeDetailApi,
   noticePageApi,
   noticeUpdateApi,
+  noticeUpdateStatusApi,
 } from '#/apis';
 import EsModalForm from '#/components/es-modal-form/index.vue';
 import { useBitMask } from '#/hooks/useBitmask';
@@ -42,9 +42,9 @@ clientPagePageApi({
 }).then((res) => {
   const pageOptions =
     res.list?.map((pageItem) => {
-      clientPageObj.value[pageItem.id!] = pageItem.pageName;
+      clientPageObj.value[pageItem.id!] = pageItem.name;
       return {
-        label: pageItem.pageName,
+        label: pageItem.name,
         value: pageItem.id,
         ...pageItem,
       };
@@ -114,15 +114,15 @@ async function handleSubmit(values: CreateNoticeDto | UpdateNoticeDto) {
 }
 
 async function deleteNotice(record: NoticePageResponseDto) {
-  await noticeBatchDeleteApi({ ids: [record.id] });
+  await noticeDeleteApi({ id: record.id });
   useMessage.success('操作成功');
   gridApi.reload();
 }
 
 async function togglePublishStatus(record: NoticePageResponseDto) {
   const newStatus = !record.isPublished;
-  await noticeBatchUpdateStatusApi({
-    ids: [record.id],
+  await noticeUpdateStatusApi({
+    id: record.id,
     isPublished: newStatus,
   });
   useMessage.success(newStatus ? '发布成功' : '取消发布成功');

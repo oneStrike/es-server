@@ -293,6 +293,13 @@ async function initComponentAdapter() {
         if (id && !Array.isArray(id)) {
           extraProps.id = [id, `${id}_end`];
         }
+
+        if (!props.startPlaceholder) {
+          extraProps.startPlaceholder = '开始时间';
+        }
+        if (!props.endPlaceholder) {
+          extraProps.endPlaceholder = '结束时间';
+        }
       }
       return h(
         ElDatePicker,

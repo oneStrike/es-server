@@ -10,6 +10,7 @@ export * from './dictionary';
 export * from './notice';
 export * from './roleType';
 export * from './system';
+export * from './tag';
 export * from './thirdParty';
 export * from './upload';
 export * from './user';

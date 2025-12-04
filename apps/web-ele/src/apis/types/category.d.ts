@@ -1,7 +1,7 @@
 /**
  *  类型定义 [CategoryCreateRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CategoryCreateRequest = CreateCategoryDto;
 
@@ -10,7 +10,7 @@ export type CategoryCreateResponse = IdDto;
 /**
  *  类型定义 [CategoryPageRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CategoryPageRequest = {
   /** 任意合法数值 */
@@ -61,7 +61,7 @@ export type CategoryPageResponse = {
 /**
  *  类型定义 [CategoryDetailRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CategoryDetailRequest = {
   /** 任意合法数值 */
@@ -76,7 +76,7 @@ export type CategoryDetailResponse = BaseCategoryDto;
 /**
  *  类型定义 [CategoryUpdateRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CategoryUpdateRequest = UpdateCategoryDto;
 
@@ -85,7 +85,7 @@ export type CategoryUpdateResponse = IdDto;
 /**
  *  类型定义 [CategoryBatchUpdateStatusRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CategoryBatchUpdateStatusRequest = BatchEnabledDto;
 
@@ -94,7 +94,7 @@ export type CategoryBatchUpdateStatusResponse = BatchOperationResponseDto;
 /**
  *  类型定义 [CategoryBatchDeleteRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CategoryBatchDeleteRequest = IdsDto;
 
@@ -103,7 +103,7 @@ export type CategoryBatchDeleteResponse = BatchOperationResponseDto;
 /**
  *  类型定义 [CategoryOrderRequest]
  *  @来源 分类管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CategoryOrderRequest = DragReorderDto;
 
@@ -112,7 +112,7 @@ export type CategoryOrderResponse = DragReorderDto;
 /**
  *  类型定义 [CreateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CreateCategoryDto = {
   /** 任意合法数值 */
@@ -135,7 +135,7 @@ export type CreateCategoryDto = {
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -148,7 +148,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BaseCategoryDto = {
   /** 任意合法数值 */
@@ -156,10 +156,10 @@ export type BaseCategoryDto = {
   /* 分类包含的内容类型项数组 */
   categoryContentTypes: CategoryContentTypeItemDto[];
   /* 创建时间 */
-  createdAt?: string;
+  createdAt: string;
   /* 分类图标URL */
   icon?: string;
-  /* 分类ID */
+  /* 主键id */
   id: number;
   /* 是否启用 */
   isEnabled?: boolean;
@@ -173,13 +173,13 @@ export type BaseCategoryDto = {
   popularityWeight?: number;
 
   /* 更新时间 */
-  updatedAt?: string;
+  updatedAt: string;
 };
 
 /**
  *  类型定义 [CategoryContentTypeItemDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CategoryContentTypeItemDto = {
   /** 任意合法数值 */
@@ -196,7 +196,7 @@ export type CategoryContentTypeItemDto = {
 /**
  *  类型定义 [BaseContentTypeDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BaseContentTypeDto = {
   /** 任意合法数值 */
@@ -204,8 +204,10 @@ export type BaseContentTypeDto = {
   /* 类型编码（唯一，如：COMIC/NOVEL/ILLUSTRATION/ALBUM） */
   code: string;
   /* 创建时间 */
-  createdAt?: string;
-  /* ID */
+  createdAt: string;
+  /* 分类描述 */
+  description?: string;
+  /* 主键id */
   id: number;
   /* 是否启用 */
   isEnabled?: boolean;
@@ -213,13 +215,13 @@ export type BaseContentTypeDto = {
   name: string;
 
   /* 更新时间 */
-  updatedAt?: string;
+  updatedAt: string;
 };
 
 /**
  *  类型定义 [UpdateCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateCategoryDto = {
   /** 任意合法数值 */
@@ -244,7 +246,7 @@ export type UpdateCategoryDto = {
 /**
  *  类型定义 [BatchEnabledDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BatchEnabledDto = {
   /** 任意合法数值 */
@@ -259,7 +261,7 @@ export type BatchEnabledDto = {
 /**
  *  类型定义 [BatchOperationResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BatchOperationResponseDto = {
   /** 任意合法数值 */
@@ -272,7 +274,7 @@ export type BatchOperationResponseDto = {
 /**
  *  类型定义 [IdsDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type IdsDto = {
   /** 任意合法数值 */
@@ -285,7 +287,7 @@ export type IdsDto = {
 /**
  *  类型定义 [DragReorderDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type DragReorderDto = {
   /** 任意合法数值 */

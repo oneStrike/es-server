@@ -1,7 +1,7 @@
 /**
  *  类型定义 [ComicCreateRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicCreateRequest = CreateComicDto;
 
@@ -10,7 +10,7 @@ export type ComicCreateResponse = IdDto;
 /**
  *  类型定义 [ComicPageRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicPageRequest = {
   /** 任意合法数值 */
@@ -66,6 +66,9 @@ export type ComicPageRequest = {
 
   /* 开始时间 */
   startDate?: string;
+
+  /* 标签ID列表 */
+  tagIds?: any[];
 };
 
 export type ComicPageResponse = {
@@ -88,7 +91,7 @@ export type ComicPageResponse = {
 /**
  *  类型定义 [ComicDetailRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicDetailRequest = {
   /** 任意合法数值 */
@@ -103,7 +106,7 @@ export type ComicDetailResponse = BaseComicDto;
 /**
  *  类型定义 [ComicUpdateRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicUpdateRequest = UpdateComicDto;
 
@@ -112,7 +115,7 @@ export type ComicUpdateResponse = IdDto;
 /**
  *  类型定义 [ComicBatchUpdateStatusRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicBatchUpdateStatusRequest = UpdateComicStatusDto;
 
@@ -121,7 +124,7 @@ export type ComicBatchUpdateStatusResponse = BatchOperationResponseDto;
 /**
  *  类型定义 [ComicBatchUpdateRecommendedRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicBatchUpdateRecommendedRequest = UpdateComicRecommendedDto;
 
@@ -130,7 +133,7 @@ export type ComicBatchUpdateRecommendedResponse = BatchOperationResponseDto;
 /**
  *  类型定义 [ComicBatchUpdateHotRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicBatchUpdateHotRequest = UpdateComicHotDto;
 
@@ -139,7 +142,7 @@ export type ComicBatchUpdateHotResponse = BatchOperationResponseDto;
 /**
  *  类型定义 [ComicBatchUpdateNewRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicBatchUpdateNewRequest = UpdateComicNewDto;
 
@@ -148,7 +151,7 @@ export type ComicBatchUpdateNewResponse = BatchOperationResponseDto;
 /**
  *  类型定义 [ComicDeleteRequest]
  *  @来源 漫画管理模块
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicDeleteRequest = IdDto;
 
@@ -157,7 +160,7 @@ export type ComicDeleteResponse = IdDto;
 /**
  *  类型定义 [CreateComicDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type CreateComicDto = {
   /** 任意合法数值 */
@@ -214,15 +217,17 @@ export type CreateComicDto = {
   seoKeywords?: string;
   /* SEO标题 */
   seoTitle?: string;
-
   /* 连载状态 */
   serialStatus: 0 | 1 | 2 | 3;
+
+  /* 关联的标签ID列表 */
+  tagIds?: number[];
 };
 
 /**
  *  类型定义 [IdDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type IdDto = {
   /** 任意合法数值 */
@@ -235,7 +240,7 @@ export type IdDto = {
 /**
  *  类型定义 [BaseComicDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BaseComicDto = {
   /** 任意合法数值 */
@@ -252,6 +257,8 @@ export type BaseComicDto = {
   comicAuthors: ComicAuthorDto[];
   /* 漫画分类 */
   comicCategories: ComicCategoryDto[];
+  /* 漫画标签 */
+  comicTags: ComicTagDto[];
   /* 评论总数 */
   commentCount: number;
   /* 版权信息 */
@@ -330,7 +337,7 @@ export type BaseComicDto = {
 /**
  *  类型定义 [ComicCategoryDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicCategoryDto = {
   /** 任意合法数值 */
@@ -345,7 +352,7 @@ export type ComicCategoryDto = {
 /**
  *  类型定义 [ComicAuthorDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type ComicAuthorDto = {
   /** 任意合法数值 */
@@ -362,9 +369,24 @@ export type ComicAuthorDto = {
 };
 
 /**
+ *  类型定义 [ComicTagDto]
+ *  @来源 components.schemas
+ *  @更新时间 2025-12-04 21:43:06
+ */
+export type ComicTagDto = {
+  /** 任意合法数值 */
+  [property: string]: any;
+  /* 标签ID */
+  id: number;
+
+  /* 标签名称 */
+  name: string;
+};
+
+/**
  *  类型定义 [UpdateComicDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateComicDto = {
   /** 任意合法数值 */
@@ -435,6 +457,8 @@ export type UpdateComicDto = {
   seoTitle?: string;
   /* 连载状态 */
   serialStatus?: 0 | 1 | 2 | 3;
+  /* 关联的标签ID列表（可选，传入则更新关联关系） */
+  tagIds?: number[];
 
   /* 总章节数 */
   totalChapters?: number;
@@ -443,7 +467,7 @@ export type UpdateComicDto = {
 /**
  *  类型定义 [UpdateComicStatusDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateComicStatusDto = {
   /** 任意合法数值 */
@@ -458,7 +482,7 @@ export type UpdateComicStatusDto = {
 /**
  *  类型定义 [BatchOperationResponseDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type BatchOperationResponseDto = {
   /** 任意合法数值 */
@@ -471,7 +495,7 @@ export type BatchOperationResponseDto = {
 /**
  *  类型定义 [UpdateComicRecommendedDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateComicRecommendedDto = {
   /** 任意合法数值 */
@@ -486,7 +510,7 @@ export type UpdateComicRecommendedDto = {
 /**
  *  类型定义 [UpdateComicHotDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateComicHotDto = {
   /** 任意合法数值 */
@@ -501,7 +525,7 @@ export type UpdateComicHotDto = {
 /**
  *  类型定义 [UpdateComicNewDto]
  *  @来源 components.schemas
- *  @更新时间 2025-11-28 23:47:20
+ *  @更新时间 2025-12-04 21:43:06
  */
 export type UpdateComicNewDto = {
   /** 任意合法数值 */

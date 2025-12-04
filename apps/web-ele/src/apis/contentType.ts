@@ -16,7 +16,7 @@ export async function contentTypeCreateApi(
   params: ContentTypeCreateRequest,
 ): Promise<ContentTypeCreateResponse> {
   return requestClient.post<ContentTypeCreateResponse>(
-    '/api/admin/work/content-type/create',
+    '/api/admin/content-type/create',
     params,
   );
 }
@@ -28,7 +28,7 @@ export async function contentTypeListApi(
   params?: ContentTypeListRequest,
 ): Promise<ContentTypeListResponse> {
   return requestClient.get<ContentTypeListResponse>(
-    '/api/admin/work/content-type/list',
+    '/api/admin/content-type/list',
     { params },
   );
 }
@@ -40,7 +40,7 @@ export async function contentTypeUpdateApi(
   params: ContentTypeUpdateRequest,
 ): Promise<ContentTypeUpdateResponse> {
   return requestClient.post<ContentTypeUpdateResponse>(
-    '/api/admin/work/content-type/update',
+    '/api/admin/content-type/update',
     params,
   );
 }
