@@ -235,6 +235,7 @@ export const formSchema: EsFormSchema = [
     label: '弹窗背景',
     componentProps: {
       maxCount: 1,
+      scene: 'common',
       returnDataType: 'url',
     },
   },

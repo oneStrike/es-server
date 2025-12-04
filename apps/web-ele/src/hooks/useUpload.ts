@@ -42,7 +42,7 @@ export async function useUpload(
     }
 
     requestClient
-      .post(api[contentType], formData, {
+      .post(`${api[contentType]}?scene=${params.scene}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data;charset=UTF-8',
         },
@@ -71,7 +71,6 @@ export async function useUpload(
         });
       })
       .catch(() => {
-        ElMessage.error('上传失败');
         resolve({
           success: [],
           error: target,

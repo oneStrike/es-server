@@ -20,6 +20,7 @@ defineOptions({
   name: 'EsUpload',
 });
 const props = withDefaults(defineProps<EsUploadProps>(), {
+  scene: 'common',
   accept: 'image/*',
   maxCount: 10,
   listType: 'picture-card',
@@ -141,10 +142,15 @@ async function customRequest(options: UploadRequestOptions) {
   // 初始化进度
   options.onProgress?.({ percent: 0 } as any);
 
+  const scene = props.scene;
+  const params = {
+    scene,
+    ...options.data,
+  };
   const { success, error } = await useUpload(
     // 将当前文件传入后端上传逻辑
     options.file as any,
-    options.data ?? {},
+    params,
     'common',
     // 进度回调：转给 Element Plus
     (progressEvent) => {
@@ -153,8 +159,6 @@ async function customRequest(options: UploadRequestOptions) {
   );
 
   if (error?.length) {
-    // 统一错误提示
-    ElMessage.error(error[0]?.message ?? '上传失败');
     options.onError?.(new Error(error[0]?.message ?? 'upload error') as any);
     return;
   }
