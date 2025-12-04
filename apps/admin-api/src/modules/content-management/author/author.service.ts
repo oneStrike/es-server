@@ -1,12 +1,10 @@
 import type { WorkAuthorWhereInput } from '@libs/base/database'
 import { RepositoryService } from '@libs/base/database'
-import { BatchEnabledDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateAuthorDto,
   QueryAuthorDto,
   UpdateAuthorDto,
-  UpdateAuthorFeaturedDto,
 } from './dto/author.dto'
 
 /**
@@ -260,7 +258,6 @@ export class WorkAuthorService extends RepositoryService {
       },
     })
   }
-
 
   /**
    * 软删除作者

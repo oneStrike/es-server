@@ -42,7 +42,7 @@ export function generateFilePath(
   scene: string,
 ) {
   // 参数验证
-  if (!uploadPath || !fileType || !scene) {
+  if (!uploadPath || !fileType) {
     throw new Error('上传失败')
   }
 

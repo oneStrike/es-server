@@ -48,13 +48,13 @@ export class UploadService {
     scene?: string,
   ): Promise<UploadResponseDto[]> {
     const files = data.files()
+    console.log(files)
     const filePromises: Promise<UploadResponseDto | null>[] = []
     const errors: Error[] = []
-
     if (!scene || !/^[a-z0-9]+$/i.test(scene) || scene.length > 10) {
       throw new BadRequestException('未知的上传场景')
     }
-
+    console.log(data)
     // 收集所有文件处理任务
     for await (const file of files) {
       // 内联文件处理逻辑以提高性能

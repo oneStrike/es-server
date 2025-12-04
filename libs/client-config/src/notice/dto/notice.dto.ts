@@ -6,13 +6,7 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import {
-  BaseDto,
-  IdDto,
-  IdsDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/base/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import { EnablePlatformEnum } from '@libs/base/enum'
 import {
   IntersectionType,
@@ -174,7 +168,7 @@ export class QueryNoticeDto extends IntersectionType(
  */
 export class UpdateNoticeStatusDto extends IntersectionType(
   PickType(BaseNoticeDto, ['isPublished']),
-  IdsDto,
+  IdDto,
 ) {}
 
 /**
