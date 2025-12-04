@@ -85,24 +85,4 @@ export class AuditInterceptor implements NestInterceptor {
       console.error('审计日志记录失败:', error)
     }
   }
-
-  /**
-   * 根据 HTTP 方法获取操作类型
-   * @param method HTTP 方法
-   * @returns 操作类型
-   */
-  private getActionType(method: string): ActionTypeEnum {
-    switch (method.toUpperCase()) {
-      case 'POST':
-        return ActionTypeEnum.CREATE
-      case 'PUT':
-      case 'PATCH':
-        return ActionTypeEnum.UPDATE
-      case 'DELETE':
-        return ActionTypeEnum.DELETE
-      default:
-        // 对于 GET 等其他方法，使用 CREATE 作为默认值
-        return ActionTypeEnum.CREATE
-    }
-  }
 }
