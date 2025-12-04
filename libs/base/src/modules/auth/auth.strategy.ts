@@ -1,9 +1,9 @@
-import { JwtBlacklistService } from '@libs/base/modules'
-import { AuthConfigInterface } from '@libs/base/types'
+import type { AuthConfigInterface } from '@libs/base/types'
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy, StrategyOptions } from 'passport-jwt'
+import { JwtBlacklistService } from './jwt-blacklist.service'
 
 /**
  * JWT负载接口定义
