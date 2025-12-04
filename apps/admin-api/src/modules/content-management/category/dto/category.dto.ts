@@ -13,7 +13,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { BaseContentTypeDto } from '../../../work/content-type/dto/content-type.dto'
+import { BaseContentTypeDto } from '../../content-type/dto/content-type.dto'
 
 /**
  * 分类-内容类型 关系项 DTO

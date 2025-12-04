@@ -1,6 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
-import { ActionTypeEnum } from '@libs/base/types'
 import {
   BaseClientPageDto,
   ClientPageResponseDto,
@@ -18,6 +17,7 @@ import {
 } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
+import { ActionTypeEnum } from '../../system/audit/audit.constant'
 
 /**
  * 客户端页面配置控制器

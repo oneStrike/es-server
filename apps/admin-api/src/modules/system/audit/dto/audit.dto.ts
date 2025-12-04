@@ -6,8 +6,9 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
-import { ActionTypeEnum, ApiTypeEnum, HttpMethodEnum } from '@libs/base/types'
+import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/enum'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { ActionTypeEnum } from '../audit.constant'
 
 export class AuditDto extends BaseDto {
   @ValidateNumber({

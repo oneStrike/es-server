@@ -2357,6 +2357,7 @@ export const WorkCategoryScalarFieldEnum = {
   popularityWeight: 'popularityWeight',
   order: 'order',
   isEnabled: 'isEnabled',
+  description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2394,6 +2395,7 @@ export const WorkTagScalarFieldEnum = {
   popularityWeight: 'popularityWeight',
   order: 'order',
   isEnabled: 'isEnabled',
+  description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

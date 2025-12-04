@@ -1,12 +1,12 @@
 import type { Cache } from 'cache-manager'
-import type { AuthConfigInterface } from './types'
-import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { JwtBlacklistService } from '@libs/base/modules'
 
+import { AuthConfigInterface } from '@libs/base/types'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { v4 as uuid } from 'uuid'
-import { JwtBlacklistService } from './jwt-blacklist.service'
 
 @Injectable()
 export class AuthService {

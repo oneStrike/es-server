@@ -28,8 +28,9 @@ export class LibClientPageService extends RepositoryService {
    */
   async createPage(createPageDto: BaseClientPageDto) {
     // 验证页面编码是否已存在
-    const existingByCode = await this.clientPage.findFirst({
+    const existingByCode = await this.clientPage.findUnique({
       where: { code: createPageDto.code },
+      select: { code: true, path: true },
     })
     if (existingByCode) {
       throw new BadRequestException(`页面编码 "${createPageDto.code}" 已存在`)

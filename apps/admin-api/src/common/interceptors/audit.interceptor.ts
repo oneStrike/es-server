@@ -1,7 +1,6 @@
 import type { FastifyRequest } from 'fastify'
 // 导入 AuditMetadata 类型
 import type { AuditMetadata } from '../decorators/audit.decorator'
-import { ActionTypeEnum } from '@libs/base/types'
 import {
   CallHandler,
   ExecutionContext,
@@ -11,6 +10,7 @@ import {
 import { Reflector } from '@nestjs/core'
 import { catchError, Observable, tap } from 'rxjs'
 
+import { ActionTypeEnum } from '../../modules/system/audit/audit.constant'
 import { AuditService } from '../../modules/system/audit/audit.service'
 
 @Injectable()
