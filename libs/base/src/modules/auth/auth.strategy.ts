@@ -1,5 +1,5 @@
 import type { AuthConfigInterface } from '@libs/base/types'
-import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy, StrategyOptions } from 'passport-jwt'
@@ -27,7 +27,7 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
 
   constructor(
     private readonly jwtBlacklistService: JwtBlacklistService,
-    private readonly configService: ConfigService,
+    @Inject(ConfigService) private readonly configService: ConfigService,
   ) {
     // 获取并验证必要的配置
     const authConfig = configService.get<AuthConfigInterface>('auth')
