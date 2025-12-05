@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 import { UploadResponseDto } from '@libs/base/dto'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { v4 as uuidv4 } from 'uuid'
 import {
@@ -32,7 +32,7 @@ export class UploadService {
   private readonly uploadConfig: UploadConfigInterface
   private readonly fileUrlPrefix: string
 
-  constructor(private configService: ConfigService) {
+  constructor(@Inject(ConfigService) private configService: ConfigService) {
     this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
     this.fileUrlPrefix = this.configService.get('app.fileUrlPrefix')!
   }

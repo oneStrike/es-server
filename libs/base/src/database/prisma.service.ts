@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationShutdown } from '@nestjs/common'
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import {
@@ -30,7 +30,9 @@ export type PrismaClientType = ReturnType<typeof makePrismaClient>
 export class PrismaService implements OnApplicationShutdown {
   public readonly client: PrismaClientType
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    @Inject(ConfigService) private readonly configService: ConfigService,
+  ) {
     const DATABASE_URL = this.configService.get('db.connection.url')
     this.client = makePrismaClient(DATABASE_URL)
   }

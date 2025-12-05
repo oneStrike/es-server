@@ -3,7 +3,7 @@ import type { LoggerConfig } from './types'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { createLogger, format, transports } from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'
@@ -21,7 +21,9 @@ export class LoggerService {
   // 默认日志器实例
   private logger: Logger
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    @Inject(ConfigService) private readonly configService: ConfigService,
+  ) {
     // 初始化默认日志器
     this.logger = createLogger(this.buildLoggerOptions())
   }
