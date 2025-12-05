@@ -1,4 +1,5 @@
-import KeyvRedis from '@keyv/redis'
+import { createKeyv } from '@keyv/redis'
+import { isDevelopment } from '@libs/base/utils'
 import { CacheModule } from '@nestjs/cache-manager'
 import { DynamicModule, Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
@@ -28,20 +29,12 @@ export class CustomCacheModule {
 
           return {
             ttl: 0,
-            stores: [
-              new Keyv({
-                store: new KeyvRedis(redisUrl, { namespace }),
-                useKeyPrefix: false,
-                ttl: 0,
-                namespace,
-              }),
-              new Keyv({
-                store: new CacheableMemory({
-                  ttl: 0,
-                  lruSize: 5000,
-                }),
-              }),
-            ],
+            namespace,
+            stores: isDevelopment()
+              ? new Keyv({
+                  store: new CacheableMemory({ lruSize: 5000 }),
+                })
+              : createKeyv(redisUrl, { namespace }),
           }
         },
       }),
