@@ -49,8 +49,7 @@ export class HealthController {
     const uploadPath = upload?.uploadDir || process.cwd()
     return this.health.check([
       async () => this.healthService.ping('database'),
-      async () => this.healthService.checkMemory('cache_memory'),
-      async () => this.healthService.checkRedis('cache_redis'),
+      async () => this.healthService.checkCacheByEnv('cache'),
       async () =>
         this.disk.checkStorage('disk', {
           path: uploadPath,

@@ -1,5 +1,6 @@
 import type { Cache } from 'cache-manager'
 import { PrismaService } from '@libs/base/database'
+import { isDevelopment, isProduction } from '@libs/base/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 import { HealthIndicatorService } from '@nestjs/terminus'
@@ -104,5 +105,26 @@ export class HealthService {
     } catch (error) {
       return indicator.down({ error: String(error) })
     }
+  }
+
+  /**
+   * 根据环境检查相应类型的缓存健康状态
+   * 开发环境只检查内存缓存，生产环境只检查Redis缓存
+   * @param key 健康检查标识符
+   * @returns HealthIndicatorResult
+   */
+  async checkCacheByEnv(key = 'cache') {
+    // 开发环境和测试环境只检查内存缓存
+    if (isDevelopment()) {
+      return this.checkMemory(key)
+    }
+
+    // 生产环境只检查Redis缓存
+    if (isProduction()) {
+      return this.checkRedis(key)
+    }
+
+    // 默认情况下（如其他环境）检查内存缓存
+    return this.checkMemory(key)
   }
 }
