@@ -40,6 +40,5 @@ model ClientNotice {
   @@index([createdAt]) // 按创建时间查询
   @@index([pageId]) // 外键索引
   @@index([showAsPopup, isPublished]) // 弹窗通知查询
-  @@index([readCount]) // 热门通知查询
   @@map("client_notice")
 }
