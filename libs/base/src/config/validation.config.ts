@@ -63,7 +63,6 @@ export const environmentValidationSchema = Joi.object({
   // 文件上传配置
   UPLOAD_DIR: Joi.string().required(),
   UPLOAD_MAX_FILE_SIZE: Joi.string().required(),
-  UPLOAD_MAX_FILES: Joi.number().min(1).required(),
 
   // 文件上传配置（兼容旧配置）
   MAX_UPLOAD_SIZE: Joi.number().optional(),

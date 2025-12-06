@@ -12,8 +12,6 @@ interface fileTypeConfig {
 export interface UploadConfigInterface {
   /** 最大文件大小 (字节) */
   maxFileSize: number
-  /** 最大文件数量 */
-  maxFiles: number
   /** 允许的文件类型 */
   allowedMimeTypes: string[]
   /** 允许的文件扩展名 */
@@ -249,7 +247,6 @@ const fileSizeMap = {
 const {
   UPLOAD_DIR,
   UPLOAD_MAX_FILE_SIZE = '100MB',
-  UPLOAD_MAX_FILES = 10,
 } = process.env
 // 解析上传文件大小配置
 const sizeUnit = UPLOAD_MAX_FILE_SIZE.slice(-2) as keyof typeof fileSizeMap
@@ -267,10 +264,8 @@ const {
 
 const maxFileSize =
   Number(UPLOAD_MAX_FILE_SIZE.slice(0, -2)) * fileSizeMap[sizeUnit]
-const maxFiles = Number(UPLOAD_MAX_FILES)
 export const UploadConfig = {
   maxFileSize,
-  maxFiles,
   uploadDir: UPLOAD_DIR
     ? isAbsolute(UPLOAD_DIR)
       ? UPLOAD_DIR
