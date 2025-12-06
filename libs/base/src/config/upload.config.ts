@@ -239,17 +239,39 @@ class FileTypeConfigProcessor {
 }
 
 const fileSizeMap = {
+  B: 1,
   KB: 1024,
   MB: 1024 * 1024,
   GB: 1024 * 1024 * 1024,
 }
 
-const {
-  UPLOAD_DIR,
-  UPLOAD_MAX_FILE_SIZE = '100MB',
-} = process.env
-// 解析上传文件大小配置
-const sizeUnit = UPLOAD_MAX_FILE_SIZE.slice(-2) as keyof typeof fileSizeMap
+const { UPLOAD_DIR, UPLOAD_MAX_FILE_SIZE = '100MB' } = process.env
+
+// 解析上传文件大小配置 - 修复单位处理逻辑
+let maxFileSize: number
+const normalizedSize = UPLOAD_MAX_FILE_SIZE.trim().toUpperCase()
+
+// 尝试匹配不同格式的单位
+const sizeMatch = normalizedSize.match(/^(\d+)([BKMGT]?B?)$/)
+if (sizeMatch) {
+  const [, sizeStr, unit] = sizeMatch
+  const size = Number(sizeStr)
+  const normalizedUnit = unit || 'B' // 默认为字节
+
+  // 确保单位是有效的
+  const validUnit =
+    normalizedUnit === 'B' ||
+    normalizedUnit === 'KB' ||
+    normalizedUnit === 'MB' ||
+    normalizedUnit === 'GB'
+      ? normalizedUnit
+      : 'MB'
+
+  maxFileSize = size * fileSizeMap[validUnit]
+} else {
+  // 如果解析失败，使用默认值100MB
+  maxFileSize = 100 * fileSizeMap.MB
+}
 
 // 使用配置处理器统一处理所有文件类型
 const {
@@ -261,9 +283,6 @@ const {
   allowedMimeTypes,
   allowedExtensions,
 } = FileTypeConfigProcessor.processAllFileTypes()
-
-const maxFileSize =
-  Number(UPLOAD_MAX_FILE_SIZE.slice(0, -2)) * fileSizeMap[sizeUnit]
 export const UploadConfig = {
   maxFileSize,
   uploadDir: UPLOAD_DIR
@@ -298,5 +317,5 @@ export const UploadConfig = {
 }
 /**
  * 注册上传配置
- */
+ */ // 注册上传配置
 export const UploadConfigRegister = registerAs('upload', () => UploadConfig)

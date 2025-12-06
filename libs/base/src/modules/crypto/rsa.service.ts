@@ -51,7 +51,6 @@ export class RsaService {
   /**
    * 使用RSA私钥解密数据
    * @param encryptedData 加密后的数据（Base64编码）
-   * @param keyType 密钥类型，默认为通用密钥
    * @returns 解密后的数据
    */
   decrypt(encryptedData: string): string {

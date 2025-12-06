@@ -2069,7 +2069,6 @@ export const ClientNoticeScalarFieldEnum = {
   enablePlatform: 'enablePlatform',
   isPinned: 'isPinned',
   showAsPopup: 'showAsPopup',
-  readCount: 'readCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2084,6 +2083,7 @@ export const ClientPageScalarFieldEnum = {
   name: 'name',
   title: 'title',
   accessLevel: 'accessLevel',
+  enablePlatform: 'enablePlatform',
   isEnabled: 'isEnabled',
   description: 'description',
   createdAt: 'createdAt',

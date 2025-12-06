@@ -45,14 +45,19 @@ export async function setupMultipart(
 
   // 注册multipart插件
   await fastifyAdapter.register(fastifyMultipart, {
-    throwFileSizeLimit: true, // 启用文件大小限制异常抛出
+    // 启用文件大小限制异常抛出
+    throwFileSizeLimit: true,
+    // 全局文件大小限制，直接传递给插件
+    fileSize: uploadConfig.maxFileSize,
+    attachFieldsToBody: 'keyValues', // 确保字段值也被包含在body中
+    // 其他限制配置
     limits: {
       fieldNameSize: 100, // 字段名称最大长度
       fieldSize: 100 * 1024, // 字段值最大长度 (100KB)
       fields: 10, // 最大字段数量
-      files: uploadConfig.maxFiles, // 最大文件数量
-      fileSize: uploadConfig.maxFileSize, // 全局文件大小限制
+      files: 1, // 最大文件数量，单文件模式
       parts: 1000, // 最大part数量
+      fileSize: uploadConfig.maxFileSize, // 确保在limits对象中也设置文件大小限制
     },
   })
 }
