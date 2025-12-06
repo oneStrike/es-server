@@ -32,7 +32,6 @@ export type ClientNoticeAvgAggregateOutputType = {
   priorityLevel: number | null
   pageId: number | null
   enablePlatform: number | null
-  readCount: number | null
 }
 
 export type ClientNoticeSumAggregateOutputType = {
@@ -41,7 +40,6 @@ export type ClientNoticeSumAggregateOutputType = {
   priorityLevel: number | null
   pageId: number | null
   enablePlatform: number | null
-  readCount: number | null
 }
 
 export type ClientNoticeMinAggregateOutputType = {
@@ -58,7 +56,6 @@ export type ClientNoticeMinAggregateOutputType = {
   enablePlatform: number | null
   isPinned: boolean | null
   showAsPopup: boolean | null
-  readCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -77,7 +74,6 @@ export type ClientNoticeMaxAggregateOutputType = {
   enablePlatform: number | null
   isPinned: boolean | null
   showAsPopup: boolean | null
-  readCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -96,7 +92,6 @@ export type ClientNoticeCountAggregateOutputType = {
   enablePlatform: number
   isPinned: number
   showAsPopup: number
-  readCount: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -109,7 +104,6 @@ export type ClientNoticeAvgAggregateInputType = {
   priorityLevel?: true
   pageId?: true
   enablePlatform?: true
-  readCount?: true
 }
 
 export type ClientNoticeSumAggregateInputType = {
@@ -118,7 +112,6 @@ export type ClientNoticeSumAggregateInputType = {
   priorityLevel?: true
   pageId?: true
   enablePlatform?: true
-  readCount?: true
 }
 
 export type ClientNoticeMinAggregateInputType = {
@@ -135,7 +128,6 @@ export type ClientNoticeMinAggregateInputType = {
   enablePlatform?: true
   isPinned?: true
   showAsPopup?: true
-  readCount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -154,7 +146,6 @@ export type ClientNoticeMaxAggregateInputType = {
   enablePlatform?: true
   isPinned?: true
   showAsPopup?: true
-  readCount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -173,7 +164,6 @@ export type ClientNoticeCountAggregateInputType = {
   enablePlatform?: true
   isPinned?: true
   showAsPopup?: true
-  readCount?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -279,7 +269,6 @@ export type ClientNoticeGroupByOutputType = {
   enablePlatform: number
   isPinned: boolean
   showAsPopup: boolean
-  readCount: number
   createdAt: Date
   updatedAt: Date
   _count: ClientNoticeCountAggregateOutputType | null
@@ -321,7 +310,6 @@ export type ClientNoticeWhereInput = {
   enablePlatform?: Prisma.IntFilter<"ClientNotice"> | number
   isPinned?: Prisma.BoolFilter<"ClientNotice"> | boolean
   showAsPopup?: Prisma.BoolFilter<"ClientNotice"> | boolean
-  readCount?: Prisma.IntFilter<"ClientNotice"> | number
   createdAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   clientPage?: Prisma.XOR<Prisma.ClientPageNullableScalarRelationFilter, Prisma.ClientPageWhereInput> | null
@@ -341,7 +329,6 @@ export type ClientNoticeOrderByWithRelationInput = {
   enablePlatform?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
-  readCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   clientPage?: Prisma.ClientPageOrderByWithRelationInput
@@ -364,7 +351,6 @@ export type ClientNoticeWhereUniqueInput = Prisma.AtLeast<{
   enablePlatform?: Prisma.IntFilter<"ClientNotice"> | number
   isPinned?: Prisma.BoolFilter<"ClientNotice"> | boolean
   showAsPopup?: Prisma.BoolFilter<"ClientNotice"> | boolean
-  readCount?: Prisma.IntFilter<"ClientNotice"> | number
   createdAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   clientPage?: Prisma.XOR<Prisma.ClientPageNullableScalarRelationFilter, Prisma.ClientPageWhereInput> | null
@@ -384,7 +370,6 @@ export type ClientNoticeOrderByWithAggregationInput = {
   enablePlatform?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
-  readCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ClientNoticeCountOrderByAggregateInput
@@ -411,7 +396,6 @@ export type ClientNoticeScalarWhereWithAggregatesInput = {
   enablePlatform?: Prisma.IntWithAggregatesFilter<"ClientNotice"> | number
   isPinned?: Prisma.BoolWithAggregatesFilter<"ClientNotice"> | boolean
   showAsPopup?: Prisma.BoolWithAggregatesFilter<"ClientNotice"> | boolean
-  readCount?: Prisma.IntWithAggregatesFilter<"ClientNotice"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ClientNotice"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ClientNotice"> | Date | string
 }
@@ -428,7 +412,6 @@ export type ClientNoticeCreateInput = {
   enablePlatform: number
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   clientPage?: Prisma.ClientPageCreateNestedOneWithoutNoticesInput
@@ -448,7 +431,6 @@ export type ClientNoticeUncheckedCreateInput = {
   enablePlatform: number
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -465,7 +447,6 @@ export type ClientNoticeUpdateInput = {
   enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  readCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   clientPage?: Prisma.ClientPageUpdateOneWithoutNoticesNestedInput
@@ -485,7 +466,6 @@ export type ClientNoticeUncheckedUpdateInput = {
   enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  readCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -504,7 +484,6 @@ export type ClientNoticeCreateManyInput = {
   enablePlatform: number
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -521,7 +500,6 @@ export type ClientNoticeUpdateManyMutationInput = {
   enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  readCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -540,7 +518,6 @@ export type ClientNoticeUncheckedUpdateManyInput = {
   enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  readCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -559,7 +536,6 @@ export type ClientNoticeCountOrderByAggregateInput = {
   enablePlatform?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
-  readCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -570,7 +546,6 @@ export type ClientNoticeAvgOrderByAggregateInput = {
   priorityLevel?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
   enablePlatform?: Prisma.SortOrder
-  readCount?: Prisma.SortOrder
 }
 
 export type ClientNoticeMaxOrderByAggregateInput = {
@@ -587,7 +562,6 @@ export type ClientNoticeMaxOrderByAggregateInput = {
   enablePlatform?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
-  readCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -606,7 +580,6 @@ export type ClientNoticeMinOrderByAggregateInput = {
   enablePlatform?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
-  readCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -617,7 +590,6 @@ export type ClientNoticeSumOrderByAggregateInput = {
   priorityLevel?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
   enablePlatform?: Prisma.SortOrder
-  readCount?: Prisma.SortOrder
 }
 
 export type ClientNoticeListRelationFilter = {
@@ -692,7 +664,6 @@ export type ClientNoticeCreateWithoutClientPageInput = {
   enablePlatform: number
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -710,7 +681,6 @@ export type ClientNoticeUncheckedCreateWithoutClientPageInput = {
   enablePlatform: number
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -758,7 +728,6 @@ export type ClientNoticeScalarWhereInput = {
   enablePlatform?: Prisma.IntFilter<"ClientNotice"> | number
   isPinned?: Prisma.BoolFilter<"ClientNotice"> | boolean
   showAsPopup?: Prisma.BoolFilter<"ClientNotice"> | boolean
-  readCount?: Prisma.IntFilter<"ClientNotice"> | number
   createdAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
 }
@@ -776,7 +745,6 @@ export type ClientNoticeCreateManyClientPageInput = {
   enablePlatform: number
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -793,7 +761,6 @@ export type ClientNoticeUpdateWithoutClientPageInput = {
   enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  readCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -811,7 +778,6 @@ export type ClientNoticeUncheckedUpdateWithoutClientPageInput = {
   enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  readCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -829,7 +795,6 @@ export type ClientNoticeUncheckedUpdateManyWithoutClientPageInput = {
   enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  readCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -850,7 +815,6 @@ export type ClientNoticeSelect<ExtArgs extends runtime.Types.Extensions.Internal
   enablePlatform?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
@@ -870,7 +834,6 @@ export type ClientNoticeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   enablePlatform?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
@@ -890,7 +853,6 @@ export type ClientNoticeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   enablePlatform?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
@@ -910,12 +872,11 @@ export type ClientNoticeSelectScalar = {
   enablePlatform?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
-  readCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ClientNoticeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "noticeType" | "priorityLevel" | "publishStartTime" | "publishEndTime" | "pageId" | "popupBackgroundImage" | "isPublished" | "enablePlatform" | "isPinned" | "showAsPopup" | "readCount" | "createdAt" | "updatedAt", ExtArgs["result"]["clientNotice"]>
+export type ClientNoticeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "noticeType" | "priorityLevel" | "publishStartTime" | "publishEndTime" | "pageId" | "popupBackgroundImage" | "isPublished" | "enablePlatform" | "isPinned" | "showAsPopup" | "createdAt" | "updatedAt", ExtArgs["result"]["clientNotice"]>
 export type ClientNoticeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
 }
@@ -984,10 +945,6 @@ export type $ClientNoticePayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 是否弹窗显示
      */
     showAsPopup: boolean
-    /**
-     * 浏览次数
-     */
-    readCount: number
     /**
      * 创建时间
      */
@@ -1433,7 +1390,6 @@ export interface ClientNoticeFieldRefs {
   readonly enablePlatform: Prisma.FieldRef<"ClientNotice", 'Int'>
   readonly isPinned: Prisma.FieldRef<"ClientNotice", 'Boolean'>
   readonly showAsPopup: Prisma.FieldRef<"ClientNotice", 'Boolean'>
-  readonly readCount: Prisma.FieldRef<"ClientNotice", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ClientNotice", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ClientNotice", 'DateTime'>
 }

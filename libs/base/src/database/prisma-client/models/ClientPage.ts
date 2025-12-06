@@ -29,11 +29,13 @@ export type AggregateClientPage = {
 export type ClientPageAvgAggregateOutputType = {
   id: number | null
   accessLevel: number | null
+  enablePlatform: number | null
 }
 
 export type ClientPageSumAggregateOutputType = {
   id: number | null
   accessLevel: number | null
+  enablePlatform: number | null
 }
 
 export type ClientPageMinAggregateOutputType = {
@@ -43,6 +45,7 @@ export type ClientPageMinAggregateOutputType = {
   name: string | null
   title: string | null
   accessLevel: number | null
+  enablePlatform: number | null
   isEnabled: boolean | null
   description: string | null
   createdAt: Date | null
@@ -56,6 +59,7 @@ export type ClientPageMaxAggregateOutputType = {
   name: string | null
   title: string | null
   accessLevel: number | null
+  enablePlatform: number | null
   isEnabled: boolean | null
   description: string | null
   createdAt: Date | null
@@ -69,6 +73,7 @@ export type ClientPageCountAggregateOutputType = {
   name: number
   title: number
   accessLevel: number
+  enablePlatform: number
   isEnabled: number
   description: number
   createdAt: number
@@ -80,11 +85,13 @@ export type ClientPageCountAggregateOutputType = {
 export type ClientPageAvgAggregateInputType = {
   id?: true
   accessLevel?: true
+  enablePlatform?: true
 }
 
 export type ClientPageSumAggregateInputType = {
   id?: true
   accessLevel?: true
+  enablePlatform?: true
 }
 
 export type ClientPageMinAggregateInputType = {
@@ -94,6 +101,7 @@ export type ClientPageMinAggregateInputType = {
   name?: true
   title?: true
   accessLevel?: true
+  enablePlatform?: true
   isEnabled?: true
   description?: true
   createdAt?: true
@@ -107,6 +115,7 @@ export type ClientPageMaxAggregateInputType = {
   name?: true
   title?: true
   accessLevel?: true
+  enablePlatform?: true
   isEnabled?: true
   description?: true
   createdAt?: true
@@ -120,6 +129,7 @@ export type ClientPageCountAggregateInputType = {
   name?: true
   title?: true
   accessLevel?: true
+  enablePlatform?: true
   isEnabled?: true
   description?: true
   createdAt?: true
@@ -220,6 +230,7 @@ export type ClientPageGroupByOutputType = {
   name: string
   title: string
   accessLevel: number
+  enablePlatform: number
   isEnabled: boolean
   description: string | null
   createdAt: Date
@@ -256,6 +267,7 @@ export type ClientPageWhereInput = {
   name?: Prisma.StringFilter<"ClientPage"> | string
   title?: Prisma.StringFilter<"ClientPage"> | string
   accessLevel?: Prisma.IntFilter<"ClientPage"> | number
+  enablePlatform?: Prisma.IntFilter<"ClientPage"> | number
   isEnabled?: Prisma.BoolFilter<"ClientPage"> | boolean
   description?: Prisma.StringNullableFilter<"ClientPage"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ClientPage"> | Date | string
@@ -270,6 +282,7 @@ export type ClientPageOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -287,6 +300,7 @@ export type ClientPageWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"ClientPage"> | string
   title?: Prisma.StringFilter<"ClientPage"> | string
   accessLevel?: Prisma.IntFilter<"ClientPage"> | number
+  enablePlatform?: Prisma.IntFilter<"ClientPage"> | number
   isEnabled?: Prisma.BoolFilter<"ClientPage"> | boolean
   description?: Prisma.StringNullableFilter<"ClientPage"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ClientPage"> | Date | string
@@ -301,6 +315,7 @@ export type ClientPageOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -322,6 +337,7 @@ export type ClientPageScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"ClientPage"> | string
   title?: Prisma.StringWithAggregatesFilter<"ClientPage"> | string
   accessLevel?: Prisma.IntWithAggregatesFilter<"ClientPage"> | number
+  enablePlatform?: Prisma.IntWithAggregatesFilter<"ClientPage"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ClientPage"> | boolean
   description?: Prisma.StringNullableWithAggregatesFilter<"ClientPage"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ClientPage"> | Date | string
@@ -334,6 +350,7 @@ export type ClientPageCreateInput = {
   name: string
   title: string
   accessLevel?: number
+  enablePlatform: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -348,6 +365,7 @@ export type ClientPageUncheckedCreateInput = {
   name: string
   title: string
   accessLevel?: number
+  enablePlatform: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -361,6 +379,7 @@ export type ClientPageUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -375,6 +394,7 @@ export type ClientPageUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -389,6 +409,7 @@ export type ClientPageCreateManyInput = {
   name: string
   title: string
   accessLevel?: number
+  enablePlatform: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -401,6 +422,7 @@ export type ClientPageUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -414,6 +436,7 @@ export type ClientPageUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -432,6 +455,7 @@ export type ClientPageCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -441,6 +465,7 @@ export type ClientPageCountOrderByAggregateInput = {
 export type ClientPageAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
 }
 
 export type ClientPageMaxOrderByAggregateInput = {
@@ -450,6 +475,7 @@ export type ClientPageMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -463,6 +489,7 @@ export type ClientPageMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -472,6 +499,7 @@ export type ClientPageMinOrderByAggregateInput = {
 export type ClientPageSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
 }
 
 export type ClientPageCreateNestedOneWithoutNoticesInput = {
@@ -496,6 +524,7 @@ export type ClientPageCreateWithoutNoticesInput = {
   name: string
   title: string
   accessLevel?: number
+  enablePlatform: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -509,6 +538,7 @@ export type ClientPageUncheckedCreateWithoutNoticesInput = {
   name: string
   title: string
   accessLevel?: number
+  enablePlatform: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -537,6 +567,7 @@ export type ClientPageUpdateWithoutNoticesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -550,6 +581,7 @@ export type ClientPageUncheckedUpdateWithoutNoticesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -594,6 +626,7 @@ export type ClientPageSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   name?: boolean
   title?: boolean
   accessLevel?: boolean
+  enablePlatform?: boolean
   isEnabled?: boolean
   description?: boolean
   createdAt?: boolean
@@ -609,6 +642,7 @@ export type ClientPageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   name?: boolean
   title?: boolean
   accessLevel?: boolean
+  enablePlatform?: boolean
   isEnabled?: boolean
   description?: boolean
   createdAt?: boolean
@@ -622,6 +656,7 @@ export type ClientPageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   name?: boolean
   title?: boolean
   accessLevel?: boolean
+  enablePlatform?: boolean
   isEnabled?: boolean
   description?: boolean
   createdAt?: boolean
@@ -635,13 +670,14 @@ export type ClientPageSelectScalar = {
   name?: boolean
   title?: boolean
   accessLevel?: boolean
+  enablePlatform?: boolean
   isEnabled?: boolean
   description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ClientPageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "path" | "name" | "title" | "accessLevel" | "isEnabled" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["clientPage"]>
+export type ClientPageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "path" | "name" | "title" | "accessLevel" | "enablePlatform" | "isEnabled" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["clientPage"]>
 export type ClientPageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   notices?: boolean | Prisma.ClientPage$noticesArgs<ExtArgs>
   _count?: boolean | Prisma.ClientPageCountOutputTypeDefaultArgs<ExtArgs>
@@ -682,6 +718,10 @@ export type $ClientPagePayload<ExtArgs extends runtime.Types.Extensions.Internal
      * 访问权限级别（0:游客可访问, 1:需要登录, 2:需要会员, 3:需要VIP）
      */
     accessLevel: number
+    /**
+     * 启用的平台（bitmask：1=H5, 2=APP, 4=小程序）
+     */
+    enablePlatform: number
     /**
      * 页面启用状态
      */
@@ -1128,6 +1168,7 @@ export interface ClientPageFieldRefs {
   readonly name: Prisma.FieldRef<"ClientPage", 'String'>
   readonly title: Prisma.FieldRef<"ClientPage", 'String'>
   readonly accessLevel: Prisma.FieldRef<"ClientPage", 'Int'>
+  readonly enablePlatform: Prisma.FieldRef<"ClientPage", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"ClientPage", 'Boolean'>
   readonly description: Prisma.FieldRef<"ClientPage", 'String'>
   readonly createdAt: Prisma.FieldRef<"ClientPage", 'DateTime'>

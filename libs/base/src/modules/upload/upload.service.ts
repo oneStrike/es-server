@@ -19,7 +19,7 @@ import {
   getFileExtension,
   renameFile,
 } from './utils/upload-stream.util'
-import { validateFile, validateFileSize } from './utils/upload-validator.util'
+import { validateFile } from './utils/upload-validator.util'
 
 const pump = promisify(pipeline)
 
@@ -40,35 +40,34 @@ export class UploadService {
   /**
    * 上传单个文件
    * @param data Fastify multipart数据
-   * @param scene 场景
    * @returns 上传结果
    */
-  async uploadFile(
-    data: FastifyRequest,
-    scene?: string,
-  ): Promise<UploadResponseDto> {
-    if (!scene || !/^[a-z0-9]+$/i.test(scene) || scene.length > 10) {
-      throw new BadRequestException('未知的上传场景')
-    }
-
-    const files = data.files()
-    let fileCount = 0
-    let targetFile: any = null
-
-    // 获取第一个文件（忽略其他文件）
-    for await (const file of files) {
-      if (fileCount === 0) {
-        targetFile = file
-      }
-      fileCount++
-    }
-
+  async uploadFile(data: FastifyRequest): Promise<UploadResponseDto> {
+    const targetFile = await data.file()
     if (!targetFile) {
       throw new BadRequestException('没有有效的文件被上传')
     }
 
-    if (fileCount > 1) {
-      throw new BadRequestException('仅支持单个文件上传')
+    // 获取场景值，处理字段类型
+    let scene: string | undefined
+    const sceneField = targetFile.fields.scene
+    if (sceneField) {
+      // 如果是单个字段
+      if (typeof sceneField === 'object' && 'type' in sceneField) {
+        if (sceneField.type === 'field') {
+          scene = String(sceneField.value)
+        }
+      } else if (Array.isArray(sceneField)) {
+        // 如果是数组，取第一个值
+        const firstField = sceneField[0]
+        if (firstField.type === 'field') {
+          scene = String(firstField.value)
+        }
+      }
+    }
+
+    if (!scene || !/^[a-z0-9]+$/i.test(scene) || scene.length > 10) {
+      throw new BadRequestException('未知的上传场景')
     }
 
     // 验证文件
@@ -101,20 +100,29 @@ export class UploadService {
 
     try {
       // 使用管道流式处理文件
-      await pump(targetFile.file, signatureStream, processingStream, writeStream)
+      await pump(
+        targetFile.file,
+        signatureStream,
+        processingStream,
+        writeStream,
+      )
 
-      // 检查文件是否被截断（超出大小限制）
-      if (targetFile.file.truncated) {
-        // 删除已写入的部分文件
-        cleanupTempFile(tempPath, null)
-        throw new BadRequestException(
-          `文件 ${targetFile.filename} 超出大小限制 ${this.uploadConfig.maxFileSize} 字节`,
-        )
-      }
+      // // 检查文件是否被截断（超出大小限制）
+      // if (targetFile.file.truncated) {
+      //   // 删除已写入的部分文件
+      //   cleanupTempFile(tempPath, null)
+      //   throw new BadRequestException(
+      //     `文件 ${targetFile.filename} 超出大小限制 ${this.uploadConfig.maxFileSize} 字节`,
+      //   )
+      // }
 
       const fileSize = getSize()
       // 二次验证文件大小（防止流处理过程中的边界情况）
-      validateFileSize(fileSize, this.uploadConfig.maxFileSize, targetFile.filename)
+      // validateFileSize(
+      //   fileSize,
+      //   this.uploadConfig.maxFileSize,
+      //   targetFile.filename,
+      // )
 
       // 恶意文件检测预留扩展点
       await this.detectMaliciousFile(tempPath, targetFile)
@@ -157,7 +165,10 @@ export class UploadService {
    * @param _filePath 文件路径
    * @param _file 文件对象
    */
-  private async detectMaliciousFile(_filePath: string, _file: any): Promise<void> {
+  private async detectMaliciousFile(
+    _filePath: string,
+    _file: any,
+  ): Promise<void> {
     // TODO: 集成恶意文件检测接口
     // 目前为预留扩展点，后续可添加具体实现
     // 例如：调用ClamAV、Virustotal等第三方API
