@@ -2,7 +2,7 @@ import type { FastifyRequest } from 'fastify'
 import { ApiDoc } from '@libs/base/decorators'
 import { UploadFileDto, UploadResponseDto } from '@libs/base/dto'
 import { UploadService } from '@libs/base/modules'
-import { Body, Controller, Post, Query, Req } from '@nestjs/common'
+import { Body, Controller, Post, Req } from '@nestjs/common'
 
 import { ApiTags } from '@nestjs/swagger'
 
@@ -15,12 +15,12 @@ export class UploadController {
   @ApiDoc({
     summary: '上传文件',
     model: UploadResponseDto,
-    isArray: true,
+    isArray: false,
   })
-  async uploadMultiple(
+  async uploadFile(
     @Req() req: FastifyRequest,
     @Body() body: UploadFileDto,
   ) {
-    return this.uploadService.uploadMultipleFiles(req, body.scene)
+    return this.uploadService.uploadFile(req, body.scene)
   }
 }
