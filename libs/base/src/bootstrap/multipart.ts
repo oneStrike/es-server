@@ -1,4 +1,5 @@
 import type { UploadConfigInterface } from '@libs/base/config'
+import type { AppConfigInterface } from '@libs/base/types'
 import type {
   FastifyAdapter,
   NestFastifyApplication,
@@ -15,10 +16,10 @@ export async function setupMultipart(
 ) {
   const configService = app.get(ConfigService)
   const uploadConfig = configService.get<UploadConfigInterface>('upload')!
-  const appConfig = configService.get('app')!
+  const appConfig = configService.get<AppConfigInterface>('app')!
 
   // 确保上传目录存在（在挂载的宿主机目录下递归创建）
-  await mkdir(uploadConfig.uploadDir, { recursive: true })
+  await mkdir(uploadConfig.uploadDir!, { recursive: true })
 
   // 注册静态文件服务
   await fastifyAdapter.register(fastifyStatic, {
@@ -32,10 +33,10 @@ export async function setupMultipart(
     // 针对文档与压缩包类型强制以附件方式下载，降低 XSS 风险
     setHeaders(res: any, filePath: string) {
       try {
-        const { document, archive } = uploadConfig.allowFile
+        const { document, archive } = uploadConfig.allowMimeTypes
         const ext = extname(filePath).toLowerCase()
-        const isDoc = document.extensions.includes(ext)
-        const isArchive = archive.extensions.includes(ext)
+        const isDoc = document?.includes(ext)
+        const isArchive = archive?.includes(ext)
         if (isDoc || isArchive) {
           res.setHeader('Content-Disposition', 'attachment')
         }
