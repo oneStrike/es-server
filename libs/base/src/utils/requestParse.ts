@@ -137,10 +137,14 @@ export function extractRequestParams(req: FastifyRequest): string | undefined {
       params.params = req.params
       hasParams = true
     }
+    // 密码字段
     delete params?.body?.password
+    // 上传文件字段，无法被json转换
+    delete params?.body?.scene
+    delete params?.body?.file
     return hasParams ? JSON.stringify(params) : undefined
   } catch (error) {
-    console.warn('Failed to extract request params:', error)
+    console.warn('提取请求参数失败:', error)
     return undefined
   }
 }
@@ -156,7 +160,7 @@ export function extractUserAgent(req: FastifyRequest): string | undefined {
     const userAgent = req.headers['user-agent']
     return typeof userAgent === 'string' ? userAgent.trim() : undefined
   } catch (error) {
-    console.warn('Failed to extract user agent:', error)
+    console.warn('提取用户代理失败:', error)
     return undefined
   }
 }
@@ -279,7 +283,7 @@ export function extractApiType(path: string): ApiTypeEnum | undefined {
 
     return undefined
   } catch (error) {
-    console.warn('Failed to extract API type:', error)
+    console.warn('提取API类型失败:', error)
     return undefined
   }
 }
@@ -311,7 +315,7 @@ export function parseRequestLogFields(req: FastifyRequest): ParsedRequestData {
       apiType: extractApiType(path),
     }
   } catch (error) {
-    console.error('Failed to parse request log fields:', error)
+    console.error('解析请求日志字段失败:', error)
     throw new Error(
       `Request parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
     )

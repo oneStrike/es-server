@@ -57,7 +57,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     })
 
     const errorResponse = {
-      status,
+      code: status,
+      data: null,
       message,
       traceId,
     }
