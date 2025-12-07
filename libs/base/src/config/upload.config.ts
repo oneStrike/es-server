@@ -58,11 +58,7 @@ export const allowMimeTypesFlat = Object.values(allowMimeTypes).flat()
 
 export const UploadConfig = {
   maxFileSize: parseBytes(UPLOAD_MAX_FILE_SIZE),
-  uploadDir: UPLOAD_DIR
-    ? isAbsolute(UPLOAD_DIR)
-      ? UPLOAD_DIR
-      : resolve(UPLOAD_DIR)
-    : undefined,
+  uploadDir: isAbsolute(UPLOAD_DIR) ? UPLOAD_DIR : resolve(UPLOAD_DIR),
   allowExtensions,
   allowExtensionsFlat,
   allowMimeTypes,
