@@ -1,25 +1,19 @@
 import type { UploadConfigInterface } from '@libs/base/config'
 import type { FastifyRequest } from 'fastify'
+import fs from 'node:fs'
 import { join } from 'node:path'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 import { UploadResponseDto } from '@libs/base/dto'
 import { BadRequestException, Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { fileTypeFromStream } from 'file-type'
 import { v4 as uuidv4 } from 'uuid'
 import {
   generateFilePath,
   sanitizeOriginalName,
 } from './utils/upload-path.util'
-import { createSignatureCheckStream } from './utils/upload-signature.util'
-import {
-  cleanupTempFile,
-  createFileProcessingStream,
-  createWriteStream,
-  getFileExtension,
-  renameFile,
-} from './utils/upload-stream.util'
-import { validateFile } from './utils/upload-validator.util'
+import { cleanupTempFile } from './utils/upload-stream.util'
 
 const pump = promisify(pipeline)
 
@@ -38,6 +32,51 @@ export class UploadService {
   }
 
   /**
+   * 清理临时文件
+   * @param filePath 临时文件路径
+   */
+  cleanupTempFile(filePath: string): void {
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath)
+      }
+    } catch (error: any) {
+      throw new BadRequestException(`上传文件时出错: ${error.message}`)
+    }
+  }
+
+  /**
+   * 生成文件保存路径
+   * @param uploadPath 基础上传路径
+   * @param fileType 文件类型分类
+   * @param scene 场景名称
+   * @returns 完整的文件保存路径
+   */
+  generateFilePath(uploadPath: string, fileType: string, scene: string) {
+    // 参数验证
+    if (!uploadPath || !fileType) {
+      throw new Error('上传失败')
+    }
+
+    // 使用现代日期处理方式生成日期字符串
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+    const savePath = join(uploadPath, dateStr, fileType, scene)
+    if (!fs.existsSync(savePath)) {
+      try {
+        fs.mkdirSync(savePath, { recursive: true, mode: 0o755 })
+      } catch {
+        throw new Error(`上传失败`)
+      }
+    }
+    // 安全地拼接路径
+    return join(uploadPath, dateStr, fileType, scene)
+  }
+
+  /**
    * 上传单个文件
    * @param data Fastify multipart数据
    * @returns 上传结果
@@ -47,13 +86,16 @@ export class UploadService {
     if (!targetFile) {
       throw new BadRequestException('没有有效的文件被上传')
     }
-    // 签名校验流（防伪造 Content-Type）
-    const ext = getFileExtension(targetFile.filename)
-    const signatureStream = createSignatureCheckStream(
-      targetFile.mimetype,
-      ext,
-      targetFile.filename,
-    )
+
+    const { ext, mime } = (await fileTypeFromStream(targetFile.file)) || {}
+    if (!ext || !mime) {
+      throw new BadRequestException('无法识别文件类型')
+    }
+
+    if (!this.uploadConfig.allowMimeTypesFlat?.includes(mime)) {
+      throw new BadRequestException('文件类型不被允许')
+    }
+
     // 获取场景值，处理字段类型
     let scene: string | undefined
     const sceneField = targetFile.fields.scene
@@ -76,45 +118,26 @@ export class UploadService {
       throw new BadRequestException('未知的上传场景')
     }
 
-    // 验证文件
-    const { fileType } = validateFile(targetFile, this.uploadConfig)
-
     // 生成保存路径
     const savePath = generateFilePath(
       this.uploadConfig.uploadDir,
-      fileType,
+      'image',
       scene,
     )
     // 生成文件名（保留原扩展，规范化小写）
     const tempName = `.${uuidv4()}.uploading`
     const tempPath = join(savePath, tempName)
-    const writeStream = createWriteStream(tempPath)
-
-    // 创建文件处理流
-    const { stream: processingStream, getSize } = createFileProcessingStream(
-      this.uploadConfig,
-      targetFile.filename,
-    )
+    const writeStream = fs.createWriteStream(tempPath)
 
     try {
       // 使用管道流式处理文件
-      await pump(
-        targetFile.file,
-        signatureStream,
-        processingStream,
-        writeStream,
-      )
-
-      const fileSize = getSize()
-
-      // 恶意文件检测预留扩展点
-      await this.detectMaliciousFile(tempPath, targetFile)
+      await pump(targetFile.file, writeStream)
 
       // 生成最终文件名并重命名临时文件
       const finalName = `${uuidv4()}${ext}`
       const finalPath = join(savePath, finalName)
       try {
-        renameFile(tempPath, finalPath)
+        fs.renameSync(tempPath, finalPath)
       } catch (renameError: any) {
         // 重命名失败则清理临时文件并抛出错误
         cleanupTempFile(tempPath, null)
@@ -125,9 +148,9 @@ export class UploadService {
         filename: finalName,
         originalName: sanitizeOriginalName(targetFile.filename),
         filePath: `${this.fileUrlPrefix}${finalPath}`,
-        fileSize,
+        fileSize: 0,
         mimeType: targetFile.mimetype,
-        fileType,
+        fileType: 'image',
         scene,
         uploadTime: new Date(),
       }
@@ -140,21 +163,5 @@ export class UploadService {
       )
       throw error
     }
-  }
-
-  /**
-   * 恶意文件检测（预留扩展点）
-   * 可集成第三方病毒扫描接口
-   * @param _filePath 文件路径
-   * @param _file 文件对象
-   */
-  private async detectMaliciousFile(
-    _filePath: string,
-    _file: any,
-  ): Promise<void> {
-    // TODO: 集成恶意文件检测接口
-    // 目前为预留扩展点，后续可添加具体实现
-    // 例如：调用ClamAV、Virustotal等第三方API
-    return Promise.resolve()
   }
 }
