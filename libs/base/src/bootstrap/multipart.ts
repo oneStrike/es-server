@@ -49,7 +49,6 @@ export async function setupMultipart(
     throwFileSizeLimit: true,
     // 全局文件大小限制，直接传递给插件
     fileSize: uploadConfig.maxFileSize,
-    attachFieldsToBody: 'keyValues', // 确保字段值也被包含在body中
     // 其他限制配置
     limits: {
       fieldNameSize: 100, // 字段名称最大长度

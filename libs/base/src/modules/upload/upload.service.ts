@@ -47,7 +47,13 @@ export class UploadService {
     if (!targetFile) {
       throw new BadRequestException('没有有效的文件被上传')
     }
-
+    // 签名校验流（防伪造 Content-Type）
+    const ext = getFileExtension(targetFile.filename)
+    const signatureStream = createSignatureCheckStream(
+      targetFile.mimetype,
+      ext,
+      targetFile.filename,
+    )
     // 获取场景值，处理字段类型
     let scene: string | undefined
     const sceneField = targetFile.fields.scene
@@ -80,7 +86,6 @@ export class UploadService {
       scene,
     )
     // 生成文件名（保留原扩展，规范化小写）
-    const ext = getFileExtension(targetFile.filename)
     const tempName = `.${uuidv4()}.uploading`
     const tempPath = join(savePath, tempName)
     const writeStream = createWriteStream(tempPath)
@@ -88,13 +93,6 @@ export class UploadService {
     // 创建文件处理流
     const { stream: processingStream, getSize } = createFileProcessingStream(
       this.uploadConfig,
-      targetFile.filename,
-    )
-
-    // 签名校验流（防伪造 Content-Type）
-    const signatureStream = createSignatureCheckStream(
-      targetFile.mimetype,
-      ext,
       targetFile.filename,
     )
 
@@ -107,22 +105,7 @@ export class UploadService {
         writeStream,
       )
 
-      // // 检查文件是否被截断（超出大小限制）
-      // if (targetFile.file.truncated) {
-      //   // 删除已写入的部分文件
-      //   cleanupTempFile(tempPath, null)
-      //   throw new BadRequestException(
-      //     `文件 ${targetFile.filename} 超出大小限制 ${this.uploadConfig.maxFileSize} 字节`,
-      //   )
-      // }
-
       const fileSize = getSize()
-      // 二次验证文件大小（防止流处理过程中的边界情况）
-      // validateFileSize(
-      //   fileSize,
-      //   this.uploadConfig.maxFileSize,
-      //   targetFile.filename,
-      // )
 
       // 恶意文件检测预留扩展点
       await this.detectMaliciousFile(tempPath, targetFile)
