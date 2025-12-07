@@ -84,15 +84,17 @@ export class UploadService {
   async uploadFile(data: FastifyRequest): Promise<UploadResponseDto> {
     const targetFile = await data.file()
     if (!targetFile) {
-      throw new BadRequestException('上传文 ')
+      throw new BadRequestException('上传文件不能为空')
     }
 
     const { ext, mime } = (await fileTypeFromStream(targetFile.file)) || {}
     if (!ext || !mime) {
-      throw new BadRequestException('无法识别的文件类型')
+      targetFile.file.destroy()
+      throw new BadRequestException('无法识别文件类型')
     }
 
     if (!this.uploadConfig.allowMimeTypesFlat?.includes(mime)) {
+      targetFile.file.destroy()
       throw new BadRequestException('文件类型不被允许')
     }
 
