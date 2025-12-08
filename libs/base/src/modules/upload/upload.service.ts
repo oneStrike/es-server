@@ -1,19 +1,19 @@
 import type { UploadConfigInterface } from '@libs/base/config'
 import type { FastifyRequest } from 'fastify'
-import fs from 'node:fs'
 import { join } from 'node:path'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 import { UploadResponseDto } from '@libs/base/dto'
-import { BadRequestException, Inject, Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  PayloadTooLargeException,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { fileTypeFromStream } from 'file-type'
+import fs from 'fs-extra'
 import { v4 as uuidv4 } from 'uuid'
-import {
-  generateFilePath,
-  sanitizeOriginalName,
-} from './utils/upload-path.util'
-import { cleanupTempFile } from './utils/upload-stream.util'
 
 const pump = promisify(pipeline)
 
@@ -29,20 +29,6 @@ export class UploadService {
   constructor(@Inject(ConfigService) private configService: ConfigService) {
     this.uploadConfig = this.configService.get<UploadConfigInterface>('upload')!
     this.fileUrlPrefix = this.configService.get('app.fileUrlPrefix')!
-  }
-
-  /**
-   * 清理临时文件
-   * @param filePath 临时文件路径
-   */
-  cleanupTempFile(filePath: string): void {
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath)
-      }
-    } catch (error: any) {
-      throw new BadRequestException(`上传文件时出错: ${error.message}`)
-    }
   }
 
   /**
@@ -65,15 +51,23 @@ export class UploadService {
     const day = String(today.getDate()).padStart(2, '0')
     const dateStr = `${year}-${month}-${day}`
     const savePath = join(uploadPath, dateStr, fileType, scene)
-    if (!fs.existsSync(savePath)) {
-      try {
-        fs.mkdirSync(savePath, { recursive: true, mode: 0o755 })
-      } catch {
-        throw new Error(`上传失败`)
+    fs.ensureDirSync(savePath, 0o755)
+    // 安全地拼接路径
+    return savePath
+  }
+
+  /**
+   * 根据文件扩展名获取文件类型
+   * @param ext 文件扩展名（带点）
+   * @returns 文件类型分类（如image、audio等）
+   */
+  getFileTypeFromExt(ext: string) {
+    ext = ext.toLowerCase() // 转换为小写
+    for (const type in this.uploadConfig.allowExtensions) {
+      if (this.uploadConfig.allowExtensions[type].includes(ext)) {
+        return type
       }
     }
-    // 安全地拼接路径
-    return join(uploadPath, dateStr, fileType, scene)
   }
 
   /**
@@ -83,8 +77,9 @@ export class UploadService {
    */
   async uploadFile(data: FastifyRequest): Promise<UploadResponseDto> {
     const targetFile = await data.file()
+    console.log(targetFile)
     if (!targetFile) {
-      throw new BadRequestException('上传文 ')
+      throw new BadRequestException('上传文件不能为空')
     }
 
     const { ext, mime } = (await fileTypeFromStream(targetFile.file)) || {}
@@ -93,7 +88,7 @@ export class UploadService {
     }
 
     if (!this.uploadConfig.allowMimeTypesFlat?.includes(mime)) {
-      throw new BadRequestException('文件类型不被允许')
+      throw new BadRequestException('不被允许的文件类型')
     }
 
     // 获取场景值，处理字段类型
@@ -119,49 +114,46 @@ export class UploadService {
     }
 
     // 生成保存路径
-    const savePath = generateFilePath(
+    const fileType = this.getFileTypeFromExt(ext)
+    if (!fileType) {
+      throw new BadRequestException('未知的文件类型')
+    }
+    const savePath = this.generateFilePath(
       this.uploadConfig.uploadDir,
-      'image',
+      fileType,
       scene,
     )
     // 生成文件名（保留原扩展，规范化小写）
     const tempName = `.${uuidv4()}.uploading`
     const tempPath = join(savePath, tempName)
     const writeStream = fs.createWriteStream(tempPath)
-
     try {
       // 使用管道流式处理文件
       await pump(targetFile.file, writeStream)
-
-      // 生成最终文件名并重命名临时文件
-      const finalName = `${uuidv4()}${ext}`
-      const finalPath = join(savePath, finalName)
-      try {
-        fs.renameSync(tempPath, finalPath)
-      } catch (renameError: any) {
-        // 重命名失败则清理临时文件并抛出错误
-        cleanupTempFile(tempPath, null)
-        throw renameError
+      if (targetFile.file.truncated) {
+        throw new PayloadTooLargeException('文件大小超过限制')
       }
+      // 生成最终文件名并重命名临时文件
+      const finalName = `${uuidv4()}.${ext}`
+      const finalPath = join(savePath, finalName)
+      fs.renameSync(tempPath, finalPath)
 
       return {
         filename: finalName,
-        originalName: sanitizeOriginalName(targetFile.filename),
+        originalName: targetFile.filename,
         filePath: `${this.fileUrlPrefix}${finalPath}`,
-        fileSize: 0,
+        fileSize: fs.statSync(finalPath).size,
         mimeType: targetFile.mimetype,
-        fileType: 'image',
+        fileType: ext,
         scene,
         uploadTime: new Date(),
       }
     } catch (error) {
-      // 如果上传失败，尝试删除已创建的文件
-      cleanupTempFile(tempPath, null)
-      console.error(
-        `文件上传失败: ${targetFile.filename} - ${error.message}`,
-        error.stack,
-      )
-      throw error
+      fs.removeSync(tempPath)
+      if (error.response.message) {
+        throw error
+      }
+      throw new BadRequestException('上传文件失败')
     }
   }
 }

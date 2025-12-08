@@ -19,7 +19,7 @@ export async function setupMultipart(
   const appConfig = configService.get<AppConfigInterface>('app')!
 
   // 确保上传目录存在（在挂载的宿主机目录下递归创建）
-  await mkdir(uploadConfig.uploadDir!, { recursive: true })
+  await mkdir(uploadConfig.uploadDir, { recursive: true })
 
   // 注册静态文件服务
   await fastifyAdapter.register(fastifyStatic, {
