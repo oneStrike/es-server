@@ -8,7 +8,7 @@ export const AppConfigRegister = registerAs('app', (): AppConfigInterface => {
     APP_NAME = 'admin-api',
     APP_PORT = '8080',
     APP_VERSION = '1.0.0',
-    APP_FILE_URL_PREFIX = '/files/',
+    APP_FILE_URL_PREFIX = '/files',
     APP_DEFAULT_PASSWORD = 'Aa@123456',
   } = process.env
   return {

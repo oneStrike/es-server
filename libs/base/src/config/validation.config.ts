@@ -19,11 +19,6 @@ export const environmentValidationSchema = Joi.object({
   DB_PAGINATION_PAGE_SIZE: Joi.number().min(1).required(),
   DB_PAGINATION_PAGE_INDEX: Joi.number().min(0).required(),
 
-  // 数据库配置（兼容旧配置）
-  MAX_QUERY_LIST_LIMIT: Joi.number().min(1).optional(),
-  PAGINATION_PAGE_SIZE: Joi.number().min(1).optional(),
-  PAGINATION_PAGE_INDEX: Joi.number().min(0).optional(),
-
   // Redis配置
   REDIS_HOST: Joi.string().required(),
   REDIS_PORT: Joi.number().port().required(),
@@ -38,12 +33,6 @@ export const environmentValidationSchema = Joi.object({
   JWT_JWT_ISSUER: Joi.string().required(),
   JWT_JWT_AUD: Joi.string().optional(),
   JWT_STRATEGY_KEY: Joi.string().optional(),
-
-  // JWT配置（兼容旧配置）
-  EXPIRATION_IN: Joi.string().optional(),
-  REFRESH_EXPIRATION_IN: Joi.string().optional(),
-  JWT_ISSUER: Joi.string().optional(),
-  JWT_AUD: Joi.string().optional(),
 
   // RSA密钥配置
   RSA_PUBLIC_KEY: Joi.string().required(),
@@ -63,8 +52,4 @@ export const environmentValidationSchema = Joi.object({
   // 文件上传配置
   UPLOAD_DIR: Joi.string().required(),
   UPLOAD_MAX_FILE_SIZE: Joi.string().required(),
-
-  // 文件上传配置（兼容旧配置）
-  MAX_UPLOAD_SIZE: Joi.number().optional(),
-  ALLOWED_FILE_TYPES: Joi.string().optional(),
 })
