@@ -10,7 +10,7 @@ import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/enum'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { ActionTypeEnum } from '../audit.constant'
 
-export class AuditDto extends BaseDto {
+export class BaseAuditDto extends BaseDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1001,
@@ -107,7 +107,7 @@ export class AuditDto extends BaseDto {
 /**
  * 创建请求日志DTO
  */
-export class CreateRequestLogDto extends PickType(AuditDto, [
+export class CreateRequestLogDto extends PickType(BaseAuditDto, [
   'userId',
   'content',
   'username',
@@ -116,16 +116,16 @@ export class CreateRequestLogDto extends PickType(AuditDto, [
 ]) {}
 
 export class CreateRequestLogSimpleDto extends IntersectionType(
-  PickType(AuditDto, ['content']),
-  PartialType(PickType(AuditDto, ['username', 'userId'])),
+  PickType(BaseAuditDto, ['content']),
+  PartialType(PickType(BaseAuditDto, ['username', 'userId'])),
 ) {}
 
 /**
  * 请求日志分页查询DTO
  */
-export class RequestLogPageDto extends IntersectionType(
+export class AuditPageRequestDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(AuditDto), [
+  PickType(PartialType(BaseAuditDto), [
     'userId',
     'username',
     'ip',
