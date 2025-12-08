@@ -1,9 +1,11 @@
 import {
+  ValidateBitmask,
   ValidateBoolean,
   ValidateEnum,
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
+import { EnablePlatformEnum } from '@libs/base/enum'
 import {
   IntersectionType,
   OmitType,
@@ -47,6 +49,14 @@ export class BaseClientPageDto extends BaseDto {
     maxLength: 200,
   })
   title!: string
+
+  @ValidateBitmask({
+    description: '启用的平台',
+    example: EnablePlatformEnum.APP,
+    required: true,
+    enum: EnablePlatformEnum,
+  })
+  enablePlatform!: EnablePlatformEnum
 
   @ValidateEnum({
     description: '页面权限级别',
