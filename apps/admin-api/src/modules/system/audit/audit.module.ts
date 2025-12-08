@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common'
+import { AuditController } from './audit.controller'
 import { AuditService } from './audit.service'
 
 /**
@@ -7,7 +8,7 @@ import { AuditService } from './audit.service'
  */
 @Global()
 @Module({
-  controllers: [],
+  controllers: [AuditController],
   providers: [AuditService],
   exports: [AuditService], // 导出服务供其他模块使用
 })
