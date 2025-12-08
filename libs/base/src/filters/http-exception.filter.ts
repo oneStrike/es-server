@@ -25,7 +25,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     /** 文件上传错误代码 */
     FST_REQ_FILE_TOO_LARGE: '上传文件大小超出系统限制',
     FST_FILES_LIMIT: '上传文件数量超出系统限制',
-    FST_INVALID_MULTIPART_CONTENT_TYPE: '上传文件不得为空',
+    FST_INVALID_MULTIPART_CONTENT_TYPE: '上传文件不能为空',
     /** 数据库错误代码 */
     P2025: '未找到相关记录',
     P2002: '唯一约束失败',
