@@ -11,7 +11,7 @@ import {
   PayloadTooLargeException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { fileTypeFromStream } from 'file-type'
+import { fileTypeStream } from 'file-type'
 import fs from 'fs-extra'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -81,15 +81,6 @@ export class UploadService {
       throw new BadRequestException('上传文件不能为空')
     }
 
-    const { ext, mime } = (await fileTypeFromStream(targetFile.file)) || {}
-    if (!ext || !mime) {
-      throw new BadRequestException('无法识别的文件类型')
-    }
-
-    if (!this.uploadConfig.allowMimeTypesFlat?.includes(mime)) {
-      throw new BadRequestException('不被允许的文件类型')
-    }
-
     // 获取场景值，处理字段类型
     let scene: string | undefined
     const sceneField = targetFile.fields.scene
@@ -112,6 +103,18 @@ export class UploadService {
       throw new BadRequestException('未知的上传场景')
     }
 
+    // 使用fileTypeStream函数检测文件类型，返回一个带有fileType属性的流
+    const detectionStream = await fileTypeStream(targetFile.file)
+    // 从流的fileType属性中获取文件类型信息
+    const { ext, mime } = detectionStream.fileType || {}
+    if (!ext || !mime) {
+      throw new BadRequestException('无法识别的文件类型')
+    }
+
+    if (!this.uploadConfig.allowMimeTypesFlat?.includes(mime)) {
+      throw new BadRequestException('不被允许的文件类型')
+    }
+
     // 生成保存路径
     const fileType = this.getFileTypeFromExt(ext)
     if (!fileType) {
@@ -127,8 +130,8 @@ export class UploadService {
     const tempPath = join(savePath, tempName)
     const writeStream = fs.createWriteStream(tempPath)
     try {
-      // 使用管道流式处理文件
-      await pump(targetFile.file, writeStream)
+      // 使用管道流式处理文件，使用detectionStream而不是targetFile.file
+      await pump(detectionStream, writeStream)
       if (targetFile.file.truncated) {
         throw new PayloadTooLargeException('文件大小超过限制')
       }
@@ -145,7 +148,7 @@ export class UploadService {
         originalName: targetFile.filename,
         filePath: `${this.fileUrlPrefix}${relativePath}`,
         fileSize: fs.statSync(finalPath).size,
-        mimeType: targetFile.mimetype,
+        mimeType: mime,
         fileType: ext,
         scene,
         uploadTime: new Date(),
