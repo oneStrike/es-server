@@ -77,7 +77,6 @@ export class UploadService {
    */
   async uploadFile(data: FastifyRequest): Promise<UploadResponseDto> {
     const targetFile = await data.file()
-    console.log(targetFile)
     if (!targetFile) {
       throw new BadRequestException('上传文件不能为空')
     }
@@ -137,11 +136,14 @@ export class UploadService {
       const finalName = `${uuidv4()}.${ext}`
       const finalPath = join(savePath, finalName)
       fs.renameSync(tempPath, finalPath)
+      const relativePath = finalPath
+        .replace(this.uploadConfig.uploadDir, '')
+        .replace(/\\/g, '/')
 
       return {
         filename: finalName,
         originalName: targetFile.filename,
-        filePath: `${this.fileUrlPrefix}${finalPath}`,
+        filePath: `${this.fileUrlPrefix}${relativePath}`,
         fileSize: fs.statSync(finalPath).size,
         mimeType: targetFile.mimetype,
         fileType: ext,
