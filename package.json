@@ -16,7 +16,7 @@
     "start:admin": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=admin-api",
     "start:client": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=client-api",
     "start:all": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=all",
-    "start:nest-dev": "nest start --watch",
+    "start:nest-dev": "nest start admin-api --exec bun --env-file ./apps/admin-api/.env.development",
     "start:debug": "cross-env NODE_ENV=development nest start --debug --watch",
     "start:prod": "node dist/apps/admin-api/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
