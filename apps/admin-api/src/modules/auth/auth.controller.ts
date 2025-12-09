@@ -66,6 +66,10 @@ export class AuthController {
       type: 'boolean',
     },
   })
+  @Audit({
+    actionType: ActionTypeEnum.LOGOUT,
+    content: '管理员退出登录',
+  })
   async logout(@Body() body: TokenDto) {
     return this.authService.logout(body)
   }
