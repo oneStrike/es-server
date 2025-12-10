@@ -37,7 +37,8 @@ export class UserService extends RepositoryService {
     if (!adminUser) {
       throw new NotFoundException('用户不存在')
     }
-    if (adminUser.role !== UserRoleEnum.NORMAL_ADMIN) {
+
+    if (adminUser.role !== UserRoleEnum.SUPER_ADMIN) {
       throw new UnauthorizedException('权限不足')
     }
   }
