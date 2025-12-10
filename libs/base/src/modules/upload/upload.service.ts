@@ -71,6 +71,17 @@ export class UploadService {
   }
 
   /**
+   * 消费流并等待结束，防止连接重置
+   */
+  private async consumeStream(stream: NodeJS.ReadableStream): Promise<void> {
+    return new Promise((resolve) => {
+      stream.on('end', resolve)
+      stream.on('error', resolve)
+      stream.resume()
+    })
+  }
+
+  /**
    * 上传单个文件
    * @param data Fastify multipart数据
    * @returns 上传结果
@@ -100,6 +111,8 @@ export class UploadService {
     }
 
     if (!scene || !/^[a-z0-9]+$/i.test(scene) || scene.length > 10) {
+      // 必须消费完文件流，否则会导致客户端连接重置 (ERR_CONNECTION_RESET)
+      await this.consumeStream(targetFile.file)
       throw new BadRequestException('未知的上传场景')
     }
 
@@ -108,16 +121,19 @@ export class UploadService {
     // 从流的fileType属性中获取文件类型信息
     const { ext, mime } = detectionStream.fileType || {}
     if (!ext || !mime) {
+      await this.consumeStream(detectionStream)
       throw new BadRequestException('无法识别的文件类型')
     }
 
     if (!this.uploadConfig.allowMimeTypesFlat?.includes(mime)) {
+      await this.consumeStream(detectionStream)
       throw new BadRequestException('不被允许的文件类型')
     }
 
     // 生成保存路径
     const fileType = this.getFileTypeFromExt(ext)
     if (!fileType) {
+      await this.consumeStream(detectionStream)
       throw new BadRequestException('未知的文件类型')
     }
     const savePath = this.generateFilePath(
