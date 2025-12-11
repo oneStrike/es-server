@@ -236,7 +236,7 @@ export class UserService extends RepositoryService {
     await this.adminUser.update({
       where: { id },
       data: {
-        password: defaultPassword,
+        password: await this.scryptService.encryptPassword(defaultPassword),
       },
     })
     return userId
