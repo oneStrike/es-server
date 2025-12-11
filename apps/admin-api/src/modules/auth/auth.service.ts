@@ -67,11 +67,14 @@ export class AuthService extends RepositoryService {
     const user = await this.adminUser.findFirst({
       where: {
         username: body.username,
-        isEnabled: true, // 只查找启用的用户
       },
     })
     if (!user) {
       throw new BadRequestException('账号或密码错误')
+    }
+
+    if (!user.isEnabled) {
+      throw new BadRequestException('账号已被禁用，请联系管理员。')
     }
 
     const requestIp = extractIpAddress(req)
