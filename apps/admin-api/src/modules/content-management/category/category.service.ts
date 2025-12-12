@@ -98,6 +98,9 @@ export class WorkCategoryService extends RepositoryService {
     if (isEnabled !== undefined) {
       where.isEnabled = isEnabled
     }
+    if (!pageParams.orderBy) {
+      pageParams.orderBy = JSON.stringify({ order: 'desc' })
+    }
 
     const types = jsonParse(contentType, [])
     if (types?.length) {

@@ -35,11 +35,6 @@ export async function findPagination<T, A>(
     DbConfig.query.maxListItemLimit,
   )
 
-  // 排序默认值
-  const effectiveOrderBy = orderBy
-    ? jsonParse(orderBy)
-    : DbConfig?.query.orderBy
-
   // 日期区间过滤：仅在可解析时生效
   const hasStart = !!startDate
   const hasEnd = !!endDate
@@ -82,7 +77,7 @@ export async function findPagination<T, A>(
       where: otherWhere,
       take,
       skip,
-      orderBy: effectiveOrderBy,
+      orderBy: orderBy ? jsonParse(orderBy) : DbConfig?.query.orderBy,
     }),
     context.count({ where: otherWhere }),
   ])
