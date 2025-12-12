@@ -59,6 +59,10 @@ export class WorkTagService extends RepositoryService {
       where.isEnabled = isEnabled
     }
 
+    if (!pageParams.orderBy) {
+      pageParams.orderBy = JSON.stringify({ order: 'desc' })
+    }
+
     return this.workTag.findPagination({
       where: { ...where, ...pageParams },
     })
@@ -91,7 +95,8 @@ export class WorkTagService extends RepositoryService {
     const existingTag = await this.workTag.findUnique({
       where: { name: updateData.name, NOT: { id } },
     })
-    if (!existingTag) {
+
+    if (existingTag) {
       throw new BadRequestException('标签名称已存在')
     }
 

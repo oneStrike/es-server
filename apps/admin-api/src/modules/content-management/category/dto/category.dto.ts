@@ -146,7 +146,7 @@ export class UpdateCategoryDto extends IntersectionType(
  */
 export class QueryCategoryDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(CreateCategoryDto), ['name', 'isEnabled']),
+  PartialType(PickType(CreateCategoryDto, ['name', 'isEnabled'])),
 ) {
   @ValidateJson({
     description: '作品媒介代码数组 JSON 字符串',
