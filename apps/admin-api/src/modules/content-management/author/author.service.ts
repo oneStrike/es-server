@@ -25,17 +25,6 @@ export class WorkAuthorService extends RepositoryService {
   async createAuthor(createAuthorDto: CreateAuthorDto) {
     const { roleTypeIds, ...authorData } = createAuthorDto
 
-    // 验证社交媒体链接格式
-    if (createAuthorDto.socialLinks) {
-      try {
-        JSON.parse(createAuthorDto.socialLinks)
-      } catch {
-        throw new BadRequestException(
-          '社交媒体链接格式不正确，请使用有效的JSON格式',
-        )
-      }
-    }
-
     // 验证角色类型ID是否有效
     if (roleTypeIds && roleTypeIds.length > 0) {
       const validRoleTypes = await this.prisma.workAuthorRoleType.findMany({
@@ -88,7 +77,9 @@ export class WorkAuthorService extends RepositoryService {
     } = queryAuthorDto
 
     // 构建查询条件
-    const where: WorkAuthorWhereInput = {}
+    const where: WorkAuthorWhereInput = {
+      deletedAt: null,
+    }
 
     // 姓名模糊搜索
     if (name) {
@@ -136,7 +127,6 @@ export class WorkAuthorService extends RepositoryService {
       },
       omit: {
         remark: true,
-        socialLinks: true,
         nationality: true,
         description: true,
         deletedAt: true,
@@ -206,17 +196,6 @@ export class WorkAuthorService extends RepositoryService {
     const existingAuthor = await this.workAuthor.findUnique({ where: { id } })
     if (!existingAuthor) {
       throw new BadRequestException('作者不存在')
-    }
-
-    // 验证社交媒体链接格式
-    if (updateData.socialLinks) {
-      try {
-        JSON.parse(updateData.socialLinks)
-      } catch {
-        throw new BadRequestException(
-          '社交媒体链接格式不正确，请使用有效的JSON格式',
-        )
-      }
     }
 
     // 验证角色类型ID是否有效
