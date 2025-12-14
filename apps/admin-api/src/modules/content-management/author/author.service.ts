@@ -72,7 +72,7 @@ export class WorkAuthorService extends RepositoryService {
       roleTypeIds,
       nationality,
       gender,
-      featured,
+      isRecommended,
       ...pageDto
     } = queryAuthorDto
 
@@ -116,8 +116,8 @@ export class WorkAuthorService extends RepositoryService {
     }
 
     // 推荐状态筛选
-    if (typeof featured === 'boolean') {
-      where.featured = featured
+    if (typeof isRecommended === 'boolean') {
+      where.isRecommended = isRecommended
     }
 
     return this.workAuthor.findPagination({

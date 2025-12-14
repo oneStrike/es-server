@@ -58,16 +58,6 @@ export type Dictionary = Prisma.DictionaryModel
  */
 export type DictionaryItem = Prisma.DictionaryItemModel
 /**
- * Model WorkAuthorRoleType
- * 作者角色类型枚举表
- */
-export type WorkAuthorRoleType = Prisma.WorkAuthorRoleTypeModel
-/**
- * Model WorkAuthorRole
- * 作者角色关联表（多对多）
- */
-export type WorkAuthorRole = Prisma.WorkAuthorRoleModel
-/**
  * Model WorkAuthor
  * 作者信息模型
  */

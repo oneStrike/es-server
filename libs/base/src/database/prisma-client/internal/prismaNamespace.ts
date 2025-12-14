@@ -392,8 +392,6 @@ export const ModelName = {
   RequestLog: 'RequestLog',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
-  WorkAuthorRoleType: 'WorkAuthorRoleType',
-  WorkAuthorRole: 'WorkAuthorRole',
   WorkAuthor: 'WorkAuthor',
   WorkComicAuthor: 'WorkComicAuthor',
   WorkComicCategory: 'WorkComicCategory',
@@ -420,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthorRoleType" | "workAuthorRole" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComicVersion" | "workComic" | "workCategory" | "workCategoryContentType" | "workContentType" | "workTag"
+    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComicVersion" | "workComic" | "workCategory" | "workCategoryContentType" | "workContentType" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1013,154 +1011,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.DictionaryItemCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.DictionaryItemCountAggregateOutputType> | number
-        }
-      }
-    }
-    WorkAuthorRoleType: {
-      payload: Prisma.$WorkAuthorRoleTypePayload<ExtArgs>
-      fields: Prisma.WorkAuthorRoleTypeFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkAuthorRoleTypeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkAuthorRoleTypeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload>
-        }
-        findFirst: {
-          args: Prisma.WorkAuthorRoleTypeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkAuthorRoleTypeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload>
-        }
-        findMany: {
-          args: Prisma.WorkAuthorRoleTypeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload>[]
-        }
-        create: {
-          args: Prisma.WorkAuthorRoleTypeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload>
-        }
-        createMany: {
-          args: Prisma.WorkAuthorRoleTypeCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkAuthorRoleTypeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload>[]
-        }
-        delete: {
-          args: Prisma.WorkAuthorRoleTypeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload>
-        }
-        update: {
-          args: Prisma.WorkAuthorRoleTypeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkAuthorRoleTypeDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkAuthorRoleTypeUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkAuthorRoleTypeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkAuthorRoleTypeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRoleTypePayload>
-        }
-        aggregate: {
-          args: Prisma.WorkAuthorRoleTypeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkAuthorRoleType>
-        }
-        groupBy: {
-          args: Prisma.WorkAuthorRoleTypeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkAuthorRoleTypeGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkAuthorRoleTypeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkAuthorRoleTypeCountAggregateOutputType> | number
-        }
-      }
-    }
-    WorkAuthorRole: {
-      payload: Prisma.$WorkAuthorRolePayload<ExtArgs>
-      fields: Prisma.WorkAuthorRoleFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkAuthorRoleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkAuthorRoleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload>
-        }
-        findFirst: {
-          args: Prisma.WorkAuthorRoleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkAuthorRoleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload>
-        }
-        findMany: {
-          args: Prisma.WorkAuthorRoleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload>[]
-        }
-        create: {
-          args: Prisma.WorkAuthorRoleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload>
-        }
-        createMany: {
-          args: Prisma.WorkAuthorRoleCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkAuthorRoleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload>[]
-        }
-        delete: {
-          args: Prisma.WorkAuthorRoleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload>
-        }
-        update: {
-          args: Prisma.WorkAuthorRoleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkAuthorRoleDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkAuthorRoleUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkAuthorRoleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkAuthorRoleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorRolePayload>
-        }
-        aggregate: {
-          args: Prisma.WorkAuthorRoleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkAuthorRole>
-        }
-        groupBy: {
-          args: Prisma.WorkAuthorRoleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkAuthorRoleGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkAuthorRoleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkAuthorRoleCountAggregateOutputType> | number
         }
       }
     }
@@ -2166,42 +2016,18 @@ export const DictionaryItemScalarFieldEnum = {
 export type DictionaryItemScalarFieldEnum = (typeof DictionaryItemScalarFieldEnum)[keyof typeof DictionaryItemScalarFieldEnum]
 
 
-export const WorkAuthorRoleTypeScalarFieldEnum = {
-  id: 'id',
-  code: 'code',
-  name: 'name',
-  description: 'description',
-  isEnabled: 'isEnabled',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkAuthorRoleTypeScalarFieldEnum = (typeof WorkAuthorRoleTypeScalarFieldEnum)[keyof typeof WorkAuthorRoleTypeScalarFieldEnum]
-
-
-export const WorkAuthorRoleScalarFieldEnum = {
-  id: 'id',
-  authorId: 'authorId',
-  roleTypeId: 'roleTypeId',
-  isPrimary: 'isPrimary',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkAuthorRoleScalarFieldEnum = (typeof WorkAuthorRoleScalarFieldEnum)[keyof typeof WorkAuthorRoleScalarFieldEnum]
-
-
 export const WorkAuthorScalarFieldEnum = {
   id: 'id',
   name: 'name',
   avatar: 'avatar',
   description: 'description',
   isEnabled: 'isEnabled',
+  type: 'type',
   nationality: 'nationality',
   gender: 'gender',
   worksCount: 'worksCount',
   followersCount: 'followersCount',
-  featured: 'featured',
+  isRecommended: 'isRecommended',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -2612,8 +2438,6 @@ export type GlobalOmitConfig = {
   requestLog?: Prisma.RequestLogOmit
   dictionary?: Prisma.DictionaryOmit
   dictionaryItem?: Prisma.DictionaryItemOmit
-  workAuthorRoleType?: Prisma.WorkAuthorRoleTypeOmit
-  workAuthorRole?: Prisma.WorkAuthorRoleOmit
   workAuthor?: Prisma.WorkAuthorOmit
   workComicAuthor?: Prisma.WorkComicAuthorOmit
   workComicCategory?: Prisma.WorkComicCategoryOmit

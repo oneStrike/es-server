@@ -109,7 +109,7 @@ export class BaseAuthorDto extends BaseDto {
     required: true,
     default: false,
   })
-  featured!: boolean
+  isRecommended!: boolean
 }
 
 /**
@@ -119,7 +119,7 @@ export class CreateAuthorDto extends OmitType(BaseAuthorDto, [
   ...OMIT_BASE_FIELDS,
   'worksCount',
   'isEnabled',
-  'featured',
+  'isRecommended',
   'followersCount',
 ]) {}
 
@@ -138,7 +138,7 @@ export class QueryAuthorDto extends IntersectionType(
     'isEnabled',
     'nationality',
     'gender',
-    'featured',
+    'isRecommended',
   ]),
 ) {
   @ValidateString({
@@ -153,8 +153,8 @@ export class QueryAuthorDto extends IntersectionType(
 /**
  * 更新作者推荐状态DTO
  */
-export class UpdateAuthorFeaturedDto extends IntersectionType(
-  PickType(BaseAuthorDto, ['featured']),
+export class UpdateAuthorisRecommendedDto extends IntersectionType(
+  PickType(BaseAuthorDto, ['isRecommended']),
   IdDto,
 ) {}
 

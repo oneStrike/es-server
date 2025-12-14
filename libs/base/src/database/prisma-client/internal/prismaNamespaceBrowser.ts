@@ -59,8 +59,6 @@ export const ModelName = {
   RequestLog: 'RequestLog',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
-  WorkAuthorRoleType: 'WorkAuthorRoleType',
-  WorkAuthorRole: 'WorkAuthorRole',
   WorkAuthor: 'WorkAuthor',
   WorkComicAuthor: 'WorkComicAuthor',
   WorkComicCategory: 'WorkComicCategory',
@@ -239,42 +237,18 @@ export const DictionaryItemScalarFieldEnum = {
 export type DictionaryItemScalarFieldEnum = (typeof DictionaryItemScalarFieldEnum)[keyof typeof DictionaryItemScalarFieldEnum]
 
 
-export const WorkAuthorRoleTypeScalarFieldEnum = {
-  id: 'id',
-  code: 'code',
-  name: 'name',
-  description: 'description',
-  isEnabled: 'isEnabled',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkAuthorRoleTypeScalarFieldEnum = (typeof WorkAuthorRoleTypeScalarFieldEnum)[keyof typeof WorkAuthorRoleTypeScalarFieldEnum]
-
-
-export const WorkAuthorRoleScalarFieldEnum = {
-  id: 'id',
-  authorId: 'authorId',
-  roleTypeId: 'roleTypeId',
-  isPrimary: 'isPrimary',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkAuthorRoleScalarFieldEnum = (typeof WorkAuthorRoleScalarFieldEnum)[keyof typeof WorkAuthorRoleScalarFieldEnum]
-
-
 export const WorkAuthorScalarFieldEnum = {
   id: 'id',
   name: 'name',
   avatar: 'avatar',
   description: 'description',
   isEnabled: 'isEnabled',
+  type: 'type',
   nationality: 'nationality',
   gender: 'gender',
   worksCount: 'worksCount',
   followersCount: 'followersCount',
-  featured: 'featured',
+  isRecommended: 'isRecommended',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
