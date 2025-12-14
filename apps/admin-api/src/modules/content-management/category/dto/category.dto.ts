@@ -113,6 +113,13 @@ export class BaseCategoryDto extends BaseDto {
     ],
   })
   categoryContentTypes!: CategoryContentTypeItemDto[]
+
+  @ValidateString({
+    description: '分类的描述 （可选）',
+    example: '科幻类分类',
+    required: false,
+  })
+  description?: string
 }
 
 /**
