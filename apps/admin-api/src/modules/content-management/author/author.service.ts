@@ -23,40 +23,9 @@ export class WorkAuthorService extends RepositoryService {
    * @returns 创建的作者信息
    */
   async createAuthor(createAuthorDto: CreateAuthorDto) {
-    const { roleTypeIds, ...authorData } = createAuthorDto
-
-    // 验证角色类型ID是否有效
-    if (roleTypeIds && roleTypeIds.length > 0) {
-      const validRoleTypes = await this.prisma.workAuthorRoleType.findMany({
-        where: {
-          id: { in: roleTypeIds },
-          isEnabled: true,
-        },
-      })
-
-      if (validRoleTypes.length !== roleTypeIds.length) {
-        throw new BadRequestException('存在无效的角色类型ID')
-      }
-    }
-
-    // 创建作者及关联角色
+    // 创建作者
     return this.workAuthor.create({
-      data: {
-        ...authorData,
-        authorRoles: {
-          create: roleTypeIds.map((roleTypeId, index) => ({
-            roleTypeId,
-            isPrimary: index === 0, // 第一个角色为主要角色
-          })),
-        },
-      },
-      include: {
-        authorRoles: {
-          include: {
-            roleType: true,
-          },
-        },
-      },
+      data: createAuthorDto,
     })
   }
 
@@ -66,15 +35,8 @@ export class WorkAuthorService extends RepositoryService {
    * @returns 分页作者列表
    */
   async getAuthorPage(queryAuthorDto: QueryAuthorDto) {
-    const {
-      name,
-      isEnabled,
-      roleTypeIds,
-      nationality,
-      gender,
-      isRecommended,
-      ...pageDto
-    } = queryAuthorDto
+    const { name, isEnabled, nationality, gender, isRecommended, ...pageDto } =
+      queryAuthorDto
 
     // 构建查询条件
     const where: WorkAuthorWhereInput = {
@@ -92,17 +54,6 @@ export class WorkAuthorService extends RepositoryService {
     // 启用状态筛选
     if (typeof isEnabled === 'boolean') {
       where.isEnabled = isEnabled
-    }
-
-    // 角色类型筛选（通过关联表查询）
-    if (roleTypeIds && roleTypeIds.length > 0) {
-      where.authorRoles = {
-        some: {
-          roleTypeId: {
-            in: roleTypeIds.split(',').map(Number),
-          },
-        },
-      }
     }
 
     // 国籍筛选
@@ -131,22 +82,6 @@ export class WorkAuthorService extends RepositoryService {
         description: true,
         deletedAt: true,
       },
-      include: {
-        authorRoles: {
-          include: {
-            roleType: {
-              select: {
-                id: true,
-                code: true,
-                name: true,
-              },
-            },
-          },
-          orderBy: {
-            isPrimary: 'desc', // 主要角色排在前面
-          },
-        },
-      },
     })
   }
 
@@ -158,23 +93,6 @@ export class WorkAuthorService extends RepositoryService {
   async getAuthorDetail(id: number) {
     const author = await this.workAuthor.findUnique({
       where: { id },
-      include: {
-        authorRoles: {
-          include: {
-            roleType: {
-              select: {
-                id: true,
-                code: true,
-                name: true,
-                description: true,
-              },
-            },
-          },
-          orderBy: {
-            isPrimary: 'desc',
-          },
-        },
-      },
     })
 
     if (!author) {
@@ -190,7 +108,7 @@ export class WorkAuthorService extends RepositoryService {
    * @returns 更新后的作者信息
    */
   async updateAuthor(updateAuthorDto: UpdateAuthorDto) {
-    const { id, roleTypeIds, ...updateData } = updateAuthorDto
+    const { id, ...updateData } = updateAuthorDto
 
     // 验证作者是否存在
     const existingAuthor = await this.workAuthor.findUnique({ where: { id } })
@@ -198,42 +116,11 @@ export class WorkAuthorService extends RepositoryService {
       throw new BadRequestException('作者不存在')
     }
 
-    // 验证角色类型ID是否有效
-    if (roleTypeIds && roleTypeIds.length > 0) {
-      const validRoleTypes = await this.prisma.workAuthorRoleType.findMany({
-        where: {
-          id: { in: roleTypeIds },
-          isEnabled: true,
-        },
-      })
-
-      if (validRoleTypes.length !== roleTypeIds.length) {
-        throw new BadRequestException('存在无效的角色类型ID')
-      }
-    }
-
     // 更新作者信息
     return this.workAuthor.update({
       where: { id },
       data: {
         ...updateData,
-        // 如果提供了 roleTypeIds，更新角色关联
-        ...(roleTypeIds !== undefined && {
-          authorRoles: {
-            deleteMany: {}, // 先删除所有旧关联
-            create: roleTypeIds.map((roleTypeId, index) => ({
-              roleTypeId,
-              isPrimary: index === 0,
-            })),
-          },
-        }),
-      },
-      include: {
-        authorRoles: {
-          include: {
-            roleType: true,
-          },
-        },
       },
     })
   }

@@ -1,5 +1,5 @@
 import {
-  ValidateArray,
+  ValidateBitmask,
   ValidateBoolean,
   ValidateEnum,
   ValidateNumber,
@@ -12,7 +12,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { AuthorGenderEnum } from '../author.constant'
+import { AuthorGenderEnum, AuthorTypeEnum } from '../author.constant'
 
 /**
  * 作者基础DTO
@@ -47,13 +47,13 @@ export class BaseAuthorDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ValidateArray({
-    description: '作者角色类型列表（角色ID数组）',
-    itemType: 'number',
-    example: [1, 2, 3],
+  @ValidateBitmask({
+    description: '作者角色类型 bitmask',
+    example: 1,
     required: true,
+    enum: AuthorTypeEnum,
   })
-  roleTypeIds!: number[]
+  type!: number
 
   @ValidateString({
     description: '国籍',
@@ -138,17 +138,10 @@ export class QueryAuthorDto extends IntersectionType(
     'isEnabled',
     'nationality',
     'gender',
+    'type',
     'isRecommended',
   ]),
-) {
-  @ValidateString({
-    description:
-      '作者角色类型列表（角色ID数组，筛选包含指定角色的作者,逗号分割）',
-    example: '1,2,3',
-    required: false,
-  })
-  roleTypeIds?: string
-}
+) {}
 
 /**
  * 更新作者推荐状态DTO
