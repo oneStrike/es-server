@@ -13,7 +13,7 @@ import {
   CreateAuthorDto,
   QueryAuthorDto,
   UpdateAuthorDto,
-  UpdateAuthorFeaturedDto,
+  UpdateAuthorisRecommendedDto,
 } from './dto/author.dto'
 
 /**
@@ -95,18 +95,18 @@ export class WorkAuthorController {
   /**
    * 批量更新作者推荐状态
    */
-  @Post('/update-featured')
+  @Post('/update-isRecommended')
   @ApiDoc({
     summary: '更新作者推荐状态',
     model: BatchOperationResponseDto,
   })
-  async updateFeatured(@Body() body: UpdateAuthorFeaturedDto) {
+  async updateisRecommended(@Body() body: UpdateAuthorisRecommendedDto) {
     return this.authorService.workAuthor.update({
       where: {
         id: body.id,
       },
       data: {
-        featured: body.featured,
+        isRecommended: body.isRecommended,
       },
     })
   }
