@@ -2202,7 +2202,6 @@ export const WorkAuthorScalarFieldEnum = {
   worksCount: 'worksCount',
   followersCount: 'followersCount',
   featured: 'featured',
-  socialLinks: 'socialLinks',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',

@@ -10,6 +10,8 @@ model WorkAuthor {
   description    String?   @db.VarChar(1000)
   /// 启用状态（true: 启用, false: 禁用）
   isEnabled      Boolean   @default(true) @map("is_enabled")
+  /// 作者类型，bitmap存储，每个bit表示一种类型（1: 漫画家, 2: 轻小说作者, 4: 插画师, 8: coser）
+  type           Int       @default(0) @db.SmallInt
   /// 国籍
   nationality    String?   @db.VarChar(50)
   /// 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）
@@ -19,9 +21,7 @@ model WorkAuthor {
   /// 粉丝数量（冗余字段，用于前台展示）
   followersCount Int       @default(0) @map("followers_count")
   /// 是否为推荐作者（用于前台推荐展示）
-  featured       Boolean   @default(false)
-  /// 社交媒体链接（JSON格式存储多个平台链接）
-  socialLinks    String?   @map("social_links") @db.Text
+  isRecommended  Boolean   @map("is_recommended") @default(false)
   /// 管理员备注
   remark         String?   @db.VarChar(1000)
   /// 创建时间
@@ -32,19 +32,17 @@ model WorkAuthor {
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz
 
   // 关联关系
-  /// 作者角色关联（多对多）
-  authorRoles  WorkAuthorRole[]
   /// 作品关联（多对多）
   comicAuthors WorkComicAuthor[]
 
   /// 索引优化
+  @@index([type]) // 按类型查询可用作者
   @@index([isEnabled]) // 按状态查询可用作者
-  @@index([isEnabled, featured]) // 查询可用的推荐作者
+  @@index([isEnabled, isRecommended]) // 查询可用的推荐作者
   @@index([isEnabled, deletedAt]) // 查询可用且未删除的作者
   @@index([nationality]) // 按国籍查询
   @@index([gender]) // 按性别查询
-  @@index([featured, worksCount(sort: Desc)]) // 推荐作者按作品数排序
+  @@index([isRecommended, worksCount(sort: Desc)]) // 推荐作者按作品数排序
   @@index([createdAt]) // 按创建时间排序
-  @@index([deletedAt]) // 按软删除时间筛选
   @@map("work_author")
 }
