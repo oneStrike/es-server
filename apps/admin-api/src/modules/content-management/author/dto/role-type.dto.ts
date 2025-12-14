@@ -1,11 +1,16 @@
-import { ValidateString } from '@libs/base/decorators'
+import { ValidateBoolean, ValidateString } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/base/dto'
-import { IntersectionType, OmitType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 /**
  * 角色类型响应DTO
  */
-export class RoleTypeListResponseDto extends BaseDto {
+export class BaseAuthorRoleTypeDto extends BaseDto {
   @ValidateString({
     description: '角色代码',
     example: 'MANGAKA',
@@ -20,6 +25,13 @@ export class RoleTypeListResponseDto extends BaseDto {
   })
   name!: string
 
+  @ValidateBoolean({
+    description: '角色是否启用',
+    example: true,
+    required: true,
+  })
+  isEnabled!: boolean
+
   @ValidateString({
     description: '角色描述',
     example: '负责漫画创作的核心画师',
@@ -29,11 +41,15 @@ export class RoleTypeListResponseDto extends BaseDto {
 }
 
 export class RoleTypeCreateRequestDto extends OmitType(
-  RoleTypeListResponseDto,
+  BaseAuthorRoleTypeDto,
   OMIT_BASE_FIELDS,
 ) {}
 
 export class RoleTypeUpdateRequestDto extends IntersectionType(
   RoleTypeCreateRequestDto,
   IdDto,
+) {}
+
+export class RoleTypeFilterDto extends PartialType(
+  PickType(RoleTypeCreateRequestDto, ['code', 'name', 'isEnabled']),
 ) {}

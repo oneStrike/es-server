@@ -1,7 +1,12 @@
-import { RepositoryService } from '@libs/base/database'
+import {
+  RepositoryService,
+  WorkAuthorRoleTypeWhereInput,
+} from '@libs/base/database'
+import { IdDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   RoleTypeCreateRequestDto,
+  RoleTypeFilterDto,
   RoleTypeUpdateRequestDto,
 } from './dto/role-type.dto'
 
@@ -13,6 +18,43 @@ import {
 export class WorkAuthorRoleTypeService extends RepositoryService {
   get workAuthorRoleType() {
     return this.prisma.workAuthorRoleType
+  }
+
+  get workAuthor() {
+    return this.prisma.workAuthor
+  }
+
+  /**
+   * 查询角色类型列表
+   * @param filterDto 查询参数
+   * @returns 角色类型列表
+   */
+  async getRoleTypeList(filterDto: RoleTypeFilterDto) {
+    const where: WorkAuthorRoleTypeWhereInput = {}
+    if (filterDto.name) {
+      where.name = {
+        contains: filterDto.name,
+        mode: 'insensitive',
+      }
+    }
+
+    if (filterDto.code) {
+      where.code = {
+        contains: filterDto.code,
+        mode: 'insensitive',
+      }
+    }
+
+    if (filterDto.isEnabled !== undefined) {
+      where.isEnabled = filterDto.isEnabled
+    }
+
+    return this.workAuthorRoleType.findMany({
+      where,
+      orderBy: {
+        id: 'asc',
+      },
+    })
   }
 
   /**
@@ -60,6 +102,30 @@ export class WorkAuthorRoleTypeService extends RepositoryService {
     return this.workAuthorRoleType.update({
       where: { id: dto.id },
       data: dto,
+    })
+  }
+
+  /**
+   * 删除角色类型
+   * @param dto 角色类型ID
+   */
+  async deleteRoleType(dto: IdDto) {
+    // 查询是否有关联的作者
+    const associatedAuthors = await this.workAuthor.findFirst({
+      where: {
+        authorRoles: {
+          some: {
+            roleTypeId: dto.id,
+          },
+        },
+      },
+    })
+    if (associatedAuthors) {
+      throw new BadRequestException('角色类型已被关联，无法删除')
+    }
+    // 删除角色类型
+    return this.workAuthorRoleType.delete({
+      where: { id: dto.id },
     })
   }
 }
