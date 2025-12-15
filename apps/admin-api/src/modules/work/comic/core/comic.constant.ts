@@ -2,20 +2,6 @@
  * 漫画模块常量定义
  */
 
-/// 漫画发布状态枚举
-export enum ComicPublishStatusEnum {
-  /** 草稿 */
-  DRAFT = 0,
-  /** 已发布 */
-  PUBLISHED = 1,
-  /** 已下架 */
-  UNPUBLISHED = 2,
-  /** 审核中 */
-  REVIEWING = 3,
-  /** 审核失败 */
-  REVIEW_FAILED = 4,
-}
-
 /// 漫画连载状态枚举
 export enum ComicSerialStatusEnum {
   /** 连载中 */
@@ -48,16 +34,6 @@ export enum ComicDownloadPermissionEnum {
   ALLOWED = 1,
   /** VIP可下载 */
   VIP_ONLY = 2,
-}
-
-/// 漫画评论权限枚举
-export enum ComicCommentPermissionEnum {
-  /** 禁止评论 */
-  FORBIDDEN = 0,
-  /** 允许评论 */
-  ALLOWED = 1,
-  /** 登录后评论 */
-  LOGIN_REQUIRED = 2,
-  /** VIP可评论 */
-  VIP_ONLY = 3,
+  /** 积分可下载 */
+  POINTS_ONLY = 3,
 }

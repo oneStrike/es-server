@@ -47,20 +47,14 @@ model WorkComic {
   rating           Float?              @db.DoublePrecision
   /// 评分人数
   ratingCount      Int                 @default(0) @map("rating_count") @db.Integer
-  /// 是否允许下载
-  canDownload      Boolean             @default(true) @map("can_download")
+  /// 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
+  canDownload      Int                 @default(1) @map("can_download") @db.SmallInt
   /// 是否允许评论
   canComment       Boolean             @default(true) @map("can_comment")
   /// 查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）
   readRule         Int                 @default(0) @map("read_rule") @db.SmallInt
   /// 购买需要消耗的积分
   purchaseAmount   Int?                @default(0) @map("purchase_amount")
-  /// SEO标题
-  seoTitle         String?             @map("seo_title") @db.VarChar(200)
-  /// SEO描述
-  seoDescription   String?             @map("seo_description") @db.VarChar(500)
-  /// SEO关键词（逗号分隔）
-  seoKeywords      String?             @map("seo_keywords") @db.VarChar(500)
   /// 推荐权重（影响推荐排序）
   recommendWeight  Float               @default(1.0) @map("recommend_weight") @db.DoublePrecision
   /// 是否推荐到首页
