@@ -70,7 +70,6 @@ export class WorkAuthorService extends RepositoryService {
     if (typeof isRecommended === 'boolean') {
       where.isRecommended = isRecommended
     }
-
     return this.workAuthor.findPagination({
       where: {
         ...where,
