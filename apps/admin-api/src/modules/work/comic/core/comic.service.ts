@@ -23,16 +23,6 @@ export class WorkComicService extends RepositoryService {
   async createComic(createComicDto: CreateComicDto) {
     const { authorIds, categoryIds, tagIds, ...comicData } = createComicDto
 
-    // 验证漫画名称是否已存在
-    const existingComic = await this.workComic.findFirst({
-      where: {
-        name: createComicDto.name,
-      },
-    })
-    if (existingComic) {
-      throw new BadRequestException('漫画名称已存在')
-    }
-
     // 验证作者是否存在
     if (!Array.isArray(authorIds) || authorIds.length === 0) {
       throw new BadRequestException('至少需要关联一个作者')

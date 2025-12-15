@@ -38,6 +38,7 @@ export type WorkComicAvgAggregateOutputType = {
   likeCount: number | null
   rating: number | null
   ratingCount: number | null
+  canDownload: number | null
   readRule: number | null
   purchaseAmount: number | null
   recommendWeight: number | null
@@ -55,6 +56,7 @@ export type WorkComicSumAggregateOutputType = {
   likeCount: number | null
   rating: number | null
   ratingCount: number | null
+  canDownload: number | null
   readRule: number | null
   purchaseAmount: number | null
   recommendWeight: number | null
@@ -84,13 +86,10 @@ export type WorkComicMinAggregateOutputType = {
   likeCount: number | null
   rating: number | null
   ratingCount: number | null
-  canDownload: boolean | null
+  canDownload: number | null
   canComment: boolean | null
   readRule: number | null
   purchaseAmount: number | null
-  seoTitle: string | null
-  seoDescription: string | null
-  seoKeywords: string | null
   recommendWeight: number | null
   isRecommended: boolean | null
   isHot: boolean | null
@@ -127,13 +126,10 @@ export type WorkComicMaxAggregateOutputType = {
   likeCount: number | null
   rating: number | null
   ratingCount: number | null
-  canDownload: boolean | null
+  canDownload: number | null
   canComment: boolean | null
   readRule: number | null
   purchaseAmount: number | null
-  seoTitle: string | null
-  seoDescription: string | null
-  seoKeywords: string | null
   recommendWeight: number | null
   isRecommended: boolean | null
   isHot: boolean | null
@@ -174,9 +170,6 @@ export type WorkComicCountAggregateOutputType = {
   canComment: number
   readRule: number
   purchaseAmount: number
-  seoTitle: number
-  seoDescription: number
-  seoKeywords: number
   recommendWeight: number
   isRecommended: number
   isHot: number
@@ -203,6 +196,7 @@ export type WorkComicAvgAggregateInputType = {
   likeCount?: true
   rating?: true
   ratingCount?: true
+  canDownload?: true
   readRule?: true
   purchaseAmount?: true
   recommendWeight?: true
@@ -220,6 +214,7 @@ export type WorkComicSumAggregateInputType = {
   likeCount?: true
   rating?: true
   ratingCount?: true
+  canDownload?: true
   readRule?: true
   purchaseAmount?: true
   recommendWeight?: true
@@ -253,9 +248,6 @@ export type WorkComicMinAggregateInputType = {
   canComment?: true
   readRule?: true
   purchaseAmount?: true
-  seoTitle?: true
-  seoDescription?: true
-  seoKeywords?: true
   recommendWeight?: true
   isRecommended?: true
   isHot?: true
@@ -296,9 +288,6 @@ export type WorkComicMaxAggregateInputType = {
   canComment?: true
   readRule?: true
   purchaseAmount?: true
-  seoTitle?: true
-  seoDescription?: true
-  seoKeywords?: true
   recommendWeight?: true
   isRecommended?: true
   isHot?: true
@@ -339,9 +328,6 @@ export type WorkComicCountAggregateInputType = {
   canComment?: true
   readRule?: true
   purchaseAmount?: true
-  seoTitle?: true
-  seoDescription?: true
-  seoKeywords?: true
   recommendWeight?: true
   isRecommended?: true
   isHot?: true
@@ -465,13 +451,10 @@ export type WorkComicGroupByOutputType = {
   likeCount: number
   rating: number | null
   ratingCount: number
-  canDownload: boolean
+  canDownload: number
   canComment: boolean
   readRule: number
   purchaseAmount: number | null
-  seoTitle: string | null
-  seoDescription: string | null
-  seoKeywords: string | null
   recommendWeight: number
   isRecommended: boolean
   isHot: boolean
@@ -531,13 +514,10 @@ export type WorkComicWhereInput = {
   likeCount?: Prisma.IntFilter<"WorkComic"> | number
   rating?: Prisma.FloatNullableFilter<"WorkComic"> | number | null
   ratingCount?: Prisma.IntFilter<"WorkComic"> | number
-  canDownload?: Prisma.BoolFilter<"WorkComic"> | boolean
+  canDownload?: Prisma.IntFilter<"WorkComic"> | number
   canComment?: Prisma.BoolFilter<"WorkComic"> | boolean
   readRule?: Prisma.IntFilter<"WorkComic"> | number
   purchaseAmount?: Prisma.IntNullableFilter<"WorkComic"> | number | null
-  seoTitle?: Prisma.StringNullableFilter<"WorkComic"> | string | null
-  seoDescription?: Prisma.StringNullableFilter<"WorkComic"> | string | null
-  seoKeywords?: Prisma.StringNullableFilter<"WorkComic"> | string | null
   recommendWeight?: Prisma.FloatFilter<"WorkComic"> | number
   isRecommended?: Prisma.BoolFilter<"WorkComic"> | boolean
   isHot?: Prisma.BoolFilter<"WorkComic"> | boolean
@@ -583,9 +563,6 @@ export type WorkComicOrderByWithRelationInput = {
   canComment?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   purchaseAmount?: Prisma.SortOrderInput | Prisma.SortOrder
-  seoTitle?: Prisma.SortOrderInput | Prisma.SortOrder
-  seoDescription?: Prisma.SortOrderInput | Prisma.SortOrder
-  seoKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   isHot?: Prisma.SortOrder
@@ -630,13 +607,10 @@ export type WorkComicWhereUniqueInput = Prisma.AtLeast<{
   likeCount?: Prisma.IntFilter<"WorkComic"> | number
   rating?: Prisma.FloatNullableFilter<"WorkComic"> | number | null
   ratingCount?: Prisma.IntFilter<"WorkComic"> | number
-  canDownload?: Prisma.BoolFilter<"WorkComic"> | boolean
+  canDownload?: Prisma.IntFilter<"WorkComic"> | number
   canComment?: Prisma.BoolFilter<"WorkComic"> | boolean
   readRule?: Prisma.IntFilter<"WorkComic"> | number
   purchaseAmount?: Prisma.IntNullableFilter<"WorkComic"> | number | null
-  seoTitle?: Prisma.StringNullableFilter<"WorkComic"> | string | null
-  seoDescription?: Prisma.StringNullableFilter<"WorkComic"> | string | null
-  seoKeywords?: Prisma.StringNullableFilter<"WorkComic"> | string | null
   recommendWeight?: Prisma.FloatFilter<"WorkComic"> | number
   isRecommended?: Prisma.BoolFilter<"WorkComic"> | boolean
   isHot?: Prisma.BoolFilter<"WorkComic"> | boolean
@@ -682,9 +656,6 @@ export type WorkComicOrderByWithAggregationInput = {
   canComment?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   purchaseAmount?: Prisma.SortOrderInput | Prisma.SortOrder
-  seoTitle?: Prisma.SortOrderInput | Prisma.SortOrder
-  seoDescription?: Prisma.SortOrderInput | Prisma.SortOrder
-  seoKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   isHot?: Prisma.SortOrder
@@ -729,13 +700,10 @@ export type WorkComicScalarWhereWithAggregatesInput = {
   likeCount?: Prisma.IntWithAggregatesFilter<"WorkComic"> | number
   rating?: Prisma.FloatNullableWithAggregatesFilter<"WorkComic"> | number | null
   ratingCount?: Prisma.IntWithAggregatesFilter<"WorkComic"> | number
-  canDownload?: Prisma.BoolWithAggregatesFilter<"WorkComic"> | boolean
+  canDownload?: Prisma.IntWithAggregatesFilter<"WorkComic"> | number
   canComment?: Prisma.BoolWithAggregatesFilter<"WorkComic"> | boolean
   readRule?: Prisma.IntWithAggregatesFilter<"WorkComic"> | number
   purchaseAmount?: Prisma.IntNullableWithAggregatesFilter<"WorkComic"> | number | null
-  seoTitle?: Prisma.StringNullableWithAggregatesFilter<"WorkComic"> | string | null
-  seoDescription?: Prisma.StringNullableWithAggregatesFilter<"WorkComic"> | string | null
-  seoKeywords?: Prisma.StringNullableWithAggregatesFilter<"WorkComic"> | string | null
   recommendWeight?: Prisma.FloatWithAggregatesFilter<"WorkComic"> | number
   isRecommended?: Prisma.BoolWithAggregatesFilter<"WorkComic"> | boolean
   isHot?: Prisma.BoolWithAggregatesFilter<"WorkComic"> | boolean
@@ -771,13 +739,10 @@ export type WorkComicCreateInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -819,13 +784,10 @@ export type WorkComicUncheckedCreateInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -866,13 +828,10 @@ export type WorkComicUpdateInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -914,13 +873,10 @@ export type WorkComicUncheckedUpdateInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -962,13 +918,10 @@ export type WorkComicCreateManyInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -1004,13 +957,10 @@ export type WorkComicUpdateManyMutationInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1047,13 +997,10 @@ export type WorkComicUncheckedUpdateManyInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1099,9 +1046,6 @@ export type WorkComicCountOrderByAggregateInput = {
   canComment?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   purchaseAmount?: Prisma.SortOrder
-  seoTitle?: Prisma.SortOrder
-  seoDescription?: Prisma.SortOrder
-  seoKeywords?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   isHot?: Prisma.SortOrder
@@ -1126,6 +1070,7 @@ export type WorkComicAvgOrderByAggregateInput = {
   likeCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   purchaseAmount?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
@@ -1159,9 +1104,6 @@ export type WorkComicMaxOrderByAggregateInput = {
   canComment?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   purchaseAmount?: Prisma.SortOrder
-  seoTitle?: Prisma.SortOrder
-  seoDescription?: Prisma.SortOrder
-  seoKeywords?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   isHot?: Prisma.SortOrder
@@ -1202,9 +1144,6 @@ export type WorkComicMinOrderByAggregateInput = {
   canComment?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   purchaseAmount?: Prisma.SortOrder
-  seoTitle?: Prisma.SortOrder
-  seoDescription?: Prisma.SortOrder
-  seoKeywords?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   isHot?: Prisma.SortOrder
@@ -1229,6 +1168,7 @@ export type WorkComicSumOrderByAggregateInput = {
   likeCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   purchaseAmount?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
@@ -1327,13 +1267,10 @@ export type WorkComicCreateWithoutComicAuthorsInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -1374,13 +1311,10 @@ export type WorkComicUncheckedCreateWithoutComicAuthorsInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -1436,13 +1370,10 @@ export type WorkComicUpdateWithoutComicAuthorsInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1483,13 +1414,10 @@ export type WorkComicUncheckedUpdateWithoutComicAuthorsInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1529,13 +1457,10 @@ export type WorkComicCreateWithoutComicCategoriesInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -1576,13 +1501,10 @@ export type WorkComicUncheckedCreateWithoutComicCategoriesInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -1638,13 +1560,10 @@ export type WorkComicUpdateWithoutComicCategoriesInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1685,13 +1604,10 @@ export type WorkComicUncheckedUpdateWithoutComicCategoriesInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1731,13 +1647,10 @@ export type WorkComicCreateWithoutRelatedChaptersInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -1778,13 +1691,10 @@ export type WorkComicUncheckedCreateWithoutRelatedChaptersInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -1840,13 +1750,10 @@ export type WorkComicUpdateWithoutRelatedChaptersInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1887,13 +1794,10 @@ export type WorkComicUncheckedUpdateWithoutRelatedChaptersInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1933,13 +1837,10 @@ export type WorkComicCreateWithoutComicTagsInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -1980,13 +1881,10 @@ export type WorkComicUncheckedCreateWithoutComicTagsInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -2042,13 +1940,10 @@ export type WorkComicUpdateWithoutComicTagsInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2089,13 +1984,10 @@ export type WorkComicUncheckedUpdateWithoutComicTagsInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2135,13 +2027,10 @@ export type WorkComicCreateWithoutComicVersionsInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -2182,13 +2071,10 @@ export type WorkComicUncheckedCreateWithoutComicVersionsInput = {
   likeCount?: number
   rating?: number | null
   ratingCount?: number
-  canDownload?: boolean
+  canDownload?: number
   canComment?: boolean
   readRule?: number
   purchaseAmount?: number | null
-  seoTitle?: string | null
-  seoDescription?: string | null
-  seoKeywords?: string | null
   recommendWeight?: number
   isRecommended?: boolean
   isHot?: boolean
@@ -2244,13 +2130,10 @@ export type WorkComicUpdateWithoutComicVersionsInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2291,13 +2174,10 @@ export type WorkComicUncheckedUpdateWithoutComicVersionsInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.IntFieldUpdateOperationsInput | number
   canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseAmount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  seoTitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  seoKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2409,9 +2289,6 @@ export type WorkComicSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   canComment?: boolean
   readRule?: boolean
   purchaseAmount?: boolean
-  seoTitle?: boolean
-  seoDescription?: boolean
-  seoKeywords?: boolean
   recommendWeight?: boolean
   isRecommended?: boolean
   isHot?: boolean
@@ -2458,9 +2335,6 @@ export type WorkComicSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   canComment?: boolean
   readRule?: boolean
   purchaseAmount?: boolean
-  seoTitle?: boolean
-  seoDescription?: boolean
-  seoKeywords?: boolean
   recommendWeight?: boolean
   isRecommended?: boolean
   isHot?: boolean
@@ -2501,9 +2375,6 @@ export type WorkComicSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   canComment?: boolean
   readRule?: boolean
   purchaseAmount?: boolean
-  seoTitle?: boolean
-  seoDescription?: boolean
-  seoKeywords?: boolean
   recommendWeight?: boolean
   isRecommended?: boolean
   isHot?: boolean
@@ -2544,9 +2415,6 @@ export type WorkComicSelectScalar = {
   canComment?: boolean
   readRule?: boolean
   purchaseAmount?: boolean
-  seoTitle?: boolean
-  seoDescription?: boolean
-  seoKeywords?: boolean
   recommendWeight?: boolean
   isRecommended?: boolean
   isHot?: boolean
@@ -2559,7 +2427,7 @@ export type WorkComicSelectScalar = {
   updatedAt?: boolean
 }
 
-export type WorkComicOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "alias" | "cover" | "popularity" | "popularityWeight" | "language" | "region" | "ageRating" | "isPublished" | "publishAt" | "lastUpdated" | "description" | "publisher" | "originalSource" | "serialStatus" | "totalChapters" | "totalViews" | "favoriteCount" | "commentCount" | "likeCount" | "rating" | "ratingCount" | "canDownload" | "canComment" | "readRule" | "purchaseAmount" | "seoTitle" | "seoDescription" | "seoKeywords" | "recommendWeight" | "isRecommended" | "isHot" | "isNew" | "copyright" | "disclaimer" | "remark" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workComic"]>
+export type WorkComicOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "alias" | "cover" | "popularity" | "popularityWeight" | "language" | "region" | "ageRating" | "isPublished" | "publishAt" | "lastUpdated" | "description" | "publisher" | "originalSource" | "serialStatus" | "totalChapters" | "totalViews" | "favoriteCount" | "commentCount" | "likeCount" | "rating" | "ratingCount" | "canDownload" | "canComment" | "readRule" | "purchaseAmount" | "recommendWeight" | "isRecommended" | "isHot" | "isNew" | "copyright" | "disclaimer" | "remark" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workComic"]>
 export type WorkComicInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comicAuthors?: boolean | Prisma.WorkComic$comicAuthorsArgs<ExtArgs>
   relatedChapters?: boolean | Prisma.WorkComic$relatedChaptersArgs<ExtArgs>
@@ -2689,9 +2557,9 @@ export type $WorkComicPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      */
     ratingCount: number
     /**
-     * 是否允许下载
+     * 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
      */
-    canDownload: boolean
+    canDownload: number
     /**
      * 是否允许评论
      */
@@ -2704,18 +2572,6 @@ export type $WorkComicPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 购买需要消耗的积分
      */
     purchaseAmount: number | null
-    /**
-     * SEO标题
-     */
-    seoTitle: string | null
-    /**
-     * SEO描述
-     */
-    seoDescription: string | null
-    /**
-     * SEO关键词（逗号分隔）
-     */
-    seoKeywords: string | null
     /**
      * 推荐权重（影响推荐排序）
      */
@@ -3207,13 +3063,10 @@ export interface WorkComicFieldRefs {
   readonly likeCount: Prisma.FieldRef<"WorkComic", 'Int'>
   readonly rating: Prisma.FieldRef<"WorkComic", 'Float'>
   readonly ratingCount: Prisma.FieldRef<"WorkComic", 'Int'>
-  readonly canDownload: Prisma.FieldRef<"WorkComic", 'Boolean'>
+  readonly canDownload: Prisma.FieldRef<"WorkComic", 'Int'>
   readonly canComment: Prisma.FieldRef<"WorkComic", 'Boolean'>
   readonly readRule: Prisma.FieldRef<"WorkComic", 'Int'>
   readonly purchaseAmount: Prisma.FieldRef<"WorkComic", 'Int'>
-  readonly seoTitle: Prisma.FieldRef<"WorkComic", 'String'>
-  readonly seoDescription: Prisma.FieldRef<"WorkComic", 'String'>
-  readonly seoKeywords: Prisma.FieldRef<"WorkComic", 'String'>
   readonly recommendWeight: Prisma.FieldRef<"WorkComic", 'Float'>
   readonly isRecommended: Prisma.FieldRef<"WorkComic", 'Boolean'>
   readonly isHot: Prisma.FieldRef<"WorkComic", 'Boolean'>
