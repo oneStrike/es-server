@@ -91,7 +91,7 @@ export class BaseComicChapterDto {
     min: 0,
     default: 0,
   })
-  purchaseAmount?: number
+  readPoints?: number
 
   @ValidateString({
     description: '漫画内容（JSON格式存储图片URL数组）',

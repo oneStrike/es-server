@@ -308,7 +308,7 @@ export class BaseComicDto extends BaseDto {
     required: false,
     min: 0,
   })
-  purchaseAmount?: number
+  readPoints?: number
 
   @ValidateNumber({
     description: '总章节数',
