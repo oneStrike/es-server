@@ -29,26 +29,14 @@ export type AggregateWorkComicVersion = {
 export type WorkComicVersionAvgAggregateOutputType = {
   id: number | null
   comicId: number | null
-  totalViews: number | null
-  favoriteCount: number | null
-  likeCount: number | null
   rating: number | null
-  ratingCount: number | null
-  readRule: number | null
-  purchaseAmount: number | null
   sortOrder: number | null
 }
 
 export type WorkComicVersionSumAggregateOutputType = {
   id: number | null
   comicId: number | null
-  totalViews: number | null
-  favoriteCount: number | null
-  likeCount: number | null
   rating: number | null
-  ratingCount: number | null
-  readRule: number | null
-  purchaseAmount: number | null
   sortOrder: number | null
 }
 
@@ -63,13 +51,7 @@ export type WorkComicVersionMinAggregateOutputType = {
   isPublished: boolean | null
   publishAt: Date | null
   lastUpdated: Date | null
-  totalViews: number | null
-  favoriteCount: number | null
-  likeCount: number | null
   rating: number | null
-  ratingCount: number | null
-  readRule: number | null
-  purchaseAmount: number | null
   copyright: string | null
   disclaimer: string | null
   remark: string | null
@@ -90,13 +72,7 @@ export type WorkComicVersionMaxAggregateOutputType = {
   isPublished: boolean | null
   publishAt: Date | null
   lastUpdated: Date | null
-  totalViews: number | null
-  favoriteCount: number | null
-  likeCount: number | null
   rating: number | null
-  ratingCount: number | null
-  readRule: number | null
-  purchaseAmount: number | null
   copyright: string | null
   disclaimer: string | null
   remark: string | null
@@ -117,13 +93,7 @@ export type WorkComicVersionCountAggregateOutputType = {
   isPublished: number
   publishAt: number
   lastUpdated: number
-  totalViews: number
-  favoriteCount: number
-  likeCount: number
   rating: number
-  ratingCount: number
-  readRule: number
-  purchaseAmount: number
   copyright: number
   disclaimer: number
   remark: number
@@ -138,26 +108,14 @@ export type WorkComicVersionCountAggregateOutputType = {
 export type WorkComicVersionAvgAggregateInputType = {
   id?: true
   comicId?: true
-  totalViews?: true
-  favoriteCount?: true
-  likeCount?: true
   rating?: true
-  ratingCount?: true
-  readRule?: true
-  purchaseAmount?: true
   sortOrder?: true
 }
 
 export type WorkComicVersionSumAggregateInputType = {
   id?: true
   comicId?: true
-  totalViews?: true
-  favoriteCount?: true
-  likeCount?: true
   rating?: true
-  ratingCount?: true
-  readRule?: true
-  purchaseAmount?: true
   sortOrder?: true
 }
 
@@ -172,13 +130,7 @@ export type WorkComicVersionMinAggregateInputType = {
   isPublished?: true
   publishAt?: true
   lastUpdated?: true
-  totalViews?: true
-  favoriteCount?: true
-  likeCount?: true
   rating?: true
-  ratingCount?: true
-  readRule?: true
-  purchaseAmount?: true
   copyright?: true
   disclaimer?: true
   remark?: true
@@ -199,13 +151,7 @@ export type WorkComicVersionMaxAggregateInputType = {
   isPublished?: true
   publishAt?: true
   lastUpdated?: true
-  totalViews?: true
-  favoriteCount?: true
-  likeCount?: true
   rating?: true
-  ratingCount?: true
-  readRule?: true
-  purchaseAmount?: true
   copyright?: true
   disclaimer?: true
   remark?: true
@@ -226,13 +172,7 @@ export type WorkComicVersionCountAggregateInputType = {
   isPublished?: true
   publishAt?: true
   lastUpdated?: true
-  totalViews?: true
-  favoriteCount?: true
-  likeCount?: true
   rating?: true
-  ratingCount?: true
-  readRule?: true
-  purchaseAmount?: true
   copyright?: true
   disclaimer?: true
   remark?: true
@@ -340,13 +280,7 @@ export type WorkComicVersionGroupByOutputType = {
   isPublished: boolean
   publishAt: Date | null
   lastUpdated: Date | null
-  totalViews: number
-  favoriteCount: number
-  likeCount: number
   rating: number | null
-  ratingCount: number
-  readRule: number
-  purchaseAmount: number
   copyright: string | null
   disclaimer: string | null
   remark: string | null
@@ -390,13 +324,7 @@ export type WorkComicVersionWhereInput = {
   isPublished?: Prisma.BoolFilter<"WorkComicVersion"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"WorkComicVersion"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableFilter<"WorkComicVersion"> | Date | string | null
-  totalViews?: Prisma.IntFilter<"WorkComicVersion"> | number
-  favoriteCount?: Prisma.IntFilter<"WorkComicVersion"> | number
-  likeCount?: Prisma.IntFilter<"WorkComicVersion"> | number
   rating?: Prisma.FloatNullableFilter<"WorkComicVersion"> | number | null
-  ratingCount?: Prisma.IntFilter<"WorkComicVersion"> | number
-  readRule?: Prisma.IntFilter<"WorkComicVersion"> | number
-  purchaseAmount?: Prisma.IntFilter<"WorkComicVersion"> | number
   copyright?: Prisma.StringNullableFilter<"WorkComicVersion"> | string | null
   disclaimer?: Prisma.StringNullableFilter<"WorkComicVersion"> | string | null
   remark?: Prisma.StringNullableFilter<"WorkComicVersion"> | string | null
@@ -419,13 +347,7 @@ export type WorkComicVersionOrderByWithRelationInput = {
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder
-  totalViews?: Prisma.SortOrder
-  favoriteCount?: Prisma.SortOrder
-  likeCount?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
-  ratingCount?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
-  purchaseAmount?: Prisma.SortOrder
   copyright?: Prisma.SortOrderInput | Prisma.SortOrder
   disclaimer?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -452,13 +374,7 @@ export type WorkComicVersionWhereUniqueInput = Prisma.AtLeast<{
   isPublished?: Prisma.BoolFilter<"WorkComicVersion"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"WorkComicVersion"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableFilter<"WorkComicVersion"> | Date | string | null
-  totalViews?: Prisma.IntFilter<"WorkComicVersion"> | number
-  favoriteCount?: Prisma.IntFilter<"WorkComicVersion"> | number
-  likeCount?: Prisma.IntFilter<"WorkComicVersion"> | number
   rating?: Prisma.FloatNullableFilter<"WorkComicVersion"> | number | null
-  ratingCount?: Prisma.IntFilter<"WorkComicVersion"> | number
-  readRule?: Prisma.IntFilter<"WorkComicVersion"> | number
-  purchaseAmount?: Prisma.IntFilter<"WorkComicVersion"> | number
   copyright?: Prisma.StringNullableFilter<"WorkComicVersion"> | string | null
   disclaimer?: Prisma.StringNullableFilter<"WorkComicVersion"> | string | null
   remark?: Prisma.StringNullableFilter<"WorkComicVersion"> | string | null
@@ -481,13 +397,7 @@ export type WorkComicVersionOrderByWithAggregationInput = {
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder
-  totalViews?: Prisma.SortOrder
-  favoriteCount?: Prisma.SortOrder
-  likeCount?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
-  ratingCount?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
-  purchaseAmount?: Prisma.SortOrder
   copyright?: Prisma.SortOrderInput | Prisma.SortOrder
   disclaimer?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -516,13 +426,7 @@ export type WorkComicVersionScalarWhereWithAggregatesInput = {
   isPublished?: Prisma.BoolWithAggregatesFilter<"WorkComicVersion"> | boolean
   publishAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkComicVersion"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkComicVersion"> | Date | string | null
-  totalViews?: Prisma.IntWithAggregatesFilter<"WorkComicVersion"> | number
-  favoriteCount?: Prisma.IntWithAggregatesFilter<"WorkComicVersion"> | number
-  likeCount?: Prisma.IntWithAggregatesFilter<"WorkComicVersion"> | number
   rating?: Prisma.FloatNullableWithAggregatesFilter<"WorkComicVersion"> | number | null
-  ratingCount?: Prisma.IntWithAggregatesFilter<"WorkComicVersion"> | number
-  readRule?: Prisma.IntWithAggregatesFilter<"WorkComicVersion"> | number
-  purchaseAmount?: Prisma.IntWithAggregatesFilter<"WorkComicVersion"> | number
   copyright?: Prisma.StringNullableWithAggregatesFilter<"WorkComicVersion"> | string | null
   disclaimer?: Prisma.StringNullableWithAggregatesFilter<"WorkComicVersion"> | string | null
   remark?: Prisma.StringNullableWithAggregatesFilter<"WorkComicVersion"> | string | null
@@ -541,13 +445,7 @@ export type WorkComicVersionCreateInput = {
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
-  totalViews?: number
-  favoriteCount?: number
-  likeCount?: number
   rating?: number | null
-  ratingCount?: number
-  readRule?: number
-  purchaseAmount?: number
   copyright?: string | null
   disclaimer?: string | null
   remark?: string | null
@@ -570,13 +468,7 @@ export type WorkComicVersionUncheckedCreateInput = {
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
-  totalViews?: number
-  favoriteCount?: number
-  likeCount?: number
   rating?: number | null
-  ratingCount?: number
-  readRule?: number
-  purchaseAmount?: number
   copyright?: string | null
   disclaimer?: string | null
   remark?: string | null
@@ -596,13 +488,7 @@ export type WorkComicVersionUpdateInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalViews?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseAmount?: Prisma.IntFieldUpdateOperationsInput | number
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -625,13 +511,7 @@ export type WorkComicVersionUncheckedUpdateInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalViews?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseAmount?: Prisma.IntFieldUpdateOperationsInput | number
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -653,13 +533,7 @@ export type WorkComicVersionCreateManyInput = {
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
-  totalViews?: number
-  favoriteCount?: number
-  likeCount?: number
   rating?: number | null
-  ratingCount?: number
-  readRule?: number
-  purchaseAmount?: number
   copyright?: string | null
   disclaimer?: string | null
   remark?: string | null
@@ -678,13 +552,7 @@ export type WorkComicVersionUpdateManyMutationInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalViews?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseAmount?: Prisma.IntFieldUpdateOperationsInput | number
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -705,13 +573,7 @@ export type WorkComicVersionUncheckedUpdateManyInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalViews?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseAmount?: Prisma.IntFieldUpdateOperationsInput | number
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -743,13 +605,7 @@ export type WorkComicVersionCountOrderByAggregateInput = {
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   lastUpdated?: Prisma.SortOrder
-  totalViews?: Prisma.SortOrder
-  favoriteCount?: Prisma.SortOrder
-  likeCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
-  ratingCount?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
-  purchaseAmount?: Prisma.SortOrder
   copyright?: Prisma.SortOrder
   disclaimer?: Prisma.SortOrder
   remark?: Prisma.SortOrder
@@ -762,13 +618,7 @@ export type WorkComicVersionCountOrderByAggregateInput = {
 export type WorkComicVersionAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   comicId?: Prisma.SortOrder
-  totalViews?: Prisma.SortOrder
-  favoriteCount?: Prisma.SortOrder
-  likeCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
-  ratingCount?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
-  purchaseAmount?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
 }
 
@@ -783,13 +633,7 @@ export type WorkComicVersionMaxOrderByAggregateInput = {
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   lastUpdated?: Prisma.SortOrder
-  totalViews?: Prisma.SortOrder
-  favoriteCount?: Prisma.SortOrder
-  likeCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
-  ratingCount?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
-  purchaseAmount?: Prisma.SortOrder
   copyright?: Prisma.SortOrder
   disclaimer?: Prisma.SortOrder
   remark?: Prisma.SortOrder
@@ -810,13 +654,7 @@ export type WorkComicVersionMinOrderByAggregateInput = {
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   lastUpdated?: Prisma.SortOrder
-  totalViews?: Prisma.SortOrder
-  favoriteCount?: Prisma.SortOrder
-  likeCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
-  ratingCount?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
-  purchaseAmount?: Prisma.SortOrder
   copyright?: Prisma.SortOrder
   disclaimer?: Prisma.SortOrder
   remark?: Prisma.SortOrder
@@ -829,13 +667,7 @@ export type WorkComicVersionMinOrderByAggregateInput = {
 export type WorkComicVersionSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   comicId?: Prisma.SortOrder
-  totalViews?: Prisma.SortOrder
-  favoriteCount?: Prisma.SortOrder
-  likeCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
-  ratingCount?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
-  purchaseAmount?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
 }
 
@@ -924,13 +756,7 @@ export type WorkComicVersionCreateWithoutChaptersInput = {
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
-  totalViews?: number
-  favoriteCount?: number
-  likeCount?: number
   rating?: number | null
-  ratingCount?: number
-  readRule?: number
-  purchaseAmount?: number
   copyright?: string | null
   disclaimer?: string | null
   remark?: string | null
@@ -952,13 +778,7 @@ export type WorkComicVersionUncheckedCreateWithoutChaptersInput = {
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
-  totalViews?: number
-  favoriteCount?: number
-  likeCount?: number
   rating?: number | null
-  ratingCount?: number
-  readRule?: number
-  purchaseAmount?: number
   copyright?: string | null
   disclaimer?: string | null
   remark?: string | null
@@ -993,13 +813,7 @@ export type WorkComicVersionUpdateWithoutChaptersInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalViews?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseAmount?: Prisma.IntFieldUpdateOperationsInput | number
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1021,13 +835,7 @@ export type WorkComicVersionUncheckedUpdateWithoutChaptersInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalViews?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseAmount?: Prisma.IntFieldUpdateOperationsInput | number
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1046,13 +854,7 @@ export type WorkComicVersionCreateWithoutComicInput = {
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
-  totalViews?: number
-  favoriteCount?: number
-  likeCount?: number
   rating?: number | null
-  ratingCount?: number
-  readRule?: number
-  purchaseAmount?: number
   copyright?: string | null
   disclaimer?: string | null
   remark?: string | null
@@ -1073,13 +875,7 @@ export type WorkComicVersionUncheckedCreateWithoutComicInput = {
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
-  totalViews?: number
-  favoriteCount?: number
-  likeCount?: number
   rating?: number | null
-  ratingCount?: number
-  readRule?: number
-  purchaseAmount?: number
   copyright?: string | null
   disclaimer?: string | null
   remark?: string | null
@@ -1130,13 +926,7 @@ export type WorkComicVersionScalarWhereInput = {
   isPublished?: Prisma.BoolFilter<"WorkComicVersion"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"WorkComicVersion"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableFilter<"WorkComicVersion"> | Date | string | null
-  totalViews?: Prisma.IntFilter<"WorkComicVersion"> | number
-  favoriteCount?: Prisma.IntFilter<"WorkComicVersion"> | number
-  likeCount?: Prisma.IntFilter<"WorkComicVersion"> | number
   rating?: Prisma.FloatNullableFilter<"WorkComicVersion"> | number | null
-  ratingCount?: Prisma.IntFilter<"WorkComicVersion"> | number
-  readRule?: Prisma.IntFilter<"WorkComicVersion"> | number
-  purchaseAmount?: Prisma.IntFilter<"WorkComicVersion"> | number
   copyright?: Prisma.StringNullableFilter<"WorkComicVersion"> | string | null
   disclaimer?: Prisma.StringNullableFilter<"WorkComicVersion"> | string | null
   remark?: Prisma.StringNullableFilter<"WorkComicVersion"> | string | null
@@ -1156,13 +946,7 @@ export type WorkComicVersionCreateManyComicInput = {
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
-  totalViews?: number
-  favoriteCount?: number
-  likeCount?: number
   rating?: number | null
-  ratingCount?: number
-  readRule?: number
-  purchaseAmount?: number
   copyright?: string | null
   disclaimer?: string | null
   remark?: string | null
@@ -1181,13 +965,7 @@ export type WorkComicVersionUpdateWithoutComicInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalViews?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseAmount?: Prisma.IntFieldUpdateOperationsInput | number
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1208,13 +986,7 @@ export type WorkComicVersionUncheckedUpdateWithoutComicInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalViews?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseAmount?: Prisma.IntFieldUpdateOperationsInput | number
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1235,13 +1007,7 @@ export type WorkComicVersionUncheckedUpdateManyWithoutComicInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  totalViews?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseAmount?: Prisma.IntFieldUpdateOperationsInput | number
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1293,13 +1059,7 @@ export type WorkComicVersionSelect<ExtArgs extends runtime.Types.Extensions.Inte
   isPublished?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
-  totalViews?: boolean
-  favoriteCount?: boolean
-  likeCount?: boolean
   rating?: boolean
-  ratingCount?: boolean
-  readRule?: boolean
-  purchaseAmount?: boolean
   copyright?: boolean
   disclaimer?: boolean
   remark?: boolean
@@ -1323,13 +1083,7 @@ export type WorkComicVersionSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   isPublished?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
-  totalViews?: boolean
-  favoriteCount?: boolean
-  likeCount?: boolean
   rating?: boolean
-  ratingCount?: boolean
-  readRule?: boolean
-  purchaseAmount?: boolean
   copyright?: boolean
   disclaimer?: boolean
   remark?: boolean
@@ -1351,13 +1105,7 @@ export type WorkComicVersionSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   isPublished?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
-  totalViews?: boolean
-  favoriteCount?: boolean
-  likeCount?: boolean
   rating?: boolean
-  ratingCount?: boolean
-  readRule?: boolean
-  purchaseAmount?: boolean
   copyright?: boolean
   disclaimer?: boolean
   remark?: boolean
@@ -1379,13 +1127,7 @@ export type WorkComicVersionSelectScalar = {
   isPublished?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
-  totalViews?: boolean
-  favoriteCount?: boolean
-  likeCount?: boolean
   rating?: boolean
-  ratingCount?: boolean
-  readRule?: boolean
-  purchaseAmount?: boolean
   copyright?: boolean
   disclaimer?: boolean
   remark?: boolean
@@ -1395,7 +1137,7 @@ export type WorkComicVersionSelectScalar = {
   updatedAt?: boolean
 }
 
-export type WorkComicVersionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "comicId" | "versionName" | "language" | "translatorGroup" | "description" | "isRecommended" | "isPublished" | "publishAt" | "lastUpdated" | "totalViews" | "favoriteCount" | "likeCount" | "rating" | "ratingCount" | "readRule" | "purchaseAmount" | "copyright" | "disclaimer" | "remark" | "sortOrder" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workComicVersion"]>
+export type WorkComicVersionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "comicId" | "versionName" | "language" | "translatorGroup" | "description" | "isRecommended" | "isPublished" | "publishAt" | "lastUpdated" | "rating" | "copyright" | "disclaimer" | "remark" | "sortOrder" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workComicVersion"]>
 export type WorkComicVersionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   chapters?: boolean | Prisma.WorkComicVersion$chaptersArgs<ExtArgs>
@@ -1462,33 +1204,9 @@ export type $WorkComicVersionPayload<ExtArgs extends runtime.Types.Extensions.In
      */
     lastUpdated: Date | null
     /**
-     * 总阅读次数
-     */
-    totalViews: number
-    /**
-     * 收藏数
-     */
-    favoriteCount: number
-    /**
-     * 点赞数
-     */
-    likeCount: number
-    /**
      * 评分（1-10分，保留一位小数）
      */
     rating: number | null
-    /**
-     * 评分人数
-     */
-    ratingCount: number
-    /**
-     * 查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）
-     */
-    readRule: number
-    /**
-     * 购买需要消耗的积分
-     */
-    purchaseAmount: number
     /**
      * 版权信息
      */
@@ -1952,13 +1670,7 @@ export interface WorkComicVersionFieldRefs {
   readonly isPublished: Prisma.FieldRef<"WorkComicVersion", 'Boolean'>
   readonly publishAt: Prisma.FieldRef<"WorkComicVersion", 'DateTime'>
   readonly lastUpdated: Prisma.FieldRef<"WorkComicVersion", 'DateTime'>
-  readonly totalViews: Prisma.FieldRef<"WorkComicVersion", 'Int'>
-  readonly favoriteCount: Prisma.FieldRef<"WorkComicVersion", 'Int'>
-  readonly likeCount: Prisma.FieldRef<"WorkComicVersion", 'Int'>
   readonly rating: Prisma.FieldRef<"WorkComicVersion", 'Float'>
-  readonly ratingCount: Prisma.FieldRef<"WorkComicVersion", 'Int'>
-  readonly readRule: Prisma.FieldRef<"WorkComicVersion", 'Int'>
-  readonly purchaseAmount: Prisma.FieldRef<"WorkComicVersion", 'Int'>
   readonly copyright: Prisma.FieldRef<"WorkComicVersion", 'String'>
   readonly disclaimer: Prisma.FieldRef<"WorkComicVersion", 'String'>
   readonly remark: Prisma.FieldRef<"WorkComicVersion", 'String'>
