@@ -36,7 +36,7 @@ export class WorkComicService extends RepositoryService {
     })
 
     if (existingAuthors.length !== authorIds.length) {
-      throw new BadRequestException('部分作者不存在或已禁用')
+      throw new BadRequestException('部分作者不存在')
     }
 
     // 验证分类是否存在
@@ -112,7 +112,6 @@ export class WorkComicService extends RepositoryService {
       language,
       region,
       ageRating,
-      readRule,
       isRecommended,
       isHot,
       isNew,
@@ -156,11 +155,6 @@ export class WorkComicService extends RepositoryService {
     // 年龄分级筛选
     if (isNotNil(ageRating)) {
       where.ageRating = ageRating
-    }
-
-    // 阅读规则筛选
-    if (isNotNil(readRule)) {
-      where.readRule = readRule
     }
 
     // 推荐状态筛选
@@ -211,7 +205,7 @@ export class WorkComicService extends RepositoryService {
       }
     }
 
-    const pageData = await this.workComic.findPagination({
+    return this.workComic.findPagination({
       where: { ...where, ...pageDto },
       select: {
         // 必须明确指定需要的所有字段
@@ -220,7 +214,6 @@ export class WorkComicService extends RepositoryService {
         alias: true,
         cover: true,
         serialStatus: true,
-        readRule: true,
         isHot: true,
         isNew: true,
         isRecommended: true,
@@ -264,7 +257,6 @@ export class WorkComicService extends RepositoryService {
         },
       },
     })
-    return pageData
   }
 
   /**

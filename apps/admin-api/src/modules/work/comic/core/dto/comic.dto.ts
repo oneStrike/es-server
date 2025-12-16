@@ -14,11 +14,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import {
-  ComicDownloadPermissionEnum,
-  ComicReadRuleEnum,
-  ComicSerialStatusEnum,
-} from '../comic.constant'
+import { ComicSerialStatusEnum } from '../comic.constant'
 
 /**
  * 漫画作者DTO
@@ -276,85 +272,6 @@ export class BaseComicDto extends BaseDto {
   })
   serialStatus!: ComicSerialStatusEnum
 
-  @ValidateEnum({
-    description: '是否允许下载',
-    enum: ComicDownloadPermissionEnum,
-    example: ComicDownloadPermissionEnum.ALLOWED,
-    required: true,
-    default: ComicDownloadPermissionEnum.ALLOWED,
-  })
-  canDownload!: number
-
-  @ValidateBoolean({
-    description: '是否允许评论',
-    example: true,
-    required: true,
-    default: true,
-  })
-  canComment!: boolean
-
-  @ValidateEnum({
-    description: '阅读规则',
-    example: ComicReadRuleEnum.FREE,
-    required: true,
-    enum: ComicReadRuleEnum,
-    default: ComicReadRuleEnum.FREE,
-  })
-  readRule!: ComicReadRuleEnum
-
-  @ValidateNumber({
-    description: '所需积分',
-    example: 1000,
-    required: false,
-    min: 0,
-  })
-  readPoints?: number
-
-  @ValidateNumber({
-    description: '总章节数',
-    example: 100,
-    required: true,
-    min: 0,
-    default: 0,
-  })
-  totalChapters!: number
-
-  @ValidateNumber({
-    description: '总阅读次数',
-    example: 10000,
-    required: true,
-    min: 0,
-    default: 0,
-  })
-  totalViews!: number
-
-  @ValidateNumber({
-    description: '收藏数',
-    example: 500,
-    required: true,
-    min: 0,
-    default: 0,
-  })
-  favoriteCount!: number
-
-  @ValidateNumber({
-    description: '评论总数',
-    example: 200,
-    required: true,
-    min: 0,
-    default: 0,
-  })
-  commentCount!: number
-
-  @ValidateNumber({
-    description: '点赞总数',
-    example: 1000,
-    required: true,
-    min: 0,
-    default: 0,
-  })
-  likeCount!: number
-
   @ValidateNumber({
     description: '评分（1-10分，保留1位小数）',
     example: 8.5,
@@ -363,39 +280,6 @@ export class BaseComicDto extends BaseDto {
     max: 10,
   })
   rating?: number
-
-  @ValidateNumber({
-    description: '评分人数',
-    example: 100,
-    required: true,
-    min: 0,
-    default: 0,
-  })
-  ratingCount!: number
-
-  @ValidateString({
-    description: 'SEO标题',
-    example: '进击的巨人 - 热门漫画在线阅读',
-    required: false,
-    maxLength: 100,
-  })
-  seoTitle?: string
-
-  @ValidateString({
-    description: 'SEO描述',
-    example: '进击的巨人是一部精彩的漫画作品...',
-    required: false,
-    maxLength: 200,
-  })
-  seoDescription?: string
-
-  @ValidateString({
-    description: 'SEO关键词',
-    example: '进击的巨人,漫画,在线阅读',
-    required: false,
-    maxLength: 200,
-  })
-  seoKeywords?: string
 
   @ValidateNumber({
     description: '推荐权重（影响推荐排序）',
@@ -468,12 +352,6 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
   'popularity',
   'isPublished',
   'deletedAt',
-  'totalChapters',
-  'totalViews',
-  'favoriteCount',
-  'commentCount',
-  'likeCount',
-  'ratingCount',
   'isRecommended',
   'isHot',
   'isNew',
@@ -528,7 +406,6 @@ export class QueryComicDto extends IntersectionType(
       'language',
       'region',
       'ageRating',
-      'readRule',
       'isRecommended',
       'isHot',
       'isNew',

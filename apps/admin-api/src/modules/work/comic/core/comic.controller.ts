@@ -75,9 +75,9 @@ export class WorkComicController {
   /**
    * 批量更新漫画发布状态
    */
-  @Post('/batch-update-status')
+  @Post('/update-status')
   @ApiDoc({
-    summary: '批量更新漫画发布状态',
+    summary: '更新漫画发布状态',
     model: BatchOperationResponseDto,
   })
   async updateStatus(@Body() body: UpdateComicStatusDto) {
@@ -90,11 +90,11 @@ export class WorkComicController {
   }
 
   /**
-   * 批量更新漫画推荐状态
+   * 更新漫画推荐状态
    */
-  @Post('/batch-update-recommended')
+  @Post('/update-recommended')
   @ApiDoc({
-    summary: '批量更新漫画推荐状态',
+    summary: '更新漫画推荐状态',
     model: BatchOperationResponseDto,
   })
   async updateRecommended(@Body() body: UpdateComicRecommendedDto) {
@@ -107,11 +107,11 @@ export class WorkComicController {
   }
 
   /**
-   * 批量更新漫画热门状态
+   * 更新漫画热门状态
    */
-  @Post('/batch-update-hot')
+  @Post('/update-hot')
   @ApiDoc({
-    summary: '批量更新漫画热门状态',
+    summary: '更新漫画热门状态',
     model: BatchOperationResponseDto,
   })
   async updateHot(@Body() body: UpdateComicHotDto) {
@@ -126,9 +126,9 @@ export class WorkComicController {
   /**
    * 批量更新漫画新作状态
    */
-  @Post('/batch-update-new')
+  @Post('/update-new')
   @ApiDoc({
-    summary: '批量更新漫画新作状态',
+    summary: '更新漫画新作状态',
     model: BatchOperationResponseDto,
   })
   async updateNew(@Body() body: UpdateComicNewDto) {
