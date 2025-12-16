@@ -50,9 +50,6 @@ model WorkComicVersion {
   @@index([language]) // 按语言和地区查询
   @@index([isPublished, publishAt]) // 查询已发布版本
   @@index([isRecommended]) // 查询推荐版本
-  @@index([totalViews]) // 按阅读量排序
-  @@index([favoriteCount]) // 按收藏数排序
-  @@index([rating, ratingCount]) // 按评分排序
   @@index([lastUpdated]) // 按最后更新时间排序
   @@index([sortOrder]) // 按排序权重排序
   @@index([translatorGroup]) // 按翻译组查询

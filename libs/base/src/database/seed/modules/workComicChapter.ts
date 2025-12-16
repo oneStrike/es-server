@@ -9,6 +9,9 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '艾伦的梦境与巨人的出现',
           chapterNumber: 1,
           isPublished: true,
+          canDownload: 1,
+          downloadPoints: 0,
+          canComment: true,
           readRule: 0, // 免费
           readPoints: 0,
           contents: JSON.stringify([
@@ -27,6 +30,9 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '玛利亚之墙的陷落',
           chapterNumber: 2,
           isPublished: true,
+          canDownload: 1,
+          downloadPoints: 0,
+          canComment: true,
           readRule: 0, // 免费
           readPoints: 0,
           contents: JSON.stringify([
@@ -45,6 +51,9 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '训练兵团的毕业典礼',
           chapterNumber: 3,
           isPublished: true,
+          canDownload: 1,
+          downloadPoints: 0,
+          canComment: true,
           readRule: 1, // 需要登录
           readPoints: 0,
           contents: JSON.stringify([
@@ -68,6 +77,9 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '路飞的冒险开始',
           chapterNumber: 1,
           isPublished: true,
+          canDownload: 1,
+          downloadPoints: 0,
+          canComment: true,
           readRule: 0, // 免费
           readPoints: 0,
           contents: JSON.stringify([
@@ -86,6 +98,9 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '路飞与克比的相遇',
           chapterNumber: 2,
           isPublished: true,
+          canDownload: 1,
+          downloadPoints: 0,
+          canComment: true,
           readRule: 0, // 免费
           readPoints: 0,
           contents: JSON.stringify([
@@ -109,6 +124,9 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '炭治郎一家的悲剧',
           chapterNumber: 1,
           isPublished: true,
+          canDownload: 1,
+          downloadPoints: 0,
+          canComment: true,
           readRule: 0, // 免费
           readPoints: 0,
           contents: JSON.stringify([
@@ -127,6 +145,9 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '炭治郎的修行开始',
           chapterNumber: 2,
           isPublished: true,
+          canDownload: 1,
+          downloadPoints: 0,
+          canComment: true,
           readRule: 1, // 需要登录
           readPoints: 0,
           contents: JSON.stringify([

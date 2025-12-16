@@ -13,6 +13,7 @@ import { createInitialClientPage } from './modules/clientPage' // 页面访问�
 import { createInitialComics } from './modules/comic' // 漫画基础信息
 import { createInitialDataDictionary } from './modules/dataDictionary' // 数据字典（语言、国籍、出版社等）
 import { createInitialMediums } from './modules/medium' // 作品媒介类型
+import { createInitialMemberLevels } from './modules/memberLevel' // 会员等级管理
 import { createInitialWorkCategory } from './modules/workCategory' // 作品分类管理
 import { createInitialWorkComicChapters } from './modules/workComicChapter' // 漫画章节内容
 import { createInitialWorkComicRelations } from './modules/workComicRelations' // 作品关联关系（作者-漫画-分类）
@@ -31,6 +32,7 @@ async function runSeeds() {
   await Promise.all([
     createInitialAdminAccount(prisma), // 用户管理：管理员账户
     createInitialDataDictionary(prisma), // 系统配置：数据字典
+    createInitialMemberLevels(prisma), // 用户管理：会员等级配置
     createInitialMediums(prisma), // 内容管理：作品媒介类型（先于分类）
     createInitialWorkCategory(prisma), // 内容管理：作品分类
     createInitialWorkTag(prisma), // 内容管理：作品标签
