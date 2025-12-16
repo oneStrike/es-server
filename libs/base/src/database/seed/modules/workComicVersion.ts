@@ -19,7 +19,7 @@ export async function createInitialWorkComicVersions(prisma: any) {
           rating: 9.2,
           ratingCount: 850,
           readRule: 0, // 免费
-          purchaseAmount: 0,
+          readPoints: 0,
           copyright: '© 諫山創/講談社',
           sortOrder: 1,
         },
@@ -38,7 +38,7 @@ export async function createInitialWorkComicVersions(prisma: any) {
           rating: 9.0,
           ratingCount: 420,
           readRule: 1, // 需要登录
-          purchaseAmount: 0,
+          readPoints: 0,
           copyright: '© Hajime Isayama/Kodansha',
           sortOrder: 2,
         },
@@ -62,7 +62,7 @@ export async function createInitialWorkComicVersions(prisma: any) {
           rating: 9.5,
           ratingCount: 1200,
           readRule: 0, // 免费
-          purchaseAmount: 0,
+          readPoints: 0,
           copyright: '© 尾田栄一郎/集英社',
           sortOrder: 1,
         },
@@ -81,7 +81,7 @@ export async function createInitialWorkComicVersions(prisma: any) {
           rating: 9.6,
           ratingCount: 200,
           readRule: 2, // 会员
-          purchaseAmount: 0,
+          readPoints: 0,
           copyright: '© 尾田栄一郎/集英社',
           sortOrder: 3,
         },
@@ -105,7 +105,7 @@ export async function createInitialWorkComicVersions(prisma: any) {
           rating: 9.3,
           ratingCount: 980,
           readRule: 0, // 免费
-          purchaseAmount: 0,
+          readPoints: 0,
           copyright: '© 吾峠呼世晴/集英社',
           sortOrder: 1,
         },
@@ -124,7 +124,7 @@ export async function createInitialWorkComicVersions(prisma: any) {
           rating: 9.2,
           ratingCount: 350,
           readRule: 1, // 需要登录
-          purchaseAmount: 0,
+          readPoints: 0,
           copyright: '© 吾峠呼世晴/集英社',
           sortOrder: 2,
         },

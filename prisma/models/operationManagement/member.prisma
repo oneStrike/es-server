@@ -1,0 +1,31 @@
+/// 会员等级
+model MemberLevel {
+  /// 主键id
+  id          Int       @id @default(autoincrement()) @map("id")
+  /// 会员等级名称
+  name        String    @map("name")
+  /// 所需要的积分
+  points      Int       @map("points")
+  /// 等级图标URL
+  icon        String?   @map("icon") @db.VarChar(200)
+  /// 等级描述
+  description String?   @map("description") @db.VarChar(255)
+  /// 是否启用该等级
+  isEnabled   Boolean   @default(true) @map("is_enabled")
+  /// 等级专属标识颜色
+  color       String?   @map("color") @db.VarChar(20)
+  /// 备注信息
+  remark      String?   @map("remark") @db.VarChar(255)
+  /// 创建时间
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  /// 软删除时间
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  /// 索引优化
+  @@index([points]) // 按所需积分查询等级
+  @@index([isEnabled]) // 按启用状态查询
+  @@index([createdAt]) // 按创建时间查询
+  @@map("member_level")
+}

@@ -157,7 +157,7 @@ export class BaseComicVersionDto {
     min: 0,
     default: 0,
   })
-  purchaseAmount!: number
+  readPoints!: number
 
   @ValidateString({
     description: '版权信息',

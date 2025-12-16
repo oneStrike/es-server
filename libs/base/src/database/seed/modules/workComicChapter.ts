@@ -10,7 +10,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           chapterNumber: 1,
           isPublished: true,
           readRule: 0, // 免费
-          purchaseAmount: 0,
+          readPoints: 0,
           contents: JSON.stringify([
             'https://example.com/aot/ch1/page1.jpg',
             'https://example.com/aot/ch1/page2.jpg',
@@ -28,7 +28,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           chapterNumber: 2,
           isPublished: true,
           readRule: 0, // 免费
-          purchaseAmount: 0,
+          readPoints: 0,
           contents: JSON.stringify([
             'https://example.com/aot/ch2/page1.jpg',
             'https://example.com/aot/ch2/page2.jpg',
@@ -46,7 +46,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           chapterNumber: 3,
           isPublished: true,
           readRule: 1, // 需要登录
-          purchaseAmount: 0,
+          readPoints: 0,
           contents: JSON.stringify([
             'https://example.com/aot/ch3/page1.jpg',
             'https://example.com/aot/ch3/page2.jpg',
@@ -69,7 +69,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           chapterNumber: 1,
           isPublished: true,
           readRule: 0, // 免费
-          purchaseAmount: 0,
+          readPoints: 0,
           contents: JSON.stringify([
             'https://example.com/op/ch1/page1.jpg',
             'https://example.com/op/ch1/page2.jpg',
@@ -87,7 +87,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           chapterNumber: 2,
           isPublished: true,
           readRule: 0, // 免费
-          purchaseAmount: 0,
+          readPoints: 0,
           contents: JSON.stringify([
             'https://example.com/op/ch2/page1.jpg',
             'https://example.com/op/ch2/page2.jpg',
@@ -110,7 +110,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           chapterNumber: 1,
           isPublished: true,
           readRule: 0, // 免费
-          purchaseAmount: 0,
+          readPoints: 0,
           contents: JSON.stringify([
             'https://example.com/ds/ch1/page1.jpg',
             'https://example.com/ds/ch1/page2.jpg',
@@ -128,7 +128,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           chapterNumber: 2,
           isPublished: true,
           readRule: 1, // 需要登录
-          purchaseAmount: 0,
+          readPoints: 0,
           contents: JSON.stringify([
             'https://example.com/ds/ch2/page1.jpg',
             'https://example.com/ds/ch2/page2.jpg',
