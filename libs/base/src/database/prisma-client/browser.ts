@@ -43,6 +43,11 @@ export type ClientPage = Prisma.ClientPageModel
  */
 export type ClientUser = Prisma.ClientUserModel
 /**
+ * Model MemberLevel
+ * 会员等级
+ */
+export type MemberLevel = Prisma.MemberLevelModel
+/**
  * Model RequestLog
  * 
  */

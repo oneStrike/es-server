@@ -56,6 +56,7 @@ export const ModelName = {
   ClientNotice: 'ClientNotice',
   ClientPage: 'ClientPage',
   ClientUser: 'ClientUser',
+  MemberLevel: 'MemberLevel',
   RequestLog: 'RequestLog',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
@@ -182,6 +183,27 @@ export const ClientUserScalarFieldEnum = {
 } as const
 
 export type ClientUserScalarFieldEnum = (typeof ClientUserScalarFieldEnum)[keyof typeof ClientUserScalarFieldEnum]
+
+
+export const MemberLevelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  points: 'points',
+  loginDays: 'loginDays',
+  icon: 'icon',
+  description: 'description',
+  isEnabled: 'isEnabled',
+  color: 'color',
+  blacklistLimit: 'blacklistLimit',
+  workCollectionLimit: 'workCollectionLimit',
+  discount: 'discount',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type MemberLevelScalarFieldEnum = (typeof MemberLevelScalarFieldEnum)[keyof typeof MemberLevelScalarFieldEnum]
 
 
 export const RequestLogScalarFieldEnum = {

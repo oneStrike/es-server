@@ -7,6 +7,7 @@ generator client {
   previewFeatures = ["relationJoins"]
   output          = "../libs/base/src/database/prisma-client"
 }
+
 datasource db {
   provider     = "postgresql"
   relationMode = "prisma"

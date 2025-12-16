@@ -27,6 +27,12 @@
       ],
       "@libs/dictionary/*": [
         "libs/dictionary/src/*"
+      ],
+      "@libs/member": [
+        "libs/member/src"
+      ],
+      "@libs/member/*": [
+        "libs/member/src/*"
       ]
     },
     "resolveJsonModule": true,
