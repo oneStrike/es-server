@@ -1,13 +1,13 @@
 import { RepositoryService } from '@libs/base/database'
-import { UpdateStatusDto } from '@libs/base/dto'
+import { IdDto, UpdateStatusDto } from '@libs/base/dto'
+import { Injectable } from '@nestjs/common'
 import {
   CreateMemberLevelDto,
   UpdateMemberLevelDto,
-} from '@libs/member/dto/member-level.dto'
-import { Injectable } from '@nestjs/common'
+} from './dto/member-level.dto'
 
 @Injectable()
-export class MemberService extends RepositoryService {
+export class MemberLevelService extends RepositoryService {
   get memberLevel() {
     return this.prisma.memberLevel
   }
@@ -40,7 +40,7 @@ export class MemberService extends RepositoryService {
   /**
    * 获取所有会员等级
    */
-  async getAllMemberLevels() {
+  async getMemberLevelList() {
     return this.memberLevel.findMany({
       orderBy: {
         points: 'asc',
@@ -54,10 +54,10 @@ export class MemberService extends RepositoryService {
   /**
    * 获取会员等级详情
    */
-  async getMemberLevelDetail(id: number) {
+  async getMemberLevelDetail(dto: IdDto) {
     return this.memberLevel.findUnique({
       where: {
-        id,
+        id: dto.id,
       },
     })
   }
@@ -65,10 +65,10 @@ export class MemberService extends RepositoryService {
   /**
    * 删除会员等级
    */
-  async deleteMemberLevel(id: number) {
+  async deleteMemberLevel(dto: IdDto) {
     return this.memberLevel.delete({
       where: {
-        id,
+        id: dto.id,
       },
     })
   }
