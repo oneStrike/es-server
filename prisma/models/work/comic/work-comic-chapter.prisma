@@ -15,10 +15,16 @@ model WorkComicChapter {
   versionId      Int?              @map("version_id") @db.Integer
   /// 章节序号（用于排序）
   chapterNumber  Float             @map("chapter_number") @db.DoublePrecision
-  /// 查看规则 0公开 1登录 2会员 3购买
+  /// 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
+  canDownload    Int               @default(1) @map("can_download") @db.SmallInt
+  /// 下载所需要的积分（积分可下载时必填）
+  downloadPoints Int?              @default(0) @map("download_points") @db.Integer
+  /// 是否允许评论
+  canComment     Boolean           @default(true) @map("can_comment")
+  /// 查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）
   readRule       Int               @default(0) @map("read_rule") @db.SmallInt
-  /// 购买需要消耗的金额
-  purchaseAmount Int               @default(0) @map("purchase_amount")
+  /// 阅读所需要的积分（积分购买时必填）
+  readPoints     Int?              @default(0) @map("read_points") @db.Integer
   /// 漫画内容（JSON格式存储图片URL数组）
   contents       String            @default("[]") @db.Text
   /// 是否为试读章节

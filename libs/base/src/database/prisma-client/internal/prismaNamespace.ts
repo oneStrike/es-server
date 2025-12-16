@@ -389,6 +389,7 @@ export const ModelName = {
   ClientNotice: 'ClientNotice',
   ClientPage: 'ClientPage',
   ClientUser: 'ClientUser',
+  MemberLevel: 'MemberLevel',
   RequestLog: 'RequestLog',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComicVersion" | "workComic" | "workCategory" | "workCategoryContentType" | "workContentType" | "workTag"
+    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComicVersion" | "workComic" | "workCategory" | "workCategoryContentType" | "workContentType" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -789,6 +790,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ClientUserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ClientUserCountAggregateOutputType> | number
+        }
+      }
+    }
+    MemberLevel: {
+      payload: Prisma.$MemberLevelPayload<ExtArgs>
+      fields: Prisma.MemberLevelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MemberLevelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MemberLevelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
+        }
+        findFirst: {
+          args: Prisma.MemberLevelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MemberLevelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
+        }
+        findMany: {
+          args: Prisma.MemberLevelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>[]
+        }
+        create: {
+          args: Prisma.MemberLevelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
+        }
+        createMany: {
+          args: Prisma.MemberLevelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MemberLevelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>[]
+        }
+        delete: {
+          args: Prisma.MemberLevelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
+        }
+        update: {
+          args: Prisma.MemberLevelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
+        }
+        deleteMany: {
+          args: Prisma.MemberLevelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MemberLevelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MemberLevelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>[]
+        }
+        upsert: {
+          args: Prisma.MemberLevelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
+        }
+        aggregate: {
+          args: Prisma.MemberLevelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMemberLevel>
+        }
+        groupBy: {
+          args: Prisma.MemberLevelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemberLevelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MemberLevelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MemberLevelCountAggregateOutputType> | number
         }
       }
     }
@@ -1963,6 +2038,27 @@ export const ClientUserScalarFieldEnum = {
 export type ClientUserScalarFieldEnum = (typeof ClientUserScalarFieldEnum)[keyof typeof ClientUserScalarFieldEnum]
 
 
+export const MemberLevelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  points: 'points',
+  loginDays: 'loginDays',
+  icon: 'icon',
+  description: 'description',
+  isEnabled: 'isEnabled',
+  color: 'color',
+  blacklistLimit: 'blacklistLimit',
+  workCollectionLimit: 'workCollectionLimit',
+  discount: 'discount',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type MemberLevelScalarFieldEnum = (typeof MemberLevelScalarFieldEnum)[keyof typeof MemberLevelScalarFieldEnum]
+
+
 export const RequestLogScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -2323,20 +2419,6 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'Json'
- */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-/**
- * Reference to a field of type 'QueryMode'
- */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -2347,6 +2429,20 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 /**
@@ -2433,6 +2529,7 @@ export type GlobalOmitConfig = {
   clientNotice?: Prisma.ClientNoticeOmit
   clientPage?: Prisma.ClientPageOmit
   clientUser?: Prisma.ClientUserOmit
+  memberLevel?: Prisma.MemberLevelOmit
   requestLog?: Prisma.RequestLogOmit
   dictionary?: Prisma.DictionaryOmit
   dictionaryItem?: Prisma.DictionaryItemOmit

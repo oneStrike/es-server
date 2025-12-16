@@ -1,27 +1,35 @@
 /// 会员等级
 model MemberLevel {
   /// 主键id
-  id          Int       @id @default(autoincrement()) @map("id")
+  id                  Int       @id @default(autoincrement()) @map("id")
   /// 会员等级名称
-  name        String    @map("name")
+  name                String    @db.VarChar(50)
   /// 所需要的积分
-  points      Int       @map("points")
+  points              Int       @db.Integer
+  /// 所需要的登录天数
+  loginDays           Int       @default(0) @map("login_days") @db.SmallInt
   /// 等级图标URL
-  icon        String?   @map("icon") @db.VarChar(200)
+  icon                String    @db.VarChar(200)
   /// 等级描述
-  description String?   @map("description") @db.VarChar(255)
+  description         String    @db.VarChar(500)
   /// 是否启用该等级
-  isEnabled   Boolean   @default(true) @map("is_enabled")
+  isEnabled           Boolean   @default(true) @map("is_enabled")
   /// 等级专属标识颜色
-  color       String?   @map("color") @db.VarChar(20)
+  color               String?   @db.VarChar(20)
+  /// 黑名单上限
+  blacklistLimit      Int       @default(10) @map("blacklist_limit") @db.SmallInt
+  /// 作品收藏上限
+  workCollectionLimit Int       @default(100) @map("work_collection_limit") @db.SmallInt
+  /// 积分购买折扣（0-1之间的小数，0表示不打折）
+  discount            Float     @default(0.0) @db.Real
   /// 备注信息
-  remark      String?   @map("remark") @db.VarChar(255)
+  remark              String?   @db.VarChar(255)
   /// 创建时间
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
   /// 更新时间
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   /// 软删除时间
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz
 
   /// 索引优化
   @@index([points]) // 按所需积分查询等级

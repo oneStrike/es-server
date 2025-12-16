@@ -54,6 +54,15 @@
       "compilerOptions": {
         "tsConfigPath": "libs/dictionary/tsconfig.lib.json"
       }
+    },
+    "member": {
+      "type": "library",
+      "root": "libs/member",
+      "entryFile": "index",
+      "sourceRoot": "libs/member/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/member/tsconfig.lib.json"
+      }
     }
   }
 }

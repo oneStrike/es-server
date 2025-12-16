@@ -723,14 +723,6 @@ export type WorkComicChapterOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type FloatFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type WorkComicChapterCreateNestedManyWithoutRelatedVersionInput = {
   create?: Prisma.XOR<Prisma.WorkComicChapterCreateWithoutRelatedVersionInput, Prisma.WorkComicChapterUncheckedCreateWithoutRelatedVersionInput> | Prisma.WorkComicChapterCreateWithoutRelatedVersionInput[] | Prisma.WorkComicChapterUncheckedCreateWithoutRelatedVersionInput[]
   connectOrCreate?: Prisma.WorkComicChapterCreateOrConnectWithoutRelatedVersionInput | Prisma.WorkComicChapterCreateOrConnectWithoutRelatedVersionInput[]

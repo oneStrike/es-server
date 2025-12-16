@@ -20,20 +20,8 @@ model WorkComicVersion {
   publishAt       DateTime? @map("publish_at") @db.Timestamptz
   /// 最后更新时间
   lastUpdated     DateTime? @map("last_updated") @db.Timestamptz
-  /// 总阅读次数
-  totalViews      Int       @default(0) @map("total_views") @db.Integer
-  /// 收藏数
-  favoriteCount   Int       @default(0) @map("favorite_count") @db.Integer
-  /// 点赞数
-  likeCount       Int       @default(0) @map("like_count") @db.Integer
   /// 评分（1-10分，保留一位小数）
   rating          Float?    @db.DoublePrecision
-  /// 评分人数
-  ratingCount     Int       @default(0) @map("rating_count") @db.Integer
-  /// 查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）
-  readRule        Int       @default(0) @map("read_rule") @db.SmallInt
-  /// 购买需要消耗的积分
-  purchaseAmount  Int       @default(0) @map("purchase_amount")
   /// 版权信息
   copyright       String?   @db.VarChar(500)
   /// 免责声明

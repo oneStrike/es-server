@@ -21,7 +21,7 @@ model WorkAuthor {
   /// 粉丝数量（冗余字段，用于前台展示）
   followersCount Int       @default(0) @map("followers_count")
   /// 是否为推荐作者（用于前台推荐展示）
-  isRecommended  Boolean   @map("is_recommended") @default(false)
+  isRecommended  Boolean   @default(false) @map("is_recommended")
   /// 管理员备注
   remark         String?   @db.VarChar(1000)
   /// 创建时间
