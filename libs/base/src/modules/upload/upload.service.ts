@@ -109,8 +109,7 @@ export class UploadService {
         }
       }
     }
-
-    if (!scene || !/^[a-z0-9]+$/i.test(scene) || scene.length > 10) {
+    if (!scene || !/^[a-z0-9]+$/i.test(scene) || scene.length > 20) {
       // 必须消费完文件流，否则会导致客户端连接重置 (ERR_CONNECTION_RESET)
       await this.consumeStream(targetFile.file)
       throw new BadRequestException('未知的上传场景')

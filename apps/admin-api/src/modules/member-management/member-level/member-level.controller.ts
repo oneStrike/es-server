@@ -6,10 +6,10 @@ import {
   MemberLevelService,
   UpdateMemberLevelDto,
 } from '@libs/member'
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('会员模块/会员等级模块')
+@ApiTags('会员模块/会员等级')
 @Controller('/admin/member-level')
 export class MemberLevelController {
   constructor(private readonly memberLevelService: MemberLevelService) {}
@@ -28,7 +28,7 @@ export class MemberLevelController {
     model: BaseMemberLevelDto,
   })
   @Get('/detail')
-  async getMemberLevelDetail(@Body() idDto: IdDto) {
+  async getMemberLevelDetail(@Query() idDto: IdDto) {
     return this.memberLevelService.getMemberLevelDetail(idDto)
   }
 
