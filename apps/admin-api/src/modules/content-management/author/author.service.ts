@@ -77,7 +77,6 @@ export class WorkAuthorService extends RepositoryService {
       },
       omit: {
         remark: true,
-        nationality: true,
         description: true,
         deletedAt: true,
       },
