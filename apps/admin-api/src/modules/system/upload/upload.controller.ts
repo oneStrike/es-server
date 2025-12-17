@@ -6,7 +6,7 @@ import { Controller, Post, Req } from '@nestjs/common'
 
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('管理端文件上传')
+@ApiTags('系统管理/文件上传')
 @Controller('admin/upload')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}

@@ -20,7 +20,7 @@ import {
  * 作者管理控制器
  * 提供作者相关的API接口
  */
-@ApiTags('作者管理模块')
+@ApiTags('内容管理/作者管理')
 @Controller('admin/work/author')
 export class WorkAuthorController {
   constructor(private readonly authorService: WorkAuthorService) {}

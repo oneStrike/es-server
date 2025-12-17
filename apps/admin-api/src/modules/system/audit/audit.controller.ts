@@ -5,7 +5,7 @@ import { AuditService } from './audit.service'
 import { AuditPageRequestDto, BaseAuditDto } from './dto/audit.dto'
 
 @Controller('admin/audit')
-@ApiTags('审计日志模块')
+@ApiTags('系统管理/审计日志')
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 

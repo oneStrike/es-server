@@ -23,7 +23,7 @@ import { ActionTypeEnum } from '../../system/audit/audit.constant'
  * 客户端页面配置控制器
  * 提供页面配置相关的API接口
  */
-@ApiTags('客户端页面配置模块')
+@ApiTags('客户端管理/页面管理')
 @Controller('admin/client-page')
 export class ClientPageController {
   constructor(private readonly libClientPageService: LibClientPageService) {}
