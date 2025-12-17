@@ -13,7 +13,7 @@ import {
 /**
  * 内容类型管理
  */
-@ApiTags('内容类型管理模块')
+@ApiTags('内容管理/内容类型')
 @Controller('admin/content-type')
 export class ContentTypeController {
   constructor(private readonly contentTypeService: ContentTypeService) {}

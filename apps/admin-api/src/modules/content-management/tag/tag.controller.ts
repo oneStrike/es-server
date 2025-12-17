@@ -14,7 +14,7 @@ import { WorkTagService } from './tag.service'
  * 标签管理控制器
  * 提供标签相关的 RESTful API 接口
  */
-@ApiTags('标签管理模块')
+@ApiTags('内容管理/标签管理')
 @Controller('admin/work/tag')
 export class WorkTagController {
   constructor(private readonly tagService: WorkTagService) {}

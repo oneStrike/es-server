@@ -16,7 +16,7 @@ import { ApiTags } from '@nestjs/swagger'
  * 客户端通知控制器
  * 提供通知相关的API接口
  */
-@ApiTags('客户端通知模块')
+@ApiTags('客户端管理/通知公告')
 @Controller('admin/notice')
 export class ClientNoticeController {
   constructor(

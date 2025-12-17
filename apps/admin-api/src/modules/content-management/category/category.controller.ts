@@ -20,7 +20,7 @@ import {
  * 分类管理控制器
  * 提供分类相关的 RESTful API 接口
  */
-@ApiTags('分类管理模块')
+@ApiTags('内容管理/分类管理')
 @Controller('admin/work/category')
 export class WorkCategoryController {
   constructor(private readonly categoryService: WorkCategoryService) {}
