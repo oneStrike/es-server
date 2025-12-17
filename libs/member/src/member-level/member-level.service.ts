@@ -47,6 +47,7 @@ export class MemberLevelService extends RepositoryService {
       },
       omit: {
         description: true,
+        remark: true,
       },
     })
   }
