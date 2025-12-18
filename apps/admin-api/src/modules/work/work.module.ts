@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common'
 import { WorkAuthorModule } from '../content-management/author/author.module'
 import { WorkCategoryModule } from '../content-management/category/category.module'
-import { ContentTypeModule } from '../content-management/content-type/content-type.module'
 import { WorkTagModule } from '../content-management/tag/tag.module'
 import { ComicModule } from './comic/comic.module'
 import { WorkComicThirdPartyModule } from './comic/third-party/third-party.module'
@@ -12,19 +11,12 @@ import { WorkComicThirdPartyModule } from './comic/third-party/third-party.modul
  */
 @Module({
   imports: [
-    ContentTypeModule,
     WorkAuthorModule,
     WorkCategoryModule,
     WorkTagModule,
     ComicModule,
     WorkComicThirdPartyModule,
   ],
-  exports: [
-    WorkAuthorModule,
-    WorkCategoryModule,
-    WorkTagModule,
-    ComicModule,
-    WorkComicThirdPartyModule,
-  ],
+  exports: [],
 })
 export class WorkModule {}

@@ -68,8 +68,6 @@ export const ModelName = {
   WorkComicVersion: 'WorkComicVersion',
   WorkComic: 'WorkComic',
   WorkCategory: 'WorkCategory',
-  WorkCategoryContentType: 'WorkCategoryContentType',
-  WorkContentType: 'WorkContentType',
   WorkTag: 'WorkTag'
 } as const
 
@@ -407,6 +405,7 @@ export const WorkCategoryScalarFieldEnum = {
   icon: 'icon',
   popularity: 'popularity',
   popularityWeight: 'popularityWeight',
+  contentType: 'contentType',
   order: 'order',
   isEnabled: 'isEnabled',
   description: 'description',
@@ -415,28 +414,6 @@ export const WorkCategoryScalarFieldEnum = {
 } as const
 
 export type WorkCategoryScalarFieldEnum = (typeof WorkCategoryScalarFieldEnum)[keyof typeof WorkCategoryScalarFieldEnum]
-
-
-export const WorkCategoryContentTypeScalarFieldEnum = {
-  categoryId: 'categoryId',
-  contentTypeId: 'contentTypeId',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkCategoryContentTypeScalarFieldEnum = (typeof WorkCategoryContentTypeScalarFieldEnum)[keyof typeof WorkCategoryContentTypeScalarFieldEnum]
-
-
-export const WorkContentTypeScalarFieldEnum = {
-  id: 'id',
-  code: 'code',
-  name: 'name',
-  isEnabled: 'isEnabled',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkContentTypeScalarFieldEnum = (typeof WorkContentTypeScalarFieldEnum)[keyof typeof WorkContentTypeScalarFieldEnum]
 
 
 export const WorkTagScalarFieldEnum = {

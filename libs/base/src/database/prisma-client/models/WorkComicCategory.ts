@@ -294,7 +294,7 @@ export type WorkComicCategoryCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   comic: Prisma.WorkComicCreateNestedOneWithoutComicCategoriesInput
-  category: Prisma.WorkCategoryCreateNestedOneWithoutCategoryComicsInput
+  category: Prisma.WorkCategoryCreateNestedOneWithoutWorkComicCategoriesInput
 }
 
 export type WorkComicCategoryUncheckedCreateInput = {
@@ -312,7 +312,7 @@ export type WorkComicCategoryUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicCategoriesNestedInput
-  category?: Prisma.WorkCategoryUpdateOneRequiredWithoutCategoryComicsNestedInput
+  category?: Prisma.WorkCategoryUpdateOneRequiredWithoutWorkComicCategoriesNestedInput
 }
 
 export type WorkComicCategoryUncheckedUpdateInput = {
@@ -492,7 +492,7 @@ export type WorkComicCategoryCreateWithoutComicInput = {
   weight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  category: Prisma.WorkCategoryCreateNestedOneWithoutCategoryComicsInput
+  category: Prisma.WorkCategoryCreateNestedOneWithoutWorkComicCategoriesInput
 }
 
 export type WorkComicCategoryUncheckedCreateWithoutComicInput = {
@@ -596,7 +596,7 @@ export type WorkComicCategoryUpdateWithoutComicInput = {
   weight?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  category?: Prisma.WorkCategoryUpdateOneRequiredWithoutCategoryComicsNestedInput
+  category?: Prisma.WorkCategoryUpdateOneRequiredWithoutWorkComicCategoriesNestedInput
 }
 
 export type WorkComicCategoryUncheckedUpdateWithoutComicInput = {

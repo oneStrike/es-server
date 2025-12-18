@@ -1,48 +1,17 @@
 import {
-  ValidateArray,
   ValidateBoolean,
-  ValidateJson,
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+import { ContentTypeEnum } from '@libs/base/enum'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { BaseContentTypeDto } from '../../content-type/dto/content-type.dto'
 
-/**
- * 分类-内容类型 关系项 DTO
- */
-export class CategoryContentTypeItemDto {
-  @ValidateNumber({
-    description: '分类ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  categoryId!: number
-
-  @ValidateNumber({
-    description: '内容类型ID',
-    example: 2,
-    required: true,
-    min: 1,
-  })
-  contentTypeId!: number
-
-  @ApiProperty({
-    description: '内容类型对象',
-    type: () => BaseContentTypeDto,
-    required: true,
-    example: { id: 2, code: 'COMIC', name: '漫画' },
-  })
-  contentType!: BaseContentTypeDto
-}
 /**
  * 分类基础 DTO
  */
@@ -95,24 +64,12 @@ export class BaseCategoryDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ApiProperty({
-    description: '分类包含的内容类型项数组',
-    type: () => [CategoryContentTypeItemDto],
+  @ValidateNumber({
+    description: '分类关联的内容类型',
+    example: ContentTypeEnum.COMIC,
     required: true,
-    example: [
-      {
-        categoryId: 1,
-        contentTypeId: 2,
-        contentType: { id: 2, code: 'COMIC', name: '漫画' },
-      },
-      {
-        categoryId: 1,
-        contentTypeId: 3,
-        contentType: { id: 3, code: 'NOVEL', name: '小说' },
-      },
-    ],
   })
-  categoryContentTypes!: CategoryContentTypeItemDto[]
+  contentType!: number
 
   @ValidateString({
     description: '分类的描述 （可选）',
@@ -128,17 +85,7 @@ export class BaseCategoryDto extends BaseDto {
 export class CreateCategoryDto extends OmitType(BaseCategoryDto, [
   ...OMIT_BASE_FIELDS,
   'popularity',
-  'categoryContentTypes',
-]) {
-  // 创建时要求明确指定媒介代码集合
-  @ValidateArray({
-    description: '作品媒介代码数组（必填）',
-    example: ['COMIC', 'NOVEL'],
-    required: true,
-    itemType: 'string',
-  })
-  contentType!: string[]
-}
+]) {}
 
 /**
  * 更新分类 DTO
@@ -155,9 +102,9 @@ export class QueryCategoryDto extends IntersectionType(
   PageDto,
   PartialType(PickType(CreateCategoryDto, ['name', 'isEnabled'])),
 ) {
-  @ValidateJson({
-    description: '作品媒介代码数组 JSON 字符串',
-    example: ' ["COMIC", "NOVEL"]',
+  @ValidateString({
+    description: '分类关联的内容类型',
+    example: '1',
     required: false,
   })
   contentType?: string
