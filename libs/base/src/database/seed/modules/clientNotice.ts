@@ -1,7 +1,7 @@
 export async function createInitialClientNotice(prisma: any) {
   const initData = [
     {
-      title: '欢迎使用漫画阅读平台',
+      title: '11欢迎使用漫画阅读平台',
       content:
         '欢迎来到我们的漫画阅读平台！这里有丰富的漫画资源，优质的阅读体验。请遵守平台规则，享受愉快的阅读时光。',
       noticeType: 0, // 系统通知
@@ -10,7 +10,7 @@ export async function createInitialClientNotice(prisma: any) {
       publishEndTime: new Date('2025-12-31T23:59:59Z'),
       pageId: 1,
       isPublished: true,
-      enablePlatform: 7, // 1+2+4 = H5+APP+小程序
+      enablePlatform: [1], // 1+2+4 = H5+APP+小程序
       isPinned: true,
       showAsPopup: false,
     },
@@ -24,7 +24,7 @@ export async function createInitialClientNotice(prisma: any) {
       publishEndTime: new Date('2024-12-31T23:59:59Z'),
       pageId: 1,
       isPublished: true,
-      enablePlatform: 7, // 1+2+4 = H5+APP+小程序
+      enablePlatform: [1], // 1+2+4 = H5+APP+小程序
       isPinned: false,
       showAsPopup: true,
     },
@@ -38,7 +38,7 @@ export async function createInitialClientNotice(prisma: any) {
       publishEndTime: new Date('2025-12-31T23:59:59Z'),
       pageId: 1,
       isPublished: true,
-      enablePlatform: 7, // 1+2+4 = H5+APP+小程序
+      enablePlatform: [1], // 1+2+4 = H5+APP+小程序
       isPinned: false,
       showAsPopup: false,
     },
@@ -52,7 +52,7 @@ export async function createInitialClientNotice(prisma: any) {
       publishEndTime: new Date('2024-12-31T23:59:59Z'),
       pageId: 2,
       isPublished: true,
-      enablePlatform: 7, // 1+2+4 = H5+APP+小程序
+      enablePlatform: [1], // 1+2+4 = H5+APP+小程序
       isPinned: false,
       showAsPopup: false,
     },
@@ -66,7 +66,7 @@ export async function createInitialClientNotice(prisma: any) {
       publishEndTime: new Date('2025-12-31T23:59:59Z'),
       pageId: 3,
       isPublished: true,
-      enablePlatform: 7, // 1+2+4 = H5+APP+小程序
+      enablePlatform: [1], // 1+2+4 = H5+APP+小程序
       isPinned: false,
       showAsPopup: false,
     },

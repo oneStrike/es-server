@@ -7,7 +7,7 @@ export async function createInitialClientPage(prisma: any) {
       title: '首页 - 漫画阅读平台',
       accessLevel: 0, // 游客可访问
       isEnabled: true, // 启用
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: '平台首页，展示推荐内容和热门作品',
     },
     {
@@ -17,7 +17,7 @@ export async function createInitialClientPage(prisma: any) {
       title: '漫画列表 - 漫画阅读平台',
       accessLevel: 0,
       isEnabled: true,
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: '漫画作品列表页面',
     },
     {
@@ -27,7 +27,7 @@ export async function createInitialClientPage(prisma: any) {
       title: '漫画详情 - 漫画阅读平台',
       accessLevel: 0,
       isEnabled: true,
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: '漫画作品详情页面',
     },
     {
@@ -37,7 +37,7 @@ export async function createInitialClientPage(prisma: any) {
       title: '漫画阅读 - 漫画阅读平台',
       accessLevel: 1, // 需要登录
       isEnabled: true,
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: '漫画在线阅读页面',
     },
     {
@@ -47,7 +47,7 @@ export async function createInitialClientPage(prisma: any) {
       title: '个人中心 - 漫画阅读平台',
       accessLevel: 1, // 需要登录
       isEnabled: true,
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: '用户个人中心页面',
     },
     {
@@ -57,7 +57,7 @@ export async function createInitialClientPage(prisma: any) {
       title: '个人资料 - 漫画阅读平台',
       accessLevel: 1, // 需要登录
       isEnabled: true,
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: '用户个人资料设置页面',
     },
     {
@@ -67,7 +67,7 @@ export async function createInitialClientPage(prisma: any) {
       title: 'VIP中心 - 漫画阅读平台',
       accessLevel: 2, // 需要会员
       isEnabled: true,
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: 'VIP会员专属页面',
     },
     {
@@ -77,7 +77,7 @@ export async function createInitialClientPage(prisma: any) {
       title: '关于我们 - 漫画阅读平台',
       accessLevel: 0,
       isEnabled: true,
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: '平台介绍和联系方式',
     },
     {
@@ -87,7 +87,7 @@ export async function createInitialClientPage(prisma: any) {
       title: '隐私政策 - 漫画阅读平台',
       accessLevel: 0,
       isEnabled: true,
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: '用户隐私政策说明',
     },
     {
@@ -97,7 +97,7 @@ export async function createInitialClientPage(prisma: any) {
       title: '服务条款 - 漫画阅读平台',
       accessLevel: 0,
       isEnabled: true,
-      enablePlatform: 7,
+      enablePlatform: [1],
       description: '平台服务条款和使用协议',
     },
   ]

@@ -5,7 +5,7 @@ export enum EnablePlatformEnum {
   /** APP */
   APP = 2,
   /** 小程序 */
-  MINI_PROGRAM = 4,
+  MINI_PROGRAM = 3,
 }
 
 /**

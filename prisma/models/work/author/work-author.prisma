@@ -11,7 +11,7 @@ model WorkAuthor {
   /// 启用状态（true: 启用, false: 禁用）
   isEnabled      Boolean   @default(true) @map("is_enabled")
   /// 作者类型，bitmap存储，每个bit表示一种类型（1: 漫画家, 2: 轻小说作者, 4: 插画师, 8: coser）
-  type           Int       @default(0) @db.SmallInt
+  type           Int[]
   /// 国籍
   nationality    String?   @db.VarChar(50)
   /// 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）

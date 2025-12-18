@@ -22,8 +22,8 @@ model ClientNotice {
   popupBackgroundImage String?     @map("popup_background_image") @db.VarChar(200)
   /// 发布状态（true:已发布, false:未发布）
   isPublished          Boolean     @default(false) @map("is_published")
-  /// 启用的平台（bitmask：1=H5, 2=APP, 4=小程序）
-  enablePlatform       Int         @map("enable_platform")
+  /// 启用的平台（1=H5, 2=APP, 4=小程序）
+  enablePlatform       Int[]       @map("enable_platform")
   /// 是否置顶显示
   isPinned             Boolean     @default(false) @map("is_pinned")
   /// 是否弹窗显示
