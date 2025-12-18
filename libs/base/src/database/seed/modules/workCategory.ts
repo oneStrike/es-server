@@ -1,10 +1,4 @@
-/**
- * 作品分类种子数据接口
- */
-interface IWorkCategoryData {
-  name: string
-  mediumCodes: string[]
-}
+// 修改 libs/base/src/database/seed/modules/workCategory.ts 文件
 
 /**
  * 创建初始作品分类数据
@@ -12,43 +6,33 @@ interface IWorkCategoryData {
  */
 export async function createInitialWorkCategory(prisma: any) {
   // 初始化作品分类数据
-  const INITIAL_WORK_CATEGORIES: IWorkCategoryData[] = [
-    { name: '百合', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
-    { name: '热血', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
-    { name: '温馨', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
-    { name: '校园', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
-    { name: '恋爱', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
-    { name: '冒险', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
-    { name: '科幻', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
-    { name: '悬疑', mediumCodes: ['COMIC', 'NOVEL', 'ILLUSTRATION', 'ALBUM'] },
+  const initData = [
+    { name: '百合', contentType: [1, 2, 4, 8] },
+    { name: '热血', contentType: [1, 2, 4, 8] },
+    { name: '温馨', contentType: [1, 2, 4, 8] },
+    { name: '校园', contentType: [1, 2, 4, 8] },
+    { name: '恋爱', contentType: [1, 2, 4, 8] },
+    { name: '冒险', contentType: [1, 2, 4, 8] },
+    { name: '科幻', contentType: [1, 2, 4, 8] },
+    { name: '悬疑', contentType: [1, 2, 4, 8] },
   ]
 
-  // 遍历初始数据，检查是否存在，不存在则创建
-  for (const categoryData of INITIAL_WORK_CATEGORIES) {
+  for (const item of initData) {
+    // 由于没有唯一约束，我们使用name作为判断条件
     const existingCategory = await prisma.workCategory.findFirst({
-      where: { name: categoryData.name },
+      where: { name: item.name },
     })
 
     if (!existingCategory) {
-      const created = await prisma.workCategory.create({
-        data: { name: categoryData.name },
+      await prisma.workCategory.create({
+        data: item,
       })
-      // 绑定媒介类型（多对多）
-      if (categoryData.mediumCodes?.length) {
-        const mediums = await prisma.workContentType.findMany({
-          where: { code: { in: categoryData.mediumCodes } },
-          select: { id: true, code: true },
-        })
-        if (mediums.length) {
-          await prisma.workCategoryContentType.createMany({
-            data: mediums.map((m: any) => ({
-              categoryId: created.id,
-              contentTypeId: m.id,
-            })),
-            skipDuplicates: true,
-          })
-        }
-      }
+    } else {
+      // 更新已存在的分类
+      await prisma.workCategory.update({
+        where: { id: existingCategory.id },
+        data: item,
+      })
     }
   }
 }

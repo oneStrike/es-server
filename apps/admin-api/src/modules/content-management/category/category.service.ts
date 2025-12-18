@@ -69,9 +69,12 @@ export class WorkCategoryService extends RepositoryService {
       where.contentType = {
         in: findCombinations(
           contentType.split(','),
-          Object.keys(ContentTypeEnum).map((item) => Number(item)),
+          Object.values(ContentTypeEnum).filter(
+            (value) => !Number.isNaN(Number(value)),
+          ) as number[],
         ),
       }
+      console.log(where.contentType)
     }
 
     return this.workCategory.findPagination({
