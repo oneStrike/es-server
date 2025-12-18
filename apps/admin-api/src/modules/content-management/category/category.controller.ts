@@ -1,11 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import {
-  BatchEnabledDto,
-  BatchOperationResponseDto,
-  DragReorderDto,
-  IdDto,
-  IdsDto,
-} from '@libs/base/dto'
+import { DragReorderDto, IdDto, UpdateStatusDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { WorkCategoryService } from './category.service'
@@ -74,27 +68,27 @@ export class WorkCategoryController {
   }
 
   /**
-   * 批量更新分类状态
+   * 更新分类状态
    */
-  @Post('/batch-update-status')
+  @Post('/update-status')
   @ApiDoc({
-    summary: '批量更新分类状态',
-    model: BatchOperationResponseDto,
+    summary: '更新分类状态',
+    model: IdDto,
   })
-  async updateStatus(@Body() body: BatchEnabledDto) {
+  async updateStatus(@Body() body: UpdateStatusDto) {
     return this.categoryService.updateCategoryStatus(body)
   }
 
   /**
    * 批量删除分类
    */
-  @Post('/batch-delete')
+  @Post('/delete')
   @ApiDoc({
-    summary: '批量删除分类',
-    model: BatchOperationResponseDto,
+    summary: '删除分类',
+    model: IdDto,
   })
-  async deleteBatch(@Body() body: IdsDto) {
-    return this.categoryService.deleteCategoryBatch(body.ids)
+  async deleteBatch(@Body() body: IdDto) {
+    return this.categoryService.deleteCategory(body.id)
   }
 
   /**

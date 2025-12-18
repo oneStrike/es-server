@@ -6,13 +6,14 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+import { GenderEnum } from '@libs/base/enum'
 import {
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { AuthorGenderEnum, AuthorTypeEnum } from '../author.constant'
+import { AuthorTypeEnum } from '../author.constant'
 
 /**
  * 作者基础DTO
@@ -64,12 +65,12 @@ export class BaseAuthorDto extends BaseDto {
 
   @ValidateEnum({
     description: '性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）',
-    example: AuthorGenderEnum.MALE,
+    example: GenderEnum.MALE,
     required: true,
-    enum: AuthorGenderEnum,
-    default: AuthorGenderEnum.UNKNOWN,
+    enum: GenderEnum,
+    default: GenderEnum.UNKNOWN,
   })
-  gender!: AuthorGenderEnum
+  gender!: GenderEnum
 
   @ValidateString({
     description: '社交媒体链接（JSON格式存储多个平台链接）',

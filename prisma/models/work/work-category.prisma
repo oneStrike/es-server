@@ -1,52 +1,31 @@
 model WorkCategory {
   /// 主键ID
-  id                   Int                       @id @default(autoincrement())
+  id                  Int                 @id @default(autoincrement())
   /// 分类名称（唯一）
-  name                 String                    @unique @db.VarChar(20)
+  name                String              @unique @db.VarChar(20)
   /// 分类图标URL
-  icon                 String?                   @db.VarChar(255)
+  icon                String?             @db.VarChar(255)
   /// 人气值（用于展示和排序）
-  popularity           Int                       @default(0)
+  popularity          Int                 @default(0)
   /// 自定义人气权重
-  popularityWeight     Int                       @default(0) @map("popularity_weight") @db.Integer
+  popularityWeight    Int                 @default(0) @map("popularity_weight") @db.Integer
+  /// 关联内容类型（如：1漫画、2小说、4插画、8写真）
+  contentType         Int?                @map("content_type") @db.SmallInt
   /// 排序值（数值越小越靠前）
-  order                Int                       @default(0) @db.SmallInt
+  order               Int                 @default(0) @db.SmallInt
   /// 是否启用
-  isEnabled            Boolean                   @default(true) @map("is_enabled")
+  isEnabled           Boolean             @default(true) @map("is_enabled")
   /// 分类描述
-  description          String?                   @db.VarChar(200)
-  // 内容类型多对多关联
-  categoryContentTypes WorkCategoryContentType[]
+  description         String?             @db.VarChar(200)
   /// 创建时间
-  createdAt            DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz
   /// 更新时间
-  updatedAt            DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
-
-  // 关联关系 - 多对多关系通过中间表
-  categoryComics WorkComicCategory[]
+  updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+  workComicCategories WorkComicCategory[]
 
   /// 索引优化
   @@index([order])
   @@index([name]) // 支持快速查找分类名
+  @@index([contentType]) // 支持快速查找分类名
   @@map("work_category")
-}
-
-model WorkCategoryContentType {
-  /// 分类ID
-  categoryId    Int @map("category_id")
-  /// 内容类型ID
-  contentTypeId Int @map("content_type_id")
-
-  // 关联
-  category    WorkCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  contentType WorkContentType @relation(fields: [contentTypeId], references: [id], onDelete: Restrict)
-  /// 创建时间
-  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz
-  /// 更新时间
-  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz
-
-  // 复合主键与索引
-  @@id([categoryId, contentTypeId])
-  @@index([contentTypeId])
-  @@map("work_category_content_type")
 }

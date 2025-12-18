@@ -103,16 +103,6 @@ export type WorkComic = Prisma.WorkComicModel
  */
 export type WorkCategory = Prisma.WorkCategoryModel
 /**
- * Model WorkCategoryContentType
- * 
- */
-export type WorkCategoryContentType = Prisma.WorkCategoryContentTypeModel
-/**
- * Model WorkContentType
- * 
- */
-export type WorkContentType = Prisma.WorkContentTypeModel
-/**
  * Model WorkTag
  * 
  */

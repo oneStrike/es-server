@@ -401,8 +401,6 @@ export const ModelName = {
   WorkComicVersion: 'WorkComicVersion',
   WorkComic: 'WorkComic',
   WorkCategory: 'WorkCategory',
-  WorkCategoryContentType: 'WorkCategoryContentType',
-  WorkContentType: 'WorkContentType',
   WorkTag: 'WorkTag'
 } as const
 
@@ -419,7 +417,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComicVersion" | "workComic" | "workCategory" | "workCategoryContentType" | "workContentType" | "workTag"
+    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComicVersion" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1681,154 +1679,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    WorkCategoryContentType: {
-      payload: Prisma.$WorkCategoryContentTypePayload<ExtArgs>
-      fields: Prisma.WorkCategoryContentTypeFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkCategoryContentTypeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkCategoryContentTypeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload>
-        }
-        findFirst: {
-          args: Prisma.WorkCategoryContentTypeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkCategoryContentTypeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload>
-        }
-        findMany: {
-          args: Prisma.WorkCategoryContentTypeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload>[]
-        }
-        create: {
-          args: Prisma.WorkCategoryContentTypeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload>
-        }
-        createMany: {
-          args: Prisma.WorkCategoryContentTypeCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkCategoryContentTypeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload>[]
-        }
-        delete: {
-          args: Prisma.WorkCategoryContentTypeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload>
-        }
-        update: {
-          args: Prisma.WorkCategoryContentTypeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkCategoryContentTypeDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkCategoryContentTypeUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkCategoryContentTypeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkCategoryContentTypeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkCategoryContentTypePayload>
-        }
-        aggregate: {
-          args: Prisma.WorkCategoryContentTypeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkCategoryContentType>
-        }
-        groupBy: {
-          args: Prisma.WorkCategoryContentTypeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkCategoryContentTypeGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkCategoryContentTypeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkCategoryContentTypeCountAggregateOutputType> | number
-        }
-      }
-    }
-    WorkContentType: {
-      payload: Prisma.$WorkContentTypePayload<ExtArgs>
-      fields: Prisma.WorkContentTypeFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkContentTypeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkContentTypeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload>
-        }
-        findFirst: {
-          args: Prisma.WorkContentTypeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkContentTypeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload>
-        }
-        findMany: {
-          args: Prisma.WorkContentTypeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload>[]
-        }
-        create: {
-          args: Prisma.WorkContentTypeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload>
-        }
-        createMany: {
-          args: Prisma.WorkContentTypeCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkContentTypeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload>[]
-        }
-        delete: {
-          args: Prisma.WorkContentTypeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload>
-        }
-        update: {
-          args: Prisma.WorkContentTypeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkContentTypeDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkContentTypeUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkContentTypeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkContentTypeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkContentTypePayload>
-        }
-        aggregate: {
-          args: Prisma.WorkContentTypeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkContentType>
-        }
-        groupBy: {
-          args: Prisma.WorkContentTypeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkContentTypeGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkContentTypeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkContentTypeCountAggregateOutputType> | number
-        }
-      }
-    }
     WorkTag: {
       payload: Prisma.$WorkTagPayload<ExtArgs>
       fields: Prisma.WorkTagFieldRefs
@@ -2260,6 +2110,7 @@ export const WorkCategoryScalarFieldEnum = {
   icon: 'icon',
   popularity: 'popularity',
   popularityWeight: 'popularityWeight',
+  contentType: 'contentType',
   order: 'order',
   isEnabled: 'isEnabled',
   description: 'description',
@@ -2268,28 +2119,6 @@ export const WorkCategoryScalarFieldEnum = {
 } as const
 
 export type WorkCategoryScalarFieldEnum = (typeof WorkCategoryScalarFieldEnum)[keyof typeof WorkCategoryScalarFieldEnum]
-
-
-export const WorkCategoryContentTypeScalarFieldEnum = {
-  categoryId: 'categoryId',
-  contentTypeId: 'contentTypeId',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkCategoryContentTypeScalarFieldEnum = (typeof WorkCategoryContentTypeScalarFieldEnum)[keyof typeof WorkCategoryContentTypeScalarFieldEnum]
-
-
-export const WorkContentTypeScalarFieldEnum = {
-  id: 'id',
-  code: 'code',
-  name: 'name',
-  isEnabled: 'isEnabled',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkContentTypeScalarFieldEnum = (typeof WorkContentTypeScalarFieldEnum)[keyof typeof WorkContentTypeScalarFieldEnum]
 
 
 export const WorkTagScalarFieldEnum = {
@@ -2527,8 +2356,6 @@ export type GlobalOmitConfig = {
   workComicVersion?: Prisma.WorkComicVersionOmit
   workComic?: Prisma.WorkComicOmit
   workCategory?: Prisma.WorkCategoryOmit
-  workCategoryContentType?: Prisma.WorkCategoryContentTypeOmit
-  workContentType?: Prisma.WorkContentTypeOmit
   workTag?: Prisma.WorkTagOmit
 }
 
