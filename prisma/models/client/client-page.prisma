@@ -12,8 +12,8 @@ model ClientPage {
   title          String   @map("title") @db.VarChar(200)
   /// 访问权限级别（0:游客可访问, 1:需要登录, 2:需要会员, 3:需要VIP）
   accessLevel    Int      @default(0) @map("access_level") @db.SmallInt
-  /// 启用的平台（bitmask：1=H5, 2=APP, 4=小程序）
-  enablePlatform Int      @map("enable_platform")
+  /// 启用的平台（1=H5, 2=APP, 4=小程序）
+  enablePlatform Int[]    @map("enable_platform")
   /// 页面启用状态
   isEnabled      Boolean  @default(true) @map("is_enabled")
   /// 页面描述信息

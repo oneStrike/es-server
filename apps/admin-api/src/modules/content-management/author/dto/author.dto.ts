@@ -1,7 +1,8 @@
 import {
-  ValidateBitmask,
+  ValidateArray,
   ValidateBoolean,
   ValidateEnum,
+  ValidateJson,
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
@@ -48,13 +49,13 @@ export class BaseAuthorDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ValidateBitmask({
-    description: '作者角色类型 bitmask',
-    example: 1,
+  @ValidateArray({
+    description: '作者角色类型',
+    example: [AuthorTypeEnum.COSER],
     required: true,
-    enum: AuthorTypeEnum,
+    itemType: 'number',
   })
-  type!: number
+  type!: number[]
 
   @ValidateString({
     description: '国籍',
@@ -139,10 +140,16 @@ export class QueryAuthorDto extends IntersectionType(
     'isEnabled',
     'nationality',
     'gender',
-    'type',
     'isRecommended',
   ]),
-) {}
+) {
+  @ValidateJson({
+    description: '作者角色类型',
+    example: '[123]',
+    required: false,
+  })
+  type?: string
+}
 
 /**
  * 更新作者推荐状态DTO

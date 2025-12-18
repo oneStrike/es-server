@@ -1,5 +1,7 @@
 import {
+  ValidateArray,
   ValidateBoolean,
+  ValidateJson,
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
@@ -64,12 +66,13 @@ export class BaseCategoryDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ValidateNumber({
+  @ValidateArray({
     description: '分类关联的内容类型',
-    example: ContentTypeEnum.COMIC,
+    example: [ContentTypeEnum.COMIC],
     required: true,
+    itemType: 'number',
   })
-  contentType!: number
+  contentType!: number[]
 
   @ValidateString({
     description: '分类的描述 （可选）',
@@ -102,9 +105,9 @@ export class QueryCategoryDto extends IntersectionType(
   PageDto,
   PartialType(PickType(CreateCategoryDto, ['name', 'isEnabled'])),
 ) {
-  @ValidateString({
+  @ValidateJson({
     description: '分类关联的内容类型',
-    example: '1',
+    example: '[1]',
     required: false,
   })
   contentType?: string

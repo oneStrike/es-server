@@ -2,8 +2,6 @@ import type { WorkCategoryWhereInput } from '@libs/base/database/prisma-client/m
 import { RepositoryService } from '@libs/base/database'
 import { DragReorderDto, UpdateStatusDto } from '@libs/base/dto'
 
-import { ContentTypeEnum } from '@libs/base/enum'
-import { findCombinations } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateCategoryDto,
@@ -64,17 +62,11 @@ export class WorkCategoryService extends RepositoryService {
       pageParams.orderBy = JSON.stringify({ order: 'desc' })
     }
 
-    if (contentType?.length) {
+    if (contentType?.length && contentType !== '[]') {
       // 按内容类型代码筛选（多对多 some 查询）
       where.contentType = {
-        in: findCombinations(
-          contentType.split(','),
-          Object.values(ContentTypeEnum).filter(
-            (value) => !Number.isNaN(Number(value)),
-          ) as number[],
-        ),
+        hasSome: JSON.parse(contentType),
       }
-      console.log(where.contentType)
     }
 
     return this.workCategory.findPagination({

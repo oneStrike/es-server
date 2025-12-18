@@ -1,7 +1,8 @@
 import {
-  ValidateBitmask,
+  ValidateArray,
   ValidateBoolean,
   ValidateEnum,
+  ValidateJson,
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
@@ -50,13 +51,13 @@ export class BaseClientPageDto extends BaseDto {
   })
   title!: string
 
-  @ValidateBitmask({
+  @ValidateArray({
     description: '启用的平台',
-    example: EnablePlatformEnum.APP,
+    example: [EnablePlatformEnum.APP],
     required: true,
-    enum: EnablePlatformEnum,
+    itemType: 'number',
   })
-  enablePlatform!: EnablePlatformEnum
+  enablePlatform!: EnablePlatformEnum[]
 
   @ValidateEnum({
     description: '页面权限级别',
@@ -99,7 +100,14 @@ export class QueryClientPageDto extends IntersectionType(
   PartialType(
     PickType(BaseClientPageDto, ['name', 'code', 'accessLevel', 'isEnabled']),
   ),
-) {}
+) {
+  @ValidateJson({
+    description: '所启用的平台',
+    example: '[1,2,3]',
+    required: false,
+  })
+  enablePlatform?: string
+}
 
 /**
  * 页面配置分页响应DTO

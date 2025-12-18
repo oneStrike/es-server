@@ -1,10 +1,8 @@
-import type { EnablePlatformEnum } from '@libs/base/enum'
 import {
   ClientNoticeCreateInput,
   ClientNoticeWhereInput,
   RepositoryService,
 } from '@libs/base/database'
-import { findCombinations } from '@libs/base/utils'
 import { assertValidTimeRange } from '@libs/base/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -108,9 +106,11 @@ export class LibClientNoticeService extends RepositoryService {
     if (publishStartTime) {
       where.AND = [{ publishStartTime: { lte: publishStartTime } }]
     }
-    if (enablePlatform) {
+    if (enablePlatform && enablePlatform !== '[]') {
       where.enablePlatform = {
-        in: findCombinations(enablePlatform.split(','), [1, 2, 4]),
+        hasEvery: JSON.parse(enablePlatform).map((item: string) =>
+          Number(item),
+        ),
       }
     }
     if (publishEndTime) {
@@ -125,50 +125,6 @@ export class LibClientNoticeService extends RepositoryService {
         ...pageParams,
         ...where,
       },
-      omit: {
-        content: true,
-        popupBackgroundImage: true,
-      },
-    })
-  }
-
-  /**
-   * 获取有效的通知列表（客户端使用）
-   * @param platform 平台类型：applet | web | app
-   * @returns 有效的通知列表
-   */
-  async findActiveNotices(platform: EnablePlatformEnum[]) {
-    const now = new Date()
-
-    return this.clientNotice.findMany({
-      where: {
-        isPublished: true, // 已发布
-        enablePlatform: {
-          in: platform,
-        },
-        OR: [
-          {
-            AND: [
-              { publishStartTime: { lte: now } },
-              { publishEndTime: { gte: now } },
-            ],
-          },
-          {
-            AND: [{ publishStartTime: null }, { publishEndTime: null }],
-          },
-          {
-            AND: [{ publishStartTime: { lte: now } }, { publishEndTime: null }],
-          },
-          {
-            AND: [{ publishStartTime: null }, { publishEndTime: { gte: now } }],
-          },
-        ],
-      },
-      orderBy: [
-        { isPinned: 'desc' },
-        { priorityLevel: 'desc' },
-        { createdAt: 'desc' },
-      ],
       omit: {
         content: true,
         popupBackgroundImage: true,

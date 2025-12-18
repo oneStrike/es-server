@@ -53,7 +53,8 @@ export class LibClientPageService extends RepositoryService {
    * @returns 分页的页面配置列表
    */
   async findPage(queryPageDto: QueryClientPageDto) {
-    const { name, code, accessLevel, isEnabled, ...other } = queryPageDto
+    const { name, code, accessLevel, isEnabled, enablePlatform, ...other } =
+      queryPageDto
 
     const where: ClientPageWhereInput = {}
 
@@ -68,6 +69,14 @@ export class LibClientPageService extends RepositoryService {
     }
     if (isEnabled !== undefined) {
       where.isEnabled = isEnabled
+    }
+
+    if (enablePlatform && enablePlatform !== '[]') {
+      where.enablePlatform = {
+        hasEvery: JSON.parse(enablePlatform).map((item: string) =>
+          Number(item),
+        ),
+      }
     }
 
     return this.clientPage.findPagination({

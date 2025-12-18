@@ -35,8 +35,15 @@ export class WorkAuthorService extends RepositoryService {
    * @returns 分页作者列表
    */
   async getAuthorPage(queryAuthorDto: QueryAuthorDto) {
-    const { name, isEnabled, nationality, gender, isRecommended, ...pageDto } =
-      queryAuthorDto
+    const {
+      name,
+      isEnabled,
+      nationality,
+      gender,
+      isRecommended,
+      type,
+      ...pageDto
+    } = queryAuthorDto
 
     // 构建查询条件
     const where: WorkAuthorWhereInput = {
@@ -70,6 +77,14 @@ export class WorkAuthorService extends RepositoryService {
     if (typeof isRecommended === 'boolean') {
       where.isRecommended = isRecommended
     }
+
+    // 角色类型筛选
+    if (type && type !== '[]') {
+      where.type = {
+        hasEvery: JSON.parse(type),
+      }
+    }
+
     return this.workAuthor.findPagination({
       where: {
         ...where,

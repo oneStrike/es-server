@@ -1,8 +1,9 @@
 import {
-  ValidateBitmask,
+  ValidateArray,
   ValidateBoolean,
   ValidateDate,
   ValidateEnum,
+  ValidateJson,
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
@@ -88,13 +89,13 @@ export class BaseNoticeDto extends BaseDto {
   })
   isPublished!: boolean
 
-  @ValidateBitmask({
+  @ValidateArray({
     description: '启用的平台',
-    example: EnablePlatformEnum.APP,
+    example: [EnablePlatformEnum.APP],
     required: true,
-    enum: EnablePlatformEnum,
+    itemType: 'number',
   })
-  enablePlatform!: EnablePlatformEnum
+  enablePlatform!: EnablePlatformEnum[]
 
   @ValidateBoolean({
     description: '是否置顶',
@@ -155,7 +156,7 @@ export class QueryNoticeDto extends IntersectionType(
     ]),
   ),
 ) {
-  @ValidateString({
+  @ValidateJson({
     description: '所启用的平台',
     example: '[1,2,3]',
     required: false,

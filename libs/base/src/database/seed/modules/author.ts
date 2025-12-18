@@ -11,7 +11,7 @@ export async function createInitialAuthors(prisma: any) {
       worksCount: 0,
       followersCount: 0,
       isRecommended: true,
-      type: 7,
+      type: [1]
     },
     {
       name: '东野圭吾',
@@ -24,7 +24,7 @@ export async function createInitialAuthors(prisma: any) {
       worksCount: 0,
       followersCount: 0,
       isRecommended: true,
-      type: 7,
+      type: [1]
     },
     {
       name: '尾田荣一郎',
@@ -37,7 +37,7 @@ export async function createInitialAuthors(prisma: any) {
       worksCount: 0,
       followersCount: 0,
       isRecommended: true,
-      type: 7,
+      type: [1]
     },
     {
       name: '鸟山明',
@@ -50,7 +50,7 @@ export async function createInitialAuthors(prisma: any) {
       worksCount: 0,
       followersCount: 0,
       isRecommended: true,
-      type: 7,
+      type: [1]
     },
   ]
   for (const item of initData) {

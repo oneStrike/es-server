@@ -35,7 +35,7 @@ export type ClientPageAvgAggregateOutputType = {
 export type ClientPageSumAggregateOutputType = {
   id: number | null
   accessLevel: number | null
-  enablePlatform: number | null
+  enablePlatform: number[]
 }
 
 export type ClientPageMinAggregateOutputType = {
@@ -45,7 +45,6 @@ export type ClientPageMinAggregateOutputType = {
   name: string | null
   title: string | null
   accessLevel: number | null
-  enablePlatform: number | null
   isEnabled: boolean | null
   description: string | null
   createdAt: Date | null
@@ -59,7 +58,6 @@ export type ClientPageMaxAggregateOutputType = {
   name: string | null
   title: string | null
   accessLevel: number | null
-  enablePlatform: number | null
   isEnabled: boolean | null
   description: string | null
   createdAt: Date | null
@@ -101,7 +99,6 @@ export type ClientPageMinAggregateInputType = {
   name?: true
   title?: true
   accessLevel?: true
-  enablePlatform?: true
   isEnabled?: true
   description?: true
   createdAt?: true
@@ -115,7 +112,6 @@ export type ClientPageMaxAggregateInputType = {
   name?: true
   title?: true
   accessLevel?: true
-  enablePlatform?: true
   isEnabled?: true
   description?: true
   createdAt?: true
@@ -230,7 +226,7 @@ export type ClientPageGroupByOutputType = {
   name: string
   title: string
   accessLevel: number
-  enablePlatform: number
+  enablePlatform: number[]
   isEnabled: boolean
   description: string | null
   createdAt: Date
@@ -267,7 +263,7 @@ export type ClientPageWhereInput = {
   name?: Prisma.StringFilter<"ClientPage"> | string
   title?: Prisma.StringFilter<"ClientPage"> | string
   accessLevel?: Prisma.IntFilter<"ClientPage"> | number
-  enablePlatform?: Prisma.IntFilter<"ClientPage"> | number
+  enablePlatform?: Prisma.IntNullableListFilter<"ClientPage">
   isEnabled?: Prisma.BoolFilter<"ClientPage"> | boolean
   description?: Prisma.StringNullableFilter<"ClientPage"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ClientPage"> | Date | string
@@ -300,7 +296,7 @@ export type ClientPageWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"ClientPage"> | string
   title?: Prisma.StringFilter<"ClientPage"> | string
   accessLevel?: Prisma.IntFilter<"ClientPage"> | number
-  enablePlatform?: Prisma.IntFilter<"ClientPage"> | number
+  enablePlatform?: Prisma.IntNullableListFilter<"ClientPage">
   isEnabled?: Prisma.BoolFilter<"ClientPage"> | boolean
   description?: Prisma.StringNullableFilter<"ClientPage"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ClientPage"> | Date | string
@@ -337,7 +333,7 @@ export type ClientPageScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"ClientPage"> | string
   title?: Prisma.StringWithAggregatesFilter<"ClientPage"> | string
   accessLevel?: Prisma.IntWithAggregatesFilter<"ClientPage"> | number
-  enablePlatform?: Prisma.IntWithAggregatesFilter<"ClientPage"> | number
+  enablePlatform?: Prisma.IntNullableListFilter<"ClientPage">
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ClientPage"> | boolean
   description?: Prisma.StringNullableWithAggregatesFilter<"ClientPage"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ClientPage"> | Date | string
@@ -350,7 +346,7 @@ export type ClientPageCreateInput = {
   name: string
   title: string
   accessLevel?: number
-  enablePlatform: number
+  enablePlatform?: Prisma.ClientPageCreateenablePlatformInput | number[]
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -365,7 +361,7 @@ export type ClientPageUncheckedCreateInput = {
   name: string
   title: string
   accessLevel?: number
-  enablePlatform: number
+  enablePlatform?: Prisma.ClientPageCreateenablePlatformInput | number[]
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -379,7 +375,7 @@ export type ClientPageUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.ClientPageUpdateenablePlatformInput | number[]
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -394,7 +390,7 @@ export type ClientPageUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.ClientPageUpdateenablePlatformInput | number[]
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -409,7 +405,7 @@ export type ClientPageCreateManyInput = {
   name: string
   title: string
   accessLevel?: number
-  enablePlatform: number
+  enablePlatform?: Prisma.ClientPageCreateenablePlatformInput | number[]
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -422,7 +418,7 @@ export type ClientPageUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.ClientPageUpdateenablePlatformInput | number[]
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -436,7 +432,7 @@ export type ClientPageUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.ClientPageUpdateenablePlatformInput | number[]
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -475,7 +471,6 @@ export type ClientPageMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -489,7 +484,6 @@ export type ClientPageMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -518,13 +512,22 @@ export type ClientPageUpdateOneWithoutNoticesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ClientPageUpdateToOneWithWhereWithoutNoticesInput, Prisma.ClientPageUpdateWithoutNoticesInput>, Prisma.ClientPageUncheckedUpdateWithoutNoticesInput>
 }
 
+export type ClientPageCreateenablePlatformInput = {
+  set: number[]
+}
+
+export type ClientPageUpdateenablePlatformInput = {
+  set?: number[]
+  push?: number | number[]
+}
+
 export type ClientPageCreateWithoutNoticesInput = {
   code: string
   path: string
   name: string
   title: string
   accessLevel?: number
-  enablePlatform: number
+  enablePlatform?: Prisma.ClientPageCreateenablePlatformInput | number[]
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -538,7 +541,7 @@ export type ClientPageUncheckedCreateWithoutNoticesInput = {
   name: string
   title: string
   accessLevel?: number
-  enablePlatform: number
+  enablePlatform?: Prisma.ClientPageCreateenablePlatformInput | number[]
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -567,7 +570,7 @@ export type ClientPageUpdateWithoutNoticesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.ClientPageUpdateenablePlatformInput | number[]
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -581,7 +584,7 @@ export type ClientPageUncheckedUpdateWithoutNoticesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  enablePlatform?: Prisma.IntFieldUpdateOperationsInput | number
+  enablePlatform?: Prisma.ClientPageUpdateenablePlatformInput | number[]
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -719,9 +722,9 @@ export type $ClientPagePayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     accessLevel: number
     /**
-     * 启用的平台（bitmask：1=H5, 2=APP, 4=小程序）
+     * 启用的平台（1=H5, 2=APP, 4=小程序）
      */
-    enablePlatform: number
+    enablePlatform: number[]
     /**
      * 页面启用状态
      */
@@ -1168,7 +1171,7 @@ export interface ClientPageFieldRefs {
   readonly name: Prisma.FieldRef<"ClientPage", 'String'>
   readonly title: Prisma.FieldRef<"ClientPage", 'String'>
   readonly accessLevel: Prisma.FieldRef<"ClientPage", 'Int'>
-  readonly enablePlatform: Prisma.FieldRef<"ClientPage", 'Int'>
+  readonly enablePlatform: Prisma.FieldRef<"ClientPage", 'Int[]'>
   readonly isEnabled: Prisma.FieldRef<"ClientPage", 'Boolean'>
   readonly description: Prisma.FieldRef<"ClientPage", 'String'>
   readonly createdAt: Prisma.FieldRef<"ClientPage", 'DateTime'>
