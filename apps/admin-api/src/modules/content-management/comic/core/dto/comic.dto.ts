@@ -14,85 +14,63 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { BaseAuthorDto } from '../../../author/dto/author.dto'
+import { BaseCategoryDto } from '../../../category/dto/category.dto'
+import { BaseTagDto } from '../../../tag/dto/tag.dto'
 import { ComicSerialStatusEnum } from '../comic.constant'
 
 /**
- * 漫画作者DTO
+ * 作者信息DTO
+ */
+class AuthorInfoDto extends PickType(BaseAuthorDto, ['id', 'name']) {}
+
+/**
+ * 漫画作者关联DTO
  */
 export class ComicAuthorDto {
   @ApiProperty({
-    description: '作者ID',
-    example: 1,
+    description: '作者信息',
+    example: { id: 1, name: '村上春树' },
     required: true,
-    type: Number,
+    type: AuthorInfoDto,
   })
-  id!: IdDto
-
-  @ApiProperty({
-    description: '作者名称',
-    example: '村上春树',
-    required: true,
-    type: String,
-  })
-  name!: string
-
-  @ApiProperty({
-    description: '是否为主要作者',
-    example: true,
-    required: true,
-    type: Boolean,
-  })
-  isPrimary!: boolean
-
-  @ApiProperty({
-    description: '排序',
-    example: 1,
-    required: true,
-    type: Number,
-  })
-  sortOrder!: boolean
+  author!: AuthorInfoDto
 }
 
 /**
- * 漫画分类DTO
+ * 分类信息DTO
+ */
+class CategoryInfoDto extends PickType(BaseCategoryDto, ['id', 'name']) {}
+
+/**
+ * 漫画分类关联DTO
  */
 export class ComicCategoryDto {
   @ApiProperty({
-    description: '分类ID',
-    example: 1,
+    description: '分类信息',
+    example: { id: 1, name: '科幻' },
     required: true,
-    type: Number,
+    type: CategoryInfoDto,
   })
-  id!: IdDto
-
-  @ApiProperty({
-    description: '分类名称',
-    example: '科幻',
-    required: true,
-    type: String,
-  })
-  name!: string
+  category!: CategoryInfoDto
 }
 
 /**
- * 漫画标签DTO
+ * 标签信息DTO
+ */
+export class TagInfoDto extends PickType(BaseTagDto, ['id', 'name']) {}
+
+/**
+ * 漫画标签关联DTO
  */
 export class ComicTagDto {
   @ApiProperty({
-    description: '标签ID',
-    example: 1,
+    description: '标签信息',
+    example: { id: 1, name: '热血' },
     required: true,
-    type: Number,
+    type: TagInfoDto,
   })
-  id!: IdDto
-
-  @ApiProperty({
-    description: '标签名称',
-    example: '热血',
-    required: true,
-    type: String,
-  })
-  name!: string
+  tag!: TagInfoDto
 }
 
 /**
@@ -127,12 +105,20 @@ export class BaseComicDto extends BaseDto {
     description: '漫画分类',
     example: [
       {
-        id: 1,
-        name: '科幻',
+        isPrimary: true,
+        sortOrder: 0,
+        category: {
+          id: 1,
+          name: '科幻',
+        },
       },
       {
-        id: 2,
-        name: '冒险',
+        isPrimary: false,
+        sortOrder: 1,
+        category: {
+          id: 2,
+          name: '冒险',
+        },
       },
     ],
     required: true,
@@ -144,16 +130,20 @@ export class BaseComicDto extends BaseDto {
     description: '漫画作者',
     example: [
       {
-        id: 1,
-        name: '村上春树',
         isPrimary: true,
-        sortOrder: 1,
+        sortOrder: 0,
+        author: {
+          id: 1,
+          name: '村上春树',
+        },
       },
       {
-        id: 2,
-        name: '东野圭吾',
         isPrimary: false,
-        sortOrder: 2,
+        sortOrder: 1,
+        author: {
+          id: 2,
+          name: '东野圭吾',
+        },
       },
     ],
     required: true,
@@ -165,12 +155,20 @@ export class BaseComicDto extends BaseDto {
     description: '漫画标签',
     example: [
       {
-        id: 1,
-        name: '热血',
+        isPrimary: true,
+        sortOrder: 0,
+        tag: {
+          id: 1,
+          name: '热血',
+        },
       },
       {
-        id: 2,
-        name: '战斗',
+        isPrimary: false,
+        sortOrder: 1,
+        tag: {
+          id: 2,
+          name: '战斗',
+        },
       },
     ],
     required: true,
@@ -352,9 +350,6 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
   'popularity',
   'isPublished',
   'deletedAt',
-  'isRecommended',
-  'isHot',
-  'isNew',
   'comicCategories',
   'comicAuthors',
   'comicTags',
@@ -379,9 +374,9 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
     description: '关联的标签ID列表',
     itemType: 'number',
     example: [1, 2],
-    required: false,
+    required: true,
   })
-  tagIds?: number[]
+  tagIds!: number[]
 }
 
 /**

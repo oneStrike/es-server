@@ -398,7 +398,6 @@ export const ModelName = {
   WorkComicCategory: 'WorkComicCategory',
   WorkComicChapter: 'WorkComicChapter',
   WorkComicTag: 'WorkComicTag',
-  WorkComicVersion: 'WorkComicVersion',
   WorkComic: 'WorkComic',
   WorkCategory: 'WorkCategory',
   WorkTag: 'WorkTag'
@@ -417,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComicVersion" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1457,80 +1456,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    WorkComicVersion: {
-      payload: Prisma.$WorkComicVersionPayload<ExtArgs>
-      fields: Prisma.WorkComicVersionFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkComicVersionFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkComicVersionFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload>
-        }
-        findFirst: {
-          args: Prisma.WorkComicVersionFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkComicVersionFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload>
-        }
-        findMany: {
-          args: Prisma.WorkComicVersionFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload>[]
-        }
-        create: {
-          args: Prisma.WorkComicVersionCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload>
-        }
-        createMany: {
-          args: Prisma.WorkComicVersionCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkComicVersionCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload>[]
-        }
-        delete: {
-          args: Prisma.WorkComicVersionDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload>
-        }
-        update: {
-          args: Prisma.WorkComicVersionUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkComicVersionDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkComicVersionUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkComicVersionUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkComicVersionUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicVersionPayload>
-        }
-        aggregate: {
-          args: Prisma.WorkComicVersionAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComicVersion>
-        }
-        groupBy: {
-          args: Prisma.WorkComicVersionGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkComicVersionGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkComicVersionCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkComicVersionCountAggregateOutputType> | number
-        }
-      }
-    }
     WorkComic: {
       payload: Prisma.$WorkComicPayload<ExtArgs>
       fields: Prisma.WorkComicFieldRefs
@@ -1987,9 +1912,6 @@ export const WorkComicAuthorScalarFieldEnum = {
   id: 'id',
   comicId: 'comicId',
   authorId: 'authorId',
-  roleType: 'roleType',
-  isPrimary: 'isPrimary',
-  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2015,8 +1937,7 @@ export const WorkComicChapterScalarFieldEnum = {
   subtitle: 'subtitle',
   isPublished: 'isPublished',
   comicId: 'comicId',
-  versionId: 'versionId',
-  chapterNumber: 'chapterNumber',
+  sortOrder: 'sortOrder',
   canDownload: 'canDownload',
   downloadPoints: 'downloadPoints',
   canComment: 'canComment',
@@ -2045,30 +1966,6 @@ export const WorkComicTagScalarFieldEnum = {
 } as const
 
 export type WorkComicTagScalarFieldEnum = (typeof WorkComicTagScalarFieldEnum)[keyof typeof WorkComicTagScalarFieldEnum]
-
-
-export const WorkComicVersionScalarFieldEnum = {
-  id: 'id',
-  comicId: 'comicId',
-  versionName: 'versionName',
-  language: 'language',
-  translatorGroup: 'translatorGroup',
-  description: 'description',
-  isRecommended: 'isRecommended',
-  isPublished: 'isPublished',
-  publishAt: 'publishAt',
-  lastUpdated: 'lastUpdated',
-  rating: 'rating',
-  copyright: 'copyright',
-  disclaimer: 'disclaimer',
-  remark: 'remark',
-  sortOrder: 'sortOrder',
-  deletedAt: 'deletedAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkComicVersionScalarFieldEnum = (typeof WorkComicVersionScalarFieldEnum)[keyof typeof WorkComicVersionScalarFieldEnum]
 
 
 export const WorkComicScalarFieldEnum = {
@@ -2369,7 +2266,6 @@ export type GlobalOmitConfig = {
   workComicCategory?: Prisma.WorkComicCategoryOmit
   workComicChapter?: Prisma.WorkComicChapterOmit
   workComicTag?: Prisma.WorkComicTagOmit
-  workComicVersion?: Prisma.WorkComicVersionOmit
   workComic?: Prisma.WorkComicOmit
   workCategory?: Prisma.WorkCategoryOmit
   workTag?: Prisma.WorkTagOmit

@@ -65,7 +65,6 @@ export const ModelName = {
   WorkComicCategory: 'WorkComicCategory',
   WorkComicChapter: 'WorkComicChapter',
   WorkComicTag: 'WorkComicTag',
-  WorkComicVersion: 'WorkComicVersion',
   WorkComic: 'WorkComic',
   WorkCategory: 'WorkCategory',
   WorkTag: 'WorkTag'
@@ -282,9 +281,6 @@ export const WorkComicAuthorScalarFieldEnum = {
   id: 'id',
   comicId: 'comicId',
   authorId: 'authorId',
-  roleType: 'roleType',
-  isPrimary: 'isPrimary',
-  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -310,8 +306,7 @@ export const WorkComicChapterScalarFieldEnum = {
   subtitle: 'subtitle',
   isPublished: 'isPublished',
   comicId: 'comicId',
-  versionId: 'versionId',
-  chapterNumber: 'chapterNumber',
+  sortOrder: 'sortOrder',
   canDownload: 'canDownload',
   downloadPoints: 'downloadPoints',
   canComment: 'canComment',
@@ -340,30 +335,6 @@ export const WorkComicTagScalarFieldEnum = {
 } as const
 
 export type WorkComicTagScalarFieldEnum = (typeof WorkComicTagScalarFieldEnum)[keyof typeof WorkComicTagScalarFieldEnum]
-
-
-export const WorkComicVersionScalarFieldEnum = {
-  id: 'id',
-  comicId: 'comicId',
-  versionName: 'versionName',
-  language: 'language',
-  translatorGroup: 'translatorGroup',
-  description: 'description',
-  isRecommended: 'isRecommended',
-  isPublished: 'isPublished',
-  publishAt: 'publishAt',
-  lastUpdated: 'lastUpdated',
-  rating: 'rating',
-  copyright: 'copyright',
-  disclaimer: 'disclaimer',
-  remark: 'remark',
-  sortOrder: 'sortOrder',
-  deletedAt: 'deletedAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkComicVersionScalarFieldEnum = (typeof WorkComicVersionScalarFieldEnum)[keyof typeof WorkComicVersionScalarFieldEnum]
 
 
 export const WorkComicScalarFieldEnum = {

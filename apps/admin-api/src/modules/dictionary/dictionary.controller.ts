@@ -1,10 +1,11 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import {
-  BatchEnabledDto,
   BatchOperationResponseDto,
+  BatchUpdateEnabledStatusDto,
   DragReorderDto,
   IdDto,
   IdsDto,
+  UpdateEnabledStatusDto,
 } from '@libs/base/dto'
 import {
   BaseDictionaryDto,
@@ -82,7 +83,7 @@ export class DictionaryController {
     summary: '批量启用禁用字典',
     model: BatchOperationResponseDto,
   })
-  async enable(@Body() query: BatchEnabledDto) {
+  async enable(@Body() query: BatchUpdateEnabledStatusDto) {
     return this.libDictionaryService.dictionary.updateMany({
       where: { id: { in: query.ids } },
       data: { isEnabled: query.isEnabled },
@@ -90,9 +91,10 @@ export class DictionaryController {
   }
 
   @Get('items')
-  @ApiPageDoc({
+  @ApiDoc({
     summary: '获取字典项',
     model: BaseDictionaryItemDto,
+    isArray: true,
   })
   async getItems(@Query() query: QueryDictionaryItemDto) {
     return this.libDictionaryService.findDictionaryItems(query)
@@ -135,7 +137,7 @@ export class DictionaryController {
     summary: '启用禁用字典项',
     model: BatchOperationResponseDto,
   })
-  async enableItem(@Body() query: BatchEnabledDto) {
+  async enableItem(@Body() query: UpdateEnabledStatusDto) {
     return this.libDictionaryService.updateDictionaryItem(query)
   }
 

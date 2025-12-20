@@ -3,7 +3,7 @@ import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-import { WorkComicService } from './comic.service'
+import { ComicService } from './comic.service'
 import {
   BaseComicDto,
   CreateComicDto,
@@ -21,8 +21,8 @@ import {
  */
 @ApiTags('漫画管理模块')
 @Controller('admin/work/comic')
-export class WorkComicController {
-  constructor(private readonly comicService: WorkComicService) {}
+export class ComicController {
+  constructor(private readonly comicService: ComicService) {}
 
   /**
    * 创建漫画

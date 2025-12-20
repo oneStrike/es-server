@@ -1,18 +1,12 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import {
-  BatchOperationResponseDto,
-  DragReorderDto,
-  IdDto,
-  IdsDto,
-} from '@libs/base/dto'
+import { DragReorderDto, IdDto, IdsDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { WorkComicVersionService } from '../version/comic-version.service'
-import { WorkComicChapterService } from './comic-chapter.service'
+
+import { ComicChapterService } from './comic-chapter.service'
 import { ComicChapterDetailDto } from './dto/comic-chapter-response'
 import {
   AddChapterContentDto,
-  BatchUpdateChapterContentsDto,
   ComicChapterPageResponseDto,
   CreateComicChapterDto,
   DeleteChapterContentDto,
@@ -29,11 +23,8 @@ import {
  */
 @ApiTags('漫画章节管理模块')
 @Controller('admin/work/comic-chapter')
-export class WorkComicChapterController {
-  constructor(
-    private readonly comicChapterService: WorkComicChapterService,
-    private readonly comicVersionService: WorkComicVersionService,
-  ) {}
+export class ComicChapterController {
+  constructor(private readonly comicChapterService: ComicChapterService) {}
 
   /**
    * 创建漫画章节
@@ -84,14 +75,14 @@ export class WorkComicChapterController {
   }
 
   /**
-   * 批量软删除章节
+   * 批量删除章节
    */
   @Post('/batch-delete')
   @ApiDoc({
-    summary: '批量软删除章节',
-    model: BatchOperationResponseDto,
+    summary: '批量删除章节',
+    model: IdDto,
   })
-  async batchDelete(@Body() body: IdsDto) {
+  async delete(@Body() body: IdsDto) {
     return this.comicChapterService.workComicChapter.deleteMany({
       where: { id: { in: body.ids } },
     })
@@ -100,10 +91,10 @@ export class WorkComicChapterController {
   /**
    * 批量更新章节发布状态
    */
-  @Post('/batch-update-status')
+  @Post('/update-status')
   @ApiDoc({
-    summary: '批量更新章节发布状态',
-    model: BatchOperationResponseDto,
+    summary: '更新章节发布状态',
+    model: IdDto,
   })
   async updatePublishStatus(@Body() body: UpdateChapterPublishStatusDto) {
     return this.comicChapterService.workComicChapter.updateMany({
@@ -208,25 +199,6 @@ export class WorkComicChapterController {
   })
   async moveChapterContent(@Body() body: MoveChapterContentDto) {
     return this.comicChapterService.moveChapterContent(body)
-  }
-
-  /**
-   * 批量更新章节内容
-   */
-  @Post('/batch-update-contents')
-  @ApiDoc({
-    summary: '批量更新章节内容',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
-  })
-  async batchUpdateChapterContents(
-    @Body() body: BatchUpdateChapterContentsDto,
-  ) {
-    return this.comicChapterService.batchUpdateChapterContents(body)
   }
 
   /**

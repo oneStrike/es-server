@@ -1,4 +1,24 @@
+import { ValidateString } from '@libs/base/decorators'
+import { IdDto } from '@libs/base/dto'
 import { ApiProperty } from '@nestjs/swagger'
+
+export class SearchComicRequestDto {
+  @ValidateString({
+    required: true,
+    maxLength: 100,
+    description: '搜索关键词',
+    example: '进击的巨人',
+  })
+  keyword!: string
+
+  @ValidateString({
+    required: true,
+    maxLength: 10,
+    description: '平台代码',
+    example: 'copy',
+  })
+  platform!: string
+}
 
 export class PlatformResponseDto {
   @ApiProperty({
@@ -18,14 +38,7 @@ export class PlatformResponseDto {
   code: string
 }
 
-export class SearchComicItemDto {
-  @ApiProperty({
-    description: '漫画ID',
-    example: 'shingeki-no-kyojin',
-    type: 'string',
-  })
-  id: string
-
+export class SearchComicItemDto extends IdDto {
   @ApiProperty({
     description: '漫画名称',
     example: '进击的巨人',

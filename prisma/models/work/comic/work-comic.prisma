@@ -17,7 +17,7 @@ model WorkComic {
   region           String              @db.VarChar(10)
   /// 作者关系 - 多对多关系通过中间表
   comicAuthors     WorkComicAuthor[]
-  /// 内容年龄分级（G=全年龄, PG=建议家长指导, PG-13=13岁以上, R=限制级, NC-17=17岁以下禁止）
+  /// 内容年龄分级 数据字典
   ageRating        String?             @map("age_rating") @db.VarChar(10)
   /// 发布状态
   isPublished      Boolean             @default(true) @map("is_published")
@@ -61,8 +61,7 @@ model WorkComic {
   comicCategories  WorkComicCategory[]
   /// 标签关系 - 多对多关系通过中间表
   comicTags        WorkComicTag[]
-  /// 版本关系 - 一对多关系
-  comicVersions    WorkComicVersion[]
+  
 
   /// 索引优化
   @@index([isPublished, publishAt]) // 查询已发布的漫画

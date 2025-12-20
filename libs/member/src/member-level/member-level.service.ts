@@ -1,5 +1,5 @@
 import { RepositoryService } from '@libs/base/database'
-import { IdDto, UpdateStatusDto } from '@libs/base/dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import { Injectable } from '@nestjs/common'
 import {
   CreateMemberLevelDto,
@@ -77,7 +77,7 @@ export class MemberLevelService extends RepositoryService {
   /**
    * 修改会员等级启用状态
    */
-  async changeMemberLevelStatus(statusDto: UpdateStatusDto) {
+  async changeMemberLevelStatus(statusDto: UpdateEnabledStatusDto) {
     return this.memberLevel.update({
       where: {
         id: statusDto.id,

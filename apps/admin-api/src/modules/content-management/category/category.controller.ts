@@ -1,5 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { DragReorderDto, IdDto, UpdateStatusDto } from '@libs/base/dto'
+import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { WorkCategoryService } from './category.service'
@@ -75,7 +75,7 @@ export class WorkCategoryController {
     summary: '更新分类状态',
     model: IdDto,
   })
-  async updateStatus(@Body() body: UpdateStatusDto) {
+  async updateStatus(@Body() body: UpdateEnabledStatusDto) {
     return this.categoryService.updateCategoryStatus(body)
   }
 
