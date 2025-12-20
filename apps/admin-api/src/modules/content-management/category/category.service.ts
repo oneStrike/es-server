@@ -1,6 +1,6 @@
 import type { WorkCategoryWhereInput } from '@libs/base/database/prisma-client/models'
 import { RepositoryService } from '@libs/base/database'
-import { DragReorderDto, UpdateStatusDto } from '@libs/base/dto'
+import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -116,7 +116,7 @@ export class WorkCategoryService extends RepositoryService {
    * @param updateStatusDto 状态更新数据
    * @returns 更新结果
    */
-  async updateCategoryStatus(updateStatusDto: UpdateStatusDto) {
+  async updateCategoryStatus(updateStatusDto: UpdateEnabledStatusDto) {
     if (!updateStatusDto.isEnabled && (await this.checkCategoryHasWorks())) {
       throw new BadRequestException(`分类存在关联作品，无法禁用`)
     }

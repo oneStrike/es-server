@@ -16,7 +16,7 @@ import { createInitialMemberLevels } from './modules/memberLevel' // 会员等�
 import { createInitialWorkCategory } from './modules/workCategory' // 作品分类管理
 import { createInitialWorkComicChapters } from './modules/workComicChapter' // 漫画章节内容
 import { createInitialWorkComicRelations } from './modules/workComicRelations' // 作品关联关系（作者-漫画-分类）
-import { createInitialWorkComicVersions } from './modules/workComicVersion'
+
 import { createInitialWorkTag } from './modules/workTag' // 作品标签管理
 
 const connectUrl = isProduction()
@@ -42,10 +42,7 @@ async function runSeeds() {
   await createInitialComics(prisma) // 内容管理：漫画基础信息
 
   // 第三批：关联关系和详细数据
-  await Promise.all([
-    createInitialWorkComicRelations(prisma), // 内容管理：作品关联关系
-    createInitialWorkComicVersions(prisma), // 内容管理：多语言版本
-  ])
+  await createInitialWorkComicRelations(prisma) // 内容管理：作品关联关系
   await createInitialWorkComicChapters(prisma) // 内容管理：漫画章节
   await createInitialClientNotice(prisma) // 运营功能：客户端通知
   console.log('🎉 所有种子数据初始化完成！')

@@ -1,18 +1,19 @@
 import { ApiDoc } from '@libs/base/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+
 import {
   PlatformResponseDto,
   SearchComicItemDto,
-} from './dto/third-party-response.dto'
-import { SearchComicRequestDto } from './dto/third-party.request'
-import { WorkComicThirdPartyService } from './third-party-service'
+  SearchComicRequestDto,
+} from './dto/third-party.dto'
+import { ComicThirdPartyService } from './third-party-service'
 import { PLATFORMS } from './third-party.constant'
 
 @ApiTags('第三方漫画平台内容解析')
 @Controller('admin/work/comic/third-party')
-export class WorkComicThirdPartyController {
-  constructor(private readonly thirdPartyService: WorkComicThirdPartyService) {}
+export class ComicThirdPartyController {
+  constructor(private readonly thirdPartyService: ComicThirdPartyService) {}
 
   @Get('/platform')
   @ApiDoc({

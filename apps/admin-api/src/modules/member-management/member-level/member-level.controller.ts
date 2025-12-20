@@ -1,5 +1,5 @@
 import { ApiDoc } from '@libs/base/decorators'
-import { IdDto, UpdateStatusDto } from '@libs/base/dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import {
   BaseMemberLevelDto,
   CreateMemberLevelDto,
@@ -64,7 +64,7 @@ export class MemberLevelController {
     model: IdDto,
   })
   @Post('/change-status')
-  async changeMemberLevelStatus(@Body() statusDto: UpdateStatusDto) {
+  async changeMemberLevelStatus(@Body() statusDto: UpdateEnabledStatusDto) {
     return this.memberLevelService.changeMemberLevelStatus(statusDto)
   }
 }

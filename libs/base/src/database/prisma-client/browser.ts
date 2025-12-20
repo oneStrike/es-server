@@ -88,11 +88,6 @@ export type WorkComicChapter = Prisma.WorkComicChapterModel
  */
 export type WorkComicTag = Prisma.WorkComicTagModel
 /**
- * Model WorkComicVersion
- * 漫画版本表（用于管理不同语言版本、汉化组等）
- */
-export type WorkComicVersion = Prisma.WorkComicVersionModel
-/**
  * Model WorkComic
  * 
  */

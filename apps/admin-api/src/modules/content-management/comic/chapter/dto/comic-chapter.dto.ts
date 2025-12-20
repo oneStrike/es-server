@@ -6,7 +6,13 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import { IdDto, PageDto } from '@libs/base/dto'
+import {
+  BaseDto,
+  IdDto,
+  IdsDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+} from '@libs/base/dto'
 import {
   IntersectionType,
   OmitType,
@@ -18,15 +24,7 @@ import { ChapterReadRuleEnum } from '../comic-chapter.constant'
 /**
  * 漫画章节基础DTO
  */
-export class BaseComicChapterDto {
-  @ValidateNumber({
-    description: '章节ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  id!: number
-
+export class BaseComicChapterDto extends BaseDto {
   @ValidateString({
     description: '章节标题',
     example: '第一话：开始的故事',
@@ -60,20 +58,12 @@ export class BaseComicChapterDto {
   comicId!: number
 
   @ValidateNumber({
-    description: '关联的漫画版本ID',
-    example: 1,
-    required: false,
-    min: 1,
-  })
-  versionId?: number
-
-  @ValidateNumber({
     description: '章节序号（用于排序）',
     example: 1.0,
     required: true,
     min: 0,
   })
-  chapterNumber!: number
+  sortOrder!: number
 
   @ValidateEnum({
     description: '查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买）',
@@ -159,29 +149,13 @@ export class BaseComicChapterDto {
     maxLength: 1000,
   })
   remark?: string
-
-  @ValidateDate({
-    description: '创建时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: true,
-  })
-  createdAt!: Date
-
-  @ValidateDate({
-    description: '更新时间',
-    example: '2024-01-01T00:00:00.000Z',
-    required: true,
-  })
-  updatedAt!: Date
 }
 
 /**
  * 创建漫画章节DTO
  */
 export class CreateComicChapterDto extends OmitType(BaseComicChapterDto, [
-  'id',
-  'createdAt',
-  'updatedAt',
+  ...OMIT_BASE_FIELDS,
   'viewCount',
   'likeCount',
   'commentCount',
@@ -269,16 +243,7 @@ export class BatchUpdateChapterContentsDto extends IdDto {
  * 更新漫画章节DTO
  */
 export class UpdateComicChapterDto extends IntersectionType(
-  PartialType(
-    OmitType(BaseComicChapterDto, [
-      'id',
-      'createdAt',
-      'updatedAt',
-      'viewCount',
-      'likeCount',
-      'commentCount',
-    ]),
-  ),
+  PartialType(CreateComicChapterDto),
   IdDto,
 ) {}
 
@@ -290,66 +255,22 @@ export class QueryComicChapterDto extends IntersectionType(
   PickType(PartialType(BaseComicChapterDto), [
     'title',
     'isPublished',
-    'versionId',
     'readRule',
     'isPreview',
+    'comicId',
   ]),
-) {
-  @ValidateString({
-    description: '章节标题（模糊搜索）',
-    example: '第一话',
-    required: false,
-  })
-  title?: string
-
-  @ValidateNumber({
-    description: '漫画ID（精确匹配）',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  comicId: number
-}
+) {}
 
 /**
  * 批量更新章节发布状态DTO
  */
-export class UpdateChapterPublishStatusDto {
-  @ValidateArray({
-    description: '章节ID列表',
-    itemType: 'number',
-    example: [1, 2, 3],
-    required: true,
-  })
-  ids!: number[]
-
+export class UpdateChapterPublishStatusDto extends IdsDto {
   @ValidateBoolean({
     description: '发布状态（true: 发布, false: 取消发布）',
     example: true,
     required: true,
   })
   isPublished!: boolean
-}
-
-/**
- * 批量更新章节查看规则DTO
- */
-export class UpdateChapterReadRuleDto {
-  @ValidateArray({
-    description: '章节ID列表',
-    itemType: 'number',
-    example: [1, 2, 3],
-    required: true,
-  })
-  ids!: number[]
-
-  @ValidateEnum({
-    description: '查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买）',
-    example: ChapterReadRuleEnum.PUBLIC,
-    required: true,
-    enum: ChapterReadRuleEnum,
-  })
-  readRule!: ChapterReadRuleEnum
 }
 
 /**

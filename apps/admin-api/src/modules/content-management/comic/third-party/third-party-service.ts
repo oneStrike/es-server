@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 
-import { SearchComicRequestDto } from './dto/third-party.request'
+import { SearchComicRequestDto } from './dto/third-party.dto'
 import { CopyService } from './libs/copy.service'
 
 @Injectable()
-export class WorkComicThirdPartyService {
+export class ComicThirdPartyService {
   constructor(private readonly copy: CopyService) {}
 
   /**

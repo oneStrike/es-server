@@ -2,7 +2,7 @@ import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import {
   BatchOperationResponseDto,
   IdDto,
-  UpdateStatusDto,
+  UpdateEnabledStatusDto,
 } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -81,7 +81,7 @@ export class WorkAuthorController {
     summary: '更新作者状态',
     model: BatchOperationResponseDto,
   })
-  async updateStatus(@Body() body: UpdateStatusDto) {
+  async updateStatus(@Body() body: UpdateEnabledStatusDto) {
     return this.authorService.workAuthor.update({
       where: {
         id: body.id,

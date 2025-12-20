@@ -56,7 +56,7 @@ export class LibDictionaryService extends RepositoryService {
    * @returns 分页数据
    */
   async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
-    const { dictionaryCode, name, code, isEnabled, ...pageParams } = queryDto
+    const { dictionaryCode, name, code, isEnabled } = queryDto
 
     const where: DictionaryItemWhereInput = {
       dictionaryCode: {
@@ -71,11 +71,10 @@ export class LibDictionaryService extends RepositoryService {
       where.name = { contains: name }
     }
     if (isEnabled !== undefined) {
-      where.isEnabled = { equals: isEnabled }
+      where.isEnabled = isEnabled
     }
-
-    return this.prisma.dictionaryItem.findPagination({
-      where: { ...where, ...pageParams },
+    return this.prisma.dictionaryItem.findMany({
+      where: { ...where },
     })
   }
 

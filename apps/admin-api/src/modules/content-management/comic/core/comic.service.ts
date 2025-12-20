@@ -1,7 +1,7 @@
+import type { WorkComicWhereInput } from '@libs/base/database'
 import { RepositoryService } from '@libs/base/database'
-import { WorkComicWhereInput } from '@libs/base/database/prisma-client/models/WorkComic'
 
-import { isBoolean, isNotNil } from '@libs/base/utils'
+import { isNotNil } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
 
@@ -10,7 +10,7 @@ import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
  * 提供漫画的增删改查等核心业务逻辑
  */
 @Injectable()
-export class WorkComicService extends RepositoryService {
+export class ComicService extends RepositoryService {
   get workComic() {
     return this.prisma.workComic
   }
@@ -22,11 +22,6 @@ export class WorkComicService extends RepositoryService {
    */
   async createComic(createComicDto: CreateComicDto) {
     const { authorIds, categoryIds, tagIds, ...comicData } = createComicDto
-
-    // 验证作者是否存在
-    if (!Array.isArray(authorIds) || authorIds.length === 0) {
-      throw new BadRequestException('至少需要关联一个作者')
-    }
 
     const existingAuthors = await this.prisma.workAuthor.findMany({
       where: {
@@ -52,18 +47,15 @@ export class WorkComicService extends RepositoryService {
     }
 
     // 验证标签是否存在
-    let existingTags: any[] = []
-    if (Array.isArray(tagIds) && tagIds.length > 0) {
-      existingTags = await this.prisma.workTag.findMany({
-        where: {
-          id: { in: tagIds },
-          isEnabled: true,
-        },
-      })
+    const existingTags = await this.prisma.workTag.findMany({
+      where: {
+        id: { in: tagIds },
+        isEnabled: true,
+      },
+    })
 
-      if (existingTags.length !== tagIds.length) {
-        throw new BadRequestException('部分标签不存在或已禁用')
-      }
+    if (existingTags.length !== tagIds.length) {
+      throw new BadRequestException('部分标签不存在或已禁用')
     }
 
     return this.workComic.create({
@@ -71,30 +63,22 @@ export class WorkComicService extends RepositoryService {
         ...comicData,
         // 创建作者关联关系
         comicAuthors: {
-          create: authorIds.map((authorId, index) => ({
+          create: authorIds.map((authorId) => ({
             authorId,
-            roleType: 1, // 默认为原作者
-            isPrimary: index === 0, // 第一个作者设为主要作者
-            sortOrder: index,
           })),
         },
         // 创建分类关联关系
         comicCategories: {
-          create: categoryIds.map((categoryId, index) => ({
+          create: categoryIds.map((categoryId) => ({
             categoryId,
-            isPrimary: index === 0, // 第一个分类设为主要分类
-            weight: categoryIds.length - index, // 权重递减
           })),
         },
         // 创建标签关联关系
-        comicTags:
-          tagIds && tagIds.length > 0
-            ? {
-                create: tagIds.map((tagId) => ({
-                  tagId,
-                })),
-              }
-            : undefined,
+        comicTags: {
+          create: tagIds.map((tagId) => ({
+            tagId,
+          })),
+        },
       },
     })
   }
@@ -105,127 +89,72 @@ export class WorkComicService extends RepositoryService {
    * @returns 分页的漫画列表
    */
   async getComicPage(queryComicDto: QueryComicDto) {
-    const {
-      name,
-      isPublished,
-      serialStatus,
-      language,
-      region,
-      ageRating,
-      isRecommended,
-      isHot,
-      isNew,
-      publisher,
-      author,
-      tagIds,
-      ...pageDto
-    } = queryComicDto
+    const { name, publisher, author, tagIds, ...otherDto } = queryComicDto
 
     // 构建查询条件
     const where: WorkComicWhereInput = {}
 
     // 漫画名称模糊搜索
-    if (isNotNil(name)) {
-      where.name = {
-        contains: name,
-        mode: 'insensitive',
-      }
-    }
-
-    // 发布状态筛选
-    if (isNotNil(isPublished)) {
-      where.isPublished = isPublished
-    }
-
-    // 连载状态筛选
-    if (isNotNil(serialStatus)) {
-      where.serialStatus = serialStatus
-    }
-
-    // 语言筛选
-    if (isNotNil(language)) {
-      where.language = language
-    }
-
-    // 地区筛选
-    if (isNotNil(region)) {
-      where.region = region
-    }
-
-    // 年龄分级筛选
-    if (isNotNil(ageRating)) {
-      where.ageRating = ageRating
-    }
-
-    // 推荐状态筛选
-    if (isBoolean(isRecommended)) {
-      where.isRecommended = isRecommended
-    }
-
-    // 热门状态筛选
-    if (isBoolean(isHot)) {
-      where.isHot = isHot
-    }
-
-    // 新作状态筛选
-    if (isBoolean(isNew)) {
-      where.isNew = isNew
+    where.name = {
+      contains: name,
+      mode: 'insensitive',
     }
 
     // 出版社模糊搜索
-    if (isNotNil(publisher)) {
-      where.publisher = {
-        contains: publisher,
-        mode: 'insensitive',
-      }
+    where.publisher = {
+      contains: publisher,
+      mode: 'insensitive',
     }
 
     // 作者名称模糊搜索
-    if (isNotNil(author)) {
-      where.comicAuthors = {
-        some: {
-          author: {
-            name: {
-              contains: author,
-              mode: 'insensitive',
-            },
+    where.comicAuthors = {
+      some: {
+        author: {
+          name: {
+            contains: author,
+            mode: 'insensitive',
           },
         },
-      }
+      },
     }
 
     // 标签筛选
-    if (Array.isArray(tagIds) && tagIds.length > 0) {
-      where.comicTags = {
-        some: {
-          tagId: {
-            in: tagIds,
-          },
+    where.comicTags = {
+      some: {
+        tagId: {
+          in: tagIds,
         },
-      }
+      },
     }
 
     return this.workComic.findPagination({
-      where: { ...where, ...pageDto },
+      where: { ...where, ...otherDto },
       select: {
-        // 必须明确指定需要的所有字段
         id: true,
         name: true,
         alias: true,
         cover: true,
+        popularity: true,
+        popularityWeight: true,
+        language: true,
+        region: true,
+        ageRating: true,
+        isPublished: true,
+        publishAt: true,
+        lastUpdated: true,
+        publisher: true,
+        originalSource: true,
         serialStatus: true,
+        rating: true,
+        recommendWeight: true,
+        isRecommended: true,
         isHot: true,
         isNew: true,
-        isRecommended: true,
         createdAt: true,
         updatedAt: true,
-        publishAt: true,
-        isPublished: true,
         // 关联关系
         comicAuthors: {
           select: {
-            isPrimary: true,
-            sortOrder: true,
             author: {
               select: {
                 id: true,
@@ -270,8 +199,6 @@ export class WorkComicService extends RepositoryService {
       include: {
         comicAuthors: {
           select: {
-            isPrimary: true,
-            sortOrder: true,
             author: {
               select: {
                 id: true,
@@ -310,20 +237,7 @@ export class WorkComicService extends RepositoryService {
       throw new BadRequestException('漫画不存在')
     }
 
-    return {
-      ...comic,
-      comicAuthors: comic.comicAuthors?.map((author) => ({
-        ...author.author,
-        isPrimary: author.isPrimary,
-        sortOrder: author.sortOrder,
-      })),
-      comicCategories: comic.comicCategories?.map((category) => ({
-        ...category.category,
-      })),
-      comicTags: comic.comicTags?.map((tag) => ({
-        ...tag.tag,
-      })),
-    }
+    return comic
   }
 
   /**
