@@ -253,6 +253,22 @@ export class BaseComicDto extends BaseDto {
   })
   publisher?: string
 
+  @ApiProperty({
+    description: '点赞数量',
+    example: 1000,
+    required: true,
+    default: 0,
+  })
+  likeCount!: number
+
+  @ApiProperty({
+    description: '收藏数量',
+    example: 50,
+    required: true,
+    default: 0,
+  })
+  favoriteCount!: number
+
   @ValidateString({
     description: '原始来源',
     example: '官方授权',
@@ -353,6 +369,8 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
   'comicCategories',
   'comicAuthors',
   'comicTags',
+  'likeCount',
+  'favoriteCount',
 ]) {
   @ValidateArray({
     description: '关联的作者ID列表',

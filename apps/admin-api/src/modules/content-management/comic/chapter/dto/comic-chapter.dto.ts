@@ -14,6 +14,7 @@ import {
   PageDto,
 } from '@libs/base/dto'
 import {
+  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -149,6 +150,29 @@ export class BaseComicChapterDto extends BaseDto {
     maxLength: 1000,
   })
   remark?: string
+}
+
+/**
+ * 关联的漫画信息
+ */
+export class RelatedComicDto {
+  @ApiProperty({ description: '漫画ID', example: 1 })
+  id: number
+
+  @ApiProperty({ description: '漫画名字', example: '示例漫画' })
+  name: string
+}
+
+/**
+ * 漫画详情接口响应dto
+ */
+
+export class ComicChapterDetailDto extends BaseComicChapterDto {
+  @ApiProperty({
+    description: '关联的漫画信息',
+    type: RelatedComicDto,
+  })
+  relatedComic: RelatedComicDto
 }
 
 /**

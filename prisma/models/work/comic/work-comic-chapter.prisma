@@ -11,7 +11,7 @@ model WorkComicChapter {
   relatedComic   WorkComic @relation(fields: [comicId], references: [id], onDelete: Cascade)
   comicId        Int       @map("comic_id") @db.Integer
   /// 章节序号（用于排序）
-  sortOrder      Int       @map("sort_order") @db.Integer @unique
+  sortOrder      Int       @map("sort_order") @db.Integer @default(0)
   /// 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
   canDownload    Int       @default(1) @map("can_download") @db.SmallInt
   /// 下载所需要的积分（积分可下载时必填）
