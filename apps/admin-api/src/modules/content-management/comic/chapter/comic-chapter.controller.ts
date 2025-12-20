@@ -21,7 +21,7 @@ import {
  * 漫画章节管理控制器
  * 提供漫画章节相关的API接口
  */
-@ApiTags('漫画管理模块/章节管理')
+@ApiTags('内容管理/漫画管理模块/章节管理')
 @Controller('admin/work/comic-chapter')
 export class ComicChapterController {
   constructor(private readonly comicChapterService: ComicChapterService) {}

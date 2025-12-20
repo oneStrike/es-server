@@ -19,7 +19,7 @@ import {
  * 漫画管理控制器
  * 提供漫画相关的API接口
  */
-@ApiTags('漫画管理模块')
+@ApiTags('内容管理/漫画管理模块')
 @Controller('admin/work/comic')
 export class ComicController {
   constructor(private readonly comicService: ComicService) {}
