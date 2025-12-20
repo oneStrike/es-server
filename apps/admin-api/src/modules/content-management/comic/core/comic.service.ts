@@ -107,26 +107,31 @@ export class ComicService extends RepositoryService {
     }
 
     // 作者名称模糊搜索
-    where.comicAuthors = {
-      some: {
-        author: {
-          name: {
-            contains: author,
-            mode: 'insensitive',
+    if (author) {
+      where.comicAuthors = {
+        some: {
+          author: {
+            name: {
+              contains: author,
+              mode: 'insensitive',
+            },
           },
         },
-      },
+      }
     }
 
     // 标签筛选
-    where.comicTags = {
-      some: {
-        tagId: {
-          in: tagIds,
+    if (tagIds) {
+      where.comicTags = {
+        some: {
+          tagId: {
+            in: tagIds,
+          },
         },
-      },
+      }
     }
 
+    console.log(where)
     return this.workComic.findPagination({
       where: { ...where, ...otherDto },
       select: {

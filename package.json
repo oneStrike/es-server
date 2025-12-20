@@ -30,6 +30,7 @@
     "prisma:generate": "prisma generate",
     "prisma:format": "prisma format",
     "prisma:init": "pnpm prisma:migrate:dev && pnpm prisma:seed",
+    "prisma:reset": "prisma migrate reset",
     "prisma:pull": "prisma db pull",
     "prisma:seed": "prisma db seed",
     "prisma:migrate:dev": "prisma migrate dev",

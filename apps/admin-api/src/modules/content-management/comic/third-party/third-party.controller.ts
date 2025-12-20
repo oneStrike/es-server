@@ -10,7 +10,7 @@ import {
 import { ComicThirdPartyService } from './third-party-service'
 import { PLATFORMS } from './third-party.constant'
 
-@ApiTags('第三方漫画平台内容解析')
+@ApiTags('漫画管理模块/三方平台内容解析')
 @Controller('admin/work/comic/third-party')
 export class ComicThirdPartyController {
   constructor(private readonly thirdPartyService: ComicThirdPartyService) {}

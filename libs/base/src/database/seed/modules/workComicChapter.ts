@@ -7,7 +7,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
         {
           title: '第1话 致两千年后的你',
           subtitle: '艾伦的梦境与巨人的出现',
-          chapterNumber: 1,
+          sortOrder: 1,
           isPublished: true,
           canDownload: 1,
           downloadPoints: 0,
@@ -28,7 +28,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
         {
           title: '第2话 那一天',
           subtitle: '玛利亚之墙的陷落',
-          chapterNumber: 2,
+          sortOrder: 2,
           isPublished: true,
           canDownload: 1,
           downloadPoints: 0,
@@ -49,7 +49,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
         {
           title: '第3话 解散式之夜',
           subtitle: '训练兵团的毕业典礼',
-          chapterNumber: 3,
+          sortOrder: 3,
           isPublished: true,
           canDownload: 1,
           downloadPoints: 0,
@@ -75,7 +75,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
         {
           title: '第1话 ROMANCE DAWN -冒险的黎明-',
           subtitle: '路飞的冒险开始',
-          chapterNumber: 1,
+          sortOrder: 1,
           isPublished: true,
           canDownload: 1,
           downloadPoints: 0,
@@ -96,7 +96,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
         {
           title: '第2话 那个人是"草帽路飞"',
           subtitle: '路飞与克比的相遇',
-          chapterNumber: 2,
+          sortOrder: 2,
           isPublished: true,
           canDownload: 1,
           downloadPoints: 0,
@@ -122,7 +122,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
         {
           title: '第1话 残酷',
           subtitle: '炭治郎一家的悲剧',
-          chapterNumber: 1,
+          sortOrder: 1,
           isPublished: true,
           canDownload: 1,
           downloadPoints: 0,
@@ -143,7 +143,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
         {
           title: '第2话 育手・鳞泷左近次',
           subtitle: '炭治郎的修行开始',
-          chapterNumber: 2,
+          sortOrder: 2,
           isPublished: true,
           canDownload: 1,
           downloadPoints: 0,
@@ -175,8 +175,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
         const existingChapter = await prisma.workComicChapter.findFirst({
           where: {
             comicId: comic.id,
-            chapterNumber: chapterInfo.chapterNumber,
-            versionId: null, // 原版章节
+            sortOrder: chapterInfo.sortOrder,
           },
         })
 
@@ -185,7 +184,6 @@ export async function createInitialWorkComicChapters(prisma: any) {
             data: {
               ...chapterInfo,
               comicId: comic.id,
-              versionId: null, // 原版章节
             },
           })
         }

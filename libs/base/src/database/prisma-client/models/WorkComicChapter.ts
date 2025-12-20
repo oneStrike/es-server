@@ -410,7 +410,6 @@ export type WorkComicChapterOrderByWithRelationInput = {
 
 export type WorkComicChapterWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  sortOrder?: number
   comicId_sortOrder?: Prisma.WorkComicChapterComicIdSortOrderCompoundUniqueInput
   AND?: Prisma.WorkComicChapterWhereInput | Prisma.WorkComicChapterWhereInput[]
   OR?: Prisma.WorkComicChapterWhereInput[]
@@ -419,6 +418,7 @@ export type WorkComicChapterWhereUniqueInput = Prisma.AtLeast<{
   subtitle?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
   isPublished?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
   comicId?: Prisma.IntFilter<"WorkComicChapter"> | number
+  sortOrder?: Prisma.IntFilter<"WorkComicChapter"> | number
   canDownload?: Prisma.IntFilter<"WorkComicChapter"> | number
   downloadPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
   canComment?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
@@ -435,7 +435,7 @@ export type WorkComicChapterWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"WorkComicChapter"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkComicChapter"> | Date | string | null
   relatedComic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
-}, "id" | "sortOrder" | "comicId_sortOrder">
+}, "id" | "comicId_sortOrder">
 
 export type WorkComicChapterOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -497,7 +497,7 @@ export type WorkComicChapterCreateInput = {
   title: string
   subtitle?: string | null
   isPublished?: boolean
-  sortOrder: number
+  sortOrder?: number
   canDownload?: number
   downloadPoints?: number | null
   canComment?: boolean
@@ -522,7 +522,7 @@ export type WorkComicChapterUncheckedCreateInput = {
   subtitle?: string | null
   isPublished?: boolean
   comicId: number
-  sortOrder: number
+  sortOrder?: number
   canDownload?: number
   downloadPoints?: number | null
   canComment?: boolean
@@ -593,7 +593,7 @@ export type WorkComicChapterCreateManyInput = {
   subtitle?: string | null
   isPublished?: boolean
   comicId: number
-  sortOrder: number
+  sortOrder?: number
   canDownload?: number
   downloadPoints?: number | null
   canComment?: boolean
@@ -816,7 +816,7 @@ export type WorkComicChapterCreateWithoutRelatedComicInput = {
   title: string
   subtitle?: string | null
   isPublished?: boolean
-  sortOrder: number
+  sortOrder?: number
   canDownload?: number
   downloadPoints?: number | null
   canComment?: boolean
@@ -839,7 +839,7 @@ export type WorkComicChapterUncheckedCreateWithoutRelatedComicInput = {
   title: string
   subtitle?: string | null
   isPublished?: boolean
-  sortOrder: number
+  sortOrder?: number
   canDownload?: number
   downloadPoints?: number | null
   canComment?: boolean
@@ -915,7 +915,7 @@ export type WorkComicChapterCreateManyRelatedComicInput = {
   title: string
   subtitle?: string | null
   isPublished?: boolean
-  sortOrder: number
+  sortOrder?: number
   canDownload?: number
   downloadPoints?: number | null
   canComment?: boolean
