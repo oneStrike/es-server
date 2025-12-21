@@ -30,14 +30,14 @@ export class WorkTagService extends RepositoryService {
       createTagDto.order = (await this.workTag.maxOrder()) + 1
     }
 
-    const tag = await this.workTag.create({
+    return this.workTag.create({
       data: {
         ...createTagDto,
         popularity: 0,
         popularityWeight: 0,
       },
+      select: { id: true },
     })
-    return { id: tag.id }
   }
 
   /**

@@ -155,6 +155,8 @@ export class ComicService extends RepositoryService {
         isRecommended: true,
         isHot: true,
         isNew: true,
+        likeCount: true,
+        favoriteCount: true,
         createdAt: true,
         updatedAt: true,
         // 关联关系
