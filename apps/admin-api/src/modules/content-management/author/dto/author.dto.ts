@@ -74,13 +74,6 @@ export class BaseAuthorDto extends BaseDto {
   gender!: GenderEnum
 
   @ValidateString({
-    description: '社交媒体链接（JSON格式存储多个平台链接）',
-    example: '{"twitter":"@author","instagram":"@author_ig"}',
-    required: false,
-  })
-  socialLinks?: string
-
-  @ValidateString({
     description: '管理员备注',
     example: '优秀作者，作品质量高',
     required: false,
@@ -164,6 +157,5 @@ export class UpdateAuthorisRecommendedDto extends IntersectionType(
  */
 export class AuthorPageResponseDto extends OmitType(BaseAuthorDto, [
   'remark',
-  'socialLinks',
   'description',
 ]) {}
