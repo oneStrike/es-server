@@ -5,35 +5,30 @@ export async function createInitialWorkComicRelations(prisma: any) {
       comicName: '进击的巨人',
       authorName: '諫山創',
       roleType: 1, // 原作者
-      isPrimary: true,
       sortOrder: 1,
     },
     {
       comicName: '海贼王',
       authorName: '尾田栄一郎',
       roleType: 1, // 原作者
-      isPrimary: true,
       sortOrder: 1,
     },
     {
       comicName: '鬼灭之刃',
       authorName: '吾峠呼世晴',
       roleType: 1, // 原作者
-      isPrimary: true,
       sortOrder: 1,
     },
     {
       comicName: '你的名字',
       authorName: '新海誠',
       roleType: 1, // 原作者
-      isPrimary: true,
       sortOrder: 1,
     },
     {
       comicName: '龙珠',
       authorName: '鳥山明',
       roleType: 1, // 原作者
-      isPrimary: true,
       sortOrder: 1,
     },
   ]
@@ -43,32 +38,27 @@ export async function createInitialWorkComicRelations(prisma: any) {
     {
       comicName: '进击的巨人',
       categoryName: '热血',
-      isPrimary: true,
-      weight: 100,
+      sortOrder: 100,
     },
     {
       comicName: '海贼王',
       categoryName: '热血',
-      isPrimary: true,
-      weight: 100,
+      sortOrder: 100,
     },
     {
       comicName: '鬼灭之刃',
       categoryName: '热血',
-      isPrimary: true,
-      weight: 100,
+      sortOrder: 100,
     },
     {
       comicName: '你的名字',
       categoryName: '温馨',
-      isPrimary: true,
-      weight: 100,
+      sortOrder: 100,
     },
     {
       comicName: '龙珠',
       categoryName: '热血',
-      isPrimary: true,
-      weight: 100,
+      sortOrder: 100,
     },
   ]
 
@@ -147,7 +137,6 @@ export async function createInitialWorkComicRelations(prisma: any) {
             comicId: comic.id,
             authorId: author.id,
             roleType: relation.roleType,
-            isPrimary: relation.isPrimary,
             sortOrder: relation.sortOrder,
           },
         })
@@ -177,8 +166,7 @@ export async function createInitialWorkComicRelations(prisma: any) {
           data: {
             comicId: comic.id,
             categoryId: category.id,
-            isPrimary: relation.isPrimary,
-            weight: relation.weight,
+            sortOrder: relation.sortOrder,
           },
         })
       }

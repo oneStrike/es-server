@@ -281,6 +281,7 @@ export const WorkComicAuthorScalarFieldEnum = {
   id: 'id',
   comicId: 'comicId',
   authorId: 'authorId',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -291,8 +292,7 @@ export type WorkComicAuthorScalarFieldEnum = (typeof WorkComicAuthorScalarFieldE
 export const WorkComicCategoryScalarFieldEnum = {
   comicId: 'comicId',
   categoryId: 'categoryId',
-  isPrimary: 'isPrimary',
-  weight: 'weight',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -330,6 +330,7 @@ export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFiel
 export const WorkComicTagScalarFieldEnum = {
   comicId: 'comicId',
   tagId: 'tagId',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
