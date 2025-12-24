@@ -29,20 +29,19 @@ export type AggregateWorkComicCategory = {
 export type WorkComicCategoryAvgAggregateOutputType = {
   comicId: number | null
   categoryId: number | null
-  weight: number | null
+  sortOrder: number | null
 }
 
 export type WorkComicCategorySumAggregateOutputType = {
   comicId: number | null
   categoryId: number | null
-  weight: number | null
+  sortOrder: number | null
 }
 
 export type WorkComicCategoryMinAggregateOutputType = {
   comicId: number | null
   categoryId: number | null
-  isPrimary: boolean | null
-  weight: number | null
+  sortOrder: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -50,8 +49,7 @@ export type WorkComicCategoryMinAggregateOutputType = {
 export type WorkComicCategoryMaxAggregateOutputType = {
   comicId: number | null
   categoryId: number | null
-  isPrimary: boolean | null
-  weight: number | null
+  sortOrder: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -59,8 +57,7 @@ export type WorkComicCategoryMaxAggregateOutputType = {
 export type WorkComicCategoryCountAggregateOutputType = {
   comicId: number
   categoryId: number
-  isPrimary: number
-  weight: number
+  sortOrder: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -70,20 +67,19 @@ export type WorkComicCategoryCountAggregateOutputType = {
 export type WorkComicCategoryAvgAggregateInputType = {
   comicId?: true
   categoryId?: true
-  weight?: true
+  sortOrder?: true
 }
 
 export type WorkComicCategorySumAggregateInputType = {
   comicId?: true
   categoryId?: true
-  weight?: true
+  sortOrder?: true
 }
 
 export type WorkComicCategoryMinAggregateInputType = {
   comicId?: true
   categoryId?: true
-  isPrimary?: true
-  weight?: true
+  sortOrder?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -91,8 +87,7 @@ export type WorkComicCategoryMinAggregateInputType = {
 export type WorkComicCategoryMaxAggregateInputType = {
   comicId?: true
   categoryId?: true
-  isPrimary?: true
-  weight?: true
+  sortOrder?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -100,8 +95,7 @@ export type WorkComicCategoryMaxAggregateInputType = {
 export type WorkComicCategoryCountAggregateInputType = {
   comicId?: true
   categoryId?: true
-  isPrimary?: true
-  weight?: true
+  sortOrder?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -196,8 +190,7 @@ export type WorkComicCategoryGroupByArgs<ExtArgs extends runtime.Types.Extension
 export type WorkComicCategoryGroupByOutputType = {
   comicId: number
   categoryId: number
-  isPrimary: boolean
-  weight: number
+  sortOrder: number
   createdAt: Date
   updatedAt: Date
   _count: WorkComicCategoryCountAggregateOutputType | null
@@ -228,8 +221,7 @@ export type WorkComicCategoryWhereInput = {
   NOT?: Prisma.WorkComicCategoryWhereInput | Prisma.WorkComicCategoryWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicCategory"> | number
   categoryId?: Prisma.IntFilter<"WorkComicCategory"> | number
-  isPrimary?: Prisma.BoolFilter<"WorkComicCategory"> | boolean
-  weight?: Prisma.IntFilter<"WorkComicCategory"> | number
+  sortOrder?: Prisma.IntFilter<"WorkComicCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
   comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
@@ -239,8 +231,7 @@ export type WorkComicCategoryWhereInput = {
 export type WorkComicCategoryOrderByWithRelationInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  isPrimary?: Prisma.SortOrder
-  weight?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   comic?: Prisma.WorkComicOrderByWithRelationInput
@@ -254,8 +245,7 @@ export type WorkComicCategoryWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.WorkComicCategoryWhereInput | Prisma.WorkComicCategoryWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicCategory"> | number
   categoryId?: Prisma.IntFilter<"WorkComicCategory"> | number
-  isPrimary?: Prisma.BoolFilter<"WorkComicCategory"> | boolean
-  weight?: Prisma.IntFilter<"WorkComicCategory"> | number
+  sortOrder?: Prisma.IntFilter<"WorkComicCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
   comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
@@ -265,8 +255,7 @@ export type WorkComicCategoryWhereUniqueInput = Prisma.AtLeast<{
 export type WorkComicCategoryOrderByWithAggregationInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  isPrimary?: Prisma.SortOrder
-  weight?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.WorkComicCategoryCountOrderByAggregateInput
@@ -282,15 +271,13 @@ export type WorkComicCategoryScalarWhereWithAggregatesInput = {
   NOT?: Prisma.WorkComicCategoryScalarWhereWithAggregatesInput | Prisma.WorkComicCategoryScalarWhereWithAggregatesInput[]
   comicId?: Prisma.IntWithAggregatesFilter<"WorkComicCategory"> | number
   categoryId?: Prisma.IntWithAggregatesFilter<"WorkComicCategory"> | number
-  isPrimary?: Prisma.BoolWithAggregatesFilter<"WorkComicCategory"> | boolean
-  weight?: Prisma.IntWithAggregatesFilter<"WorkComicCategory"> | number
+  sortOrder?: Prisma.IntWithAggregatesFilter<"WorkComicCategory"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicCategory"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicCategory"> | Date | string
 }
 
 export type WorkComicCategoryCreateInput = {
-  isPrimary?: boolean
-  weight?: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   comic: Prisma.WorkComicCreateNestedOneWithoutComicCategoriesInput
@@ -300,15 +287,13 @@ export type WorkComicCategoryCreateInput = {
 export type WorkComicCategoryUncheckedCreateInput = {
   comicId: number
   categoryId: number
-  isPrimary?: boolean
-  weight?: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkComicCategoryUpdateInput = {
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicCategoriesNestedInput
@@ -318,8 +303,7 @@ export type WorkComicCategoryUpdateInput = {
 export type WorkComicCategoryUncheckedUpdateInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
   categoryId?: Prisma.IntFieldUpdateOperationsInput | number
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -327,15 +311,13 @@ export type WorkComicCategoryUncheckedUpdateInput = {
 export type WorkComicCategoryCreateManyInput = {
   comicId: number
   categoryId: number
-  isPrimary?: boolean
-  weight?: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkComicCategoryUpdateManyMutationInput = {
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -343,8 +325,7 @@ export type WorkComicCategoryUpdateManyMutationInput = {
 export type WorkComicCategoryUncheckedUpdateManyInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
   categoryId?: Prisma.IntFieldUpdateOperationsInput | number
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -357,8 +338,7 @@ export type WorkComicCategoryComicIdCategoryIdCompoundUniqueInput = {
 export type WorkComicCategoryCountOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  isPrimary?: Prisma.SortOrder
-  weight?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -366,14 +346,13 @@ export type WorkComicCategoryCountOrderByAggregateInput = {
 export type WorkComicCategoryAvgOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  weight?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicCategoryMaxOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  isPrimary?: Prisma.SortOrder
-  weight?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -381,8 +360,7 @@ export type WorkComicCategoryMaxOrderByAggregateInput = {
 export type WorkComicCategoryMinOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  isPrimary?: Prisma.SortOrder
-  weight?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -390,7 +368,7 @@ export type WorkComicCategoryMinOrderByAggregateInput = {
 export type WorkComicCategorySumOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  weight?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicCategoryListRelationFilter = {
@@ -488,8 +466,7 @@ export type WorkComicCategoryUncheckedUpdateManyWithoutCategoryNestedInput = {
 }
 
 export type WorkComicCategoryCreateWithoutComicInput = {
-  isPrimary?: boolean
-  weight?: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   category: Prisma.WorkCategoryCreateNestedOneWithoutWorkComicCategoriesInput
@@ -497,8 +474,7 @@ export type WorkComicCategoryCreateWithoutComicInput = {
 
 export type WorkComicCategoryUncheckedCreateWithoutComicInput = {
   categoryId: number
-  isPrimary?: boolean
-  weight?: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -535,15 +511,13 @@ export type WorkComicCategoryScalarWhereInput = {
   NOT?: Prisma.WorkComicCategoryScalarWhereInput | Prisma.WorkComicCategoryScalarWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicCategory"> | number
   categoryId?: Prisma.IntFilter<"WorkComicCategory"> | number
-  isPrimary?: Prisma.BoolFilter<"WorkComicCategory"> | boolean
-  weight?: Prisma.IntFilter<"WorkComicCategory"> | number
+  sortOrder?: Prisma.IntFilter<"WorkComicCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
 }
 
 export type WorkComicCategoryCreateWithoutCategoryInput = {
-  isPrimary?: boolean
-  weight?: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   comic: Prisma.WorkComicCreateNestedOneWithoutComicCategoriesInput
@@ -551,8 +525,7 @@ export type WorkComicCategoryCreateWithoutCategoryInput = {
 
 export type WorkComicCategoryUncheckedCreateWithoutCategoryInput = {
   comicId: number
-  isPrimary?: boolean
-  weight?: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -585,15 +558,13 @@ export type WorkComicCategoryUpdateManyWithWhereWithoutCategoryInput = {
 
 export type WorkComicCategoryCreateManyComicInput = {
   categoryId: number
-  isPrimary?: boolean
-  weight?: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkComicCategoryUpdateWithoutComicInput = {
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   category?: Prisma.WorkCategoryUpdateOneRequiredWithoutWorkComicCategoriesNestedInput
@@ -601,31 +572,27 @@ export type WorkComicCategoryUpdateWithoutComicInput = {
 
 export type WorkComicCategoryUncheckedUpdateWithoutComicInput = {
   categoryId?: Prisma.IntFieldUpdateOperationsInput | number
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkComicCategoryUncheckedUpdateManyWithoutComicInput = {
   categoryId?: Prisma.IntFieldUpdateOperationsInput | number
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkComicCategoryCreateManyCategoryInput = {
   comicId: number
-  isPrimary?: boolean
-  weight?: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkComicCategoryUpdateWithoutCategoryInput = {
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicCategoriesNestedInput
@@ -633,16 +600,14 @@ export type WorkComicCategoryUpdateWithoutCategoryInput = {
 
 export type WorkComicCategoryUncheckedUpdateWithoutCategoryInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkComicCategoryUncheckedUpdateManyWithoutCategoryInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
-  isPrimary?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  weight?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -652,8 +617,7 @@ export type WorkComicCategoryUncheckedUpdateManyWithoutCategoryInput = {
 export type WorkComicCategorySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   comicId?: boolean
   categoryId?: boolean
-  isPrimary?: boolean
-  weight?: boolean
+  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
@@ -663,8 +627,7 @@ export type WorkComicCategorySelect<ExtArgs extends runtime.Types.Extensions.Int
 export type WorkComicCategorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   comicId?: boolean
   categoryId?: boolean
-  isPrimary?: boolean
-  weight?: boolean
+  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
@@ -674,8 +637,7 @@ export type WorkComicCategorySelectCreateManyAndReturn<ExtArgs extends runtime.T
 export type WorkComicCategorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   comicId?: boolean
   categoryId?: boolean
-  isPrimary?: boolean
-  weight?: boolean
+  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
@@ -685,13 +647,12 @@ export type WorkComicCategorySelectUpdateManyAndReturn<ExtArgs extends runtime.T
 export type WorkComicCategorySelectScalar = {
   comicId?: boolean
   categoryId?: boolean
-  isPrimary?: boolean
-  weight?: boolean
+  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type WorkComicCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"comicId" | "categoryId" | "isPrimary" | "weight" | "createdAt" | "updatedAt", ExtArgs["result"]["workComicCategory"]>
+export type WorkComicCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"comicId" | "categoryId" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workComicCategory"]>
 export type WorkComicCategoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   category?: boolean | Prisma.WorkCategoryDefaultArgs<ExtArgs>
@@ -721,13 +682,9 @@ export type $WorkComicCategoryPayload<ExtArgs extends runtime.Types.Extensions.I
      */
     categoryId: number
     /**
-     * 是否为主要分类
+     * 排序顺序（用于展示顺序）
      */
-    isPrimary: boolean
-    /**
-     * 分类权重（用于排序显示）
-     */
-    weight: number
+    sortOrder: number
     /**
      * 关联时间
      */
@@ -1163,8 +1120,7 @@ export interface Prisma__WorkComicCategoryClient<T, Null = never, ExtArgs extend
 export interface WorkComicCategoryFieldRefs {
   readonly comicId: Prisma.FieldRef<"WorkComicCategory", 'Int'>
   readonly categoryId: Prisma.FieldRef<"WorkComicCategory", 'Int'>
-  readonly isPrimary: Prisma.FieldRef<"WorkComicCategory", 'Boolean'>
-  readonly weight: Prisma.FieldRef<"WorkComicCategory", 'Int'>
+  readonly sortOrder: Prisma.FieldRef<"WorkComicCategory", 'Int'>
   readonly createdAt: Prisma.FieldRef<"WorkComicCategory", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WorkComicCategory", 'DateTime'>
 }

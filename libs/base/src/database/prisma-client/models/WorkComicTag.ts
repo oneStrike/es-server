@@ -29,16 +29,19 @@ export type AggregateWorkComicTag = {
 export type WorkComicTagAvgAggregateOutputType = {
   comicId: number | null
   tagId: number | null
+  sortOrder: number | null
 }
 
 export type WorkComicTagSumAggregateOutputType = {
   comicId: number | null
   tagId: number | null
+  sortOrder: number | null
 }
 
 export type WorkComicTagMinAggregateOutputType = {
   comicId: number | null
   tagId: number | null
+  sortOrder: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -46,6 +49,7 @@ export type WorkComicTagMinAggregateOutputType = {
 export type WorkComicTagMaxAggregateOutputType = {
   comicId: number | null
   tagId: number | null
+  sortOrder: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -53,6 +57,7 @@ export type WorkComicTagMaxAggregateOutputType = {
 export type WorkComicTagCountAggregateOutputType = {
   comicId: number
   tagId: number
+  sortOrder: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -62,16 +67,19 @@ export type WorkComicTagCountAggregateOutputType = {
 export type WorkComicTagAvgAggregateInputType = {
   comicId?: true
   tagId?: true
+  sortOrder?: true
 }
 
 export type WorkComicTagSumAggregateInputType = {
   comicId?: true
   tagId?: true
+  sortOrder?: true
 }
 
 export type WorkComicTagMinAggregateInputType = {
   comicId?: true
   tagId?: true
+  sortOrder?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -79,6 +87,7 @@ export type WorkComicTagMinAggregateInputType = {
 export type WorkComicTagMaxAggregateInputType = {
   comicId?: true
   tagId?: true
+  sortOrder?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -86,6 +95,7 @@ export type WorkComicTagMaxAggregateInputType = {
 export type WorkComicTagCountAggregateInputType = {
   comicId?: true
   tagId?: true
+  sortOrder?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -180,6 +190,7 @@ export type WorkComicTagGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type WorkComicTagGroupByOutputType = {
   comicId: number
   tagId: number
+  sortOrder: number
   createdAt: Date
   updatedAt: Date
   _count: WorkComicTagCountAggregateOutputType | null
@@ -210,6 +221,7 @@ export type WorkComicTagWhereInput = {
   NOT?: Prisma.WorkComicTagWhereInput | Prisma.WorkComicTagWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicTag"> | number
   tagId?: Prisma.IntFilter<"WorkComicTag"> | number
+  sortOrder?: Prisma.IntFilter<"WorkComicTag"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicTag"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicTag"> | Date | string
   comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
@@ -219,6 +231,7 @@ export type WorkComicTagWhereInput = {
 export type WorkComicTagOrderByWithRelationInput = {
   comicId?: Prisma.SortOrder
   tagId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   comic?: Prisma.WorkComicOrderByWithRelationInput
@@ -232,6 +245,7 @@ export type WorkComicTagWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.WorkComicTagWhereInput | Prisma.WorkComicTagWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicTag"> | number
   tagId?: Prisma.IntFilter<"WorkComicTag"> | number
+  sortOrder?: Prisma.IntFilter<"WorkComicTag"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicTag"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicTag"> | Date | string
   comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
@@ -241,6 +255,7 @@ export type WorkComicTagWhereUniqueInput = Prisma.AtLeast<{
 export type WorkComicTagOrderByWithAggregationInput = {
   comicId?: Prisma.SortOrder
   tagId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.WorkComicTagCountOrderByAggregateInput
@@ -256,11 +271,13 @@ export type WorkComicTagScalarWhereWithAggregatesInput = {
   NOT?: Prisma.WorkComicTagScalarWhereWithAggregatesInput | Prisma.WorkComicTagScalarWhereWithAggregatesInput[]
   comicId?: Prisma.IntWithAggregatesFilter<"WorkComicTag"> | number
   tagId?: Prisma.IntWithAggregatesFilter<"WorkComicTag"> | number
+  sortOrder?: Prisma.IntWithAggregatesFilter<"WorkComicTag"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicTag"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicTag"> | Date | string
 }
 
 export type WorkComicTagCreateInput = {
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   comic: Prisma.WorkComicCreateNestedOneWithoutComicTagsInput
@@ -270,11 +287,13 @@ export type WorkComicTagCreateInput = {
 export type WorkComicTagUncheckedCreateInput = {
   comicId: number
   tagId: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkComicTagUpdateInput = {
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicTagsNestedInput
@@ -284,6 +303,7 @@ export type WorkComicTagUpdateInput = {
 export type WorkComicTagUncheckedUpdateInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
   tagId?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -291,11 +311,13 @@ export type WorkComicTagUncheckedUpdateInput = {
 export type WorkComicTagCreateManyInput = {
   comicId: number
   tagId: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkComicTagUpdateManyMutationInput = {
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -303,6 +325,7 @@ export type WorkComicTagUpdateManyMutationInput = {
 export type WorkComicTagUncheckedUpdateManyInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
   tagId?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -315,6 +338,7 @@ export type WorkComicTagComicIdTagIdCompoundUniqueInput = {
 export type WorkComicTagCountOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   tagId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -322,11 +346,13 @@ export type WorkComicTagCountOrderByAggregateInput = {
 export type WorkComicTagAvgOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   tagId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicTagMaxOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   tagId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -334,6 +360,7 @@ export type WorkComicTagMaxOrderByAggregateInput = {
 export type WorkComicTagMinOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   tagId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -341,6 +368,7 @@ export type WorkComicTagMinOrderByAggregateInput = {
 export type WorkComicTagSumOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   tagId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicTagListRelationFilter = {
@@ -438,6 +466,7 @@ export type WorkComicTagUncheckedUpdateManyWithoutTagNestedInput = {
 }
 
 export type WorkComicTagCreateWithoutComicInput = {
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   tag: Prisma.WorkTagCreateNestedOneWithoutComicTagsInput
@@ -445,6 +474,7 @@ export type WorkComicTagCreateWithoutComicInput = {
 
 export type WorkComicTagUncheckedCreateWithoutComicInput = {
   tagId: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -481,11 +511,13 @@ export type WorkComicTagScalarWhereInput = {
   NOT?: Prisma.WorkComicTagScalarWhereInput | Prisma.WorkComicTagScalarWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicTag"> | number
   tagId?: Prisma.IntFilter<"WorkComicTag"> | number
+  sortOrder?: Prisma.IntFilter<"WorkComicTag"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicTag"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicTag"> | Date | string
 }
 
 export type WorkComicTagCreateWithoutTagInput = {
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   comic: Prisma.WorkComicCreateNestedOneWithoutComicTagsInput
@@ -493,6 +525,7 @@ export type WorkComicTagCreateWithoutTagInput = {
 
 export type WorkComicTagUncheckedCreateWithoutTagInput = {
   comicId: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -525,11 +558,13 @@ export type WorkComicTagUpdateManyWithWhereWithoutTagInput = {
 
 export type WorkComicTagCreateManyComicInput = {
   tagId: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkComicTagUpdateWithoutComicInput = {
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tag?: Prisma.WorkTagUpdateOneRequiredWithoutComicTagsNestedInput
@@ -537,23 +572,27 @@ export type WorkComicTagUpdateWithoutComicInput = {
 
 export type WorkComicTagUncheckedUpdateWithoutComicInput = {
   tagId?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkComicTagUncheckedUpdateManyWithoutComicInput = {
   tagId?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkComicTagCreateManyTagInput = {
   comicId: number
+  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkComicTagUpdateWithoutTagInput = {
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicTagsNestedInput
@@ -561,12 +600,14 @@ export type WorkComicTagUpdateWithoutTagInput = {
 
 export type WorkComicTagUncheckedUpdateWithoutTagInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkComicTagUncheckedUpdateManyWithoutTagInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -576,6 +617,7 @@ export type WorkComicTagUncheckedUpdateManyWithoutTagInput = {
 export type WorkComicTagSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   comicId?: boolean
   tagId?: boolean
+  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
@@ -585,6 +627,7 @@ export type WorkComicTagSelect<ExtArgs extends runtime.Types.Extensions.Internal
 export type WorkComicTagSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   comicId?: boolean
   tagId?: boolean
+  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
@@ -594,6 +637,7 @@ export type WorkComicTagSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
 export type WorkComicTagSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   comicId?: boolean
   tagId?: boolean
+  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
@@ -603,11 +647,12 @@ export type WorkComicTagSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
 export type WorkComicTagSelectScalar = {
   comicId?: boolean
   tagId?: boolean
+  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type WorkComicTagOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"comicId" | "tagId" | "createdAt" | "updatedAt", ExtArgs["result"]["workComicTag"]>
+export type WorkComicTagOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"comicId" | "tagId" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workComicTag"]>
 export type WorkComicTagInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   tag?: boolean | Prisma.WorkTagDefaultArgs<ExtArgs>
@@ -636,6 +681,10 @@ export type $WorkComicTagPayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 标签ID
      */
     tagId: number
+    /**
+     * 排序顺序（用于展示顺序）
+     */
+    sortOrder: number
     /**
      * 创建时间
      */
@@ -1071,6 +1120,7 @@ export interface Prisma__WorkComicTagClient<T, Null = never, ExtArgs extends run
 export interface WorkComicTagFieldRefs {
   readonly comicId: Prisma.FieldRef<"WorkComicTag", 'Int'>
   readonly tagId: Prisma.FieldRef<"WorkComicTag", 'Int'>
+  readonly sortOrder: Prisma.FieldRef<"WorkComicTag", 'Int'>
   readonly createdAt: Prisma.FieldRef<"WorkComicTag", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WorkComicTag", 'DateTime'>
 }

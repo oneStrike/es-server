@@ -224,7 +224,7 @@ export class ComicService extends RepositoryService {
             },
           },
           orderBy: {
-            weight: 'desc',
+            sortOrder: 'desc',
           },
         },
         comicTags: {
@@ -338,8 +338,6 @@ export class ComicService extends RepositoryService {
             data: authorIds.map((authorId, index) => ({
               comicId: id,
               authorId,
-              roleType: 1, // 默认为原作者
-              isPrimary: index === 0, // 第一个作者设为主要作者
               sortOrder: index,
             })),
           })
@@ -359,8 +357,7 @@ export class ComicService extends RepositoryService {
             data: categoryIds.map((categoryId, index) => ({
               comicId: id,
               categoryId,
-              isPrimary: index === 0, // 第一个分类设为主要分类
-              weight: categoryIds.length - index, // 权重递减
+              sortOrder: categoryIds.length - index, // 权重递减
             })),
           })
         }

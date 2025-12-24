@@ -3,6 +3,8 @@ model WorkComicTag {
   comicId   Int      @map("comic_id")
   /// 标签ID
   tagId     Int      @map("tag_id")
+  /// 排序顺序（用于展示顺序）
+  sortOrder      Int       @map("sort_order") @db.Integer @default(0)
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   /// 更新时间
@@ -13,8 +15,10 @@ model WorkComicTag {
   tag   WorkTag   @relation(fields: [tagId], references: [id], onDelete: Restrict)
 
   // 复合主键与索引
-  @@id([comicId, tagId])
-  @@index([tagId])
-  @@index([comicId])
+  @@id([comicId, tagId]) // 按漫画ID和标签ID复合主键
+  @@index([tagId]) // 按标签ID查询漫画
+  @@index([comicId]) // 按漫画ID查询标签
+  @@index([sortOrder]) // 按排序顺序排序
+  @@index([comicId, sortOrder]) // 按漫画ID和排序顺序排序 
   @@map("work_comic_tag")
 }
