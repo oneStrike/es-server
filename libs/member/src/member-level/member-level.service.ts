@@ -43,7 +43,7 @@ export class MemberLevelService extends RepositoryService {
   async getMemberLevelList() {
     return this.memberLevel.findMany({
       orderBy: {
-        points: 'asc',
+        level: 'asc',
       },
       omit: {
         description: true,

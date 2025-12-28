@@ -58,3 +58,17 @@ export enum GenderEnum {
   /** 未知 */
   UNKNOWN = 0,
 }
+
+/**
+ * 作品查看权限
+ */
+export enum WorkViewPermissionEnum {
+  /** 所有人 */
+  ALL = 0,
+  /** 登录用户 */
+  LOGGED_IN = 1,
+  /** 会员 */
+  MEMBER = 2,
+  /** 积分购买 */
+  POINTS = 3,
+}

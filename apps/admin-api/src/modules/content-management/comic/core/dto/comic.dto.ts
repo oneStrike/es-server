@@ -269,6 +269,14 @@ export class BaseComicDto extends BaseDto {
   })
   favoriteCount!: number
 
+  @ApiProperty({
+    description: '浏览量',
+    example: 1000,
+    required: true,
+    default: 0,
+  })
+  viewCount!: number
+
   @ValidateString({
     description: '原始来源',
     example: '官方授权',
@@ -294,6 +302,15 @@ export class BaseComicDto extends BaseDto {
     max: 10,
   })
   rating?: number
+
+  @ValidateNumber({
+    description: '评分人数',
+    example: 1000,
+    required: true,
+    min: 0,
+    default: 0,
+  })
+  ratingCount!: number
 
   @ValidateNumber({
     description: '推荐权重（影响推荐排序）',
@@ -349,13 +366,6 @@ export class BaseComicDto extends BaseDto {
     required: false,
   })
   remark?: string
-
-  @ValidateDate({
-    description: '软删除时间',
-    example: null,
-    required: false,
-  })
-  deletedAt?: Date | null
 }
 
 /**
@@ -365,12 +375,12 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
   ...OMIT_BASE_FIELDS,
   'popularity',
   'isPublished',
-  'deletedAt',
   'comicCategories',
   'comicAuthors',
   'comicTags',
   'likeCount',
   'favoriteCount',
+  'viewCount',
 ]) {
   @ValidateArray({
     description: '关联的作者ID列表',
@@ -422,6 +432,7 @@ export class QueryComicDto extends IntersectionType(
       'isRecommended',
       'isHot',
       'isNew',
+      'viewCount',
     ]),
     PartialType(PickType(CreateComicDto, ['tagIds', 'categoryIds'])),
   ),

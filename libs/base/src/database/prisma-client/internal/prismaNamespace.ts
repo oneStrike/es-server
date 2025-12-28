@@ -1816,6 +1816,7 @@ export type ClientUserScalarFieldEnum = (typeof ClientUserScalarFieldEnum)[keyof
 export const MemberLevelScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  level: 'level',
   points: 'points',
   loginDays: 'loginDays',
   icon: 'icon',
@@ -1938,7 +1939,7 @@ export const WorkComicChapterScalarFieldEnum = {
   isPublished: 'isPublished',
   comicId: 'comicId',
   sortOrder: 'sortOrder',
-  canDownload: 'canDownload',
+  downloadRule: 'downloadRule',
   downloadPoints: 'downloadPoints',
   canComment: 'canComment',
   readRule: 'readRule',
@@ -1952,7 +1953,9 @@ export const WorkComicChapterScalarFieldEnum = {
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deletedAt',
+  requiredReadLevelId: 'requiredReadLevelId',
+  requiredDownloadLevelId: 'requiredDownloadLevelId'
 } as const
 
 export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFieldEnum)[keyof typeof WorkComicChapterScalarFieldEnum]
@@ -1987,7 +1990,9 @@ export const WorkComicScalarFieldEnum = {
   popularityWeight: 'popularityWeight',
   likeCount: 'likeCount',
   favoriteCount: 'favoriteCount',
+  viewCount: 'viewCount',
   rating: 'rating',
+  ratingCount: 'ratingCount',
   recommendWeight: 'recommendWeight',
   isRecommended: 'isRecommended',
   isHot: 'isHot',

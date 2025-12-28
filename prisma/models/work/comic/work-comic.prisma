@@ -33,8 +33,12 @@ model WorkComic {
   likeCount        Int                 @default(0) @map("like_count") @db.Integer
   /// 收藏数
   favoriteCount    Int                 @default(0) @map("favorite_count") @db.Integer
+  /// 浏览量
+  viewCount        Int                 @default(0) @map("view_count") @db.Integer
   /// 评分（1-10分，保留一位小数）
   rating           Float?              @db.DoublePrecision
+  /// 评分人数
+  ratingCount      Int                 @default(0) @map("rating_count") @db.Integer
   /// 推荐权重（影响推荐排序）
   recommendWeight  Float               @default(1.0) @map("recommend_weight") @db.DoublePrecision
   /// 是否推荐到首页
@@ -83,5 +87,6 @@ model WorkComic {
   @@index([deletedAt]) // 软删除查询
   @@index([likeCount]) // 按点赞数排序
   @@index([favoriteCount]) // 按收藏数排序
+  @@index([viewCount]) // 按浏览量排序
   @@map("work_comic")
 }

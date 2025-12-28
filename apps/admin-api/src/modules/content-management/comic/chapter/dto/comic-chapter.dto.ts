@@ -13,6 +13,7 @@ import {
   OMIT_BASE_FIELDS,
   PageDto,
 } from '@libs/base/dto'
+import { WorkViewPermissionEnum } from '@libs/base/enum'
 import {
   ApiProperty,
   IntersectionType,
@@ -20,7 +21,6 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ChapterReadRuleEnum } from '../comic-chapter.constant'
 
 /**
  * 漫画章节基础DTO
@@ -68,12 +68,12 @@ export class BaseComicChapterDto extends BaseDto {
 
   @ValidateEnum({
     description: '查看规则（0: 公开, 1: 登录, 2: 会员, 3: 购买）',
-    example: ChapterReadRuleEnum.PUBLIC,
+    example: WorkViewPermissionEnum.ALL,
     required: true,
-    enum: ChapterReadRuleEnum,
-    default: ChapterReadRuleEnum.PUBLIC,
+    enum: WorkViewPermissionEnum,
+    default: WorkViewPermissionEnum.ALL,
   })
-  readRule!: ChapterReadRuleEnum
+  readRule!: WorkViewPermissionEnum
 
   @ValidateNumber({
     description: '购买需要消耗的积分',
@@ -83,6 +83,48 @@ export class BaseComicChapterDto extends BaseDto {
     default: 0,
   })
   readPoints?: number
+
+  @ValidateEnum({
+    description: '下载规则（0: 禁止, 1: 允许, 2: VIP可下载, 3: 积分可下载）',
+    example: WorkViewPermissionEnum.ALL,
+    required: true,
+    enum: WorkViewPermissionEnum,
+    default: WorkViewPermissionEnum.ALL,
+  })
+  downloadRule!: WorkViewPermissionEnum
+
+  @ValidateNumber({
+    description: '下载所需要的积分',
+    example: 50,
+    required: false,
+    min: 0,
+    default: 0,
+  })
+  downloadPoints?: number
+
+  @ValidateBoolean({
+    description: '是否允许评论',
+    example: true,
+    required: true,
+    default: true,
+  })
+  canComment!: boolean
+
+  @ValidateNumber({
+    description: '允许查看的会员等级ID',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  requiredReadLevelId?: number
+
+  @ValidateNumber({
+    description: '允许下载的会员等级ID',
+    example: 2,
+    required: false,
+    min: 1,
+  })
+  requiredDownloadLevelId?: number
 
   @ValidateString({
     description: '漫画内容（JSON格式存储图片URL数组）',
@@ -164,6 +206,20 @@ export class RelatedComicDto {
 }
 
 /**
+ * 关联的会员等级信息
+ */
+export class RelatedMemberLevelDto {
+  @ApiProperty({ description: '会员等级ID', example: 1 })
+  id: number
+
+  @ApiProperty({ description: '会员等级名称', example: '白金会员' })
+  name: string
+
+  @ApiProperty({ description: '会员等级颜色', example: '#FFD700' })
+  color: string
+}
+
+/**
  * 漫画详情接口响应dto
  */
 
@@ -173,6 +229,20 @@ export class ComicChapterDetailDto extends BaseComicChapterDto {
     type: RelatedComicDto,
   })
   relatedComic: RelatedComicDto
+
+  @ApiProperty({
+    description: '允许查看的会员等级信息',
+    type: RelatedMemberLevelDto,
+    required: false,
+  })
+  requiredReadLevel?: RelatedMemberLevelDto
+
+  @ApiProperty({
+    description: '允许下载的会员等级信息',
+    type: RelatedMemberLevelDto,
+    required: false,
+  })
+  requiredDownloadLevel?: RelatedMemberLevelDto
 }
 
 /**
@@ -280,6 +350,8 @@ export class QueryComicChapterDto extends IntersectionType(
     'title',
     'isPublished',
     'readRule',
+    'downloadRule',
+    'canComment',
     'isPreview',
     'comicId',
   ]),
