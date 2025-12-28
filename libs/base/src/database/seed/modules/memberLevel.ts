@@ -2,6 +2,7 @@ export async function createInitialMemberLevels(prisma: any) {
   const initData = [
     {
       name: '普通会员',
+      level: 1,
       points: 0,
       loginDays: 0,
       icon: 'https://example.com/icons/member-level-1.png',
@@ -14,6 +15,7 @@ export async function createInitialMemberLevels(prisma: any) {
     },
     {
       name: '青铜会员',
+      level: 2,
       points: 1000,
       loginDays: 10,
       icon: 'https://example.com/icons/member-level-2.png',
@@ -26,6 +28,7 @@ export async function createInitialMemberLevels(prisma: any) {
     },
     {
       name: '白银会员',
+      level: 3,
       points: 5000,
       loginDays: 30,
       icon: 'https://example.com/icons/member-level-3.png',
@@ -38,6 +41,7 @@ export async function createInitialMemberLevels(prisma: any) {
     },
     {
       name: '黄金会员',
+      level: 4,
       points: 10000,
       loginDays: 60,
       icon: 'https://example.com/icons/member-level-4.png',
@@ -50,6 +54,7 @@ export async function createInitialMemberLevels(prisma: any) {
     },
     {
       name: '铂金会员',
+      level: 5,
       points: 20000,
       loginDays: 90,
       icon: 'https://example.com/icons/member-level-5.png',
@@ -62,6 +67,7 @@ export async function createInitialMemberLevels(prisma: any) {
     },
     {
       name: '钻石会员',
+      level: 6,
       points: 50000,
       loginDays: 180,
       icon: 'https://example.com/icons/member-level-6.png',

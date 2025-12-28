@@ -5,14 +5,10 @@ import { ApiTags } from '@nestjs/swagger'
 
 import { ComicChapterService } from './comic-chapter.service'
 import {
-  AddChapterContentDto,
   ComicChapterDetailDto,
   ComicChapterPageResponseDto,
   CreateComicChapterDto,
-  DeleteChapterContentDto,
-  MoveChapterContentDto,
   QueryComicChapterDto,
-  UpdateChapterContentDto,
   UpdateChapterPublishStatusDto,
   UpdateComicChapterDto,
 } from './dto/comic-chapter.dto'
@@ -114,102 +110,5 @@ export class ComicChapterController {
   @ApiDoc({ summary: '交换两个章节的章节号', model: DragReorderDto })
   async swapChapterNumbers(@Body() swapChapterNumberDto: DragReorderDto) {
     return this.comicChapterService.swapChapterNumbers(swapChapterNumberDto)
-  }
-
-  /**
-   * 获取章节内容详情
-   */
-  @Get('/contents')
-  @ApiDoc({
-    summary: '获取章节内容详情',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
-  })
-  async getChapterContents(@Query() query: IdDto) {
-    return this.comicChapterService.getChapterContents(query.id)
-  }
-
-  /**
-   * 添加章节内容
-   */
-  @Post('/add-content')
-  @ApiDoc({
-    summary: '添加章节内容',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
-  })
-  async addChapterContent(@Body() body: AddChapterContentDto) {
-    return this.comicChapterService.addChapterContent(body)
-  }
-
-  /**
-   * 更新章节内容
-   */
-  @Post('/update-content')
-  @ApiDoc({
-    summary: '更新章节内容',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
-  })
-  async updateChapterContent(@Body() body: UpdateChapterContentDto) {
-    return this.comicChapterService.updateChapterContent(body)
-  }
-
-  /**
-   * 删除章节内容
-   */
-  @Post('/delete-content')
-  @ApiDoc({
-    summary: '删除章节内容',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
-  })
-  async deleteChapterContent(@Body() body: DeleteChapterContentDto) {
-    return this.comicChapterService.deleteChapterContent(body)
-  }
-
-  /**
-   * 移动章节内容（排序）
-   */
-  @Post('/move-content')
-  @ApiDoc({
-    summary: '移动章节内容（排序）',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
-  })
-  async moveChapterContent(@Body() body: MoveChapterContentDto) {
-    return this.comicChapterService.moveChapterContent(body)
-  }
-
-  /**
-   * 清空章节内容
-   */
-  @Post('/clear-contents')
-  @ApiDoc({
-    summary: '清空章节内容',
-    model: IdDto,
-  })
-  async clearChapterContents(@Body() body: IdDto) {
-    return this.comicChapterService.clearChapterContents(body.id)
   }
 }

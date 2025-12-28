@@ -4,6 +4,8 @@ model MemberLevel {
   id                  Int       @id @default(autoincrement()) @map("id")
   /// 会员等级名称
   name                String    @db.VarChar(50)
+  /// 会员等级
+  level               Int       @default(1) @map("level") @db.SmallInt
   /// 所需要的积分
   points              Int       @db.Integer
   /// 所需要的登录天数
@@ -30,10 +32,15 @@ model MemberLevel {
   updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   /// 软删除时间
   deletedAt           DateTime? @map("deleted_at") @db.Timestamptz
+  /// 关联的漫画章节（作为阅读要求）
+  comicChaptersAsReadLevel      WorkComicChapter[] @relation("ChapterReadLevel")
+  /// 关联的漫画章节（作为下载要求）
+  comicChaptersAsDownloadLevel   WorkComicChapter[] @relation("ChapterDownloadLevel")
 
   /// 索引优化
   @@index([points]) // 按所需积分查询等级
   @@index([isEnabled]) // 按启用状态查询
   @@index([createdAt]) // 按创建时间查询
+  @@index([level]) // 按等级查询
   @@map("member_level")
 }

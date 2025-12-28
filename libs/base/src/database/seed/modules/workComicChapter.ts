@@ -9,7 +9,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '艾伦的梦境与巨人的出现',
           sortOrder: 1,
           isPublished: true,
-          canDownload: 1,
+          downloadRule: 1,
           downloadPoints: 0,
           canComment: true,
           readRule: 0, // 免费
@@ -30,7 +30,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '玛利亚之墙的陷落',
           sortOrder: 2,
           isPublished: true,
-          canDownload: 1,
+          downloadRule: 1,
           downloadPoints: 0,
           canComment: true,
           readRule: 0, // 免费
@@ -51,7 +51,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '训练兵团的毕业典礼',
           sortOrder: 3,
           isPublished: true,
-          canDownload: 1,
+          downloadRule: 1,
           downloadPoints: 0,
           canComment: true,
           readRule: 1, // 需要登录
@@ -77,7 +77,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '路飞的冒险开始',
           sortOrder: 1,
           isPublished: true,
-          canDownload: 1,
+          downloadRule: 1,
           downloadPoints: 0,
           canComment: true,
           readRule: 0, // 免费
@@ -98,7 +98,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '路飞与克比的相遇',
           sortOrder: 2,
           isPublished: true,
-          canDownload: 1,
+          downloadRule: 1,
           downloadPoints: 0,
           canComment: true,
           readRule: 0, // 免费
@@ -124,7 +124,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '炭治郎一家的悲剧',
           sortOrder: 1,
           isPublished: true,
-          canDownload: 1,
+          downloadRule: 1,
           downloadPoints: 0,
           canComment: true,
           readRule: 0, // 免费
@@ -145,7 +145,7 @@ export async function createInitialWorkComicChapters(prisma: any) {
           subtitle: '炭治郎的修行开始',
           sortOrder: 2,
           isPublished: true,
-          canDownload: 1,
+          downloadRule: 1,
           downloadPoints: 0,
           canComment: true,
           readRule: 1, // 需要登录

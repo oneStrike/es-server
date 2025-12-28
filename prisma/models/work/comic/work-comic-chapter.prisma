@@ -13,7 +13,7 @@ model WorkComicChapter {
   /// 章节序号（用于排序）
   sortOrder      Int       @map("sort_order") @db.Integer @default(0)
   /// 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
-  canDownload    Int       @default(1) @map("can_download") @db.SmallInt
+  downloadRule    Int       @default(1) @map("download_rule") @db.SmallInt
   /// 下载所需要的积分（积分可下载时必填）
   downloadPoints Int?      @default(0) @map("download_points") @db.Integer
   /// 是否允许评论
@@ -42,6 +42,14 @@ model WorkComicChapter {
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   /// 软删除时间（用于数据恢复或归档）
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz
+  /// 允许查看的会员等级ID
+  requiredReadLevelId    Int?      @map("required_read_level_id") @db.Integer
+  /// 允许查看的会员等级
+  requiredReadLevel      MemberLevel? @relation("ChapterReadLevel", fields: [requiredReadLevelId], references: [id], onDelete: SetNull)
+  /// 允许下载的会员等级ID
+  requiredDownloadLevelId Int?     @map("required_download_level_id") @db.Integer
+  /// 允许下载的会员等级
+  requiredDownloadLevel   MemberLevel? @relation("ChapterDownloadLevel", fields: [requiredDownloadLevelId], references: [id], onDelete: SetNull)
 
   @@unique([comicId, sortOrder]) // 确保同一漫画的章节号唯一
   /// 索引优化
@@ -54,5 +62,7 @@ model WorkComicChapter {
   @@index([likeCount]) // 按点赞数排序
   @@index([createdAt]) // 按创建时间排序
   @@index([publishAt]) // 按发布时间排序
+  @@index([requiredReadLevelId]) // 按所需阅读会员等级查询
+  @@index([requiredDownloadLevelId]) // 按所需下载会员等级查询
   @@map("work_comic_chapter")
 }

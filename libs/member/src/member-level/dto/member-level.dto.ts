@@ -18,6 +18,15 @@ export class BaseMemberLevelDto extends BaseDto {
 
   @ValidateNumber({
     required: true,
+    description: '会员等级',
+    min: 1,
+    max: 99,
+    example: 1,
+  })
+  level!: number
+
+  @ValidateNumber({
+    required: true,
     description: '会员等级所需要的积分',
     min: 0,
     max: 999999999,

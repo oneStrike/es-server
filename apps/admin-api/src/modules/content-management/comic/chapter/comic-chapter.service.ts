@@ -2,12 +2,8 @@ import { RepositoryService } from '@libs/base/database'
 import { DragReorderDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  AddChapterContentDto,
   CreateComicChapterDto,
-  DeleteChapterContentDto,
-  MoveChapterContentDto,
   QueryComicChapterDto,
-  UpdateChapterContentDto,
   UpdateComicChapterDto,
 } from './dto/comic-chapter.dto'
 
@@ -31,7 +27,8 @@ export class ComicChapterService extends RepositoryService {
    * @returns 创建的章节信息
    */
   async createComicChapter(createComicChapterDto: CreateComicChapterDto) {
-    const { comicId, sortOrder } = createComicChapterDto
+    const { comicId, sortOrder, requiredReadLevelId, requiredDownloadLevelId } =
+      createComicChapterDto
 
     if (!(await this.workComicChapter.exists({ id: comicId }))) {
       throw new BadRequestException('关联的漫画不存在')
@@ -45,6 +42,21 @@ export class ComicChapterService extends RepositoryService {
       })
     ) {
       throw new BadRequestException('该漫画下章节号已存在')
+    }
+
+    // 验证会员等级ID是否存在
+    if (
+      requiredReadLevelId &&
+      !(await this.prisma.memberLevel.exists({ id: requiredReadLevelId }))
+    ) {
+      throw new BadRequestException('指定的阅读会员等级不存在')
+    }
+
+    if (
+      requiredDownloadLevelId &&
+      !(await this.prisma.memberLevel.exists({ id: requiredDownloadLevelId }))
+    ) {
+      throw new BadRequestException('指定的下载会员等级不存在')
     }
 
     return this.workComicChapter.create({ data: createComicChapterDto })
@@ -88,6 +100,20 @@ export class ComicChapterService extends RepositoryService {
             name: true,
           },
         },
+        requiredReadLevel: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
+        requiredDownloadLevel: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+          },
+        },
       },
     })
   }
@@ -99,6 +125,7 @@ export class ComicChapterService extends RepositoryService {
    */
   async updateComicChapter(dto: UpdateComicChapterDto) {
     const { id, ...updateData } = dto
+    const { requiredReadLevelId, requiredDownloadLevelId } = updateData
 
     if (
       await this.workComicChapter.exists({
@@ -108,6 +135,21 @@ export class ComicChapterService extends RepositoryService {
       })
     ) {
       throw new BadRequestException('该漫画下章节号已存在')
+    }
+
+    // 验证会员等级ID是否存在
+    if (
+      requiredReadLevelId &&
+      !(await this.prisma.memberLevel.exists({ id: requiredReadLevelId }))
+    ) {
+      throw new BadRequestException('指定的阅读会员等级不存在')
+    }
+
+    if (
+      requiredDownloadLevelId &&
+      !(await this.prisma.memberLevel.exists({ id: requiredDownloadLevelId }))
+    ) {
+      throw new BadRequestException('指定的下载会员等级不存在')
     }
 
     return this.workComicChapter.update({
@@ -123,142 +165,6 @@ export class ComicChapterService extends RepositoryService {
    */
   async deleteComicChapter(id: number) {
     return this.workComicChapter.delete({ where: { id } })
-  }
-
-  /**
-   * 获取章节内容
-   * @param chapterId 章节ID
-   * @returns 章节内容数组
-   */
-  async getChapterContents(chapterId: number) {
-    const chapter = await this.workComicChapter.findUnique({
-      where: { id: chapterId },
-      select: {
-        contents: true,
-      },
-    })
-
-    if (!chapter) {
-      throw new BadRequestException('章节不存在')
-    }
-
-    return chapter.contents ? JSON.parse(chapter.contents) : []
-  }
-
-  /**
-   * 添加章节内容
-   */
-  async addChapterContent(body: AddChapterContentDto) {
-    const { id, content, index } = body
-
-    const contents: string[] = await this.getChapterContents(id)
-
-    // 添加内容到指定位置或末尾
-    if (index !== undefined && index >= 0 && index <= contents.length) {
-      contents.splice(index, 0, content)
-    } else {
-      contents.push(content)
-    }
-
-    // 更新数据库
-    await this.workComicChapter.update({
-      where: { id },
-      data: { contents: JSON.stringify(contents) },
-    })
-
-    return { id }
-  }
-
-  /**
-   * 更新章节内容
-   */
-  async updateChapterContent(body: UpdateChapterContentDto) {
-    const { id, index, content } = body
-
-    const contents: string[] = await this.getChapterContents(id)
-
-    // 验证索引是否有效
-    if (index < 0 || index >= contents.length) {
-      throw new BadRequestException('索引超出范围')
-    }
-
-    // 更新指定位置的内容
-    contents[index] = content
-
-    // 更新数据库
-    await this.workComicChapter.update({
-      where: { id },
-      data: { contents: JSON.stringify(contents) },
-    })
-
-    return { id }
-  }
-
-  /**
-   * 删除章节内容
-   */
-  async deleteChapterContent(body: DeleteChapterContentDto) {
-    const { id, index } = body
-
-    const contents: string[] = await this.getChapterContents(id)
-
-    // 验证索引是否有效
-    if (index < 0 || index >= contents.length) {
-      throw new BadRequestException('索引超出范围')
-    }
-
-    // 删除指定位置的内容
-    contents.splice(index, 1)
-
-    // 更新数据库
-    await this.workComicChapter.update({
-      where: { id },
-      data: { contents: JSON.stringify(contents) },
-    })
-
-    return contents
-  }
-
-  /**
-   * 移动章节内容（用于排序）
-   */
-  async moveChapterContent(body: MoveChapterContentDto) {
-    const { id, fromIndex, toIndex } = body
-
-    const contents: string[] = await this.getChapterContents(id)
-
-    // 验证索引是否有效
-    if (
-      fromIndex < 0 ||
-      fromIndex >= contents.length ||
-      toIndex < 0 ||
-      toIndex >= contents.length
-    ) {
-      throw new BadRequestException('索引超出范围')
-    }
-
-    // 移动内容
-    const [movedContent] = contents.splice(fromIndex, 1)
-    contents.splice(toIndex, 0, movedContent)
-
-    // 更新数据库
-    await this.workComicChapter.update({
-      where: { id },
-      data: { contents: JSON.stringify(contents) },
-    })
-
-    return contents
-  }
-
-  /**
-   * 清空章节内容
-   */
-  async clearChapterContents(id: number) {
-    await this.workComicChapter.update({
-      where: { id },
-      data: { contents: '[]' },
-    })
-    return { id }
   }
 
   /**

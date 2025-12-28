@@ -28,6 +28,7 @@ export type AggregateMemberLevel = {
 
 export type MemberLevelAvgAggregateOutputType = {
   id: number | null
+  level: number | null
   points: number | null
   loginDays: number | null
   blacklistLimit: number | null
@@ -37,6 +38,7 @@ export type MemberLevelAvgAggregateOutputType = {
 
 export type MemberLevelSumAggregateOutputType = {
   id: number | null
+  level: number | null
   points: number | null
   loginDays: number | null
   blacklistLimit: number | null
@@ -47,6 +49,7 @@ export type MemberLevelSumAggregateOutputType = {
 export type MemberLevelMinAggregateOutputType = {
   id: number | null
   name: string | null
+  level: number | null
   points: number | null
   loginDays: number | null
   icon: string | null
@@ -65,6 +68,7 @@ export type MemberLevelMinAggregateOutputType = {
 export type MemberLevelMaxAggregateOutputType = {
   id: number | null
   name: string | null
+  level: number | null
   points: number | null
   loginDays: number | null
   icon: string | null
@@ -83,6 +87,7 @@ export type MemberLevelMaxAggregateOutputType = {
 export type MemberLevelCountAggregateOutputType = {
   id: number
   name: number
+  level: number
   points: number
   loginDays: number
   icon: number
@@ -102,6 +107,7 @@ export type MemberLevelCountAggregateOutputType = {
 
 export type MemberLevelAvgAggregateInputType = {
   id?: true
+  level?: true
   points?: true
   loginDays?: true
   blacklistLimit?: true
@@ -111,6 +117,7 @@ export type MemberLevelAvgAggregateInputType = {
 
 export type MemberLevelSumAggregateInputType = {
   id?: true
+  level?: true
   points?: true
   loginDays?: true
   blacklistLimit?: true
@@ -121,6 +128,7 @@ export type MemberLevelSumAggregateInputType = {
 export type MemberLevelMinAggregateInputType = {
   id?: true
   name?: true
+  level?: true
   points?: true
   loginDays?: true
   icon?: true
@@ -139,6 +147,7 @@ export type MemberLevelMinAggregateInputType = {
 export type MemberLevelMaxAggregateInputType = {
   id?: true
   name?: true
+  level?: true
   points?: true
   loginDays?: true
   icon?: true
@@ -157,6 +166,7 @@ export type MemberLevelMaxAggregateInputType = {
 export type MemberLevelCountAggregateInputType = {
   id?: true
   name?: true
+  level?: true
   points?: true
   loginDays?: true
   icon?: true
@@ -262,6 +272,7 @@ export type MemberLevelGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type MemberLevelGroupByOutputType = {
   id: number
   name: string
+  level: number
   points: number
   loginDays: number
   icon: string
@@ -303,6 +314,7 @@ export type MemberLevelWhereInput = {
   NOT?: Prisma.MemberLevelWhereInput | Prisma.MemberLevelWhereInput[]
   id?: Prisma.IntFilter<"MemberLevel"> | number
   name?: Prisma.StringFilter<"MemberLevel"> | string
+  level?: Prisma.IntFilter<"MemberLevel"> | number
   points?: Prisma.IntFilter<"MemberLevel"> | number
   loginDays?: Prisma.IntFilter<"MemberLevel"> | number
   icon?: Prisma.StringFilter<"MemberLevel"> | string
@@ -316,11 +328,14 @@ export type MemberLevelWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"MemberLevel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MemberLevel"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"MemberLevel"> | Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterListRelationFilter
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterListRelationFilter
 }
 
 export type MemberLevelOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  level?: Prisma.SortOrder
   points?: Prisma.SortOrder
   loginDays?: Prisma.SortOrder
   icon?: Prisma.SortOrder
@@ -334,6 +349,8 @@ export type MemberLevelOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterOrderByRelationAggregateInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterOrderByRelationAggregateInput
 }
 
 export type MemberLevelWhereUniqueInput = Prisma.AtLeast<{
@@ -342,6 +359,7 @@ export type MemberLevelWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.MemberLevelWhereInput[]
   NOT?: Prisma.MemberLevelWhereInput | Prisma.MemberLevelWhereInput[]
   name?: Prisma.StringFilter<"MemberLevel"> | string
+  level?: Prisma.IntFilter<"MemberLevel"> | number
   points?: Prisma.IntFilter<"MemberLevel"> | number
   loginDays?: Prisma.IntFilter<"MemberLevel"> | number
   icon?: Prisma.StringFilter<"MemberLevel"> | string
@@ -355,11 +373,14 @@ export type MemberLevelWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"MemberLevel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"MemberLevel"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"MemberLevel"> | Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterListRelationFilter
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterListRelationFilter
 }, "id">
 
 export type MemberLevelOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  level?: Prisma.SortOrder
   points?: Prisma.SortOrder
   loginDays?: Prisma.SortOrder
   icon?: Prisma.SortOrder
@@ -386,6 +407,7 @@ export type MemberLevelScalarWhereWithAggregatesInput = {
   NOT?: Prisma.MemberLevelScalarWhereWithAggregatesInput | Prisma.MemberLevelScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"MemberLevel"> | number
   name?: Prisma.StringWithAggregatesFilter<"MemberLevel"> | string
+  level?: Prisma.IntWithAggregatesFilter<"MemberLevel"> | number
   points?: Prisma.IntWithAggregatesFilter<"MemberLevel"> | number
   loginDays?: Prisma.IntWithAggregatesFilter<"MemberLevel"> | number
   icon?: Prisma.StringWithAggregatesFilter<"MemberLevel"> | string
@@ -403,6 +425,7 @@ export type MemberLevelScalarWhereWithAggregatesInput = {
 
 export type MemberLevelCreateInput = {
   name: string
+  level?: number
   points: number
   loginDays?: number
   icon: string
@@ -416,11 +439,14 @@ export type MemberLevelCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
 }
 
 export type MemberLevelUncheckedCreateInput = {
   id?: number
   name: string
+  level?: number
   points: number
   loginDays?: number
   icon: string
@@ -434,10 +460,13 @@ export type MemberLevelUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
 }
 
 export type MemberLevelUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   icon?: Prisma.StringFieldUpdateOperationsInput | string
@@ -451,11 +480,14 @@ export type MemberLevelUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
 }
 
 export type MemberLevelUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   icon?: Prisma.StringFieldUpdateOperationsInput | string
@@ -469,11 +501,14 @@ export type MemberLevelUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
 }
 
 export type MemberLevelCreateManyInput = {
   id?: number
   name: string
+  level?: number
   points: number
   loginDays?: number
   icon: string
@@ -491,6 +526,7 @@ export type MemberLevelCreateManyInput = {
 
 export type MemberLevelUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   icon?: Prisma.StringFieldUpdateOperationsInput | string
@@ -509,6 +545,7 @@ export type MemberLevelUpdateManyMutationInput = {
 export type MemberLevelUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   icon?: Prisma.StringFieldUpdateOperationsInput | string
@@ -527,6 +564,7 @@ export type MemberLevelUncheckedUpdateManyInput = {
 export type MemberLevelCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  level?: Prisma.SortOrder
   points?: Prisma.SortOrder
   loginDays?: Prisma.SortOrder
   icon?: Prisma.SortOrder
@@ -544,6 +582,7 @@ export type MemberLevelCountOrderByAggregateInput = {
 
 export type MemberLevelAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  level?: Prisma.SortOrder
   points?: Prisma.SortOrder
   loginDays?: Prisma.SortOrder
   blacklistLimit?: Prisma.SortOrder
@@ -554,6 +593,7 @@ export type MemberLevelAvgOrderByAggregateInput = {
 export type MemberLevelMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  level?: Prisma.SortOrder
   points?: Prisma.SortOrder
   loginDays?: Prisma.SortOrder
   icon?: Prisma.SortOrder
@@ -572,6 +612,7 @@ export type MemberLevelMaxOrderByAggregateInput = {
 export type MemberLevelMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  level?: Prisma.SortOrder
   points?: Prisma.SortOrder
   loginDays?: Prisma.SortOrder
   icon?: Prisma.SortOrder
@@ -589,11 +630,17 @@ export type MemberLevelMinOrderByAggregateInput = {
 
 export type MemberLevelSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  level?: Prisma.SortOrder
   points?: Prisma.SortOrder
   loginDays?: Prisma.SortOrder
   blacklistLimit?: Prisma.SortOrder
   workCollectionLimit?: Prisma.SortOrder
   discount?: Prisma.SortOrder
+}
+
+export type MemberLevelNullableScalarRelationFilter = {
+  is?: Prisma.MemberLevelWhereInput | null
+  isNot?: Prisma.MemberLevelWhereInput | null
 }
 
 export type FloatFieldUpdateOperationsInput = {
@@ -604,11 +651,270 @@ export type FloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type MemberLevelCreateNestedOneWithoutComicChaptersAsReadLevelInput = {
+  create?: Prisma.XOR<Prisma.MemberLevelCreateWithoutComicChaptersAsReadLevelInput, Prisma.MemberLevelUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+  connectOrCreate?: Prisma.MemberLevelCreateOrConnectWithoutComicChaptersAsReadLevelInput
+  connect?: Prisma.MemberLevelWhereUniqueInput
+}
+
+export type MemberLevelCreateNestedOneWithoutComicChaptersAsDownloadLevelInput = {
+  create?: Prisma.XOR<Prisma.MemberLevelCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.MemberLevelUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+  connectOrCreate?: Prisma.MemberLevelCreateOrConnectWithoutComicChaptersAsDownloadLevelInput
+  connect?: Prisma.MemberLevelWhereUniqueInput
+}
+
+export type MemberLevelUpdateOneWithoutComicChaptersAsReadLevelNestedInput = {
+  create?: Prisma.XOR<Prisma.MemberLevelCreateWithoutComicChaptersAsReadLevelInput, Prisma.MemberLevelUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+  connectOrCreate?: Prisma.MemberLevelCreateOrConnectWithoutComicChaptersAsReadLevelInput
+  upsert?: Prisma.MemberLevelUpsertWithoutComicChaptersAsReadLevelInput
+  disconnect?: Prisma.MemberLevelWhereInput | boolean
+  delete?: Prisma.MemberLevelWhereInput | boolean
+  connect?: Prisma.MemberLevelWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MemberLevelUpdateToOneWithWhereWithoutComicChaptersAsReadLevelInput, Prisma.MemberLevelUpdateWithoutComicChaptersAsReadLevelInput>, Prisma.MemberLevelUncheckedUpdateWithoutComicChaptersAsReadLevelInput>
+}
+
+export type MemberLevelUpdateOneWithoutComicChaptersAsDownloadLevelNestedInput = {
+  create?: Prisma.XOR<Prisma.MemberLevelCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.MemberLevelUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+  connectOrCreate?: Prisma.MemberLevelCreateOrConnectWithoutComicChaptersAsDownloadLevelInput
+  upsert?: Prisma.MemberLevelUpsertWithoutComicChaptersAsDownloadLevelInput
+  disconnect?: Prisma.MemberLevelWhereInput | boolean
+  delete?: Prisma.MemberLevelWhereInput | boolean
+  connect?: Prisma.MemberLevelWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MemberLevelUpdateToOneWithWhereWithoutComicChaptersAsDownloadLevelInput, Prisma.MemberLevelUpdateWithoutComicChaptersAsDownloadLevelInput>, Prisma.MemberLevelUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput>
+}
+
+export type MemberLevelCreateWithoutComicChaptersAsReadLevelInput = {
+  name: string
+  level?: number
+  points: number
+  loginDays?: number
+  icon: string
+  description: string
+  isEnabled?: boolean
+  color?: string | null
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: number
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
+}
+
+export type MemberLevelUncheckedCreateWithoutComicChaptersAsReadLevelInput = {
+  id?: number
+  name: string
+  level?: number
+  points: number
+  loginDays?: number
+  icon: string
+  description: string
+  isEnabled?: boolean
+  color?: string | null
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: number
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
+}
+
+export type MemberLevelCreateOrConnectWithoutComicChaptersAsReadLevelInput = {
+  where: Prisma.MemberLevelWhereUniqueInput
+  create: Prisma.XOR<Prisma.MemberLevelCreateWithoutComicChaptersAsReadLevelInput, Prisma.MemberLevelUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+}
+
+export type MemberLevelCreateWithoutComicChaptersAsDownloadLevelInput = {
+  name: string
+  level?: number
+  points: number
+  loginDays?: number
+  icon: string
+  description: string
+  isEnabled?: boolean
+  color?: string | null
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: number
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
+}
+
+export type MemberLevelUncheckedCreateWithoutComicChaptersAsDownloadLevelInput = {
+  id?: number
+  name: string
+  level?: number
+  points: number
+  loginDays?: number
+  icon: string
+  description: string
+  isEnabled?: boolean
+  color?: string | null
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: number
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
+}
+
+export type MemberLevelCreateOrConnectWithoutComicChaptersAsDownloadLevelInput = {
+  where: Prisma.MemberLevelWhereUniqueInput
+  create: Prisma.XOR<Prisma.MemberLevelCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.MemberLevelUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+}
+
+export type MemberLevelUpsertWithoutComicChaptersAsReadLevelInput = {
+  update: Prisma.XOR<Prisma.MemberLevelUpdateWithoutComicChaptersAsReadLevelInput, Prisma.MemberLevelUncheckedUpdateWithoutComicChaptersAsReadLevelInput>
+  create: Prisma.XOR<Prisma.MemberLevelCreateWithoutComicChaptersAsReadLevelInput, Prisma.MemberLevelUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+  where?: Prisma.MemberLevelWhereInput
+}
+
+export type MemberLevelUpdateToOneWithWhereWithoutComicChaptersAsReadLevelInput = {
+  where?: Prisma.MemberLevelWhereInput
+  data: Prisma.XOR<Prisma.MemberLevelUpdateWithoutComicChaptersAsReadLevelInput, Prisma.MemberLevelUncheckedUpdateWithoutComicChaptersAsReadLevelInput>
+}
+
+export type MemberLevelUpdateWithoutComicChaptersAsReadLevelInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
+  icon?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.FloatFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
+}
+
+export type MemberLevelUncheckedUpdateWithoutComicChaptersAsReadLevelInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
+  icon?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.FloatFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
+}
+
+export type MemberLevelUpsertWithoutComicChaptersAsDownloadLevelInput = {
+  update: Prisma.XOR<Prisma.MemberLevelUpdateWithoutComicChaptersAsDownloadLevelInput, Prisma.MemberLevelUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput>
+  create: Prisma.XOR<Prisma.MemberLevelCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.MemberLevelUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+  where?: Prisma.MemberLevelWhereInput
+}
+
+export type MemberLevelUpdateToOneWithWhereWithoutComicChaptersAsDownloadLevelInput = {
+  where?: Prisma.MemberLevelWhereInput
+  data: Prisma.XOR<Prisma.MemberLevelUpdateWithoutComicChaptersAsDownloadLevelInput, Prisma.MemberLevelUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput>
+}
+
+export type MemberLevelUpdateWithoutComicChaptersAsDownloadLevelInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
+  icon?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.FloatFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
+}
+
+export type MemberLevelUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
+  icon?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.FloatFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
+}
+
+
+/**
+ * Count Type MemberLevelCountOutputType
+ */
+
+export type MemberLevelCountOutputType = {
+  comicChaptersAsReadLevel: number
+  comicChaptersAsDownloadLevel: number
+}
+
+export type MemberLevelCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  comicChaptersAsReadLevel?: boolean | MemberLevelCountOutputTypeCountComicChaptersAsReadLevelArgs
+  comicChaptersAsDownloadLevel?: boolean | MemberLevelCountOutputTypeCountComicChaptersAsDownloadLevelArgs
+}
+
+/**
+ * MemberLevelCountOutputType without action
+ */
+export type MemberLevelCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MemberLevelCountOutputType
+   */
+  select?: Prisma.MemberLevelCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * MemberLevelCountOutputType without action
+ */
+export type MemberLevelCountOutputTypeCountComicChaptersAsReadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkComicChapterWhereInput
+}
+
+/**
+ * MemberLevelCountOutputType without action
+ */
+export type MemberLevelCountOutputTypeCountComicChaptersAsDownloadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkComicChapterWhereInput
+}
 
 
 export type MemberLevelSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  level?: boolean
   points?: boolean
   loginDays?: boolean
   icon?: boolean
@@ -622,11 +928,15 @@ export type MemberLevelSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  comicChaptersAsReadLevel?: boolean | Prisma.MemberLevel$comicChaptersAsReadLevelArgs<ExtArgs>
+  comicChaptersAsDownloadLevel?: boolean | Prisma.MemberLevel$comicChaptersAsDownloadLevelArgs<ExtArgs>
+  _count?: boolean | Prisma.MemberLevelCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["memberLevel"]>
 
 export type MemberLevelSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  level?: boolean
   points?: boolean
   loginDays?: boolean
   icon?: boolean
@@ -645,6 +955,7 @@ export type MemberLevelSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
 export type MemberLevelSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  level?: boolean
   points?: boolean
   loginDays?: boolean
   icon?: boolean
@@ -663,6 +974,7 @@ export type MemberLevelSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type MemberLevelSelectScalar = {
   id?: boolean
   name?: boolean
+  level?: boolean
   points?: boolean
   loginDays?: boolean
   icon?: boolean
@@ -678,11 +990,27 @@ export type MemberLevelSelectScalar = {
   deletedAt?: boolean
 }
 
-export type MemberLevelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "points" | "loginDays" | "icon" | "description" | "isEnabled" | "color" | "blacklistLimit" | "workCollectionLimit" | "discount" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["memberLevel"]>
+export type MemberLevelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "level" | "points" | "loginDays" | "icon" | "description" | "isEnabled" | "color" | "blacklistLimit" | "workCollectionLimit" | "discount" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["memberLevel"]>
+export type MemberLevelInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  comicChaptersAsReadLevel?: boolean | Prisma.MemberLevel$comicChaptersAsReadLevelArgs<ExtArgs>
+  comicChaptersAsDownloadLevel?: boolean | Prisma.MemberLevel$comicChaptersAsDownloadLevelArgs<ExtArgs>
+  _count?: boolean | Prisma.MemberLevelCountOutputTypeDefaultArgs<ExtArgs>
+}
+export type MemberLevelIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type MemberLevelIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $MemberLevelPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "MemberLevel"
-  objects: {}
+  objects: {
+    /**
+     * 关联的漫画章节（作为阅读要求）
+     */
+    comicChaptersAsReadLevel: Prisma.$WorkComicChapterPayload<ExtArgs>[]
+    /**
+     * 关联的漫画章节（作为下载要求）
+     */
+    comicChaptersAsDownloadLevel: Prisma.$WorkComicChapterPayload<ExtArgs>[]
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
      * 主键id
@@ -692,6 +1020,10 @@ export type $MemberLevelPayload<ExtArgs extends runtime.Types.Extensions.Interna
      * 会员等级名称
      */
     name: string
+    /**
+     * 会员等级
+     */
+    level: number
     /**
      * 所需要的积分
      */
@@ -1138,6 +1470,8 @@ readonly fields: MemberLevelFieldRefs;
  */
 export interface Prisma__MemberLevelClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  comicChaptersAsReadLevel<T extends Prisma.MemberLevel$comicChaptersAsReadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MemberLevel$comicChaptersAsReadLevelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  comicChaptersAsDownloadLevel<T extends Prisma.MemberLevel$comicChaptersAsDownloadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MemberLevel$comicChaptersAsDownloadLevelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1169,6 +1503,7 @@ export interface Prisma__MemberLevelClient<T, Null = never, ExtArgs extends runt
 export interface MemberLevelFieldRefs {
   readonly id: Prisma.FieldRef<"MemberLevel", 'Int'>
   readonly name: Prisma.FieldRef<"MemberLevel", 'String'>
+  readonly level: Prisma.FieldRef<"MemberLevel", 'Int'>
   readonly points: Prisma.FieldRef<"MemberLevel", 'Int'>
   readonly loginDays: Prisma.FieldRef<"MemberLevel", 'Int'>
   readonly icon: Prisma.FieldRef<"MemberLevel", 'String'>
@@ -1199,6 +1534,10 @@ export type MemberLevelFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
+  /**
    * Filter, which MemberLevel to fetch.
    */
   where: Prisma.MemberLevelWhereUniqueInput
@@ -1218,6 +1557,10 @@ export type MemberLevelFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
+  /**
    * Filter, which MemberLevel to fetch.
    */
   where: Prisma.MemberLevelWhereUniqueInput
@@ -1236,6 +1579,10 @@ export type MemberLevelFindFirstArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the MemberLevel
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
   /**
    * Filter, which MemberLevel to fetch.
    */
@@ -1286,6 +1633,10 @@ export type MemberLevelFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extens
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
+  /**
    * Filter, which MemberLevel to fetch.
    */
   where?: Prisma.MemberLevelWhereInput
@@ -1335,6 +1686,10 @@ export type MemberLevelFindManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
+  /**
    * Filter, which MemberLevels to fetch.
    */
   where?: Prisma.MemberLevelWhereInput
@@ -1378,6 +1733,10 @@ export type MemberLevelCreateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the MemberLevel
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
   /**
    * The data needed to create a MemberLevel.
    */
@@ -1427,6 +1786,10 @@ export type MemberLevelUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the MemberLevel
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
   /**
    * The data needed to update a MemberLevel.
    */
@@ -1495,6 +1858,10 @@ export type MemberLevelUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
+  /**
    * The filter to search for the MemberLevel to update in case it exists.
    */
   where: Prisma.MemberLevelWhereUniqueInput
@@ -1522,6 +1889,10 @@ export type MemberLevelDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
+  /**
    * Filter which MemberLevel to delete.
    */
   where: Prisma.MemberLevelWhereUniqueInput
@@ -1543,6 +1914,54 @@ export type MemberLevelDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
 }
 
 /**
+ * MemberLevel.comicChaptersAsReadLevel
+ */
+export type MemberLevel$comicChaptersAsReadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkComicChapter
+   */
+  select?: Prisma.WorkComicChapterSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkComicChapter
+   */
+  omit?: Prisma.WorkComicChapterOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkComicChapterInclude<ExtArgs> | null
+  where?: Prisma.WorkComicChapterWhereInput
+  orderBy?: Prisma.WorkComicChapterOrderByWithRelationInput | Prisma.WorkComicChapterOrderByWithRelationInput[]
+  cursor?: Prisma.WorkComicChapterWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkComicChapterScalarFieldEnum | Prisma.WorkComicChapterScalarFieldEnum[]
+}
+
+/**
+ * MemberLevel.comicChaptersAsDownloadLevel
+ */
+export type MemberLevel$comicChaptersAsDownloadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkComicChapter
+   */
+  select?: Prisma.WorkComicChapterSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkComicChapter
+   */
+  omit?: Prisma.WorkComicChapterOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkComicChapterInclude<ExtArgs> | null
+  where?: Prisma.WorkComicChapterWhereInput
+  orderBy?: Prisma.WorkComicChapterOrderByWithRelationInput | Prisma.WorkComicChapterOrderByWithRelationInput[]
+  cursor?: Prisma.WorkComicChapterWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkComicChapterScalarFieldEnum | Prisma.WorkComicChapterScalarFieldEnum[]
+}
+
+/**
  * MemberLevel without action
  */
 export type MemberLevelDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1554,4 +1973,8 @@ export type MemberLevelDefaultArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the MemberLevel
    */
   omit?: Prisma.MemberLevelOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MemberLevelInclude<ExtArgs> | null
 }
