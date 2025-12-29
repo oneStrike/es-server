@@ -2,11 +2,9 @@ import { ValidateString } from '@libs/base/decorators'
 
 export class CaptchaDto {
   @ValidateString({
-    description: '验证码',
+    description: '验证码,base64格式',
     example: '1234',
     required: true,
-    maxLength: 4,
-    minLength: 4,
   })
   captcha!: string
 

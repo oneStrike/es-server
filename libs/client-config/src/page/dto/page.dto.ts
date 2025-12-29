@@ -5,7 +5,7 @@ import {
   ValidateJson,
   ValidateString,
 } from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import { EnablePlatformEnum } from '@libs/base/enum'
 import {
   IntersectionType,
@@ -86,10 +86,19 @@ export class BaseClientPageDto extends BaseDto {
 }
 
 /**
+ * 页面配置创建DTO
+ */
+export class CreateClientPageDto extends OmitType(
+  BaseClientPageDto,
+  OMIT_BASE_FIELDS,
+) {}
+
+/**
  * 更新页面配置DTO
  */
-export class UpdateClientPageDto extends PartialType(
-  OmitType(BaseClientPageDto, ['createdAt', 'updatedAt']),
+export class UpdateClientPageDto extends IntersectionType(
+  PartialType(CreateClientPageDto),
+  IdDto,
 ) {}
 
 /**
