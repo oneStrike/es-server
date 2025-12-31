@@ -128,13 +128,15 @@ export class UpdateAuthorDto extends IntersectionType(CreateAuthorDto, IdDto) {}
  */
 export class QueryAuthorDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BaseAuthorDto), [
-    'name',
-    'isEnabled',
-    'nationality',
-    'gender',
-    'isRecommended',
-  ]),
+  PartialType(
+    PickType(BaseAuthorDto, [
+      'name',
+      'isEnabled',
+      'nationality',
+      'gender',
+      'isRecommended',
+    ]),
+  ),
 ) {
   @ValidateJson({
     description: '作者角色类型',
@@ -147,7 +149,7 @@ export class QueryAuthorDto extends IntersectionType(
 /**
  * 更新作者推荐状态DTO
  */
-export class UpdateAuthorisRecommendedDto extends IntersectionType(
+export class UpdateAuthorRecommendedDto extends IntersectionType(
   PickType(BaseAuthorDto, ['isRecommended']),
   IdDto,
 ) {}

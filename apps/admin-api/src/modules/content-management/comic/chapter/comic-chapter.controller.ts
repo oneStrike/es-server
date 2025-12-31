@@ -1,5 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { DragReorderDto, IdDto, IdsDto } from '@libs/base/dto'
+import { BatchUpdatePublishedStatusDto, DragReorderDto, IdDto, IdsDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -9,7 +9,6 @@ import {
   ComicChapterPageResponseDto,
   CreateComicChapterDto,
   QueryComicChapterDto,
-  UpdateChapterPublishStatusDto,
   UpdateComicChapterDto,
 } from './dto/comic-chapter.dto'
 
@@ -92,7 +91,7 @@ export class ComicChapterController {
     summary: '更新章节发布状态',
     model: IdDto,
   })
-  async updatePublishStatus(@Body() body: UpdateChapterPublishStatusDto) {
+  async updatePublishStatus(@Body() body: BatchUpdatePublishedStatusDto) {
     return this.comicChapterService.workComicChapter.updateMany({
       where: {
         id: { in: body.ids },
