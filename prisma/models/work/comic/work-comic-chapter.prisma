@@ -28,12 +28,16 @@ model WorkComicChapter {
   isPreview      Boolean   @default(false) @map("is_preview")
   /// 发布时间
   publishAt      DateTime? @map("publish_at") @db.Timestamptz
+  /// 购买次数
+  purchaseCount  Int       @default(0) @map("purchase_count") @db.Integer
   /// 阅读次数
   viewCount      Int       @default(0) @map("view_count") @db.Integer
   /// 点赞数
   likeCount      Int       @default(0) @map("like_count") @db.Integer
   /// 评论数
   commentCount   Int       @default(0) @map("comment_count") @db.Integer
+  /// 章节描述
+  description    String?   @db.VarChar(1000)
   /// 备注
   remark         String?   @db.VarChar(1000)
   /// 创建时间

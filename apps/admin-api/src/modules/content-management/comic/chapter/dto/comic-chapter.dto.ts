@@ -1,18 +1,11 @@
 import {
-  ValidateArray,
   ValidateBoolean,
   ValidateDate,
   ValidateEnum,
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import {
-  BaseDto,
-  IdDto,
-  IdsDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-} from '@libs/base/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import { WorkViewPermissionEnum } from '@libs/base/enum'
 import {
   ApiProperty,
@@ -158,6 +151,14 @@ export class BaseComicChapterDto extends BaseDto {
   })
   thumbnail?: string
 
+  @ApiProperty({
+    description: '购买次数',
+    example: 100,
+    required: true,
+    default: 0,
+  })
+  purchaseCount!: number
+
   @ValidateNumber({
     description: '阅读次数',
     example: 1000,
@@ -184,6 +185,14 @@ export class BaseComicChapterDto extends BaseDto {
     default: 0,
   })
   commentCount!: number
+
+  @ValidateString({
+    description: '章节描述',
+    example: '优质章节，内容丰富',
+    required: false,
+    maxLength: 1000,
+  })
+  description?: string
 
   @ValidateString({
     description: '管理员备注',
@@ -252,86 +261,10 @@ export class CreateComicChapterDto extends OmitType(BaseComicChapterDto, [
   ...OMIT_BASE_FIELDS,
   'viewCount',
   'likeCount',
+  'purchaseCount',
   'commentCount',
-  'isPublished',
   'contents',
 ]) {}
-
-/**
- * 添加章节内容DTO
- */
-export class AddChapterContentDto extends IdDto {
-  @ValidateString({
-    description: '要添加的内容（图片URL）',
-    example: 'https://example.com/new-page.jpg',
-    required: true,
-  })
-  content!: string
-
-  @ValidateNumber({
-    description: '插入位置索引（可选，默认添加到末尾）',
-    example: 2,
-    required: false,
-    min: 0,
-  })
-  index?: number
-}
-
-/**
- * 更新章节内容DTO
- */
-export class UpdateChapterContentDto extends OmitType(AddChapterContentDto, [
-  'index',
-]) {
-  @ValidateNumber({
-    description: '插入位置索引（可选，默认添加到末尾）',
-    example: 2,
-    required: true,
-    min: 0,
-  })
-  index!: number
-}
-
-/**
- * 删除章节内容DTO
- */
-export class DeleteChapterContentDto extends OmitType(UpdateChapterContentDto, [
-  'content',
-]) {}
-
-/**
- * 移动章节内容DTO（用于排序）
- */
-export class MoveChapterContentDto extends IdDto {
-  @ValidateNumber({
-    description: '源索引位置',
-    example: 2,
-    required: true,
-    min: 0,
-  })
-  fromIndex!: number
-
-  @ValidateNumber({
-    description: '目标索引位置',
-    example: 0,
-    required: true,
-    min: 0,
-  })
-  toIndex!: number
-}
-
-/**
- * 批量更新章节内容DTO
- */
-export class BatchUpdateChapterContentsDto extends IdDto {
-  @ValidateArray({
-    description: '新的内容数组（JSON格式）',
-    example: ['https://example.com/page1.jpg'],
-    required: true,
-    itemType: 'string',
-  })
-  contents!: string
-}
 
 /**
  * 更新漫画章节DTO
@@ -358,21 +291,10 @@ export class QueryComicChapterDto extends IntersectionType(
 ) {}
 
 /**
- * 批量更新章节发布状态DTO
- */
-export class UpdateChapterPublishStatusDto extends IdsDto {
-  @ValidateBoolean({
-    description: '发布状态（true: 发布, false: 取消发布）',
-    example: true,
-    required: true,
-  })
-  isPublished!: boolean
-}
-
-/**
  * 漫画章节分页响应DTO
  */
 export class ComicChapterPageResponseDto extends OmitType(BaseComicChapterDto, [
+  'description',
   'contents',
   'remark',
 ]) {}
