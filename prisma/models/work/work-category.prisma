@@ -10,7 +10,7 @@ model WorkCategory {
   /// 自定义人气权重
   popularityWeight    Int                 @default(0) @map("popularity_weight") @db.Integer
   /// 关联内容类型（如：1漫画、2小说、4插画、8写真）
-  contentType         Int[]                @map("content_type")
+  contentType         Int[]               @map("content_type")
   /// 排序值（数值越小越靠前）
   order               Int                 @default(0) @db.SmallInt
   /// 是否启用

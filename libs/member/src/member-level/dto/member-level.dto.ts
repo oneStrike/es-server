@@ -4,7 +4,12 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/base/dto'
-import { IntersectionType, OmitType, PartialType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 export class BaseMemberLevelDto extends BaseDto {
   @ValidateString({
@@ -122,4 +127,8 @@ export class CreateMemberLevelDto extends OmitType(
 export class UpdateMemberLevelDto extends IntersectionType(
   PartialType(CreateMemberLevelDto),
   IdDto,
+) {}
+
+export class QueryMemberLevelDto extends PartialType(
+  PickType(BaseMemberLevelDto, ['isEnabled', 'name']),
 ) {}

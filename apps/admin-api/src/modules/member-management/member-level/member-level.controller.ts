@@ -4,6 +4,7 @@ import {
   BaseMemberLevelDto,
   CreateMemberLevelDto,
   MemberLevelService,
+  QueryMemberLevelDto,
   UpdateMemberLevelDto,
 } from '@libs/member'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -17,10 +18,11 @@ export class MemberLevelController {
   @ApiDoc({
     summary: '获取会员等级列表',
     model: BaseMemberLevelDto,
+    isArray: true,
   })
   @Get('/list')
-  async getMemberLevelList() {
-    return this.memberLevelService.getMemberLevelList()
+  async getMemberLevelList(@Query() enabledStatusDto: QueryMemberLevelDto) {
+    return this.memberLevelService.getMemberLevelList(enabledStatusDto)
   }
 
   @ApiDoc({

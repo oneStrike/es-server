@@ -3,28 +3,19 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import {
-  IdDto,
-} from '@libs/base/dto'
+import { IdDto } from '@libs/base/dto'
 
 /**
  * 添加章节内容DTO
  */
 export class AddChapterContentDto extends IdDto {
-  @ValidateString({
+  @ValidateArray({
     description: '要添加的内容（图片URL）',
-    example: 'https://example.com/new-page.jpg',
+    example: ['https://example.com/new-page.jpg'],
     required: true,
+    itemType: 'string',
   })
   content!: string
-
-  @ValidateNumber({
-    description: '插入位置索引（可选，默认添加到末尾）',
-    example: 2,
-    required: false,
-    min: 0,
-  })
-  index?: number
 }
 
 /**
@@ -51,13 +42,13 @@ export class UpdateChapterContentDto extends IdDto {
  * 删除章节内容DTO
  */
 export class DeleteChapterContentDto extends IdDto {
-  @ValidateNumber({
+  @ValidateArray({
     description: '要删除的内容索引',
-    example: 2,
+    example: [1, 2, 3],
     required: true,
-    min: 0,
+    itemType: 'number',
   })
-  index!: number
+  index!: number[]
 }
 
 /**

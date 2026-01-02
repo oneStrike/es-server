@@ -270,7 +270,7 @@ export class CreateComicChapterDto extends OmitType(BaseComicChapterDto, [
  * 更新漫画章节DTO
  */
 export class UpdateComicChapterDto extends IntersectionType(
-  PartialType(CreateComicChapterDto),
+  CreateComicChapterDto,
   IdDto,
 ) {}
 
