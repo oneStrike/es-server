@@ -3,6 +3,7 @@ import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import { Injectable } from '@nestjs/common'
 import {
   CreateMemberLevelDto,
+  QueryMemberLevelDto,
   UpdateMemberLevelDto,
 } from './dto/member-level.dto'
 
@@ -40,8 +41,16 @@ export class MemberLevelService extends RepositoryService {
   /**
    * 获取所有会员等级
    */
-  async getMemberLevelList() {
+  async getMemberLevelList(queryDto: QueryMemberLevelDto) {
+    const { isEnabled, name } = queryDto
+
     return this.memberLevel.findMany({
+      where: {
+        isEnabled,
+        name: {
+          contains: name,
+        },
+      },
       orderBy: {
         level: 'asc',
       },

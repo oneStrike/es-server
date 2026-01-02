@@ -17,7 +17,7 @@ export async function findPagination<T, A>(
   const context = Prisma.getExtensionContext(this) as any
   // 读取 where，但不要突变原对象
   const rawWhere = (options as any)?.where ?? {}
-  let { pageIndex, pageSize, orderBy, startDate, endDate, ...otherWhere } =
+  let { pageIndex, pageSize, startDate, endDate, orderBy, ...otherWhere } =
     rawWhere
 
   // 规范化分页参数，并智能识别 0 基/1 基传参：
@@ -67,7 +67,9 @@ export async function findPagination<T, A>(
       : normalizedPageIndex * normalizedPageSize,
   )
   const take = normalizedPageSize
-
+  orderBy = orderBy
+    ? jsonParse(orderBy)
+    : options.orderBy || DbConfig?.query.orderBy
   // 并行查询列表与总数
   const [list, total] = await Promise.all<
     [Prisma.Result<T, A, 'findMany'>, number]
@@ -76,8 +78,9 @@ export async function findPagination<T, A>(
       ...(options || {}),
       where: otherWhere,
       take,
+
       skip,
-      orderBy: orderBy ? jsonParse(orderBy) : DbConfig?.query.orderBy,
+      orderBy,
     }),
     context.count({ where: otherWhere }),
   ])

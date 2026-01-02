@@ -4,7 +4,7 @@ model WorkComicCategory {
   /// 分类ID  
   categoryId Int      @map("category_id")
   /// 排序顺序（用于展示顺序）
-  sortOrder      Int       @map("sort_order") @db.Integer @default(0)
+  sortOrder  Int      @default(0) @map("sort_order") @db.Integer
   /// 关联时间
   createdAt  DateTime @default(now()) @map("created_at")
   /// 更新时间

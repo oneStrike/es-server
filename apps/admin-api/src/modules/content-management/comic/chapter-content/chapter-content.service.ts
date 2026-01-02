@@ -45,16 +45,11 @@ export class ChapterContentService extends RepositoryService {
    * 添加章节内容
    */
   async addChapterContent(body: AddChapterContentDto) {
-    const { id, content, index } = body
+    const { id, content } = body
 
     const contents: string[] = await this.getChapterContents(id)
 
-    // 添加内容到指定位置或末尾
-    if (index !== undefined && index >= 0 && index <= contents.length) {
-      contents.splice(index, 0, content)
-    } else {
-      contents.push(content)
-    }
+    contents.push(...content)
 
     // 更新数据库
     await this.workComicChapter.update({
@@ -93,18 +88,19 @@ export class ChapterContentService extends RepositoryService {
   /**
    * 删除章节内容
    */
-  async deleteChapterContent(body: DeleteChapterContentDto) {
-    const { id, index } = body
+  async deleteChapterContent(dto: DeleteChapterContentDto) {
+    const { id, index } = dto
 
     const contents: string[] = await this.getChapterContents(id)
 
     // 验证索引是否有效
-    if (index < 0 || index >= contents.length) {
-      throw new BadRequestException('索引超出范围')
+    if (index.some((i) => i < 0 || i >= contents.length)) {
+      throw new BadRequestException('删除的内容不存在')
     }
 
     // 删除指定位置的内容
-    contents.splice(index, 1)
+    index.sort((a, b) => b - a)
+    index.forEach((i) => contents.splice(i, 1))
 
     // 更新数据库
     await this.workComicChapter.update({

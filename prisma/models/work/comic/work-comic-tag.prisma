@@ -4,7 +4,7 @@ model WorkComicTag {
   /// 标签ID
   tagId     Int      @map("tag_id")
   /// 排序顺序（用于展示顺序）
-  sortOrder      Int       @map("sort_order") @db.Integer @default(0)
+  sortOrder Int      @default(0) @map("sort_order") @db.Integer
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   /// 更新时间

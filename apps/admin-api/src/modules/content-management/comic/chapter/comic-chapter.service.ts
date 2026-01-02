@@ -77,11 +77,12 @@ export class ComicChapterService extends RepositoryService {
         },
       },
       omit: {
+        description: true,
         contents: true,
         remark: true,
         deletedAt: true,
       },
-      orderBy: [{ sortOrder: 'asc' }],
+      orderBy: [{ sortOrder: 'desc' }],
     })
   }
 
@@ -124,15 +125,16 @@ export class ComicChapterService extends RepositoryService {
    * @returns 更新后的章节信息
    */
   async updateComicChapter(dto: UpdateComicChapterDto) {
-    const { id, ...updateData } = dto
-    const { requiredReadLevelId, requiredDownloadLevelId } = updateData
-
+    const { id, comicId, ...updateData } = dto
+    const { requiredReadLevelId, requiredDownloadLevelId, sortOrder } =
+      updateData
     if (
-      await this.workComicChapter.exists({
+      sortOrder &&
+      (await this.workComicChapter.exists({
         id: { not: id },
         sortOrder: updateData.sortOrder,
-        comicId: dto.comicId,
-      })
+        comicId,
+      }))
     ) {
       throw new BadRequestException('该漫画下章节号已存在')
     }
