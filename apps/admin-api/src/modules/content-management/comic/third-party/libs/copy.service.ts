@@ -1,5 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
+import {
+  DetailComicRequestDto,
+  SearchComicRequestDto,
+} from '../dto/third-party.dto'
 
 /**
  * 拷贝漫画平台服务
@@ -8,10 +12,10 @@ import axios, { AxiosInstance } from 'axios'
 @Injectable()
 export class CopyService {
   private readonly httpClient: AxiosInstance
-  private readonly baseUrl = 'https://api.copy-manga.com'
+  private readonly baseUrl = 'https://api.copy2000.online'
   private readonly headers = {
     platform: 3,
-    version: '2.2.5',
+    version: '3.0.6',
   }
 
   constructor() {
@@ -24,37 +28,38 @@ export class CopyService {
 
   /**
    * 搜索漫画关键词
-   * @param keyword 搜索关键词
-   * @returns 搜索结果
    */
-  async searchWord(keyword: string) {
+  async searchWord(dto: SearchComicRequestDto) {
     try {
       const { data } = await this.httpClient.get('/api/v3/search/comic', {
         params: {
-          q: keyword,
-          limit: 30,
-          offset: 0,
+          q: dto.keyword,
+          limit: dto.pageSize,
+          offset: dto.pageIndex,
         },
       })
-
       if (data.code !== 200) {
-        return { code: 201 }
+        throw new Error('解析服务出现错误，请稍后再试！')
       }
-
       return {
-        code: 200,
-        data: data.results.list.map((item: any) => ({
+        total: data.results.total,
+        pageIndex: data.results.offset,
+        pageSize: data.results.limit,
+        list: data.results.list.map((item: any) => ({
           id: item.path_word,
           name: item.name,
           cover: item.cover,
-          author: item.author.map((author: any) => ({
-            name: author.name,
-          })),
+          author: item.author.map((author: any) => author.name),
           source: '拷贝',
+          platform: 'copy',
         })),
       }
-    } catch {
-      return { code: 201 }
+    } catch (error) {
+      throw new BadRequestException(
+        typeof error === 'string'
+          ? error
+          : error.response?.data?.detail || '解析服务出现错误，请稍后再试！',
+      )
     }
   }
 
@@ -63,34 +68,36 @@ export class CopyService {
    * @param id 漫画ID
    * @returns 漫画详情
    */
-  async parseWord(id: string) {
-    return this.wordDetail(id)
+  async parseWord() {
+    // return this.detail(id)
   }
 
   /**
    * 获取漫画详情
-   * @param path 漫画路径
    * @returns 漫画详情数据
+   * @param dto
    */
-  async wordDetail(path: string) {
+  async detail(dto: DetailComicRequestDto) {
     try {
       const { data } = await this.httpClient.get(
-        `/api/v3/comic2/${path}?in_mainland=true&platform=3`,
+        `/api/v3/comic2/${dto.comicId}?in_mainland=true&platform=3`,
       )
+      console.log(data)
       return data.code !== 200
         ? { code: 201 }
         : { code: 200, data: data.results }
-    } catch {
+    } catch (error) {
+      console.log(error)
       return { code: 201 }
     }
   }
 
   /**
    * 获取章节列表
-   * @param path 漫画路径
+   * @param dto 漫画路径
    * @returns 章节列表
    */
-  async chapterList(path: string) {
+  async chapter(path: string) {
     try {
       const { data } = await this.httpClient.get(
         `/api/v3/comic/${path}/group/default/chapters?limit=500&offset=0&in_mainland=true&platform=3`,
@@ -109,7 +116,7 @@ export class CopyService {
    * @param chapterId 章节ID
    * @returns 章节内容
    */
-  async chapterContent(path: string, chapterId: string) {
+  async content(path: string, chapterId: string) {
     try {
       const { data } = await this.httpClient.get(
         `/api/v3/comic/${path}/chapter2/${chapterId}?in_mainland=true&platform=3`,

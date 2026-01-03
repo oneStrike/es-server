@@ -38,10 +38,29 @@ export class UploadService {
    * @param scene 场景名称
    * @returns 完整的文件保存路径
    */
-  generateFilePath(uploadPath: string, fileType: string, scene: string) {
+  /**
+   * 生成文件保存路径
+   * @param uploadPath 基础上传路径
+   * @param fileType 文件类型分类
+   * @param scene 场景名称
+   * @param pathSegments 路径片段数组
+   * @returns 完整的文件保存路径
+   */
+  generateFilePath(
+    uploadPath: string,
+    fileType: string,
+    scene: string,
+    pathSegments?: string[],
+  ) {
     // 参数验证
     if (!uploadPath || !fileType) {
       throw new Error('上传失败')
+    }
+
+    if (pathSegments && pathSegments?.length > 0) {
+      const savePath = join(uploadPath, scene, ...pathSegments)
+      fs.ensureDirSync(savePath, 0o755)
+      return savePath
     }
 
     // 使用现代日期处理方式生成日期字符串
@@ -50,7 +69,7 @@ export class UploadService {
     const month = String(today.getMonth() + 1).padStart(2, '0')
     const day = String(today.getDate()).padStart(2, '0')
     const dateStr = `${year}-${month}-${day}`
-    const savePath = join(uploadPath, dateStr, fileType, scene)
+    const savePath = join(uploadPath, scene, dateStr, fileType)
     fs.ensureDirSync(savePath, 0o755)
     // 安全地拼接路径
     return savePath
@@ -86,7 +105,10 @@ export class UploadService {
    * @param data Fastify multipart数据
    * @returns 上传结果
    */
-  async uploadFile(data: FastifyRequest): Promise<UploadResponseDto> {
+  async uploadFile(
+    data: FastifyRequest,
+    pathSegments?: string[],
+  ): Promise<UploadResponseDto> {
     const targetFile = await data.file()
     if (!targetFile) {
       throw new BadRequestException('上传文件不能为空')
@@ -139,6 +161,7 @@ export class UploadService {
       this.uploadConfig.uploadDir,
       fileType,
       scene,
+      pathSegments,
     )
     // 生成文件名（保留原扩展，规范化小写）
     const tempName = `.${uuidv4()}.uploading`

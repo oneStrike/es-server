@@ -1,8 +1,8 @@
+import type { FastifyRequest } from 'fastify'
 import { ApiDoc } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { IdDto, UploadResponseDto } from '@libs/base/dto'
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-
 import { ChapterContentService } from './chapter-content.service'
 import {
   AddChapterContentDto,
@@ -43,15 +43,13 @@ export class ChapterContentController {
   @Post('/add-content')
   @ApiDoc({
     summary: '添加章节内容',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
+    model: UploadResponseDto,
   })
-  async addChapterContent(@Body() body: AddChapterContentDto) {
-    return this.chapterContentService.addChapterContent(body)
+  async addChapterContent(
+    @Req() req: FastifyRequest,
+    @Query() query: AddChapterContentDto,
+  ) {
+    return this.chapterContentService.addChapterContent(req, query)
   }
 
   /**
