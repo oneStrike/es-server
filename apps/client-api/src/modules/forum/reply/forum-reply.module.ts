@@ -1,0 +1,16 @@
+import { Module } from '@nestjs/common'
+import { ForumReplyController } from './forum-reply.controller'
+import { ForumReplyService } from './forum-reply.service'
+import { NotificationModule } from '@app/forum/notification/notification.module'
+
+/**
+ * 客户端论坛回复模块
+ * 提供客户端论坛回复相关的功能
+ */
+@Module({
+  imports: [NotificationModule],
+  controllers: [ForumReplyController],
+  providers: [ForumReplyService],
+  exports: [ForumReplyService],
+})
+export class ForumReplyModule {}

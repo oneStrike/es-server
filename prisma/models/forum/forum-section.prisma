@@ -1,0 +1,47 @@
+model ForumSection {
+  /// 主键ID
+  id              Int       @id @default(autoincrement())
+  /// 板块名称
+  name            String    @db.VarChar(50)
+  /// 板块描述
+  description     String?   @db.VarChar(500)
+  /// 板块图标URL
+  icon            String?   @db.VarChar(255)
+  /// 板块封面URL
+  cover           String?   @db.VarChar(500)
+  /// 排序值（数值越小越靠前）
+  sortOrder       Int       @default(0) @map("sort_order") @db.Integer
+  /// 是否启用
+  isEnabled       Boolean   @default(true) @map("is_enabled")
+  /// 主题数
+  topicCount      Int       @default(0) @map("topic_count") @db.Integer
+  /// 回复数
+  replyCount      Int       @default(0) @map("reply_count") @db.Integer
+  /// 最后发表时间
+  lastPostAt      DateTime? @map("last_post_at") @db.Timestamptz
+  /// 最后发表主题ID
+  lastTopicId     Int?      @map("last_topic_id") @db.Integer
+  /// 最后发表主题
+  lastTopic       ForumTopic? @relation("LastTopic", fields: [lastTopicId], references: [id], onDelete: SetNull)
+  /// 创建时间
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  /// 软删除时间
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz
+
+  /// 关联的主题
+  topics          ForumTopic[]
+  /// 关联的版主板块
+  moderatorSections ForumModeratorSection[]
+
+  /// 索引优化
+  @@index([sortOrder])
+  @@index([isEnabled])
+  @@index([topicCount])
+  @@index([replyCount])
+  @@index([lastPostAt])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("forum_section")
+}

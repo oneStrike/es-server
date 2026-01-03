@@ -1,0 +1,21 @@
+model ForumTopicTag {
+  /// 主键ID
+  id              Int       @id @default(autoincrement())
+  /// 关联的主题ID
+  topicId         Int       @map("topic_id") @db.Integer
+  /// 关联的主题
+  topic           ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  /// 关联的标签ID
+  tagId           Int       @map("tag_id") @db.Integer
+  /// 关联的标签
+  tag             ForumTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  /// 创建时间
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  /// 索引优化
+  @@unique([topicId, tagId])
+  @@index([topicId])
+  @@index([tagId])
+  @@index([createdAt])
+  @@map("forum_topic_tag")
+}
