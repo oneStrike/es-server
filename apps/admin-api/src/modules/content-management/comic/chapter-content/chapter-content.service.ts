@@ -1,5 +1,8 @@
+import type { FastifyRequest } from 'fastify'
 import { RepositoryService } from '@libs/base/database'
+import { UploadService } from '@libs/base/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import fsExtra from 'fs-extra'
 import {
   AddChapterContentDto,
   DeleteChapterContentDto,
@@ -17,7 +20,7 @@ export class ChapterContentService extends RepositoryService {
     return this.prisma.workComicChapter
   }
 
-  constructor() {
+  constructor(private readonly uploadService: UploadService) {
     super()
   }
 
@@ -44,12 +47,27 @@ export class ChapterContentService extends RepositoryService {
   /**
    * 添加章节内容
    */
-  async addChapterContent(body: AddChapterContentDto) {
-    const { id, content } = body
+  async addChapterContent(req: FastifyRequest, query: AddChapterContentDto) {
+    const id = query.chapterId
+    const file = await this.uploadService.uploadFile(req, [
+      'comic',
+      query.comicId.toString(),
+      'chapter',
+      id.toString(),
+    ])
+    if (
+      !(await this.workComicChapter.exists({
+        id,
+        comicId: query.comicId,
+      }))
+    ) {
+      fsExtra.removeSync(file.filePath)
+      throw new BadRequestException('章节不存在')
+    }
 
     const contents: string[] = await this.getChapterContents(id)
 
-    contents.push(...content)
+    contents.push(file.filePath)
 
     // 更新数据库
     await this.workComicChapter.update({
@@ -57,7 +75,7 @@ export class ChapterContentService extends RepositoryService {
       data: { contents: JSON.stringify(contents) },
     })
 
-    return { id }
+    return file
   }
 
   /**

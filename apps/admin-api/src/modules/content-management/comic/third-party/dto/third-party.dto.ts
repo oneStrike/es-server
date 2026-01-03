@@ -1,8 +1,8 @@
 import { ValidateString } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
-import { ApiProperty } from '@nestjs/swagger'
+import { IdDto, PageDto } from '@libs/base/dto'
+import { ApiProperty, PickType } from '@nestjs/swagger'
 
-export class SearchComicRequestDto {
+export class SearchComicRequestDto extends PageDto {
   @ValidateString({
     required: true,
     maxLength: 100,
@@ -18,6 +18,18 @@ export class SearchComicRequestDto {
     example: 'copy',
   })
   platform!: string
+}
+
+export class DetailComicRequestDto extends PickType(SearchComicRequestDto, [
+  'platform',
+]) {
+  @ValidateString({
+    required: true,
+    maxLength: 100,
+    description: '漫画ID',
+    example: '123456',
+  })
+  comicId!: string
 }
 
 export class PlatformResponseDto {

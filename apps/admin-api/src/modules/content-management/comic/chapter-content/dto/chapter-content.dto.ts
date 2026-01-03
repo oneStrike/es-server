@@ -8,14 +8,20 @@ import { IdDto } from '@libs/base/dto'
 /**
  * 添加章节内容DTO
  */
-export class AddChapterContentDto extends IdDto {
-  @ValidateArray({
-    description: '要添加的内容（图片URL）',
-    example: ['https://example.com/new-page.jpg'],
+export class AddChapterContentDto {
+  @ValidateNumber({
+    description: '漫画ID',
+    example: 1,
     required: true,
-    itemType: 'string',
   })
-  content!: string
+  comicId!: number
+
+  @ValidateNumber({
+    description: '章节ID',
+    example: 1,
+    required: true,
+  })
+  chapterId!: number
 }
 
 /**

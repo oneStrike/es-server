@@ -131,7 +131,6 @@ export class ComicService extends RepositoryService {
       }
     }
 
-    console.log(where)
     return this.workComic.findPagination({
       where: { ...where, ...otherDto },
       select: {
