@@ -1,0 +1,21 @@
+model ForumModeratorSection {
+  /// 主键ID
+  id              Int       @id @default(autoincrement())
+  /// 关联的版主ID
+  moderatorId     Int       @map("moderator_id") @db.Integer
+  /// 关联的版主
+  moderator       ForumModerator @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+  /// 关联的板块ID
+  sectionId       Int       @map("section_id") @db.Integer
+  /// 关联的板块
+  section         ForumSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  /// 创建时间
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  /// 索引优化
+  @@unique([moderatorId, sectionId])
+  @@index([moderatorId])
+  @@index([sectionId])
+  @@index([createdAt])
+  @@map("forum_moderator_section")
+}

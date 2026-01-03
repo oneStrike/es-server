@@ -1,0 +1,26 @@
+model ForumPointRule {
+  /// 主键ID
+  id              Int       @id @default(autoincrement())
+  /// 规则名称
+  name            String    @db.VarChar(50)
+  /// 规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）
+  type            Int       @db.SmallInt
+  /// 积分变化（正数为获得，负数为消费）
+  points          Int       @db.Integer
+  /// 每日上限（0=无限制）
+  dailyLimit      Int       @default(0) @map("daily_limit") @db.Integer
+  /// 是否启用
+  isEnabled       Boolean   @default(true) @map("is_enabled")
+  /// 备注
+  remark          String?   @db.VarChar(500)
+  /// 创建时间
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// 索引优化
+  @@index([type])
+  @@index([isEnabled])
+  @@index([createdAt])
+  @@map("forum_point_rule")
+}

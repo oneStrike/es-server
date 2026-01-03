@@ -1,0 +1,85 @@
+model ForumTopic {
+  /// 主键ID
+  id              Int       @id @default(autoincrement())
+  /// 主题标题
+  title           String    @db.VarChar(200)
+  /// 主题内容
+  content         String    @db.Text
+  /// 关联的板块ID
+  sectionId       Int       @map("section_id") @db.Integer
+  /// 关联的板块
+  section         ForumSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  /// 关联的用户ID
+  userId          Int       @map("user_id") @db.Integer
+  /// 关联的用户资料
+  profile         ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 关联的用户
+  user            ClientUser @relation(fields: [userId], references: [id])
+  /// 是否置顶
+  isPinned        Boolean   @default(false) @map("is_pinned")
+  /// 是否加精
+  isFeatured      Boolean   @default(false) @map("is_featured")
+  /// 是否锁定
+  isLocked        Boolean   @default(false) @map("is_locked")
+  /// 是否隐藏（待审核）
+  isHidden        Boolean   @default(false) @map("is_hidden")
+  /// 审核状态（0=待审核, 1=已通过, 2=已拒绝）
+  auditStatus     Int       @default(0) @map("audit_status") @db.SmallInt
+  /// 审核原因
+  auditReason     String?   @map("audit_reason") @db.VarChar(500)
+  /// 审核时间
+  auditAt         DateTime? @map("audit_at") @db.Timestamptz
+  /// 审核人ID
+  auditBy         Int?      @map("audit_by") @db.Integer
+  /// 浏览量
+  viewCount       Int       @default(0) @map("view_count") @db.Integer
+  /// 回复数
+  replyCount      Int       @default(0) @map("reply_count") @db.Integer
+  /// 点赞数
+  likeCount       Int       @default(0) @map("like_count") @db.Integer
+  /// 收藏数
+  favoriteCount   Int       @default(0) @map("favorite_count") @db.Integer
+  /// 最后回复时间
+  lastReplyAt     DateTime? @map("last_reply_at") @db.Timestamptz
+  /// 最后回复用户ID
+  lastReplyUserId Int?      @map("last_reply_user_id") @db.Integer
+  /// 最后回复用户
+  lastReplyUser   ClientUser? @relation("LastReplyUser", fields: [lastReplyUserId], references: [id], onDelete: SetNull)
+  /// 创建时间
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  /// 软删除时间
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz
+
+  /// 关联的回复
+  replies         ForumReply[]
+  /// 关联的标签
+  tags            ForumTag[] @relation("TopicTags")
+  /// 关联的点赞记录
+  likes           ForumTopicLike[]
+  /// 关联的收藏记录
+  favorites       ForumTopicFavorite[]
+  /// 关联的审核日志
+  auditLogs       ForumAuditLog[]
+
+  /// 索引优化
+  @@index([sectionId])
+  @@index([userId])
+  @@index([isPinned, createdAt])
+  @@index([isFeatured, createdAt])
+  @@index([isLocked])
+  @@index([isHidden])
+  @@index([auditStatus])
+  @@index([viewCount])
+  @@index([replyCount])
+  @@index([likeCount])
+  @@index([favoriteCount])
+  @@index([lastReplyAt])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([deletedAt])
+  @@index([sectionId, isPinned, createdAt])
+  @@index([sectionId, isFeatured, createdAt])
+  @@map("forum_topic")
+}

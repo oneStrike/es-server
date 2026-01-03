@@ -1,0 +1,22 @@
+model ForumSensitiveWord {
+  /// 主键ID
+  id              Int       @id @default(autoincrement())
+  /// 敏感词
+  word            String    @unique @db.VarChar(100)
+  /// 替换词
+  replaceWord     String?   @map("replace_word") @db.VarChar(100)
+  /// 是否启用
+  isEnabled       Boolean   @default(true) @map("is_enabled")
+  /// 备注
+  remark          String?   @db.VarChar(500)
+  /// 创建时间
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// 索引优化
+  @@index([word])
+  @@index([isEnabled])
+  @@index([createdAt])
+  @@map("forum_sensitive_word")
+}

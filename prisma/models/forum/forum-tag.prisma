@@ -1,0 +1,31 @@
+model ForumTag {
+  /// 主键ID
+  id              Int       @id @default(autoincrement())
+  /// 标签名称
+  name            String    @unique @db.VarChar(20)
+  /// 标签图标URL
+  icon            String?   @db.VarChar(255)
+  /// 使用次数
+  useCount        Int       @default(0) @map("use_count") @db.Integer
+  /// 排序值（数值越小越靠前）
+  order           Int       @default(0) @db.SmallInt
+  /// 是否启用
+  isEnabled       Boolean   @default(true) @map("is_enabled")
+  /// 标签描述
+  description     String?   @db.VarChar(200)
+  /// 创建时间
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// 关联的主题
+  topics          ForumTopic[] @relation("TopicTags")
+
+  /// 索引优化
+  @@index([order])
+  @@index([name])
+  @@index([isEnabled])
+  @@index([useCount])
+  @@index([createdAt])
+  @@map("forum_tag")
+}

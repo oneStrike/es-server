@@ -1,0 +1,29 @@
+model ForumAuditLog {
+  /// 主键ID
+  id              Int       @id @default(autoincrement())
+  /// 审核对象类型（1=主题, 2=回复）
+  objectType      Int       @map("object_type") @db.SmallInt
+  /// 审核对象ID
+  objectId        Int       @map("object_id") @db.Integer
+  /// 关联的主题
+  topic           ForumTopic? @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  /// 关联的回复
+  reply           ForumReply? @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  /// 审核状态（0=待审核, 1=已通过, 2=已拒绝）
+  auditStatus     Int       @map("audit_status") @db.SmallInt
+  /// 审核原因
+  auditReason     String?   @map("audit_reason") @db.VarChar(500)
+  /// 审核人ID
+  auditBy         Int       @map("audit_by") @db.Integer
+  /// 审核时间
+  auditAt         DateTime  @default(now()) @map("audit_at") @db.Timestamptz
+  /// 备注
+  remark          String?   @db.VarChar(500)
+
+  /// 索引优化
+  @@index([objectType, objectId])
+  @@index([auditStatus])
+  @@index([auditBy])
+  @@index([auditAt])
+  @@map("forum_audit_log")
+}
