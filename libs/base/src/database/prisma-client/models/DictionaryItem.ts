@@ -738,9 +738,6 @@ export type DictionaryItemIncludeUpdateManyAndReturn<ExtArgs extends runtime.Typ
 export type $DictionaryItemPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "DictionaryItem"
   objects: {
-    /**
-     * 所属字典关系
-     */
     parentDictionary: Prisma.$DictionaryPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{

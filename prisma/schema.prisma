@@ -1,14 +1,9 @@
-// Prisma Schema 配置与数据模型入口
-// - 说明：Prisma v7 推荐将连接字符串等放到 prisma.config.ts 中，本文件专注于生成器与数据模型定义
-// - 文档：https://www.prisma.io/docs/orm/reference/prisma-schema-reference
-
 generator client {
   provider        = "prisma-client"
-  previewFeatures = ["relationJoins"]
   output          = "../libs/base/src/database/prisma-client"
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
-  provider     = "postgresql"
-  relationMode = "prisma"
+  provider = "postgresql"
 }

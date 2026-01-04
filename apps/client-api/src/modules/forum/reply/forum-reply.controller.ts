@@ -1,16 +1,15 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { CurrentUser } from '@libs/base/decorators'
 
-import { ForumReplyService } from './forum-reply.service'
 import {
   BaseForumReplyDto,
   CreateForumReplyDto,
   QueryForumReplyDto,
   UpdateForumReplyDto,
 } from './dto/forum-reply.dto'
+import { ForumReplyService } from './forum-reply.service'
 
 /**
  * 客户端论坛回复控制器

@@ -1,12 +1,12 @@
+import { ApiDoc, ApiPageDoc } from '@libs/common'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ApiDoc, ApiPageDoc } from '@libs/common'
 import { AnalyticsService } from './analytics.service'
 import {
-  ForumOverviewDto,
-  ActivityTrendQueryDto,
-  HotTopicsQueryDto,
   ActiveUsersQueryDto,
+  ActivityTrendQueryDto,
+  ForumOverviewDto,
+  HotTopicsQueryDto,
   SectionStatsQueryDto,
 } from './dto/analytics.dto'
 

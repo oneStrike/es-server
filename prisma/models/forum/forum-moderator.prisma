@@ -1,30 +1,24 @@
 model ForumModerator {
   /// 主键ID
-  id              Int       @id @default(autoincrement())
+  id             Int                       @id @default(autoincrement())
   /// 关联的用户ID
-  userId          Int       @map("user_id") @db.Integer
-  /// 关联的用户资料
-  profile         ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int                       @unique @map("user_id")
   /// 权限位掩码（1=置顶, 2=加精, 4=锁定, 8=删除, 16=审核, 32=移动）
-  permissionMask  Int       @default(0) @map("permission_mask") @db.Integer
+  permissionMask Int                       @default(0) @map("permission_mask")
   /// 是否启用
-  isEnabled       Boolean   @default(true) @map("is_enabled")
+  isEnabled      Boolean                   @default(true) @map("is_enabled")
   /// 备注
-  remark          String?   @db.VarChar(500)
+  remark         String?                   @db.VarChar(500)
   /// 创建时间
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt      DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt      DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
-  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz
+  deletedAt      DateTime?                 @map("deleted_at") @db.Timestamptz(6)
+  profile        ForumProfile              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actionLogs     ForumModeratorActionLog[]
+  sections       ForumModeratorSection[]
 
-  /// 关联的版主板块
-  sections        ForumModeratorSection[]
-  /// 关联的操作日志
-  actionLogs      ForumModeratorActionLog[]
-
-  /// 索引优化
-  @@unique([userId])
   @@index([permissionMask])
   @@index([isEnabled])
   @@index([createdAt])

@@ -1,15 +1,15 @@
 import type { ForumReplyWhereInput } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { NotificationObjectTypeEnum } from '@app/forum/notification/notification.constant'
 
+import { NotificationService } from '@app/forum/notification/notification.service'
+import { RepositoryService } from '@libs/base/database'
 import { isNotNil } from '@libs/base/utils'
-import { BadRequestException, Injectable, Inject } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable } from '@nestjs/common'
 import {
   CreateForumReplyDto,
   QueryForumReplyDto,
   UpdateForumReplyDto,
 } from './dto/forum-reply.dto'
-import { NotificationService } from '@app/forum/notification/notification.service'
-import { NotificationObjectTypeEnum } from '@app/forum/notification/notification.constant'
 
 /**
  * 客户端论坛回复服务类
@@ -23,6 +23,7 @@ export class ForumReplyService extends RepositoryService {
   ) {
     super()
   }
+
   get forumReply() {
     return this.prisma.forumReply
   }

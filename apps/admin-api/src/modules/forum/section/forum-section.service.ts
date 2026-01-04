@@ -1,9 +1,9 @@
 import type { ForumSectionWhereInput } from '@libs/base/database'
 import { RepositoryService } from '@libs/base/database'
 
+import { DragReorderDto } from '@libs/base/dto'
 import { isNotNil } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { DragReorderDto } from '@libs/base/dto'
 import {
   CreateForumSectionDto,
   QueryForumSectionDto,

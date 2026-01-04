@@ -196,7 +196,7 @@ export const SystemConfigKeyNameMap: Record<SystemConfigKeyEnum, string> = {
 /**
  * 系统配置默认值映射
  */
-export const SystemConfigDefaultValueMap: Record<SystemConfigKeyEnum, { value: string; type: SystemConfigTypeEnum }> = {
+export const SystemConfigDefaultValueMap: Record<SystemConfigKeyEnum, { value: string, type: SystemConfigTypeEnum }> = {
   [SystemConfigKeyEnum.ENABLE_REGISTRATION]: { value: 'true', type: SystemConfigTypeEnum.BOOLEAN },
   [SystemConfigKeyEnum.ENABLE_GUEST_BROWSE]: { value: 'true', type: SystemConfigTypeEnum.BOOLEAN },
   [SystemConfigKeyEnum.ENABLE_GUEST_POST]: { value: 'false', type: SystemConfigTypeEnum.BOOLEAN },

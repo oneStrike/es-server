@@ -1,12 +1,12 @@
 import { ApiDoc, ApiPageDoc, Public } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { ForumSectionService } from './forum-section.service'
 import {
   BaseForumSectionDto,
   QueryForumSectionDto,
 } from './dto/forum-section.dto'
+import { ForumSectionService } from './forum-section.service'
 
 /**
  * 客户端论坛板块控制器

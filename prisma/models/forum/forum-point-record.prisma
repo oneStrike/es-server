@@ -1,30 +1,27 @@
 model ForumPointRecord {
   /// 主键ID
-  id              Int       @id @default(autoincrement())
+  id           Int             @id @default(autoincrement())
   /// 关联的用户ID
-  userId          Int       @map("user_id") @db.Integer
-  /// 关联的用户资料
-  profile         ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int             @map("user_id")
   /// 关联的规则ID
-  ruleId          Int?      @map("rule_id") @db.Integer
-  /// 关联的规则
-  rule            ForumPointRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  ruleId       Int?            @map("rule_id")
   /// 积分变化（正数为获得，负数为消费）
-  points          Int       @db.Integer
+  points       Int
   /// 变化前积分
-  beforePoints    Int       @map("before_points") @db.Integer
+  beforePoints Int             @map("before_points")
   /// 变化后积分
-  afterPoints     Int       @map("after_points") @db.Integer
+  afterPoints  Int             @map("after_points")
   /// 关联对象类型（1=主题, 2=回复, 3=签到）
-  objectType      Int       @map("object_type") @db.SmallInt
+  objectType   Int             @map("object_type") @db.SmallInt
   /// 关联对象ID
-  objectId        Int       @map("object_id") @db.Integer
+  objectId     Int             @map("object_id")
   /// 备注
-  remark          String?   @db.VarChar(500)
+  remark       String?         @db.VarChar(500)
   /// 创建时间
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  rule         ForumPointRule? @relation(fields: [ruleId], references: [id])
+  profile      ForumProfile    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /// 索引优化
   @@index([userId])
   @@index([ruleId])
   @@index([objectType, objectId])

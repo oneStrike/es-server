@@ -28,18 +28,18 @@ export type AggregateWorkAuthor = {
 
 export type WorkAuthorAvgAggregateOutputType = {
   id: number | null
-  type: number | null
   gender: number | null
   worksCount: number | null
   followersCount: number | null
+  type: number | null
 }
 
 export type WorkAuthorSumAggregateOutputType = {
   id: number | null
-  type: number[]
   gender: number | null
   worksCount: number | null
   followersCount: number | null
+  type: number[]
 }
 
 export type WorkAuthorMinAggregateOutputType = {
@@ -52,11 +52,11 @@ export type WorkAuthorMinAggregateOutputType = {
   gender: number | null
   worksCount: number | null
   followersCount: number | null
-  isRecommended: boolean | null
   remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
+  isRecommended: boolean | null
 }
 
 export type WorkAuthorMaxAggregateOutputType = {
@@ -69,11 +69,11 @@ export type WorkAuthorMaxAggregateOutputType = {
   gender: number | null
   worksCount: number | null
   followersCount: number | null
-  isRecommended: boolean | null
   remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
+  isRecommended: boolean | null
 }
 
 export type WorkAuthorCountAggregateOutputType = {
@@ -82,34 +82,34 @@ export type WorkAuthorCountAggregateOutputType = {
   avatar: number
   description: number
   isEnabled: number
-  type: number
   nationality: number
   gender: number
   worksCount: number
   followersCount: number
-  isRecommended: number
   remark: number
   createdAt: number
   updatedAt: number
   deletedAt: number
+  isRecommended: number
+  type: number
   _all: number
 }
 
 
 export type WorkAuthorAvgAggregateInputType = {
   id?: true
-  type?: true
   gender?: true
   worksCount?: true
   followersCount?: true
+  type?: true
 }
 
 export type WorkAuthorSumAggregateInputType = {
   id?: true
-  type?: true
   gender?: true
   worksCount?: true
   followersCount?: true
+  type?: true
 }
 
 export type WorkAuthorMinAggregateInputType = {
@@ -122,11 +122,11 @@ export type WorkAuthorMinAggregateInputType = {
   gender?: true
   worksCount?: true
   followersCount?: true
-  isRecommended?: true
   remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
+  isRecommended?: true
 }
 
 export type WorkAuthorMaxAggregateInputType = {
@@ -139,11 +139,11 @@ export type WorkAuthorMaxAggregateInputType = {
   gender?: true
   worksCount?: true
   followersCount?: true
-  isRecommended?: true
   remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
+  isRecommended?: true
 }
 
 export type WorkAuthorCountAggregateInputType = {
@@ -152,16 +152,16 @@ export type WorkAuthorCountAggregateInputType = {
   avatar?: true
   description?: true
   isEnabled?: true
-  type?: true
   nationality?: true
   gender?: true
   worksCount?: true
   followersCount?: true
-  isRecommended?: true
   remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
+  isRecommended?: true
+  type?: true
   _all?: true
 }
 
@@ -257,16 +257,16 @@ export type WorkAuthorGroupByOutputType = {
   avatar: string | null
   description: string | null
   isEnabled: boolean
-  type: number[]
   nationality: string | null
   gender: number
   worksCount: number
   followersCount: number
-  isRecommended: boolean
   remark: string | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
+  isRecommended: boolean
+  type: number[]
   _count: WorkAuthorCountAggregateOutputType | null
   _avg: WorkAuthorAvgAggregateOutputType | null
   _sum: WorkAuthorSumAggregateOutputType | null
@@ -298,16 +298,16 @@ export type WorkAuthorWhereInput = {
   avatar?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
   description?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
   isEnabled?: Prisma.BoolFilter<"WorkAuthor"> | boolean
-  type?: Prisma.IntNullableListFilter<"WorkAuthor">
   nationality?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
   gender?: Prisma.IntFilter<"WorkAuthor"> | number
   worksCount?: Prisma.IntFilter<"WorkAuthor"> | number
   followersCount?: Prisma.IntFilter<"WorkAuthor"> | number
-  isRecommended?: Prisma.BoolFilter<"WorkAuthor"> | boolean
   remark?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkAuthor"> | Date | string | null
+  isRecommended?: Prisma.BoolFilter<"WorkAuthor"> | boolean
+  type?: Prisma.IntNullableListFilter<"WorkAuthor">
   comicAuthors?: Prisma.WorkComicAuthorListRelationFilter
 }
 
@@ -317,16 +317,16 @@ export type WorkAuthorOrderByWithRelationInput = {
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  type?: Prisma.SortOrder
   nationality?: Prisma.SortOrderInput | Prisma.SortOrder
   gender?: Prisma.SortOrder
   worksCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   comicAuthors?: Prisma.WorkComicAuthorOrderByRelationAggregateInput
 }
 
@@ -339,16 +339,16 @@ export type WorkAuthorWhereUniqueInput = Prisma.AtLeast<{
   avatar?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
   description?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
   isEnabled?: Prisma.BoolFilter<"WorkAuthor"> | boolean
-  type?: Prisma.IntNullableListFilter<"WorkAuthor">
   nationality?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
   gender?: Prisma.IntFilter<"WorkAuthor"> | number
   worksCount?: Prisma.IntFilter<"WorkAuthor"> | number
   followersCount?: Prisma.IntFilter<"WorkAuthor"> | number
-  isRecommended?: Prisma.BoolFilter<"WorkAuthor"> | boolean
   remark?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkAuthor"> | Date | string | null
+  isRecommended?: Prisma.BoolFilter<"WorkAuthor"> | boolean
+  type?: Prisma.IntNullableListFilter<"WorkAuthor">
   comicAuthors?: Prisma.WorkComicAuthorListRelationFilter
 }, "id" | "name">
 
@@ -358,16 +358,16 @@ export type WorkAuthorOrderByWithAggregationInput = {
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  type?: Prisma.SortOrder
   nationality?: Prisma.SortOrderInput | Prisma.SortOrder
   gender?: Prisma.SortOrder
   worksCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   _count?: Prisma.WorkAuthorCountOrderByAggregateInput
   _avg?: Prisma.WorkAuthorAvgOrderByAggregateInput
   _max?: Prisma.WorkAuthorMaxOrderByAggregateInput
@@ -384,16 +384,16 @@ export type WorkAuthorScalarWhereWithAggregatesInput = {
   avatar?: Prisma.StringNullableWithAggregatesFilter<"WorkAuthor"> | string | null
   description?: Prisma.StringNullableWithAggregatesFilter<"WorkAuthor"> | string | null
   isEnabled?: Prisma.BoolWithAggregatesFilter<"WorkAuthor"> | boolean
-  type?: Prisma.IntNullableListFilter<"WorkAuthor">
   nationality?: Prisma.StringNullableWithAggregatesFilter<"WorkAuthor"> | string | null
   gender?: Prisma.IntWithAggregatesFilter<"WorkAuthor"> | number
   worksCount?: Prisma.IntWithAggregatesFilter<"WorkAuthor"> | number
   followersCount?: Prisma.IntWithAggregatesFilter<"WorkAuthor"> | number
-  isRecommended?: Prisma.BoolWithAggregatesFilter<"WorkAuthor"> | boolean
   remark?: Prisma.StringNullableWithAggregatesFilter<"WorkAuthor"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WorkAuthor"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkAuthor"> | Date | string | null
+  isRecommended?: Prisma.BoolWithAggregatesFilter<"WorkAuthor"> | boolean
+  type?: Prisma.IntNullableListFilter<"WorkAuthor">
 }
 
 export type WorkAuthorCreateInput = {
@@ -401,16 +401,16 @@ export type WorkAuthorCreateInput = {
   avatar?: string | null
   description?: string | null
   isEnabled?: boolean
-  type?: Prisma.WorkAuthorCreatetypeInput | number[]
   nationality?: string | null
   gender?: number
   worksCount?: number
   followersCount?: number
-  isRecommended?: boolean
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  isRecommended?: boolean
+  type?: Prisma.WorkAuthorCreatetypeInput | number[]
   comicAuthors?: Prisma.WorkComicAuthorCreateNestedManyWithoutAuthorInput
 }
 
@@ -420,16 +420,16 @@ export type WorkAuthorUncheckedCreateInput = {
   avatar?: string | null
   description?: string | null
   isEnabled?: boolean
-  type?: Prisma.WorkAuthorCreatetypeInput | number[]
   nationality?: string | null
   gender?: number
   worksCount?: number
   followersCount?: number
-  isRecommended?: boolean
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  isRecommended?: boolean
+  type?: Prisma.WorkAuthorCreatetypeInput | number[]
   comicAuthors?: Prisma.WorkComicAuthorUncheckedCreateNestedManyWithoutAuthorInput
 }
 
@@ -438,16 +438,16 @@ export type WorkAuthorUpdateInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
   nationality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   worksCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
   comicAuthors?: Prisma.WorkComicAuthorUpdateManyWithoutAuthorNestedInput
 }
 
@@ -457,16 +457,16 @@ export type WorkAuthorUncheckedUpdateInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
   nationality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   worksCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
   comicAuthors?: Prisma.WorkComicAuthorUncheckedUpdateManyWithoutAuthorNestedInput
 }
 
@@ -476,16 +476,16 @@ export type WorkAuthorCreateManyInput = {
   avatar?: string | null
   description?: string | null
   isEnabled?: boolean
-  type?: Prisma.WorkAuthorCreatetypeInput | number[]
   nationality?: string | null
   gender?: number
   worksCount?: number
   followersCount?: number
-  isRecommended?: boolean
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  isRecommended?: boolean
+  type?: Prisma.WorkAuthorCreatetypeInput | number[]
 }
 
 export type WorkAuthorUpdateManyMutationInput = {
@@ -493,16 +493,16 @@ export type WorkAuthorUpdateManyMutationInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
   nationality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   worksCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
 }
 
 export type WorkAuthorUncheckedUpdateManyInput = {
@@ -511,16 +511,16 @@ export type WorkAuthorUncheckedUpdateManyInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
   nationality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   worksCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
 }
 
 export type WorkAuthorCountOrderByAggregateInput = {
@@ -529,24 +529,24 @@ export type WorkAuthorCountOrderByAggregateInput = {
   avatar?: Prisma.SortOrder
   description?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  type?: Prisma.SortOrder
   nationality?: Prisma.SortOrder
   gender?: Prisma.SortOrder
   worksCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
+  type?: Prisma.SortOrder
 }
 
 export type WorkAuthorAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  type?: Prisma.SortOrder
   gender?: Prisma.SortOrder
   worksCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
+  type?: Prisma.SortOrder
 }
 
 export type WorkAuthorMaxOrderByAggregateInput = {
@@ -559,11 +559,11 @@ export type WorkAuthorMaxOrderByAggregateInput = {
   gender?: Prisma.SortOrder
   worksCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
 }
 
 export type WorkAuthorMinOrderByAggregateInput = {
@@ -576,19 +576,19 @@ export type WorkAuthorMinOrderByAggregateInput = {
   gender?: Prisma.SortOrder
   worksCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
 }
 
 export type WorkAuthorSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  type?: Prisma.SortOrder
   gender?: Prisma.SortOrder
   worksCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
+  type?: Prisma.SortOrder
 }
 
 export type WorkAuthorScalarRelationFilter = {
@@ -624,16 +624,16 @@ export type WorkAuthorCreateWithoutComicAuthorsInput = {
   avatar?: string | null
   description?: string | null
   isEnabled?: boolean
-  type?: Prisma.WorkAuthorCreatetypeInput | number[]
   nationality?: string | null
   gender?: number
   worksCount?: number
   followersCount?: number
-  isRecommended?: boolean
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  isRecommended?: boolean
+  type?: Prisma.WorkAuthorCreatetypeInput | number[]
 }
 
 export type WorkAuthorUncheckedCreateWithoutComicAuthorsInput = {
@@ -642,16 +642,16 @@ export type WorkAuthorUncheckedCreateWithoutComicAuthorsInput = {
   avatar?: string | null
   description?: string | null
   isEnabled?: boolean
-  type?: Prisma.WorkAuthorCreatetypeInput | number[]
   nationality?: string | null
   gender?: number
   worksCount?: number
   followersCount?: number
-  isRecommended?: boolean
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  isRecommended?: boolean
+  type?: Prisma.WorkAuthorCreatetypeInput | number[]
 }
 
 export type WorkAuthorCreateOrConnectWithoutComicAuthorsInput = {
@@ -675,16 +675,16 @@ export type WorkAuthorUpdateWithoutComicAuthorsInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
   nationality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   worksCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
 }
 
 export type WorkAuthorUncheckedUpdateWithoutComicAuthorsInput = {
@@ -693,16 +693,16 @@ export type WorkAuthorUncheckedUpdateWithoutComicAuthorsInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
   nationality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   worksCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  type?: Prisma.WorkAuthorUpdatetypeInput | number[]
 }
 
 
@@ -742,16 +742,16 @@ export type WorkAuthorSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   avatar?: boolean
   description?: boolean
   isEnabled?: boolean
-  type?: boolean
   nationality?: boolean
   gender?: boolean
   worksCount?: boolean
   followersCount?: boolean
-  isRecommended?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  isRecommended?: boolean
+  type?: boolean
   comicAuthors?: boolean | Prisma.WorkAuthor$comicAuthorsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkAuthorCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workAuthor"]>
@@ -762,16 +762,16 @@ export type WorkAuthorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   avatar?: boolean
   description?: boolean
   isEnabled?: boolean
-  type?: boolean
   nationality?: boolean
   gender?: boolean
   worksCount?: boolean
   followersCount?: boolean
-  isRecommended?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  isRecommended?: boolean
+  type?: boolean
 }, ExtArgs["result"]["workAuthor"]>
 
 export type WorkAuthorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -780,16 +780,16 @@ export type WorkAuthorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   avatar?: boolean
   description?: boolean
   isEnabled?: boolean
-  type?: boolean
   nationality?: boolean
   gender?: boolean
   worksCount?: boolean
   followersCount?: boolean
-  isRecommended?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  isRecommended?: boolean
+  type?: boolean
 }, ExtArgs["result"]["workAuthor"]>
 
 export type WorkAuthorSelectScalar = {
@@ -798,19 +798,19 @@ export type WorkAuthorSelectScalar = {
   avatar?: boolean
   description?: boolean
   isEnabled?: boolean
-  type?: boolean
   nationality?: boolean
   gender?: boolean
   worksCount?: boolean
   followersCount?: boolean
-  isRecommended?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  isRecommended?: boolean
+  type?: boolean
 }
 
-export type WorkAuthorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "avatar" | "description" | "isEnabled" | "type" | "nationality" | "gender" | "worksCount" | "followersCount" | "isRecommended" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workAuthor"]>
+export type WorkAuthorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "avatar" | "description" | "isEnabled" | "nationality" | "gender" | "worksCount" | "followersCount" | "remark" | "createdAt" | "updatedAt" | "deletedAt" | "isRecommended" | "type", ExtArgs["result"]["workAuthor"]>
 export type WorkAuthorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comicAuthors?: boolean | Prisma.WorkAuthor$comicAuthorsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkAuthorCountOutputTypeDefaultArgs<ExtArgs>
@@ -821,9 +821,6 @@ export type WorkAuthorIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type $WorkAuthorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "WorkAuthor"
   objects: {
-    /**
-     * 作品关联（多对多）
-     */
     comicAuthors: Prisma.$WorkComicAuthorPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -848,10 +845,6 @@ export type $WorkAuthorPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     isEnabled: boolean
     /**
-     * 作者类型，bitmap存储，每个bit表示一种类型（1: 漫画家, 2: 轻小说作者, 4: 插画师, 8: coser）
-     */
-    type: number[]
-    /**
      * 国籍
      */
     nationality: string | null
@@ -868,10 +861,6 @@ export type $WorkAuthorPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     followersCount: number
     /**
-     * 是否为推荐作者（用于前台推荐展示）
-     */
-    isRecommended: boolean
-    /**
      * 管理员备注
      */
     remark: string | null
@@ -887,6 +876,14 @@ export type $WorkAuthorPayload<ExtArgs extends runtime.Types.Extensions.Internal
      * 软删除时间（用于数据恢复或归档）
      */
     deletedAt: Date | null
+    /**
+     * 是否为推荐作者（用于前台推荐展示）
+     */
+    isRecommended: boolean
+    /**
+     * 作者类型，bitmap存储，每个bit表示一种类型（1: 漫画家, 2: 轻小说作者, 4: 插画师, 8: coser）
+     */
+    type: number[]
   }, ExtArgs["result"]["workAuthor"]>
   composites: {}
 }
@@ -1316,16 +1313,16 @@ export interface WorkAuthorFieldRefs {
   readonly avatar: Prisma.FieldRef<"WorkAuthor", 'String'>
   readonly description: Prisma.FieldRef<"WorkAuthor", 'String'>
   readonly isEnabled: Prisma.FieldRef<"WorkAuthor", 'Boolean'>
-  readonly type: Prisma.FieldRef<"WorkAuthor", 'Int[]'>
   readonly nationality: Prisma.FieldRef<"WorkAuthor", 'String'>
   readonly gender: Prisma.FieldRef<"WorkAuthor", 'Int'>
   readonly worksCount: Prisma.FieldRef<"WorkAuthor", 'Int'>
   readonly followersCount: Prisma.FieldRef<"WorkAuthor", 'Int'>
-  readonly isRecommended: Prisma.FieldRef<"WorkAuthor", 'Boolean'>
   readonly remark: Prisma.FieldRef<"WorkAuthor", 'String'>
   readonly createdAt: Prisma.FieldRef<"WorkAuthor", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WorkAuthor", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"WorkAuthor", 'DateTime'>
+  readonly isRecommended: Prisma.FieldRef<"WorkAuthor", 'Boolean'>
+  readonly type: Prisma.FieldRef<"WorkAuthor", 'Int[]'>
 }
     
 

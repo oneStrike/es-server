@@ -1,5 +1,4 @@
 import {
-  ValidateArray,
   ValidateBoolean,
   ValidateNumber,
   ValidateString,

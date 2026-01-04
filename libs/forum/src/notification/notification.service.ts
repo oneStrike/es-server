@@ -1,21 +1,21 @@
-import { Injectable, BadRequestException } from '@nestjs/common'
-import { PrismaService } from '@app/prisma/prisma.service'
 import { RepositoryService } from '@app/base/repository/repository.service'
-import { 
-  CreateNotificationDto, 
-  QueryNotificationListDto, 
-  MarkNotificationReadDto,
-  BatchMarkNotificationReadDto,
-  MarkAllNotificationReadDto,
-  DeleteNotificationDto,
+import { PrismaService } from '@app/prisma/prisma.service'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import {
   BatchDeleteNotificationDto,
-  GetUnreadCountDto
+  BatchMarkNotificationReadDto,
+  CreateNotificationDto,
+  DeleteNotificationDto,
+  GetUnreadCountDto,
+  MarkAllNotificationReadDto,
+  MarkNotificationReadDto,
+  QueryNotificationListDto
 } from './dto/notification.dto'
-import { 
-  NotificationTypeEnum, 
+import {
+  NotificationContentTemplates,
   NotificationObjectTypeEnum,
   NotificationTitleTemplates,
-  NotificationContentTemplates
+  NotificationTypeEnum
 } from './notification.constant'
 
 @Injectable()

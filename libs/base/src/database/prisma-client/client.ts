@@ -63,6 +63,106 @@ export type ClientPage = Prisma.ClientPageModel
  */
 export type ClientUser = Prisma.ClientUserModel
 /**
+ * Model ForumAuditLog
+ * 
+ */
+export type ForumAuditLog = Prisma.ForumAuditLogModel
+/**
+ * Model ForumBadge
+ * 
+ */
+export type ForumBadge = Prisma.ForumBadgeModel
+/**
+ * Model ForumLevelRule
+ * 
+ */
+export type ForumLevelRule = Prisma.ForumLevelRuleModel
+/**
+ * Model ForumModeratorActionLog
+ * 
+ */
+export type ForumModeratorActionLog = Prisma.ForumModeratorActionLogModel
+/**
+ * Model ForumModeratorSection
+ * 
+ */
+export type ForumModeratorSection = Prisma.ForumModeratorSectionModel
+/**
+ * Model ForumModerator
+ * 
+ */
+export type ForumModerator = Prisma.ForumModeratorModel
+/**
+ * Model ForumNotification
+ * 
+ */
+export type ForumNotification = Prisma.ForumNotificationModel
+/**
+ * Model ForumPointRecord
+ * 
+ */
+export type ForumPointRecord = Prisma.ForumPointRecordModel
+/**
+ * Model ForumPointRule
+ * 
+ */
+export type ForumPointRule = Prisma.ForumPointRuleModel
+/**
+ * Model ForumProfileBadge
+ * 
+ */
+export type ForumProfileBadge = Prisma.ForumProfileBadgeModel
+/**
+ * Model ForumProfile
+ * 
+ */
+export type ForumProfile = Prisma.ForumProfileModel
+/**
+ * Model ForumReplyLike
+ * 
+ */
+export type ForumReplyLike = Prisma.ForumReplyLikeModel
+/**
+ * Model ForumReply
+ * 
+ */
+export type ForumReply = Prisma.ForumReplyModel
+/**
+ * Model ForumSection
+ * 
+ */
+export type ForumSection = Prisma.ForumSectionModel
+/**
+ * Model ForumSensitiveWord
+ * 
+ */
+export type ForumSensitiveWord = Prisma.ForumSensitiveWordModel
+/**
+ * Model ForumTag
+ * 
+ */
+export type ForumTag = Prisma.ForumTagModel
+/**
+ * Model ForumTopicFavorite
+ * 
+ */
+export type ForumTopicFavorite = Prisma.ForumTopicFavoriteModel
+/**
+ * Model ForumTopicLike
+ * 
+ */
+export type ForumTopicLike = Prisma.ForumTopicLikeModel
+/**
+ * Model ForumTopicTag
+ * 
+ */
+export type ForumTopicTag = Prisma.ForumTopicTagModel
+/**
+ * Model ForumTopic
+ * 
+ */
+export type ForumTopic = Prisma.ForumTopicModel
+/**
  * Model MemberLevel
  * 会员等级
  */

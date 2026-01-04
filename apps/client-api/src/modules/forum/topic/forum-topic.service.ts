@@ -1,15 +1,14 @@
 import type { ForumTopicWhereInput } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
 
+import { NotificationService } from '@app/forum/notification/notification.service'
+import { RepositoryService } from '@libs/base/database'
 import { isNotNil } from '@libs/base/utils'
-import { BadRequestException, Injectable, Inject } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable } from '@nestjs/common'
 import {
-  QueryForumTopicDto,
   CreateForumTopicDto,
+  QueryForumTopicDto,
   UpdateForumTopicDto,
 } from './dto/forum-topic.dto'
-import { NotificationService } from '@app/forum/notification/notification.service'
-import { NotificationObjectTypeEnum } from '@app/forum/notification/notification.constant'
 
 /**
  * 客户端论坛主题服务类
@@ -23,6 +22,7 @@ export class ForumTopicService extends RepositoryService {
   ) {
     super()
   }
+
   get forumTopic() {
     return this.prisma.forumTopic
   }

@@ -3,17 +3,17 @@ import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-import { ForumTopicService } from './forum-topic.service'
 import {
   BaseForumTopicDto,
   CreateForumTopicDto,
   QueryForumTopicDto,
+  UpdateForumTopicDto,
   UpdateTopicAuditStatusDto,
   UpdateTopicFeaturedDto,
   UpdateTopicLockedDto,
   UpdateTopicPinnedDto,
-  UpdateForumTopicDto,
 } from './dto/forum-topic.dto'
+import { ForumTopicService } from './forum-topic.service'
 
 /**
  * 论坛主题管理控制器

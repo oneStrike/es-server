@@ -6,13 +6,12 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { PointRuleTypeEnum, PointObjectTypeEnum } from '../point.constant'
+import { PointObjectTypeEnum, PointRuleTypeEnum } from '../point.constant'
 
 /**
  * 积分规则基础DTO

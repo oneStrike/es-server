@@ -3,7 +3,6 @@ import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-import { ForumUserService } from './forum-user.service'
 import {
   AdjustPointsDto,
   BaseForumProfileDto,
@@ -12,6 +11,7 @@ import {
   UpdateBanStatusDto,
   UpdateForumProfileDto,
 } from './dto/forum-user.dto'
+import { ForumUserService } from './forum-user.service'
 
 /**
  * 论坛用户管理控制器

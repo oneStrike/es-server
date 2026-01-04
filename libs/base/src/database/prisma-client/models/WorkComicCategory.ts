@@ -41,25 +41,25 @@ export type WorkComicCategorySumAggregateOutputType = {
 export type WorkComicCategoryMinAggregateOutputType = {
   comicId: number | null
   categoryId: number | null
-  sortOrder: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  sortOrder: number | null
 }
 
 export type WorkComicCategoryMaxAggregateOutputType = {
   comicId: number | null
   categoryId: number | null
-  sortOrder: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  sortOrder: number | null
 }
 
 export type WorkComicCategoryCountAggregateOutputType = {
   comicId: number
   categoryId: number
-  sortOrder: number
   createdAt: number
   updatedAt: number
+  sortOrder: number
   _all: number
 }
 
@@ -79,25 +79,25 @@ export type WorkComicCategorySumAggregateInputType = {
 export type WorkComicCategoryMinAggregateInputType = {
   comicId?: true
   categoryId?: true
-  sortOrder?: true
   createdAt?: true
   updatedAt?: true
+  sortOrder?: true
 }
 
 export type WorkComicCategoryMaxAggregateInputType = {
   comicId?: true
   categoryId?: true
-  sortOrder?: true
   createdAt?: true
   updatedAt?: true
+  sortOrder?: true
 }
 
 export type WorkComicCategoryCountAggregateInputType = {
   comicId?: true
   categoryId?: true
-  sortOrder?: true
   createdAt?: true
   updatedAt?: true
+  sortOrder?: true
   _all?: true
 }
 
@@ -190,9 +190,9 @@ export type WorkComicCategoryGroupByArgs<ExtArgs extends runtime.Types.Extension
 export type WorkComicCategoryGroupByOutputType = {
   comicId: number
   categoryId: number
-  sortOrder: number
   createdAt: Date
   updatedAt: Date
+  sortOrder: number
   _count: WorkComicCategoryCountAggregateOutputType | null
   _avg: WorkComicCategoryAvgAggregateOutputType | null
   _sum: WorkComicCategorySumAggregateOutputType | null
@@ -221,21 +221,21 @@ export type WorkComicCategoryWhereInput = {
   NOT?: Prisma.WorkComicCategoryWhereInput | Prisma.WorkComicCategoryWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicCategory"> | number
   categoryId?: Prisma.IntFilter<"WorkComicCategory"> | number
-  sortOrder?: Prisma.IntFilter<"WorkComicCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
-  comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
+  sortOrder?: Prisma.IntFilter<"WorkComicCategory"> | number
   category?: Prisma.XOR<Prisma.WorkCategoryScalarRelationFilter, Prisma.WorkCategoryWhereInput>
+  comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
 }
 
 export type WorkComicCategoryOrderByWithRelationInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  comic?: Prisma.WorkComicOrderByWithRelationInput
+  sortOrder?: Prisma.SortOrder
   category?: Prisma.WorkCategoryOrderByWithRelationInput
+  comic?: Prisma.WorkComicOrderByWithRelationInput
 }
 
 export type WorkComicCategoryWhereUniqueInput = Prisma.AtLeast<{
@@ -245,19 +245,19 @@ export type WorkComicCategoryWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.WorkComicCategoryWhereInput | Prisma.WorkComicCategoryWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicCategory"> | number
   categoryId?: Prisma.IntFilter<"WorkComicCategory"> | number
-  sortOrder?: Prisma.IntFilter<"WorkComicCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
-  comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
+  sortOrder?: Prisma.IntFilter<"WorkComicCategory"> | number
   category?: Prisma.XOR<Prisma.WorkCategoryScalarRelationFilter, Prisma.WorkCategoryWhereInput>
+  comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
 }, "comicId_categoryId">
 
 export type WorkComicCategoryOrderByWithAggregationInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   _count?: Prisma.WorkComicCategoryCountOrderByAggregateInput
   _avg?: Prisma.WorkComicCategoryAvgOrderByAggregateInput
   _max?: Prisma.WorkComicCategoryMaxOrderByAggregateInput
@@ -271,63 +271,63 @@ export type WorkComicCategoryScalarWhereWithAggregatesInput = {
   NOT?: Prisma.WorkComicCategoryScalarWhereWithAggregatesInput | Prisma.WorkComicCategoryScalarWhereWithAggregatesInput[]
   comicId?: Prisma.IntWithAggregatesFilter<"WorkComicCategory"> | number
   categoryId?: Prisma.IntWithAggregatesFilter<"WorkComicCategory"> | number
-  sortOrder?: Prisma.IntWithAggregatesFilter<"WorkComicCategory"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicCategory"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicCategory"> | Date | string
+  sortOrder?: Prisma.IntWithAggregatesFilter<"WorkComicCategory"> | number
 }
 
 export type WorkComicCategoryCreateInput = {
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  comic: Prisma.WorkComicCreateNestedOneWithoutComicCategoriesInput
+  sortOrder?: number
   category: Prisma.WorkCategoryCreateNestedOneWithoutWorkComicCategoriesInput
+  comic: Prisma.WorkComicCreateNestedOneWithoutComicCategoriesInput
 }
 
 export type WorkComicCategoryUncheckedCreateInput = {
   comicId: number
   categoryId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicCategoryUpdateInput = {
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicCategoriesNestedInput
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   category?: Prisma.WorkCategoryUpdateOneRequiredWithoutWorkComicCategoriesNestedInput
+  comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicCategoriesNestedInput
 }
 
 export type WorkComicCategoryUncheckedUpdateInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
   categoryId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicCategoryCreateManyInput = {
   comicId: number
   categoryId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicCategoryUpdateManyMutationInput = {
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicCategoryUncheckedUpdateManyInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
   categoryId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicCategoryComicIdCategoryIdCompoundUniqueInput = {
@@ -338,9 +338,9 @@ export type WorkComicCategoryComicIdCategoryIdCompoundUniqueInput = {
 export type WorkComicCategoryCountOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicCategoryAvgOrderByAggregateInput = {
@@ -352,17 +352,17 @@ export type WorkComicCategoryAvgOrderByAggregateInput = {
 export type WorkComicCategoryMaxOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicCategoryMinOrderByAggregateInput = {
   comicId?: Prisma.SortOrder
   categoryId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicCategorySumOrderByAggregateInput = {
@@ -466,17 +466,17 @@ export type WorkComicCategoryUncheckedUpdateManyWithoutCategoryNestedInput = {
 }
 
 export type WorkComicCategoryCreateWithoutComicInput = {
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
   category: Prisma.WorkCategoryCreateNestedOneWithoutWorkComicCategoriesInput
 }
 
 export type WorkComicCategoryUncheckedCreateWithoutComicInput = {
   categoryId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicCategoryCreateOrConnectWithoutComicInput = {
@@ -511,23 +511,23 @@ export type WorkComicCategoryScalarWhereInput = {
   NOT?: Prisma.WorkComicCategoryScalarWhereInput | Prisma.WorkComicCategoryScalarWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicCategory"> | number
   categoryId?: Prisma.IntFilter<"WorkComicCategory"> | number
-  sortOrder?: Prisma.IntFilter<"WorkComicCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicCategory"> | Date | string
+  sortOrder?: Prisma.IntFilter<"WorkComicCategory"> | number
 }
 
 export type WorkComicCategoryCreateWithoutCategoryInput = {
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
   comic: Prisma.WorkComicCreateNestedOneWithoutComicCategoriesInput
 }
 
 export type WorkComicCategoryUncheckedCreateWithoutCategoryInput = {
   comicId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicCategoryCreateOrConnectWithoutCategoryInput = {
@@ -558,58 +558,58 @@ export type WorkComicCategoryUpdateManyWithWhereWithoutCategoryInput = {
 
 export type WorkComicCategoryCreateManyComicInput = {
   categoryId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicCategoryUpdateWithoutComicInput = {
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   category?: Prisma.WorkCategoryUpdateOneRequiredWithoutWorkComicCategoriesNestedInput
 }
 
 export type WorkComicCategoryUncheckedUpdateWithoutComicInput = {
   categoryId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicCategoryUncheckedUpdateManyWithoutComicInput = {
   categoryId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicCategoryCreateManyCategoryInput = {
   comicId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicCategoryUpdateWithoutCategoryInput = {
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicCategoriesNestedInput
 }
 
 export type WorkComicCategoryUncheckedUpdateWithoutCategoryInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicCategoryUncheckedUpdateManyWithoutCategoryInput = {
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 
@@ -617,60 +617,60 @@ export type WorkComicCategoryUncheckedUpdateManyWithoutCategoryInput = {
 export type WorkComicCategorySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   comicId?: boolean
   categoryId?: boolean
-  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
+  sortOrder?: boolean
   category?: boolean | Prisma.WorkCategoryDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workComicCategory"]>
 
 export type WorkComicCategorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   comicId?: boolean
   categoryId?: boolean
-  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
+  sortOrder?: boolean
   category?: boolean | Prisma.WorkCategoryDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workComicCategory"]>
 
 export type WorkComicCategorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   comicId?: boolean
   categoryId?: boolean
-  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
+  sortOrder?: boolean
   category?: boolean | Prisma.WorkCategoryDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workComicCategory"]>
 
 export type WorkComicCategorySelectScalar = {
   comicId?: boolean
   categoryId?: boolean
-  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  sortOrder?: boolean
 }
 
-export type WorkComicCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"comicId" | "categoryId" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workComicCategory"]>
+export type WorkComicCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"comicId" | "categoryId" | "createdAt" | "updatedAt" | "sortOrder", ExtArgs["result"]["workComicCategory"]>
 export type WorkComicCategoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   category?: boolean | Prisma.WorkCategoryDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }
 export type WorkComicCategoryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   category?: boolean | Prisma.WorkCategoryDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }
 export type WorkComicCategoryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   category?: boolean | Prisma.WorkCategoryDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }
 
 export type $WorkComicCategoryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "WorkComicCategory"
   objects: {
-    comic: Prisma.$WorkComicPayload<ExtArgs>
     category: Prisma.$WorkCategoryPayload<ExtArgs>
+    comic: Prisma.$WorkComicPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -682,10 +682,6 @@ export type $WorkComicCategoryPayload<ExtArgs extends runtime.Types.Extensions.I
      */
     categoryId: number
     /**
-     * 排序顺序（用于展示顺序）
-     */
-    sortOrder: number
-    /**
      * 关联时间
      */
     createdAt: Date
@@ -693,6 +689,10 @@ export type $WorkComicCategoryPayload<ExtArgs extends runtime.Types.Extensions.I
      * 更新时间
      */
     updatedAt: Date
+    /**
+     * 排序顺序（用于展示顺序）
+     */
+    sortOrder: number
   }, ExtArgs["result"]["workComicCategory"]>
   composites: {}
 }
@@ -1087,8 +1087,8 @@ readonly fields: WorkComicCategoryFieldRefs;
  */
 export interface Prisma__WorkComicCategoryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  comic<T extends Prisma.WorkComicDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkComicDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkComicClient<runtime.Types.Result.GetResult<Prisma.$WorkComicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   category<T extends Prisma.WorkCategoryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkCategoryDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkCategoryClient<runtime.Types.Result.GetResult<Prisma.$WorkCategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  comic<T extends Prisma.WorkComicDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkComicDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkComicClient<runtime.Types.Result.GetResult<Prisma.$WorkComicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1120,9 +1120,9 @@ export interface Prisma__WorkComicCategoryClient<T, Null = never, ExtArgs extend
 export interface WorkComicCategoryFieldRefs {
   readonly comicId: Prisma.FieldRef<"WorkComicCategory", 'Int'>
   readonly categoryId: Prisma.FieldRef<"WorkComicCategory", 'Int'>
-  readonly sortOrder: Prisma.FieldRef<"WorkComicCategory", 'Int'>
   readonly createdAt: Prisma.FieldRef<"WorkComicCategory", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WorkComicCategory", 'DateTime'>
+  readonly sortOrder: Prisma.FieldRef<"WorkComicCategory", 'Int'>
 }
     
 

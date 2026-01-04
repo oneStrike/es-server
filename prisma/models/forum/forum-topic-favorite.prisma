@@ -1,18 +1,15 @@
 model ForumTopicFavorite {
   /// 主键ID
-  id              Int       @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   /// 关联的主题ID
-  topicId         Int       @map("topic_id") @db.Integer
-  /// 关联的主题
-  topic           ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId   Int          @map("topic_id")
   /// 关联的用户ID
-  userId          Int       @map("user_id") @db.Integer
-  /// 关联的用户资料
-  profile         ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int          @map("user_id")
   /// 创建时间
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  topic     ForumTopic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  profile   ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /// 索引优化
   @@unique([topicId, userId])
   @@index([topicId])
   @@index([userId])

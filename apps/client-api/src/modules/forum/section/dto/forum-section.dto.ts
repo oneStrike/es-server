@@ -5,7 +5,6 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   PartialType,
   PickType,

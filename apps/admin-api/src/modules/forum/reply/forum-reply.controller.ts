@@ -3,15 +3,15 @@ import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-import { ForumReplyService } from './forum-reply.service'
 import {
   BaseForumReplyDto,
   CreateForumReplyDto,
   QueryForumReplyDto,
+  UpdateForumReplyDto,
   UpdateReplyAuditStatusDto,
   UpdateReplyHiddenDto,
-  UpdateForumReplyDto,
 } from './dto/forum-reply.dto'
+import { ForumReplyService } from './forum-reply.service'
 
 /**
  * 论坛回复管理控制器

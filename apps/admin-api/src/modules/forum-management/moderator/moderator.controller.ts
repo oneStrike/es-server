@@ -1,17 +1,15 @@
 import { ApiDoc } from '@libs/base/decorators'
 import { ApiPageDoc } from '@libs/base/decorators/api-page-doc.decorator'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ModeratorService } from './moderator.service'
 import {
   AssignModeratorSectionDto,
   CreateModeratorDto,
-  ModeratorActionLogPageDto,
-  ModeratorPageDto,
   QueryModeratorActionLogDto,
   QueryModeratorDto,
   RemoveModeratorDto,
   UpdateModeratorDto,
 } from './dto/moderator.dto'
+import { ModeratorService } from './moderator.service'
 
 @Controller('forum/moderator')
 export class ModeratorController {

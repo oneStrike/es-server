@@ -1,27 +1,24 @@
 model ForumLevelRule {
   /// 主键ID
-  id              Int       @id @default(autoincrement())
+  id             Int            @id @default(autoincrement())
   /// 等级名称
-  name            String    @db.VarChar(20)
+  name           String         @db.VarChar(20)
   /// 等级描述
-  description     String?   @db.VarChar(200)
+  description    String?        @db.VarChar(200)
   /// 等级图标URL
-  icon            String?   @db.VarChar(255)
+  icon           String?        @db.VarChar(255)
   /// 所需积分
-  requiredPoints  Int       @map("required_points") @db.Integer
+  requiredPoints Int            @map("required_points")
   /// 排序值（数值越小越靠前）
-  order           Int       @default(0) @db.SmallInt
+  order          Int            @default(0) @db.SmallInt
   /// 是否启用
-  isEnabled       Boolean   @default(true) @map("is_enabled")
+  isEnabled      Boolean        @default(true) @map("is_enabled")
   /// 创建时间
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  profiles       ForumProfile[]
 
-  /// 关联的用户资料
-  profiles        ForumProfile[]
-
-  /// 索引优化
   @@index([order])
   @@index([requiredPoints])
   @@index([isEnabled])

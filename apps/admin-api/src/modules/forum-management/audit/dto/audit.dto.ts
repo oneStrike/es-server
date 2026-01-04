@@ -1,8 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { AuditObjectTypeEnum, AuditStatusEnum } from '../audit.constant'
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator'
-import { Type } from 'class-transformer'
 import { ValidateNumber, ValidateString } from '@libs/base/dto'
+import { ApiProperty } from '@nestjs/swagger'
+import { Type } from 'class-transformer'
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator'
+import { AuditObjectTypeEnum, AuditStatusEnum } from '../audit.constant'
 
 export class CreateSensitiveWordDto {
   @ApiProperty({ description: '敏感词', example: '测试' })

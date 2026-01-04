@@ -1,24 +1,20 @@
 model WorkComicCategory {
   /// 漫画ID
-  comicId    Int      @map("comic_id")
+  comicId    Int          @map("comic_id")
   /// 分类ID  
-  categoryId Int      @map("category_id")
-  /// 排序顺序（用于展示顺序）
-  sortOrder  Int      @default(0) @map("sort_order") @db.Integer
+  categoryId Int          @map("category_id")
   /// 关联时间
-  createdAt  DateTime @default(now()) @map("created_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
   /// 更新时间
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  /// 排序顺序（用于展示顺序）
+  sortOrder  Int          @default(0) @map("sort_order")
+  category   WorkCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  comic      WorkComic    @relation(fields: [comicId], references: [id], onDelete: Cascade)
 
-  // 关联关系
-  comic    WorkComic    @relation(fields: [comicId], references: [id], onDelete: Cascade)
-  category WorkCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  // 复合主键
   @@id([comicId, categoryId])
-  // 索引优化
-  @@index([categoryId]) // 按分类查询漫画
-  @@index([sortOrder]) // 按排序顺序排序
-  @@index([comicId, sortOrder]) // 按漫画ID和排序顺序排序 
+  @@index([categoryId])
+  @@index([sortOrder])
+  @@index([comicId, sortOrder])
   @@map("work_comic_category")
 }

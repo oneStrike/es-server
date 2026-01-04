@@ -87,11 +87,11 @@ export type ClientNoticeCountAggregateOutputType = {
   pageId: number
   popupBackgroundImage: number
   isPublished: number
-  enablePlatform: number
   isPinned: number
   showAsPopup: number
   createdAt: number
   updatedAt: number
+  enablePlatform: number
   _all: number
 }
 
@@ -157,11 +157,11 @@ export type ClientNoticeCountAggregateInputType = {
   pageId?: true
   popupBackgroundImage?: true
   isPublished?: true
-  enablePlatform?: true
   isPinned?: true
   showAsPopup?: true
   createdAt?: true
   updatedAt?: true
+  enablePlatform?: true
   _all?: true
 }
 
@@ -262,11 +262,11 @@ export type ClientNoticeGroupByOutputType = {
   pageId: number | null
   popupBackgroundImage: string | null
   isPublished: boolean
-  enablePlatform: number[]
   isPinned: boolean
   showAsPopup: boolean
   createdAt: Date
   updatedAt: Date
+  enablePlatform: number[]
   _count: ClientNoticeCountAggregateOutputType | null
   _avg: ClientNoticeAvgAggregateOutputType | null
   _sum: ClientNoticeSumAggregateOutputType | null
@@ -303,11 +303,11 @@ export type ClientNoticeWhereInput = {
   pageId?: Prisma.IntNullableFilter<"ClientNotice"> | number | null
   popupBackgroundImage?: Prisma.StringNullableFilter<"ClientNotice"> | string | null
   isPublished?: Prisma.BoolFilter<"ClientNotice"> | boolean
-  enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
   isPinned?: Prisma.BoolFilter<"ClientNotice"> | boolean
   showAsPopup?: Prisma.BoolFilter<"ClientNotice"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
+  enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
   clientPage?: Prisma.XOR<Prisma.ClientPageNullableScalarRelationFilter, Prisma.ClientPageWhereInput> | null
 }
 
@@ -322,11 +322,11 @@ export type ClientNoticeOrderByWithRelationInput = {
   pageId?: Prisma.SortOrderInput | Prisma.SortOrder
   popupBackgroundImage?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   clientPage?: Prisma.ClientPageOrderByWithRelationInput
 }
 
@@ -344,11 +344,11 @@ export type ClientNoticeWhereUniqueInput = Prisma.AtLeast<{
   pageId?: Prisma.IntNullableFilter<"ClientNotice"> | number | null
   popupBackgroundImage?: Prisma.StringNullableFilter<"ClientNotice"> | string | null
   isPublished?: Prisma.BoolFilter<"ClientNotice"> | boolean
-  enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
   isPinned?: Prisma.BoolFilter<"ClientNotice"> | boolean
   showAsPopup?: Prisma.BoolFilter<"ClientNotice"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
+  enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
   clientPage?: Prisma.XOR<Prisma.ClientPageNullableScalarRelationFilter, Prisma.ClientPageWhereInput> | null
 }, "id">
 
@@ -363,11 +363,11 @@ export type ClientNoticeOrderByWithAggregationInput = {
   pageId?: Prisma.SortOrderInput | Prisma.SortOrder
   popupBackgroundImage?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   _count?: Prisma.ClientNoticeCountOrderByAggregateInput
   _avg?: Prisma.ClientNoticeAvgOrderByAggregateInput
   _max?: Prisma.ClientNoticeMaxOrderByAggregateInput
@@ -389,11 +389,11 @@ export type ClientNoticeScalarWhereWithAggregatesInput = {
   pageId?: Prisma.IntNullableWithAggregatesFilter<"ClientNotice"> | number | null
   popupBackgroundImage?: Prisma.StringNullableWithAggregatesFilter<"ClientNotice"> | string | null
   isPublished?: Prisma.BoolWithAggregatesFilter<"ClientNotice"> | boolean
-  enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
   isPinned?: Prisma.BoolWithAggregatesFilter<"ClientNotice"> | boolean
   showAsPopup?: Prisma.BoolWithAggregatesFilter<"ClientNotice"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ClientNotice"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ClientNotice"> | Date | string
+  enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
 }
 
 export type ClientNoticeCreateInput = {
@@ -405,11 +405,11 @@ export type ClientNoticeCreateInput = {
   publishEndTime?: Date | string | null
   popupBackgroundImage?: string | null
   isPublished?: boolean
-  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
   clientPage?: Prisma.ClientPageCreateNestedOneWithoutNoticesInput
 }
 
@@ -424,11 +424,11 @@ export type ClientNoticeUncheckedCreateInput = {
   pageId?: number | null
   popupBackgroundImage?: string | null
   isPublished?: boolean
-  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
 }
 
 export type ClientNoticeUpdateInput = {
@@ -440,11 +440,11 @@ export type ClientNoticeUpdateInput = {
   publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
   clientPage?: Prisma.ClientPageUpdateOneWithoutNoticesNestedInput
 }
 
@@ -459,11 +459,11 @@ export type ClientNoticeUncheckedUpdateInput = {
   pageId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
 }
 
 export type ClientNoticeCreateManyInput = {
@@ -477,11 +477,11 @@ export type ClientNoticeCreateManyInput = {
   pageId?: number | null
   popupBackgroundImage?: string | null
   isPublished?: boolean
-  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
 }
 
 export type ClientNoticeUpdateManyMutationInput = {
@@ -493,11 +493,11 @@ export type ClientNoticeUpdateManyMutationInput = {
   publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
 }
 
 export type ClientNoticeUncheckedUpdateManyInput = {
@@ -511,11 +511,11 @@ export type ClientNoticeUncheckedUpdateManyInput = {
   pageId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
 }
 
 export type IntNullableListFilter<$PrismaModel = never> = {
@@ -537,11 +537,11 @@ export type ClientNoticeCountOrderByAggregateInput = {
   pageId?: Prisma.SortOrder
   popupBackgroundImage?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
 }
 
 export type ClientNoticeAvgOrderByAggregateInput = {
@@ -672,11 +672,11 @@ export type ClientNoticeCreateWithoutClientPageInput = {
   publishEndTime?: Date | string | null
   popupBackgroundImage?: string | null
   isPublished?: boolean
-  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
 }
 
 export type ClientNoticeUncheckedCreateWithoutClientPageInput = {
@@ -689,11 +689,11 @@ export type ClientNoticeUncheckedCreateWithoutClientPageInput = {
   publishEndTime?: Date | string | null
   popupBackgroundImage?: string | null
   isPublished?: boolean
-  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
 }
 
 export type ClientNoticeCreateOrConnectWithoutClientPageInput = {
@@ -736,11 +736,11 @@ export type ClientNoticeScalarWhereInput = {
   pageId?: Prisma.IntNullableFilter<"ClientNotice"> | number | null
   popupBackgroundImage?: Prisma.StringNullableFilter<"ClientNotice"> | string | null
   isPublished?: Prisma.BoolFilter<"ClientNotice"> | boolean
-  enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
   isPinned?: Prisma.BoolFilter<"ClientNotice"> | boolean
   showAsPopup?: Prisma.BoolFilter<"ClientNotice"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
+  enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
 }
 
 export type ClientNoticeCreateManyClientPageInput = {
@@ -753,11 +753,11 @@ export type ClientNoticeCreateManyClientPageInput = {
   publishEndTime?: Date | string | null
   popupBackgroundImage?: string | null
   isPublished?: boolean
-  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
 }
 
 export type ClientNoticeUpdateWithoutClientPageInput = {
@@ -769,11 +769,11 @@ export type ClientNoticeUpdateWithoutClientPageInput = {
   publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
 }
 
 export type ClientNoticeUncheckedUpdateWithoutClientPageInput = {
@@ -786,11 +786,11 @@ export type ClientNoticeUncheckedUpdateWithoutClientPageInput = {
   publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
 }
 
 export type ClientNoticeUncheckedUpdateManyWithoutClientPageInput = {
@@ -803,11 +803,11 @@ export type ClientNoticeUncheckedUpdateManyWithoutClientPageInput = {
   publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
 }
 
 
@@ -823,11 +823,11 @@ export type ClientNoticeSelect<ExtArgs extends runtime.Types.Extensions.Internal
   pageId?: boolean
   popupBackgroundImage?: boolean
   isPublished?: boolean
-  enablePlatform?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  enablePlatform?: boolean
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
 }, ExtArgs["result"]["clientNotice"]>
 
@@ -842,11 +842,11 @@ export type ClientNoticeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   pageId?: boolean
   popupBackgroundImage?: boolean
   isPublished?: boolean
-  enablePlatform?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  enablePlatform?: boolean
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
 }, ExtArgs["result"]["clientNotice"]>
 
@@ -861,11 +861,11 @@ export type ClientNoticeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   pageId?: boolean
   popupBackgroundImage?: boolean
   isPublished?: boolean
-  enablePlatform?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  enablePlatform?: boolean
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
 }, ExtArgs["result"]["clientNotice"]>
 
@@ -880,14 +880,14 @@ export type ClientNoticeSelectScalar = {
   pageId?: boolean
   popupBackgroundImage?: boolean
   isPublished?: boolean
-  enablePlatform?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  enablePlatform?: boolean
 }
 
-export type ClientNoticeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "noticeType" | "priorityLevel" | "publishStartTime" | "publishEndTime" | "pageId" | "popupBackgroundImage" | "isPublished" | "enablePlatform" | "isPinned" | "showAsPopup" | "createdAt" | "updatedAt", ExtArgs["result"]["clientNotice"]>
+export type ClientNoticeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "noticeType" | "priorityLevel" | "publishStartTime" | "publishEndTime" | "pageId" | "popupBackgroundImage" | "isPublished" | "isPinned" | "showAsPopup" | "createdAt" | "updatedAt" | "enablePlatform", ExtArgs["result"]["clientNotice"]>
 export type ClientNoticeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
 }
@@ -945,10 +945,6 @@ export type $ClientNoticePayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     isPublished: boolean
     /**
-     * 启用的平台（1=H5, 2=APP, 4=小程序）
-     */
-    enablePlatform: number[]
-    /**
      * 是否置顶显示
      */
     isPinned: boolean
@@ -964,6 +960,10 @@ export type $ClientNoticePayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 更新时间
      */
     updatedAt: Date
+    /**
+     * 启用的平台（1=H5, 2=APP, 4=小程序）
+     */
+    enablePlatform: number[]
   }, ExtArgs["result"]["clientNotice"]>
   composites: {}
 }
@@ -1398,11 +1398,11 @@ export interface ClientNoticeFieldRefs {
   readonly pageId: Prisma.FieldRef<"ClientNotice", 'Int'>
   readonly popupBackgroundImage: Prisma.FieldRef<"ClientNotice", 'String'>
   readonly isPublished: Prisma.FieldRef<"ClientNotice", 'Boolean'>
-  readonly enablePlatform: Prisma.FieldRef<"ClientNotice", 'Int[]'>
   readonly isPinned: Prisma.FieldRef<"ClientNotice", 'Boolean'>
   readonly showAsPopup: Prisma.FieldRef<"ClientNotice", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"ClientNotice", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ClientNotice", 'DateTime'>
+  readonly enablePlatform: Prisma.FieldRef<"ClientNotice", 'Int[]'>
 }
     
 
