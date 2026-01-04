@@ -278,11 +278,11 @@ export type ForumPointRuleOrderByWithRelationInput = {
 
 export type ForumPointRuleWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  name?: string
+  type?: number
   AND?: Prisma.ForumPointRuleWhereInput | Prisma.ForumPointRuleWhereInput[]
   OR?: Prisma.ForumPointRuleWhereInput[]
   NOT?: Prisma.ForumPointRuleWhereInput | Prisma.ForumPointRuleWhereInput[]
-  name?: Prisma.StringFilter<"ForumPointRule"> | string
-  type?: Prisma.IntFilter<"ForumPointRule"> | number
   points?: Prisma.IntFilter<"ForumPointRule"> | number
   dailyLimit?: Prisma.IntFilter<"ForumPointRule"> | number
   isEnabled?: Prisma.BoolFilter<"ForumPointRule"> | boolean
@@ -290,7 +290,7 @@ export type ForumPointRuleWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"ForumPointRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumPointRule"> | Date | string
   records?: Prisma.ForumPointRecordListRelationFilter
-}, "id">
+}, "id" | "name" | "type">
 
 export type ForumPointRuleOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

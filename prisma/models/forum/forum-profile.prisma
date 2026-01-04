@@ -5,7 +5,7 @@ model ForumProfile {
   /// 关联的用户ID
   userId         Int                  @unique @map("user_id")
   /// 论坛积分
-  points         BigInt               @default(0)
+  points         Int                  @default(0)
   /// 等级ID
   levelId        Int?                 @map("level_id")
   /// 发表主题数
@@ -20,12 +20,8 @@ model ForumProfile {
   signature      String?              @db.VarChar(200)
   /// 个人简介
   bio            String?              @db.VarChar(500)
-  /// 最后发帖时间
-  lastPostAt     DateTime?            @map("last_post_at") @db.Timestamptz(6)
-  /// 最后访问时间
-  lastVisitAt    DateTime?            @map("last_visit_at") @db.Timestamptz(6)
-  /// 是否被封禁
-  isBanned       Boolean              @default(false) @map("is_banned")
+  /// 用户状态（1:正常, 2:被禁言, 3:永久禁言，4:被封禁，5:永久封禁）
+  status         Int                  @default(1) @map("status")
   /// 封禁原因
   banReason      String?              @map("ban_reason") @db.VarChar(500)
   /// 封禁到期时间
@@ -36,8 +32,6 @@ model ForumProfile {
   updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
   deletedAt      DateTime?            @map("deleted_at") @db.Timestamptz(6)
-  /// 版本号（用于乐观锁）
-  version        Int                  @default(0)
   moderator      ForumModerator?
   notifications  ForumNotification[]
   pointRecords   ForumPointRecord[]
@@ -54,10 +48,7 @@ model ForumProfile {
   @@index([replyCount])
   @@index([likeCount])
   @@index([favoriteCount])
-  @@index([lastPostAt])
-  @@index([lastVisitAt])
-  @@index([isBanned])
+  @@index([status])
   @@index([createdAt])
-  @@index([deletedAt])
   @@map("forum_profile")
 }

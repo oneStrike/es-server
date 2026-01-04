@@ -3,9 +3,9 @@ model ForumPointRule {
   /// 主键ID
   id         Int                @id @default(autoincrement())
   /// 规则名称
-  name       String             @db.VarChar(50)
+  name       String             @unique @db.VarChar(50)
   /// 规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）
-  type       Int                @db.SmallInt
+  type       Int                @unique @db.SmallInt
   /// 积分变化（正数为获得，负数为消费）
   points     Int
   /// 每日上限（0=无限制）

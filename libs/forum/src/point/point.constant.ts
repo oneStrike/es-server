@@ -16,20 +16,6 @@ export enum PointRuleTypeEnum {
   TOPIC_FAVORITED = 5,
   /** 每日签到 */
   DAILY_CHECK_IN = 6,
-}
-
-/// 积分对象类型枚举
-export enum PointObjectTypeEnum {
-  /** 主题 */
-  TOPIC = 1,
-  /** 回复 */
-  REPLY = 2,
-  /** 签到 */
-  CHECK_IN = 3,
-  /** 点赞 */
-  LIKE = 4,
-  /** 收藏 */
-  FAVORITE = 5,
   /** 管理员操作 */
-  ADMIN = 6,
+  ADMIN = 7,
 }

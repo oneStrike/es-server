@@ -1,12 +1,19 @@
-import { ValidateEnum, ValidateNumber, ValidateString } from '@libs/base/decorators'
-import { ApiProperty } from '@nestjs/swagger'
-import { IsOptional } from 'class-validator'
+import {
+  ValidateDate,
+  ValidateEnum,
+  ValidateNumber,
+  ValidateString,
+} from '@libs/base/decorators'
+import { BaseDto, PageDto } from '@libs/base/dto'
+import {
+  ApiProperty,
+  IntersectionType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 import { UserLevelEnum, UserStatusEnum } from '../user.constant'
 
-/**
- * 更新用户积分DTO
- */
-export class UpdateUserPointsDto {
+export class BaseForumProfileDto extends BaseDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,
@@ -14,6 +21,95 @@ export class UpdateUserPointsDto {
   })
   userId!: number
 
+  @ValidateNumber({
+    description: '积分数量',
+    example: 100,
+    required: true,
+  })
+  points!: number
+
+  @ValidateNumber({
+    description: '等级ID',
+    example: 100,
+    required: true,
+  })
+  levelId!: number
+
+  @ValidateString({
+    description: '签名',
+    example: '这是我的签名',
+    required: true,
+    maxLength: 200,
+  })
+  signature!: string
+
+  @ValidateString({
+    description: '个人简介',
+    example: '这是我的个人简介',
+    required: true,
+    maxLength: 500,
+  })
+  bio!: string
+
+  @ValidateEnum({
+    description: '用户状态',
+    example: UserStatusEnum.NORMAL,
+    enum: UserStatusEnum,
+    required: true,
+  })
+  status!: UserStatusEnum
+
+  @ValidateString({
+    description: '封禁原因',
+    example: '违反社区规则',
+    required: true,
+    maxLength: 200,
+  })
+  banReason!: string
+
+  @ValidateDate({
+    description: '封禁结束时间',
+    example: '2023-09-15T00:00:00.000Z',
+    required: true,
+  })
+  banUntil!: Date
+
+  @ApiProperty({ description: '主题数', default: 0, example: 10 })
+  topicCount!: number
+
+  @ApiProperty({ description: '回复数', default: 0, example: 100 })
+  replyCount!: number
+
+  @ApiProperty({ description: '点赞数', default: 0, example: 5 })
+  likeCount!: number
+
+  @ApiProperty({ description: '收藏数', default: 0, example: 5 })
+  favoriteCount!: number
+}
+
+/**
+ * 查询用户列表DTO
+ */
+export class QueryUserListDto extends IntersectionType(
+  PageDto,
+  PartialType(PickType(BaseForumProfileDto, ['levelId', 'status'])),
+) {
+  @ValidateString({
+    description: '昵称',
+    example: '张三',
+    required: false,
+    maxLength: 50,
+  })
+  nickname?: string
+}
+
+/**
+ * 更新用户积分DTO
+ */
+export class UpdateUserPointsDto extends PickType(BaseForumProfileDto, [
+  'userId',
+  'points',
+]) {
   @ValidateNumber({
     description: '积分变化值（正数增加，负数减少）',
     example: 100,
@@ -117,71 +213,11 @@ export class RevokeBadgeDto {
 }
 
 /**
- * 查询用户列表DTO
- */
-export class QueryUserListDto {
-  @ValidateString({
-    description: '用户名或昵称',
-    example: '张三',
-    required: false,
-    maxLength: 50,
-  })
-  @IsOptional()
-  keyword?: string
-
-  @ValidateEnum({
-    description: '等级',
-    example: UserLevelEnum.SENIOR,
-    enum: UserLevelEnum,
-    required: false,
-  })
-  @IsOptional()
-  level?: UserLevelEnum
-
-  @ValidateEnum({
-    description: '状态',
-    example: UserStatusEnum.NORMAL,
-    enum: UserStatusEnum,
-    required: false,
-  })
-  @IsOptional()
-  status?: UserStatusEnum
-
-  @ValidateNumber({
-    description: '页码',
-    example: 1,
-    required: false,
-    min: 1,
-  })
-  @IsOptional()
-  page?: number
-
-  @ValidateNumber({
-    description: '每页数量',
-    example: 20,
-    required: false,
-    min: 1,
-    max: 100,
-  })
-  @IsOptional()
-  pageSize?: number
-}
-
-/**
  * 用户资料DTO
  */
 export class UserProfileDto {
   @ApiProperty({ description: '用户ID', example: 1 })
   userId!: number
-
-  @ApiProperty({ description: '用户名', example: 'zhangsan' })
-  username!: string
-
-  @ApiProperty({ description: '昵称', example: '张三' })
-  nickname!: string
-
-  @ApiProperty({ description: '头像', example: 'https://example.com/avatar.jpg' })
-  avatar?: string
 
   @ApiProperty({ description: '积分', example: 1000 })
   points!: number

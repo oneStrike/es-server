@@ -1,7 +1,15 @@
 import { PrismaService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { SearchDto, SearchResultDto, SearchResultPageDto } from './dto/search.dto'
-import { SearchSortTypeEnum, SearchTimeFilterEnum, SearchTypeEnum } from './search.constant'
+import {
+  SearchDto,
+  SearchResultDto,
+  SearchResultPageDto,
+} from './dto/search.dto'
+import {
+  SearchSortTypeEnum,
+  SearchTimeFilterEnum,
+  SearchTypeEnum,
+} from './search.constant'
 
 /**
  * 搜索服务
@@ -16,22 +24,50 @@ export class SearchService {
    * @returns 搜索结果
    */
   async search(searchDto: SearchDto): Promise<SearchResultPageDto> {
-    const { keyword, type = SearchTypeEnum.ALL, sectionId, tagId, sort = SearchSortTypeEnum.RELEVANCE, timeFilter = SearchTimeFilterEnum.ALL, page = 1, pageSize = 20 } = searchDto
+    const {
+      keyword,
+      type = SearchTypeEnum.ALL,
+      sectionId,
+      tagId,
+      sort = SearchSortTypeEnum.RELEVANCE,
+      timeFilter = SearchTimeFilterEnum.ALL,
+      page = 1,
+      pageSize = 20,
+    } = searchDto
 
     const results: SearchResultDto[] = []
 
     if (type === SearchTypeEnum.TOPIC || type === SearchTypeEnum.ALL) {
-      const topicResults = await this.searchTopics(keyword, sectionId, tagId, sort, timeFilter, page, pageSize)
+      const topicResults = await this.searchTopics(
+        keyword,
+        sectionId,
+        tagId,
+        sort,
+        timeFilter,
+        page,
+        pageSize,
+      )
       results.push(...topicResults)
     }
 
     if (type === SearchTypeEnum.REPLY || type === SearchTypeEnum.ALL) {
-      const replyResults = await this.searchReplies(keyword, sectionId, tagId, sort, timeFilter, page, pageSize)
+      const replyResults = await this.searchReplies(
+        keyword,
+        sectionId,
+        tagId,
+        sort,
+        timeFilter,
+        page,
+        pageSize,
+      )
       results.push(...replyResults)
     }
 
     const total = results.length
-    const paginatedResults = results.slice((page - 1) * pageSize, page * pageSize)
+    const paginatedResults = results.slice(
+      (page - 1) * pageSize,
+      page * pageSize,
+    )
 
     return {
       list: paginatedResults,

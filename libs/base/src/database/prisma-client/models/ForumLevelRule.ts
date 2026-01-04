@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumLevelRule
- * 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级图标等
+ * 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级权益等
  */
 export type ForumLevelRuleModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumLevelRulePayload>
 
@@ -30,12 +30,26 @@ export type ForumLevelRuleAvgAggregateOutputType = {
   id: number | null
   requiredPoints: number | null
   order: number | null
+  dailyTopicLimit: number | null
+  dailyReplyLimit: number | null
+  postInterval: number | null
+  maxFileSize: number | null
+  dailyLikeLimit: number | null
+  dailyFavoriteLimit: number | null
+  dailyCommentLimit: number | null
 }
 
 export type ForumLevelRuleSumAggregateOutputType = {
   id: number | null
-  requiredPoints: bigint | null
+  requiredPoints: number | null
   order: number | null
+  dailyTopicLimit: number | null
+  dailyReplyLimit: number | null
+  postInterval: number | null
+  maxFileSize: number | null
+  dailyLikeLimit: number | null
+  dailyFavoriteLimit: number | null
+  dailyCommentLimit: number | null
 }
 
 export type ForumLevelRuleMinAggregateOutputType = {
@@ -43,9 +57,18 @@ export type ForumLevelRuleMinAggregateOutputType = {
   name: string | null
   description: string | null
   icon: string | null
-  requiredPoints: bigint | null
+  requiredPoints: number | null
   order: number | null
   isEnabled: boolean | null
+  dailyTopicLimit: number | null
+  dailyReplyLimit: number | null
+  postInterval: number | null
+  maxFileSize: number | null
+  dailyLikeLimit: number | null
+  dailyFavoriteLimit: number | null
+  dailyCommentLimit: number | null
+  levelColor: string | null
+  levelBadge: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -55,9 +78,18 @@ export type ForumLevelRuleMaxAggregateOutputType = {
   name: string | null
   description: string | null
   icon: string | null
-  requiredPoints: bigint | null
+  requiredPoints: number | null
   order: number | null
   isEnabled: boolean | null
+  dailyTopicLimit: number | null
+  dailyReplyLimit: number | null
+  postInterval: number | null
+  maxFileSize: number | null
+  dailyLikeLimit: number | null
+  dailyFavoriteLimit: number | null
+  dailyCommentLimit: number | null
+  levelColor: string | null
+  levelBadge: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -70,6 +102,15 @@ export type ForumLevelRuleCountAggregateOutputType = {
   requiredPoints: number
   order: number
   isEnabled: number
+  dailyTopicLimit: number
+  dailyReplyLimit: number
+  postInterval: number
+  maxFileSize: number
+  dailyLikeLimit: number
+  dailyFavoriteLimit: number
+  dailyCommentLimit: number
+  levelColor: number
+  levelBadge: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -80,12 +121,26 @@ export type ForumLevelRuleAvgAggregateInputType = {
   id?: true
   requiredPoints?: true
   order?: true
+  dailyTopicLimit?: true
+  dailyReplyLimit?: true
+  postInterval?: true
+  maxFileSize?: true
+  dailyLikeLimit?: true
+  dailyFavoriteLimit?: true
+  dailyCommentLimit?: true
 }
 
 export type ForumLevelRuleSumAggregateInputType = {
   id?: true
   requiredPoints?: true
   order?: true
+  dailyTopicLimit?: true
+  dailyReplyLimit?: true
+  postInterval?: true
+  maxFileSize?: true
+  dailyLikeLimit?: true
+  dailyFavoriteLimit?: true
+  dailyCommentLimit?: true
 }
 
 export type ForumLevelRuleMinAggregateInputType = {
@@ -96,6 +151,15 @@ export type ForumLevelRuleMinAggregateInputType = {
   requiredPoints?: true
   order?: true
   isEnabled?: true
+  dailyTopicLimit?: true
+  dailyReplyLimit?: true
+  postInterval?: true
+  maxFileSize?: true
+  dailyLikeLimit?: true
+  dailyFavoriteLimit?: true
+  dailyCommentLimit?: true
+  levelColor?: true
+  levelBadge?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -108,6 +172,15 @@ export type ForumLevelRuleMaxAggregateInputType = {
   requiredPoints?: true
   order?: true
   isEnabled?: true
+  dailyTopicLimit?: true
+  dailyReplyLimit?: true
+  postInterval?: true
+  maxFileSize?: true
+  dailyLikeLimit?: true
+  dailyFavoriteLimit?: true
+  dailyCommentLimit?: true
+  levelColor?: true
+  levelBadge?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -120,6 +193,15 @@ export type ForumLevelRuleCountAggregateInputType = {
   requiredPoints?: true
   order?: true
   isEnabled?: true
+  dailyTopicLimit?: true
+  dailyReplyLimit?: true
+  postInterval?: true
+  maxFileSize?: true
+  dailyLikeLimit?: true
+  dailyFavoriteLimit?: true
+  dailyCommentLimit?: true
+  levelColor?: true
+  levelBadge?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -216,9 +298,18 @@ export type ForumLevelRuleGroupByOutputType = {
   name: string
   description: string | null
   icon: string | null
-  requiredPoints: bigint
+  requiredPoints: number
   order: number
   isEnabled: boolean
+  dailyTopicLimit: number
+  dailyReplyLimit: number
+  postInterval: number
+  maxFileSize: number
+  dailyLikeLimit: number
+  dailyFavoriteLimit: number
+  dailyCommentLimit: number
+  levelColor: string | null
+  levelBadge: string | null
   createdAt: Date
   updatedAt: Date
   _count: ForumLevelRuleCountAggregateOutputType | null
@@ -251,9 +342,18 @@ export type ForumLevelRuleWhereInput = {
   name?: Prisma.StringFilter<"ForumLevelRule"> | string
   description?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
   icon?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
-  requiredPoints?: Prisma.BigIntFilter<"ForumLevelRule"> | bigint | number
+  requiredPoints?: Prisma.IntFilter<"ForumLevelRule"> | number
   order?: Prisma.IntFilter<"ForumLevelRule"> | number
   isEnabled?: Prisma.BoolFilter<"ForumLevelRule"> | boolean
+  dailyTopicLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  dailyReplyLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  postInterval?: Prisma.IntFilter<"ForumLevelRule"> | number
+  maxFileSize?: Prisma.IntFilter<"ForumLevelRule"> | number
+  dailyLikeLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  dailyFavoriteLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  dailyCommentLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  levelColor?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
+  levelBadge?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
   profiles?: Prisma.ForumProfileListRelationFilter
@@ -267,6 +367,15 @@ export type ForumLevelRuleOrderByWithRelationInput = {
   requiredPoints?: Prisma.SortOrder
   order?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  dailyTopicLimit?: Prisma.SortOrder
+  dailyReplyLimit?: Prisma.SortOrder
+  postInterval?: Prisma.SortOrder
+  maxFileSize?: Prisma.SortOrder
+  dailyLikeLimit?: Prisma.SortOrder
+  dailyFavoriteLimit?: Prisma.SortOrder
+  dailyCommentLimit?: Prisma.SortOrder
+  levelColor?: Prisma.SortOrderInput | Prisma.SortOrder
+  levelBadge?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   profiles?: Prisma.ForumProfileOrderByRelationAggregateInput
@@ -280,9 +389,18 @@ export type ForumLevelRuleWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"ForumLevelRule"> | string
   description?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
   icon?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
-  requiredPoints?: Prisma.BigIntFilter<"ForumLevelRule"> | bigint | number
+  requiredPoints?: Prisma.IntFilter<"ForumLevelRule"> | number
   order?: Prisma.IntFilter<"ForumLevelRule"> | number
   isEnabled?: Prisma.BoolFilter<"ForumLevelRule"> | boolean
+  dailyTopicLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  dailyReplyLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  postInterval?: Prisma.IntFilter<"ForumLevelRule"> | number
+  maxFileSize?: Prisma.IntFilter<"ForumLevelRule"> | number
+  dailyLikeLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  dailyFavoriteLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  dailyCommentLimit?: Prisma.IntFilter<"ForumLevelRule"> | number
+  levelColor?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
+  levelBadge?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
   profiles?: Prisma.ForumProfileListRelationFilter
@@ -296,6 +414,15 @@ export type ForumLevelRuleOrderByWithAggregationInput = {
   requiredPoints?: Prisma.SortOrder
   order?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  dailyTopicLimit?: Prisma.SortOrder
+  dailyReplyLimit?: Prisma.SortOrder
+  postInterval?: Prisma.SortOrder
+  maxFileSize?: Prisma.SortOrder
+  dailyLikeLimit?: Prisma.SortOrder
+  dailyFavoriteLimit?: Prisma.SortOrder
+  dailyCommentLimit?: Prisma.SortOrder
+  levelColor?: Prisma.SortOrderInput | Prisma.SortOrder
+  levelBadge?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ForumLevelRuleCountOrderByAggregateInput
@@ -313,9 +440,18 @@ export type ForumLevelRuleScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"ForumLevelRule"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"ForumLevelRule"> | string | null
   icon?: Prisma.StringNullableWithAggregatesFilter<"ForumLevelRule"> | string | null
-  requiredPoints?: Prisma.BigIntWithAggregatesFilter<"ForumLevelRule"> | bigint | number
+  requiredPoints?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
   order?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ForumLevelRule"> | boolean
+  dailyTopicLimit?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
+  dailyReplyLimit?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
+  postInterval?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
+  maxFileSize?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
+  dailyLikeLimit?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
+  dailyFavoriteLimit?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
+  dailyCommentLimit?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
+  levelColor?: Prisma.StringNullableWithAggregatesFilter<"ForumLevelRule"> | string | null
+  levelBadge?: Prisma.StringNullableWithAggregatesFilter<"ForumLevelRule"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumLevelRule"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumLevelRule"> | Date | string
 }
@@ -324,9 +460,18 @@ export type ForumLevelRuleCreateInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: bigint | number
+  requiredPoints: number
   order?: number
   isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyLimit?: number
+  postInterval?: number
+  maxFileSize?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  dailyCommentLimit?: number
+  levelColor?: string | null
+  levelBadge?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   profiles?: Prisma.ForumProfileCreateNestedManyWithoutLevelInput
@@ -337,9 +482,18 @@ export type ForumLevelRuleUncheckedCreateInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: bigint | number
+  requiredPoints: number
   order?: number
   isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyLimit?: number
+  postInterval?: number
+  maxFileSize?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  dailyCommentLimit?: number
+  levelColor?: string | null
+  levelBadge?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   profiles?: Prisma.ForumProfileUncheckedCreateNestedManyWithoutLevelInput
@@ -349,9 +503,18 @@ export type ForumLevelRuleUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  maxFileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  levelColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   profiles?: Prisma.ForumProfileUpdateManyWithoutLevelNestedInput
@@ -362,9 +525,18 @@ export type ForumLevelRuleUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  maxFileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  levelColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   profiles?: Prisma.ForumProfileUncheckedUpdateManyWithoutLevelNestedInput
@@ -375,9 +547,18 @@ export type ForumLevelRuleCreateManyInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: bigint | number
+  requiredPoints: number
   order?: number
   isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyLimit?: number
+  postInterval?: number
+  maxFileSize?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  dailyCommentLimit?: number
+  levelColor?: string | null
+  levelBadge?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -386,9 +567,18 @@ export type ForumLevelRuleUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  maxFileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  levelColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -398,9 +588,18 @@ export type ForumLevelRuleUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  maxFileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  levelColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -413,6 +612,15 @@ export type ForumLevelRuleCountOrderByAggregateInput = {
   requiredPoints?: Prisma.SortOrder
   order?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  dailyTopicLimit?: Prisma.SortOrder
+  dailyReplyLimit?: Prisma.SortOrder
+  postInterval?: Prisma.SortOrder
+  maxFileSize?: Prisma.SortOrder
+  dailyLikeLimit?: Prisma.SortOrder
+  dailyFavoriteLimit?: Prisma.SortOrder
+  dailyCommentLimit?: Prisma.SortOrder
+  levelColor?: Prisma.SortOrder
+  levelBadge?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -421,6 +629,13 @@ export type ForumLevelRuleAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   requiredPoints?: Prisma.SortOrder
   order?: Prisma.SortOrder
+  dailyTopicLimit?: Prisma.SortOrder
+  dailyReplyLimit?: Prisma.SortOrder
+  postInterval?: Prisma.SortOrder
+  maxFileSize?: Prisma.SortOrder
+  dailyLikeLimit?: Prisma.SortOrder
+  dailyFavoriteLimit?: Prisma.SortOrder
+  dailyCommentLimit?: Prisma.SortOrder
 }
 
 export type ForumLevelRuleMaxOrderByAggregateInput = {
@@ -431,6 +646,15 @@ export type ForumLevelRuleMaxOrderByAggregateInput = {
   requiredPoints?: Prisma.SortOrder
   order?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  dailyTopicLimit?: Prisma.SortOrder
+  dailyReplyLimit?: Prisma.SortOrder
+  postInterval?: Prisma.SortOrder
+  maxFileSize?: Prisma.SortOrder
+  dailyLikeLimit?: Prisma.SortOrder
+  dailyFavoriteLimit?: Prisma.SortOrder
+  dailyCommentLimit?: Prisma.SortOrder
+  levelColor?: Prisma.SortOrder
+  levelBadge?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -443,6 +667,15 @@ export type ForumLevelRuleMinOrderByAggregateInput = {
   requiredPoints?: Prisma.SortOrder
   order?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  dailyTopicLimit?: Prisma.SortOrder
+  dailyReplyLimit?: Prisma.SortOrder
+  postInterval?: Prisma.SortOrder
+  maxFileSize?: Prisma.SortOrder
+  dailyLikeLimit?: Prisma.SortOrder
+  dailyFavoriteLimit?: Prisma.SortOrder
+  dailyCommentLimit?: Prisma.SortOrder
+  levelColor?: Prisma.SortOrder
+  levelBadge?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -451,19 +684,18 @@ export type ForumLevelRuleSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   requiredPoints?: Prisma.SortOrder
   order?: Prisma.SortOrder
+  dailyTopicLimit?: Prisma.SortOrder
+  dailyReplyLimit?: Prisma.SortOrder
+  postInterval?: Prisma.SortOrder
+  maxFileSize?: Prisma.SortOrder
+  dailyLikeLimit?: Prisma.SortOrder
+  dailyFavoriteLimit?: Prisma.SortOrder
+  dailyCommentLimit?: Prisma.SortOrder
 }
 
 export type ForumLevelRuleNullableScalarRelationFilter = {
   is?: Prisma.ForumLevelRuleWhereInput | null
   isNot?: Prisma.ForumLevelRuleWhereInput | null
-}
-
-export type BigIntFieldUpdateOperationsInput = {
-  set?: bigint | number
-  increment?: bigint | number
-  decrement?: bigint | number
-  multiply?: bigint | number
-  divide?: bigint | number
 }
 
 export type ForumLevelRuleCreateNestedOneWithoutProfilesInput = {
@@ -486,9 +718,18 @@ export type ForumLevelRuleCreateWithoutProfilesInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: bigint | number
+  requiredPoints: number
   order?: number
   isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyLimit?: number
+  postInterval?: number
+  maxFileSize?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  dailyCommentLimit?: number
+  levelColor?: string | null
+  levelBadge?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -498,9 +739,18 @@ export type ForumLevelRuleUncheckedCreateWithoutProfilesInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: bigint | number
+  requiredPoints: number
   order?: number
   isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyLimit?: number
+  postInterval?: number
+  maxFileSize?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  dailyCommentLimit?: number
+  levelColor?: string | null
+  levelBadge?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -525,9 +775,18 @@ export type ForumLevelRuleUpdateWithoutProfilesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  maxFileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  levelColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -537,9 +796,18 @@ export type ForumLevelRuleUncheckedUpdateWithoutProfilesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  maxFileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  levelColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -583,6 +851,15 @@ export type ForumLevelRuleSelect<ExtArgs extends runtime.Types.Extensions.Intern
   requiredPoints?: boolean
   order?: boolean
   isEnabled?: boolean
+  dailyTopicLimit?: boolean
+  dailyReplyLimit?: boolean
+  postInterval?: boolean
+  maxFileSize?: boolean
+  dailyLikeLimit?: boolean
+  dailyFavoriteLimit?: boolean
+  dailyCommentLimit?: boolean
+  levelColor?: boolean
+  levelBadge?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   profiles?: boolean | Prisma.ForumLevelRule$profilesArgs<ExtArgs>
@@ -597,6 +874,15 @@ export type ForumLevelRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   requiredPoints?: boolean
   order?: boolean
   isEnabled?: boolean
+  dailyTopicLimit?: boolean
+  dailyReplyLimit?: boolean
+  postInterval?: boolean
+  maxFileSize?: boolean
+  dailyLikeLimit?: boolean
+  dailyFavoriteLimit?: boolean
+  dailyCommentLimit?: boolean
+  levelColor?: boolean
+  levelBadge?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["forumLevelRule"]>
@@ -609,6 +895,15 @@ export type ForumLevelRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   requiredPoints?: boolean
   order?: boolean
   isEnabled?: boolean
+  dailyTopicLimit?: boolean
+  dailyReplyLimit?: boolean
+  postInterval?: boolean
+  maxFileSize?: boolean
+  dailyLikeLimit?: boolean
+  dailyFavoriteLimit?: boolean
+  dailyCommentLimit?: boolean
+  levelColor?: boolean
+  levelBadge?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["forumLevelRule"]>
@@ -621,11 +916,20 @@ export type ForumLevelRuleSelectScalar = {
   requiredPoints?: boolean
   order?: boolean
   isEnabled?: boolean
+  dailyTopicLimit?: boolean
+  dailyReplyLimit?: boolean
+  postInterval?: boolean
+  maxFileSize?: boolean
+  dailyLikeLimit?: boolean
+  dailyFavoriteLimit?: boolean
+  dailyCommentLimit?: boolean
+  levelColor?: boolean
+  levelBadge?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ForumLevelRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "icon" | "requiredPoints" | "order" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["forumLevelRule"]>
+export type ForumLevelRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "icon" | "requiredPoints" | "order" | "isEnabled" | "dailyTopicLimit" | "dailyReplyLimit" | "postInterval" | "maxFileSize" | "dailyLikeLimit" | "dailyFavoriteLimit" | "dailyCommentLimit" | "levelColor" | "levelBadge" | "createdAt" | "updatedAt", ExtArgs["result"]["forumLevelRule"]>
 export type ForumLevelRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profiles?: boolean | Prisma.ForumLevelRule$profilesArgs<ExtArgs>
   _count?: boolean | Prisma.ForumLevelRuleCountOutputTypeDefaultArgs<ExtArgs>
@@ -658,7 +962,7 @@ export type $ForumLevelRulePayload<ExtArgs extends runtime.Types.Extensions.Inte
     /**
      * 所需积分
      */
-    requiredPoints: bigint
+    requiredPoints: number
     /**
      * 排序值（数值越小越靠前）
      */
@@ -667,6 +971,42 @@ export type $ForumLevelRulePayload<ExtArgs extends runtime.Types.Extensions.Inte
      * 是否启用
      */
     isEnabled: boolean
+    /**
+     * 每日发帖数量上限，0表示无限制
+     */
+    dailyTopicLimit: number
+    /**
+     * 每日回复数量上限，0表示无限制
+     */
+    dailyReplyLimit: number
+    /**
+     * 发帖间隔秒数（防刷屏），0表示无限制
+     */
+    postInterval: number
+    /**
+     * 单个文件最大大小（KB），0表示无限制 
+     */
+    maxFileSize: number
+    /**
+     * 每日点赞次数上限，0表示无限制
+     */
+    dailyLikeLimit: number
+    /**
+     * 每日收藏次数上限，0表示无限制
+     */
+    dailyFavoriteLimit: number
+    /**
+     * 每日评论次数上限，0表示无限制
+     */
+    dailyCommentLimit: number
+    /**
+     * 等级专属颜色（十六进制）
+     */
+    levelColor: string | null
+    /**
+     * 等级徽章URL
+     */
+    levelBadge: string | null
     /**
      * 创建时间
      */
@@ -1103,9 +1443,18 @@ export interface ForumLevelRuleFieldRefs {
   readonly name: Prisma.FieldRef<"ForumLevelRule", 'String'>
   readonly description: Prisma.FieldRef<"ForumLevelRule", 'String'>
   readonly icon: Prisma.FieldRef<"ForumLevelRule", 'String'>
-  readonly requiredPoints: Prisma.FieldRef<"ForumLevelRule", 'BigInt'>
+  readonly requiredPoints: Prisma.FieldRef<"ForumLevelRule", 'Int'>
   readonly order: Prisma.FieldRef<"ForumLevelRule", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"ForumLevelRule", 'Boolean'>
+  readonly dailyTopicLimit: Prisma.FieldRef<"ForumLevelRule", 'Int'>
+  readonly dailyReplyLimit: Prisma.FieldRef<"ForumLevelRule", 'Int'>
+  readonly postInterval: Prisma.FieldRef<"ForumLevelRule", 'Int'>
+  readonly maxFileSize: Prisma.FieldRef<"ForumLevelRule", 'Int'>
+  readonly dailyLikeLimit: Prisma.FieldRef<"ForumLevelRule", 'Int'>
+  readonly dailyFavoriteLimit: Prisma.FieldRef<"ForumLevelRule", 'Int'>
+  readonly dailyCommentLimit: Prisma.FieldRef<"ForumLevelRule", 'Int'>
+  readonly levelColor: Prisma.FieldRef<"ForumLevelRule", 'String'>
+  readonly levelBadge: Prisma.FieldRef<"ForumLevelRule", 'String'>
   readonly createdAt: Prisma.FieldRef<"ForumLevelRule", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumLevelRule", 'DateTime'>
 }

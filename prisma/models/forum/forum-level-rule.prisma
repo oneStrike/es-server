@@ -1,28 +1,45 @@
-/// 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级图标等
+/// 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级权益等
 model ForumLevelRule {
   /// 主键ID
-  id             Int            @id @default(autoincrement())
+  id                 Int            @id @default(autoincrement())
   /// 等级名称
-  name           String         @db.VarChar(20)
+  name               String         @db.VarChar(20)
   /// 等级描述
-  description    String?        @db.VarChar(200)
+  description        String?        @db.VarChar(200)
   /// 等级图标URL
-  icon           String?        @db.VarChar(255)
+  icon               String?        @db.VarChar(255)
   /// 所需积分
-  requiredPoints BigInt         @map("required_points")
+  requiredPoints     Int            @map("required_points")
   /// 排序值（数值越小越靠前）
-  order          Int            @default(0) @db.SmallInt
+  order              Int            @default(0) @db.SmallInt
   /// 是否启用
-  isEnabled      Boolean        @default(true) @map("is_enabled")
+  isEnabled          Boolean        @default(true) @map("is_enabled")
+  /// 每日发帖数量上限，0表示无限制
+  dailyTopicLimit    Int            @default(0) @map("daily_topic_limit") @db.SmallInt
+  /// 每日回复数量上限，0表示无限制
+  dailyReplyLimit    Int            @default(0) @map("daily_reply_limit") @db.SmallInt
+  /// 发帖间隔秒数（防刷屏），0表示无限制
+  postInterval       Int            @default(0) @map("post_interval") @db.SmallInt
+  /// 单个文件最大大小（KB），0表示无限制 
+  maxFileSize        Int            @default(0) @map("max_file_size") @db.SmallInt
+  /// 每日点赞次数上限，0表示无限制
+  dailyLikeLimit     Int            @default(0) @map("daily_like_limit") @db.SmallInt
+  /// 每日收藏次数上限，0表示无限制
+  dailyFavoriteLimit Int            @default(0) @map("daily_favorite_limit") @db.SmallInt
+  /// 每日评论次数上限，0表示无限制
+  dailyCommentLimit  Int            @default(0) @map("daily_comment_limit") @db.SmallInt
+  /// 等级专属颜色（十六进制）
+  levelColor         String?        @map("level_color") @db.VarChar(20)
+  /// 等级徽章URL
+  levelBadge         String?        @map("level_badge") @db.VarChar(255)
   /// 创建时间
-  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
-  profiles       ForumProfile[]
+  updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  profiles           ForumProfile[]
 
-  @@index([order])
-  @@index([requiredPoints])
-  @@index([isEnabled])
+  @@index([isEnabled, order])
+  @@index([isEnabled, requiredPoints])
   @@index([createdAt])
   @@map("forum_level_rule")
 }

@@ -33,15 +33,10 @@ export enum UserStatusEnum {
   NORMAL = 1,
   /** 禁言 */
   MUTED = 2,
+  /** 永久禁言 */
+  PERMANENT_MUTED = 3,
   /** 封禁 */
-  BANNED = 3,
-}
-
-/**
- * 用户状态名称映射
- */
-export const UserStatusNames: Record<UserStatusEnum, string> = {
-  [UserStatusEnum.NORMAL]: '正常',
-  [UserStatusEnum.MUTED]: '禁言',
-  [UserStatusEnum.BANNED]: '封禁',
+  BANNED = 4,
+  /** 永久封禁 */
+  PERMANENT_BANNED = 5,
 }

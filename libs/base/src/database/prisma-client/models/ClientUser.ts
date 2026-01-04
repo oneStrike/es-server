@@ -46,6 +46,7 @@ export type ClientUserMinAggregateOutputType = {
   isEnabled: boolean | null
   genderType: number | null
   birthDate: Date | null
+  isSignedIn: boolean | null
   lastLoginAt: Date | null
   lastLoginIp: string | null
   createdAt: Date | null
@@ -63,6 +64,7 @@ export type ClientUserMaxAggregateOutputType = {
   isEnabled: boolean | null
   genderType: number | null
   birthDate: Date | null
+  isSignedIn: boolean | null
   lastLoginAt: Date | null
   lastLoginIp: string | null
   createdAt: Date | null
@@ -80,6 +82,7 @@ export type ClientUserCountAggregateOutputType = {
   isEnabled: number
   genderType: number
   birthDate: number
+  isSignedIn: number
   lastLoginAt: number
   lastLoginIp: number
   createdAt: number
@@ -109,6 +112,7 @@ export type ClientUserMinAggregateInputType = {
   isEnabled?: true
   genderType?: true
   birthDate?: true
+  isSignedIn?: true
   lastLoginAt?: true
   lastLoginIp?: true
   createdAt?: true
@@ -126,6 +130,7 @@ export type ClientUserMaxAggregateInputType = {
   isEnabled?: true
   genderType?: true
   birthDate?: true
+  isSignedIn?: true
   lastLoginAt?: true
   lastLoginIp?: true
   createdAt?: true
@@ -143,6 +148,7 @@ export type ClientUserCountAggregateInputType = {
   isEnabled?: true
   genderType?: true
   birthDate?: true
+  isSignedIn?: true
   lastLoginAt?: true
   lastLoginIp?: true
   createdAt?: true
@@ -247,6 +253,7 @@ export type ClientUserGroupByOutputType = {
   isEnabled: boolean
   genderType: number
   birthDate: Date | null
+  isSignedIn: boolean
   lastLoginAt: Date | null
   lastLoginIp: string | null
   createdAt: Date
@@ -287,14 +294,15 @@ export type ClientUserWhereInput = {
   isEnabled?: Prisma.BoolFilter<"ClientUser"> | boolean
   genderType?: Prisma.IntFilter<"ClientUser"> | number
   birthDate?: Prisma.DateTimeNullableFilter<"ClientUser"> | Date | string | null
+  isSignedIn?: Prisma.BoolFilter<"ClientUser"> | boolean
   lastLoginAt?: Prisma.DateTimeNullableFilter<"ClientUser"> | Date | string | null
   lastLoginIp?: Prisma.StringNullableFilter<"ClientUser"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ClientUser"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ClientUser"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ClientUser"> | Date | string | null
   forumProfile?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
-  forumReplies?: Prisma.ForumReplyListRelationFilter
   forumTopics?: Prisma.ForumTopicListRelationFilter
+  forumReplies?: Prisma.ForumReplyListRelationFilter
   lastReplyTopics?: Prisma.ForumTopicListRelationFilter
 }
 
@@ -308,14 +316,15 @@ export type ClientUserOrderByWithRelationInput = {
   isEnabled?: Prisma.SortOrder
   genderType?: Prisma.SortOrder
   birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  isSignedIn?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   forumProfile?: Prisma.ForumProfileOrderByWithRelationInput
-  forumReplies?: Prisma.ForumReplyOrderByRelationAggregateInput
   forumTopics?: Prisma.ForumTopicOrderByRelationAggregateInput
+  forumReplies?: Prisma.ForumReplyOrderByRelationAggregateInput
   lastReplyTopics?: Prisma.ForumTopicOrderByRelationAggregateInput
 }
 
@@ -332,14 +341,15 @@ export type ClientUserWhereUniqueInput = Prisma.AtLeast<{
   isEnabled?: Prisma.BoolFilter<"ClientUser"> | boolean
   genderType?: Prisma.IntFilter<"ClientUser"> | number
   birthDate?: Prisma.DateTimeNullableFilter<"ClientUser"> | Date | string | null
+  isSignedIn?: Prisma.BoolFilter<"ClientUser"> | boolean
   lastLoginAt?: Prisma.DateTimeNullableFilter<"ClientUser"> | Date | string | null
   lastLoginIp?: Prisma.StringNullableFilter<"ClientUser"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ClientUser"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ClientUser"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ClientUser"> | Date | string | null
   forumProfile?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
-  forumReplies?: Prisma.ForumReplyListRelationFilter
   forumTopics?: Prisma.ForumTopicListRelationFilter
+  forumReplies?: Prisma.ForumReplyListRelationFilter
   lastReplyTopics?: Prisma.ForumTopicListRelationFilter
 }, "id" | "username" | "phoneNumber" | "emailAddress">
 
@@ -353,6 +363,7 @@ export type ClientUserOrderByWithAggregationInput = {
   isEnabled?: Prisma.SortOrder
   genderType?: Prisma.SortOrder
   birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  isSignedIn?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -378,6 +389,7 @@ export type ClientUserScalarWhereWithAggregatesInput = {
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ClientUser"> | boolean
   genderType?: Prisma.IntWithAggregatesFilter<"ClientUser"> | number
   birthDate?: Prisma.DateTimeNullableWithAggregatesFilter<"ClientUser"> | Date | string | null
+  isSignedIn?: Prisma.BoolWithAggregatesFilter<"ClientUser"> | boolean
   lastLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ClientUser"> | Date | string | null
   lastLoginIp?: Prisma.StringNullableWithAggregatesFilter<"ClientUser"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ClientUser"> | Date | string
@@ -394,14 +406,15 @@ export type ClientUserCreateInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
+  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
 }
 
@@ -415,14 +428,15 @@ export type ClientUserUncheckedCreateInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
+  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
 }
 
@@ -435,14 +449,15 @@ export type ClientUserUpdateInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
+  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
 }
 
@@ -456,14 +471,15 @@ export type ClientUserUncheckedUpdateInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
+  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
 }
 
@@ -477,6 +493,7 @@ export type ClientUserCreateManyInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
@@ -493,6 +510,7 @@ export type ClientUserUpdateManyMutationInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -510,6 +528,7 @@ export type ClientUserUncheckedUpdateManyInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -527,6 +546,7 @@ export type ClientUserCountOrderByAggregateInput = {
   isEnabled?: Prisma.SortOrder
   genderType?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
+  isSignedIn?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -549,6 +569,7 @@ export type ClientUserMaxOrderByAggregateInput = {
   isEnabled?: Prisma.SortOrder
   genderType?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
+  isSignedIn?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -566,6 +587,7 @@ export type ClientUserMinOrderByAggregateInput = {
   isEnabled?: Prisma.SortOrder
   genderType?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
+  isSignedIn?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -655,13 +677,14 @@ export type ClientUserCreateWithoutForumProfileInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
+  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
 }
 
@@ -675,13 +698,14 @@ export type ClientUserUncheckedCreateWithoutForumProfileInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
+  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
 }
 
@@ -710,13 +734,14 @@ export type ClientUserUpdateWithoutForumProfileInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
+  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
 }
 
@@ -730,13 +755,14 @@ export type ClientUserUncheckedUpdateWithoutForumProfileInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
+  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
 }
 
@@ -749,6 +775,7 @@ export type ClientUserCreateWithoutForumRepliesInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
@@ -769,6 +796,7 @@ export type ClientUserUncheckedCreateWithoutForumRepliesInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
@@ -804,6 +832,7 @@ export type ClientUserUpdateWithoutForumRepliesInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -824,6 +853,7 @@ export type ClientUserUncheckedUpdateWithoutForumRepliesInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -843,6 +873,7 @@ export type ClientUserCreateWithoutForumTopicsInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
@@ -863,6 +894,7 @@ export type ClientUserUncheckedCreateWithoutForumTopicsInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
@@ -887,14 +919,15 @@ export type ClientUserCreateWithoutLastReplyTopicsInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
+  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
 }
 
 export type ClientUserUncheckedCreateWithoutLastReplyTopicsInput = {
@@ -907,14 +940,15 @@ export type ClientUserUncheckedCreateWithoutLastReplyTopicsInput = {
   isEnabled?: boolean
   genderType?: number
   birthDate?: Date | string | null
+  isSignedIn?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
+  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type ClientUserCreateOrConnectWithoutLastReplyTopicsInput = {
@@ -942,6 +976,7 @@ export type ClientUserUpdateWithoutForumTopicsInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -962,6 +997,7 @@ export type ClientUserUncheckedUpdateWithoutForumTopicsInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -992,14 +1028,15 @@ export type ClientUserUpdateWithoutLastReplyTopicsInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
+  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
 }
 
 export type ClientUserUncheckedUpdateWithoutLastReplyTopicsInput = {
@@ -1012,14 +1049,15 @@ export type ClientUserUncheckedUpdateWithoutLastReplyTopicsInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   genderType?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
+  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -1028,14 +1066,14 @@ export type ClientUserUncheckedUpdateWithoutLastReplyTopicsInput = {
  */
 
 export type ClientUserCountOutputType = {
-  forumReplies: number
   forumTopics: number
+  forumReplies: number
   lastReplyTopics: number
 }
 
 export type ClientUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  forumReplies?: boolean | ClientUserCountOutputTypeCountForumRepliesArgs
   forumTopics?: boolean | ClientUserCountOutputTypeCountForumTopicsArgs
+  forumReplies?: boolean | ClientUserCountOutputTypeCountForumRepliesArgs
   lastReplyTopics?: boolean | ClientUserCountOutputTypeCountLastReplyTopicsArgs
 }
 
@@ -1052,15 +1090,15 @@ export type ClientUserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.E
 /**
  * ClientUserCountOutputType without action
  */
-export type ClientUserCountOutputTypeCountForumRepliesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ForumReplyWhereInput
+export type ClientUserCountOutputTypeCountForumTopicsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ForumTopicWhereInput
 }
 
 /**
  * ClientUserCountOutputType without action
  */
-export type ClientUserCountOutputTypeCountForumTopicsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ForumTopicWhereInput
+export type ClientUserCountOutputTypeCountForumRepliesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ForumReplyWhereInput
 }
 
 /**
@@ -1081,14 +1119,15 @@ export type ClientUserSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   isEnabled?: boolean
   genderType?: boolean
   birthDate?: boolean
+  isSignedIn?: boolean
   lastLoginAt?: boolean
   lastLoginIp?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
   forumProfile?: boolean | Prisma.ClientUser$forumProfileArgs<ExtArgs>
-  forumReplies?: boolean | Prisma.ClientUser$forumRepliesArgs<ExtArgs>
   forumTopics?: boolean | Prisma.ClientUser$forumTopicsArgs<ExtArgs>
+  forumReplies?: boolean | Prisma.ClientUser$forumRepliesArgs<ExtArgs>
   lastReplyTopics?: boolean | Prisma.ClientUser$lastReplyTopicsArgs<ExtArgs>
   _count?: boolean | Prisma.ClientUserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["clientUser"]>
@@ -1103,6 +1142,7 @@ export type ClientUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   isEnabled?: boolean
   genderType?: boolean
   birthDate?: boolean
+  isSignedIn?: boolean
   lastLoginAt?: boolean
   lastLoginIp?: boolean
   createdAt?: boolean
@@ -1120,6 +1160,7 @@ export type ClientUserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   isEnabled?: boolean
   genderType?: boolean
   birthDate?: boolean
+  isSignedIn?: boolean
   lastLoginAt?: boolean
   lastLoginIp?: boolean
   createdAt?: boolean
@@ -1137,6 +1178,7 @@ export type ClientUserSelectScalar = {
   isEnabled?: boolean
   genderType?: boolean
   birthDate?: boolean
+  isSignedIn?: boolean
   lastLoginAt?: boolean
   lastLoginIp?: boolean
   createdAt?: boolean
@@ -1144,11 +1186,11 @@ export type ClientUserSelectScalar = {
   deletedAt?: boolean
 }
 
-export type ClientUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "nickname" | "avatarUrl" | "phoneNumber" | "emailAddress" | "isEnabled" | "genderType" | "birthDate" | "lastLoginAt" | "lastLoginIp" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["clientUser"]>
+export type ClientUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "nickname" | "avatarUrl" | "phoneNumber" | "emailAddress" | "isEnabled" | "genderType" | "birthDate" | "isSignedIn" | "lastLoginAt" | "lastLoginIp" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["clientUser"]>
 export type ClientUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   forumProfile?: boolean | Prisma.ClientUser$forumProfileArgs<ExtArgs>
-  forumReplies?: boolean | Prisma.ClientUser$forumRepliesArgs<ExtArgs>
   forumTopics?: boolean | Prisma.ClientUser$forumTopicsArgs<ExtArgs>
+  forumReplies?: boolean | Prisma.ClientUser$forumRepliesArgs<ExtArgs>
   lastReplyTopics?: boolean | Prisma.ClientUser$lastReplyTopicsArgs<ExtArgs>
   _count?: boolean | Prisma.ClientUserCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -1158,9 +1200,21 @@ export type ClientUserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.E
 export type $ClientUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ClientUser"
   objects: {
+    /**
+     * 关联的论坛资料
+     */
     forumProfile: Prisma.$ForumProfilePayload<ExtArgs> | null
-    forumReplies: Prisma.$ForumReplyPayload<ExtArgs>[]
+    /**
+     * 关联的论坛主题
+     */
     forumTopics: Prisma.$ForumTopicPayload<ExtArgs>[]
+    /**
+     * 关联的论坛回复
+     */
+    forumReplies: Prisma.$ForumReplyPayload<ExtArgs>[]
+    /**
+     * 最后回复的主题
+     */
     lastReplyTopics: Prisma.$ForumTopicPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1200,6 +1254,10 @@ export type $ClientUserPayload<ExtArgs extends runtime.Types.Extensions.Internal
      * 出生日期
      */
     birthDate: Date | null
+    /**
+     * 签到状态（true:已签到, false:未签到）
+     */
+    isSignedIn: boolean
     /**
      * 最后登录时间
      */
@@ -1615,8 +1673,8 @@ readonly fields: ClientUserFieldRefs;
 export interface Prisma__ClientUserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   forumProfile<T extends Prisma.ClientUser$forumProfileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUser$forumProfileArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  forumReplies<T extends Prisma.ClientUser$forumRepliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUser$forumRepliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReplyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   forumTopics<T extends Prisma.ClientUser$forumTopicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUser$forumTopicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  forumReplies<T extends Prisma.ClientUser$forumRepliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUser$forumRepliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReplyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lastReplyTopics<T extends Prisma.ClientUser$lastReplyTopicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUser$lastReplyTopicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1656,6 +1714,7 @@ export interface ClientUserFieldRefs {
   readonly isEnabled: Prisma.FieldRef<"ClientUser", 'Boolean'>
   readonly genderType: Prisma.FieldRef<"ClientUser", 'Int'>
   readonly birthDate: Prisma.FieldRef<"ClientUser", 'DateTime'>
+  readonly isSignedIn: Prisma.FieldRef<"ClientUser", 'Boolean'>
   readonly lastLoginAt: Prisma.FieldRef<"ClientUser", 'DateTime'>
   readonly lastLoginIp: Prisma.FieldRef<"ClientUser", 'String'>
   readonly createdAt: Prisma.FieldRef<"ClientUser", 'DateTime'>
@@ -2077,30 +2136,6 @@ export type ClientUser$forumProfileArgs<ExtArgs extends runtime.Types.Extensions
 }
 
 /**
- * ClientUser.forumReplies
- */
-export type ClientUser$forumRepliesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ForumReply
-   */
-  select?: Prisma.ForumReplySelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ForumReply
-   */
-  omit?: Prisma.ForumReplyOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumReplyInclude<ExtArgs> | null
-  where?: Prisma.ForumReplyWhereInput
-  orderBy?: Prisma.ForumReplyOrderByWithRelationInput | Prisma.ForumReplyOrderByWithRelationInput[]
-  cursor?: Prisma.ForumReplyWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ForumReplyScalarFieldEnum | Prisma.ForumReplyScalarFieldEnum[]
-}
-
-/**
  * ClientUser.forumTopics
  */
 export type ClientUser$forumTopicsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2122,6 +2157,30 @@ export type ClientUser$forumTopicsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.ForumTopicScalarFieldEnum | Prisma.ForumTopicScalarFieldEnum[]
+}
+
+/**
+ * ClientUser.forumReplies
+ */
+export type ClientUser$forumRepliesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumReply
+   */
+  select?: Prisma.ForumReplySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumReply
+   */
+  omit?: Prisma.ForumReplyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumReplyInclude<ExtArgs> | null
+  where?: Prisma.ForumReplyWhereInput
+  orderBy?: Prisma.ForumReplyOrderByWithRelationInput | Prisma.ForumReplyOrderByWithRelationInput[]
+  cursor?: Prisma.ForumReplyWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ForumReplyScalarFieldEnum | Prisma.ForumReplyScalarFieldEnum[]
 }
 
 /**
