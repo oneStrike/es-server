@@ -1,3 +1,4 @@
+/// 论坛主题收藏表 - 记录用户收藏的主题关系
 model ForumTopicFavorite {
   /// 主键ID
   id        Int          @id @default(autoincrement())

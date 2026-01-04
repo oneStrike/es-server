@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumProfileBadge
- * 
+ * 论坛用户徽章关联表 - 管理用户获得的徽章，一个用户可以有多个徽章
  */
 export type ForumProfileBadgeModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumProfileBadgePayload>
 

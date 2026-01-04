@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumLevelRule
- * 
+ * 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级图标等
  */
 export type ForumLevelRuleModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumLevelRulePayload>
 
@@ -34,7 +34,7 @@ export type ForumLevelRuleAvgAggregateOutputType = {
 
 export type ForumLevelRuleSumAggregateOutputType = {
   id: number | null
-  requiredPoints: number | null
+  requiredPoints: bigint | null
   order: number | null
 }
 
@@ -43,7 +43,7 @@ export type ForumLevelRuleMinAggregateOutputType = {
   name: string | null
   description: string | null
   icon: string | null
-  requiredPoints: number | null
+  requiredPoints: bigint | null
   order: number | null
   isEnabled: boolean | null
   createdAt: Date | null
@@ -55,7 +55,7 @@ export type ForumLevelRuleMaxAggregateOutputType = {
   name: string | null
   description: string | null
   icon: string | null
-  requiredPoints: number | null
+  requiredPoints: bigint | null
   order: number | null
   isEnabled: boolean | null
   createdAt: Date | null
@@ -216,7 +216,7 @@ export type ForumLevelRuleGroupByOutputType = {
   name: string
   description: string | null
   icon: string | null
-  requiredPoints: number
+  requiredPoints: bigint
   order: number
   isEnabled: boolean
   createdAt: Date
@@ -251,7 +251,7 @@ export type ForumLevelRuleWhereInput = {
   name?: Prisma.StringFilter<"ForumLevelRule"> | string
   description?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
   icon?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
-  requiredPoints?: Prisma.IntFilter<"ForumLevelRule"> | number
+  requiredPoints?: Prisma.BigIntFilter<"ForumLevelRule"> | bigint | number
   order?: Prisma.IntFilter<"ForumLevelRule"> | number
   isEnabled?: Prisma.BoolFilter<"ForumLevelRule"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
@@ -280,7 +280,7 @@ export type ForumLevelRuleWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"ForumLevelRule"> | string
   description?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
   icon?: Prisma.StringNullableFilter<"ForumLevelRule"> | string | null
-  requiredPoints?: Prisma.IntFilter<"ForumLevelRule"> | number
+  requiredPoints?: Prisma.BigIntFilter<"ForumLevelRule"> | bigint | number
   order?: Prisma.IntFilter<"ForumLevelRule"> | number
   isEnabled?: Prisma.BoolFilter<"ForumLevelRule"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
@@ -313,7 +313,7 @@ export type ForumLevelRuleScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"ForumLevelRule"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"ForumLevelRule"> | string | null
   icon?: Prisma.StringNullableWithAggregatesFilter<"ForumLevelRule"> | string | null
-  requiredPoints?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
+  requiredPoints?: Prisma.BigIntWithAggregatesFilter<"ForumLevelRule"> | bigint | number
   order?: Prisma.IntWithAggregatesFilter<"ForumLevelRule"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ForumLevelRule"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumLevelRule"> | Date | string
@@ -324,7 +324,7 @@ export type ForumLevelRuleCreateInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: number
+  requiredPoints: bigint | number
   order?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -337,7 +337,7 @@ export type ForumLevelRuleUncheckedCreateInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: number
+  requiredPoints: bigint | number
   order?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -349,7 +349,7 @@ export type ForumLevelRuleUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -362,7 +362,7 @@ export type ForumLevelRuleUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -375,7 +375,7 @@ export type ForumLevelRuleCreateManyInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: number
+  requiredPoints: bigint | number
   order?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -386,7 +386,7 @@ export type ForumLevelRuleUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -398,7 +398,7 @@ export type ForumLevelRuleUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -458,6 +458,14 @@ export type ForumLevelRuleNullableScalarRelationFilter = {
   isNot?: Prisma.ForumLevelRuleWhereInput | null
 }
 
+export type BigIntFieldUpdateOperationsInput = {
+  set?: bigint | number
+  increment?: bigint | number
+  decrement?: bigint | number
+  multiply?: bigint | number
+  divide?: bigint | number
+}
+
 export type ForumLevelRuleCreateNestedOneWithoutProfilesInput = {
   create?: Prisma.XOR<Prisma.ForumLevelRuleCreateWithoutProfilesInput, Prisma.ForumLevelRuleUncheckedCreateWithoutProfilesInput>
   connectOrCreate?: Prisma.ForumLevelRuleCreateOrConnectWithoutProfilesInput
@@ -478,7 +486,7 @@ export type ForumLevelRuleCreateWithoutProfilesInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: number
+  requiredPoints: bigint | number
   order?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -490,7 +498,7 @@ export type ForumLevelRuleUncheckedCreateWithoutProfilesInput = {
   name: string
   description?: string | null
   icon?: string | null
-  requiredPoints: number
+  requiredPoints: bigint | number
   order?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -517,7 +525,7 @@ export type ForumLevelRuleUpdateWithoutProfilesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -529,7 +537,7 @@ export type ForumLevelRuleUncheckedUpdateWithoutProfilesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   order?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -650,7 +658,7 @@ export type $ForumLevelRulePayload<ExtArgs extends runtime.Types.Extensions.Inte
     /**
      * 所需积分
      */
-    requiredPoints: number
+    requiredPoints: bigint
     /**
      * 排序值（数值越小越靠前）
      */
@@ -1095,7 +1103,7 @@ export interface ForumLevelRuleFieldRefs {
   readonly name: Prisma.FieldRef<"ForumLevelRule", 'String'>
   readonly description: Prisma.FieldRef<"ForumLevelRule", 'String'>
   readonly icon: Prisma.FieldRef<"ForumLevelRule", 'String'>
-  readonly requiredPoints: Prisma.FieldRef<"ForumLevelRule", 'Int'>
+  readonly requiredPoints: Prisma.FieldRef<"ForumLevelRule", 'BigInt'>
   readonly order: Prisma.FieldRef<"ForumLevelRule", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"ForumLevelRule", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"ForumLevelRule", 'DateTime'>

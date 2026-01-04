@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumPointRecord
- * 
+ * 论坛积分记录表 - 记录用户积分变化历史，包括获得和消费的积分
  */
 export type ForumPointRecordModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumPointRecordPayload>
 
@@ -41,9 +41,9 @@ export type ForumPointRecordSumAggregateOutputType = {
   id: number | null
   userId: number | null
   ruleId: number | null
-  points: number | null
-  beforePoints: number | null
-  afterPoints: number | null
+  points: bigint | null
+  beforePoints: bigint | null
+  afterPoints: bigint | null
   objectType: number | null
   objectId: number | null
 }
@@ -52,9 +52,9 @@ export type ForumPointRecordMinAggregateOutputType = {
   id: number | null
   userId: number | null
   ruleId: number | null
-  points: number | null
-  beforePoints: number | null
-  afterPoints: number | null
+  points: bigint | null
+  beforePoints: bigint | null
+  afterPoints: bigint | null
   objectType: number | null
   objectId: number | null
   remark: string | null
@@ -65,9 +65,9 @@ export type ForumPointRecordMaxAggregateOutputType = {
   id: number | null
   userId: number | null
   ruleId: number | null
-  points: number | null
-  beforePoints: number | null
-  afterPoints: number | null
+  points: bigint | null
+  beforePoints: bigint | null
+  afterPoints: bigint | null
   objectType: number | null
   objectId: number | null
   remark: string | null
@@ -241,9 +241,9 @@ export type ForumPointRecordGroupByOutputType = {
   id: number
   userId: number
   ruleId: number | null
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint
+  beforePoints: bigint
+  afterPoints: bigint
   objectType: number
   objectId: number
   remark: string | null
@@ -277,9 +277,9 @@ export type ForumPointRecordWhereInput = {
   id?: Prisma.IntFilter<"ForumPointRecord"> | number
   userId?: Prisma.IntFilter<"ForumPointRecord"> | number
   ruleId?: Prisma.IntNullableFilter<"ForumPointRecord"> | number | null
-  points?: Prisma.IntFilter<"ForumPointRecord"> | number
-  beforePoints?: Prisma.IntFilter<"ForumPointRecord"> | number
-  afterPoints?: Prisma.IntFilter<"ForumPointRecord"> | number
+  points?: Prisma.BigIntFilter<"ForumPointRecord"> | bigint | number
+  beforePoints?: Prisma.BigIntFilter<"ForumPointRecord"> | bigint | number
+  afterPoints?: Prisma.BigIntFilter<"ForumPointRecord"> | bigint | number
   objectType?: Prisma.IntFilter<"ForumPointRecord"> | number
   objectId?: Prisma.IntFilter<"ForumPointRecord"> | number
   remark?: Prisma.StringNullableFilter<"ForumPointRecord"> | string | null
@@ -310,9 +310,9 @@ export type ForumPointRecordWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ForumPointRecordWhereInput | Prisma.ForumPointRecordWhereInput[]
   userId?: Prisma.IntFilter<"ForumPointRecord"> | number
   ruleId?: Prisma.IntNullableFilter<"ForumPointRecord"> | number | null
-  points?: Prisma.IntFilter<"ForumPointRecord"> | number
-  beforePoints?: Prisma.IntFilter<"ForumPointRecord"> | number
-  afterPoints?: Prisma.IntFilter<"ForumPointRecord"> | number
+  points?: Prisma.BigIntFilter<"ForumPointRecord"> | bigint | number
+  beforePoints?: Prisma.BigIntFilter<"ForumPointRecord"> | bigint | number
+  afterPoints?: Prisma.BigIntFilter<"ForumPointRecord"> | bigint | number
   objectType?: Prisma.IntFilter<"ForumPointRecord"> | number
   objectId?: Prisma.IntFilter<"ForumPointRecord"> | number
   remark?: Prisma.StringNullableFilter<"ForumPointRecord"> | string | null
@@ -346,9 +346,9 @@ export type ForumPointRecordScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"ForumPointRecord"> | number
   userId?: Prisma.IntWithAggregatesFilter<"ForumPointRecord"> | number
   ruleId?: Prisma.IntNullableWithAggregatesFilter<"ForumPointRecord"> | number | null
-  points?: Prisma.IntWithAggregatesFilter<"ForumPointRecord"> | number
-  beforePoints?: Prisma.IntWithAggregatesFilter<"ForumPointRecord"> | number
-  afterPoints?: Prisma.IntWithAggregatesFilter<"ForumPointRecord"> | number
+  points?: Prisma.BigIntWithAggregatesFilter<"ForumPointRecord"> | bigint | number
+  beforePoints?: Prisma.BigIntWithAggregatesFilter<"ForumPointRecord"> | bigint | number
+  afterPoints?: Prisma.BigIntWithAggregatesFilter<"ForumPointRecord"> | bigint | number
   objectType?: Prisma.IntWithAggregatesFilter<"ForumPointRecord"> | number
   objectId?: Prisma.IntWithAggregatesFilter<"ForumPointRecord"> | number
   remark?: Prisma.StringNullableWithAggregatesFilter<"ForumPointRecord"> | string | null
@@ -356,9 +356,9 @@ export type ForumPointRecordScalarWhereWithAggregatesInput = {
 }
 
 export type ForumPointRecordCreateInput = {
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint | number
+  beforePoints: bigint | number
+  afterPoints: bigint | number
   objectType: number
   objectId: number
   remark?: string | null
@@ -371,9 +371,9 @@ export type ForumPointRecordUncheckedCreateInput = {
   id?: number
   userId: number
   ruleId?: number | null
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint | number
+  beforePoints: bigint | number
+  afterPoints: bigint | number
   objectType: number
   objectId: number
   remark?: string | null
@@ -381,9 +381,9 @@ export type ForumPointRecordUncheckedCreateInput = {
 }
 
 export type ForumPointRecordUpdateInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -396,9 +396,9 @@ export type ForumPointRecordUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -409,9 +409,9 @@ export type ForumPointRecordCreateManyInput = {
   id?: number
   userId: number
   ruleId?: number | null
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint | number
+  beforePoints: bigint | number
+  afterPoints: bigint | number
   objectType: number
   objectId: number
   remark?: string | null
@@ -419,9 +419,9 @@ export type ForumPointRecordCreateManyInput = {
 }
 
 export type ForumPointRecordUpdateManyMutationInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -432,9 +432,9 @@ export type ForumPointRecordUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -597,9 +597,9 @@ export type ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput = {
 }
 
 export type ForumPointRecordCreateWithoutRuleInput = {
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint | number
+  beforePoints: bigint | number
+  afterPoints: bigint | number
   objectType: number
   objectId: number
   remark?: string | null
@@ -610,9 +610,9 @@ export type ForumPointRecordCreateWithoutRuleInput = {
 export type ForumPointRecordUncheckedCreateWithoutRuleInput = {
   id?: number
   userId: number
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint | number
+  beforePoints: bigint | number
+  afterPoints: bigint | number
   objectType: number
   objectId: number
   remark?: string | null
@@ -652,9 +652,9 @@ export type ForumPointRecordScalarWhereInput = {
   id?: Prisma.IntFilter<"ForumPointRecord"> | number
   userId?: Prisma.IntFilter<"ForumPointRecord"> | number
   ruleId?: Prisma.IntNullableFilter<"ForumPointRecord"> | number | null
-  points?: Prisma.IntFilter<"ForumPointRecord"> | number
-  beforePoints?: Prisma.IntFilter<"ForumPointRecord"> | number
-  afterPoints?: Prisma.IntFilter<"ForumPointRecord"> | number
+  points?: Prisma.BigIntFilter<"ForumPointRecord"> | bigint | number
+  beforePoints?: Prisma.BigIntFilter<"ForumPointRecord"> | bigint | number
+  afterPoints?: Prisma.BigIntFilter<"ForumPointRecord"> | bigint | number
   objectType?: Prisma.IntFilter<"ForumPointRecord"> | number
   objectId?: Prisma.IntFilter<"ForumPointRecord"> | number
   remark?: Prisma.StringNullableFilter<"ForumPointRecord"> | string | null
@@ -662,9 +662,9 @@ export type ForumPointRecordScalarWhereInput = {
 }
 
 export type ForumPointRecordCreateWithoutProfileInput = {
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint | number
+  beforePoints: bigint | number
+  afterPoints: bigint | number
   objectType: number
   objectId: number
   remark?: string | null
@@ -675,9 +675,9 @@ export type ForumPointRecordCreateWithoutProfileInput = {
 export type ForumPointRecordUncheckedCreateWithoutProfileInput = {
   id?: number
   ruleId?: number | null
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint | number
+  beforePoints: bigint | number
+  afterPoints: bigint | number
   objectType: number
   objectId: number
   remark?: string | null
@@ -713,9 +713,9 @@ export type ForumPointRecordUpdateManyWithWhereWithoutProfileInput = {
 export type ForumPointRecordCreateManyRuleInput = {
   id?: number
   userId: number
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint | number
+  beforePoints: bigint | number
+  afterPoints: bigint | number
   objectType: number
   objectId: number
   remark?: string | null
@@ -723,9 +723,9 @@ export type ForumPointRecordCreateManyRuleInput = {
 }
 
 export type ForumPointRecordUpdateWithoutRuleInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -736,9 +736,9 @@ export type ForumPointRecordUpdateWithoutRuleInput = {
 export type ForumPointRecordUncheckedUpdateWithoutRuleInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -748,9 +748,9 @@ export type ForumPointRecordUncheckedUpdateWithoutRuleInput = {
 export type ForumPointRecordUncheckedUpdateManyWithoutRuleInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -760,9 +760,9 @@ export type ForumPointRecordUncheckedUpdateManyWithoutRuleInput = {
 export type ForumPointRecordCreateManyProfileInput = {
   id?: number
   ruleId?: number | null
-  points: number
-  beforePoints: number
-  afterPoints: number
+  points: bigint | number
+  beforePoints: bigint | number
+  afterPoints: bigint | number
   objectType: number
   objectId: number
   remark?: string | null
@@ -770,9 +770,9 @@ export type ForumPointRecordCreateManyProfileInput = {
 }
 
 export type ForumPointRecordUpdateWithoutProfileInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -783,9 +783,9 @@ export type ForumPointRecordUpdateWithoutProfileInput = {
 export type ForumPointRecordUncheckedUpdateWithoutProfileInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -795,9 +795,9 @@ export type ForumPointRecordUncheckedUpdateWithoutProfileInput = {
 export type ForumPointRecordUncheckedUpdateManyWithoutProfileInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  beforePoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  afterPoints?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
   objectId?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -900,15 +900,15 @@ export type $ForumPointRecordPayload<ExtArgs extends runtime.Types.Extensions.In
     /**
      * 积分变化（正数为获得，负数为消费）
      */
-    points: number
+    points: bigint
     /**
      * 变化前积分
      */
-    beforePoints: number
+    beforePoints: bigint
     /**
      * 变化后积分
      */
-    afterPoints: number
+    afterPoints: bigint
     /**
      * 关联对象类型（1=主题, 2=回复, 3=签到）
      */
@@ -1353,9 +1353,9 @@ export interface ForumPointRecordFieldRefs {
   readonly id: Prisma.FieldRef<"ForumPointRecord", 'Int'>
   readonly userId: Prisma.FieldRef<"ForumPointRecord", 'Int'>
   readonly ruleId: Prisma.FieldRef<"ForumPointRecord", 'Int'>
-  readonly points: Prisma.FieldRef<"ForumPointRecord", 'Int'>
-  readonly beforePoints: Prisma.FieldRef<"ForumPointRecord", 'Int'>
-  readonly afterPoints: Prisma.FieldRef<"ForumPointRecord", 'Int'>
+  readonly points: Prisma.FieldRef<"ForumPointRecord", 'BigInt'>
+  readonly beforePoints: Prisma.FieldRef<"ForumPointRecord", 'BigInt'>
+  readonly afterPoints: Prisma.FieldRef<"ForumPointRecord", 'BigInt'>
   readonly objectType: Prisma.FieldRef<"ForumPointRecord", 'Int'>
   readonly objectId: Prisma.FieldRef<"ForumPointRecord", 'Int'>
   readonly remark: Prisma.FieldRef<"ForumPointRecord", 'String'>

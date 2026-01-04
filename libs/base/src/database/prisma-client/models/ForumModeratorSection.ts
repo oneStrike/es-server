@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumModeratorSection
- * 
+ * 论坛版主板块关联表 - 管理版主与板块的多对多关系，一个版主可以管理多个板块
  */
 export type ForumModeratorSectionModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumModeratorSectionPayload>
 

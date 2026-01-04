@@ -409,6 +409,7 @@ export const ModelName = {
   ForumTopicLike: 'ForumTopicLike',
   ForumTopicTag: 'ForumTopicTag',
   ForumTopic: 'ForumTopic',
+  ForumUserActionLog: 'ForumUserActionLog',
   MemberLevel: 'MemberLevel',
   RequestLog: 'RequestLog',
   Dictionary: 'Dictionary',
@@ -436,7 +437,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "forumAuditLog" | "forumBadge" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "forumAuditLog" | "forumBadge" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2290,6 +2291,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ForumUserActionLog: {
+      payload: Prisma.$ForumUserActionLogPayload<ExtArgs>
+      fields: Prisma.ForumUserActionLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ForumUserActionLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ForumUserActionLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload>
+        }
+        findFirst: {
+          args: Prisma.ForumUserActionLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ForumUserActionLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload>
+        }
+        findMany: {
+          args: Prisma.ForumUserActionLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload>[]
+        }
+        create: {
+          args: Prisma.ForumUserActionLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload>
+        }
+        createMany: {
+          args: Prisma.ForumUserActionLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ForumUserActionLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload>[]
+        }
+        delete: {
+          args: Prisma.ForumUserActionLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload>
+        }
+        update: {
+          args: Prisma.ForumUserActionLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.ForumUserActionLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ForumUserActionLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ForumUserActionLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.ForumUserActionLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumUserActionLogPayload>
+        }
+        aggregate: {
+          args: Prisma.ForumUserActionLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateForumUserActionLog>
+        }
+        groupBy: {
+          args: Prisma.ForumUserActionLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumUserActionLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ForumUserActionLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumUserActionLogCountAggregateOutputType> | number
+        }
+      }
+    }
     MemberLevel: {
       payload: Prisma.$MemberLevelPayload<ExtArgs>
       fields: Prisma.MemberLevelFieldRefs
@@ -3406,7 +3481,9 @@ export const ForumNotificationScalarFieldEnum = {
   objectId: 'objectId',
   isRead: 'isRead',
   readAt: 'readAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  expiredAt: 'expiredAt',
+  priority: 'priority'
 } as const
 
 export type ForumNotificationScalarFieldEnum = (typeof ForumNotificationScalarFieldEnum)[keyof typeof ForumNotificationScalarFieldEnum]
@@ -3471,7 +3548,8 @@ export const ForumProfileScalarFieldEnum = {
   banUntil: 'banUntil',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deletedAt',
+  version: 'version'
 } as const
 
 export type ForumProfileScalarFieldEnum = (typeof ForumProfileScalarFieldEnum)[keyof typeof ForumProfileScalarFieldEnum]
@@ -3502,7 +3580,8 @@ export const ForumReplyScalarFieldEnum = {
   likeCount: 'likeCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deletedAt',
+  version: 'version'
 } as const
 
 export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof typeof ForumReplyScalarFieldEnum]
@@ -3535,7 +3614,11 @@ export const ForumSensitiveWordScalarFieldEnum = {
   isEnabled: 'isEnabled',
   remark: 'remark',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  level: 'level',
+  matchMode: 'matchMode',
+  type: 'type',
+  version: 'version'
 } as const
 
 export type ForumSensitiveWordScalarFieldEnum = (typeof ForumSensitiveWordScalarFieldEnum)[keyof typeof ForumSensitiveWordScalarFieldEnum]
@@ -3608,10 +3691,28 @@ export const ForumTopicScalarFieldEnum = {
   lastReplyUserId: 'lastReplyUserId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deletedAt',
+  version: 'version'
 } as const
 
 export type ForumTopicScalarFieldEnum = (typeof ForumTopicScalarFieldEnum)[keyof typeof ForumTopicScalarFieldEnum]
+
+
+export const ForumUserActionLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  actionType: 'actionType',
+  actionDescription: 'actionDescription',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  beforeData: 'beforeData',
+  afterData: 'afterData',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt'
+} as const
+
+export type ForumUserActionLogScalarFieldEnum = (typeof ForumUserActionLogScalarFieldEnum)[keyof typeof ForumUserActionLogScalarFieldEnum]
 
 
 export const MemberLevelScalarFieldEnum = {
@@ -3942,6 +4043,20 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'BigInt'
+ */
+export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+/**
+ * Reference to a field of type 'BigInt[]'
+ */
+export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -4088,6 +4203,7 @@ export type GlobalOmitConfig = {
   forumTopicLike?: Prisma.ForumTopicLikeOmit
   forumTopicTag?: Prisma.ForumTopicTagOmit
   forumTopic?: Prisma.ForumTopicOmit
+  forumUserActionLog?: Prisma.ForumUserActionLogOmit
   memberLevel?: Prisma.MemberLevelOmit
   requestLog?: Prisma.RequestLogOmit
   dictionary?: Prisma.DictionaryOmit

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumProfile
- * 
+ * 论坛用户资料表 - 存储用户的论坛信息，包括积分、等级、统计数据、签名等
  */
 export type ForumProfileModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumProfilePayload>
 
@@ -35,23 +35,25 @@ export type ForumProfileAvgAggregateOutputType = {
   replyCount: number | null
   likeCount: number | null
   favoriteCount: number | null
+  version: number | null
 }
 
 export type ForumProfileSumAggregateOutputType = {
   id: number | null
   userId: number | null
-  points: number | null
+  points: bigint | null
   levelId: number | null
   topicCount: number | null
   replyCount: number | null
   likeCount: number | null
   favoriteCount: number | null
+  version: number | null
 }
 
 export type ForumProfileMinAggregateOutputType = {
   id: number | null
   userId: number | null
-  points: number | null
+  points: bigint | null
   levelId: number | null
   topicCount: number | null
   replyCount: number | null
@@ -67,12 +69,13 @@ export type ForumProfileMinAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
+  version: number | null
 }
 
 export type ForumProfileMaxAggregateOutputType = {
   id: number | null
   userId: number | null
-  points: number | null
+  points: bigint | null
   levelId: number | null
   topicCount: number | null
   replyCount: number | null
@@ -88,6 +91,7 @@ export type ForumProfileMaxAggregateOutputType = {
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
+  version: number | null
 }
 
 export type ForumProfileCountAggregateOutputType = {
@@ -109,6 +113,7 @@ export type ForumProfileCountAggregateOutputType = {
   createdAt: number
   updatedAt: number
   deletedAt: number
+  version: number
   _all: number
 }
 
@@ -122,6 +127,7 @@ export type ForumProfileAvgAggregateInputType = {
   replyCount?: true
   likeCount?: true
   favoriteCount?: true
+  version?: true
 }
 
 export type ForumProfileSumAggregateInputType = {
@@ -133,6 +139,7 @@ export type ForumProfileSumAggregateInputType = {
   replyCount?: true
   likeCount?: true
   favoriteCount?: true
+  version?: true
 }
 
 export type ForumProfileMinAggregateInputType = {
@@ -154,6 +161,7 @@ export type ForumProfileMinAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
+  version?: true
 }
 
 export type ForumProfileMaxAggregateInputType = {
@@ -175,6 +183,7 @@ export type ForumProfileMaxAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
+  version?: true
 }
 
 export type ForumProfileCountAggregateInputType = {
@@ -196,6 +205,7 @@ export type ForumProfileCountAggregateInputType = {
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
+  version?: true
   _all?: true
 }
 
@@ -288,7 +298,7 @@ export type ForumProfileGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type ForumProfileGroupByOutputType = {
   id: number
   userId: number
-  points: number
+  points: bigint
   levelId: number | null
   topicCount: number
   replyCount: number
@@ -304,6 +314,7 @@ export type ForumProfileGroupByOutputType = {
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
+  version: number
   _count: ForumProfileCountAggregateOutputType | null
   _avg: ForumProfileAvgAggregateOutputType | null
   _sum: ForumProfileSumAggregateOutputType | null
@@ -332,7 +343,7 @@ export type ForumProfileWhereInput = {
   NOT?: Prisma.ForumProfileWhereInput | Prisma.ForumProfileWhereInput[]
   id?: Prisma.IntFilter<"ForumProfile"> | number
   userId?: Prisma.IntFilter<"ForumProfile"> | number
-  points?: Prisma.IntFilter<"ForumProfile"> | number
+  points?: Prisma.BigIntFilter<"ForumProfile"> | bigint | number
   levelId?: Prisma.IntNullableFilter<"ForumProfile"> | number | null
   topicCount?: Prisma.IntFilter<"ForumProfile"> | number
   replyCount?: Prisma.IntFilter<"ForumProfile"> | number
@@ -348,6 +359,7 @@ export type ForumProfileWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
+  version?: Prisma.IntFilter<"ForumProfile"> | number
   moderator?: Prisma.XOR<Prisma.ForumModeratorNullableScalarRelationFilter, Prisma.ForumModeratorWhereInput> | null
   notifications?: Prisma.ForumNotificationListRelationFilter
   pointRecords?: Prisma.ForumPointRecordListRelationFilter
@@ -378,6 +390,7 @@ export type ForumProfileOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  version?: Prisma.SortOrder
   moderator?: Prisma.ForumModeratorOrderByWithRelationInput
   notifications?: Prisma.ForumNotificationOrderByRelationAggregateInput
   pointRecords?: Prisma.ForumPointRecordOrderByRelationAggregateInput
@@ -395,7 +408,7 @@ export type ForumProfileWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.ForumProfileWhereInput | Prisma.ForumProfileWhereInput[]
   OR?: Prisma.ForumProfileWhereInput[]
   NOT?: Prisma.ForumProfileWhereInput | Prisma.ForumProfileWhereInput[]
-  points?: Prisma.IntFilter<"ForumProfile"> | number
+  points?: Prisma.BigIntFilter<"ForumProfile"> | bigint | number
   levelId?: Prisma.IntNullableFilter<"ForumProfile"> | number | null
   topicCount?: Prisma.IntFilter<"ForumProfile"> | number
   replyCount?: Prisma.IntFilter<"ForumProfile"> | number
@@ -411,6 +424,7 @@ export type ForumProfileWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
+  version?: Prisma.IntFilter<"ForumProfile"> | number
   moderator?: Prisma.XOR<Prisma.ForumModeratorNullableScalarRelationFilter, Prisma.ForumModeratorWhereInput> | null
   notifications?: Prisma.ForumNotificationListRelationFilter
   pointRecords?: Prisma.ForumPointRecordListRelationFilter
@@ -441,6 +455,7 @@ export type ForumProfileOrderByWithAggregationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  version?: Prisma.SortOrder
   _count?: Prisma.ForumProfileCountOrderByAggregateInput
   _avg?: Prisma.ForumProfileAvgOrderByAggregateInput
   _max?: Prisma.ForumProfileMaxOrderByAggregateInput
@@ -454,7 +469,7 @@ export type ForumProfileScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumProfileScalarWhereWithAggregatesInput | Prisma.ForumProfileScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
   userId?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
-  points?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
+  points?: Prisma.BigIntWithAggregatesFilter<"ForumProfile"> | bigint | number
   levelId?: Prisma.IntNullableWithAggregatesFilter<"ForumProfile"> | number | null
   topicCount?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
   replyCount?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
@@ -470,10 +485,11 @@ export type ForumProfileScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumProfile"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumProfile"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumProfile"> | Date | string | null
+  version?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
 }
 
 export type ForumProfileCreateInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -488,6 +504,7 @@ export type ForumProfileCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -502,7 +519,7 @@ export type ForumProfileCreateInput = {
 export type ForumProfileUncheckedCreateInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -518,6 +535,7 @@ export type ForumProfileUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -528,7 +546,7 @@ export type ForumProfileUncheckedCreateInput = {
 }
 
 export type ForumProfileUpdateInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -543,6 +561,7 @@ export type ForumProfileUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -557,7 +576,7 @@ export type ForumProfileUpdateInput = {
 export type ForumProfileUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -573,6 +592,7 @@ export type ForumProfileUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -585,7 +605,7 @@ export type ForumProfileUncheckedUpdateInput = {
 export type ForumProfileCreateManyInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -601,10 +621,11 @@ export type ForumProfileCreateManyInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
 }
 
 export type ForumProfileUpdateManyMutationInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -619,12 +640,13 @@ export type ForumProfileUpdateManyMutationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ForumProfileUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -640,6 +662,7 @@ export type ForumProfileUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ForumProfileNullableScalarRelationFilter = {
@@ -681,6 +704,7 @@ export type ForumProfileCountOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumProfileAvgOrderByAggregateInput = {
@@ -692,6 +716,7 @@ export type ForumProfileAvgOrderByAggregateInput = {
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumProfileMaxOrderByAggregateInput = {
@@ -713,6 +738,7 @@ export type ForumProfileMaxOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumProfileMinOrderByAggregateInput = {
@@ -734,6 +760,7 @@ export type ForumProfileMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumProfileSumOrderByAggregateInput = {
@@ -745,6 +772,7 @@ export type ForumProfileSumOrderByAggregateInput = {
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumProfileCreateNestedOneWithoutUserInput = {
@@ -920,7 +948,7 @@ export type ForumProfileUpdateOneRequiredWithoutTopicLikesNestedInput = {
 }
 
 export type ForumProfileCreateWithoutUserInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -935,6 +963,7 @@ export type ForumProfileCreateWithoutUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -947,7 +976,7 @@ export type ForumProfileCreateWithoutUserInput = {
 
 export type ForumProfileUncheckedCreateWithoutUserInput = {
   id?: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -963,6 +992,7 @@ export type ForumProfileUncheckedCreateWithoutUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -989,7 +1019,7 @@ export type ForumProfileUpdateToOneWithWhereWithoutUserInput = {
 }
 
 export type ForumProfileUpdateWithoutUserInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1004,6 +1034,7 @@ export type ForumProfileUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -1016,7 +1047,7 @@ export type ForumProfileUpdateWithoutUserInput = {
 
 export type ForumProfileUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1032,6 +1063,7 @@ export type ForumProfileUncheckedUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -1042,7 +1074,7 @@ export type ForumProfileUncheckedUpdateWithoutUserInput = {
 }
 
 export type ForumProfileCreateWithoutLevelInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -1057,6 +1089,7 @@ export type ForumProfileCreateWithoutLevelInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1070,7 +1103,7 @@ export type ForumProfileCreateWithoutLevelInput = {
 export type ForumProfileUncheckedCreateWithoutLevelInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -1085,6 +1118,7 @@ export type ForumProfileUncheckedCreateWithoutLevelInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1126,7 +1160,7 @@ export type ForumProfileScalarWhereInput = {
   NOT?: Prisma.ForumProfileScalarWhereInput | Prisma.ForumProfileScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumProfile"> | number
   userId?: Prisma.IntFilter<"ForumProfile"> | number
-  points?: Prisma.IntFilter<"ForumProfile"> | number
+  points?: Prisma.BigIntFilter<"ForumProfile"> | bigint | number
   levelId?: Prisma.IntNullableFilter<"ForumProfile"> | number | null
   topicCount?: Prisma.IntFilter<"ForumProfile"> | number
   replyCount?: Prisma.IntFilter<"ForumProfile"> | number
@@ -1142,10 +1176,11 @@ export type ForumProfileScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
+  version?: Prisma.IntFilter<"ForumProfile"> | number
 }
 
 export type ForumProfileCreateWithoutModeratorInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -1160,6 +1195,7 @@ export type ForumProfileCreateWithoutModeratorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
@@ -1173,7 +1209,7 @@ export type ForumProfileCreateWithoutModeratorInput = {
 export type ForumProfileUncheckedCreateWithoutModeratorInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1189,6 +1225,7 @@ export type ForumProfileUncheckedCreateWithoutModeratorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
@@ -1214,7 +1251,7 @@ export type ForumProfileUpdateToOneWithWhereWithoutModeratorInput = {
 }
 
 export type ForumProfileUpdateWithoutModeratorInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1229,6 +1266,7 @@ export type ForumProfileUpdateWithoutModeratorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
@@ -1242,7 +1280,7 @@ export type ForumProfileUpdateWithoutModeratorInput = {
 export type ForumProfileUncheckedUpdateWithoutModeratorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1258,6 +1296,7 @@ export type ForumProfileUncheckedUpdateWithoutModeratorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
@@ -1267,7 +1306,7 @@ export type ForumProfileUncheckedUpdateWithoutModeratorInput = {
 }
 
 export type ForumProfileCreateWithoutNotificationsInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -1282,6 +1321,7 @@ export type ForumProfileCreateWithoutNotificationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
@@ -1295,7 +1335,7 @@ export type ForumProfileCreateWithoutNotificationsInput = {
 export type ForumProfileUncheckedCreateWithoutNotificationsInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1311,6 +1351,7 @@ export type ForumProfileUncheckedCreateWithoutNotificationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
@@ -1336,7 +1377,7 @@ export type ForumProfileUpdateToOneWithWhereWithoutNotificationsInput = {
 }
 
 export type ForumProfileUpdateWithoutNotificationsInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1351,6 +1392,7 @@ export type ForumProfileUpdateWithoutNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
@@ -1364,7 +1406,7 @@ export type ForumProfileUpdateWithoutNotificationsInput = {
 export type ForumProfileUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1380,6 +1422,7 @@ export type ForumProfileUncheckedUpdateWithoutNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
@@ -1389,7 +1432,7 @@ export type ForumProfileUncheckedUpdateWithoutNotificationsInput = {
 }
 
 export type ForumProfileCreateWithoutPointRecordsInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -1404,6 +1447,7 @@ export type ForumProfileCreateWithoutPointRecordsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
@@ -1417,7 +1461,7 @@ export type ForumProfileCreateWithoutPointRecordsInput = {
 export type ForumProfileUncheckedCreateWithoutPointRecordsInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1433,6 +1477,7 @@ export type ForumProfileUncheckedCreateWithoutPointRecordsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
@@ -1458,7 +1503,7 @@ export type ForumProfileUpdateToOneWithWhereWithoutPointRecordsInput = {
 }
 
 export type ForumProfileUpdateWithoutPointRecordsInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1473,6 +1518,7 @@ export type ForumProfileUpdateWithoutPointRecordsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
@@ -1486,7 +1532,7 @@ export type ForumProfileUpdateWithoutPointRecordsInput = {
 export type ForumProfileUncheckedUpdateWithoutPointRecordsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1502,6 +1548,7 @@ export type ForumProfileUncheckedUpdateWithoutPointRecordsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
@@ -1511,7 +1558,7 @@ export type ForumProfileUncheckedUpdateWithoutPointRecordsInput = {
 }
 
 export type ForumProfileCreateWithoutProfileBadgesInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -1526,6 +1573,7 @@ export type ForumProfileCreateWithoutProfileBadgesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1539,7 +1587,7 @@ export type ForumProfileCreateWithoutProfileBadgesInput = {
 export type ForumProfileUncheckedCreateWithoutProfileBadgesInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1555,6 +1603,7 @@ export type ForumProfileUncheckedCreateWithoutProfileBadgesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1580,7 +1629,7 @@ export type ForumProfileUpdateToOneWithWhereWithoutProfileBadgesInput = {
 }
 
 export type ForumProfileUpdateWithoutProfileBadgesInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1595,6 +1644,7 @@ export type ForumProfileUpdateWithoutProfileBadgesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -1608,7 +1658,7 @@ export type ForumProfileUpdateWithoutProfileBadgesInput = {
 export type ForumProfileUncheckedUpdateWithoutProfileBadgesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1624,6 +1674,7 @@ export type ForumProfileUncheckedUpdateWithoutProfileBadgesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -1633,7 +1684,7 @@ export type ForumProfileUncheckedUpdateWithoutProfileBadgesInput = {
 }
 
 export type ForumProfileCreateWithoutReplyLikesInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -1648,6 +1699,7 @@ export type ForumProfileCreateWithoutReplyLikesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1661,7 +1713,7 @@ export type ForumProfileCreateWithoutReplyLikesInput = {
 export type ForumProfileUncheckedCreateWithoutReplyLikesInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1677,6 +1729,7 @@ export type ForumProfileUncheckedCreateWithoutReplyLikesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1702,7 +1755,7 @@ export type ForumProfileUpdateToOneWithWhereWithoutReplyLikesInput = {
 }
 
 export type ForumProfileUpdateWithoutReplyLikesInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1717,6 +1770,7 @@ export type ForumProfileUpdateWithoutReplyLikesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -1730,7 +1784,7 @@ export type ForumProfileUpdateWithoutReplyLikesInput = {
 export type ForumProfileUncheckedUpdateWithoutReplyLikesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1746,6 +1800,7 @@ export type ForumProfileUncheckedUpdateWithoutReplyLikesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -1755,7 +1810,7 @@ export type ForumProfileUncheckedUpdateWithoutReplyLikesInput = {
 }
 
 export type ForumProfileCreateWithoutTopicFavoritesInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -1770,6 +1825,7 @@ export type ForumProfileCreateWithoutTopicFavoritesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1783,7 +1839,7 @@ export type ForumProfileCreateWithoutTopicFavoritesInput = {
 export type ForumProfileUncheckedCreateWithoutTopicFavoritesInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1799,6 +1855,7 @@ export type ForumProfileUncheckedCreateWithoutTopicFavoritesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1824,7 +1881,7 @@ export type ForumProfileUpdateToOneWithWhereWithoutTopicFavoritesInput = {
 }
 
 export type ForumProfileUpdateWithoutTopicFavoritesInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1839,6 +1896,7 @@ export type ForumProfileUpdateWithoutTopicFavoritesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -1852,7 +1910,7 @@ export type ForumProfileUpdateWithoutTopicFavoritesInput = {
 export type ForumProfileUncheckedUpdateWithoutTopicFavoritesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1868,6 +1926,7 @@ export type ForumProfileUncheckedUpdateWithoutTopicFavoritesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -1877,7 +1936,7 @@ export type ForumProfileUncheckedUpdateWithoutTopicFavoritesInput = {
 }
 
 export type ForumProfileCreateWithoutTopicLikesInput = {
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -1892,6 +1951,7 @@ export type ForumProfileCreateWithoutTopicLikesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1905,7 +1965,7 @@ export type ForumProfileCreateWithoutTopicLikesInput = {
 export type ForumProfileUncheckedCreateWithoutTopicLikesInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1921,6 +1981,7 @@ export type ForumProfileUncheckedCreateWithoutTopicLikesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1946,7 +2007,7 @@ export type ForumProfileUpdateToOneWithWhereWithoutTopicLikesInput = {
 }
 
 export type ForumProfileUpdateWithoutTopicLikesInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1961,6 +2022,7 @@ export type ForumProfileUpdateWithoutTopicLikesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -1974,7 +2036,7 @@ export type ForumProfileUpdateWithoutTopicLikesInput = {
 export type ForumProfileUncheckedUpdateWithoutTopicLikesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1990,6 +2052,7 @@ export type ForumProfileUncheckedUpdateWithoutTopicLikesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -2001,7 +2064,7 @@ export type ForumProfileUncheckedUpdateWithoutTopicLikesInput = {
 export type ForumProfileCreateManyLevelInput = {
   id?: number
   userId: number
-  points?: number
+  points?: bigint | number
   topicCount?: number
   replyCount?: number
   likeCount?: number
@@ -2016,10 +2079,11 @@ export type ForumProfileCreateManyLevelInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  version?: number
 }
 
 export type ForumProfileUpdateWithoutLevelInput = {
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2034,6 +2098,7 @@ export type ForumProfileUpdateWithoutLevelInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -2047,7 +2112,7 @@ export type ForumProfileUpdateWithoutLevelInput = {
 export type ForumProfileUncheckedUpdateWithoutLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2062,6 +2127,7 @@ export type ForumProfileUncheckedUpdateWithoutLevelInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -2074,7 +2140,7 @@ export type ForumProfileUncheckedUpdateWithoutLevelInput = {
 export type ForumProfileUncheckedUpdateManyWithoutLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2089,6 +2155,7 @@ export type ForumProfileUncheckedUpdateManyWithoutLevelInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 
@@ -2186,6 +2253,7 @@ export type ForumProfileSelect<ExtArgs extends runtime.Types.Extensions.Internal
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  version?: boolean
   moderator?: boolean | Prisma.ForumProfile$moderatorArgs<ExtArgs>
   notifications?: boolean | Prisma.ForumProfile$notificationsArgs<ExtArgs>
   pointRecords?: boolean | Prisma.ForumProfile$pointRecordsArgs<ExtArgs>
@@ -2217,6 +2285,7 @@ export type ForumProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  version?: boolean
   level?: boolean | Prisma.ForumProfile$levelArgs<ExtArgs>
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumProfile"]>
@@ -2240,6 +2309,7 @@ export type ForumProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  version?: boolean
   level?: boolean | Prisma.ForumProfile$levelArgs<ExtArgs>
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumProfile"]>
@@ -2263,9 +2333,10 @@ export type ForumProfileSelectScalar = {
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  version?: boolean
 }
 
-export type ForumProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "points" | "levelId" | "topicCount" | "replyCount" | "likeCount" | "favoriteCount" | "signature" | "bio" | "lastPostAt" | "lastVisitAt" | "isBanned" | "banReason" | "banUntil" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumProfile"]>
+export type ForumProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "points" | "levelId" | "topicCount" | "replyCount" | "likeCount" | "favoriteCount" | "signature" | "bio" | "lastPostAt" | "lastVisitAt" | "isBanned" | "banReason" | "banUntil" | "createdAt" | "updatedAt" | "deletedAt" | "version", ExtArgs["result"]["forumProfile"]>
 export type ForumProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   moderator?: boolean | Prisma.ForumProfile$moderatorArgs<ExtArgs>
   notifications?: boolean | Prisma.ForumProfile$notificationsArgs<ExtArgs>
@@ -2312,7 +2383,7 @@ export type $ForumProfilePayload<ExtArgs extends runtime.Types.Extensions.Intern
     /**
      * 论坛积分
      */
-    points: number
+    points: bigint
     /**
      * 等级ID
      */
@@ -2373,6 +2444,10 @@ export type $ForumProfilePayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 软删除时间
      */
     deletedAt: Date | null
+    /**
+     * 版本号（用于乐观锁）
+     */
+    version: number
   }, ExtArgs["result"]["forumProfile"]>
   composites: {}
 }
@@ -2807,7 +2882,7 @@ export interface Prisma__ForumProfileClient<T, Null = never, ExtArgs extends run
 export interface ForumProfileFieldRefs {
   readonly id: Prisma.FieldRef<"ForumProfile", 'Int'>
   readonly userId: Prisma.FieldRef<"ForumProfile", 'Int'>
-  readonly points: Prisma.FieldRef<"ForumProfile", 'Int'>
+  readonly points: Prisma.FieldRef<"ForumProfile", 'BigInt'>
   readonly levelId: Prisma.FieldRef<"ForumProfile", 'Int'>
   readonly topicCount: Prisma.FieldRef<"ForumProfile", 'Int'>
   readonly replyCount: Prisma.FieldRef<"ForumProfile", 'Int'>
@@ -2823,6 +2898,7 @@ export interface ForumProfileFieldRefs {
   readonly createdAt: Prisma.FieldRef<"ForumProfile", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumProfile", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"ForumProfile", 'DateTime'>
+  readonly version: Prisma.FieldRef<"ForumProfile", 'Int'>
 }
     
 

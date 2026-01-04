@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumAuditLog
- * 
+ * 论坛审核日志表 - 记录主题和回复的审核信息，包括审核状态、审核人、审核原因等
  */
 export type ForumAuditLogModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumAuditLogPayload>
 
@@ -256,8 +256,6 @@ export type ForumAuditLogWhereInput = {
   auditBy?: Prisma.IntFilter<"ForumAuditLog"> | number
   auditAt?: Prisma.DateTimeFilter<"ForumAuditLog"> | Date | string
   remark?: Prisma.StringNullableFilter<"ForumAuditLog"> | string | null
-  topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
-  reply?: Prisma.XOR<Prisma.ForumReplyScalarRelationFilter, Prisma.ForumReplyWhereInput>
 }
 
 export type ForumAuditLogOrderByWithRelationInput = {
@@ -269,8 +267,6 @@ export type ForumAuditLogOrderByWithRelationInput = {
   auditBy?: Prisma.SortOrder
   auditAt?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
-  topic?: Prisma.ForumTopicOrderByWithRelationInput
-  reply?: Prisma.ForumReplyOrderByWithRelationInput
 }
 
 export type ForumAuditLogWhereUniqueInput = Prisma.AtLeast<{
@@ -285,8 +281,6 @@ export type ForumAuditLogWhereUniqueInput = Prisma.AtLeast<{
   auditBy?: Prisma.IntFilter<"ForumAuditLog"> | number
   auditAt?: Prisma.DateTimeFilter<"ForumAuditLog"> | Date | string
   remark?: Prisma.StringNullableFilter<"ForumAuditLog"> | string | null
-  topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
-  reply?: Prisma.XOR<Prisma.ForumReplyScalarRelationFilter, Prisma.ForumReplyWhereInput>
 }, "id">
 
 export type ForumAuditLogOrderByWithAggregationInput = {
@@ -321,13 +315,12 @@ export type ForumAuditLogScalarWhereWithAggregatesInput = {
 
 export type ForumAuditLogCreateInput = {
   objectType: number
+  objectId: number
   auditStatus: number
   auditReason?: string | null
   auditBy: number
   auditAt?: Date | string
   remark?: string | null
-  topic: Prisma.ForumTopicCreateNestedOneWithoutAuditLogsInput
-  reply: Prisma.ForumReplyCreateNestedOneWithoutAuditLogsInput
 }
 
 export type ForumAuditLogUncheckedCreateInput = {
@@ -343,13 +336,12 @@ export type ForumAuditLogUncheckedCreateInput = {
 
 export type ForumAuditLogUpdateInput = {
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
+  objectId?: Prisma.IntFieldUpdateOperationsInput | number
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditBy?: Prisma.IntFieldUpdateOperationsInput | number
   auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  topic?: Prisma.ForumTopicUpdateOneRequiredWithoutAuditLogsNestedInput
-  reply?: Prisma.ForumReplyUpdateOneRequiredWithoutAuditLogsNestedInput
 }
 
 export type ForumAuditLogUncheckedUpdateInput = {
@@ -376,6 +368,7 @@ export type ForumAuditLogCreateManyInput = {
 
 export type ForumAuditLogUpdateManyMutationInput = {
   objectType?: Prisma.IntFieldUpdateOperationsInput | number
+  objectId?: Prisma.IntFieldUpdateOperationsInput | number
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditBy?: Prisma.IntFieldUpdateOperationsInput | number
@@ -443,286 +436,6 @@ export type ForumAuditLogSumOrderByAggregateInput = {
   auditBy?: Prisma.SortOrder
 }
 
-export type ForumAuditLogListRelationFilter = {
-  every?: Prisma.ForumAuditLogWhereInput
-  some?: Prisma.ForumAuditLogWhereInput
-  none?: Prisma.ForumAuditLogWhereInput
-}
-
-export type ForumAuditLogOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
-}
-
-export type ForumAuditLogCreateNestedManyWithoutReplyInput = {
-  create?: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutReplyInput, Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput> | Prisma.ForumAuditLogCreateWithoutReplyInput[] | Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput[]
-  connectOrCreate?: Prisma.ForumAuditLogCreateOrConnectWithoutReplyInput | Prisma.ForumAuditLogCreateOrConnectWithoutReplyInput[]
-  createMany?: Prisma.ForumAuditLogCreateManyReplyInputEnvelope
-  connect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-}
-
-export type ForumAuditLogUncheckedCreateNestedManyWithoutReplyInput = {
-  create?: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutReplyInput, Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput> | Prisma.ForumAuditLogCreateWithoutReplyInput[] | Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput[]
-  connectOrCreate?: Prisma.ForumAuditLogCreateOrConnectWithoutReplyInput | Prisma.ForumAuditLogCreateOrConnectWithoutReplyInput[]
-  createMany?: Prisma.ForumAuditLogCreateManyReplyInputEnvelope
-  connect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-}
-
-export type ForumAuditLogUpdateManyWithoutReplyNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutReplyInput, Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput> | Prisma.ForumAuditLogCreateWithoutReplyInput[] | Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput[]
-  connectOrCreate?: Prisma.ForumAuditLogCreateOrConnectWithoutReplyInput | Prisma.ForumAuditLogCreateOrConnectWithoutReplyInput[]
-  upsert?: Prisma.ForumAuditLogUpsertWithWhereUniqueWithoutReplyInput | Prisma.ForumAuditLogUpsertWithWhereUniqueWithoutReplyInput[]
-  createMany?: Prisma.ForumAuditLogCreateManyReplyInputEnvelope
-  set?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  disconnect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  delete?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  connect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  update?: Prisma.ForumAuditLogUpdateWithWhereUniqueWithoutReplyInput | Prisma.ForumAuditLogUpdateWithWhereUniqueWithoutReplyInput[]
-  updateMany?: Prisma.ForumAuditLogUpdateManyWithWhereWithoutReplyInput | Prisma.ForumAuditLogUpdateManyWithWhereWithoutReplyInput[]
-  deleteMany?: Prisma.ForumAuditLogScalarWhereInput | Prisma.ForumAuditLogScalarWhereInput[]
-}
-
-export type ForumAuditLogUncheckedUpdateManyWithoutReplyNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutReplyInput, Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput> | Prisma.ForumAuditLogCreateWithoutReplyInput[] | Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput[]
-  connectOrCreate?: Prisma.ForumAuditLogCreateOrConnectWithoutReplyInput | Prisma.ForumAuditLogCreateOrConnectWithoutReplyInput[]
-  upsert?: Prisma.ForumAuditLogUpsertWithWhereUniqueWithoutReplyInput | Prisma.ForumAuditLogUpsertWithWhereUniqueWithoutReplyInput[]
-  createMany?: Prisma.ForumAuditLogCreateManyReplyInputEnvelope
-  set?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  disconnect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  delete?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  connect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  update?: Prisma.ForumAuditLogUpdateWithWhereUniqueWithoutReplyInput | Prisma.ForumAuditLogUpdateWithWhereUniqueWithoutReplyInput[]
-  updateMany?: Prisma.ForumAuditLogUpdateManyWithWhereWithoutReplyInput | Prisma.ForumAuditLogUpdateManyWithWhereWithoutReplyInput[]
-  deleteMany?: Prisma.ForumAuditLogScalarWhereInput | Prisma.ForumAuditLogScalarWhereInput[]
-}
-
-export type ForumAuditLogCreateNestedManyWithoutTopicInput = {
-  create?: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutTopicInput, Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput> | Prisma.ForumAuditLogCreateWithoutTopicInput[] | Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput[]
-  connectOrCreate?: Prisma.ForumAuditLogCreateOrConnectWithoutTopicInput | Prisma.ForumAuditLogCreateOrConnectWithoutTopicInput[]
-  createMany?: Prisma.ForumAuditLogCreateManyTopicInputEnvelope
-  connect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-}
-
-export type ForumAuditLogUncheckedCreateNestedManyWithoutTopicInput = {
-  create?: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutTopicInput, Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput> | Prisma.ForumAuditLogCreateWithoutTopicInput[] | Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput[]
-  connectOrCreate?: Prisma.ForumAuditLogCreateOrConnectWithoutTopicInput | Prisma.ForumAuditLogCreateOrConnectWithoutTopicInput[]
-  createMany?: Prisma.ForumAuditLogCreateManyTopicInputEnvelope
-  connect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-}
-
-export type ForumAuditLogUpdateManyWithoutTopicNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutTopicInput, Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput> | Prisma.ForumAuditLogCreateWithoutTopicInput[] | Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput[]
-  connectOrCreate?: Prisma.ForumAuditLogCreateOrConnectWithoutTopicInput | Prisma.ForumAuditLogCreateOrConnectWithoutTopicInput[]
-  upsert?: Prisma.ForumAuditLogUpsertWithWhereUniqueWithoutTopicInput | Prisma.ForumAuditLogUpsertWithWhereUniqueWithoutTopicInput[]
-  createMany?: Prisma.ForumAuditLogCreateManyTopicInputEnvelope
-  set?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  disconnect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  delete?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  connect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  update?: Prisma.ForumAuditLogUpdateWithWhereUniqueWithoutTopicInput | Prisma.ForumAuditLogUpdateWithWhereUniqueWithoutTopicInput[]
-  updateMany?: Prisma.ForumAuditLogUpdateManyWithWhereWithoutTopicInput | Prisma.ForumAuditLogUpdateManyWithWhereWithoutTopicInput[]
-  deleteMany?: Prisma.ForumAuditLogScalarWhereInput | Prisma.ForumAuditLogScalarWhereInput[]
-}
-
-export type ForumAuditLogUncheckedUpdateManyWithoutTopicNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutTopicInput, Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput> | Prisma.ForumAuditLogCreateWithoutTopicInput[] | Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput[]
-  connectOrCreate?: Prisma.ForumAuditLogCreateOrConnectWithoutTopicInput | Prisma.ForumAuditLogCreateOrConnectWithoutTopicInput[]
-  upsert?: Prisma.ForumAuditLogUpsertWithWhereUniqueWithoutTopicInput | Prisma.ForumAuditLogUpsertWithWhereUniqueWithoutTopicInput[]
-  createMany?: Prisma.ForumAuditLogCreateManyTopicInputEnvelope
-  set?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  disconnect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  delete?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  connect?: Prisma.ForumAuditLogWhereUniqueInput | Prisma.ForumAuditLogWhereUniqueInput[]
-  update?: Prisma.ForumAuditLogUpdateWithWhereUniqueWithoutTopicInput | Prisma.ForumAuditLogUpdateWithWhereUniqueWithoutTopicInput[]
-  updateMany?: Prisma.ForumAuditLogUpdateManyWithWhereWithoutTopicInput | Prisma.ForumAuditLogUpdateManyWithWhereWithoutTopicInput[]
-  deleteMany?: Prisma.ForumAuditLogScalarWhereInput | Prisma.ForumAuditLogScalarWhereInput[]
-}
-
-export type ForumAuditLogCreateWithoutReplyInput = {
-  objectType: number
-  auditStatus: number
-  auditReason?: string | null
-  auditBy: number
-  auditAt?: Date | string
-  remark?: string | null
-  topic: Prisma.ForumTopicCreateNestedOneWithoutAuditLogsInput
-}
-
-export type ForumAuditLogUncheckedCreateWithoutReplyInput = {
-  id?: number
-  objectType: number
-  auditStatus: number
-  auditReason?: string | null
-  auditBy: number
-  auditAt?: Date | string
-  remark?: string | null
-}
-
-export type ForumAuditLogCreateOrConnectWithoutReplyInput = {
-  where: Prisma.ForumAuditLogWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutReplyInput, Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput>
-}
-
-export type ForumAuditLogCreateManyReplyInputEnvelope = {
-  data: Prisma.ForumAuditLogCreateManyReplyInput | Prisma.ForumAuditLogCreateManyReplyInput[]
-  skipDuplicates?: boolean
-}
-
-export type ForumAuditLogUpsertWithWhereUniqueWithoutReplyInput = {
-  where: Prisma.ForumAuditLogWhereUniqueInput
-  update: Prisma.XOR<Prisma.ForumAuditLogUpdateWithoutReplyInput, Prisma.ForumAuditLogUncheckedUpdateWithoutReplyInput>
-  create: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutReplyInput, Prisma.ForumAuditLogUncheckedCreateWithoutReplyInput>
-}
-
-export type ForumAuditLogUpdateWithWhereUniqueWithoutReplyInput = {
-  where: Prisma.ForumAuditLogWhereUniqueInput
-  data: Prisma.XOR<Prisma.ForumAuditLogUpdateWithoutReplyInput, Prisma.ForumAuditLogUncheckedUpdateWithoutReplyInput>
-}
-
-export type ForumAuditLogUpdateManyWithWhereWithoutReplyInput = {
-  where: Prisma.ForumAuditLogScalarWhereInput
-  data: Prisma.XOR<Prisma.ForumAuditLogUpdateManyMutationInput, Prisma.ForumAuditLogUncheckedUpdateManyWithoutReplyInput>
-}
-
-export type ForumAuditLogScalarWhereInput = {
-  AND?: Prisma.ForumAuditLogScalarWhereInput | Prisma.ForumAuditLogScalarWhereInput[]
-  OR?: Prisma.ForumAuditLogScalarWhereInput[]
-  NOT?: Prisma.ForumAuditLogScalarWhereInput | Prisma.ForumAuditLogScalarWhereInput[]
-  id?: Prisma.IntFilter<"ForumAuditLog"> | number
-  objectType?: Prisma.IntFilter<"ForumAuditLog"> | number
-  objectId?: Prisma.IntFilter<"ForumAuditLog"> | number
-  auditStatus?: Prisma.IntFilter<"ForumAuditLog"> | number
-  auditReason?: Prisma.StringNullableFilter<"ForumAuditLog"> | string | null
-  auditBy?: Prisma.IntFilter<"ForumAuditLog"> | number
-  auditAt?: Prisma.DateTimeFilter<"ForumAuditLog"> | Date | string
-  remark?: Prisma.StringNullableFilter<"ForumAuditLog"> | string | null
-}
-
-export type ForumAuditLogCreateWithoutTopicInput = {
-  objectType: number
-  auditStatus: number
-  auditReason?: string | null
-  auditBy: number
-  auditAt?: Date | string
-  remark?: string | null
-  reply: Prisma.ForumReplyCreateNestedOneWithoutAuditLogsInput
-}
-
-export type ForumAuditLogUncheckedCreateWithoutTopicInput = {
-  id?: number
-  objectType: number
-  auditStatus: number
-  auditReason?: string | null
-  auditBy: number
-  auditAt?: Date | string
-  remark?: string | null
-}
-
-export type ForumAuditLogCreateOrConnectWithoutTopicInput = {
-  where: Prisma.ForumAuditLogWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutTopicInput, Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput>
-}
-
-export type ForumAuditLogCreateManyTopicInputEnvelope = {
-  data: Prisma.ForumAuditLogCreateManyTopicInput | Prisma.ForumAuditLogCreateManyTopicInput[]
-  skipDuplicates?: boolean
-}
-
-export type ForumAuditLogUpsertWithWhereUniqueWithoutTopicInput = {
-  where: Prisma.ForumAuditLogWhereUniqueInput
-  update: Prisma.XOR<Prisma.ForumAuditLogUpdateWithoutTopicInput, Prisma.ForumAuditLogUncheckedUpdateWithoutTopicInput>
-  create: Prisma.XOR<Prisma.ForumAuditLogCreateWithoutTopicInput, Prisma.ForumAuditLogUncheckedCreateWithoutTopicInput>
-}
-
-export type ForumAuditLogUpdateWithWhereUniqueWithoutTopicInput = {
-  where: Prisma.ForumAuditLogWhereUniqueInput
-  data: Prisma.XOR<Prisma.ForumAuditLogUpdateWithoutTopicInput, Prisma.ForumAuditLogUncheckedUpdateWithoutTopicInput>
-}
-
-export type ForumAuditLogUpdateManyWithWhereWithoutTopicInput = {
-  where: Prisma.ForumAuditLogScalarWhereInput
-  data: Prisma.XOR<Prisma.ForumAuditLogUpdateManyMutationInput, Prisma.ForumAuditLogUncheckedUpdateManyWithoutTopicInput>
-}
-
-export type ForumAuditLogCreateManyReplyInput = {
-  id?: number
-  objectType: number
-  auditStatus: number
-  auditReason?: string | null
-  auditBy: number
-  auditAt?: Date | string
-  remark?: string | null
-}
-
-export type ForumAuditLogUpdateWithoutReplyInput = {
-  objectType?: Prisma.IntFieldUpdateOperationsInput | number
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  topic?: Prisma.ForumTopicUpdateOneRequiredWithoutAuditLogsNestedInput
-}
-
-export type ForumAuditLogUncheckedUpdateWithoutReplyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  objectType?: Prisma.IntFieldUpdateOperationsInput | number
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-}
-
-export type ForumAuditLogUncheckedUpdateManyWithoutReplyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  objectType?: Prisma.IntFieldUpdateOperationsInput | number
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-}
-
-export type ForumAuditLogCreateManyTopicInput = {
-  id?: number
-  objectType: number
-  auditStatus: number
-  auditReason?: string | null
-  auditBy: number
-  auditAt?: Date | string
-  remark?: string | null
-}
-
-export type ForumAuditLogUpdateWithoutTopicInput = {
-  objectType?: Prisma.IntFieldUpdateOperationsInput | number
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  reply?: Prisma.ForumReplyUpdateOneRequiredWithoutAuditLogsNestedInput
-}
-
-export type ForumAuditLogUncheckedUpdateWithoutTopicInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  objectType?: Prisma.IntFieldUpdateOperationsInput | number
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-}
-
-export type ForumAuditLogUncheckedUpdateManyWithoutTopicInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  objectType?: Prisma.IntFieldUpdateOperationsInput | number
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-}
-
 
 
 export type ForumAuditLogSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -734,8 +447,6 @@ export type ForumAuditLogSelect<ExtArgs extends runtime.Types.Extensions.Interna
   auditBy?: boolean
   auditAt?: boolean
   remark?: boolean
-  topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumAuditLog"]>
 
 export type ForumAuditLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -747,8 +458,6 @@ export type ForumAuditLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   auditBy?: boolean
   auditAt?: boolean
   remark?: boolean
-  topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumAuditLog"]>
 
 export type ForumAuditLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -760,8 +469,6 @@ export type ForumAuditLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   auditBy?: boolean
   auditAt?: boolean
   remark?: boolean
-  topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumAuditLog"]>
 
 export type ForumAuditLogSelectScalar = {
@@ -776,25 +483,10 @@ export type ForumAuditLogSelectScalar = {
 }
 
 export type ForumAuditLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "objectType" | "objectId" | "auditStatus" | "auditReason" | "auditBy" | "auditAt" | "remark", ExtArgs["result"]["forumAuditLog"]>
-export type ForumAuditLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
-}
-export type ForumAuditLogIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
-}
-export type ForumAuditLogIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
-}
 
 export type $ForumAuditLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumAuditLog"
-  objects: {
-    topic: Prisma.$ForumTopicPayload<ExtArgs>
-    reply: Prisma.$ForumReplyPayload<ExtArgs>
-  }
+  objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
      * 主键ID
@@ -1222,8 +914,6 @@ readonly fields: ForumAuditLogFieldRefs;
  */
 export interface Prisma__ForumAuditLogClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  topic<T extends Prisma.ForumTopicDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumTopicDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumTopicClient<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  reply<T extends Prisma.ForumReplyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumReplyDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumReplyClient<runtime.Types.Result.GetResult<Prisma.$ForumReplyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1278,10 +968,6 @@ export type ForumAuditLogFindUniqueArgs<ExtArgs extends runtime.Types.Extensions
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
-  /**
    * Filter, which ForumAuditLog to fetch.
    */
   where: Prisma.ForumAuditLogWhereUniqueInput
@@ -1301,10 +987,6 @@ export type ForumAuditLogFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Ext
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
-  /**
    * Filter, which ForumAuditLog to fetch.
    */
   where: Prisma.ForumAuditLogWhereUniqueInput
@@ -1323,10 +1005,6 @@ export type ForumAuditLogFindFirstArgs<ExtArgs extends runtime.Types.Extensions.
    * Omit specific fields from the ForumAuditLog
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
   /**
    * Filter, which ForumAuditLog to fetch.
    */
@@ -1377,10 +1055,6 @@ export type ForumAuditLogFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exte
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
-  /**
    * Filter, which ForumAuditLog to fetch.
    */
   where?: Prisma.ForumAuditLogWhereInput
@@ -1430,10 +1104,6 @@ export type ForumAuditLogFindManyArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
-  /**
    * Filter, which ForumAuditLogs to fetch.
    */
   where?: Prisma.ForumAuditLogWhereInput
@@ -1478,10 +1148,6 @@ export type ForumAuditLogCreateArgs<ExtArgs extends runtime.Types.Extensions.Int
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
-  /**
    * The data needed to create a ForumAuditLog.
    */
   data: Prisma.XOR<Prisma.ForumAuditLogCreateInput, Prisma.ForumAuditLogUncheckedCreateInput>
@@ -1516,10 +1182,6 @@ export type ForumAuditLogCreateManyAndReturnArgs<ExtArgs extends runtime.Types.E
    */
   data: Prisma.ForumAuditLogCreateManyInput | Prisma.ForumAuditLogCreateManyInput[]
   skipDuplicates?: boolean
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1534,10 +1196,6 @@ export type ForumAuditLogUpdateArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the ForumAuditLog
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
   /**
    * The data needed to update a ForumAuditLog.
    */
@@ -1591,10 +1249,6 @@ export type ForumAuditLogUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.E
    * Limit how many ForumAuditLogs to update.
    */
   limit?: number
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1609,10 +1263,6 @@ export type ForumAuditLogUpsertArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the ForumAuditLog
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
   /**
    * The filter to search for the ForumAuditLog to update in case it exists.
    */
@@ -1640,10 +1290,6 @@ export type ForumAuditLogDeleteArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the ForumAuditLog
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
   /**
    * Filter which ForumAuditLog to delete.
    */
@@ -1677,8 +1323,4 @@ export type ForumAuditLogDefaultArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the ForumAuditLog
    */
   omit?: Prisma.ForumAuditLogOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumAuditLogInclude<ExtArgs> | null
 }

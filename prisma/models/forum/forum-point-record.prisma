@@ -1,3 +1,4 @@
+/// 论坛积分记录表 - 记录用户积分变化历史，包括获得和消费的积分
 model ForumPointRecord {
   /// 主键ID
   id           Int             @id @default(autoincrement())
@@ -6,11 +7,11 @@ model ForumPointRecord {
   /// 关联的规则ID
   ruleId       Int?            @map("rule_id")
   /// 积分变化（正数为获得，负数为消费）
-  points       Int
+  points       BigInt
   /// 变化前积分
-  beforePoints Int             @map("before_points")
+  beforePoints BigInt          @map("before_points")
   /// 变化后积分
-  afterPoints  Int             @map("after_points")
+  afterPoints  BigInt          @map("after_points")
   /// 关联对象类型（1=主题, 2=回复, 3=签到）
   objectType   Int             @map("object_type") @db.SmallInt
   /// 关联对象ID

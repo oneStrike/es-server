@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumTopicFavorite
- * 
+ * 论坛主题收藏表 - 记录用户收藏的主题关系
  */
 export type ForumTopicFavoriteModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumTopicFavoritePayload>
 

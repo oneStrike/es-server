@@ -1,3 +1,4 @@
+/// 论坛主题标签关联表 - 管理主题与标签的多对多关系
 model ForumTopicTag {
   /// 主键ID
   id        Int        @id @default(autoincrement())

@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/prisma'
+import { RepositoryService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { TimeRangeEnum } from './analytics.constant'
 import {

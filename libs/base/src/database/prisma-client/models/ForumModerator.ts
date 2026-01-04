@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumModerator
- * 
+ * 论坛版主表 - 管理论坛版主信息，包括权限设置、启用状态等
  */
 export type ForumModeratorModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumModeratorPayload>
 

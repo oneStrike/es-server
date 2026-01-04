@@ -1,3 +1,4 @@
+/// 论坛主题点赞表 - 记录用户对主题的点赞关系
 model ForumTopicLike {
   /// 主键ID
   id        Int          @id @default(autoincrement())

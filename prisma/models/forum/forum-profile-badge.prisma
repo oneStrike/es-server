@@ -1,3 +1,4 @@
+/// 论坛用户徽章关联表 - 管理用户获得的徽章，一个用户可以有多个徽章
 model ForumProfileBadge {
   /// 主键ID
   id        Int          @id @default(autoincrement())

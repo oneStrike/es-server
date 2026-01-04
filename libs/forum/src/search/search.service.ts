@@ -1,4 +1,4 @@
-import { PrismaService } from '@libs/prisma'
+import { PrismaService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { SearchDto, SearchResultDto, SearchResultPageDto } from './dto/search.dto'
 import { SearchSortTypeEnum, SearchTimeFilterEnum, SearchTypeEnum } from './search.constant'
@@ -81,7 +81,7 @@ export class SearchService {
       }
     }
 
-    if (timeFilter !== SearchTimeFilterEnum.ALL) {
+    if (timeFilter && timeFilter !== SearchTimeFilterEnum.ALL) {
       where.createdAt = this.getTimeFilter(timeFilter)
     }
 
@@ -172,7 +172,7 @@ export class SearchService {
       }
     }
 
-    if (timeFilter !== SearchTimeFilterEnum.ALL) {
+    if (timeFilter && timeFilter !== SearchTimeFilterEnum.ALL) {
       where.createdAt = this.getTimeFilter(timeFilter)
     }
 

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumModeratorActionLog
- * 
+ * 论坛版主操作日志表 - 记录版主的所有操作行为，包括主题管理、回复管理、审核等操作
  */
 export type ForumModeratorActionLogModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumModeratorActionLogPayload>
 
@@ -29,21 +29,25 @@ export type AggregateForumModeratorActionLog = {
 export type ForumModeratorActionLogAvgAggregateOutputType = {
   id: number | null
   moderatorId: number | null
+  actionType: number | null
+  targetType: number | null
   targetId: number | null
 }
 
 export type ForumModeratorActionLogSumAggregateOutputType = {
   id: number | null
   moderatorId: number | null
+  actionType: number | null
+  targetType: number | null
   targetId: number | null
 }
 
 export type ForumModeratorActionLogMinAggregateOutputType = {
   id: number | null
   moderatorId: number | null
-  actionType: string | null
+  actionType: number | null
   actionDescription: string | null
-  targetType: string | null
+  targetType: number | null
   targetId: number | null
   beforeData: string | null
   afterData: string | null
@@ -53,9 +57,9 @@ export type ForumModeratorActionLogMinAggregateOutputType = {
 export type ForumModeratorActionLogMaxAggregateOutputType = {
   id: number | null
   moderatorId: number | null
-  actionType: string | null
+  actionType: number | null
   actionDescription: string | null
-  targetType: string | null
+  targetType: number | null
   targetId: number | null
   beforeData: string | null
   afterData: string | null
@@ -79,12 +83,16 @@ export type ForumModeratorActionLogCountAggregateOutputType = {
 export type ForumModeratorActionLogAvgAggregateInputType = {
   id?: true
   moderatorId?: true
+  actionType?: true
+  targetType?: true
   targetId?: true
 }
 
 export type ForumModeratorActionLogSumAggregateInputType = {
   id?: true
   moderatorId?: true
+  actionType?: true
+  targetType?: true
   targetId?: true
 }
 
@@ -214,9 +222,9 @@ export type ForumModeratorActionLogGroupByArgs<ExtArgs extends runtime.Types.Ext
 export type ForumModeratorActionLogGroupByOutputType = {
   id: number
   moderatorId: number
-  actionType: string
+  actionType: number
   actionDescription: string
-  targetType: string
+  targetType: number
   targetId: number
   beforeData: string | null
   afterData: string | null
@@ -249,9 +257,9 @@ export type ForumModeratorActionLogWhereInput = {
   NOT?: Prisma.ForumModeratorActionLogWhereInput | Prisma.ForumModeratorActionLogWhereInput[]
   id?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   moderatorId?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
-  actionType?: Prisma.StringFilter<"ForumModeratorActionLog"> | string
+  actionType?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   actionDescription?: Prisma.StringFilter<"ForumModeratorActionLog"> | string
-  targetType?: Prisma.StringFilter<"ForumModeratorActionLog"> | string
+  targetType?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   targetId?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   beforeData?: Prisma.StringNullableFilter<"ForumModeratorActionLog"> | string | null
   afterData?: Prisma.StringNullableFilter<"ForumModeratorActionLog"> | string | null
@@ -278,9 +286,9 @@ export type ForumModeratorActionLogWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ForumModeratorActionLogWhereInput[]
   NOT?: Prisma.ForumModeratorActionLogWhereInput | Prisma.ForumModeratorActionLogWhereInput[]
   moderatorId?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
-  actionType?: Prisma.StringFilter<"ForumModeratorActionLog"> | string
+  actionType?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   actionDescription?: Prisma.StringFilter<"ForumModeratorActionLog"> | string
-  targetType?: Prisma.StringFilter<"ForumModeratorActionLog"> | string
+  targetType?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   targetId?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   beforeData?: Prisma.StringNullableFilter<"ForumModeratorActionLog"> | string | null
   afterData?: Prisma.StringNullableFilter<"ForumModeratorActionLog"> | string | null
@@ -311,9 +319,9 @@ export type ForumModeratorActionLogScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumModeratorActionLogScalarWhereWithAggregatesInput | Prisma.ForumModeratorActionLogScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumModeratorActionLog"> | number
   moderatorId?: Prisma.IntWithAggregatesFilter<"ForumModeratorActionLog"> | number
-  actionType?: Prisma.StringWithAggregatesFilter<"ForumModeratorActionLog"> | string
+  actionType?: Prisma.IntWithAggregatesFilter<"ForumModeratorActionLog"> | number
   actionDescription?: Prisma.StringWithAggregatesFilter<"ForumModeratorActionLog"> | string
-  targetType?: Prisma.StringWithAggregatesFilter<"ForumModeratorActionLog"> | string
+  targetType?: Prisma.IntWithAggregatesFilter<"ForumModeratorActionLog"> | number
   targetId?: Prisma.IntWithAggregatesFilter<"ForumModeratorActionLog"> | number
   beforeData?: Prisma.StringNullableWithAggregatesFilter<"ForumModeratorActionLog"> | string | null
   afterData?: Prisma.StringNullableWithAggregatesFilter<"ForumModeratorActionLog"> | string | null
@@ -321,9 +329,9 @@ export type ForumModeratorActionLogScalarWhereWithAggregatesInput = {
 }
 
 export type ForumModeratorActionLogCreateInput = {
-  actionType: string
+  actionType: number
   actionDescription: string
-  targetType: string
+  targetType: number
   targetId: number
   beforeData?: string | null
   afterData?: string | null
@@ -334,9 +342,9 @@ export type ForumModeratorActionLogCreateInput = {
 export type ForumModeratorActionLogUncheckedCreateInput = {
   id?: number
   moderatorId: number
-  actionType: string
+  actionType: number
   actionDescription: string
-  targetType: string
+  targetType: number
   targetId: number
   beforeData?: string | null
   afterData?: string | null
@@ -344,9 +352,9 @@ export type ForumModeratorActionLogUncheckedCreateInput = {
 }
 
 export type ForumModeratorActionLogUpdateInput = {
-  actionType?: Prisma.StringFieldUpdateOperationsInput | string
+  actionType?: Prisma.IntFieldUpdateOperationsInput | number
   actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
-  targetType?: Prisma.StringFieldUpdateOperationsInput | string
+  targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -357,9 +365,9 @@ export type ForumModeratorActionLogUpdateInput = {
 export type ForumModeratorActionLogUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   moderatorId?: Prisma.IntFieldUpdateOperationsInput | number
-  actionType?: Prisma.StringFieldUpdateOperationsInput | string
+  actionType?: Prisma.IntFieldUpdateOperationsInput | number
   actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
-  targetType?: Prisma.StringFieldUpdateOperationsInput | string
+  targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -369,9 +377,9 @@ export type ForumModeratorActionLogUncheckedUpdateInput = {
 export type ForumModeratorActionLogCreateManyInput = {
   id?: number
   moderatorId: number
-  actionType: string
+  actionType: number
   actionDescription: string
-  targetType: string
+  targetType: number
   targetId: number
   beforeData?: string | null
   afterData?: string | null
@@ -379,9 +387,9 @@ export type ForumModeratorActionLogCreateManyInput = {
 }
 
 export type ForumModeratorActionLogUpdateManyMutationInput = {
-  actionType?: Prisma.StringFieldUpdateOperationsInput | string
+  actionType?: Prisma.IntFieldUpdateOperationsInput | number
   actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
-  targetType?: Prisma.StringFieldUpdateOperationsInput | string
+  targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -391,9 +399,9 @@ export type ForumModeratorActionLogUpdateManyMutationInput = {
 export type ForumModeratorActionLogUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   moderatorId?: Prisma.IntFieldUpdateOperationsInput | number
-  actionType?: Prisma.StringFieldUpdateOperationsInput | string
+  actionType?: Prisma.IntFieldUpdateOperationsInput | number
   actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
-  targetType?: Prisma.StringFieldUpdateOperationsInput | string
+  targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -415,6 +423,8 @@ export type ForumModeratorActionLogCountOrderByAggregateInput = {
 export type ForumModeratorActionLogAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moderatorId?: Prisma.SortOrder
+  actionType?: Prisma.SortOrder
+  targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
 }
 
@@ -445,6 +455,8 @@ export type ForumModeratorActionLogMinOrderByAggregateInput = {
 export type ForumModeratorActionLogSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moderatorId?: Prisma.SortOrder
+  actionType?: Prisma.SortOrder
+  targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
 }
 
@@ -501,9 +513,9 @@ export type ForumModeratorActionLogUncheckedUpdateManyWithoutModeratorNestedInpu
 }
 
 export type ForumModeratorActionLogCreateWithoutModeratorInput = {
-  actionType: string
+  actionType: number
   actionDescription: string
-  targetType: string
+  targetType: number
   targetId: number
   beforeData?: string | null
   afterData?: string | null
@@ -512,9 +524,9 @@ export type ForumModeratorActionLogCreateWithoutModeratorInput = {
 
 export type ForumModeratorActionLogUncheckedCreateWithoutModeratorInput = {
   id?: number
-  actionType: string
+  actionType: number
   actionDescription: string
-  targetType: string
+  targetType: number
   targetId: number
   beforeData?: string | null
   afterData?: string | null
@@ -553,9 +565,9 @@ export type ForumModeratorActionLogScalarWhereInput = {
   NOT?: Prisma.ForumModeratorActionLogScalarWhereInput | Prisma.ForumModeratorActionLogScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   moderatorId?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
-  actionType?: Prisma.StringFilter<"ForumModeratorActionLog"> | string
+  actionType?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   actionDescription?: Prisma.StringFilter<"ForumModeratorActionLog"> | string
-  targetType?: Prisma.StringFilter<"ForumModeratorActionLog"> | string
+  targetType?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   targetId?: Prisma.IntFilter<"ForumModeratorActionLog"> | number
   beforeData?: Prisma.StringNullableFilter<"ForumModeratorActionLog"> | string | null
   afterData?: Prisma.StringNullableFilter<"ForumModeratorActionLog"> | string | null
@@ -564,9 +576,9 @@ export type ForumModeratorActionLogScalarWhereInput = {
 
 export type ForumModeratorActionLogCreateManyModeratorInput = {
   id?: number
-  actionType: string
+  actionType: number
   actionDescription: string
-  targetType: string
+  targetType: number
   targetId: number
   beforeData?: string | null
   afterData?: string | null
@@ -574,9 +586,9 @@ export type ForumModeratorActionLogCreateManyModeratorInput = {
 }
 
 export type ForumModeratorActionLogUpdateWithoutModeratorInput = {
-  actionType?: Prisma.StringFieldUpdateOperationsInput | string
+  actionType?: Prisma.IntFieldUpdateOperationsInput | number
   actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
-  targetType?: Prisma.StringFieldUpdateOperationsInput | string
+  targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -585,9 +597,9 @@ export type ForumModeratorActionLogUpdateWithoutModeratorInput = {
 
 export type ForumModeratorActionLogUncheckedUpdateWithoutModeratorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  actionType?: Prisma.StringFieldUpdateOperationsInput | string
+  actionType?: Prisma.IntFieldUpdateOperationsInput | number
   actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
-  targetType?: Prisma.StringFieldUpdateOperationsInput | string
+  targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -596,9 +608,9 @@ export type ForumModeratorActionLogUncheckedUpdateWithoutModeratorInput = {
 
 export type ForumModeratorActionLogUncheckedUpdateManyWithoutModeratorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  actionType?: Prisma.StringFieldUpdateOperationsInput | string
+  actionType?: Prisma.IntFieldUpdateOperationsInput | number
   actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
-  targetType?: Prisma.StringFieldUpdateOperationsInput | string
+  targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -684,17 +696,17 @@ export type $ForumModeratorActionLogPayload<ExtArgs extends runtime.Types.Extens
      */
     moderatorId: number
     /**
-     * 操作类型（pin_topic=置顶主题, unpin_topic=取消置顶, feature_topic=加精主题, unfeature_topic=取消加精, lock_topic=锁定主题, unlock_topic=解锁主题, delete_topic=删除主题, move_topic=移动主题, audit_topic=审核主题, delete_reply=删除回复）
+     * 操作类型（1=置顶主题, 2=取消置顶, 3=加精主题, 4=取消加精, 5=锁定主题, 6=解锁主题, 7=删除主题, 8=移动主题, 9=审核主题, 10=删除回复）
      */
-    actionType: string
+    actionType: number
     /**
      * 操作描述
      */
     actionDescription: string
     /**
-     * 目标类型（topic=主题, reply=回复）
+     * 目标类型（1=主题, 2=回复）
      */
-    targetType: string
+    targetType: number
     /**
      * 目标ID
      */
@@ -1137,9 +1149,9 @@ export interface Prisma__ForumModeratorActionLogClient<T, Null = never, ExtArgs 
 export interface ForumModeratorActionLogFieldRefs {
   readonly id: Prisma.FieldRef<"ForumModeratorActionLog", 'Int'>
   readonly moderatorId: Prisma.FieldRef<"ForumModeratorActionLog", 'Int'>
-  readonly actionType: Prisma.FieldRef<"ForumModeratorActionLog", 'String'>
+  readonly actionType: Prisma.FieldRef<"ForumModeratorActionLog", 'Int'>
   readonly actionDescription: Prisma.FieldRef<"ForumModeratorActionLog", 'String'>
-  readonly targetType: Prisma.FieldRef<"ForumModeratorActionLog", 'String'>
+  readonly targetType: Prisma.FieldRef<"ForumModeratorActionLog", 'Int'>
   readonly targetId: Prisma.FieldRef<"ForumModeratorActionLog", 'Int'>
   readonly beforeData: Prisma.FieldRef<"ForumModeratorActionLog", 'String'>
   readonly afterData: Prisma.FieldRef<"ForumModeratorActionLog", 'String'>

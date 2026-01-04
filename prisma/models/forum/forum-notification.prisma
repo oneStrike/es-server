@@ -1,3 +1,4 @@
+/// 论坛通知表 - 存储用户通知信息，包括回复、点赞、收藏、系统通知等
 model ForumNotification {
   /// 主键ID
   id         Int          @id @default(autoincrement())
@@ -19,14 +20,21 @@ model ForumNotification {
   readAt     DateTime?    @map("read_at") @db.Timestamptz(6)
   /// 创建时间
   createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 过期时间（null表示永不过期）
+  expiredAt  DateTime?    @map("expired_at") @db.Timestamptz(6)
+  /// 通知优先级（1=低, 2=中, 3=高）
+  priority   Int          @default(2) @db.SmallInt
   profile    ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([type])
+  @@index([priority])
   @@index([objectType, objectId])
+  @@index([expiredAt])
   @@index([isRead])
   @@index([createdAt])
   @@index([userId, isRead])
+  @@index([userId, priority])
   @@index([userId, createdAt])
   @@map("forum_notification")
 }

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumReplyLike
- * 
+ * 论坛回复点赞表 - 记录用户对回复的点赞关系
  */
 export type ForumReplyLikeModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumReplyLikePayload>
 

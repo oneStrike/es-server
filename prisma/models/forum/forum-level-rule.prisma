@@ -1,3 +1,4 @@
+/// 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级图标等
 model ForumLevelRule {
   /// 主键ID
   id             Int            @id @default(autoincrement())
@@ -8,7 +9,7 @@ model ForumLevelRule {
   /// 等级图标URL
   icon           String?        @db.VarChar(255)
   /// 所需积分
-  requiredPoints Int            @map("required_points")
+  requiredPoints BigInt         @map("required_points")
   /// 排序值（数值越小越靠前）
   order          Int            @default(0) @db.SmallInt
   /// 是否启用

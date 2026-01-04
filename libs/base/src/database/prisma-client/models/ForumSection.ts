@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumSection
- * 
+ * 论坛板块表 - 管理论坛板块信息，包括板块名称、描述、统计信息等
  */
 export type ForumSectionModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumSectionPayload>
 

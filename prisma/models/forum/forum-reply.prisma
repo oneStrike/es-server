@@ -1,3 +1,4 @@
+/// 论坛回复表 - 存储主题的回复内容，支持楼中楼回复
 model ForumReply {
   /// 主键ID
   id          Int              @id @default(autoincrement())
@@ -29,11 +30,12 @@ model ForumReply {
   updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
   deletedAt   DateTime?        @map("deleted_at") @db.Timestamptz(6)
-  auditLogs   ForumAuditLog[]  @relation("AuditLogReply")
-  user        ClientUser       @relation(fields: [userId], references: [id], onDelete: Cascade, map: "forum_reply_user_id_fkey")
-  replyTo     ForumReply?      @relation("ReplyTo", fields: [replyToId], references: [id], onUpdate: NoAction)
+  /// 版本号（用于乐观锁）
+  version     Int              @default(0)
+  replyTo     ForumReply?      @relation("ReplyTo", fields: [replyToId], references: [id])
   replies     ForumReply[]     @relation("ReplyTo")
   topic       ForumTopic       @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user        ClientUser       @relation(fields: [userId], references: [id], onDelete: Cascade, map: "forum_reply_user_id_fkey")
   likes       ForumReplyLike[]
 
   @@index([topicId])

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumSensitiveWord
- * 
+ * 论坛敏感词表 - 存储敏感词信息，用于内容过滤和审核
  */
 export type ForumSensitiveWordModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumSensitiveWordPayload>
 
@@ -28,10 +28,18 @@ export type AggregateForumSensitiveWord = {
 
 export type ForumSensitiveWordAvgAggregateOutputType = {
   id: number | null
+  level: number | null
+  matchMode: number | null
+  type: number | null
+  version: number | null
 }
 
 export type ForumSensitiveWordSumAggregateOutputType = {
   id: number | null
+  level: number | null
+  matchMode: number | null
+  type: number | null
+  version: number | null
 }
 
 export type ForumSensitiveWordMinAggregateOutputType = {
@@ -42,6 +50,10 @@ export type ForumSensitiveWordMinAggregateOutputType = {
   remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  level: number | null
+  matchMode: number | null
+  type: number | null
+  version: number | null
 }
 
 export type ForumSensitiveWordMaxAggregateOutputType = {
@@ -52,6 +64,10 @@ export type ForumSensitiveWordMaxAggregateOutputType = {
   remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  level: number | null
+  matchMode: number | null
+  type: number | null
+  version: number | null
 }
 
 export type ForumSensitiveWordCountAggregateOutputType = {
@@ -62,16 +78,28 @@ export type ForumSensitiveWordCountAggregateOutputType = {
   remark: number
   createdAt: number
   updatedAt: number
+  level: number
+  matchMode: number
+  type: number
+  version: number
   _all: number
 }
 
 
 export type ForumSensitiveWordAvgAggregateInputType = {
   id?: true
+  level?: true
+  matchMode?: true
+  type?: true
+  version?: true
 }
 
 export type ForumSensitiveWordSumAggregateInputType = {
   id?: true
+  level?: true
+  matchMode?: true
+  type?: true
+  version?: true
 }
 
 export type ForumSensitiveWordMinAggregateInputType = {
@@ -82,6 +110,10 @@ export type ForumSensitiveWordMinAggregateInputType = {
   remark?: true
   createdAt?: true
   updatedAt?: true
+  level?: true
+  matchMode?: true
+  type?: true
+  version?: true
 }
 
 export type ForumSensitiveWordMaxAggregateInputType = {
@@ -92,6 +124,10 @@ export type ForumSensitiveWordMaxAggregateInputType = {
   remark?: true
   createdAt?: true
   updatedAt?: true
+  level?: true
+  matchMode?: true
+  type?: true
+  version?: true
 }
 
 export type ForumSensitiveWordCountAggregateInputType = {
@@ -102,6 +138,10 @@ export type ForumSensitiveWordCountAggregateInputType = {
   remark?: true
   createdAt?: true
   updatedAt?: true
+  level?: true
+  matchMode?: true
+  type?: true
+  version?: true
   _all?: true
 }
 
@@ -199,6 +239,10 @@ export type ForumSensitiveWordGroupByOutputType = {
   remark: string | null
   createdAt: Date
   updatedAt: Date
+  level: number
+  matchMode: number
+  type: number
+  version: number
   _count: ForumSensitiveWordCountAggregateOutputType | null
   _avg: ForumSensitiveWordAvgAggregateOutputType | null
   _sum: ForumSensitiveWordSumAggregateOutputType | null
@@ -232,6 +276,10 @@ export type ForumSensitiveWordWhereInput = {
   remark?: Prisma.StringNullableFilter<"ForumSensitiveWord"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumSensitiveWord"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumSensitiveWord"> | Date | string
+  level?: Prisma.IntFilter<"ForumSensitiveWord"> | number
+  matchMode?: Prisma.IntFilter<"ForumSensitiveWord"> | number
+  type?: Prisma.IntFilter<"ForumSensitiveWord"> | number
+  version?: Prisma.IntFilter<"ForumSensitiveWord"> | number
 }
 
 export type ForumSensitiveWordOrderByWithRelationInput = {
@@ -242,6 +290,10 @@ export type ForumSensitiveWordOrderByWithRelationInput = {
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  matchMode?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumSensitiveWordWhereUniqueInput = Prisma.AtLeast<{
@@ -255,6 +307,10 @@ export type ForumSensitiveWordWhereUniqueInput = Prisma.AtLeast<{
   remark?: Prisma.StringNullableFilter<"ForumSensitiveWord"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumSensitiveWord"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumSensitiveWord"> | Date | string
+  level?: Prisma.IntFilter<"ForumSensitiveWord"> | number
+  matchMode?: Prisma.IntFilter<"ForumSensitiveWord"> | number
+  type?: Prisma.IntFilter<"ForumSensitiveWord"> | number
+  version?: Prisma.IntFilter<"ForumSensitiveWord"> | number
 }, "id" | "word">
 
 export type ForumSensitiveWordOrderByWithAggregationInput = {
@@ -265,6 +321,10 @@ export type ForumSensitiveWordOrderByWithAggregationInput = {
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  matchMode?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  version?: Prisma.SortOrder
   _count?: Prisma.ForumSensitiveWordCountOrderByAggregateInput
   _avg?: Prisma.ForumSensitiveWordAvgOrderByAggregateInput
   _max?: Prisma.ForumSensitiveWordMaxOrderByAggregateInput
@@ -283,6 +343,10 @@ export type ForumSensitiveWordScalarWhereWithAggregatesInput = {
   remark?: Prisma.StringNullableWithAggregatesFilter<"ForumSensitiveWord"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumSensitiveWord"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumSensitiveWord"> | Date | string
+  level?: Prisma.IntWithAggregatesFilter<"ForumSensitiveWord"> | number
+  matchMode?: Prisma.IntWithAggregatesFilter<"ForumSensitiveWord"> | number
+  type?: Prisma.IntWithAggregatesFilter<"ForumSensitiveWord"> | number
+  version?: Prisma.IntWithAggregatesFilter<"ForumSensitiveWord"> | number
 }
 
 export type ForumSensitiveWordCreateInput = {
@@ -292,6 +356,10 @@ export type ForumSensitiveWordCreateInput = {
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  level?: number
+  matchMode?: number
+  type?: number
+  version?: number
 }
 
 export type ForumSensitiveWordUncheckedCreateInput = {
@@ -302,6 +370,10 @@ export type ForumSensitiveWordUncheckedCreateInput = {
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  level?: number
+  matchMode?: number
+  type?: number
+  version?: number
 }
 
 export type ForumSensitiveWordUpdateInput = {
@@ -311,6 +383,10 @@ export type ForumSensitiveWordUpdateInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  matchMode?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ForumSensitiveWordUncheckedUpdateInput = {
@@ -321,6 +397,10 @@ export type ForumSensitiveWordUncheckedUpdateInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  matchMode?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ForumSensitiveWordCreateManyInput = {
@@ -331,6 +411,10 @@ export type ForumSensitiveWordCreateManyInput = {
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  level?: number
+  matchMode?: number
+  type?: number
+  version?: number
 }
 
 export type ForumSensitiveWordUpdateManyMutationInput = {
@@ -340,6 +424,10 @@ export type ForumSensitiveWordUpdateManyMutationInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  matchMode?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ForumSensitiveWordUncheckedUpdateManyInput = {
@@ -350,6 +438,10 @@ export type ForumSensitiveWordUncheckedUpdateManyInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  matchMode?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ForumSensitiveWordCountOrderByAggregateInput = {
@@ -360,10 +452,18 @@ export type ForumSensitiveWordCountOrderByAggregateInput = {
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  matchMode?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumSensitiveWordAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  matchMode?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumSensitiveWordMaxOrderByAggregateInput = {
@@ -374,6 +474,10 @@ export type ForumSensitiveWordMaxOrderByAggregateInput = {
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  matchMode?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumSensitiveWordMinOrderByAggregateInput = {
@@ -384,10 +488,18 @@ export type ForumSensitiveWordMinOrderByAggregateInput = {
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  matchMode?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 export type ForumSensitiveWordSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  matchMode?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  version?: Prisma.SortOrder
 }
 
 
@@ -400,6 +512,10 @@ export type ForumSensitiveWordSelect<ExtArgs extends runtime.Types.Extensions.In
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  level?: boolean
+  matchMode?: boolean
+  type?: boolean
+  version?: boolean
 }, ExtArgs["result"]["forumSensitiveWord"]>
 
 export type ForumSensitiveWordSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -410,6 +526,10 @@ export type ForumSensitiveWordSelectCreateManyAndReturn<ExtArgs extends runtime.
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  level?: boolean
+  matchMode?: boolean
+  type?: boolean
+  version?: boolean
 }, ExtArgs["result"]["forumSensitiveWord"]>
 
 export type ForumSensitiveWordSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -420,6 +540,10 @@ export type ForumSensitiveWordSelectUpdateManyAndReturn<ExtArgs extends runtime.
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  level?: boolean
+  matchMode?: boolean
+  type?: boolean
+  version?: boolean
 }, ExtArgs["result"]["forumSensitiveWord"]>
 
 export type ForumSensitiveWordSelectScalar = {
@@ -430,9 +554,13 @@ export type ForumSensitiveWordSelectScalar = {
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  level?: boolean
+  matchMode?: boolean
+  type?: boolean
+  version?: boolean
 }
 
-export type ForumSensitiveWordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "word" | "replaceWord" | "isEnabled" | "remark" | "createdAt" | "updatedAt", ExtArgs["result"]["forumSensitiveWord"]>
+export type ForumSensitiveWordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "word" | "replaceWord" | "isEnabled" | "remark" | "createdAt" | "updatedAt" | "level" | "matchMode" | "type" | "version", ExtArgs["result"]["forumSensitiveWord"]>
 
 export type $ForumSensitiveWordPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumSensitiveWord"
@@ -466,6 +594,22 @@ export type $ForumSensitiveWordPayload<ExtArgs extends runtime.Types.Extensions.
      * 更新时间
      */
     updatedAt: Date
+    /**
+     * 敏感词级别（1=严重, 2=一般, 3=轻微）
+     */
+    level: number
+    /**
+     * 匹配模式（1=精确匹配, 2=模糊匹配, 3=正则表达式）
+     */
+    matchMode: number
+    /**
+     * 敏感词类型（1=政治, 2=色情, 3=暴力, 4=广告, 5=其他）
+     */
+    type: number
+    /**
+     * 版本号（用于乐观锁）
+     */
+    version: number
   }, ExtArgs["result"]["forumSensitiveWord"]>
   composites: {}
 }
@@ -896,6 +1040,10 @@ export interface ForumSensitiveWordFieldRefs {
   readonly remark: Prisma.FieldRef<"ForumSensitiveWord", 'String'>
   readonly createdAt: Prisma.FieldRef<"ForumSensitiveWord", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumSensitiveWord", 'DateTime'>
+  readonly level: Prisma.FieldRef<"ForumSensitiveWord", 'Int'>
+  readonly matchMode: Prisma.FieldRef<"ForumSensitiveWord", 'Int'>
+  readonly type: Prisma.FieldRef<"ForumSensitiveWord", 'Int'>
+  readonly version: Prisma.FieldRef<"ForumSensitiveWord", 'Int'>
 }
     
 

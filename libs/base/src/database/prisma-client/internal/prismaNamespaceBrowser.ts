@@ -76,6 +76,7 @@ export const ModelName = {
   ForumTopicLike: 'ForumTopicLike',
   ForumTopicTag: 'ForumTopicTag',
   ForumTopic: 'ForumTopic',
+  ForumUserActionLog: 'ForumUserActionLog',
   MemberLevel: 'MemberLevel',
   RequestLog: 'RequestLog',
   Dictionary: 'Dictionary',
@@ -295,7 +296,9 @@ export const ForumNotificationScalarFieldEnum = {
   objectId: 'objectId',
   isRead: 'isRead',
   readAt: 'readAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  expiredAt: 'expiredAt',
+  priority: 'priority'
 } as const
 
 export type ForumNotificationScalarFieldEnum = (typeof ForumNotificationScalarFieldEnum)[keyof typeof ForumNotificationScalarFieldEnum]
@@ -360,7 +363,8 @@ export const ForumProfileScalarFieldEnum = {
   banUntil: 'banUntil',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deletedAt',
+  version: 'version'
 } as const
 
 export type ForumProfileScalarFieldEnum = (typeof ForumProfileScalarFieldEnum)[keyof typeof ForumProfileScalarFieldEnum]
@@ -391,7 +395,8 @@ export const ForumReplyScalarFieldEnum = {
   likeCount: 'likeCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deletedAt',
+  version: 'version'
 } as const
 
 export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof typeof ForumReplyScalarFieldEnum]
@@ -424,7 +429,11 @@ export const ForumSensitiveWordScalarFieldEnum = {
   isEnabled: 'isEnabled',
   remark: 'remark',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  level: 'level',
+  matchMode: 'matchMode',
+  type: 'type',
+  version: 'version'
 } as const
 
 export type ForumSensitiveWordScalarFieldEnum = (typeof ForumSensitiveWordScalarFieldEnum)[keyof typeof ForumSensitiveWordScalarFieldEnum]
@@ -497,10 +506,28 @@ export const ForumTopicScalarFieldEnum = {
   lastReplyUserId: 'lastReplyUserId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deletedAt',
+  version: 'version'
 } as const
 
 export type ForumTopicScalarFieldEnum = (typeof ForumTopicScalarFieldEnum)[keyof typeof ForumTopicScalarFieldEnum]
+
+
+export const ForumUserActionLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  actionType: 'actionType',
+  actionDescription: 'actionDescription',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  beforeData: 'beforeData',
+  afterData: 'afterData',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt'
+} as const
+
+export type ForumUserActionLogScalarFieldEnum = (typeof ForumUserActionLogScalarFieldEnum)[keyof typeof ForumUserActionLogScalarFieldEnum]
 
 
 export const MemberLevelScalarFieldEnum = {
