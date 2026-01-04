@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common'
 import { PrismaService } from '@libs/prisma'
+import { Injectable } from '@nestjs/common'
 import { SearchDto, SearchResultDto, SearchResultPageDto } from './dto/search.dto'
-import { SearchTypeEnum, SearchSortTypeEnum, SearchTimeFilterEnum } from './search.constant'
+import { SearchSortTypeEnum, SearchTimeFilterEnum, SearchTypeEnum } from './search.constant'
 
 /**
  * 搜索服务

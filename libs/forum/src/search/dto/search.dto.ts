@@ -1,7 +1,7 @@
 import { ValidateEnum, ValidateNumber, ValidateString } from '@libs/base/decorators'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsOptional } from 'class-validator'
-import { SearchTypeEnum, SearchSortTypeEnum, SearchTimeFilterEnum } from '../search.constant'
+import { SearchSortTypeEnum, SearchTimeFilterEnum, SearchTypeEnum } from '../search.constant'
 
 /**
  * 搜索DTO

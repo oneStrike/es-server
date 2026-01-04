@@ -11,12 +11,11 @@ model Dictionary {
   /// 字典描述信息
   description     String?          @map("description") @db.VarChar(255)
   /// 创建时间
-  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
-  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz
-  /// 字典项列表
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
   dictionaryItems DictionaryItem[]
 
   @@map("dictionary")
@@ -24,8 +23,6 @@ model Dictionary {
 
 model DictionaryItem {
   id               Int        @id @default(autoincrement())
-  /// 所属字典关系
-  parentDictionary Dictionary @relation(fields: [dictionaryCode], references: [code], onDelete: Cascade)
   /// 所属字典编码
   dictionaryCode   String     @map("dictionary_code")
   /// 字典项名称
@@ -41,11 +38,12 @@ model DictionaryItem {
   /// 字典项描述信息
   description      String?    @map("description") @db.VarChar(255)
   /// 创建时间
-  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
-  deletedAt        DateTime?  @map("deleted_at") @db.Timestamptz
+  deletedAt        DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  parentDictionary Dictionary @relation(fields: [dictionaryCode], references: [code], onDelete: Cascade)
 
   @@unique([dictionaryCode, code])
   @@index([dictionaryCode])

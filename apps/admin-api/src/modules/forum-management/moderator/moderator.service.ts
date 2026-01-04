@@ -1,5 +1,6 @@
 import { RepositoryService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { ModeratorPermissionEnum } from '../moderator.constant'
 import {
   addPermission,
   CreateModeratorDto,
@@ -8,7 +9,6 @@ import {
   RemoveModeratorDto,
   UpdateModeratorDto,
 } from './dto/moderator.dto'
-import { ModeratorPermissionEnum } from '../moderator.constant'
 
 @Injectable()
 export class ModeratorService extends RepositoryService {
@@ -105,7 +105,7 @@ export class ModeratorService extends RepositoryService {
    * @param assignDto 分配参数
    * @returns 分配结果
    */
-  async assignModeratorSection(assignDto: { moderatorId: number; sectionIds: number[] }) {
+  async assignModeratorSection(assignDto: { moderatorId: number, sectionIds: number[] }) {
     const { moderatorId, sectionIds } = assignDto
 
     const moderator = await this.forumModerator.findUnique({

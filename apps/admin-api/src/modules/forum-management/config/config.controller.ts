@@ -1,32 +1,27 @@
-import { Controller, Get, Post, Put, Delete, Body, Query, Param } from '@nestjs/common'
-import { ApiTags, ApiProperty } from '@nestjs/swagger'
 import { ApiDoc, ApiPageDoc } from '@libs/common'
-import { IdDto, PageDto } from '@libs/common/dto'
+import { IdDto } from '@libs/common/dto'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+
 import { ConfigService } from './config.service'
 import {
-  CreatePointRuleDto,
-  UpdatePointRuleDto,
-  QueryPointRuleDto,
-  CreateLevelRuleDto,
-  UpdateLevelRuleDto,
-  QueryLevelRuleDto,
-  CreateBadgeDto,
-  UpdateBadgeDto,
-  QueryBadgeDto,
-  CreateSystemConfigDto,
-  UpdateSystemConfigDto,
-  QuerySystemConfigDto,
-  CreatePointRuleBatchDto,
-  CreateLevelRuleBatchDto,
-  CreateBadgeBatchDto,
   BatchUpdateSystemConfigDto,
+  CreateBadgeBatchDto,
+  CreateBadgeDto,
+  CreateLevelRuleBatchDto,
+  CreateLevelRuleDto,
+  CreatePointRuleBatchDto,
+  CreatePointRuleDto,
+  CreateSystemConfigDto,
+  QueryBadgeDto,
+  QueryLevelRuleDto,
+  QueryPointRuleDto,
+  QuerySystemConfigDto,
+  UpdateBadgeDto,
+  UpdateLevelRuleDto,
+  UpdatePointRuleDto,
+  UpdateSystemConfigDto,
 } from './dto/config.dto'
-import {
-  PointRuleTypeEnum,
-  LevelRuleTypeEnum,
-  BadgeTypeEnum,
-  SystemConfigTypeEnum,
-} from './config.constant'
 
 @ApiTags('论坛管理/系统配置')
 @Controller('admin/forum/config')

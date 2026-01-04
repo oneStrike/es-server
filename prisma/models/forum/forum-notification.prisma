@@ -1,28 +1,26 @@
 model ForumNotification {
   /// 主键ID
-  id              Int       @id @default(autoincrement())
+  id         Int          @id @default(autoincrement())
   /// 关联的用户ID
-  userId          Int       @map("user_id") @db.Integer
-  /// 关联的用户资料
-  profile         ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int          @map("user_id")
   /// 通知类型（1=回复, 2=点赞, 3=收藏, 4=系统通知）
-  type            Int       @db.SmallInt
+  type       Int          @db.SmallInt
   /// 通知标题
-  title           String    @db.VarChar(200)
+  title      String       @db.VarChar(200)
   /// 通知内容
-  content         String    @db.Text
+  content    String
   /// 关联对象类型（1=主题, 2=回复）
-  objectType      Int       @map("object_type") @db.SmallInt
+  objectType Int          @map("object_type") @db.SmallInt
   /// 关联对象ID
-  objectId        Int       @map("object_id") @db.Integer
+  objectId   Int          @map("object_id")
   /// 是否已读
-  isRead          Boolean   @default(false) @map("is_read")
+  isRead     Boolean      @default(false) @map("is_read")
   /// 已读时间
-  readAt          DateTime? @map("read_at") @db.Timestamptz
+  readAt     DateTime?    @map("read_at") @db.Timestamptz(6)
   /// 创建时间
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  profile    ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /// 索引优化
   @@index([userId])
   @@index([type])
   @@index([objectType, objectId])

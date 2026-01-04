@@ -44,27 +44,27 @@ export type WorkComicAuthorMinAggregateOutputType = {
   id: number | null
   comicId: number | null
   authorId: number | null
-  sortOrder: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  sortOrder: number | null
 }
 
 export type WorkComicAuthorMaxAggregateOutputType = {
   id: number | null
   comicId: number | null
   authorId: number | null
-  sortOrder: number | null
   createdAt: Date | null
   updatedAt: Date | null
+  sortOrder: number | null
 }
 
 export type WorkComicAuthorCountAggregateOutputType = {
   id: number
   comicId: number
   authorId: number
-  sortOrder: number
   createdAt: number
   updatedAt: number
+  sortOrder: number
   _all: number
 }
 
@@ -87,27 +87,27 @@ export type WorkComicAuthorMinAggregateInputType = {
   id?: true
   comicId?: true
   authorId?: true
-  sortOrder?: true
   createdAt?: true
   updatedAt?: true
+  sortOrder?: true
 }
 
 export type WorkComicAuthorMaxAggregateInputType = {
   id?: true
   comicId?: true
   authorId?: true
-  sortOrder?: true
   createdAt?: true
   updatedAt?: true
+  sortOrder?: true
 }
 
 export type WorkComicAuthorCountAggregateInputType = {
   id?: true
   comicId?: true
   authorId?: true
-  sortOrder?: true
   createdAt?: true
   updatedAt?: true
+  sortOrder?: true
   _all?: true
 }
 
@@ -201,9 +201,9 @@ export type WorkComicAuthorGroupByOutputType = {
   id: number
   comicId: number
   authorId: number
-  sortOrder: number
   createdAt: Date
   updatedAt: Date
+  sortOrder: number
   _count: WorkComicAuthorCountAggregateOutputType | null
   _avg: WorkComicAuthorAvgAggregateOutputType | null
   _sum: WorkComicAuthorSumAggregateOutputType | null
@@ -233,22 +233,22 @@ export type WorkComicAuthorWhereInput = {
   id?: Prisma.IntFilter<"WorkComicAuthor"> | number
   comicId?: Prisma.IntFilter<"WorkComicAuthor"> | number
   authorId?: Prisma.IntFilter<"WorkComicAuthor"> | number
-  sortOrder?: Prisma.IntFilter<"WorkComicAuthor"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicAuthor"> | Date | string
-  comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
+  sortOrder?: Prisma.IntFilter<"WorkComicAuthor"> | number
   author?: Prisma.XOR<Prisma.WorkAuthorScalarRelationFilter, Prisma.WorkAuthorWhereInput>
+  comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
 }
 
 export type WorkComicAuthorOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   comicId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  comic?: Prisma.WorkComicOrderByWithRelationInput
+  sortOrder?: Prisma.SortOrder
   author?: Prisma.WorkAuthorOrderByWithRelationInput
+  comic?: Prisma.WorkComicOrderByWithRelationInput
 }
 
 export type WorkComicAuthorWhereUniqueInput = Prisma.AtLeast<{
@@ -259,20 +259,20 @@ export type WorkComicAuthorWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.WorkComicAuthorWhereInput | Prisma.WorkComicAuthorWhereInput[]
   comicId?: Prisma.IntFilter<"WorkComicAuthor"> | number
   authorId?: Prisma.IntFilter<"WorkComicAuthor"> | number
-  sortOrder?: Prisma.IntFilter<"WorkComicAuthor"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicAuthor"> | Date | string
-  comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
+  sortOrder?: Prisma.IntFilter<"WorkComicAuthor"> | number
   author?: Prisma.XOR<Prisma.WorkAuthorScalarRelationFilter, Prisma.WorkAuthorWhereInput>
+  comic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
 }, "id" | "comicId_authorId">
 
 export type WorkComicAuthorOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   comicId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   _count?: Prisma.WorkComicAuthorCountOrderByAggregateInput
   _avg?: Prisma.WorkComicAuthorAvgOrderByAggregateInput
   _max?: Prisma.WorkComicAuthorMaxOrderByAggregateInput
@@ -287,67 +287,67 @@ export type WorkComicAuthorScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"WorkComicAuthor"> | number
   comicId?: Prisma.IntWithAggregatesFilter<"WorkComicAuthor"> | number
   authorId?: Prisma.IntWithAggregatesFilter<"WorkComicAuthor"> | number
-  sortOrder?: Prisma.IntWithAggregatesFilter<"WorkComicAuthor"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicAuthor"> | Date | string
+  sortOrder?: Prisma.IntWithAggregatesFilter<"WorkComicAuthor"> | number
 }
 
 export type WorkComicAuthorCreateInput = {
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
-  comic: Prisma.WorkComicCreateNestedOneWithoutComicAuthorsInput
+  sortOrder?: number
   author: Prisma.WorkAuthorCreateNestedOneWithoutComicAuthorsInput
+  comic: Prisma.WorkComicCreateNestedOneWithoutComicAuthorsInput
 }
 
 export type WorkComicAuthorUncheckedCreateInput = {
   id?: number
   comicId: number
   authorId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicAuthorUpdateInput = {
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicAuthorsNestedInput
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   author?: Prisma.WorkAuthorUpdateOneRequiredWithoutComicAuthorsNestedInput
+  comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicAuthorsNestedInput
 }
 
 export type WorkComicAuthorUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
   authorId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicAuthorCreateManyInput = {
   id?: number
   comicId: number
   authorId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicAuthorUpdateManyMutationInput = {
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicAuthorUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
   authorId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicAuthorListRelationFilter = {
@@ -369,9 +369,9 @@ export type WorkComicAuthorCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   comicId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicAuthorAvgOrderByAggregateInput = {
@@ -385,18 +385,18 @@ export type WorkComicAuthorMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   comicId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicAuthorMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   comicId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type WorkComicAuthorSumOrderByAggregateInput = {
@@ -491,18 +491,18 @@ export type WorkComicAuthorUncheckedUpdateManyWithoutComicNestedInput = {
 }
 
 export type WorkComicAuthorCreateWithoutAuthorInput = {
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
   comic: Prisma.WorkComicCreateNestedOneWithoutComicAuthorsInput
 }
 
 export type WorkComicAuthorUncheckedCreateWithoutAuthorInput = {
   id?: number
   comicId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicAuthorCreateOrConnectWithoutAuthorInput = {
@@ -538,24 +538,24 @@ export type WorkComicAuthorScalarWhereInput = {
   id?: Prisma.IntFilter<"WorkComicAuthor"> | number
   comicId?: Prisma.IntFilter<"WorkComicAuthor"> | number
   authorId?: Prisma.IntFilter<"WorkComicAuthor"> | number
-  sortOrder?: Prisma.IntFilter<"WorkComicAuthor"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkComicAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicAuthor"> | Date | string
+  sortOrder?: Prisma.IntFilter<"WorkComicAuthor"> | number
 }
 
 export type WorkComicAuthorCreateWithoutComicInput = {
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
   author: Prisma.WorkAuthorCreateNestedOneWithoutComicAuthorsInput
 }
 
 export type WorkComicAuthorUncheckedCreateWithoutComicInput = {
   id?: number
   authorId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicAuthorCreateOrConnectWithoutComicInput = {
@@ -587,63 +587,63 @@ export type WorkComicAuthorUpdateManyWithWhereWithoutComicInput = {
 export type WorkComicAuthorCreateManyAuthorInput = {
   id?: number
   comicId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicAuthorUpdateWithoutAuthorInput = {
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   comic?: Prisma.WorkComicUpdateOneRequiredWithoutComicAuthorsNestedInput
 }
 
 export type WorkComicAuthorUncheckedUpdateWithoutAuthorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicAuthorUncheckedUpdateManyWithoutAuthorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   comicId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicAuthorCreateManyComicInput = {
   id?: number
   authorId: number
-  sortOrder?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  sortOrder?: number
 }
 
 export type WorkComicAuthorUpdateWithoutComicInput = {
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   author?: Prisma.WorkAuthorUpdateOneRequiredWithoutComicAuthorsNestedInput
 }
 
 export type WorkComicAuthorUncheckedUpdateWithoutComicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   authorId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicAuthorUncheckedUpdateManyWithoutComicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   authorId?: Prisma.IntFieldUpdateOperationsInput | number
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 
@@ -652,63 +652,63 @@ export type WorkComicAuthorSelect<ExtArgs extends runtime.Types.Extensions.Inter
   id?: boolean
   comicId?: boolean
   authorId?: boolean
-  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
+  sortOrder?: boolean
   author?: boolean | Prisma.WorkAuthorDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workComicAuthor"]>
 
 export type WorkComicAuthorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   comicId?: boolean
   authorId?: boolean
-  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
+  sortOrder?: boolean
   author?: boolean | Prisma.WorkAuthorDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workComicAuthor"]>
 
 export type WorkComicAuthorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   comicId?: boolean
   authorId?: boolean
-  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
+  sortOrder?: boolean
   author?: boolean | Prisma.WorkAuthorDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workComicAuthor"]>
 
 export type WorkComicAuthorSelectScalar = {
   id?: boolean
   comicId?: boolean
   authorId?: boolean
-  sortOrder?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  sortOrder?: boolean
 }
 
-export type WorkComicAuthorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "comicId" | "authorId" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workComicAuthor"]>
+export type WorkComicAuthorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "comicId" | "authorId" | "createdAt" | "updatedAt" | "sortOrder", ExtArgs["result"]["workComicAuthor"]>
 export type WorkComicAuthorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   author?: boolean | Prisma.WorkAuthorDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }
 export type WorkComicAuthorIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   author?: boolean | Prisma.WorkAuthorDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }
 export type WorkComicAuthorIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   author?: boolean | Prisma.WorkAuthorDefaultArgs<ExtArgs>
+  comic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
 }
 
 export type $WorkComicAuthorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "WorkComicAuthor"
   objects: {
-    comic: Prisma.$WorkComicPayload<ExtArgs>
     author: Prisma.$WorkAuthorPayload<ExtArgs>
+    comic: Prisma.$WorkComicPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -724,10 +724,6 @@ export type $WorkComicAuthorPayload<ExtArgs extends runtime.Types.Extensions.Int
      */
     authorId: number
     /**
-     * 排序顺序（用于展示顺序）
-     */
-    sortOrder: number
-    /**
      * 创建时间
      */
     createdAt: Date
@@ -735,6 +731,10 @@ export type $WorkComicAuthorPayload<ExtArgs extends runtime.Types.Extensions.Int
      * 更新时间
      */
     updatedAt: Date
+    /**
+     * 排序顺序（用于展示顺序）
+     */
+    sortOrder: number
   }, ExtArgs["result"]["workComicAuthor"]>
   composites: {}
 }
@@ -1129,8 +1129,8 @@ readonly fields: WorkComicAuthorFieldRefs;
  */
 export interface Prisma__WorkComicAuthorClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  comic<T extends Prisma.WorkComicDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkComicDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkComicClient<runtime.Types.Result.GetResult<Prisma.$WorkComicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   author<T extends Prisma.WorkAuthorDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkAuthorDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkAuthorClient<runtime.Types.Result.GetResult<Prisma.$WorkAuthorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  comic<T extends Prisma.WorkComicDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkComicDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkComicClient<runtime.Types.Result.GetResult<Prisma.$WorkComicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1163,9 +1163,9 @@ export interface WorkComicAuthorFieldRefs {
   readonly id: Prisma.FieldRef<"WorkComicAuthor", 'Int'>
   readonly comicId: Prisma.FieldRef<"WorkComicAuthor", 'Int'>
   readonly authorId: Prisma.FieldRef<"WorkComicAuthor", 'Int'>
-  readonly sortOrder: Prisma.FieldRef<"WorkComicAuthor", 'Int'>
   readonly createdAt: Prisma.FieldRef<"WorkComicAuthor", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WorkComicAuthor", 'DateTime'>
+  readonly sortOrder: Prisma.FieldRef<"WorkComicAuthor", 'Int'>
 }
     
 

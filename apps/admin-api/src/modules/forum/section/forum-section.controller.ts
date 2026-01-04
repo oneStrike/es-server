@@ -3,15 +3,15 @@ import { BatchOperationResponseDto, DragReorderDto, IdDto } from '@libs/base/dto
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-import { ForumSectionService } from './forum-section.service'
 import {
   BaseForumSectionDto,
   CreateForumSectionDto,
   QueryForumSectionDto,
+  UpdateForumSectionDto,
   UpdateSectionEnabledDto,
   UpdateSectionSortDto,
-  UpdateForumSectionDto,
 } from './dto/forum-section.dto'
+import { ForumSectionService } from './forum-section.service'
 
 /**
  * 论坛板块管理控制器

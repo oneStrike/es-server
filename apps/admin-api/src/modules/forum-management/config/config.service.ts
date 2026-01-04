@@ -1,30 +1,25 @@
-import { Injectable } from '@nestjs/common'
 import { ApiErrorCode } from '@libs/common'
 import { BusinessException } from '@libs/common/exception'
 import { RepositoryService } from '@libs/prisma'
+import { Injectable } from '@nestjs/common'
+
 import {
-  CreatePointRuleDto,
-  UpdatePointRuleDto,
-  QueryPointRuleDto,
-  CreateLevelRuleDto,
-  UpdateLevelRuleDto,
-  QueryLevelRuleDto,
-  CreateBadgeDto,
-  UpdateBadgeDto,
-  QueryBadgeDto,
-  CreateSystemConfigDto,
-  UpdateSystemConfigDto,
-  QuerySystemConfigDto,
-  CreatePointRuleBatchDto,
-  CreateLevelRuleBatchDto,
   CreateBadgeBatchDto,
+  CreateBadgeDto,
+  CreateLevelRuleBatchDto,
+  CreateLevelRuleDto,
+  CreatePointRuleBatchDto,
+  CreatePointRuleDto,
+  CreateSystemConfigDto,
+  QueryBadgeDto,
+  QueryLevelRuleDto,
+  QueryPointRuleDto,
+  QuerySystemConfigDto,
+  UpdateBadgeDto,
+  UpdateLevelRuleDto,
+  UpdatePointRuleDto,
+  UpdateSystemConfigDto,
 } from './dto/config.dto'
-import {
-  PointRuleTypeEnum,
-  LevelRuleTypeEnum,
-  BadgeTypeEnum,
-  SystemConfigTypeEnum,
-} from './config.constant'
 
 @Injectable()
 export class ConfigService extends RepositoryService {
@@ -589,7 +584,7 @@ export class ConfigService extends RepositoryService {
     return config
   }
 
-  async batchUpdateSystemConfig(updates: Array<{ configKey: string; configValue: string }>) {
+  async batchUpdateSystemConfig(updates: Array<{ configKey: string, configValue: string }>) {
     return this.prisma.$transaction(async (tx) => {
       const results = []
       for (const update of updates) {

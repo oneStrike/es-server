@@ -1,48 +1,44 @@
 /// 作者信息模型
 model WorkAuthor {
   /// 主键ID
-  id             Int       @id @default(autoincrement())
+  id             Int               @id @default(autoincrement())
   /// 作者姓名
-  name           String    @unique @db.VarChar(100)
+  name           String            @unique @db.VarChar(100)
   /// 作者头像URL
-  avatar         String?   @db.VarChar(500)
+  avatar         String?           @db.VarChar(500)
   /// 作者描述
-  description    String?   @db.VarChar(1000)
+  description    String?           @db.VarChar(1000)
   /// 启用状态（true: 启用, false: 禁用）
-  isEnabled      Boolean   @default(true) @map("is_enabled")
+  isEnabled      Boolean           @default(true) @map("is_enabled")
+  /// 国籍
+  nationality    String?           @db.VarChar(50)
+  /// 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）
+  gender         Int               @default(0) @db.SmallInt
+  /// 作品数量（冗余字段，用于提升查询性能）
+  worksCount     Int               @default(0) @map("works_count")
+  /// 粉丝数量（冗余字段，用于前台展示）
+  followersCount Int               @default(0) @map("followers_count")
+  /// 管理员备注
+  remark         String?           @db.VarChar(1000)
+  /// 创建时间
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 软删除时间（用于数据恢复或归档）
+  deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  /// 是否为推荐作者（用于前台推荐展示）
+  isRecommended  Boolean           @default(false) @map("is_recommended")
   /// 作者类型，bitmap存储，每个bit表示一种类型（1: 漫画家, 2: 轻小说作者, 4: 插画师, 8: coser）
   type           Int[]
-  /// 国籍
-  nationality    String?   @db.VarChar(50)
-  /// 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）
-  gender         Int       @default(0) @db.SmallInt
-  /// 作品数量（冗余字段，用于提升查询性能）
-  worksCount     Int       @default(0) @map("works_count")
-  /// 粉丝数量（冗余字段，用于前台展示）
-  followersCount Int       @default(0) @map("followers_count")
-  /// 是否为推荐作者（用于前台推荐展示）
-  isRecommended  Boolean   @default(false) @map("is_recommended")
-  /// 管理员备注
-  remark         String?   @db.VarChar(1000)
-  /// 创建时间
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  /// 更新时间
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-  /// 软删除时间（用于数据恢复或归档）
-  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz
+  comicAuthors   WorkComicAuthor[]
 
-  // 关联关系
-  /// 作品关联（多对多）
-  comicAuthors WorkComicAuthor[]
-
-  /// 索引优化
-  @@index([type]) // 按类型查询可用作者
-  @@index([isEnabled]) // 按状态查询可用作者
-  @@index([isEnabled, isRecommended]) // 查询可用的推荐作者
-  @@index([isEnabled, deletedAt]) // 查询可用且未删除的作者
-  @@index([nationality]) // 按国籍查询
-  @@index([gender]) // 按性别查询
-  @@index([isRecommended, worksCount(sort: Desc)]) // 推荐作者按作品数排序
-  @@index([createdAt]) // 按创建时间排序
+  @@index([type])
+  @@index([isEnabled])
+  @@index([isEnabled, isRecommended])
+  @@index([isEnabled, deletedAt])
+  @@index([nationality])
+  @@index([gender])
+  @@index([isRecommended, worksCount(sort: Desc)])
+  @@index([createdAt])
   @@map("work_author")
 }

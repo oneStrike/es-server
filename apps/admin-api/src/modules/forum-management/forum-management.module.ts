@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common'
-import { ModeratorModule } from './moderator/moderator.module'
+import { AnalyticsModule } from './analytics/analytics.module'
 import { AuditModule } from './audit/audit.module'
 import { ConfigModule } from './config/config.module'
-import { AnalyticsModule } from './analytics/analytics.module'
+import { ModeratorModule } from './moderator/moderator.module'
 
 @Module({
   imports: [ModeratorModule, AuditModule, ConfigModule, AnalyticsModule],

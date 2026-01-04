@@ -1,26 +1,22 @@
 /// 漫画作者关联表（多对多关系中间表）
 model WorkComicAuthor {
   /// 主键ID
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   /// 漫画ID
-  comicId   Int      @map("comic_id")
+  comicId   Int        @map("comic_id")
   /// 作者ID
-  authorId  Int      @map("author_id")
-  /// 排序顺序（用于展示顺序）
-  sortOrder Int      @default(0) @map("sort_order") @db.Integer
+  authorId  Int        @map("author_id")
   /// 创建时间
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 排序顺序（用于展示顺序）
+  sortOrder Int        @default(0) @map("sort_order")
+  author    WorkAuthor @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comic     WorkComic  @relation(fields: [comicId], references: [id], onDelete: Cascade)
 
-  // 关联关系
-  comic  WorkComic  @relation(fields: [comicId], references: [id], onDelete: Cascade)
-  author WorkAuthor @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  /// 复合唯一索引（防止重复关联）
   @@unique([comicId, authorId])
-  /// 索引优化
-  @@index([comicId]) // 按漫画查询作者
-  @@index([authorId]) // 按作者查询漫画
+  @@index([comicId])
+  @@index([authorId])
   @@map("work_comic_author")
 }

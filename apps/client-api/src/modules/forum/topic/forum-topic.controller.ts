@@ -1,18 +1,18 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
-import { CurrentUser } from '@libs/base/decorators'
+
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-import { ForumTopicService } from './forum-topic.service'
 import {
   BaseForumTopicDto,
   CreateForumTopicDto,
+  FavoriteTopicDto,
+  LikeTopicDto,
   QueryForumTopicDto,
   UpdateForumTopicDto,
-  LikeTopicDto,
-  FavoriteTopicDto,
 } from './dto/forum-topic.dto'
+import { ForumTopicService } from './forum-topic.service'
 
 /**
  * 客户端论坛主题控制器

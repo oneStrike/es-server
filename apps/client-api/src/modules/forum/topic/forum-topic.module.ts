@@ -1,7 +1,7 @@
+import { NotificationModule } from '@app/forum/notification/notification.module'
 import { Module } from '@nestjs/common'
 import { ForumTopicController } from './forum-topic.controller'
 import { ForumTopicService } from './forum-topic.service'
-import { NotificationModule } from '@app/forum/notification/notification.module'
 
 /**
  * 客户端论坛主题模块

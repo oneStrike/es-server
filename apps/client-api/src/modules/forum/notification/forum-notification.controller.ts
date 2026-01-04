@@ -1,16 +1,15 @@
-import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
-import { JwtAuthGuard } from '@app/guards/jwt-auth.guard'
-import { NotificationService } from '@app/forum/notification/notification.service'
 import {
-  QueryNotificationListDto,
-  MarkNotificationReadDto,
-  BatchMarkNotificationReadDto,
-  MarkAllNotificationReadDto,
-  DeleteNotificationDto,
   BatchDeleteNotificationDto,
-  GetUnreadCountDto,
+  BatchMarkNotificationReadDto,
+  DeleteNotificationDto,
+  MarkAllNotificationReadDto,
+  MarkNotificationReadDto,
+  QueryNotificationListDto,
 } from '@app/forum/notification/dto/notification.dto'
+import { NotificationService } from '@app/forum/notification/notification.service'
+import { JwtAuthGuard } from '@app/guards/jwt-auth.guard'
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common'
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 
 @ApiTags('客户端-论坛通知')
 @Controller('client/forum/notification')

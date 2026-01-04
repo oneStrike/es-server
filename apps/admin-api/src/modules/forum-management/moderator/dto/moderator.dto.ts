@@ -1,8 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { ModeratorPermissionEnum } from '../moderator.constant'
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator'
-import { Type } from 'class-transformer'
 import { ValidateNumber } from '@libs/base/dto'
+import { ApiProperty } from '@nestjs/swagger'
+import { Type } from 'class-transformer'
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator'
+import { ModeratorPermissionEnum } from '../moderator.constant'
 
 export class CreateModeratorDto {
   @ApiProperty({ description: '用户ID', example: 1 })

@@ -7,66 +7,62 @@ model WorkComicChapter {
   subtitle                String?      @db.VarChar(200)
   /// 发布状态
   isPublished             Boolean      @default(false) @map("is_published")
-  /// 关联的漫画id
-  relatedComic            WorkComic    @relation(fields: [comicId], references: [id], onDelete: Cascade)
-  comicId                 Int          @map("comic_id") @db.Integer
-  /// 章节序号（用于排序）
-  sortOrder               Int          @default(0) @map("sort_order") @db.Integer
-  /// 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
-  downloadRule            Int          @default(1) @map("download_rule") @db.SmallInt
-  /// 下载所需要的积分（积分可下载时必填）
-  downloadPoints          Int?         @default(0) @map("download_points") @db.Integer
-  /// 是否允许评论
-  canComment              Boolean      @default(true) @map("can_comment")
+  comicId                 Int          @map("comic_id")
   /// 查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）
   readRule                Int          @default(0) @map("read_rule") @db.SmallInt
-  /// 阅读所需要的积分（积分购买时必填）
-  readPoints              Int?         @default(0) @map("read_points") @db.Integer
   /// 漫画内容（JSON格式存储图片URL数组）
-  contents                String       @default("[]") @db.Text
+  contents                String       @default("[]")
   /// 是否为试读章节
   isPreview               Boolean      @default(false) @map("is_preview")
   /// 发布时间
-  publishAt               DateTime?    @map("publish_at") @db.Timestamptz
-  /// 购买次数
-  purchaseCount           Int          @default(0) @map("purchase_count") @db.Integer
+  publishAt               DateTime?    @map("publish_at") @db.Timestamptz(6)
   /// 阅读次数
-  viewCount               Int          @default(0) @map("view_count") @db.Integer
+  viewCount               Int          @default(0) @map("view_count")
   /// 点赞数
-  likeCount               Int          @default(0) @map("like_count") @db.Integer
+  likeCount               Int          @default(0) @map("like_count")
   /// 评论数
-  commentCount            Int          @default(0) @map("comment_count") @db.Integer
-  /// 章节描述
-  description             String?      @db.VarChar(1000)
+  commentCount            Int          @default(0) @map("comment_count")
   /// 备注
   remark                  String?      @db.VarChar(1000)
   /// 创建时间
-  createdAt               DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  createdAt               DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt               DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt               DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间（用于数据恢复或归档）
-  deletedAt               DateTime?    @map("deleted_at") @db.Timestamptz
-  /// 允许查看的会员等级ID
-  requiredReadLevelId     Int?         @map("required_read_level_id") @db.Integer
-  /// 允许查看的会员等级
-  requiredReadLevel       MemberLevel? @relation("ChapterReadLevel", fields: [requiredReadLevelId], references: [id], onDelete: SetNull)
+  deletedAt               DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  /// 是否允许评论
+  canComment              Boolean      @default(true) @map("can_comment")
+  /// 下载所需要的积分（积分可下载时必填）
+  downloadPoints          Int?         @default(0) @map("download_points")
+  /// 阅读所需要的积分（积分购买时必填）
+  readPoints              Int?         @default(0) @map("read_points")
+  /// 章节序号（用于排序）
+  sortOrder               Int          @default(0) @map("sort_order")
+  /// 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
+  downloadRule            Int          @default(1) @map("download_rule") @db.SmallInt
   /// 允许下载的会员等级ID
-  requiredDownloadLevelId Int?         @map("required_download_level_id") @db.Integer
-  /// 允许下载的会员等级
-  requiredDownloadLevel   MemberLevel? @relation("ChapterDownloadLevel", fields: [requiredDownloadLevelId], references: [id], onDelete: SetNull)
+  requiredDownloadLevelId Int?         @map("required_download_level_id")
+  /// 允许查看的会员等级ID
+  requiredReadLevelId     Int?         @map("required_read_level_id")
+  /// 章节描述
+  description             String?      @db.VarChar(1000)
+  /// 购买次数
+  purchaseCount           Int          @default(0) @map("purchase_count")
+  relatedComic            WorkComic    @relation(fields: [comicId], references: [id], onDelete: Cascade)
+  requiredDownloadLevel   MemberLevel? @relation("ChapterDownloadLevel", fields: [requiredDownloadLevelId], references: [id])
+  requiredReadLevel       MemberLevel? @relation("ChapterReadLevel", fields: [requiredReadLevelId], references: [id])
 
-  @@unique([comicId, sortOrder]) // 确保同一漫画的章节号唯一
-  /// 索引优化
-  @@index([comicId]) // 外键索引
-  @@index([comicId, sortOrder]) // 按漫画ID和章节号查询
-  @@index([isPublished, publishAt]) // 查询已发布章节
-  @@index([readRule]) // 按查看权限查询
-  @@index([isPreview]) // 查询试读章节
-  @@index([viewCount]) // 按阅读次数排序
-  @@index([likeCount]) // 按点赞数排序
-  @@index([createdAt]) // 按创建时间排序
-  @@index([publishAt]) // 按发布时间排序
-  @@index([requiredReadLevelId]) // 按所需阅读会员等级查询
-  @@index([requiredDownloadLevelId]) // 按所需下载会员等级查询
+  @@unique([comicId, sortOrder])
+  @@index([comicId])
+  @@index([comicId, sortOrder])
+  @@index([isPublished, publishAt])
+  @@index([readRule])
+  @@index([isPreview])
+  @@index([viewCount])
+  @@index([likeCount])
+  @@index([createdAt])
+  @@index([publishAt])
+  @@index([requiredReadLevelId])
+  @@index([requiredDownloadLevelId])
   @@map("work_comic_chapter")
 }

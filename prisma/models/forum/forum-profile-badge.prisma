@@ -1,18 +1,15 @@
 model ForumProfileBadge {
   /// 主键ID
-  id              Int       @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   /// 关联的用户资料ID
-  profileId       Int       @map("profile_id") @db.Integer
-  /// 关联的用户资料
-  profile         ForumProfile @relation("ProfileBadges", fields: [profileId], references: [id], onDelete: Cascade)
+  profileId Int          @map("profile_id")
   /// 关联的徽章ID
-  badgeId         Int       @map("badge_id") @db.Integer
-  /// 关联的徽章
-  badge           ForumBadge @relation("ProfileBadges", fields: [badgeId], references: [id], onDelete: Cascade)
+  badgeId   Int          @map("badge_id")
   /// 获得时间
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  badge     ForumBadge   @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  profile   ForumProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  /// 索引优化
   @@unique([profileId, badgeId])
   @@index([profileId])
   @@index([badgeId])

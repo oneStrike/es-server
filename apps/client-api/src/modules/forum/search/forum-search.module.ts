@@ -1,6 +1,6 @@
+import { SearchModule } from '@libs/forum/search'
 import { Module } from '@nestjs/common'
 import { ForumSearchController } from './forum-search.controller'
-import { SearchModule } from '@libs/forum/search'
 
 /**
  * 客户端论坛搜索模块

@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger'
 import { IsBoolean, IsNumber, IsOptional, IsString, ValidateString } from '@libs/base/validator'
+import { ApiProperty } from '@nestjs/swagger'
 
 export class CreatePointRuleDto {
   @ApiProperty({ description: '规则名称', example: '每日签到' })

@@ -1,8 +1,8 @@
-import { Controller, Get, Query } from '@nestjs/common'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { InjectSearchService } from './forum-search.constant'
 import { SearchService } from '@libs/forum/search'
 import { SearchDto } from '@libs/forum/search/dto/search.dto'
+import { Controller, Get, Query } from '@nestjs/common'
+import { InjectSearchService } from './forum-search.constant'
 
 /**
  * 客户端论坛搜索控制器

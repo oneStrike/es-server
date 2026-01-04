@@ -1,0 +1,8 @@
+export { createInitialAuthors } from './author'
+export { createInitialWorkCategory } from './category'
+export { createInitialComics } from './comic'
+export { createInitialComicAuthors } from './comic-author'
+export { createInitialComicCategories } from './comic-category'
+export { createInitialComicChapters } from './comic-chapter'
+export { createInitialComicTags } from './comic-tag'
+export { createInitialWorkTag } from './tag'

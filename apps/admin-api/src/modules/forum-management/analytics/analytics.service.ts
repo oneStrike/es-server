@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common'
 import { RepositoryService } from '@libs/prisma'
-import {
-  ForumOverviewDto,
-  ActivityTrendQueryDto,
-  HotTopicsQueryDto,
-  ActiveUsersQueryDto,
-  SectionStatsQueryDto,
-  ActivityTrendPointDto,
-  HotTopicDto,
-  ActiveUserDto,
-  SectionStatsDto,
-} from './dto/analytics.dto'
+import { Injectable } from '@nestjs/common'
 import { TimeRangeEnum } from './analytics.constant'
+import {
+  ActiveUserDto,
+  ActiveUsersQueryDto,
+  ActivityTrendPointDto,
+  ActivityTrendQueryDto,
+  ForumOverviewDto,
+  HotTopicDto,
+  HotTopicsQueryDto,
+  SectionStatsDto,
+  SectionStatsQueryDto,
+} from './dto/analytics.dto'
 
 @Injectable()
 export class AnalyticsService extends RepositoryService {
@@ -43,7 +43,7 @@ export class AnalyticsService extends RepositoryService {
     return this.prisma.forumView
   }
 
-  private getDateRange(timeRange: TimeRangeEnum): { startDate: Date; endDate: Date } {
+  private getDateRange(timeRange: TimeRangeEnum): { startDate: Date, endDate: Date } {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const yesterday = new Date(today)
@@ -208,7 +208,7 @@ export class AnalyticsService extends RepositoryService {
     return trends
   }
 
-  async getHotTopics(query: HotTopicsQueryDto): Promise<{ total: number; items: HotTopicDto[] }> {
+  async getHotTopics(query: HotTopicsQueryDto): Promise<{ total: number, items: HotTopicDto[] }> {
     let startDate: Date
     let endDate: Date
 
@@ -271,7 +271,7 @@ export class AnalyticsService extends RepositoryService {
     return { total, items }
   }
 
-  async getActiveUsers(query: ActiveUsersQueryDto): Promise<{ total: number; items: ActiveUserDto[] }> {
+  async getActiveUsers(query: ActiveUsersQueryDto): Promise<{ total: number, items: ActiveUserDto[] }> {
     let startDate: Date
     let endDate: Date
 
@@ -322,7 +322,7 @@ export class AnalyticsService extends RepositoryService {
     return { total, items }
   }
 
-  async getSectionStats(query: SectionStatsQueryDto): Promise<{ total: number; items: SectionStatsDto[] }> {
+  async getSectionStats(query: SectionStatsQueryDto): Promise<{ total: number, items: SectionStatsDto[] }> {
     const today = new Date()
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
 

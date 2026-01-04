@@ -1,26 +1,24 @@
 model ForumModeratorActionLog {
   /// 主键ID
-  id              Int       @id @default(autoincrement())
+  id                Int            @id @default(autoincrement())
   /// 关联的版主ID
-  moderatorId     Int       @map("moderator_id") @db.Integer
-  /// 关联的版主
-  moderator       ForumModerator @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+  moderatorId       Int            @map("moderator_id")
   /// 操作类型（pin_topic=置顶主题, unpin_topic=取消置顶, feature_topic=加精主题, unfeature_topic=取消加精, lock_topic=锁定主题, unlock_topic=解锁主题, delete_topic=删除主题, move_topic=移动主题, audit_topic=审核主题, delete_reply=删除回复）
-  actionType      String    @map("action_type") @db.VarChar(50)
+  actionType        String         @map("action_type") @db.VarChar(50)
   /// 操作描述
-  actionDescription String  @map("action_description") @db.VarChar(200)
+  actionDescription String         @map("action_description") @db.VarChar(200)
   /// 目标类型（topic=主题, reply=回复）
-  targetType      String    @map("target_type") @db.VarChar(20)
+  targetType        String         @map("target_type") @db.VarChar(20)
   /// 目标ID
-  targetId        Int       @map("target_id") @db.Integer
+  targetId          Int            @map("target_id")
   /// 操作前数据（JSON格式）
-  beforeData      String?   @map("before_data") @db.Text
+  beforeData        String?        @map("before_data")
   /// 操作后数据（JSON格式）
-  afterData       String?   @map("after_data") @db.Text
+  afterData         String?        @map("after_data")
   /// 操作时间
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  moderator         ForumModerator @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
 
-  /// 索引优化
   @@index([moderatorId])
   @@index([actionType])
   @@index([targetType, targetId])
