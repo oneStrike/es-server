@@ -33,6 +33,12 @@
       ],
       "@libs/member/*": [
         "libs/member/src/*"
+      ],
+      "@libs/forum": [
+        "libs/forum/src"
+      ],
+      "@libs/forum/*": [
+        "libs/forum/src/*"
       ]
     },
     "resolveJsonModule": true,

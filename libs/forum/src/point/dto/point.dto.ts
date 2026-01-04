@@ -11,7 +11,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { PointObjectTypeEnum, PointRuleTypeEnum } from '../point.constant'
+import { PointRuleTypeEnum } from '../point.constant'
 
 /**
  * 积分规则基础DTO
@@ -26,7 +26,8 @@ export class BasePointRuleDto extends BaseDto {
   name!: string
 
   @ValidateEnum({
-    description: '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）',
+    description:
+      '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）',
     example: PointRuleTypeEnum.CREATE_TOPIC,
     required: true,
     enum: PointRuleTypeEnum,
@@ -86,9 +87,7 @@ export class UpdatePointRuleDto extends IntersectionType(
  */
 export class QueryPointRuleDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(BasePointRuleDto, ['name', 'type', 'isEnabled']),
-  ),
+  PartialType(PickType(BasePointRuleDto, ['name', 'type', 'isEnabled'])),
 ) {}
 
 /**
@@ -130,21 +129,6 @@ export class BasePointRecordDto extends BaseDto {
   })
   afterPoints!: number
 
-  @ValidateEnum({
-    description: '关联对象类型（1=主题, 2=回复, 3=签到, 4=点赞, 5=收藏, 6=管理员操作）',
-    example: PointObjectTypeEnum.TOPIC,
-    required: true,
-    enum: PointObjectTypeEnum,
-  })
-  objectType!: PointObjectTypeEnum
-
-  @ValidateNumber({
-    description: '关联对象ID',
-    example: 1,
-    required: true,
-  })
-  objectId!: number
-
   @ValidateString({
     description: '备注',
     example: '发表主题获得积分',
@@ -159,14 +143,7 @@ export class BasePointRecordDto extends BaseDto {
  */
 export class QueryPointRecordDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(BasePointRecordDto, [
-      'userId',
-      'ruleId',
-      'objectType',
-      'objectId',
-    ]),
-  ),
+  PartialType(PickType(BasePointRecordDto, ['ruleId'])),
 ) {}
 
 /**
@@ -187,21 +164,6 @@ export class AddPointsDto {
     enum: PointRuleTypeEnum,
   })
   ruleType!: PointRuleTypeEnum
-
-  @ValidateEnum({
-    description: '对象类型',
-    example: PointObjectTypeEnum.TOPIC,
-    required: true,
-    enum: PointObjectTypeEnum,
-  })
-  objectType!: PointObjectTypeEnum
-
-  @ValidateNumber({
-    description: '对象ID',
-    example: 1,
-    required: true,
-  })
-  objectId!: number
 
   @ValidateString({
     description: '备注',
@@ -229,21 +191,6 @@ export class ConsumePointsDto {
     required: true,
   })
   points!: number
-
-  @ValidateEnum({
-    description: '对象类型',
-    example: PointObjectTypeEnum.ADMIN,
-    required: true,
-    enum: PointObjectTypeEnum,
-  })
-  objectType!: PointObjectTypeEnum
-
-  @ValidateNumber({
-    description: '对象ID',
-    example: 1,
-    required: true,
-  })
-  objectId!: number
 
   @ValidateString({
     description: '备注',

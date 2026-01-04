@@ -193,6 +193,7 @@ export const ClientUserScalarFieldEnum = {
   isEnabled: 'isEnabled',
   genderType: 'genderType',
   birthDate: 'birthDate',
+  isSignedIn: 'isSignedIn',
   lastLoginAt: 'lastLoginAt',
   lastLoginIp: 'lastLoginIp',
   createdAt: 'createdAt',
@@ -240,6 +241,15 @@ export const ForumLevelRuleScalarFieldEnum = {
   requiredPoints: 'requiredPoints',
   order: 'order',
   isEnabled: 'isEnabled',
+  dailyTopicLimit: 'dailyTopicLimit',
+  dailyReplyLimit: 'dailyReplyLimit',
+  postInterval: 'postInterval',
+  maxFileSize: 'maxFileSize',
+  dailyLikeLimit: 'dailyLikeLimit',
+  dailyFavoriteLimit: 'dailyFavoriteLimit',
+  dailyCommentLimit: 'dailyCommentLimit',
+  levelColor: 'levelColor',
+  levelBadge: 'levelBadge',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -311,8 +321,6 @@ export const ForumPointRecordScalarFieldEnum = {
   points: 'points',
   beforePoints: 'beforePoints',
   afterPoints: 'afterPoints',
-  objectType: 'objectType',
-  objectId: 'objectId',
   remark: 'remark',
   createdAt: 'createdAt'
 } as const
@@ -356,15 +364,12 @@ export const ForumProfileScalarFieldEnum = {
   favoriteCount: 'favoriteCount',
   signature: 'signature',
   bio: 'bio',
-  lastPostAt: 'lastPostAt',
-  lastVisitAt: 'lastVisitAt',
-  isBanned: 'isBanned',
+  status: 'status',
   banReason: 'banReason',
   banUntil: 'banUntil',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  version: 'version'
+  deletedAt: 'deletedAt'
 } as const
 
 export type ForumProfileScalarFieldEnum = (typeof ForumProfileScalarFieldEnum)[keyof typeof ForumProfileScalarFieldEnum]

@@ -1,4 +1,7 @@
-import type { ForumPointRecordWhereInput, ForumPointRuleWhereInput } from '@libs/base/database'
+import type {
+  ForumPointRecordWhereInput,
+  ForumPointRuleWhereInput,
+} from '@libs/base/database'
 import { RepositoryService } from '@libs/base/database'
 
 import { isNotNil } from '@libs/base/utils'
@@ -6,10 +9,11 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   AddPointsDto,
   ConsumePointsDto,
+  CreatePointRuleDto,
   QueryPointRecordDto,
   QueryPointRuleDto,
 } from './dto/point.dto'
-import { PointObjectTypeEnum, PointRuleTypeEnum } from './point.constant'
+import { PointRuleTypeEnum } from './point.constant'
 
 /**
  * 积分服务类
@@ -34,22 +38,9 @@ export class PointService extends RepositoryService {
    * @param createPointRuleDto 创建规则的数据
    * @returns 创建的规则信息
    */
-  async createPointRule(createPointRuleDto: any) {
-    const { type, name } = createPointRuleDto
-
-    const existingRule = await this.forumPointRule.findFirst({
-      where: {
-        type,
-        name,
-      },
-    })
-
-    if (existingRule) {
-      throw new BadRequestException('该类型的规则名称已存在')
-    }
-
+  async createPointRule(dto: CreatePointRuleDto) {
     return this.forumPointRule.create({
-      data: createPointRuleDto,
+      data: dto,
     })
   }
 
@@ -59,30 +50,17 @@ export class PointService extends RepositoryService {
    * @returns 分页的规则列表
    */
   async getPointRulePage(queryPointRuleDto: QueryPointRuleDto) {
-    const { name, type, isEnabled, ...otherDto } = queryPointRuleDto
+    const where: ForumPointRuleWhereInput = queryPointRuleDto
 
-    const where: ForumPointRuleWhereInput = {}
-
-    if (isNotNil(name)) {
+    if (queryPointRuleDto.name) {
       where.name = {
-        contains: name,
+        contains: queryPointRuleDto.name,
         mode: 'insensitive',
       }
     }
 
-    if (isNotNil(type)) {
-      where.type = type
-    }
-
-    if (isNotNil(isEnabled)) {
-      where.isEnabled = isEnabled
-    }
-
     return this.forumPointRule.findPagination({
       where,
-      orderBy: {
-        type: 'asc',
-      },
     })
   }
 
@@ -111,36 +89,9 @@ export class PointService extends RepositoryService {
   async updatePointRule(updatePointRuleDto: any) {
     const { id, ...updateData } = updatePointRuleDto
 
-    const existingRule = await this.forumPointRule.findUnique({
-      where: { id },
-    })
-
-    if (!existingRule) {
-      throw new BadRequestException('积分规则不存在')
-    }
-
     return this.forumPointRule.update({
       where: { id },
       data: updateData,
-    })
-  }
-
-  /**
-   * 删除积分规则
-   * @param id 规则ID
-   * @returns 删除结果
-   */
-  async deletePointRule(id: number) {
-    const rule = await this.forumPointRule.findUnique({
-      where: { id },
-    })
-
-    if (!rule) {
-      throw new BadRequestException('积分规则不存在')
-    }
-
-    return this.forumPointRule.delete({
-      where: { id },
     })
   }
 
@@ -150,7 +101,7 @@ export class PointService extends RepositoryService {
    * @returns 增加积分的结果
    */
   async addPoints(addPointsDto: AddPointsDto) {
-    const { userId, ruleType, objectType, objectId, remark } = addPointsDto
+    const { userId, ruleType, remark } = addPointsDto
 
     const profile = await this.forumProfile.findUnique({
       where: { id: userId },
@@ -160,7 +111,7 @@ export class PointService extends RepositoryService {
       throw new BadRequestException('用户资料不存在')
     }
 
-    const rule = await this.forumPointRule.findFirst({
+    const rule = await this.forumPointRule.findUnique({
       where: {
         type: ruleType,
         isEnabled: true,
@@ -168,7 +119,7 @@ export class PointService extends RepositoryService {
     })
 
     if (!rule) {
-      throw new BadRequestException('积分规则不存在或已禁用')
+      throw new BadRequestException('积分规则不存在')
     }
 
     if (rule.points <= 0) {
@@ -183,7 +134,6 @@ export class PointService extends RepositoryService {
         where: {
           userId,
           ruleId: rule.id,
-          objectType,
           createdAt: {
             gte: today,
           },
@@ -206,9 +156,7 @@ export class PointService extends RepositoryService {
           points: rule.points,
           beforePoints,
           afterPoints,
-          objectType,
-          objectId,
-          remark: remark || rule.remark,
+          remark,
         },
       })
 
@@ -229,7 +177,7 @@ export class PointService extends RepositoryService {
    * @returns 消费积分的结果
    */
   async consumePoints(consumePointsDto: ConsumePointsDto) {
-    const { userId, points, objectType, objectId, remark } = consumePointsDto
+    const { userId, points, remark } = consumePointsDto
 
     const profile = await this.forumProfile.findUnique({
       where: { id: userId },
@@ -253,8 +201,6 @@ export class PointService extends RepositoryService {
           points: -points,
           beforePoints,
           afterPoints,
-          objectType,
-          objectId,
           remark,
         },
       })
@@ -273,43 +219,12 @@ export class PointService extends RepositoryService {
   /**
    * 分页查询积分记录列表
    * @param queryPointRecordDto 查询条件
+   * @param userId 用户ID
    * @returns 分页的记录列表
    */
-  async getPointRecordPage(queryPointRecordDto: QueryPointRecordDto) {
-    const { userId, ruleId, objectType, objectId, ...otherDto } =
-      queryPointRecordDto
-
-    const where: ForumPointRecordWhereInput = {}
-
-    if (isNotNil(userId)) {
-      where.userId = userId
-    }
-
-    if (isNotNil(ruleId)) {
-      where.ruleId = ruleId
-    }
-
-    if (isNotNil(objectType)) {
-      where.objectType = objectType
-    }
-
-    if (isNotNil(objectId)) {
-      where.objectId = objectId
-    }
-
+  async getPointRecordPage(dto: QueryPointRecordDto, userId: number) {
     return this.forumPointRecord.findPagination({
-      where,
-      include: {
-        profile: {
-          include: {
-            user: true,
-          },
-        },
-        rule: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      where: { ...dto, userId },
     })
   }
 
@@ -393,7 +308,7 @@ export class PointService extends RepositoryService {
   }
 
   /**
-   * 与漫画系统互通接口 - 预留
+   * 与漫画系统互通接口
    * @param userId 用户ID
    * @param points 积分数量
    * @param operation 操作类型（add=增加, consume=消费）
@@ -445,24 +360,17 @@ export class PointService extends RepositoryService {
   /**
    * 根据规则类型获取积分
    * @param userId 用户ID
-   * @param ruleType 规则类型
-   * @param objectType 对象类型
-   * @param objectId 对象ID
    * @param remark 备注
    * @returns 操作结果
    */
   async addPointsByRuleType(
     userId: number,
     ruleType: PointRuleTypeEnum,
-    objectType: PointObjectTypeEnum,
-    objectId: number,
     remark?: string,
   ) {
     return this.addPoints({
       userId,
       ruleType,
-      objectType,
-      objectId,
       remark,
     })
   }

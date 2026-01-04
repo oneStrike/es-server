@@ -54,7 +54,7 @@ export type ForumAuditLog = Prisma.ForumAuditLogModel
 export type ForumBadge = Prisma.ForumBadgeModel
 /**
  * Model ForumLevelRule
- * 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级图标等
+ * 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级权益等
  */
 export type ForumLevelRule = Prisma.ForumLevelRuleModel
 /**

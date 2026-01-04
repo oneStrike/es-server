@@ -1,4 +1,4 @@
-import { PrismaService } from '@libs/base/database'
+import { RepositoryService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import {
   GrantBadgeDto,
@@ -19,17 +19,17 @@ import { UserLevelNames, UserStatusNames } from './user.constant'
  * 用户服务
  */
 @Injectable()
-export class UserService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+export class UserService extends RepositoryService {
+  constructor() {
+    super()
+  }
 
   /**
    * 查询用户列表
    * @param queryDto 查询参数
    * @returns 用户列表
    */
-  async queryUserList(queryDto: QueryUserListDto): Promise<{ list: UserProfileDto[], total: number, page: number, pageSize: number }> {
+  async queryUserList(queryDto: QueryUserListDto) {
     const { keyword, level, status, page = 1, pageSize = 20 } = queryDto
 
     const where: any = {
@@ -284,7 +284,16 @@ export class UserService {
    * @param pageSize 每页数量
    * @returns 主题列表
    */
-  async getMyTopics(userId: number, page = 1, pageSize = 20): Promise<{ list: UserTopicListDto[], total: number, page: number, pageSize: number }> {
+  async getMyTopics(
+    userId: number,
+    page = 1,
+    pageSize = 20,
+  ): Promise<{
+    list: UserTopicListDto[]
+    total: number
+    page: number
+    pageSize: number
+  }> {
     const [topics, total] = await Promise.all([
       this.prisma.forumTopic.findMany({
         where: {
@@ -341,7 +350,16 @@ export class UserService {
    * @param pageSize 每页数量
    * @returns 回复列表
    */
-  async getMyReplies(userId: number, page = 1, pageSize = 20): Promise<{ list: UserReplyListDto[], total: number, page: number, pageSize: number }> {
+  async getMyReplies(
+    userId: number,
+    page = 1,
+    pageSize = 20,
+  ): Promise<{
+    list: UserReplyListDto[]
+    total: number
+    page: number
+    pageSize: number
+  }> {
     const [replies, total] = await Promise.all([
       this.prisma.forumReply.findMany({
         where: {
@@ -397,7 +415,16 @@ export class UserService {
    * @param pageSize 每页数量
    * @returns 收藏列表
    */
-  async getMyFavorites(userId: number, page = 1, pageSize = 20): Promise<{ list: UserFavoriteListDto[], total: number, page: number, pageSize: number }> {
+  async getMyFavorites(
+    userId: number,
+    page = 1,
+    pageSize = 20,
+  ): Promise<{
+    list: UserFavoriteListDto[]
+    total: number
+    page: number
+    pageSize: number
+  }> {
     const [favorites, total] = await Promise.all([
       this.prisma.forumTopicFavorite.findMany({
         where: {
@@ -456,7 +483,16 @@ export class UserService {
    * @param pageSize 每页数量
    * @returns 积分记录列表
    */
-  async getPointRecords(userId: number, page = 1, pageSize = 20): Promise<{ list: PointRecordDto[], total: number, page: number, pageSize: number }> {
+  async getPointRecords(
+    userId: number,
+    page = 1,
+    pageSize = 20,
+  ): Promise<{
+    list: PointRecordDto[]
+    total: number
+    page: number
+    pageSize: number
+  }> {
     const [records, total] = await Promise.all([
       this.prisma.forumPointRecord.findMany({
         where: {

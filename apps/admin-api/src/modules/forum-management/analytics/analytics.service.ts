@@ -43,7 +43,10 @@ export class AnalyticsService extends RepositoryService {
     return this.prisma.forumView
   }
 
-  private getDateRange(timeRange: TimeRangeEnum): { startDate: Date, endDate: Date } {
+  private getDateRange(timeRange: TimeRangeEnum): {
+    startDate: Date
+    endDate: Date
+  } {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const yesterday = new Date(today)
@@ -70,7 +73,11 @@ export class AnalyticsService extends RepositoryService {
         const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
         return { startDate: thisMonthStart, endDate: now }
       case TimeRangeEnum.LAST_MONTH:
-        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        const lastMonthStart = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1,
+        )
         const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1)
         return { startDate: lastMonthStart, endDate: lastMonthEnd }
       case TimeRangeEnum.THIS_YEAR:
@@ -83,7 +90,11 @@ export class AnalyticsService extends RepositoryService {
 
   async getForumOverview(): Promise<ForumOverviewDto> {
     const today = new Date()
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    const todayStart = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    )
     const sevenDaysAgo = new Date(todayStart)
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     const fiveMinutesAgo = new Date(today.getTime() - 5 * 60 * 1000)
@@ -148,7 +159,9 @@ export class AnalyticsService extends RepositoryService {
     }
   }
 
-  async getActivityTrend(query: ActivityTrendQueryDto): Promise<ActivityTrendPointDto[]> {
+  async getActivityTrend(
+    query: ActivityTrendQueryDto,
+  ): Promise<ActivityTrendPointDto[]> {
     let startDate: Date
     let endDate: Date
 
@@ -156,12 +169,16 @@ export class AnalyticsService extends RepositoryService {
       startDate = new Date(query.startDate)
       endDate = new Date(query.endDate)
     } else {
-      const range = this.getDateRange(query.timeRange || TimeRangeEnum.LAST_7_DAYS)
+      const range = this.getDateRange(
+        query.timeRange || TimeRangeEnum.LAST_7_DAYS,
+      )
       startDate = range.startDate
       endDate = range.endDate
     }
 
-    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    const days = Math.ceil(
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+    )
     const trends: ActivityTrendPointDto[] = []
 
     for (let i = 0; i < days; i++) {
@@ -170,31 +187,33 @@ export class AnalyticsService extends RepositoryService {
       const dayEnd = new Date(dayStart)
       dayEnd.setDate(dayEnd.getDate() + 1)
 
-      const [topicCount, replyCount, userCount, visitCount] = await Promise.all([
-        this.forumTopic.count({
-          where: {
-            deletedAt: null,
-            createdAt: { gte: dayStart, lt: dayEnd },
-          },
-        }),
-        this.forumReply.count({
-          where: {
-            deletedAt: null,
-            createdAt: { gte: dayStart, lt: dayEnd },
-          },
-        }),
-        this.forumUser.count({
-          where: {
-            deletedAt: null,
-            createdAt: { gte: dayStart, lt: dayEnd },
-          },
-        }),
-        this.forumView.count({
-          where: {
-            createdAt: { gte: dayStart, lt: dayEnd },
-          },
-        }),
-      ])
+      const [topicCount, replyCount, userCount, visitCount] = await Promise.all(
+        [
+          this.forumTopic.count({
+            where: {
+              deletedAt: null,
+              createdAt: { gte: dayStart, lt: dayEnd },
+            },
+          }),
+          this.forumReply.count({
+            where: {
+              deletedAt: null,
+              createdAt: { gte: dayStart, lt: dayEnd },
+            },
+          }),
+          this.forumUser.count({
+            where: {
+              deletedAt: null,
+              createdAt: { gte: dayStart, lt: dayEnd },
+            },
+          }),
+          this.forumView.count({
+            where: {
+              createdAt: { gte: dayStart, lt: dayEnd },
+            },
+          }),
+        ],
+      )
 
       trends.push({
         date: dayStart.toISOString().split('T')[0],
@@ -208,7 +227,9 @@ export class AnalyticsService extends RepositoryService {
     return trends
   }
 
-  async getHotTopics(query: HotTopicsQueryDto): Promise<{ total: number, items: HotTopicDto[] }> {
+  async getHotTopics(
+    query: HotTopicsQueryDto,
+  ): Promise<{ total: number; items: HotTopicDto[] }> {
     let startDate: Date
     let endDate: Date
 
@@ -271,7 +292,9 @@ export class AnalyticsService extends RepositoryService {
     return { total, items }
   }
 
-  async getActiveUsers(query: ActiveUsersQueryDto): Promise<{ total: number, items: ActiveUserDto[] }> {
+  async getActiveUsers(
+    query: ActiveUsersQueryDto,
+  ): Promise<{ total: number; items: ActiveUserDto[] }> {
     let startDate: Date
     let endDate: Date
 
@@ -322,9 +345,15 @@ export class AnalyticsService extends RepositoryService {
     return { total, items }
   }
 
-  async getSectionStats(query: SectionStatsQueryDto): Promise<{ total: number, items: SectionStatsDto[] }> {
+  async getSectionStats(
+    query: SectionStatsQueryDto,
+  ): Promise<{ total: number; items: SectionStatsDto[] }> {
     const today = new Date()
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    const todayStart = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    )
 
     const where: any = {
       deletedAt: null,

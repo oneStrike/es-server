@@ -35,25 +35,25 @@ export type ForumProfileAvgAggregateOutputType = {
   replyCount: number | null
   likeCount: number | null
   favoriteCount: number | null
-  version: number | null
+  status: number | null
 }
 
 export type ForumProfileSumAggregateOutputType = {
   id: number | null
   userId: number | null
-  points: bigint | null
+  points: number | null
   levelId: number | null
   topicCount: number | null
   replyCount: number | null
   likeCount: number | null
   favoriteCount: number | null
-  version: number | null
+  status: number | null
 }
 
 export type ForumProfileMinAggregateOutputType = {
   id: number | null
   userId: number | null
-  points: bigint | null
+  points: number | null
   levelId: number | null
   topicCount: number | null
   replyCount: number | null
@@ -61,21 +61,18 @@ export type ForumProfileMinAggregateOutputType = {
   favoriteCount: number | null
   signature: string | null
   bio: string | null
-  lastPostAt: Date | null
-  lastVisitAt: Date | null
-  isBanned: boolean | null
+  status: number | null
   banReason: string | null
   banUntil: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  version: number | null
 }
 
 export type ForumProfileMaxAggregateOutputType = {
   id: number | null
   userId: number | null
-  points: bigint | null
+  points: number | null
   levelId: number | null
   topicCount: number | null
   replyCount: number | null
@@ -83,15 +80,12 @@ export type ForumProfileMaxAggregateOutputType = {
   favoriteCount: number | null
   signature: string | null
   bio: string | null
-  lastPostAt: Date | null
-  lastVisitAt: Date | null
-  isBanned: boolean | null
+  status: number | null
   banReason: string | null
   banUntil: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  version: number | null
 }
 
 export type ForumProfileCountAggregateOutputType = {
@@ -105,15 +99,12 @@ export type ForumProfileCountAggregateOutputType = {
   favoriteCount: number
   signature: number
   bio: number
-  lastPostAt: number
-  lastVisitAt: number
-  isBanned: number
+  status: number
   banReason: number
   banUntil: number
   createdAt: number
   updatedAt: number
   deletedAt: number
-  version: number
   _all: number
 }
 
@@ -127,7 +118,7 @@ export type ForumProfileAvgAggregateInputType = {
   replyCount?: true
   likeCount?: true
   favoriteCount?: true
-  version?: true
+  status?: true
 }
 
 export type ForumProfileSumAggregateInputType = {
@@ -139,7 +130,7 @@ export type ForumProfileSumAggregateInputType = {
   replyCount?: true
   likeCount?: true
   favoriteCount?: true
-  version?: true
+  status?: true
 }
 
 export type ForumProfileMinAggregateInputType = {
@@ -153,15 +144,12 @@ export type ForumProfileMinAggregateInputType = {
   favoriteCount?: true
   signature?: true
   bio?: true
-  lastPostAt?: true
-  lastVisitAt?: true
-  isBanned?: true
+  status?: true
   banReason?: true
   banUntil?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  version?: true
 }
 
 export type ForumProfileMaxAggregateInputType = {
@@ -175,15 +163,12 @@ export type ForumProfileMaxAggregateInputType = {
   favoriteCount?: true
   signature?: true
   bio?: true
-  lastPostAt?: true
-  lastVisitAt?: true
-  isBanned?: true
+  status?: true
   banReason?: true
   banUntil?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  version?: true
 }
 
 export type ForumProfileCountAggregateInputType = {
@@ -197,15 +182,12 @@ export type ForumProfileCountAggregateInputType = {
   favoriteCount?: true
   signature?: true
   bio?: true
-  lastPostAt?: true
-  lastVisitAt?: true
-  isBanned?: true
+  status?: true
   banReason?: true
   banUntil?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  version?: true
   _all?: true
 }
 
@@ -298,7 +280,7 @@ export type ForumProfileGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type ForumProfileGroupByOutputType = {
   id: number
   userId: number
-  points: bigint
+  points: number
   levelId: number | null
   topicCount: number
   replyCount: number
@@ -306,15 +288,12 @@ export type ForumProfileGroupByOutputType = {
   favoriteCount: number
   signature: string | null
   bio: string | null
-  lastPostAt: Date | null
-  lastVisitAt: Date | null
-  isBanned: boolean
+  status: number
   banReason: string | null
   banUntil: Date | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
-  version: number
   _count: ForumProfileCountAggregateOutputType | null
   _avg: ForumProfileAvgAggregateOutputType | null
   _sum: ForumProfileSumAggregateOutputType | null
@@ -343,7 +322,7 @@ export type ForumProfileWhereInput = {
   NOT?: Prisma.ForumProfileWhereInput | Prisma.ForumProfileWhereInput[]
   id?: Prisma.IntFilter<"ForumProfile"> | number
   userId?: Prisma.IntFilter<"ForumProfile"> | number
-  points?: Prisma.BigIntFilter<"ForumProfile"> | bigint | number
+  points?: Prisma.IntFilter<"ForumProfile"> | number
   levelId?: Prisma.IntNullableFilter<"ForumProfile"> | number | null
   topicCount?: Prisma.IntFilter<"ForumProfile"> | number
   replyCount?: Prisma.IntFilter<"ForumProfile"> | number
@@ -351,15 +330,12 @@ export type ForumProfileWhereInput = {
   favoriteCount?: Prisma.IntFilter<"ForumProfile"> | number
   signature?: Prisma.StringNullableFilter<"ForumProfile"> | string | null
   bio?: Prisma.StringNullableFilter<"ForumProfile"> | string | null
-  lastPostAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
-  lastVisitAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
-  isBanned?: Prisma.BoolFilter<"ForumProfile"> | boolean
+  status?: Prisma.IntFilter<"ForumProfile"> | number
   banReason?: Prisma.StringNullableFilter<"ForumProfile"> | string | null
   banUntil?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
-  version?: Prisma.IntFilter<"ForumProfile"> | number
   moderator?: Prisma.XOR<Prisma.ForumModeratorNullableScalarRelationFilter, Prisma.ForumModeratorWhereInput> | null
   notifications?: Prisma.ForumNotificationListRelationFilter
   pointRecords?: Prisma.ForumPointRecordListRelationFilter
@@ -382,15 +358,12 @@ export type ForumProfileOrderByWithRelationInput = {
   favoriteCount?: Prisma.SortOrder
   signature?: Prisma.SortOrderInput | Prisma.SortOrder
   bio?: Prisma.SortOrderInput | Prisma.SortOrder
-  lastPostAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  lastVisitAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  isBanned?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   banReason?: Prisma.SortOrderInput | Prisma.SortOrder
   banUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  version?: Prisma.SortOrder
   moderator?: Prisma.ForumModeratorOrderByWithRelationInput
   notifications?: Prisma.ForumNotificationOrderByRelationAggregateInput
   pointRecords?: Prisma.ForumPointRecordOrderByRelationAggregateInput
@@ -408,7 +381,7 @@ export type ForumProfileWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.ForumProfileWhereInput | Prisma.ForumProfileWhereInput[]
   OR?: Prisma.ForumProfileWhereInput[]
   NOT?: Prisma.ForumProfileWhereInput | Prisma.ForumProfileWhereInput[]
-  points?: Prisma.BigIntFilter<"ForumProfile"> | bigint | number
+  points?: Prisma.IntFilter<"ForumProfile"> | number
   levelId?: Prisma.IntNullableFilter<"ForumProfile"> | number | null
   topicCount?: Prisma.IntFilter<"ForumProfile"> | number
   replyCount?: Prisma.IntFilter<"ForumProfile"> | number
@@ -416,15 +389,12 @@ export type ForumProfileWhereUniqueInput = Prisma.AtLeast<{
   favoriteCount?: Prisma.IntFilter<"ForumProfile"> | number
   signature?: Prisma.StringNullableFilter<"ForumProfile"> | string | null
   bio?: Prisma.StringNullableFilter<"ForumProfile"> | string | null
-  lastPostAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
-  lastVisitAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
-  isBanned?: Prisma.BoolFilter<"ForumProfile"> | boolean
+  status?: Prisma.IntFilter<"ForumProfile"> | number
   banReason?: Prisma.StringNullableFilter<"ForumProfile"> | string | null
   banUntil?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
-  version?: Prisma.IntFilter<"ForumProfile"> | number
   moderator?: Prisma.XOR<Prisma.ForumModeratorNullableScalarRelationFilter, Prisma.ForumModeratorWhereInput> | null
   notifications?: Prisma.ForumNotificationListRelationFilter
   pointRecords?: Prisma.ForumPointRecordListRelationFilter
@@ -447,15 +417,12 @@ export type ForumProfileOrderByWithAggregationInput = {
   favoriteCount?: Prisma.SortOrder
   signature?: Prisma.SortOrderInput | Prisma.SortOrder
   bio?: Prisma.SortOrderInput | Prisma.SortOrder
-  lastPostAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  lastVisitAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  isBanned?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   banReason?: Prisma.SortOrderInput | Prisma.SortOrder
   banUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  version?: Prisma.SortOrder
   _count?: Prisma.ForumProfileCountOrderByAggregateInput
   _avg?: Prisma.ForumProfileAvgOrderByAggregateInput
   _max?: Prisma.ForumProfileMaxOrderByAggregateInput
@@ -469,7 +436,7 @@ export type ForumProfileScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumProfileScalarWhereWithAggregatesInput | Prisma.ForumProfileScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
   userId?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
-  points?: Prisma.BigIntWithAggregatesFilter<"ForumProfile"> | bigint | number
+  points?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
   levelId?: Prisma.IntNullableWithAggregatesFilter<"ForumProfile"> | number | null
   topicCount?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
   replyCount?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
@@ -477,34 +444,28 @@ export type ForumProfileScalarWhereWithAggregatesInput = {
   favoriteCount?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
   signature?: Prisma.StringNullableWithAggregatesFilter<"ForumProfile"> | string | null
   bio?: Prisma.StringNullableWithAggregatesFilter<"ForumProfile"> | string | null
-  lastPostAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumProfile"> | Date | string | null
-  lastVisitAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumProfile"> | Date | string | null
-  isBanned?: Prisma.BoolWithAggregatesFilter<"ForumProfile"> | boolean
+  status?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
   banReason?: Prisma.StringNullableWithAggregatesFilter<"ForumProfile"> | string | null
   banUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumProfile"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumProfile"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumProfile"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumProfile"> | Date | string | null
-  version?: Prisma.IntWithAggregatesFilter<"ForumProfile"> | number
 }
 
 export type ForumProfileCreateInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -519,7 +480,7 @@ export type ForumProfileCreateInput = {
 export type ForumProfileUncheckedCreateInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -527,15 +488,12 @@ export type ForumProfileUncheckedCreateInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -546,22 +504,19 @@ export type ForumProfileUncheckedCreateInput = {
 }
 
 export type ForumProfileUpdateInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -576,7 +531,7 @@ export type ForumProfileUpdateInput = {
 export type ForumProfileUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -584,15 +539,12 @@ export type ForumProfileUncheckedUpdateInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -605,7 +557,7 @@ export type ForumProfileUncheckedUpdateInput = {
 export type ForumProfileCreateManyInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -613,40 +565,34 @@ export type ForumProfileCreateManyInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
 }
 
 export type ForumProfileUpdateManyMutationInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ForumProfileUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -654,15 +600,12 @@ export type ForumProfileUncheckedUpdateManyInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type ForumProfileNullableScalarRelationFilter = {
@@ -696,15 +639,12 @@ export type ForumProfileCountOrderByAggregateInput = {
   favoriteCount?: Prisma.SortOrder
   signature?: Prisma.SortOrder
   bio?: Prisma.SortOrder
-  lastPostAt?: Prisma.SortOrder
-  lastVisitAt?: Prisma.SortOrder
-  isBanned?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   banReason?: Prisma.SortOrder
   banUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  version?: Prisma.SortOrder
 }
 
 export type ForumProfileAvgOrderByAggregateInput = {
@@ -716,7 +656,7 @@ export type ForumProfileAvgOrderByAggregateInput = {
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
-  version?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type ForumProfileMaxOrderByAggregateInput = {
@@ -730,15 +670,12 @@ export type ForumProfileMaxOrderByAggregateInput = {
   favoriteCount?: Prisma.SortOrder
   signature?: Prisma.SortOrder
   bio?: Prisma.SortOrder
-  lastPostAt?: Prisma.SortOrder
-  lastVisitAt?: Prisma.SortOrder
-  isBanned?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   banReason?: Prisma.SortOrder
   banUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  version?: Prisma.SortOrder
 }
 
 export type ForumProfileMinOrderByAggregateInput = {
@@ -752,15 +689,12 @@ export type ForumProfileMinOrderByAggregateInput = {
   favoriteCount?: Prisma.SortOrder
   signature?: Prisma.SortOrder
   bio?: Prisma.SortOrder
-  lastPostAt?: Prisma.SortOrder
-  lastVisitAt?: Prisma.SortOrder
-  isBanned?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   banReason?: Prisma.SortOrder
   banUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  version?: Prisma.SortOrder
 }
 
 export type ForumProfileSumOrderByAggregateInput = {
@@ -772,7 +706,7 @@ export type ForumProfileSumOrderByAggregateInput = {
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
-  version?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type ForumProfileCreateNestedOneWithoutUserInput = {
@@ -948,22 +882,19 @@ export type ForumProfileUpdateOneRequiredWithoutTopicLikesNestedInput = {
 }
 
 export type ForumProfileCreateWithoutUserInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -976,7 +907,7 @@ export type ForumProfileCreateWithoutUserInput = {
 
 export type ForumProfileUncheckedCreateWithoutUserInput = {
   id?: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -984,15 +915,12 @@ export type ForumProfileUncheckedCreateWithoutUserInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1019,22 +947,19 @@ export type ForumProfileUpdateToOneWithWhereWithoutUserInput = {
 }
 
 export type ForumProfileUpdateWithoutUserInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -1047,7 +972,7 @@ export type ForumProfileUpdateWithoutUserInput = {
 
 export type ForumProfileUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1055,15 +980,12 @@ export type ForumProfileUncheckedUpdateWithoutUserInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -1074,22 +996,19 @@ export type ForumProfileUncheckedUpdateWithoutUserInput = {
 }
 
 export type ForumProfileCreateWithoutLevelInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1103,22 +1022,19 @@ export type ForumProfileCreateWithoutLevelInput = {
 export type ForumProfileUncheckedCreateWithoutLevelInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1160,7 +1076,7 @@ export type ForumProfileScalarWhereInput = {
   NOT?: Prisma.ForumProfileScalarWhereInput | Prisma.ForumProfileScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumProfile"> | number
   userId?: Prisma.IntFilter<"ForumProfile"> | number
-  points?: Prisma.BigIntFilter<"ForumProfile"> | bigint | number
+  points?: Prisma.IntFilter<"ForumProfile"> | number
   levelId?: Prisma.IntNullableFilter<"ForumProfile"> | number | null
   topicCount?: Prisma.IntFilter<"ForumProfile"> | number
   replyCount?: Prisma.IntFilter<"ForumProfile"> | number
@@ -1168,34 +1084,28 @@ export type ForumProfileScalarWhereInput = {
   favoriteCount?: Prisma.IntFilter<"ForumProfile"> | number
   signature?: Prisma.StringNullableFilter<"ForumProfile"> | string | null
   bio?: Prisma.StringNullableFilter<"ForumProfile"> | string | null
-  lastPostAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
-  lastVisitAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
-  isBanned?: Prisma.BoolFilter<"ForumProfile"> | boolean
+  status?: Prisma.IntFilter<"ForumProfile"> | number
   banReason?: Prisma.StringNullableFilter<"ForumProfile"> | string | null
   banUntil?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumProfile"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumProfile"> | Date | string | null
-  version?: Prisma.IntFilter<"ForumProfile"> | number
 }
 
 export type ForumProfileCreateWithoutModeratorInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
@@ -1209,7 +1119,7 @@ export type ForumProfileCreateWithoutModeratorInput = {
 export type ForumProfileUncheckedCreateWithoutModeratorInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1217,15 +1127,12 @@ export type ForumProfileUncheckedCreateWithoutModeratorInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
@@ -1251,22 +1158,19 @@ export type ForumProfileUpdateToOneWithWhereWithoutModeratorInput = {
 }
 
 export type ForumProfileUpdateWithoutModeratorInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
@@ -1280,7 +1184,7 @@ export type ForumProfileUpdateWithoutModeratorInput = {
 export type ForumProfileUncheckedUpdateWithoutModeratorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1288,15 +1192,12 @@ export type ForumProfileUncheckedUpdateWithoutModeratorInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
@@ -1306,22 +1207,19 @@ export type ForumProfileUncheckedUpdateWithoutModeratorInput = {
 }
 
 export type ForumProfileCreateWithoutNotificationsInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
@@ -1335,7 +1233,7 @@ export type ForumProfileCreateWithoutNotificationsInput = {
 export type ForumProfileUncheckedCreateWithoutNotificationsInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1343,15 +1241,12 @@ export type ForumProfileUncheckedCreateWithoutNotificationsInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
@@ -1377,22 +1272,19 @@ export type ForumProfileUpdateToOneWithWhereWithoutNotificationsInput = {
 }
 
 export type ForumProfileUpdateWithoutNotificationsInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
@@ -1406,7 +1298,7 @@ export type ForumProfileUpdateWithoutNotificationsInput = {
 export type ForumProfileUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1414,15 +1306,12 @@ export type ForumProfileUncheckedUpdateWithoutNotificationsInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
@@ -1432,22 +1321,19 @@ export type ForumProfileUncheckedUpdateWithoutNotificationsInput = {
 }
 
 export type ForumProfileCreateWithoutPointRecordsInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
@@ -1461,7 +1347,7 @@ export type ForumProfileCreateWithoutPointRecordsInput = {
 export type ForumProfileUncheckedCreateWithoutPointRecordsInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1469,15 +1355,12 @@ export type ForumProfileUncheckedCreateWithoutPointRecordsInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
@@ -1503,22 +1386,19 @@ export type ForumProfileUpdateToOneWithWhereWithoutPointRecordsInput = {
 }
 
 export type ForumProfileUpdateWithoutPointRecordsInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
@@ -1532,7 +1412,7 @@ export type ForumProfileUpdateWithoutPointRecordsInput = {
 export type ForumProfileUncheckedUpdateWithoutPointRecordsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1540,15 +1420,12 @@ export type ForumProfileUncheckedUpdateWithoutPointRecordsInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   profileBadges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
@@ -1558,22 +1435,19 @@ export type ForumProfileUncheckedUpdateWithoutPointRecordsInput = {
 }
 
 export type ForumProfileCreateWithoutProfileBadgesInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1587,7 +1461,7 @@ export type ForumProfileCreateWithoutProfileBadgesInput = {
 export type ForumProfileUncheckedCreateWithoutProfileBadgesInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1595,15 +1469,12 @@ export type ForumProfileUncheckedCreateWithoutProfileBadgesInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1629,22 +1500,19 @@ export type ForumProfileUpdateToOneWithWhereWithoutProfileBadgesInput = {
 }
 
 export type ForumProfileUpdateWithoutProfileBadgesInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -1658,7 +1526,7 @@ export type ForumProfileUpdateWithoutProfileBadgesInput = {
 export type ForumProfileUncheckedUpdateWithoutProfileBadgesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1666,15 +1534,12 @@ export type ForumProfileUncheckedUpdateWithoutProfileBadgesInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -1684,22 +1549,19 @@ export type ForumProfileUncheckedUpdateWithoutProfileBadgesInput = {
 }
 
 export type ForumProfileCreateWithoutReplyLikesInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1713,7 +1575,7 @@ export type ForumProfileCreateWithoutReplyLikesInput = {
 export type ForumProfileUncheckedCreateWithoutReplyLikesInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1721,15 +1583,12 @@ export type ForumProfileUncheckedCreateWithoutReplyLikesInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1755,22 +1614,19 @@ export type ForumProfileUpdateToOneWithWhereWithoutReplyLikesInput = {
 }
 
 export type ForumProfileUpdateWithoutReplyLikesInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -1784,7 +1640,7 @@ export type ForumProfileUpdateWithoutReplyLikesInput = {
 export type ForumProfileUncheckedUpdateWithoutReplyLikesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1792,15 +1648,12 @@ export type ForumProfileUncheckedUpdateWithoutReplyLikesInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -1810,22 +1663,19 @@ export type ForumProfileUncheckedUpdateWithoutReplyLikesInput = {
 }
 
 export type ForumProfileCreateWithoutTopicFavoritesInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1839,7 +1689,7 @@ export type ForumProfileCreateWithoutTopicFavoritesInput = {
 export type ForumProfileUncheckedCreateWithoutTopicFavoritesInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1847,15 +1697,12 @@ export type ForumProfileUncheckedCreateWithoutTopicFavoritesInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -1881,22 +1728,19 @@ export type ForumProfileUpdateToOneWithWhereWithoutTopicFavoritesInput = {
 }
 
 export type ForumProfileUpdateWithoutTopicFavoritesInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -1910,7 +1754,7 @@ export type ForumProfileUpdateWithoutTopicFavoritesInput = {
 export type ForumProfileUncheckedUpdateWithoutTopicFavoritesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1918,15 +1762,12 @@ export type ForumProfileUncheckedUpdateWithoutTopicFavoritesInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -1936,22 +1777,19 @@ export type ForumProfileUncheckedUpdateWithoutTopicFavoritesInput = {
 }
 
 export type ForumProfileCreateWithoutTopicLikesInput = {
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
@@ -1965,7 +1803,7 @@ export type ForumProfileCreateWithoutTopicLikesInput = {
 export type ForumProfileUncheckedCreateWithoutTopicLikesInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   levelId?: number | null
   topicCount?: number
   replyCount?: number
@@ -1973,15 +1811,12 @@ export type ForumProfileUncheckedCreateWithoutTopicLikesInput = {
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
   moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
@@ -2007,22 +1842,19 @@ export type ForumProfileUpdateToOneWithWhereWithoutTopicLikesInput = {
 }
 
 export type ForumProfileUpdateWithoutTopicLikesInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -2036,7 +1868,7 @@ export type ForumProfileUpdateWithoutTopicLikesInput = {
 export type ForumProfileUncheckedUpdateWithoutTopicLikesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2044,15 +1876,12 @@ export type ForumProfileUncheckedUpdateWithoutTopicLikesInput = {
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -2064,41 +1893,35 @@ export type ForumProfileUncheckedUpdateWithoutTopicLikesInput = {
 export type ForumProfileCreateManyLevelInput = {
   id?: number
   userId: number
-  points?: bigint | number
+  points?: number
   topicCount?: number
   replyCount?: number
   likeCount?: number
   favoriteCount?: number
   signature?: string | null
   bio?: string | null
-  lastPostAt?: Date | string | null
-  lastVisitAt?: Date | string | null
-  isBanned?: boolean
+  status?: number
   banReason?: string | null
   banUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  version?: number
 }
 
 export type ForumProfileUpdateWithoutLevelInput = {
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
@@ -2112,22 +1935,19 @@ export type ForumProfileUpdateWithoutLevelInput = {
 export type ForumProfileUncheckedUpdateWithoutLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
@@ -2140,22 +1960,19 @@ export type ForumProfileUncheckedUpdateWithoutLevelInput = {
 export type ForumProfileUncheckedUpdateManyWithoutLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastVisitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isBanned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 
@@ -2245,15 +2062,12 @@ export type ForumProfileSelect<ExtArgs extends runtime.Types.Extensions.Internal
   favoriteCount?: boolean
   signature?: boolean
   bio?: boolean
-  lastPostAt?: boolean
-  lastVisitAt?: boolean
-  isBanned?: boolean
+  status?: boolean
   banReason?: boolean
   banUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  version?: boolean
   moderator?: boolean | Prisma.ForumProfile$moderatorArgs<ExtArgs>
   notifications?: boolean | Prisma.ForumProfile$notificationsArgs<ExtArgs>
   pointRecords?: boolean | Prisma.ForumProfile$pointRecordsArgs<ExtArgs>
@@ -2277,15 +2091,12 @@ export type ForumProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   favoriteCount?: boolean
   signature?: boolean
   bio?: boolean
-  lastPostAt?: boolean
-  lastVisitAt?: boolean
-  isBanned?: boolean
+  status?: boolean
   banReason?: boolean
   banUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  version?: boolean
   level?: boolean | Prisma.ForumProfile$levelArgs<ExtArgs>
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumProfile"]>
@@ -2301,15 +2112,12 @@ export type ForumProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   favoriteCount?: boolean
   signature?: boolean
   bio?: boolean
-  lastPostAt?: boolean
-  lastVisitAt?: boolean
-  isBanned?: boolean
+  status?: boolean
   banReason?: boolean
   banUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  version?: boolean
   level?: boolean | Prisma.ForumProfile$levelArgs<ExtArgs>
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumProfile"]>
@@ -2325,18 +2133,15 @@ export type ForumProfileSelectScalar = {
   favoriteCount?: boolean
   signature?: boolean
   bio?: boolean
-  lastPostAt?: boolean
-  lastVisitAt?: boolean
-  isBanned?: boolean
+  status?: boolean
   banReason?: boolean
   banUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  version?: boolean
 }
 
-export type ForumProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "points" | "levelId" | "topicCount" | "replyCount" | "likeCount" | "favoriteCount" | "signature" | "bio" | "lastPostAt" | "lastVisitAt" | "isBanned" | "banReason" | "banUntil" | "createdAt" | "updatedAt" | "deletedAt" | "version", ExtArgs["result"]["forumProfile"]>
+export type ForumProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "points" | "levelId" | "topicCount" | "replyCount" | "likeCount" | "favoriteCount" | "signature" | "bio" | "status" | "banReason" | "banUntil" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumProfile"]>
 export type ForumProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   moderator?: boolean | Prisma.ForumProfile$moderatorArgs<ExtArgs>
   notifications?: boolean | Prisma.ForumProfile$notificationsArgs<ExtArgs>
@@ -2383,7 +2188,7 @@ export type $ForumProfilePayload<ExtArgs extends runtime.Types.Extensions.Intern
     /**
      * 论坛积分
      */
-    points: bigint
+    points: number
     /**
      * 等级ID
      */
@@ -2413,17 +2218,9 @@ export type $ForumProfilePayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     bio: string | null
     /**
-     * 最后发帖时间
+     * 用户状态（1:正常, 2:被禁言, 3:永久禁言，4:被封禁，5:永久封禁）
      */
-    lastPostAt: Date | null
-    /**
-     * 最后访问时间
-     */
-    lastVisitAt: Date | null
-    /**
-     * 是否被封禁
-     */
-    isBanned: boolean
+    status: number
     /**
      * 封禁原因
      */
@@ -2444,10 +2241,6 @@ export type $ForumProfilePayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 软删除时间
      */
     deletedAt: Date | null
-    /**
-     * 版本号（用于乐观锁）
-     */
-    version: number
   }, ExtArgs["result"]["forumProfile"]>
   composites: {}
 }
@@ -2882,7 +2675,7 @@ export interface Prisma__ForumProfileClient<T, Null = never, ExtArgs extends run
 export interface ForumProfileFieldRefs {
   readonly id: Prisma.FieldRef<"ForumProfile", 'Int'>
   readonly userId: Prisma.FieldRef<"ForumProfile", 'Int'>
-  readonly points: Prisma.FieldRef<"ForumProfile", 'BigInt'>
+  readonly points: Prisma.FieldRef<"ForumProfile", 'Int'>
   readonly levelId: Prisma.FieldRef<"ForumProfile", 'Int'>
   readonly topicCount: Prisma.FieldRef<"ForumProfile", 'Int'>
   readonly replyCount: Prisma.FieldRef<"ForumProfile", 'Int'>
@@ -2890,15 +2683,12 @@ export interface ForumProfileFieldRefs {
   readonly favoriteCount: Prisma.FieldRef<"ForumProfile", 'Int'>
   readonly signature: Prisma.FieldRef<"ForumProfile", 'String'>
   readonly bio: Prisma.FieldRef<"ForumProfile", 'String'>
-  readonly lastPostAt: Prisma.FieldRef<"ForumProfile", 'DateTime'>
-  readonly lastVisitAt: Prisma.FieldRef<"ForumProfile", 'DateTime'>
-  readonly isBanned: Prisma.FieldRef<"ForumProfile", 'Boolean'>
+  readonly status: Prisma.FieldRef<"ForumProfile", 'Int'>
   readonly banReason: Prisma.FieldRef<"ForumProfile", 'String'>
   readonly banUntil: Prisma.FieldRef<"ForumProfile", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"ForumProfile", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumProfile", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"ForumProfile", 'DateTime'>
-  readonly version: Prisma.FieldRef<"ForumProfile", 'Int'>
 }
     
 

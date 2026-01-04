@@ -7,15 +7,11 @@ model ForumPointRecord {
   /// 关联的规则ID
   ruleId       Int?            @map("rule_id")
   /// 积分变化（正数为获得，负数为消费）
-  points       BigInt
+  points       Int
   /// 变化前积分
-  beforePoints BigInt          @map("before_points")
+  beforePoints Int             @map("before_points")
   /// 变化后积分
-  afterPoints  BigInt          @map("after_points")
-  /// 关联对象类型（1=主题, 2=回复, 3=签到）
-  objectType   Int             @map("object_type") @db.SmallInt
-  /// 关联对象ID
-  objectId     Int             @map("object_id")
+  afterPoints  Int             @map("after_points")
   /// 备注
   remark       String?         @db.VarChar(500)
   /// 创建时间
@@ -25,7 +21,6 @@ model ForumPointRecord {
 
   @@index([userId])
   @@index([ruleId])
-  @@index([objectType, objectId])
   @@index([createdAt])
   @@index([userId, createdAt])
   @@map("forum_point_record")
