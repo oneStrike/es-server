@@ -1,3 +1,4 @@
+/// 论坛积分规则表 - 定义积分获取和消费规则，包括发表主题、回复、点赞、签到等
 model ForumPointRule {
   /// 主键ID
   id         Int                @id @default(autoincrement())

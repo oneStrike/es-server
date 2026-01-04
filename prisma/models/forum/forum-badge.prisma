@@ -1,3 +1,4 @@
+/// 论坛徽章表 - 存储论坛徽章信息，包括系统徽章、成就徽章、活动徽章等
 model ForumBadge {
   /// 主键ID
   id            Int                 @id @default(autoincrement())

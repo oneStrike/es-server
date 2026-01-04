@@ -1,6 +1,6 @@
 import { ApiErrorCode } from '@libs/common'
 import { BusinessException } from '@libs/common/exception'
-import { RepositoryService } from '@libs/prisma'
+import { RepositoryService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 
 import {

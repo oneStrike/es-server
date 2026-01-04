@@ -1,4 +1,4 @@
-import { ValidateNumber, ValidateString } from '@libs/base/decorators'
+import { ValidateEnum, ValidateNumber, ValidateString } from '@libs/base/decorators'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsOptional } from 'class-validator'
 import { UserLevelEnum, UserStatusEnum } from '../user.constant'
@@ -41,11 +41,11 @@ export class UpdateUserLevelDto {
   })
   userId!: number
 
-  @ValidateNumber({
+  @ValidateEnum({
     description: '等级',
     example: UserLevelEnum.SENIOR,
-    required: true,
     enum: UserLevelEnum,
+    required: true,
   })
   level!: UserLevelEnum
 }
@@ -61,11 +61,11 @@ export class UpdateUserStatusDto {
   })
   userId!: number
 
-  @ValidateNumber({
+  @ValidateEnum({
     description: '状态',
     example: UserStatusEnum.MUTED,
-    required: true,
     enum: UserStatusEnum,
+    required: true,
   })
   status!: UserStatusEnum
 
@@ -129,20 +129,20 @@ export class QueryUserListDto {
   @IsOptional()
   keyword?: string
 
-  @ValidateNumber({
+  @ValidateEnum({
     description: '等级',
     example: UserLevelEnum.SENIOR,
-    required: false,
     enum: UserLevelEnum,
+    required: false,
   })
   @IsOptional()
   level?: UserLevelEnum
 
-  @ValidateNumber({
+  @ValidateEnum({
     description: '状态',
     example: UserStatusEnum.NORMAL,
-    required: false,
     enum: UserStatusEnum,
+    required: false,
   })
   @IsOptional()
   status?: UserStatusEnum

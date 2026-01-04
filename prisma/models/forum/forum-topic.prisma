@@ -1,3 +1,4 @@
+/// 论坛主题表 - 存储论坛主题信息，包括标题、内容、审核状态、统计数据等
 model ForumTopic {
   /// 主键ID
   id              Int                  @id @default(autoincrement())
@@ -43,12 +44,13 @@ model ForumTopic {
   updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
   deletedAt       DateTime?            @map("deleted_at") @db.Timestamptz(6)
-  auditLogs       ForumAuditLog[]      @relation("AuditLogTopic")
+  /// 版本号（用于乐观锁）
+  version         Int                  @default(0)
   replies         ForumReply[]
   lastSections    ForumSection[]       @relation("LastTopic")
   user            ClientUser           @relation(fields: [userId], references: [id], map: "forum_topic_client_user_id_fkey")
   lastReplyUser   ClientUser?          @relation("LastReplyUser", fields: [lastReplyUserId], references: [id])
-  section         ForumSection         @relation(fields: [sectionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  section         ForumSection         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   favorites       ForumTopicFavorite[]
   likes           ForumTopicLike[]
   topicTags       ForumTopicTag[]

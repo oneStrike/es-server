@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumPointRule
- * 
+ * 论坛积分规则表 - 定义积分获取和消费规则，包括发表主题、回复、点赞、签到等
  */
 export type ForumPointRuleModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumPointRulePayload>
 

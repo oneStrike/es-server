@@ -1,22 +1,21 @@
+/// 论坛审核日志表 - 记录主题和回复的审核信息，包括审核状态、审核人、审核原因等
 model ForumAuditLog {
   /// 主键ID
-  id          Int        @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   /// 审核对象类型（1=主题, 2=回复）
-  objectType  Int        @map("object_type") @db.SmallInt
+  objectType  Int      @map("object_type") @db.SmallInt
   /// 审核对象ID
-  objectId    Int        @map("object_id")
+  objectId    Int      @map("object_id")
   /// 审核状态（0=待审核, 1=已通过, 2=已拒绝）
-  auditStatus Int        @map("audit_status") @db.SmallInt
+  auditStatus Int      @map("audit_status") @db.SmallInt
   /// 审核原因
-  auditReason String?    @map("audit_reason") @db.VarChar(500)
+  auditReason String?  @map("audit_reason") @db.VarChar(500)
   /// 审核人ID
-  auditBy     Int        @map("audit_by")
+  auditBy     Int      @map("audit_by")
   /// 审核时间
-  auditAt     DateTime   @default(now()) @map("audit_at") @db.Timestamptz(6)
+  auditAt     DateTime @default(now()) @map("audit_at") @db.Timestamptz(6)
   /// 备注
-  remark      String?    @db.VarChar(500)
-  topic       ForumTopic @relation("AuditLogTopic", fields: [objectId], references: [id], onDelete: Cascade, map: "forum_audit_log_topic_id_fkey")
-  reply       ForumReply @relation("AuditLogReply", fields: [objectId], references: [id], onDelete: Cascade, map: "forum_audit_log_reply_id_fkey")
+  remark      String?  @db.VarChar(500)
 
   @@index([objectType, objectId])
   @@index([auditStatus])

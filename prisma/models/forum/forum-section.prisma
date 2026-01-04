@@ -1,3 +1,4 @@
+/// 论坛板块表 - 管理论坛板块信息，包括板块名称、描述、统计信息等
 model ForumSection {
   /// 主键ID
   id                Int                     @id @default(autoincrement())
@@ -28,7 +29,7 @@ model ForumSection {
   /// 软删除时间
   deletedAt         DateTime?               @map("deleted_at") @db.Timestamptz(6)
   moderatorSections ForumModeratorSection[]
-  lastTopic         ForumTopic?             @relation("LastTopic", fields: [lastTopicId], references: [id], onUpdate: NoAction)
+  lastTopic         ForumTopic?             @relation("LastTopic", fields: [lastTopicId], references: [id])
   topics            ForumTopic[]
 
   @@index([sortOrder])

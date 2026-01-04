@@ -1,10 +1,11 @@
+/// 论坛用户资料表 - 存储用户的论坛信息，包括积分、等级、统计数据、签名等
 model ForumProfile {
   /// 主键ID
   id             Int                  @id @default(autoincrement())
   /// 关联的用户ID
   userId         Int                  @unique @map("user_id")
   /// 论坛积分
-  points         Int                  @default(0)
+  points         BigInt               @default(0)
   /// 等级ID
   levelId        Int?                 @map("level_id")
   /// 发表主题数
@@ -35,6 +36,8 @@ model ForumProfile {
   updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
   deletedAt      DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  /// 版本号（用于乐观锁）
+  version        Int                  @default(0)
   moderator      ForumModerator?
   notifications  ForumNotification[]
   pointRecords   ForumPointRecord[]

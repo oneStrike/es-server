@@ -64,104 +64,109 @@ export type ClientPage = Prisma.ClientPageModel
 export type ClientUser = Prisma.ClientUserModel
 /**
  * Model ForumAuditLog
- * 
+ * 论坛审核日志表 - 记录主题和回复的审核信息，包括审核状态、审核人、审核原因等
  */
 export type ForumAuditLog = Prisma.ForumAuditLogModel
 /**
  * Model ForumBadge
- * 
+ * 论坛徽章表 - 存储论坛徽章信息，包括系统徽章、成就徽章、活动徽章等
  */
 export type ForumBadge = Prisma.ForumBadgeModel
 /**
  * Model ForumLevelRule
- * 
+ * 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级图标等
  */
 export type ForumLevelRule = Prisma.ForumLevelRuleModel
 /**
  * Model ForumModeratorActionLog
- * 
+ * 论坛版主操作日志表 - 记录版主的所有操作行为，包括主题管理、回复管理、审核等操作
  */
 export type ForumModeratorActionLog = Prisma.ForumModeratorActionLogModel
 /**
  * Model ForumModeratorSection
- * 
+ * 论坛版主板块关联表 - 管理版主与板块的多对多关系，一个版主可以管理多个板块
  */
 export type ForumModeratorSection = Prisma.ForumModeratorSectionModel
 /**
  * Model ForumModerator
- * 
+ * 论坛版主表 - 管理论坛版主信息，包括权限设置、启用状态等
  */
 export type ForumModerator = Prisma.ForumModeratorModel
 /**
  * Model ForumNotification
- * 
+ * 论坛通知表 - 存储用户通知信息，包括回复、点赞、收藏、系统通知等
  */
 export type ForumNotification = Prisma.ForumNotificationModel
 /**
  * Model ForumPointRecord
- * 
+ * 论坛积分记录表 - 记录用户积分变化历史，包括获得和消费的积分
  */
 export type ForumPointRecord = Prisma.ForumPointRecordModel
 /**
  * Model ForumPointRule
- * 
+ * 论坛积分规则表 - 定义积分获取和消费规则，包括发表主题、回复、点赞、签到等
  */
 export type ForumPointRule = Prisma.ForumPointRuleModel
 /**
  * Model ForumProfileBadge
- * 
+ * 论坛用户徽章关联表 - 管理用户获得的徽章，一个用户可以有多个徽章
  */
 export type ForumProfileBadge = Prisma.ForumProfileBadgeModel
 /**
  * Model ForumProfile
- * 
+ * 论坛用户资料表 - 存储用户的论坛信息，包括积分、等级、统计数据、签名等
  */
 export type ForumProfile = Prisma.ForumProfileModel
 /**
  * Model ForumReplyLike
- * 
+ * 论坛回复点赞表 - 记录用户对回复的点赞关系
  */
 export type ForumReplyLike = Prisma.ForumReplyLikeModel
 /**
  * Model ForumReply
- * 
+ * 论坛回复表 - 存储主题的回复内容，支持楼中楼回复
  */
 export type ForumReply = Prisma.ForumReplyModel
 /**
  * Model ForumSection
- * 
+ * 论坛板块表 - 管理论坛板块信息，包括板块名称、描述、统计信息等
  */
 export type ForumSection = Prisma.ForumSectionModel
 /**
  * Model ForumSensitiveWord
- * 
+ * 论坛敏感词表 - 存储敏感词信息，用于内容过滤和审核
  */
 export type ForumSensitiveWord = Prisma.ForumSensitiveWordModel
 /**
  * Model ForumTag
- * 
+ * 论坛标签表 - 管理论坛标签信息，包括标签名称、图标、使用次数等
  */
 export type ForumTag = Prisma.ForumTagModel
 /**
  * Model ForumTopicFavorite
- * 
+ * 论坛主题收藏表 - 记录用户收藏的主题关系
  */
 export type ForumTopicFavorite = Prisma.ForumTopicFavoriteModel
 /**
  * Model ForumTopicLike
- * 
+ * 论坛主题点赞表 - 记录用户对主题的点赞关系
  */
 export type ForumTopicLike = Prisma.ForumTopicLikeModel
 /**
  * Model ForumTopicTag
- * 
+ * 论坛主题标签关联表 - 管理主题与标签的多对多关系
  */
 export type ForumTopicTag = Prisma.ForumTopicTagModel
 /**
  * Model ForumTopic
- * 
+ * 论坛主题表 - 存储论坛主题信息，包括标题、内容、审核状态、统计数据等
  */
 export type ForumTopic = Prisma.ForumTopicModel
+/**
+ * Model ForumUserActionLog
+ * 论坛用户操作日志表 - 记录用户的所有操作行为，包括创建主题、回复、点赞、收藏等操作
+ */
+export type ForumUserActionLog = Prisma.ForumUserActionLogModel
 /**
  * Model MemberLevel
  * 会员等级

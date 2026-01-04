@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumTopicTag
- * 
+ * 论坛主题标签关联表 - 管理主题与标签的多对多关系
  */
 export type ForumTopicTagModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumTopicTagPayload>
 

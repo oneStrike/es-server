@@ -1,4 +1,4 @@
-import { PrismaService } from '@libs/prisma'
+import { PrismaService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import {
   GrantBadgeDto,

@@ -1,14 +1,15 @@
+/// 论坛版主操作日志表 - 记录版主的所有操作行为，包括主题管理、回复管理、审核等操作
 model ForumModeratorActionLog {
   /// 主键ID
   id                Int            @id @default(autoincrement())
   /// 关联的版主ID
   moderatorId       Int            @map("moderator_id")
-  /// 操作类型（pin_topic=置顶主题, unpin_topic=取消置顶, feature_topic=加精主题, unfeature_topic=取消加精, lock_topic=锁定主题, unlock_topic=解锁主题, delete_topic=删除主题, move_topic=移动主题, audit_topic=审核主题, delete_reply=删除回复）
-  actionType        String         @map("action_type") @db.VarChar(50)
+  /// 操作类型（1=置顶主题, 2=取消置顶, 3=加精主题, 4=取消加精, 5=锁定主题, 6=解锁主题, 7=删除主题, 8=移动主题, 9=审核主题, 10=删除回复）
+  actionType        Int            @map("action_type") @db.SmallInt
   /// 操作描述
   actionDescription String         @map("action_description") @db.VarChar(200)
-  /// 目标类型（topic=主题, reply=回复）
-  targetType        String         @map("target_type") @db.VarChar(20)
+  /// 目标类型（1=主题, 2=回复）
+  targetType        Int            @map("target_type") @db.SmallInt
   /// 目标ID
   targetId          Int            @map("target_id")
   /// 操作前数据（JSON格式）

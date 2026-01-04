@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumBadge
- * 
+ * 论坛徽章表 - 存储论坛徽章信息，包括系统徽章、成就徽章、活动徽章等
  */
 export type ForumBadgeModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumBadgePayload>
 

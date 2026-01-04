@@ -1,3 +1,4 @@
+/// 论坛版主表 - 管理论坛版主信息，包括权限设置、启用状态等
 model ForumModerator {
   /// 主键ID
   id             Int                       @id @default(autoincrement())
