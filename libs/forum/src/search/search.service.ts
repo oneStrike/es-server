@@ -1,52 +1,44 @@
-import { PrismaService } from '@libs/base/database'
+import { RepositoryService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import {
-  SearchDto,
-  SearchResultDto,
-  SearchResultPageDto,
-} from './dto/search.dto'
-import {
-  SearchSortTypeEnum,
-  SearchTimeFilterEnum,
-  SearchTypeEnum,
-} from './search.constant'
+import { SearchDto, SearchResultDto, SearchTopicDto } from './dto/search.dto'
+import { SearchSortTypeEnum, SearchTypeEnum } from './search.constant'
 
 /**
  * 搜索服务
  */
 @Injectable()
-export class SearchService {
-  constructor(private readonly prisma: PrismaService) {}
+export class SearchService extends RepositoryService {
+  constructor() {
+    super()
+  }
+
+  get forumTopic() {
+    return this.prisma.forumTopic
+  }
 
   /**
    * 搜索
    * @param searchDto 搜索参数
    * @returns 搜索结果
    */
-  async search(searchDto: SearchDto): Promise<SearchResultPageDto> {
+  async search(searchDto: SearchDto) {
     const {
       keyword,
       type = SearchTypeEnum.ALL,
       sectionId,
       tagId,
       sort = SearchSortTypeEnum.RELEVANCE,
-      timeFilter = SearchTimeFilterEnum.ALL,
-      page = 1,
-      pageSize = 20,
     } = searchDto
 
     const results: SearchResultDto[] = []
 
     if (type === SearchTypeEnum.TOPIC || type === SearchTypeEnum.ALL) {
-      const topicResults = await this.searchTopics(
+      const topicResults = await this.searchTopics({
         keyword,
         sectionId,
         tagId,
         sort,
-        timeFilter,
-        page,
-        pageSize,
-      )
+      })
       results.push(...topicResults)
     }
 
@@ -56,9 +48,6 @@ export class SearchService {
         sectionId,
         tagId,
         sort,
-        timeFilter,
-        page,
-        pageSize,
       )
       results.push(...replyResults)
     }
@@ -88,42 +77,30 @@ export class SearchService {
    * @param pageSize 每页数量
    * @returns 主题搜索结果
    */
-  private async searchTopics(
-    keyword: string,
-    sectionId?: number,
-    tagId?: number,
-    sort?: SearchSortTypeEnum,
-    timeFilter?: SearchTimeFilterEnum,
-    page = 1,
-    pageSize = 20,
-  ): Promise<SearchResultDto[]> {
+  private async searchTopics(dto: SearchTopicDto) {
     const where: any = {
       deletedAt: null,
       OR: [
-        { title: { contains: keyword } },
-        { content: { contains: keyword } },
+        { title: { contains: dto.keyword } },
+        { content: { contains: dto.keyword } },
       ],
     }
 
-    if (sectionId) {
-      where.sectionId = sectionId
+    if (dto.sectionId) {
+      where.sectionId = dto.sectionId
     }
 
-    if (tagId) {
+    if (dto.tagId) {
       where.tags = {
         some: {
-          tagId,
+          tagId: dto.tagId,
         },
       }
     }
 
-    if (timeFilter && timeFilter !== SearchTimeFilterEnum.ALL) {
-      where.createdAt = this.getTimeFilter(timeFilter)
-    }
+    const orderBy = this.getOrderBy(dto.sort)
 
-    const orderBy = this.getOrderBy(sort)
-
-    const topics = await this.prisma.forumTopic.findMany({
+    return this.forumTopic.findPagination({
       where,
       include: {
         section: {
@@ -146,23 +123,7 @@ export class SearchService {
         },
       },
       orderBy,
-      take: pageSize,
-      skip: (page - 1) * pageSize,
     })
-
-    return topics.map((topic) => ({
-      topicId: topic.id,
-      topicTitle: topic.title,
-      topicContent: topic.content,
-      sectionId: topic.sectionId,
-      sectionName: topic.section.name,
-      userId: topic.userId,
-      userNickname: topic.user.nickname,
-      createdAt: topic.createdAt,
-      replyCount: topic._count.replies,
-      viewCount: topic.viewCount,
-      likeCount: topic._count.likes,
-    }))
   }
 
   /**
@@ -181,10 +142,7 @@ export class SearchService {
     sectionId?: number,
     tagId?: number,
     sort?: SearchSortTypeEnum,
-    timeFilter?: SearchTimeFilterEnum,
-    page = 1,
-    pageSize = 20,
-  ): Promise<SearchResultDto[]> {
+  ) {
     const where: any = {
       deletedAt: null,
       content: {
@@ -206,10 +164,6 @@ export class SearchService {
           },
         },
       }
-    }
-
-    if (timeFilter && timeFilter !== SearchTimeFilterEnum.ALL) {
-      where.createdAt = this.getTimeFilter(timeFilter)
     }
 
     const orderBy = this.getOrderBy(sort)
@@ -266,37 +220,6 @@ export class SearchService {
       viewCount: reply.topic.viewCount,
       likeCount: reply.topic._count.likes,
     }))
-  }
-
-  /**
-   * 获取时间筛选条件
-   * @param timeFilter 时间筛选
-   * @returns 时间筛选条件
-   */
-  private getTimeFilter(timeFilter: SearchTimeFilterEnum): any {
-    const now = new Date()
-    let startDate: Date
-
-    switch (timeFilter) {
-      case SearchTimeFilterEnum.ONE_DAY:
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-        break
-      case SearchTimeFilterEnum.ONE_WEEK:
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-        break
-      case SearchTimeFilterEnum.ONE_MONTH:
-        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-        break
-      case SearchTimeFilterEnum.ONE_YEAR:
-        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
-        break
-      default:
-        return undefined
-    }
-
-    return {
-      gte: startDate,
-    }
   }
 
   /**

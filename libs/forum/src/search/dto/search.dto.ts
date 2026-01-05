@@ -1,12 +1,16 @@
-import { ValidateEnum, ValidateNumber, ValidateString } from '@libs/base/decorators'
-import { ApiProperty } from '@nestjs/swagger'
-import { IsOptional } from 'class-validator'
-import { SearchSortTypeEnum, SearchTimeFilterEnum, SearchTypeEnum } from '../search.constant'
+import {
+  ValidateEnum,
+  ValidateNumber,
+  ValidateString,
+} from '@libs/base/decorators'
+import { PageDto } from '@libs/base/dto'
+import { ApiProperty, OmitType } from '@nestjs/swagger'
+import { SearchSortTypeEnum, SearchTypeEnum } from '../search.constant'
 
 /**
  * 搜索DTO
  */
-export class SearchDto {
+export class SearchDto extends PageDto {
   @ValidateString({
     description: '搜索关键词',
     example: '测试',
@@ -22,7 +26,6 @@ export class SearchDto {
     required: false,
     enum: SearchTypeEnum,
   })
-  @IsOptional()
   type?: SearchTypeEnum
 
   @ValidateNumber({
@@ -30,7 +33,6 @@ export class SearchDto {
     example: 1,
     required: false,
   })
-  @IsOptional()
   sectionId?: number
 
   @ValidateNumber({
@@ -38,7 +40,6 @@ export class SearchDto {
     example: 1,
     required: false,
   })
-  @IsOptional()
   tagId?: number
 
   @ValidateEnum({
@@ -47,37 +48,10 @@ export class SearchDto {
     required: false,
     enum: SearchSortTypeEnum,
   })
-  @IsOptional()
   sort?: SearchSortTypeEnum
-
-  @ValidateEnum({
-    description: '时间筛选',
-    example: SearchTimeFilterEnum.ALL,
-    required: false,
-    enum: SearchTimeFilterEnum,
-  })
-  @IsOptional()
-  timeFilter?: SearchTimeFilterEnum
-
-  @ValidateNumber({
-    description: '页码',
-    example: 1,
-    required: false,
-    min: 1,
-  })
-  @IsOptional()
-  page?: number
-
-  @ValidateNumber({
-    description: '每页数量',
-    example: 20,
-    required: false,
-    min: 1,
-    max: 100,
-  })
-  @IsOptional()
-  pageSize?: number
 }
+
+export class SearchTopicDto extends OmitType(SearchDto, ['type']) {}
 
 /**
  * 搜索结果DTO
@@ -107,7 +81,11 @@ export class SearchResultDto {
   @ApiProperty({ description: '回复ID', example: 1, required: false })
   replyId?: number
 
-  @ApiProperty({ description: '回复内容', example: '这是回复内容', required: false })
+  @ApiProperty({
+    description: '回复内容',
+    example: '这是回复内容',
+    required: false,
+  })
   replyContent?: string
 
   @ApiProperty({ description: '创建时间', example: '2024-01-01T00:00:00.000Z' })
@@ -121,21 +99,4 @@ export class SearchResultDto {
 
   @ApiProperty({ description: '点赞数', example: 5 })
   likeCount!: number
-}
-
-/**
- * 搜索结果分页DTO
- */
-export class SearchResultPageDto {
-  @ApiProperty({ description: '数据列表', type: [SearchResultDto] })
-  list!: SearchResultDto[]
-
-  @ApiProperty({ description: '总数', example: 100 })
-  total!: number
-
-  @ApiProperty({ description: '页码', example: 1 })
-  page!: number
-
-  @ApiProperty({ description: '每页数量', example: 20 })
-  pageSize!: number
 }
