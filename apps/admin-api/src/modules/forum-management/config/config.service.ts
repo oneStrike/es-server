@@ -1,6 +1,6 @@
+import { RepositoryService } from '@libs/base/database'
 import { ApiErrorCode } from '@libs/common'
 import { BusinessException } from '@libs/common/exception'
-import { RepositoryService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 
 import {
@@ -181,7 +181,10 @@ export class ConfigService extends RepositoryService {
         })
 
         if (existing) {
-          throw new BusinessException(ApiErrorCode.COMMON_ERROR, `规则代码 ${rule.code} 已存在`)
+          throw new BusinessException(
+            ApiErrorCode.COMMON_ERROR,
+            `规则代码 ${rule.code} 已存在`,
+          )
         }
 
         const created = await tx.forumPointRule.create({
@@ -256,7 +259,10 @@ export class ConfigService extends RepositoryService {
     })
 
     if (hasUsers > 0) {
-      throw new BusinessException(ApiErrorCode.COMMON_ERROR, '该等级下存在用户，无法删除')
+      throw new BusinessException(
+        ApiErrorCode.COMMON_ERROR,
+        '该等级下存在用户，无法删除',
+      )
     }
 
     return this.forumLevelRule.update({
@@ -270,9 +276,7 @@ export class ConfigService extends RepositoryService {
       deletedAt: null,
       ...(dto.isEnabled !== undefined && { isEnabled: dto.isEnabled }),
       ...(dto.keyword && {
-        OR: [
-          { name: { contains: dto.keyword } },
-        ],
+        OR: [{ name: { contains: dto.keyword } }],
       }),
     }
 
@@ -318,7 +322,10 @@ export class ConfigService extends RepositoryService {
         })
 
         if (existing) {
-          throw new BusinessException(ApiErrorCode.COMMON_ERROR, `等级 ${rule.level} 已存在`)
+          throw new BusinessException(
+            ApiErrorCode.COMMON_ERROR,
+            `等级 ${rule.level} 已存在`,
+          )
         }
 
         const created = await tx.forumLevelRule.create({
@@ -393,7 +400,10 @@ export class ConfigService extends RepositoryService {
     })
 
     if (hasUsers > 0) {
-      throw new BusinessException(ApiErrorCode.COMMON_ERROR, '该徽章已被用户拥有，无法删除')
+      throw new BusinessException(
+        ApiErrorCode.COMMON_ERROR,
+        '该徽章已被用户拥有，无法删除',
+      )
     }
 
     return this.forumBadge.update({
@@ -457,7 +467,10 @@ export class ConfigService extends RepositoryService {
         })
 
         if (existing) {
-          throw new BusinessException(ApiErrorCode.COMMON_ERROR, `徽章代码 ${badge.code} 已存在`)
+          throw new BusinessException(
+            ApiErrorCode.COMMON_ERROR,
+            `徽章代码 ${badge.code} 已存在`,
+          )
         }
 
         const created = await tx.forumBadge.create({
@@ -584,7 +597,9 @@ export class ConfigService extends RepositoryService {
     return config
   }
 
-  async batchUpdateSystemConfig(updates: Array<{ configKey: string, configValue: string }>) {
+  async batchUpdateSystemConfig(
+    updates: Array<{ configKey: string; configValue: string }>,
+  ) {
     return this.prisma.$transaction(async (tx) => {
       const results = []
       for (const update of updates) {
@@ -593,7 +608,10 @@ export class ConfigService extends RepositoryService {
         })
 
         if (!config) {
-          throw new BusinessException(ApiErrorCode.COMMON_ERROR, `配置键 ${update.configKey} 不存在`)
+          throw new BusinessException(
+            ApiErrorCode.COMMON_ERROR,
+            `配置键 ${update.configKey} 不存在`,
+          )
         }
 
         const updated = await tx.forumSystemConfig.update({

@@ -28,7 +28,11 @@ export type AggregateForumSection = {
 
 export type ForumSectionAvgAggregateOutputType = {
   id: number | null
+  parentId: number | null
+  level: number | null
   sortOrder: number | null
+  topicReviewPolicy: number | null
+  userLevelRuleId: number | null
   topicCount: number | null
   replyCount: number | null
   lastTopicId: number | null
@@ -36,7 +40,11 @@ export type ForumSectionAvgAggregateOutputType = {
 
 export type ForumSectionSumAggregateOutputType = {
   id: number | null
+  parentId: number | null
+  level: number | null
   sortOrder: number | null
+  topicReviewPolicy: number | null
+  userLevelRuleId: number | null
   topicCount: number | null
   replyCount: number | null
   lastTopicId: number | null
@@ -45,15 +53,21 @@ export type ForumSectionSumAggregateOutputType = {
 export type ForumSectionMinAggregateOutputType = {
   id: number | null
   name: string | null
-  description: string | null
+  parentId: number | null
+  level: number | null
+  path: string | null
+  inheritPermission: boolean | null
   icon: string | null
-  cover: string | null
   sortOrder: number | null
   isEnabled: boolean | null
+  topicReviewPolicy: number | null
+  userLevelRuleId: number | null
   topicCount: number | null
   replyCount: number | null
   lastPostAt: Date | null
   lastTopicId: number | null
+  description: string | null
+  remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -62,15 +76,21 @@ export type ForumSectionMinAggregateOutputType = {
 export type ForumSectionMaxAggregateOutputType = {
   id: number | null
   name: string | null
-  description: string | null
+  parentId: number | null
+  level: number | null
+  path: string | null
+  inheritPermission: boolean | null
   icon: string | null
-  cover: string | null
   sortOrder: number | null
   isEnabled: boolean | null
+  topicReviewPolicy: number | null
+  userLevelRuleId: number | null
   topicCount: number | null
   replyCount: number | null
   lastPostAt: Date | null
   lastTopicId: number | null
+  description: string | null
+  remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -79,15 +99,21 @@ export type ForumSectionMaxAggregateOutputType = {
 export type ForumSectionCountAggregateOutputType = {
   id: number
   name: number
-  description: number
+  parentId: number
+  level: number
+  path: number
+  inheritPermission: number
   icon: number
-  cover: number
   sortOrder: number
   isEnabled: number
+  topicReviewPolicy: number
+  userLevelRuleId: number
   topicCount: number
   replyCount: number
   lastPostAt: number
   lastTopicId: number
+  description: number
+  remark: number
   createdAt: number
   updatedAt: number
   deletedAt: number
@@ -97,7 +123,11 @@ export type ForumSectionCountAggregateOutputType = {
 
 export type ForumSectionAvgAggregateInputType = {
   id?: true
+  parentId?: true
+  level?: true
   sortOrder?: true
+  topicReviewPolicy?: true
+  userLevelRuleId?: true
   topicCount?: true
   replyCount?: true
   lastTopicId?: true
@@ -105,7 +135,11 @@ export type ForumSectionAvgAggregateInputType = {
 
 export type ForumSectionSumAggregateInputType = {
   id?: true
+  parentId?: true
+  level?: true
   sortOrder?: true
+  topicReviewPolicy?: true
+  userLevelRuleId?: true
   topicCount?: true
   replyCount?: true
   lastTopicId?: true
@@ -114,15 +148,21 @@ export type ForumSectionSumAggregateInputType = {
 export type ForumSectionMinAggregateInputType = {
   id?: true
   name?: true
-  description?: true
+  parentId?: true
+  level?: true
+  path?: true
+  inheritPermission?: true
   icon?: true
-  cover?: true
   sortOrder?: true
   isEnabled?: true
+  topicReviewPolicy?: true
+  userLevelRuleId?: true
   topicCount?: true
   replyCount?: true
   lastPostAt?: true
   lastTopicId?: true
+  description?: true
+  remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -131,15 +171,21 @@ export type ForumSectionMinAggregateInputType = {
 export type ForumSectionMaxAggregateInputType = {
   id?: true
   name?: true
-  description?: true
+  parentId?: true
+  level?: true
+  path?: true
+  inheritPermission?: true
   icon?: true
-  cover?: true
   sortOrder?: true
   isEnabled?: true
+  topicReviewPolicy?: true
+  userLevelRuleId?: true
   topicCount?: true
   replyCount?: true
   lastPostAt?: true
   lastTopicId?: true
+  description?: true
+  remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -148,15 +194,21 @@ export type ForumSectionMaxAggregateInputType = {
 export type ForumSectionCountAggregateInputType = {
   id?: true
   name?: true
-  description?: true
+  parentId?: true
+  level?: true
+  path?: true
+  inheritPermission?: true
   icon?: true
-  cover?: true
   sortOrder?: true
   isEnabled?: true
+  topicReviewPolicy?: true
+  userLevelRuleId?: true
   topicCount?: true
   replyCount?: true
   lastPostAt?: true
   lastTopicId?: true
+  description?: true
+  remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -252,15 +304,21 @@ export type ForumSectionGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type ForumSectionGroupByOutputType = {
   id: number
   name: string
-  description: string | null
+  parentId: number | null
+  level: number
+  path: string | null
+  inheritPermission: boolean
   icon: string | null
-  cover: string | null
   sortOrder: number
   isEnabled: boolean
+  topicReviewPolicy: number
+  userLevelRuleId: number | null
   topicCount: number
   replyCount: number
   lastPostAt: Date | null
   lastTopicId: number | null
+  description: string | null
+  remark: string | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -292,40 +350,58 @@ export type ForumSectionWhereInput = {
   NOT?: Prisma.ForumSectionWhereInput | Prisma.ForumSectionWhereInput[]
   id?: Prisma.IntFilter<"ForumSection"> | number
   name?: Prisma.StringFilter<"ForumSection"> | string
-  description?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  parentId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
+  level?: Prisma.IntFilter<"ForumSection"> | number
+  path?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  inheritPermission?: Prisma.BoolFilter<"ForumSection"> | boolean
   icon?: Prisma.StringNullableFilter<"ForumSection"> | string | null
-  cover?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   sortOrder?: Prisma.IntFilter<"ForumSection"> | number
   isEnabled?: Prisma.BoolFilter<"ForumSection"> | boolean
+  topicReviewPolicy?: Prisma.IntFilter<"ForumSection"> | number
+  userLevelRuleId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
   topicCount?: Prisma.IntFilter<"ForumSection"> | number
   replyCount?: Prisma.IntFilter<"ForumSection"> | number
   lastPostAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
   lastTopicId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
+  description?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  remark?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
+  parent?: Prisma.XOR<Prisma.ForumSectionNullableScalarRelationFilter, Prisma.ForumSectionWhereInput> | null
+  children?: Prisma.ForumSectionListRelationFilter
   moderatorSections?: Prisma.ForumModeratorSectionListRelationFilter
   lastTopic?: Prisma.XOR<Prisma.ForumTopicNullableScalarRelationFilter, Prisma.ForumTopicWhereInput> | null
+  userLevelRule?: Prisma.XOR<Prisma.ForumLevelRuleNullableScalarRelationFilter, Prisma.ForumLevelRuleWhereInput> | null
   topics?: Prisma.ForumTopicListRelationFilter
 }
 
 export type ForumSectionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  parentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  level?: Prisma.SortOrder
+  path?: Prisma.SortOrderInput | Prisma.SortOrder
+  inheritPermission?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
-  cover?: Prisma.SortOrderInput | Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  topicReviewPolicy?: Prisma.SortOrder
+  userLevelRuleId?: Prisma.SortOrderInput | Prisma.SortOrder
   topicCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   lastPostAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastTopicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  parent?: Prisma.ForumSectionOrderByWithRelationInput
+  children?: Prisma.ForumSectionOrderByRelationAggregateInput
   moderatorSections?: Prisma.ForumModeratorSectionOrderByRelationAggregateInput
   lastTopic?: Prisma.ForumTopicOrderByWithRelationInput
+  userLevelRule?: Prisma.ForumLevelRuleOrderByWithRelationInput
   topics?: Prisma.ForumTopicOrderByRelationAggregateInput
 }
 
@@ -335,35 +411,50 @@ export type ForumSectionWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ForumSectionWhereInput[]
   NOT?: Prisma.ForumSectionWhereInput | Prisma.ForumSectionWhereInput[]
   name?: Prisma.StringFilter<"ForumSection"> | string
-  description?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  parentId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
+  level?: Prisma.IntFilter<"ForumSection"> | number
+  path?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  inheritPermission?: Prisma.BoolFilter<"ForumSection"> | boolean
   icon?: Prisma.StringNullableFilter<"ForumSection"> | string | null
-  cover?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   sortOrder?: Prisma.IntFilter<"ForumSection"> | number
   isEnabled?: Prisma.BoolFilter<"ForumSection"> | boolean
+  topicReviewPolicy?: Prisma.IntFilter<"ForumSection"> | number
+  userLevelRuleId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
   topicCount?: Prisma.IntFilter<"ForumSection"> | number
   replyCount?: Prisma.IntFilter<"ForumSection"> | number
   lastPostAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
   lastTopicId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
+  description?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  remark?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
+  parent?: Prisma.XOR<Prisma.ForumSectionNullableScalarRelationFilter, Prisma.ForumSectionWhereInput> | null
+  children?: Prisma.ForumSectionListRelationFilter
   moderatorSections?: Prisma.ForumModeratorSectionListRelationFilter
   lastTopic?: Prisma.XOR<Prisma.ForumTopicNullableScalarRelationFilter, Prisma.ForumTopicWhereInput> | null
+  userLevelRule?: Prisma.XOR<Prisma.ForumLevelRuleNullableScalarRelationFilter, Prisma.ForumLevelRuleWhereInput> | null
   topics?: Prisma.ForumTopicListRelationFilter
 }, "id">
 
 export type ForumSectionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  parentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  level?: Prisma.SortOrder
+  path?: Prisma.SortOrderInput | Prisma.SortOrder
+  inheritPermission?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
-  cover?: Prisma.SortOrderInput | Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  topicReviewPolicy?: Prisma.SortOrder
+  userLevelRuleId?: Prisma.SortOrderInput | Prisma.SortOrder
   topicCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   lastPostAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastTopicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -380,15 +471,21 @@ export type ForumSectionScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumSectionScalarWhereWithAggregatesInput | Prisma.ForumSectionScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
   name?: Prisma.StringWithAggregatesFilter<"ForumSection"> | string
-  description?: Prisma.StringNullableWithAggregatesFilter<"ForumSection"> | string | null
+  parentId?: Prisma.IntNullableWithAggregatesFilter<"ForumSection"> | number | null
+  level?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
+  path?: Prisma.StringNullableWithAggregatesFilter<"ForumSection"> | string | null
+  inheritPermission?: Prisma.BoolWithAggregatesFilter<"ForumSection"> | boolean
   icon?: Prisma.StringNullableWithAggregatesFilter<"ForumSection"> | string | null
-  cover?: Prisma.StringNullableWithAggregatesFilter<"ForumSection"> | string | null
   sortOrder?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ForumSection"> | boolean
+  topicReviewPolicy?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
+  userLevelRuleId?: Prisma.IntNullableWithAggregatesFilter<"ForumSection"> | number | null
   topicCount?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
   replyCount?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
   lastPostAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumSection"> | Date | string | null
   lastTopicId?: Prisma.IntNullableWithAggregatesFilter<"ForumSection"> | number | null
+  description?: Prisma.StringNullableWithAggregatesFilter<"ForumSection"> | string | null
+  remark?: Prisma.StringNullableWithAggregatesFilter<"ForumSection"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumSection"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumSection"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumSection"> | Date | string | null
@@ -396,74 +493,102 @@ export type ForumSectionScalarWhereWithAggregatesInput = {
 
 export type ForumSectionCreateInput = {
   name: string
-  description?: string | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  parent?: Prisma.ForumSectionCreateNestedOneWithoutChildrenInput
+  children?: Prisma.ForumSectionCreateNestedManyWithoutParentInput
   moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
   lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
+  userLevelRule?: Prisma.ForumLevelRuleCreateNestedOneWithoutSectionsInput
   topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
 }
 
 export type ForumSectionUncheckedCreateInput = {
   id?: number
   name: string
-  description?: string | null
+  parentId?: number | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
+  userLevelRuleId?: number | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
   lastTopicId?: number | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  children?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutParentInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
   topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
 }
 
 export type ForumSectionUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parent?: Prisma.ForumSectionUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.ForumSectionUpdateManyWithoutParentNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
   lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
+  userLevelRule?: Prisma.ForumLevelRuleUpdateOneWithoutSectionsNestedInput
   topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  children?: Prisma.ForumSectionUncheckedUpdateManyWithoutParentNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
   topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
 }
@@ -471,15 +596,21 @@ export type ForumSectionUncheckedUpdateInput = {
 export type ForumSectionCreateManyInput = {
   id?: number
   name: string
-  description?: string | null
+  parentId?: number | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
+  userLevelRuleId?: number | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
   lastTopicId?: number | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -487,14 +618,18 @@ export type ForumSectionCreateManyInput = {
 
 export type ForumSectionUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -503,90 +638,24 @@ export type ForumSectionUpdateManyMutationInput = {
 export type ForumSectionUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-}
-
-export type ForumSectionScalarRelationFilter = {
-  is?: Prisma.ForumSectionWhereInput
-  isNot?: Prisma.ForumSectionWhereInput
-}
-
-export type ForumSectionCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  description?: Prisma.SortOrder
-  icon?: Prisma.SortOrder
-  cover?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  isEnabled?: Prisma.SortOrder
-  topicCount?: Prisma.SortOrder
-  replyCount?: Prisma.SortOrder
-  lastPostAt?: Prisma.SortOrder
-  lastTopicId?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
-}
-
-export type ForumSectionAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  topicCount?: Prisma.SortOrder
-  replyCount?: Prisma.SortOrder
-  lastTopicId?: Prisma.SortOrder
-}
-
-export type ForumSectionMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  description?: Prisma.SortOrder
-  icon?: Prisma.SortOrder
-  cover?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  isEnabled?: Prisma.SortOrder
-  topicCount?: Prisma.SortOrder
-  replyCount?: Prisma.SortOrder
-  lastPostAt?: Prisma.SortOrder
-  lastTopicId?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
-}
-
-export type ForumSectionMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
-  description?: Prisma.SortOrder
-  icon?: Prisma.SortOrder
-  cover?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  isEnabled?: Prisma.SortOrder
-  topicCount?: Prisma.SortOrder
-  replyCount?: Prisma.SortOrder
-  lastPostAt?: Prisma.SortOrder
-  lastTopicId?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
-}
-
-export type ForumSectionSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  topicCount?: Prisma.SortOrder
-  replyCount?: Prisma.SortOrder
-  lastTopicId?: Prisma.SortOrder
 }
 
 export type ForumSectionListRelationFilter = {
@@ -597,6 +666,151 @@ export type ForumSectionListRelationFilter = {
 
 export type ForumSectionOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type ForumSectionScalarRelationFilter = {
+  is?: Prisma.ForumSectionWhereInput
+  isNot?: Prisma.ForumSectionWhereInput
+}
+
+export type ForumSectionNullableScalarRelationFilter = {
+  is?: Prisma.ForumSectionWhereInput | null
+  isNot?: Prisma.ForumSectionWhereInput | null
+}
+
+export type ForumSectionCountOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  name?: Prisma.SortOrder
+  parentId?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  path?: Prisma.SortOrder
+  inheritPermission?: Prisma.SortOrder
+  icon?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
+  isEnabled?: Prisma.SortOrder
+  topicReviewPolicy?: Prisma.SortOrder
+  userLevelRuleId?: Prisma.SortOrder
+  topicCount?: Prisma.SortOrder
+  replyCount?: Prisma.SortOrder
+  lastPostAt?: Prisma.SortOrder
+  lastTopicId?: Prisma.SortOrder
+  description?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+}
+
+export type ForumSectionAvgOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  parentId?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
+  topicReviewPolicy?: Prisma.SortOrder
+  userLevelRuleId?: Prisma.SortOrder
+  topicCount?: Prisma.SortOrder
+  replyCount?: Prisma.SortOrder
+  lastTopicId?: Prisma.SortOrder
+}
+
+export type ForumSectionMaxOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  name?: Prisma.SortOrder
+  parentId?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  path?: Prisma.SortOrder
+  inheritPermission?: Prisma.SortOrder
+  icon?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
+  isEnabled?: Prisma.SortOrder
+  topicReviewPolicy?: Prisma.SortOrder
+  userLevelRuleId?: Prisma.SortOrder
+  topicCount?: Prisma.SortOrder
+  replyCount?: Prisma.SortOrder
+  lastPostAt?: Prisma.SortOrder
+  lastTopicId?: Prisma.SortOrder
+  description?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+}
+
+export type ForumSectionMinOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  name?: Prisma.SortOrder
+  parentId?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  path?: Prisma.SortOrder
+  inheritPermission?: Prisma.SortOrder
+  icon?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
+  isEnabled?: Prisma.SortOrder
+  topicReviewPolicy?: Prisma.SortOrder
+  userLevelRuleId?: Prisma.SortOrder
+  topicCount?: Prisma.SortOrder
+  replyCount?: Prisma.SortOrder
+  lastPostAt?: Prisma.SortOrder
+  lastTopicId?: Prisma.SortOrder
+  description?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+}
+
+export type ForumSectionSumOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  parentId?: Prisma.SortOrder
+  level?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
+  topicReviewPolicy?: Prisma.SortOrder
+  userLevelRuleId?: Prisma.SortOrder
+  topicCount?: Prisma.SortOrder
+  replyCount?: Prisma.SortOrder
+  lastTopicId?: Prisma.SortOrder
+}
+
+export type ForumSectionCreateNestedManyWithoutUserLevelRuleInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutUserLevelRuleInput, Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput> | Prisma.ForumSectionCreateWithoutUserLevelRuleInput[] | Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput[]
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutUserLevelRuleInput | Prisma.ForumSectionCreateOrConnectWithoutUserLevelRuleInput[]
+  createMany?: Prisma.ForumSectionCreateManyUserLevelRuleInputEnvelope
+  connect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+}
+
+export type ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutUserLevelRuleInput, Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput> | Prisma.ForumSectionCreateWithoutUserLevelRuleInput[] | Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput[]
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutUserLevelRuleInput | Prisma.ForumSectionCreateOrConnectWithoutUserLevelRuleInput[]
+  createMany?: Prisma.ForumSectionCreateManyUserLevelRuleInputEnvelope
+  connect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+}
+
+export type ForumSectionUpdateManyWithoutUserLevelRuleNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutUserLevelRuleInput, Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput> | Prisma.ForumSectionCreateWithoutUserLevelRuleInput[] | Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput[]
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutUserLevelRuleInput | Prisma.ForumSectionCreateOrConnectWithoutUserLevelRuleInput[]
+  upsert?: Prisma.ForumSectionUpsertWithWhereUniqueWithoutUserLevelRuleInput | Prisma.ForumSectionUpsertWithWhereUniqueWithoutUserLevelRuleInput[]
+  createMany?: Prisma.ForumSectionCreateManyUserLevelRuleInputEnvelope
+  set?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  disconnect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  delete?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  connect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  update?: Prisma.ForumSectionUpdateWithWhereUniqueWithoutUserLevelRuleInput | Prisma.ForumSectionUpdateWithWhereUniqueWithoutUserLevelRuleInput[]
+  updateMany?: Prisma.ForumSectionUpdateManyWithWhereWithoutUserLevelRuleInput | Prisma.ForumSectionUpdateManyWithWhereWithoutUserLevelRuleInput[]
+  deleteMany?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
+}
+
+export type ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutUserLevelRuleInput, Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput> | Prisma.ForumSectionCreateWithoutUserLevelRuleInput[] | Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput[]
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutUserLevelRuleInput | Prisma.ForumSectionCreateOrConnectWithoutUserLevelRuleInput[]
+  upsert?: Prisma.ForumSectionUpsertWithWhereUniqueWithoutUserLevelRuleInput | Prisma.ForumSectionUpsertWithWhereUniqueWithoutUserLevelRuleInput[]
+  createMany?: Prisma.ForumSectionCreateManyUserLevelRuleInputEnvelope
+  set?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  disconnect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  delete?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  connect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  update?: Prisma.ForumSectionUpdateWithWhereUniqueWithoutUserLevelRuleInput | Prisma.ForumSectionUpdateWithWhereUniqueWithoutUserLevelRuleInput[]
+  updateMany?: Prisma.ForumSectionUpdateManyWithWhereWithoutUserLevelRuleInput | Prisma.ForumSectionUpdateManyWithWhereWithoutUserLevelRuleInput[]
+  deleteMany?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
 }
 
 export type ForumSectionCreateNestedOneWithoutModeratorSectionsInput = {
@@ -611,6 +825,64 @@ export type ForumSectionUpdateOneRequiredWithoutModeratorSectionsNestedInput = {
   upsert?: Prisma.ForumSectionUpsertWithoutModeratorSectionsInput
   connect?: Prisma.ForumSectionWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.ForumSectionUpdateToOneWithWhereWithoutModeratorSectionsInput, Prisma.ForumSectionUpdateWithoutModeratorSectionsInput>, Prisma.ForumSectionUncheckedUpdateWithoutModeratorSectionsInput>
+}
+
+export type ForumSectionCreateNestedOneWithoutChildrenInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutChildrenInput, Prisma.ForumSectionUncheckedCreateWithoutChildrenInput>
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutChildrenInput
+  connect?: Prisma.ForumSectionWhereUniqueInput
+}
+
+export type ForumSectionCreateNestedManyWithoutParentInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutParentInput, Prisma.ForumSectionUncheckedCreateWithoutParentInput> | Prisma.ForumSectionCreateWithoutParentInput[] | Prisma.ForumSectionUncheckedCreateWithoutParentInput[]
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutParentInput | Prisma.ForumSectionCreateOrConnectWithoutParentInput[]
+  createMany?: Prisma.ForumSectionCreateManyParentInputEnvelope
+  connect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+}
+
+export type ForumSectionUncheckedCreateNestedManyWithoutParentInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutParentInput, Prisma.ForumSectionUncheckedCreateWithoutParentInput> | Prisma.ForumSectionCreateWithoutParentInput[] | Prisma.ForumSectionUncheckedCreateWithoutParentInput[]
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutParentInput | Prisma.ForumSectionCreateOrConnectWithoutParentInput[]
+  createMany?: Prisma.ForumSectionCreateManyParentInputEnvelope
+  connect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+}
+
+export type ForumSectionUpdateOneWithoutChildrenNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutChildrenInput, Prisma.ForumSectionUncheckedCreateWithoutChildrenInput>
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutChildrenInput
+  upsert?: Prisma.ForumSectionUpsertWithoutChildrenInput
+  disconnect?: Prisma.ForumSectionWhereInput | boolean
+  delete?: Prisma.ForumSectionWhereInput | boolean
+  connect?: Prisma.ForumSectionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumSectionUpdateToOneWithWhereWithoutChildrenInput, Prisma.ForumSectionUpdateWithoutChildrenInput>, Prisma.ForumSectionUncheckedUpdateWithoutChildrenInput>
+}
+
+export type ForumSectionUpdateManyWithoutParentNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutParentInput, Prisma.ForumSectionUncheckedCreateWithoutParentInput> | Prisma.ForumSectionCreateWithoutParentInput[] | Prisma.ForumSectionUncheckedCreateWithoutParentInput[]
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutParentInput | Prisma.ForumSectionCreateOrConnectWithoutParentInput[]
+  upsert?: Prisma.ForumSectionUpsertWithWhereUniqueWithoutParentInput | Prisma.ForumSectionUpsertWithWhereUniqueWithoutParentInput[]
+  createMany?: Prisma.ForumSectionCreateManyParentInputEnvelope
+  set?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  disconnect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  delete?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  connect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  update?: Prisma.ForumSectionUpdateWithWhereUniqueWithoutParentInput | Prisma.ForumSectionUpdateWithWhereUniqueWithoutParentInput[]
+  updateMany?: Prisma.ForumSectionUpdateManyWithWhereWithoutParentInput | Prisma.ForumSectionUpdateManyWithWhereWithoutParentInput[]
+  deleteMany?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
+}
+
+export type ForumSectionUncheckedUpdateManyWithoutParentNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumSectionCreateWithoutParentInput, Prisma.ForumSectionUncheckedCreateWithoutParentInput> | Prisma.ForumSectionCreateWithoutParentInput[] | Prisma.ForumSectionUncheckedCreateWithoutParentInput[]
+  connectOrCreate?: Prisma.ForumSectionCreateOrConnectWithoutParentInput | Prisma.ForumSectionCreateOrConnectWithoutParentInput[]
+  upsert?: Prisma.ForumSectionUpsertWithWhereUniqueWithoutParentInput | Prisma.ForumSectionUpsertWithWhereUniqueWithoutParentInput[]
+  createMany?: Prisma.ForumSectionCreateManyParentInputEnvelope
+  set?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  disconnect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  delete?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  connect?: Prisma.ForumSectionWhereUniqueInput | Prisma.ForumSectionWhereUniqueInput[]
+  update?: Prisma.ForumSectionUpdateWithWhereUniqueWithoutParentInput | Prisma.ForumSectionUpdateWithWhereUniqueWithoutParentInput[]
+  updateMany?: Prisma.ForumSectionUpdateManyWithWhereWithoutParentInput | Prisma.ForumSectionUpdateManyWithWhereWithoutParentInput[]
+  deleteMany?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
 }
 
 export type ForumSectionCreateNestedManyWithoutLastTopicInput = {
@@ -669,38 +941,153 @@ export type ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput = {
   deleteMany?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
 }
 
-export type ForumSectionCreateWithoutModeratorSectionsInput = {
+export type ForumSectionCreateWithoutUserLevelRuleInput = {
   name: string
-  description?: string | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  parent?: Prisma.ForumSectionCreateNestedOneWithoutChildrenInput
+  children?: Prisma.ForumSectionCreateNestedManyWithoutParentInput
+  moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
   lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
+  topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
+}
+
+export type ForumSectionUncheckedCreateWithoutUserLevelRuleInput = {
+  id?: number
+  name: string
+  parentId?: number | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  lastTopicId?: number | null
+  description?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  children?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutParentInput
+  moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
+  topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
+}
+
+export type ForumSectionCreateOrConnectWithoutUserLevelRuleInput = {
+  where: Prisma.ForumSectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumSectionCreateWithoutUserLevelRuleInput, Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput>
+}
+
+export type ForumSectionCreateManyUserLevelRuleInputEnvelope = {
+  data: Prisma.ForumSectionCreateManyUserLevelRuleInput | Prisma.ForumSectionCreateManyUserLevelRuleInput[]
+  skipDuplicates?: boolean
+}
+
+export type ForumSectionUpsertWithWhereUniqueWithoutUserLevelRuleInput = {
+  where: Prisma.ForumSectionWhereUniqueInput
+  update: Prisma.XOR<Prisma.ForumSectionUpdateWithoutUserLevelRuleInput, Prisma.ForumSectionUncheckedUpdateWithoutUserLevelRuleInput>
+  create: Prisma.XOR<Prisma.ForumSectionCreateWithoutUserLevelRuleInput, Prisma.ForumSectionUncheckedCreateWithoutUserLevelRuleInput>
+}
+
+export type ForumSectionUpdateWithWhereUniqueWithoutUserLevelRuleInput = {
+  where: Prisma.ForumSectionWhereUniqueInput
+  data: Prisma.XOR<Prisma.ForumSectionUpdateWithoutUserLevelRuleInput, Prisma.ForumSectionUncheckedUpdateWithoutUserLevelRuleInput>
+}
+
+export type ForumSectionUpdateManyWithWhereWithoutUserLevelRuleInput = {
+  where: Prisma.ForumSectionScalarWhereInput
+  data: Prisma.XOR<Prisma.ForumSectionUpdateManyMutationInput, Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleInput>
+}
+
+export type ForumSectionScalarWhereInput = {
+  AND?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
+  OR?: Prisma.ForumSectionScalarWhereInput[]
+  NOT?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
+  id?: Prisma.IntFilter<"ForumSection"> | number
+  name?: Prisma.StringFilter<"ForumSection"> | string
+  parentId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
+  level?: Prisma.IntFilter<"ForumSection"> | number
+  path?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  inheritPermission?: Prisma.BoolFilter<"ForumSection"> | boolean
+  icon?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  sortOrder?: Prisma.IntFilter<"ForumSection"> | number
+  isEnabled?: Prisma.BoolFilter<"ForumSection"> | boolean
+  topicReviewPolicy?: Prisma.IntFilter<"ForumSection"> | number
+  userLevelRuleId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
+  topicCount?: Prisma.IntFilter<"ForumSection"> | number
+  replyCount?: Prisma.IntFilter<"ForumSection"> | number
+  lastPostAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
+  lastTopicId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
+  description?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  remark?: Prisma.StringNullableFilter<"ForumSection"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
+}
+
+export type ForumSectionCreateWithoutModeratorSectionsInput = {
+  name: string
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  description?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  parent?: Prisma.ForumSectionCreateNestedOneWithoutChildrenInput
+  children?: Prisma.ForumSectionCreateNestedManyWithoutParentInput
+  lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
+  userLevelRule?: Prisma.ForumLevelRuleCreateNestedOneWithoutSectionsInput
   topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
 }
 
 export type ForumSectionUncheckedCreateWithoutModeratorSectionsInput = {
   id?: number
   name: string
-  description?: string | null
+  parentId?: number | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
+  userLevelRuleId?: number | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
   lastTopicId?: number | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  children?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutParentInput
   topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
 }
 
@@ -722,70 +1109,287 @@ export type ForumSectionUpdateToOneWithWhereWithoutModeratorSectionsInput = {
 
 export type ForumSectionUpdateWithoutModeratorSectionsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parent?: Prisma.ForumSectionUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.ForumSectionUpdateManyWithoutParentNestedInput
   lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
+  userLevelRule?: Prisma.ForumLevelRuleUpdateOneWithoutSectionsNestedInput
   topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateWithoutModeratorSectionsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  children?: Prisma.ForumSectionUncheckedUpdateManyWithoutParentNestedInput
   topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
+}
+
+export type ForumSectionCreateWithoutChildrenInput = {
+  name: string
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  description?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  parent?: Prisma.ForumSectionCreateNestedOneWithoutChildrenInput
+  moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
+  lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
+  userLevelRule?: Prisma.ForumLevelRuleCreateNestedOneWithoutSectionsInput
+  topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
+}
+
+export type ForumSectionUncheckedCreateWithoutChildrenInput = {
+  id?: number
+  name: string
+  parentId?: number | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  userLevelRuleId?: number | null
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  lastTopicId?: number | null
+  description?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
+  topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
+}
+
+export type ForumSectionCreateOrConnectWithoutChildrenInput = {
+  where: Prisma.ForumSectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumSectionCreateWithoutChildrenInput, Prisma.ForumSectionUncheckedCreateWithoutChildrenInput>
+}
+
+export type ForumSectionCreateWithoutParentInput = {
+  name: string
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  description?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  children?: Prisma.ForumSectionCreateNestedManyWithoutParentInput
+  moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
+  lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
+  userLevelRule?: Prisma.ForumLevelRuleCreateNestedOneWithoutSectionsInput
+  topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
+}
+
+export type ForumSectionUncheckedCreateWithoutParentInput = {
+  id?: number
+  name: string
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  userLevelRuleId?: number | null
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  lastTopicId?: number | null
+  description?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  children?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutParentInput
+  moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
+  topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
+}
+
+export type ForumSectionCreateOrConnectWithoutParentInput = {
+  where: Prisma.ForumSectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumSectionCreateWithoutParentInput, Prisma.ForumSectionUncheckedCreateWithoutParentInput>
+}
+
+export type ForumSectionCreateManyParentInputEnvelope = {
+  data: Prisma.ForumSectionCreateManyParentInput | Prisma.ForumSectionCreateManyParentInput[]
+  skipDuplicates?: boolean
+}
+
+export type ForumSectionUpsertWithoutChildrenInput = {
+  update: Prisma.XOR<Prisma.ForumSectionUpdateWithoutChildrenInput, Prisma.ForumSectionUncheckedUpdateWithoutChildrenInput>
+  create: Prisma.XOR<Prisma.ForumSectionCreateWithoutChildrenInput, Prisma.ForumSectionUncheckedCreateWithoutChildrenInput>
+  where?: Prisma.ForumSectionWhereInput
+}
+
+export type ForumSectionUpdateToOneWithWhereWithoutChildrenInput = {
+  where?: Prisma.ForumSectionWhereInput
+  data: Prisma.XOR<Prisma.ForumSectionUpdateWithoutChildrenInput, Prisma.ForumSectionUncheckedUpdateWithoutChildrenInput>
+}
+
+export type ForumSectionUpdateWithoutChildrenInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parent?: Prisma.ForumSectionUpdateOneWithoutChildrenNestedInput
+  moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
+  lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
+  userLevelRule?: Prisma.ForumLevelRuleUpdateOneWithoutSectionsNestedInput
+  topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
+}
+
+export type ForumSectionUncheckedUpdateWithoutChildrenInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
+  topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
+}
+
+export type ForumSectionUpsertWithWhereUniqueWithoutParentInput = {
+  where: Prisma.ForumSectionWhereUniqueInput
+  update: Prisma.XOR<Prisma.ForumSectionUpdateWithoutParentInput, Prisma.ForumSectionUncheckedUpdateWithoutParentInput>
+  create: Prisma.XOR<Prisma.ForumSectionCreateWithoutParentInput, Prisma.ForumSectionUncheckedCreateWithoutParentInput>
+}
+
+export type ForumSectionUpdateWithWhereUniqueWithoutParentInput = {
+  where: Prisma.ForumSectionWhereUniqueInput
+  data: Prisma.XOR<Prisma.ForumSectionUpdateWithoutParentInput, Prisma.ForumSectionUncheckedUpdateWithoutParentInput>
+}
+
+export type ForumSectionUpdateManyWithWhereWithoutParentInput = {
+  where: Prisma.ForumSectionScalarWhereInput
+  data: Prisma.XOR<Prisma.ForumSectionUpdateManyMutationInput, Prisma.ForumSectionUncheckedUpdateManyWithoutParentInput>
 }
 
 export type ForumSectionCreateWithoutLastTopicInput = {
   name: string
-  description?: string | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  parent?: Prisma.ForumSectionCreateNestedOneWithoutChildrenInput
+  children?: Prisma.ForumSectionCreateNestedManyWithoutParentInput
   moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
+  userLevelRule?: Prisma.ForumLevelRuleCreateNestedOneWithoutSectionsInput
   topics?: Prisma.ForumTopicCreateNestedManyWithoutSectionInput
 }
 
 export type ForumSectionUncheckedCreateWithoutLastTopicInput = {
   id?: number
   name: string
-  description?: string | null
+  parentId?: number | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
+  userLevelRuleId?: number | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  children?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutParentInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
   topics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutSectionInput
 }
@@ -802,36 +1406,50 @@ export type ForumSectionCreateManyLastTopicInputEnvelope = {
 
 export type ForumSectionCreateWithoutTopicsInput = {
   name: string
-  description?: string | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  parent?: Prisma.ForumSectionCreateNestedOneWithoutChildrenInput
+  children?: Prisma.ForumSectionCreateNestedManyWithoutParentInput
   moderatorSections?: Prisma.ForumModeratorSectionCreateNestedManyWithoutSectionInput
   lastTopic?: Prisma.ForumTopicCreateNestedOneWithoutLastSectionsInput
+  userLevelRule?: Prisma.ForumLevelRuleCreateNestedOneWithoutSectionsInput
 }
 
 export type ForumSectionUncheckedCreateWithoutTopicsInput = {
   id?: number
   name: string
-  description?: string | null
+  parentId?: number | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
+  userLevelRuleId?: number | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
   lastTopicId?: number | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  children?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutParentInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedCreateNestedManyWithoutSectionInput
 }
 
@@ -856,26 +1474,6 @@ export type ForumSectionUpdateManyWithWhereWithoutLastTopicInput = {
   data: Prisma.XOR<Prisma.ForumSectionUpdateManyMutationInput, Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicInput>
 }
 
-export type ForumSectionScalarWhereInput = {
-  AND?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
-  OR?: Prisma.ForumSectionScalarWhereInput[]
-  NOT?: Prisma.ForumSectionScalarWhereInput | Prisma.ForumSectionScalarWhereInput[]
-  id?: Prisma.IntFilter<"ForumSection"> | number
-  name?: Prisma.StringFilter<"ForumSection"> | string
-  description?: Prisma.StringNullableFilter<"ForumSection"> | string | null
-  icon?: Prisma.StringNullableFilter<"ForumSection"> | string | null
-  cover?: Prisma.StringNullableFilter<"ForumSection"> | string | null
-  sortOrder?: Prisma.IntFilter<"ForumSection"> | number
-  isEnabled?: Prisma.BoolFilter<"ForumSection"> | boolean
-  topicCount?: Prisma.IntFilter<"ForumSection"> | number
-  replyCount?: Prisma.IntFilter<"ForumSection"> | number
-  lastPostAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
-  lastTopicId?: Prisma.IntNullableFilter<"ForumSection"> | number | null
-  createdAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
-  deletedAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
-}
-
 export type ForumSectionUpsertWithoutTopicsInput = {
   update: Prisma.XOR<Prisma.ForumSectionUpdateWithoutTopicsInput, Prisma.ForumSectionUncheckedUpdateWithoutTopicsInput>
   create: Prisma.XOR<Prisma.ForumSectionCreateWithoutTopicsInput, Prisma.ForumSectionUncheckedCreateWithoutTopicsInput>
@@ -889,50 +1487,256 @@ export type ForumSectionUpdateToOneWithWhereWithoutTopicsInput = {
 
 export type ForumSectionUpdateWithoutTopicsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parent?: Prisma.ForumSectionUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.ForumSectionUpdateManyWithoutParentNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
   lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
+  userLevelRule?: Prisma.ForumLevelRuleUpdateOneWithoutSectionsNestedInput
 }
 
 export type ForumSectionUncheckedUpdateWithoutTopicsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  children?: Prisma.ForumSectionUncheckedUpdateManyWithoutParentNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
+}
+
+export type ForumSectionCreateManyUserLevelRuleInput = {
+  id?: number
+  name: string
+  parentId?: number | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  lastTopicId?: number | null
+  description?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type ForumSectionUpdateWithoutUserLevelRuleInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parent?: Prisma.ForumSectionUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.ForumSectionUpdateManyWithoutParentNestedInput
+  moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
+  lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
+  topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
+}
+
+export type ForumSectionUncheckedUpdateWithoutUserLevelRuleInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  children?: Prisma.ForumSectionUncheckedUpdateManyWithoutParentNestedInput
+  moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
+  topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
+}
+
+export type ForumSectionUncheckedUpdateManyWithoutUserLevelRuleInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type ForumSectionCreateManyParentInput = {
+  id?: number
+  name: string
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
+  icon?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  topicReviewPolicy?: number
+  userLevelRuleId?: number | null
+  topicCount?: number
+  replyCount?: number
+  lastPostAt?: Date | string | null
+  lastTopicId?: number | null
+  description?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type ForumSectionUpdateWithoutParentInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  children?: Prisma.ForumSectionUpdateManyWithoutParentNestedInput
+  moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
+  lastTopic?: Prisma.ForumTopicUpdateOneWithoutLastSectionsNestedInput
+  userLevelRule?: Prisma.ForumLevelRuleUpdateOneWithoutSectionsNestedInput
+  topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
+}
+
+export type ForumSectionUncheckedUpdateWithoutParentInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  children?: Prisma.ForumSectionUncheckedUpdateManyWithoutParentNestedInput
+  moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
+  topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
+}
+
+export type ForumSectionUncheckedUpdateManyWithoutParentInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type ForumSectionCreateManyLastTopicInput = {
   id?: number
   name: string
-  description?: string | null
+  parentId?: number | null
+  level?: number
+  path?: string | null
+  inheritPermission?: boolean
   icon?: string | null
-  cover?: string | null
   sortOrder?: number
   isEnabled?: boolean
+  topicReviewPolicy?: number
+  userLevelRuleId?: number | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
+  description?: string | null
+  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -940,35 +1744,49 @@ export type ForumSectionCreateManyLastTopicInput = {
 
 export type ForumSectionUpdateWithoutLastTopicInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  parent?: Prisma.ForumSectionUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.ForumSectionUpdateManyWithoutParentNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUpdateManyWithoutSectionNestedInput
+  userLevelRule?: Prisma.ForumLevelRuleUpdateOneWithoutSectionsNestedInput
   topics?: Prisma.ForumTopicUpdateManyWithoutSectionNestedInput
 }
 
 export type ForumSectionUncheckedUpdateWithoutLastTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  children?: Prisma.ForumSectionUncheckedUpdateManyWithoutParentNestedInput
   moderatorSections?: Prisma.ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput
   topics?: Prisma.ForumTopicUncheckedUpdateManyWithoutSectionNestedInput
 }
@@ -976,14 +1794,20 @@ export type ForumSectionUncheckedUpdateWithoutLastTopicInput = {
 export type ForumSectionUncheckedUpdateManyWithoutLastTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  parentId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  level?: Prisma.IntFieldUpdateOperationsInput | number
+  path?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inheritPermission?: Prisma.BoolFieldUpdateOperationsInput | boolean
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  userLevelRuleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -995,11 +1819,13 @@ export type ForumSectionUncheckedUpdateManyWithoutLastTopicInput = {
  */
 
 export type ForumSectionCountOutputType = {
+  children: number
   moderatorSections: number
   topics: number
 }
 
 export type ForumSectionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  children?: boolean | ForumSectionCountOutputTypeCountChildrenArgs
   moderatorSections?: boolean | ForumSectionCountOutputTypeCountModeratorSectionsArgs
   topics?: boolean | ForumSectionCountOutputTypeCountTopicsArgs
 }
@@ -1012,6 +1838,13 @@ export type ForumSectionCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types
    * Select specific fields to fetch from the ForumSectionCountOutputType
    */
   select?: Prisma.ForumSectionCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * ForumSectionCountOutputType without action
+ */
+export type ForumSectionCountOutputTypeCountChildrenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ForumSectionWhereInput
 }
 
 /**
@@ -1032,20 +1865,29 @@ export type ForumSectionCountOutputTypeCountTopicsArgs<ExtArgs extends runtime.T
 export type ForumSectionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  description?: boolean
+  parentId?: boolean
+  level?: boolean
+  path?: boolean
+  inheritPermission?: boolean
   icon?: boolean
-  cover?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
+  topicReviewPolicy?: boolean
+  userLevelRuleId?: boolean
   topicCount?: boolean
   replyCount?: boolean
   lastPostAt?: boolean
   lastTopicId?: boolean
+  description?: boolean
+  remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  parent?: boolean | Prisma.ForumSection$parentArgs<ExtArgs>
+  children?: boolean | Prisma.ForumSection$childrenArgs<ExtArgs>
   moderatorSections?: boolean | Prisma.ForumSection$moderatorSectionsArgs<ExtArgs>
   lastTopic?: boolean | Prisma.ForumSection$lastTopicArgs<ExtArgs>
+  userLevelRule?: boolean | Prisma.ForumSection$userLevelRuleArgs<ExtArgs>
   topics?: boolean | Prisma.ForumSection$topicsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumSectionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumSection"]>
@@ -1053,75 +1895,113 @@ export type ForumSectionSelect<ExtArgs extends runtime.Types.Extensions.Internal
 export type ForumSectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  description?: boolean
+  parentId?: boolean
+  level?: boolean
+  path?: boolean
+  inheritPermission?: boolean
   icon?: boolean
-  cover?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
+  topicReviewPolicy?: boolean
+  userLevelRuleId?: boolean
   topicCount?: boolean
   replyCount?: boolean
   lastPostAt?: boolean
   lastTopicId?: boolean
+  description?: boolean
+  remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  parent?: boolean | Prisma.ForumSection$parentArgs<ExtArgs>
   lastTopic?: boolean | Prisma.ForumSection$lastTopicArgs<ExtArgs>
+  userLevelRule?: boolean | Prisma.ForumSection$userLevelRuleArgs<ExtArgs>
 }, ExtArgs["result"]["forumSection"]>
 
 export type ForumSectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
-  description?: boolean
+  parentId?: boolean
+  level?: boolean
+  path?: boolean
+  inheritPermission?: boolean
   icon?: boolean
-  cover?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
+  topicReviewPolicy?: boolean
+  userLevelRuleId?: boolean
   topicCount?: boolean
   replyCount?: boolean
   lastPostAt?: boolean
   lastTopicId?: boolean
+  description?: boolean
+  remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  parent?: boolean | Prisma.ForumSection$parentArgs<ExtArgs>
   lastTopic?: boolean | Prisma.ForumSection$lastTopicArgs<ExtArgs>
+  userLevelRule?: boolean | Prisma.ForumSection$userLevelRuleArgs<ExtArgs>
 }, ExtArgs["result"]["forumSection"]>
 
 export type ForumSectionSelectScalar = {
   id?: boolean
   name?: boolean
-  description?: boolean
+  parentId?: boolean
+  level?: boolean
+  path?: boolean
+  inheritPermission?: boolean
   icon?: boolean
-  cover?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
+  topicReviewPolicy?: boolean
+  userLevelRuleId?: boolean
   topicCount?: boolean
   replyCount?: boolean
   lastPostAt?: boolean
   lastTopicId?: boolean
+  description?: boolean
+  remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type ForumSectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "icon" | "cover" | "sortOrder" | "isEnabled" | "topicCount" | "replyCount" | "lastPostAt" | "lastTopicId" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumSection"]>
+export type ForumSectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "parentId" | "level" | "path" | "inheritPermission" | "icon" | "sortOrder" | "isEnabled" | "topicReviewPolicy" | "userLevelRuleId" | "topicCount" | "replyCount" | "lastPostAt" | "lastTopicId" | "description" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumSection"]>
 export type ForumSectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  parent?: boolean | Prisma.ForumSection$parentArgs<ExtArgs>
+  children?: boolean | Prisma.ForumSection$childrenArgs<ExtArgs>
   moderatorSections?: boolean | Prisma.ForumSection$moderatorSectionsArgs<ExtArgs>
   lastTopic?: boolean | Prisma.ForumSection$lastTopicArgs<ExtArgs>
+  userLevelRule?: boolean | Prisma.ForumSection$userLevelRuleArgs<ExtArgs>
   topics?: boolean | Prisma.ForumSection$topicsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumSectionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ForumSectionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  parent?: boolean | Prisma.ForumSection$parentArgs<ExtArgs>
   lastTopic?: boolean | Prisma.ForumSection$lastTopicArgs<ExtArgs>
+  userLevelRule?: boolean | Prisma.ForumSection$userLevelRuleArgs<ExtArgs>
 }
 export type ForumSectionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  parent?: boolean | Prisma.ForumSection$parentArgs<ExtArgs>
   lastTopic?: boolean | Prisma.ForumSection$lastTopicArgs<ExtArgs>
+  userLevelRule?: boolean | Prisma.ForumSection$userLevelRuleArgs<ExtArgs>
 }
 
 export type $ForumSectionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumSection"
   objects: {
+    /**
+     * 父板块（层级关系）
+     */
+    parent: Prisma.$ForumSectionPayload<ExtArgs> | null
+    /**
+     * 子板块列表（层级关系）
+     */
+    children: Prisma.$ForumSectionPayload<ExtArgs>[]
     moderatorSections: Prisma.$ForumModeratorSectionPayload<ExtArgs>[]
     lastTopic: Prisma.$ForumTopicPayload<ExtArgs> | null
+    userLevelRule: Prisma.$ForumLevelRulePayload<ExtArgs> | null
     topics: Prisma.$ForumTopicPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1134,17 +2014,25 @@ export type $ForumSectionPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     name: string
     /**
-     * 板块描述
+     * 父板块ID（支持多级子版块）
      */
-    description: string | null
+    parentId: number | null
+    /**
+     * 板块层级深度（0为主板块，1为一级子版块）
+     */
+    level: number
+    /**
+     * 板块路径（如：/1/3/ 表示归属于板块1下的板块3）
+     */
+    path: string | null
+    /**
+     * 是否继承父板块权限
+     */
+    inheritPermission: boolean
     /**
      * 板块图标URL
      */
     icon: string | null
-    /**
-     * 板块封面URL
-     */
-    cover: string | null
     /**
      * 排序值（数值越小越靠前）
      */
@@ -1154,11 +2042,19 @@ export type $ForumSectionPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     isEnabled: boolean
     /**
+     * 主题审核策略（0：无需审核，1：敏感词审核，2：人工审核）
+     */
+    topicReviewPolicy: number
+    /**
+     * 用户的论坛等级规则ID
+     */
+    userLevelRuleId: number | null
+    /**
      * 主题数
      */
     topicCount: number
     /**
-     * 回复数
+     * 回复数（包含所有子版块）
      */
     replyCount: number
     /**
@@ -1169,6 +2065,14 @@ export type $ForumSectionPayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 最后发表主题ID
      */
     lastTopicId: number | null
+    /**
+     * 板块描述
+     */
+    description: string | null
+    /**
+     * 备注信息
+     */
+    remark: string | null
     /**
      * 创建时间
      */
@@ -1575,8 +2479,11 @@ readonly fields: ForumSectionFieldRefs;
  */
 export interface Prisma__ForumSectionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  parent<T extends Prisma.ForumSection$parentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$parentArgs<ExtArgs>>): Prisma.Prisma__ForumSectionClient<runtime.Types.Result.GetResult<Prisma.$ForumSectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  children<T extends Prisma.ForumSection$childrenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$childrenArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumSectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   moderatorSections<T extends Prisma.ForumSection$moderatorSectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$moderatorSectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumModeratorSectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lastTopic<T extends Prisma.ForumSection$lastTopicArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$lastTopicArgs<ExtArgs>>): Prisma.Prisma__ForumTopicClient<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  userLevelRule<T extends Prisma.ForumSection$userLevelRuleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$userLevelRuleArgs<ExtArgs>>): Prisma.Prisma__ForumLevelRuleClient<runtime.Types.Result.GetResult<Prisma.$ForumLevelRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   topics<T extends Prisma.ForumSection$topicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSection$topicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1609,15 +2516,21 @@ export interface Prisma__ForumSectionClient<T, Null = never, ExtArgs extends run
 export interface ForumSectionFieldRefs {
   readonly id: Prisma.FieldRef<"ForumSection", 'Int'>
   readonly name: Prisma.FieldRef<"ForumSection", 'String'>
-  readonly description: Prisma.FieldRef<"ForumSection", 'String'>
+  readonly parentId: Prisma.FieldRef<"ForumSection", 'Int'>
+  readonly level: Prisma.FieldRef<"ForumSection", 'Int'>
+  readonly path: Prisma.FieldRef<"ForumSection", 'String'>
+  readonly inheritPermission: Prisma.FieldRef<"ForumSection", 'Boolean'>
   readonly icon: Prisma.FieldRef<"ForumSection", 'String'>
-  readonly cover: Prisma.FieldRef<"ForumSection", 'String'>
   readonly sortOrder: Prisma.FieldRef<"ForumSection", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"ForumSection", 'Boolean'>
+  readonly topicReviewPolicy: Prisma.FieldRef<"ForumSection", 'Int'>
+  readonly userLevelRuleId: Prisma.FieldRef<"ForumSection", 'Int'>
   readonly topicCount: Prisma.FieldRef<"ForumSection", 'Int'>
   readonly replyCount: Prisma.FieldRef<"ForumSection", 'Int'>
   readonly lastPostAt: Prisma.FieldRef<"ForumSection", 'DateTime'>
   readonly lastTopicId: Prisma.FieldRef<"ForumSection", 'Int'>
+  readonly description: Prisma.FieldRef<"ForumSection", 'String'>
+  readonly remark: Prisma.FieldRef<"ForumSection", 'String'>
   readonly createdAt: Prisma.FieldRef<"ForumSection", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumSection", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"ForumSection", 'DateTime'>
@@ -2026,6 +2939,49 @@ export type ForumSectionDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
 }
 
 /**
+ * ForumSection.parent
+ */
+export type ForumSection$parentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumSection
+   */
+  select?: Prisma.ForumSectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumSection
+   */
+  omit?: Prisma.ForumSectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumSectionInclude<ExtArgs> | null
+  where?: Prisma.ForumSectionWhereInput
+}
+
+/**
+ * ForumSection.children
+ */
+export type ForumSection$childrenArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumSection
+   */
+  select?: Prisma.ForumSectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumSection
+   */
+  omit?: Prisma.ForumSectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumSectionInclude<ExtArgs> | null
+  where?: Prisma.ForumSectionWhereInput
+  orderBy?: Prisma.ForumSectionOrderByWithRelationInput | Prisma.ForumSectionOrderByWithRelationInput[]
+  cursor?: Prisma.ForumSectionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ForumSectionScalarFieldEnum | Prisma.ForumSectionScalarFieldEnum[]
+}
+
+/**
  * ForumSection.moderatorSections
  */
 export type ForumSection$moderatorSectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2066,6 +3022,25 @@ export type ForumSection$lastTopicArgs<ExtArgs extends runtime.Types.Extensions.
    */
   include?: Prisma.ForumTopicInclude<ExtArgs> | null
   where?: Prisma.ForumTopicWhereInput
+}
+
+/**
+ * ForumSection.userLevelRule
+ */
+export type ForumSection$userLevelRuleArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumLevelRule
+   */
+  select?: Prisma.ForumLevelRuleSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumLevelRule
+   */
+  omit?: Prisma.ForumLevelRuleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumLevelRuleInclude<ExtArgs> | null
+  where?: Prisma.ForumLevelRuleWhereInput
 }
 
 /**

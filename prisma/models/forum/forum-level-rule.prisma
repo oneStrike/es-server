@@ -37,6 +37,7 @@ model ForumLevelRule {
   /// 更新时间
   updatedAt          DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
   profiles           ForumProfile[]
+  sections           ForumSection[]
 
   @@index([isEnabled, order])
   @@index([isEnabled, requiredPoints])

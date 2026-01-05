@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common'
-import { ForumSectionController } from './forum-section.controller'
 import { ForumSectionService } from './forum-section.service'
 import { SectionPermissionService } from './section-permission.service'
 
@@ -8,8 +7,6 @@ import { SectionPermissionService } from './section-permission.service'
  * 提供论坛板块管理的完整功能
  */
 @Module({
-  imports: [],
-  controllers: [ForumSectionController],
   providers: [ForumSectionService, SectionPermissionService],
   exports: [ForumSectionService, SectionPermissionService],
 })

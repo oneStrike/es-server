@@ -650,7 +650,7 @@ export type $ForumPointRulePayload<ExtArgs extends runtime.Types.Extensions.Inte
      */
     type: number
     /**
-     * 积分变化（正数为获得，负数为消费）
+     * 积分变化（正数为获得，负数为扣除）
      */
     points: number
     /**

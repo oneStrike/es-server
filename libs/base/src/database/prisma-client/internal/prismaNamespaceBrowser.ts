@@ -276,7 +276,11 @@ export const ForumModeratorSectionScalarFieldEnum = {
   id: 'id',
   moderatorId: 'moderatorId',
   sectionId: 'sectionId',
-  createdAt: 'createdAt'
+  inheritFromParent: 'inheritFromParent',
+  customPermissionMask: 'customPermissionMask',
+  finalPermissionMask: 'finalPermissionMask',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type ForumModeratorSectionScalarFieldEnum = (typeof ForumModeratorSectionScalarFieldEnum)[keyof typeof ForumModeratorSectionScalarFieldEnum]
@@ -410,15 +414,21 @@ export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof
 export const ForumSectionScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  description: 'description',
+  parentId: 'parentId',
+  level: 'level',
+  path: 'path',
+  inheritPermission: 'inheritPermission',
   icon: 'icon',
-  cover: 'cover',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
+  topicReviewPolicy: 'topicReviewPolicy',
+  userLevelRuleId: 'userLevelRuleId',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
   lastPostAt: 'lastPostAt',
   lastTopicId: 'lastTopicId',
+  description: 'description',
+  remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'

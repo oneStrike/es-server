@@ -62,6 +62,16 @@ export class AssignModeratorSectionDto {
   @IsArray()
   @IsNumber({}, { each: true })
   sectionIds!: number[]
+
+  @ApiProperty({ description: '是否继承父板块权限', example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  inheritFromParent?: boolean
+
+  @ApiProperty({ description: '自定义权限位掩码', example: 0, required: false })
+  @IsOptional()
+  @IsNumber()
+  customPermissionMask?: number
 }
 
 export class QueryModeratorDto {
@@ -168,6 +178,9 @@ export class ModeratorDto {
   sections!: Array<{
     id: number
     name: string
+    inheritFromParent: boolean
+    customPermissionMask: number
+    finalPermissionMask: number
   }>
 
   @ApiProperty({ description: '创建时间', example: '2024-01-01T00:00:00.000Z' })

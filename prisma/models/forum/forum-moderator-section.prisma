@@ -1,15 +1,23 @@
 /// 论坛版主板块关联表 - 管理版主与板块的多对多关系，一个版主可以管理多个板块
 model ForumModeratorSection {
   /// 主键ID
-  id          Int            @id @default(autoincrement())
+  id                   Int            @id @default(autoincrement())
   /// 关联的版主ID
-  moderatorId Int            @map("moderator_id")
+  moderatorId          Int            @map("moderator_id")
   /// 关联的板块ID
-  sectionId   Int            @map("section_id")
+  sectionId            Int            @map("section_id")
+  /// 是否继承父板块的版主权限
+  inheritFromParent    Boolean        @default(true) @map("inherit_from_parent")
+  /// 自定义权限位掩码（与父板块权限做 OR 运算）
+  customPermissionMask Int            @default(0) @map("custom_permission_mask")
+  /// 最终计算出的权限位掩码
+  finalPermissionMask  Int            @default(0) @map("final_permission_mask")
   /// 创建时间
-  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  moderator   ForumModerator @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
-  section     ForumSection   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt            DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  moderator            ForumModerator @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+  section              ForumSection   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@unique([moderatorId, sectionId])
   @@index([moderatorId])

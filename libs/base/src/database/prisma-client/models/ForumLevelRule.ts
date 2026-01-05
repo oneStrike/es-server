@@ -357,6 +357,7 @@ export type ForumLevelRuleWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
   profiles?: Prisma.ForumProfileListRelationFilter
+  sections?: Prisma.ForumSectionListRelationFilter
 }
 
 export type ForumLevelRuleOrderByWithRelationInput = {
@@ -379,6 +380,7 @@ export type ForumLevelRuleOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   profiles?: Prisma.ForumProfileOrderByRelationAggregateInput
+  sections?: Prisma.ForumSectionOrderByRelationAggregateInput
 }
 
 export type ForumLevelRuleWhereUniqueInput = Prisma.AtLeast<{
@@ -404,6 +406,7 @@ export type ForumLevelRuleWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumLevelRule"> | Date | string
   profiles?: Prisma.ForumProfileListRelationFilter
+  sections?: Prisma.ForumSectionListRelationFilter
 }, "id">
 
 export type ForumLevelRuleOrderByWithAggregationInput = {
@@ -475,6 +478,7 @@ export type ForumLevelRuleCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   profiles?: Prisma.ForumProfileCreateNestedManyWithoutLevelInput
+  sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
 }
 
 export type ForumLevelRuleUncheckedCreateInput = {
@@ -497,6 +501,7 @@ export type ForumLevelRuleUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   profiles?: Prisma.ForumProfileUncheckedCreateNestedManyWithoutLevelInput
+  sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
 }
 
 export type ForumLevelRuleUpdateInput = {
@@ -518,6 +523,7 @@ export type ForumLevelRuleUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   profiles?: Prisma.ForumProfileUpdateManyWithoutLevelNestedInput
+  sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
 }
 
 export type ForumLevelRuleUncheckedUpdateInput = {
@@ -540,6 +546,7 @@ export type ForumLevelRuleUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   profiles?: Prisma.ForumProfileUncheckedUpdateManyWithoutLevelNestedInput
+  sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
 }
 
 export type ForumLevelRuleCreateManyInput = {
@@ -714,6 +721,22 @@ export type ForumLevelRuleUpdateOneWithoutProfilesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ForumLevelRuleUpdateToOneWithWhereWithoutProfilesInput, Prisma.ForumLevelRuleUpdateWithoutProfilesInput>, Prisma.ForumLevelRuleUncheckedUpdateWithoutProfilesInput>
 }
 
+export type ForumLevelRuleCreateNestedOneWithoutSectionsInput = {
+  create?: Prisma.XOR<Prisma.ForumLevelRuleCreateWithoutSectionsInput, Prisma.ForumLevelRuleUncheckedCreateWithoutSectionsInput>
+  connectOrCreate?: Prisma.ForumLevelRuleCreateOrConnectWithoutSectionsInput
+  connect?: Prisma.ForumLevelRuleWhereUniqueInput
+}
+
+export type ForumLevelRuleUpdateOneWithoutSectionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumLevelRuleCreateWithoutSectionsInput, Prisma.ForumLevelRuleUncheckedCreateWithoutSectionsInput>
+  connectOrCreate?: Prisma.ForumLevelRuleCreateOrConnectWithoutSectionsInput
+  upsert?: Prisma.ForumLevelRuleUpsertWithoutSectionsInput
+  disconnect?: Prisma.ForumLevelRuleWhereInput | boolean
+  delete?: Prisma.ForumLevelRuleWhereInput | boolean
+  connect?: Prisma.ForumLevelRuleWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumLevelRuleUpdateToOneWithWhereWithoutSectionsInput, Prisma.ForumLevelRuleUpdateWithoutSectionsInput>, Prisma.ForumLevelRuleUncheckedUpdateWithoutSectionsInput>
+}
+
 export type ForumLevelRuleCreateWithoutProfilesInput = {
   name: string
   description?: string | null
@@ -732,6 +755,7 @@ export type ForumLevelRuleCreateWithoutProfilesInput = {
   levelBadge?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
 }
 
 export type ForumLevelRuleUncheckedCreateWithoutProfilesInput = {
@@ -753,6 +777,7 @@ export type ForumLevelRuleUncheckedCreateWithoutProfilesInput = {
   levelBadge?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
 }
 
 export type ForumLevelRuleCreateOrConnectWithoutProfilesInput = {
@@ -789,6 +814,7 @@ export type ForumLevelRuleUpdateWithoutProfilesInput = {
   levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
 }
 
 export type ForumLevelRuleUncheckedUpdateWithoutProfilesInput = {
@@ -810,6 +836,109 @@ export type ForumLevelRuleUncheckedUpdateWithoutProfilesInput = {
   levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
+}
+
+export type ForumLevelRuleCreateWithoutSectionsInput = {
+  name: string
+  description?: string | null
+  icon?: string | null
+  requiredPoints: number
+  order?: number
+  isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyLimit?: number
+  postInterval?: number
+  maxFileSize?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  dailyCommentLimit?: number
+  levelColor?: string | null
+  levelBadge?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  profiles?: Prisma.ForumProfileCreateNestedManyWithoutLevelInput
+}
+
+export type ForumLevelRuleUncheckedCreateWithoutSectionsInput = {
+  id?: number
+  name: string
+  description?: string | null
+  icon?: string | null
+  requiredPoints: number
+  order?: number
+  isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyLimit?: number
+  postInterval?: number
+  maxFileSize?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  dailyCommentLimit?: number
+  levelColor?: string | null
+  levelBadge?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  profiles?: Prisma.ForumProfileUncheckedCreateNestedManyWithoutLevelInput
+}
+
+export type ForumLevelRuleCreateOrConnectWithoutSectionsInput = {
+  where: Prisma.ForumLevelRuleWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumLevelRuleCreateWithoutSectionsInput, Prisma.ForumLevelRuleUncheckedCreateWithoutSectionsInput>
+}
+
+export type ForumLevelRuleUpsertWithoutSectionsInput = {
+  update: Prisma.XOR<Prisma.ForumLevelRuleUpdateWithoutSectionsInput, Prisma.ForumLevelRuleUncheckedUpdateWithoutSectionsInput>
+  create: Prisma.XOR<Prisma.ForumLevelRuleCreateWithoutSectionsInput, Prisma.ForumLevelRuleUncheckedCreateWithoutSectionsInput>
+  where?: Prisma.ForumLevelRuleWhereInput
+}
+
+export type ForumLevelRuleUpdateToOneWithWhereWithoutSectionsInput = {
+  where?: Prisma.ForumLevelRuleWhereInput
+  data: Prisma.XOR<Prisma.ForumLevelRuleUpdateWithoutSectionsInput, Prisma.ForumLevelRuleUncheckedUpdateWithoutSectionsInput>
+}
+
+export type ForumLevelRuleUpdateWithoutSectionsInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  order?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  maxFileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  levelColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  profiles?: Prisma.ForumProfileUpdateManyWithoutLevelNestedInput
+}
+
+export type ForumLevelRuleUncheckedUpdateWithoutSectionsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requiredPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  order?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  maxFileSize?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  levelColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelBadge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  profiles?: Prisma.ForumProfileUncheckedUpdateManyWithoutLevelNestedInput
 }
 
 
@@ -819,10 +948,12 @@ export type ForumLevelRuleUncheckedUpdateWithoutProfilesInput = {
 
 export type ForumLevelRuleCountOutputType = {
   profiles: number
+  sections: number
 }
 
 export type ForumLevelRuleCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profiles?: boolean | ForumLevelRuleCountOutputTypeCountProfilesArgs
+  sections?: boolean | ForumLevelRuleCountOutputTypeCountSectionsArgs
 }
 
 /**
@@ -840,6 +971,13 @@ export type ForumLevelRuleCountOutputTypeDefaultArgs<ExtArgs extends runtime.Typ
  */
 export type ForumLevelRuleCountOutputTypeCountProfilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ForumProfileWhereInput
+}
+
+/**
+ * ForumLevelRuleCountOutputType without action
+ */
+export type ForumLevelRuleCountOutputTypeCountSectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ForumSectionWhereInput
 }
 
 
@@ -863,6 +1001,7 @@ export type ForumLevelRuleSelect<ExtArgs extends runtime.Types.Extensions.Intern
   createdAt?: boolean
   updatedAt?: boolean
   profiles?: boolean | Prisma.ForumLevelRule$profilesArgs<ExtArgs>
+  sections?: boolean | Prisma.ForumLevelRule$sectionsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumLevelRuleCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumLevelRule"]>
 
@@ -932,6 +1071,7 @@ export type ForumLevelRuleSelectScalar = {
 export type ForumLevelRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "icon" | "requiredPoints" | "order" | "isEnabled" | "dailyTopicLimit" | "dailyReplyLimit" | "postInterval" | "maxFileSize" | "dailyLikeLimit" | "dailyFavoriteLimit" | "dailyCommentLimit" | "levelColor" | "levelBadge" | "createdAt" | "updatedAt", ExtArgs["result"]["forumLevelRule"]>
 export type ForumLevelRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profiles?: boolean | Prisma.ForumLevelRule$profilesArgs<ExtArgs>
+  sections?: boolean | Prisma.ForumLevelRule$sectionsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumLevelRuleCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ForumLevelRuleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -941,6 +1081,7 @@ export type $ForumLevelRulePayload<ExtArgs extends runtime.Types.Extensions.Inte
   name: "ForumLevelRule"
   objects: {
     profiles: Prisma.$ForumProfilePayload<ExtArgs>[]
+    sections: Prisma.$ForumSectionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1410,6 +1551,7 @@ readonly fields: ForumLevelRuleFieldRefs;
 export interface Prisma__ForumLevelRuleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   profiles<T extends Prisma.ForumLevelRule$profilesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumLevelRule$profilesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sections<T extends Prisma.ForumLevelRule$sectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumLevelRule$sectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumSectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1875,6 +2017,30 @@ export type ForumLevelRule$profilesArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.ForumProfileScalarFieldEnum | Prisma.ForumProfileScalarFieldEnum[]
+}
+
+/**
+ * ForumLevelRule.sections
+ */
+export type ForumLevelRule$sectionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumSection
+   */
+  select?: Prisma.ForumSectionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumSection
+   */
+  omit?: Prisma.ForumSectionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumSectionInclude<ExtArgs> | null
+  where?: Prisma.ForumSectionWhereInput
+  orderBy?: Prisma.ForumSectionOrderByWithRelationInput | Prisma.ForumSectionOrderByWithRelationInput[]
+  cursor?: Prisma.ForumSectionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ForumSectionScalarFieldEnum | Prisma.ForumSectionScalarFieldEnum[]
 }
 
 /**

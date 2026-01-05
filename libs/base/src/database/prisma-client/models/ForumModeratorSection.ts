@@ -30,33 +30,49 @@ export type ForumModeratorSectionAvgAggregateOutputType = {
   id: number | null
   moderatorId: number | null
   sectionId: number | null
+  customPermissionMask: number | null
+  finalPermissionMask: number | null
 }
 
 export type ForumModeratorSectionSumAggregateOutputType = {
   id: number | null
   moderatorId: number | null
   sectionId: number | null
+  customPermissionMask: number | null
+  finalPermissionMask: number | null
 }
 
 export type ForumModeratorSectionMinAggregateOutputType = {
   id: number | null
   moderatorId: number | null
   sectionId: number | null
+  inheritFromParent: boolean | null
+  customPermissionMask: number | null
+  finalPermissionMask: number | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type ForumModeratorSectionMaxAggregateOutputType = {
   id: number | null
   moderatorId: number | null
   sectionId: number | null
+  inheritFromParent: boolean | null
+  customPermissionMask: number | null
+  finalPermissionMask: number | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type ForumModeratorSectionCountAggregateOutputType = {
   id: number
   moderatorId: number
   sectionId: number
+  inheritFromParent: number
+  customPermissionMask: number
+  finalPermissionMask: number
   createdAt: number
+  updatedAt: number
   _all: number
 }
 
@@ -65,33 +81,49 @@ export type ForumModeratorSectionAvgAggregateInputType = {
   id?: true
   moderatorId?: true
   sectionId?: true
+  customPermissionMask?: true
+  finalPermissionMask?: true
 }
 
 export type ForumModeratorSectionSumAggregateInputType = {
   id?: true
   moderatorId?: true
   sectionId?: true
+  customPermissionMask?: true
+  finalPermissionMask?: true
 }
 
 export type ForumModeratorSectionMinAggregateInputType = {
   id?: true
   moderatorId?: true
   sectionId?: true
+  inheritFromParent?: true
+  customPermissionMask?: true
+  finalPermissionMask?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type ForumModeratorSectionMaxAggregateInputType = {
   id?: true
   moderatorId?: true
   sectionId?: true
+  inheritFromParent?: true
+  customPermissionMask?: true
+  finalPermissionMask?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type ForumModeratorSectionCountAggregateInputType = {
   id?: true
   moderatorId?: true
   sectionId?: true
+  inheritFromParent?: true
+  customPermissionMask?: true
+  finalPermissionMask?: true
   createdAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -185,7 +217,11 @@ export type ForumModeratorSectionGroupByOutputType = {
   id: number
   moderatorId: number
   sectionId: number
+  inheritFromParent: boolean
+  customPermissionMask: number
+  finalPermissionMask: number
   createdAt: Date
+  updatedAt: Date
   _count: ForumModeratorSectionCountAggregateOutputType | null
   _avg: ForumModeratorSectionAvgAggregateOutputType | null
   _sum: ForumModeratorSectionSumAggregateOutputType | null
@@ -215,7 +251,11 @@ export type ForumModeratorSectionWhereInput = {
   id?: Prisma.IntFilter<"ForumModeratorSection"> | number
   moderatorId?: Prisma.IntFilter<"ForumModeratorSection"> | number
   sectionId?: Prisma.IntFilter<"ForumModeratorSection"> | number
+  inheritFromParent?: Prisma.BoolFilter<"ForumModeratorSection"> | boolean
+  customPermissionMask?: Prisma.IntFilter<"ForumModeratorSection"> | number
+  finalPermissionMask?: Prisma.IntFilter<"ForumModeratorSection"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumModeratorSection"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"ForumModeratorSection"> | Date | string
   moderator?: Prisma.XOR<Prisma.ForumModeratorScalarRelationFilter, Prisma.ForumModeratorWhereInput>
   section?: Prisma.XOR<Prisma.ForumSectionScalarRelationFilter, Prisma.ForumSectionWhereInput>
 }
@@ -224,7 +264,11 @@ export type ForumModeratorSectionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   moderatorId?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  inheritFromParent?: Prisma.SortOrder
+  customPermissionMask?: Prisma.SortOrder
+  finalPermissionMask?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   moderator?: Prisma.ForumModeratorOrderByWithRelationInput
   section?: Prisma.ForumSectionOrderByWithRelationInput
 }
@@ -237,7 +281,11 @@ export type ForumModeratorSectionWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ForumModeratorSectionWhereInput | Prisma.ForumModeratorSectionWhereInput[]
   moderatorId?: Prisma.IntFilter<"ForumModeratorSection"> | number
   sectionId?: Prisma.IntFilter<"ForumModeratorSection"> | number
+  inheritFromParent?: Prisma.BoolFilter<"ForumModeratorSection"> | boolean
+  customPermissionMask?: Prisma.IntFilter<"ForumModeratorSection"> | number
+  finalPermissionMask?: Prisma.IntFilter<"ForumModeratorSection"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumModeratorSection"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"ForumModeratorSection"> | Date | string
   moderator?: Prisma.XOR<Prisma.ForumModeratorScalarRelationFilter, Prisma.ForumModeratorWhereInput>
   section?: Prisma.XOR<Prisma.ForumSectionScalarRelationFilter, Prisma.ForumSectionWhereInput>
 }, "id" | "moderatorId_sectionId">
@@ -246,7 +294,11 @@ export type ForumModeratorSectionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   moderatorId?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  inheritFromParent?: Prisma.SortOrder
+  customPermissionMask?: Prisma.SortOrder
+  finalPermissionMask?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.ForumModeratorSectionCountOrderByAggregateInput
   _avg?: Prisma.ForumModeratorSectionAvgOrderByAggregateInput
   _max?: Prisma.ForumModeratorSectionMaxOrderByAggregateInput
@@ -261,11 +313,19 @@ export type ForumModeratorSectionScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"ForumModeratorSection"> | number
   moderatorId?: Prisma.IntWithAggregatesFilter<"ForumModeratorSection"> | number
   sectionId?: Prisma.IntWithAggregatesFilter<"ForumModeratorSection"> | number
+  inheritFromParent?: Prisma.BoolWithAggregatesFilter<"ForumModeratorSection"> | boolean
+  customPermissionMask?: Prisma.IntWithAggregatesFilter<"ForumModeratorSection"> | number
+  finalPermissionMask?: Prisma.IntWithAggregatesFilter<"ForumModeratorSection"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumModeratorSection"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumModeratorSection"> | Date | string
 }
 
 export type ForumModeratorSectionCreateInput = {
+  inheritFromParent?: boolean
+  customPermissionMask?: number
+  finalPermissionMask?: number
   createdAt?: Date | string
+  updatedAt?: Date | string
   moderator: Prisma.ForumModeratorCreateNestedOneWithoutSectionsInput
   section: Prisma.ForumSectionCreateNestedOneWithoutModeratorSectionsInput
 }
@@ -274,11 +334,19 @@ export type ForumModeratorSectionUncheckedCreateInput = {
   id?: number
   moderatorId: number
   sectionId: number
+  inheritFromParent?: boolean
+  customPermissionMask?: number
+  finalPermissionMask?: number
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ForumModeratorSectionUpdateInput = {
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   moderator?: Prisma.ForumModeratorUpdateOneRequiredWithoutSectionsNestedInput
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutModeratorSectionsNestedInput
 }
@@ -287,25 +355,41 @@ export type ForumModeratorSectionUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   moderatorId?: Prisma.IntFieldUpdateOperationsInput | number
   sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumModeratorSectionCreateManyInput = {
   id?: number
   moderatorId: number
   sectionId: number
+  inheritFromParent?: boolean
+  customPermissionMask?: number
+  finalPermissionMask?: number
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ForumModeratorSectionUpdateManyMutationInput = {
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumModeratorSectionUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   moderatorId?: Prisma.IntFieldUpdateOperationsInput | number
   sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumModeratorSectionModeratorIdSectionIdCompoundUniqueInput = {
@@ -317,33 +401,49 @@ export type ForumModeratorSectionCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moderatorId?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  inheritFromParent?: Prisma.SortOrder
+  customPermissionMask?: Prisma.SortOrder
+  finalPermissionMask?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type ForumModeratorSectionAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moderatorId?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  customPermissionMask?: Prisma.SortOrder
+  finalPermissionMask?: Prisma.SortOrder
 }
 
 export type ForumModeratorSectionMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moderatorId?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  inheritFromParent?: Prisma.SortOrder
+  customPermissionMask?: Prisma.SortOrder
+  finalPermissionMask?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type ForumModeratorSectionMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moderatorId?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  inheritFromParent?: Prisma.SortOrder
+  customPermissionMask?: Prisma.SortOrder
+  finalPermissionMask?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type ForumModeratorSectionSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   moderatorId?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  customPermissionMask?: Prisma.SortOrder
+  finalPermissionMask?: Prisma.SortOrder
 }
 
 export type ForumModeratorSectionListRelationFilter = {
@@ -441,14 +541,22 @@ export type ForumModeratorSectionUncheckedUpdateManyWithoutSectionNestedInput = 
 }
 
 export type ForumModeratorSectionCreateWithoutModeratorInput = {
+  inheritFromParent?: boolean
+  customPermissionMask?: number
+  finalPermissionMask?: number
   createdAt?: Date | string
+  updatedAt?: Date | string
   section: Prisma.ForumSectionCreateNestedOneWithoutModeratorSectionsInput
 }
 
 export type ForumModeratorSectionUncheckedCreateWithoutModeratorInput = {
   id?: number
   sectionId: number
+  inheritFromParent?: boolean
+  customPermissionMask?: number
+  finalPermissionMask?: number
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ForumModeratorSectionCreateOrConnectWithoutModeratorInput = {
@@ -484,18 +592,30 @@ export type ForumModeratorSectionScalarWhereInput = {
   id?: Prisma.IntFilter<"ForumModeratorSection"> | number
   moderatorId?: Prisma.IntFilter<"ForumModeratorSection"> | number
   sectionId?: Prisma.IntFilter<"ForumModeratorSection"> | number
+  inheritFromParent?: Prisma.BoolFilter<"ForumModeratorSection"> | boolean
+  customPermissionMask?: Prisma.IntFilter<"ForumModeratorSection"> | number
+  finalPermissionMask?: Prisma.IntFilter<"ForumModeratorSection"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumModeratorSection"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"ForumModeratorSection"> | Date | string
 }
 
 export type ForumModeratorSectionCreateWithoutSectionInput = {
+  inheritFromParent?: boolean
+  customPermissionMask?: number
+  finalPermissionMask?: number
   createdAt?: Date | string
+  updatedAt?: Date | string
   moderator: Prisma.ForumModeratorCreateNestedOneWithoutSectionsInput
 }
 
 export type ForumModeratorSectionUncheckedCreateWithoutSectionInput = {
   id?: number
   moderatorId: number
+  inheritFromParent?: boolean
+  customPermissionMask?: number
+  finalPermissionMask?: number
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ForumModeratorSectionCreateOrConnectWithoutSectionInput = {
@@ -527,47 +647,79 @@ export type ForumModeratorSectionUpdateManyWithWhereWithoutSectionInput = {
 export type ForumModeratorSectionCreateManyModeratorInput = {
   id?: number
   sectionId: number
+  inheritFromParent?: boolean
+  customPermissionMask?: number
+  finalPermissionMask?: number
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ForumModeratorSectionUpdateWithoutModeratorInput = {
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutModeratorSectionsNestedInput
 }
 
 export type ForumModeratorSectionUncheckedUpdateWithoutModeratorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumModeratorSectionUncheckedUpdateManyWithoutModeratorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumModeratorSectionCreateManySectionInput = {
   id?: number
   moderatorId: number
+  inheritFromParent?: boolean
+  customPermissionMask?: number
+  finalPermissionMask?: number
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ForumModeratorSectionUpdateWithoutSectionInput = {
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   moderator?: Prisma.ForumModeratorUpdateOneRequiredWithoutSectionsNestedInput
 }
 
 export type ForumModeratorSectionUncheckedUpdateWithoutSectionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   moderatorId?: Prisma.IntFieldUpdateOperationsInput | number
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumModeratorSectionUncheckedUpdateManyWithoutSectionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   moderatorId?: Prisma.IntFieldUpdateOperationsInput | number
+  inheritFromParent?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  customPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
+  finalPermissionMask?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -576,7 +728,11 @@ export type ForumModeratorSectionSelect<ExtArgs extends runtime.Types.Extensions
   id?: boolean
   moderatorId?: boolean
   sectionId?: boolean
+  inheritFromParent?: boolean
+  customPermissionMask?: boolean
+  finalPermissionMask?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   moderator?: boolean | Prisma.ForumModeratorDefaultArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumModeratorSection"]>
@@ -585,7 +741,11 @@ export type ForumModeratorSectionSelectCreateManyAndReturn<ExtArgs extends runti
   id?: boolean
   moderatorId?: boolean
   sectionId?: boolean
+  inheritFromParent?: boolean
+  customPermissionMask?: boolean
+  finalPermissionMask?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   moderator?: boolean | Prisma.ForumModeratorDefaultArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumModeratorSection"]>
@@ -594,7 +754,11 @@ export type ForumModeratorSectionSelectUpdateManyAndReturn<ExtArgs extends runti
   id?: boolean
   moderatorId?: boolean
   sectionId?: boolean
+  inheritFromParent?: boolean
+  customPermissionMask?: boolean
+  finalPermissionMask?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   moderator?: boolean | Prisma.ForumModeratorDefaultArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumModeratorSection"]>
@@ -603,10 +767,14 @@ export type ForumModeratorSectionSelectScalar = {
   id?: boolean
   moderatorId?: boolean
   sectionId?: boolean
+  inheritFromParent?: boolean
+  customPermissionMask?: boolean
+  finalPermissionMask?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }
 
-export type ForumModeratorSectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "moderatorId" | "sectionId" | "createdAt", ExtArgs["result"]["forumModeratorSection"]>
+export type ForumModeratorSectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "moderatorId" | "sectionId" | "inheritFromParent" | "customPermissionMask" | "finalPermissionMask" | "createdAt" | "updatedAt", ExtArgs["result"]["forumModeratorSection"]>
 export type ForumModeratorSectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   moderator?: boolean | Prisma.ForumModeratorDefaultArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
@@ -640,9 +808,25 @@ export type $ForumModeratorSectionPayload<ExtArgs extends runtime.Types.Extensio
      */
     sectionId: number
     /**
+     * 是否继承父板块的版主权限
+     */
+    inheritFromParent: boolean
+    /**
+     * 自定义权限位掩码（与父板块权限做 OR 运算）
+     */
+    customPermissionMask: number
+    /**
+     * 最终计算出的权限位掩码
+     */
+    finalPermissionMask: number
+    /**
      * 创建时间
      */
     createdAt: Date
+    /**
+     * 更新时间
+     */
+    updatedAt: Date
   }, ExtArgs["result"]["forumModeratorSection"]>
   composites: {}
 }
@@ -1071,7 +1255,11 @@ export interface ForumModeratorSectionFieldRefs {
   readonly id: Prisma.FieldRef<"ForumModeratorSection", 'Int'>
   readonly moderatorId: Prisma.FieldRef<"ForumModeratorSection", 'Int'>
   readonly sectionId: Prisma.FieldRef<"ForumModeratorSection", 'Int'>
+  readonly inheritFromParent: Prisma.FieldRef<"ForumModeratorSection", 'Boolean'>
+  readonly customPermissionMask: Prisma.FieldRef<"ForumModeratorSection", 'Int'>
+  readonly finalPermissionMask: Prisma.FieldRef<"ForumModeratorSection", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ForumModeratorSection", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"ForumModeratorSection", 'DateTime'>
 }
     
 
