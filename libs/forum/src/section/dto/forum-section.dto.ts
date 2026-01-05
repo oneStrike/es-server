@@ -139,12 +139,7 @@ export class UpdateForumSectionDto extends IntersectionType(
 export class QueryForumSectionDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumSectionDto, [
-      'name',
-      'isEnabled',
-      'requireAudit',
-      'sortOrder',
-    ]),
+    PickType(BaseForumSectionDto, ['name', 'isEnabled', 'requireAudit']),
   ),
 ) {}
 
@@ -154,12 +149,4 @@ export class QueryForumSectionDto extends IntersectionType(
 export class UpdateSectionEnabledDto extends IntersectionType(
   IdDto,
   PickType(BaseForumSectionDto, ['isEnabled']),
-) {}
-
-/**
- * 更新板块排序DTO
- */
-export class UpdateSectionSortDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumSectionDto, ['sortOrder']),
 ) {}

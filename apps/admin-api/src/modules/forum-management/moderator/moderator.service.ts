@@ -3,15 +3,24 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { ModeratorPermissionEnum } from '../moderator.constant'
 import {
   addPermission,
+  AssignModeratorSectionDto,
   CreateModeratorDto,
   QueryModeratorActionLogDto,
   QueryModeratorDto,
   RemoveModeratorDto,
   UpdateModeratorDto,
 } from './dto/moderator.dto'
+import { SectionPermissionService } from '../../forum/section/section-permission.service'
 
 @Injectable()
 export class ModeratorService extends RepositoryService {
+  private readonly sectionPermissionService: SectionPermissionService
+
+  constructor(sectionPermissionService: SectionPermissionService) {
+    super()
+    this.sectionPermissionService = sectionPermissionService
+  }
+
   get forumModerator() {
     return this.prisma.forumModerator
   }
@@ -105,8 +114,8 @@ export class ModeratorService extends RepositoryService {
    * @param assignDto 分配参数
    * @returns 分配结果
    */
-  async assignModeratorSection(assignDto: { moderatorId: number, sectionIds: number[] }) {
-    const { moderatorId, sectionIds } = assignDto
+  async assignModeratorSection(assignDto: AssignModeratorSectionDto) {
+    const { moderatorId, sectionIds, inheritFromParent = true, customPermissionMask = 0 } = assignDto
 
     const moderator = await this.forumModerator.findUnique({
       where: { id: moderatorId },
@@ -126,20 +135,14 @@ export class ModeratorService extends RepositoryService {
       }
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.forumModeratorSection.deleteMany({
-        where: { moderatorId },
-      })
-
-      for (const sectionId of sectionIds) {
-        await tx.forumModeratorSection.create({
-          data: {
-            moderatorId,
-            sectionId,
-          },
-        })
-      }
-    })
+    for (const sectionId of sectionIds) {
+      await this.sectionPermissionService.assignModeratorToSection(
+        moderatorId,
+        sectionId,
+        inheritFromParent,
+        customPermissionMask,
+      )
+    }
   }
 
   /**
@@ -245,6 +248,9 @@ export class ModeratorService extends RepositoryService {
         sections: moderator.sections.map((ms) => ({
           id: ms.section.id,
           name: ms.section.name,
+          inheritFromParent: ms.inheritFromParent,
+          customPermissionMask: ms.customPermissionMask,
+          finalPermissionMask: ms.finalPermissionMask,
         })),
         createdAt: moderator.createdAt,
       }

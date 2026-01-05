@@ -20,7 +20,12 @@ export class ForumSectionService extends RepositoryService {
     return this.prisma.forumSection
   }
 
-  private async calculateSectionPath(parentId: number | null): Promise<string> {
+  /**
+   * 计算板块路径
+   * @param parentId 父板块ID
+   * @returns 板块路径字符串
+   */
+  private async calculateSectionPath(parentId: number | null) {
     if (!parentId) {
       return '/'
     }
@@ -36,16 +41,19 @@ export class ForumSectionService extends RepositoryService {
 
     const maxLevel = 2
     if (parentSection.level >= maxLevel) {
-      throw new BadRequestException('板块层级不能超过3级（包含主板块）')
+      throw new BadRequestException('板块层级只允许存在2级（包含主板块）')
     }
 
     return `${parentSection.path}${parentId}/`
   }
 
-  private async validateNoCircularReference(
-    parentId: number,
-    childId: number,
-  ): Promise<boolean> {
+  /**
+   * 验证是否存在循环引用
+   * @param parentId 父板块ID
+   * @param childId 子板块ID
+   * @returns 是否存在循环引用
+   */
+  private async validateNoCircularReference(parentId: number, childId: number) {
     if (parentId === childId) {
       return false
     }
@@ -62,15 +70,23 @@ export class ForumSectionService extends RepositoryService {
     return this.validateNoCircularReference(parentId, childSection.parentId)
   }
 
+  /**
+   * 获取父板块信息
+   * @param parentId 父板块ID
+   * @returns 父板块信息
+   */
   private async getParentSection(parentId: number) {
     return this.forumSection.findUnique({
       where: { id: parentId },
     })
   }
 
-  private async calculateStatistics(
-    sectionId: number,
-  ): Promise<{ topicCount: number; replyCount: number }> {
+  /**
+   * 计算板块统计信息（包含子板块）
+   * @param sectionId 板块ID
+   * @returns 统计信息对象
+   */
+  private async calculateStatistics(sectionId: number) {
     const section = await this.forumSection.findUnique({
       where: { id: sectionId },
       include: {
@@ -193,8 +209,16 @@ export class ForumSectionService extends RepositoryService {
     for (const child of section.children) {
       await this.updateChildSectionPath(child.id, newPath, newLevel)
     }
+
+    return { id }
   }
 
+  /**
+   * 递归更新子板块路径和层级
+   * @param childId 子板块ID
+   * @param parentPath 父板块路径
+   * @param parentLevel 父板块层级
+   */
   private async updateChildSectionPath(
     childId: number,
     parentPath: string,
@@ -209,7 +233,9 @@ export class ForumSectionService extends RepositoryService {
       },
     })
 
-    if (!child) return
+    if (!child) {
+      return
+    }
 
     const newPath = `${parentPath}${childId}/`
     const newLevel = parentLevel + 1
@@ -273,25 +299,18 @@ export class ForumSectionService extends RepositoryService {
    * @returns 分页的板块列表
    */
   async getForumSectionPage(queryForumSectionDto: QueryForumSectionDto) {
-    const { name, parentId, level, ...otherDto } = queryForumSectionDto
+    const { name, ...otherDto } = queryForumSectionDto
 
     const where: ForumSectionWhereInput = {
       deletedAt: null,
+      ...otherDto,
     }
 
-    if (isNotNil(name)) {
+    if (name) {
       where.name = {
         contains: name,
         mode: 'insensitive',
       }
-    }
-
-    if (isNotNil(parentId)) {
-      where.parentId = parentId
-    }
-
-    if (isNotNil(level)) {
-      where.level = level
     }
 
     return this.forumSection.findPagination({
