@@ -1,14 +1,18 @@
 import {
   ValidateBoolean,
+  ValidateEnum,
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
+  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
+  PickType,
 } from '@nestjs/swagger'
+import { LevelRulePermissionEnum } from '../level-rule.constant'
 
 /**
  * 等级规则基础DTO
@@ -146,75 +150,8 @@ export class UpdateLevelRuleDto extends IntersectionType(
  */
 export class QueryLevelRuleDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(
-      BaseLevelRuleDto,
-      ['name', 'isEnabled', 'requiredPoints'],
-    ),
-  ),
-) {
-  @ValidateString({
-    description: '排序字段',
-    example: 'order',
-    required: false,
-  })
-  sortBy?: string
-
-  @ValidateString({
-    description: '排序方向',
-    example: 'asc',
-    required: false,
-  })
-  sortOrder?: 'asc' | 'desc'
-}
-
-/**
- * 等级规则详情DTO
- */
-export class LevelRuleDetailDto {
-  id!: number
-  name!: string
-  description?: string
-  icon?: string
-  requiredPoints!: number
-  order!: number
-  isEnabled!: boolean
-  dailyTopicLimit!: number
-  dailyReplyLimit!: number
-  postInterval!: number
-  maxFileSize!: number
-  dailyLikeLimit!: number
-  dailyFavoriteLimit!: number
-  dailyCommentLimit!: number
-  levelColor?: string
-  levelBadge?: string
-  createdAt!: Date
-  updatedAt!: Date
-}
-
-/**
- * 用户等级信息DTO
- */
-export class UserLevelInfoDto {
-  levelId!: number
-  levelName!: string
-  levelDescription?: string
-  levelIcon?: string
-  levelColor?: string
-  levelBadge?: string
-  currentPoints!: number
-  nextLevelPoints?: number
-  progressPercentage?: number
-  permissions: {
-    dailyTopicLimit: number
-    dailyReplyLimit: number
-    postInterval: number
-    maxFileSize: number
-    dailyLikeLimit: number
-    dailyFavoriteLimit: number
-    dailyCommentLimit: number
-  }
-}
+  PartialType(PickType(BaseLevelRuleDto, ['name', 'isEnabled'])),
+) {}
 
 /**
  * 等级权限检查DTO
@@ -227,22 +164,52 @@ export class CheckLevelPermissionDto {
   })
   userId!: number
 
-  @ValidateString({
+  @ValidateEnum({
+    enum: LevelRulePermissionEnum,
     description: '权限类型',
-    example: 'dailyTopicLimit',
+    example: LevelRulePermissionEnum.DAILY_TOPIC_LIMIT,
     required: true,
   })
-  permissionType!: string
+  permissionType!: LevelRulePermissionEnum
 }
 
 /**
  * 等级权限检查结果DTO
  */
 export class LevelPermissionResultDto {
+  @ApiProperty({
+    description: '是否有该权限',
+    example: true,
+  })
   hasPermission!: boolean
+
+  @ApiProperty({
+    description: '当前等级',
+    example: '新手',
+  })
   currentLevel!: string
+
+  @ApiProperty({
+    description: '权限限制值',
+    example: 10,
+  })
   limit?: number
+
+  @ApiProperty({
+    description: '已用次数',
+    example: 5,
+  })
   used?: number
+
+  @ApiProperty({
+    description: '剩余次数',
+    example: 5,
+  })
   remaining?: number
+
+  @ApiProperty({
+    description: '权限检查消息',
+    example: '您已使用完所有权限次数',
+  })
   message?: string
 }
