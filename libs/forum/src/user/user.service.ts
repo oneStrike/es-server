@@ -1,27 +1,25 @@
 import { RepositoryService } from '@libs/base/database'
+import { AddPointsDto } from '@libs/forum/point/dto/point.dto'
+import { PointService } from '@libs/forum/point/point.service'
 import { Injectable } from '@nestjs/common'
 import {
   GrantBadgeDto,
-  PointRecordDto,
   QueryUserListDto,
   RevokeBadgeDto,
-  UpdateUserLevelDto,
-  UpdateUserPointsDto,
   UpdateUserStatusDto,
-  UserFavoriteListDto,
-  UserProfileDto,
-  UserReplyListDto,
-  UserTopicListDto,
 } from './dto/user.dto'
-import { UserLevelNames, UserStatusNames } from './user.constant'
 
 /**
  * 用户服务
  */
 @Injectable()
 export class UserService extends RepositoryService {
-  constructor() {
+  constructor(protected readonly pointService: PointService) {
     super()
+  }
+
+  get forumProfile() {
+    return this.prisma.forumProfile
   }
 
   /**
@@ -30,60 +28,27 @@ export class UserService extends RepositoryService {
    * @returns 用户列表
    */
   async queryUserList(queryDto: QueryUserListDto) {
-    const { keyword, level, status, page = 1, pageSize = 20 } = queryDto
-
-    const where: any = {
-      deletedAt: null,
-    }
-
-    if (keyword) {
-      where.OR = [
-        { user: { username: { contains: keyword } } },
-        { user: { nickname: { contains: keyword } } },
-      ]
-    }
-
-    if (level) {
-      where.level = level
-    }
-
-    if (status) {
-      where.status = status
-    }
-
-    const [profiles, total] = await Promise.all([
-      this.prisma.forumProfile.findMany({
-        where,
-        include: {
-          user: true,
-          badges: {
-            include: {
-              badge: true,
-            },
-          },
-          _count: {
-            select: {
-              topics: true,
-              replies: true,
-              favorites: true,
-            },
+    return this.forumProfile.findPagination({
+      where: {
+        ...queryDto,
+        user: {
+          nickname: { contains: queryDto.nickname },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            avatar: true,
+            nickname: true,
           },
         },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.forumProfile.count({ where }),
-    ])
-
-    const list = profiles.map((profile) => this.mapToUserProfileDto(profile))
-
-    return {
-      list,
-      total,
-      page,
-      pageSize,
-    }
+        badges: {
+          include: {
+            badge: true,
+          },
+        },
+      },
+    })
   }
 
   /**
@@ -91,7 +56,7 @@ export class UserService extends RepositoryService {
    * @param userId 用户ID
    * @returns 用户资料
    */
-  async getUserProfile(userId: number): Promise<UserProfileDto> {
+  async getUserProfile(userId: number) {
     const profile = await this.prisma.forumProfile.findUnique({
       where: { userId },
       include: {
@@ -101,60 +66,22 @@ export class UserService extends RepositoryService {
             badge: true,
           },
         },
-        _count: {
-          select: {
-            topics: true,
-            replies: true,
-            favorites: true,
-          },
-        },
       },
     })
 
     if (!profile) {
       throw new Error('用户不存在')
     }
-
-    return this.mapToUserProfileDto(profile)
+    return profile
   }
 
   /**
    * 更新用户积分
-   * @param updateDto 更新参数
+   * @param dto 更新参数
    * @returns 更新结果
    */
-  async updateUserPoints(updateDto: UpdateUserPointsDto): Promise<void> {
-    const { userId, points, reason } = updateDto
-
-    const profile = await this.prisma.forumProfile.findUnique({
-      where: { userId },
-    })
-
-    if (!profile) {
-      throw new Error('用户不存在')
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      const beforePoints = profile.points
-      const afterPoints = beforePoints + points
-
-      await tx.forumProfile.update({
-        where: { userId },
-        data: {
-          points: afterPoints,
-        },
-      })
-
-      await tx.forumPointRecord.create({
-        data: {
-          userId,
-          points,
-          beforePoints,
-          afterPoints,
-          reason,
-        },
-      })
-    })
+  async updateUserPoints(dto: AddPointsDto) {
+    return this.pointService.addPoints(dto)
   }
 
   /**
@@ -521,35 +448,6 @@ export class UserService extends RepositoryService {
       total,
       page,
       pageSize,
-    }
-  }
-
-  /**
-   * 映射到用户资料DTO
-   * @param profile 用户资料
-   * @returns 用户资料DTO
-   */
-  private mapToUserProfileDto(profile: any): UserProfileDto {
-    return {
-      userId: profile.userId,
-      username: profile.user?.username || '',
-      nickname: profile.user?.nickname || '',
-      avatar: profile.user?.avatar,
-      points: profile.points,
-      level: profile.level,
-      levelName: UserLevelNames[profile.level],
-      status: profile.status,
-      statusName: UserStatusNames[profile.status],
-      topicCount: profile._count.topics,
-      replyCount: profile._count.replies,
-      favoriteCount: profile._count.favorites,
-      badges: profile.badges.map((ub: any) => ({
-        id: ub.badge.id,
-        name: ub.badge.name,
-        icon: ub.badge.icon,
-        description: ub.badge.description,
-      })),
-      createdAt: profile.createdAt,
     }
   }
 }

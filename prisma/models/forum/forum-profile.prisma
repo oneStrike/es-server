@@ -37,7 +37,7 @@ model ForumProfile {
   pointRecords   ForumPointRecord[]
   level          ForumLevelRule?      @relation(fields: [levelId], references: [id])
   user           ClientUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  profileBadges  ForumProfileBadge[]
+  badges         ForumProfileBadge[]
   replyLikes     ForumReplyLike[]
   topicFavorites ForumTopicFavorite[]
   topicLikes     ForumTopicLike[]

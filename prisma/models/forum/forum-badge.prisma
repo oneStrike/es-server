@@ -1,24 +1,24 @@
 /// 论坛徽章表 - 存储论坛徽章信息，包括系统徽章、成就徽章、活动徽章等
 model ForumBadge {
   /// 主键ID
-  id            Int                 @id @default(autoincrement())
+  id          Int                 @id @default(autoincrement())
   /// 徽章名称
-  name          String              @db.VarChar(20)
+  name        String              @db.VarChar(20)
   /// 徽章描述
-  description   String?             @db.VarChar(200)
+  description String?             @db.VarChar(200)
   /// 徽章图标URL
-  icon          String?             @db.VarChar(255)
+  icon        String?             @db.VarChar(255)
   /// 徽章类型（1=系统徽章, 2=成就徽章, 3=活动徽章）
-  type          Int                 @db.SmallInt
+  type        Int                 @db.SmallInt
   /// 排序值（数值越小越靠前）
-  order         Int                 @default(0) @db.SmallInt
+  order       Int                 @default(0) @db.SmallInt
   /// 是否启用
-  isEnabled     Boolean             @default(true) @map("is_enabled")
+  isEnabled   Boolean             @default(true) @map("is_enabled")
   /// 创建时间
-  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  profileBadges ForumProfileBadge[]
+  updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  badges      ForumProfileBadge[]
 
   @@index([type])
   @@index([order])
