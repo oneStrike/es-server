@@ -7,7 +7,7 @@ model ForumProfile {
   /// 论坛积分
   points         Int                  @default(0)
   /// 等级ID
-  levelId        Int                 @map("level_id")
+  levelId        Int                  @map("level_id")
   /// 发表主题数
   topicCount     Int                  @default(0) @map("topic_count")
   /// 发表回复数

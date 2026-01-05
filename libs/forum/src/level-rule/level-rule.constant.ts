@@ -35,26 +35,3 @@ export const LevelRulePermissionNames: Record<LevelRulePermissionEnum, string> =
     [LevelRulePermissionEnum.DAILY_FAVORITE_LIMIT]: '每日收藏次数上限',
     [LevelRulePermissionEnum.DAILY_COMMENT_LIMIT]: '每日评论次数上限',
   }
-
-/**
- * 默认等级规则配置
- */
-export const DEFAULT_LEVEL_RULE_CONFIG = {
-  dailyTopicLimit: 0,
-  dailyReplyLimit: 0,
-  postInterval: 0,
-  maxFileSize: 0,
-  dailyLikeLimit: 0,
-  dailyFavoriteLimit: 0,
-  dailyCommentLimit: 0,
-}
-
-/**
- * 等级规则排序方向
- */
-export enum LevelRuleSortOrder {
-  /** 升序 */
-  ASC = 'asc',
-  /** 降序 */
-  DESC = 'desc',
-}
