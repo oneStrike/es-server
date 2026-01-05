@@ -21,19 +21,3 @@ export enum SearchSortTypeEnum {
   /** 相关度 */
   RELEVANCE = 'relevance',
 }
-
-/**
- * 时间筛选枚举
- */
-export enum SearchTimeFilterEnum {
-  /** 全部时间 */
-  ALL = 'all',
-  /** 最近一天 */
-  ONE_DAY = 'one_day',
-  /** 最近一周 */
-  ONE_WEEK = 'one_week',
-  /** 最近一月 */
-  ONE_MONTH = 'one_month',
-  /** 最近一年 */
-  ONE_YEAR = 'one_year',
-}
