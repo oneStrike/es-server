@@ -25,15 +25,16 @@ export enum LevelRulePermissionEnum {
 /**
  * 等级规则权限名称映射
  */
-export const LevelRulePermissionNames: Record<LevelRulePermissionEnum, string> = {
-  [LevelRulePermissionEnum.DAILY_TOPIC_LIMIT]: '每日发帖数量上限',
-  [LevelRulePermissionEnum.DAILY_REPLY_LIMIT]: '每日回复数量上限',
-  [LevelRulePermissionEnum.POST_INTERVAL]: '发帖间隔秒数',
-  [LevelRulePermissionEnum.MAX_FILE_SIZE]: '单个文件最大大小(KB)',
-  [LevelRulePermissionEnum.DAILY_LIKE_LIMIT]: '每日点赞次数上限',
-  [LevelRulePermissionEnum.DAILY_FAVORITE_LIMIT]: '每日收藏次数上限',
-  [LevelRulePermissionEnum.DAILY_COMMENT_LIMIT]: '每日评论次数上限',
-}
+export const LevelRulePermissionNames: Record<LevelRulePermissionEnum, string> =
+  {
+    [LevelRulePermissionEnum.DAILY_TOPIC_LIMIT]: '每日发帖数量上限',
+    [LevelRulePermissionEnum.DAILY_REPLY_LIMIT]: '每日回复数量上限',
+    [LevelRulePermissionEnum.POST_INTERVAL]: '发帖间隔秒数',
+    [LevelRulePermissionEnum.MAX_FILE_SIZE]: '单个文件最大大小(KB)',
+    [LevelRulePermissionEnum.DAILY_LIKE_LIMIT]: '每日点赞次数上限',
+    [LevelRulePermissionEnum.DAILY_FAVORITE_LIMIT]: '每日收藏次数上限',
+    [LevelRulePermissionEnum.DAILY_COMMENT_LIMIT]: '每日评论次数上限',
+  }
 
 /**
  * 默认等级规则配置

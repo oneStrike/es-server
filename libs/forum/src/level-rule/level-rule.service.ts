@@ -1,18 +1,13 @@
-import type {
-  ForumLevelRuleWhereInput,
-} from '@libs/base/database'
+import type { ForumLevelRuleWhereInput } from '@libs/base/database'
 import { RepositoryService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateLevelRuleDto,
-  LevelRuleDetailDto,
-  LevelPermissionResultDto,
   QueryLevelRuleDto,
   UpdateLevelRuleDto,
-  UserLevelInfoDto,
 } from './dto/level-rule.dto'
-import { DEFAULT_LEVEL_RULE_CONFIG, LevelRulePermissionEnum } from './level-rule.constant'
+import { LevelRulePermissionEnum } from './level-rule.constant'
 
 /**
  * 等级规则服务
@@ -82,7 +77,7 @@ export class LevelRuleService extends RepositoryService {
    * @returns 分页的等级规则列表
    */
   async getLevelRulePage(queryLevelRuleDto: QueryLevelRuleDto) {
-    const where: ForumLevelRuleWhereInput = {}
+    const where: ForumLevelRuleWhereInput = queryLevelRuleDto
 
     if (queryLevelRuleDto.name) {
       where.name = {
@@ -91,24 +86,8 @@ export class LevelRuleService extends RepositoryService {
       }
     }
 
-    if (queryLevelRuleDto.isEnabled !== undefined) {
-      where.isEnabled = queryLevelRuleDto.isEnabled
-    }
-
-    if (queryLevelRuleDto.requiredPoints !== undefined) {
-      where.requiredPoints = {
-        gte: queryLevelRuleDto.requiredPoints,
-      }
-    }
-
-    const sortBy = queryLevelRuleDto.sortBy || 'order'
-    const sortOrder = queryLevelRuleDto.sortOrder || 'asc'
-
     return this.forumLevelRule.findPagination({
       where,
-      orderBy: {
-        [sortBy]: sortOrder,
-      },
     })
   }
 
@@ -117,7 +96,7 @@ export class LevelRuleService extends RepositoryService {
    * @param id 等级规则ID
    * @returns 等级规则详情
    */
-  async getLevelRuleDetail(id: number): Promise<LevelRuleDetailDto> {
+  async getLevelRuleDetail(id: number) {
     const rule = await this.forumLevelRule.findUnique({
       where: { id },
     })
@@ -126,7 +105,7 @@ export class LevelRuleService extends RepositoryService {
       throw new BadRequestException('等级规则不存在')
     }
 
-    return rule as LevelRuleDetailDto
+    return rule
   }
 
   /**
@@ -195,21 +174,11 @@ export class LevelRuleService extends RepositoryService {
   }
 
   /**
-   * 获取已启用的等级规则列表
-   * @returns 已启用的等级规则列表
+   * 获取用户等级信息
+   * @param userId 用户ID
+   * @returns 用户等级信息，包括当前等级、进度、权限等
    */
-  async getEnabledLevelRules() {
-    return this.forumLevelRule.findMany({
-      where: {
-        isEnabled: true,
-      },
-      orderBy: {
-        order: 'asc',
-      },
-    })
-  }
-
-  async getUserLevelInfo(userId: number): Promise<UserLevelInfoDto> {
+  async getUserLevelInfo(userId: number) {
     const profile = await this.forumProfile.findUnique({
       where: { id: userId },
     })
@@ -246,7 +215,8 @@ export class LevelRuleService extends RepositoryService {
       const previousLevelPoints = currentLevelRule.requiredPoints
       const totalRange = nextLevelPoints - previousLevelPoints
       const currentProgress = profile.points - previousLevelPoints
-      progressPercentage = totalRange > 0 ? Math.round((currentProgress / totalRange) * 100) : 100
+      progressPercentage =
+        totalRange > 0 ? Math.round((currentProgress / totalRange) * 100) : 100
     } else {
       progressPercentage = 100
     }
@@ -273,10 +243,16 @@ export class LevelRuleService extends RepositoryService {
     }
   }
 
+  /**
+   * 检查用户等级权限
+   * @param userId 用户ID
+   * @param permissionType 权限类型
+   * @returns 权限检查结果
+   */
   async checkLevelPermission(
     userId: number,
-    permissionType: string,
-  ): Promise<LevelPermissionResultDto> {
+    permissionType: LevelRulePermissionEnum,
+  ) {
     const profile = await this.forumProfile.findUnique({
       where: { id: userId },
     })
@@ -312,7 +288,9 @@ export class LevelRuleService extends RepositoryService {
             },
           })
           hasPermission = used < limit
-          message = hasPermission ? '可以发帖' : `今日发帖次数已达上限(${limit}次)`
+          message = hasPermission
+            ? '可以发帖'
+            : `今日发帖次数已达上限(${limit}次)`
         } else {
           message = '无限制'
         }
@@ -328,7 +306,9 @@ export class LevelRuleService extends RepositoryService {
             },
           })
           hasPermission = used < limit
-          message = hasPermission ? '可以回复' : `今日回复次数已达上限(${limit}次)`
+          message = hasPermission
+            ? '可以回复'
+            : `今日回复次数已达上限(${limit}次)`
         } else {
           message = '无限制'
         }
@@ -363,9 +343,7 @@ export class LevelRuleService extends RepositoryService {
       case LevelRulePermissionEnum.MAX_FILE_SIZE:
         limit = levelRule.maxFileSize
         hasPermission = limit > 0
-        message = hasPermission
-          ? `最大文件大小为${limit}KB`
-          : '无限制'
+        message = hasPermission ? `最大文件大小为${limit}KB` : '无限制'
         break
 
       case LevelRulePermissionEnum.DAILY_LIKE_LIMIT:
@@ -385,7 +363,9 @@ export class LevelRuleService extends RepositoryService {
           })
           used = topicLikes + replyLikes
           hasPermission = used < limit
-          message = hasPermission ? '可以点赞' : `今日点赞次数已达上限(${limit}次)`
+          message = hasPermission
+            ? '可以点赞'
+            : `今日点赞次数已达上限(${limit}次)`
         } else {
           message = '无限制'
         }
@@ -401,7 +381,9 @@ export class LevelRuleService extends RepositoryService {
             },
           })
           hasPermission = used < limit
-          message = hasPermission ? '可以收藏' : `今日收藏次数已达上限(${limit}次)`
+          message = hasPermission
+            ? '可以收藏'
+            : `今日收藏次数已达上限(${limit}次)`
         } else {
           message = '无限制'
         }
@@ -417,7 +399,9 @@ export class LevelRuleService extends RepositoryService {
             },
           })
           hasPermission = used < limit
-          message = hasPermission ? '可以评论' : `今日评论次数已达上限(${limit}次)`
+          message = hasPermission
+            ? '可以评论'
+            : `今日评论次数已达上限(${limit}次)`
         } else {
           message = '无限制'
         }
@@ -437,6 +421,11 @@ export class LevelRuleService extends RepositoryService {
     }
   }
 
+  /**
+   * 根据积分更新用户等级
+   * @param userId 用户ID
+   * @returns 等级更新结果
+   */
   async updateUserLevelByPoints(userId: number) {
     const profile = await this.forumProfile.findUnique({
       where: { id: userId },
@@ -492,16 +481,21 @@ export class LevelRuleService extends RepositoryService {
     }
   }
 
+  /**
+   * 获取等级统计信息
+   * @returns 等级统计数据
+   */
   async getLevelStatistics() {
-    const totalLevels = await this.forumLevelRule.count()
-    const enabledLevels = await this.forumLevelRule.count({
-      where: { isEnabled: true },
-    })
-
-    const levelDistribution = await this.forumLevelRule.groupBy({
-      by: ['id', 'name'],
-      _count: {
-        profiles: true,
+    const levels = await this.forumLevelRule.findMany({
+      select: {
+        id: true,
+        name: true,
+        isEnabled: true,
+        _count: {
+          select: {
+            profiles: true,
+          },
+        },
       },
       orderBy: {
         order: 'asc',
@@ -509,9 +503,9 @@ export class LevelRuleService extends RepositoryService {
     })
 
     return {
-      totalLevels,
-      enabledLevels,
-      levelDistribution: levelDistribution.map((item) => ({
+      totalLevels: levels.length,
+      enabledLevels: levels.filter((l) => l.isEnabled).length,
+      levelDistribution: levels.map((item) => ({
         levelId: item.id,
         levelName: item.name,
         userCount: item._count.profiles,
