@@ -52,6 +52,7 @@ export class SearchDto extends PageDto {
 }
 
 export class SearchTopicDto extends OmitType(SearchDto, ['type']) {}
+export class SearchReplyDto extends OmitType(SearchDto, ['type']) {}
 
 /**
  * 搜索结果DTO

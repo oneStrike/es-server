@@ -1,10 +1,6 @@
-import type {
-  ForumPointRecordWhereInput,
-  ForumPointRuleWhereInput,
-} from '@libs/base/database'
+import type { ForumPointRuleWhereInput } from '@libs/base/database'
 import { RepositoryService } from '@libs/base/database'
 
-import { isNotNil } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   AddPointsDto,
@@ -12,6 +8,7 @@ import {
   CreatePointRuleDto,
   QueryPointRecordDto,
   QueryPointRuleDto,
+  UpdatePointRuleDto,
 } from './dto/point.dto'
 import { PointRuleTypeEnum } from './point.constant'
 
@@ -83,11 +80,11 @@ export class PointService extends RepositoryService {
 
   /**
    * 更新积分规则
-   * @param updatePointRuleDto 更新规则的数据
+   * @param dto 更新规则的数据
    * @returns 更新后的规则信息
    */
-  async updatePointRule(updatePointRuleDto: any) {
-    const { id, ...updateData } = updatePointRuleDto
+  async updatePointRule(dto: UpdatePointRuleDto) {
+    const { id, ...updateData } = dto
 
     return this.forumPointRule.update({
       where: { id },
@@ -218,7 +215,7 @@ export class PointService extends RepositoryService {
 
   /**
    * 分页查询积分记录列表
-   * @param queryPointRecordDto 查询条件
+   * @param dto 查询条件
    * @param userId 用户ID
    * @returns 分页的记录列表
    */

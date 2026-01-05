@@ -266,8 +266,8 @@ export type ForumProfileBadgeScalarWhereWithAggregatesInput = {
 
 export type ForumProfileBadgeCreateInput = {
   createdAt?: Date | string
-  badge: Prisma.ForumBadgeCreateNestedOneWithoutProfileBadgesInput
-  profile: Prisma.ForumProfileCreateNestedOneWithoutProfileBadgesInput
+  badge: Prisma.ForumBadgeCreateNestedOneWithoutBadgesInput
+  profile: Prisma.ForumProfileCreateNestedOneWithoutBadgesInput
 }
 
 export type ForumProfileBadgeUncheckedCreateInput = {
@@ -279,8 +279,8 @@ export type ForumProfileBadgeUncheckedCreateInput = {
 
 export type ForumProfileBadgeUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  badge?: Prisma.ForumBadgeUpdateOneRequiredWithoutProfileBadgesNestedInput
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutProfileBadgesNestedInput
+  badge?: Prisma.ForumBadgeUpdateOneRequiredWithoutBadgesNestedInput
+  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutBadgesNestedInput
 }
 
 export type ForumProfileBadgeUncheckedUpdateInput = {
@@ -442,7 +442,7 @@ export type ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput = {
 
 export type ForumProfileBadgeCreateWithoutBadgeInput = {
   createdAt?: Date | string
-  profile: Prisma.ForumProfileCreateNestedOneWithoutProfileBadgesInput
+  profile: Prisma.ForumProfileCreateNestedOneWithoutBadgesInput
 }
 
 export type ForumProfileBadgeUncheckedCreateWithoutBadgeInput = {
@@ -489,7 +489,7 @@ export type ForumProfileBadgeScalarWhereInput = {
 
 export type ForumProfileBadgeCreateWithoutProfileInput = {
   createdAt?: Date | string
-  badge: Prisma.ForumBadgeCreateNestedOneWithoutProfileBadgesInput
+  badge: Prisma.ForumBadgeCreateNestedOneWithoutBadgesInput
 }
 
 export type ForumProfileBadgeUncheckedCreateWithoutProfileInput = {
@@ -532,7 +532,7 @@ export type ForumProfileBadgeCreateManyBadgeInput = {
 
 export type ForumProfileBadgeUpdateWithoutBadgeInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutProfileBadgesNestedInput
+  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutBadgesNestedInput
 }
 
 export type ForumProfileBadgeUncheckedUpdateWithoutBadgeInput = {
@@ -555,7 +555,7 @@ export type ForumProfileBadgeCreateManyProfileInput = {
 
 export type ForumProfileBadgeUpdateWithoutProfileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  badge?: Prisma.ForumBadgeUpdateOneRequiredWithoutProfileBadgesNestedInput
+  badge?: Prisma.ForumBadgeUpdateOneRequiredWithoutBadgesNestedInput
 }
 
 export type ForumProfileBadgeUncheckedUpdateWithoutProfileInput = {

@@ -5,9 +5,9 @@ import { Prisma } from '../prisma-client/client'
 /**
  * 分页查询扩展
  */
-export async function findPagination<T, A>(
+export async function findPagination<T, A extends Prisma.Args<T, 'findMany'>>(
   this: T,
-  options: Prisma.Args<T, 'findMany'>,
+  options: A,
 ): Promise<{
   list: Prisma.Result<T, A, 'findMany'>
   total: number

@@ -1,6 +1,10 @@
-import { RepositoryService } from '@libs/base/database'
+import {
+  ForumReplyWhereInput,
+  ForumTopicWhereInput,
+  RepositoryService,
+} from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { SearchDto, SearchResultDto, SearchTopicDto } from './dto/search.dto'
+import { SearchDto, SearchReplyDto, SearchTopicDto } from './dto/search.dto'
 import { SearchSortTypeEnum, SearchTypeEnum } from './search.constant'
 
 /**
@@ -16,6 +20,10 @@ export class SearchService extends RepositoryService {
     return this.prisma.forumTopic
   }
 
+  get forumReply() {
+    return this.prisma.forumReply
+  }
+
   /**
    * 搜索
    * @param searchDto 搜索参数
@@ -23,62 +31,45 @@ export class SearchService extends RepositoryService {
    */
   async search(searchDto: SearchDto) {
     const {
-      keyword,
       type = SearchTypeEnum.ALL,
-      sectionId,
-      tagId,
-      sort = SearchSortTypeEnum.RELEVANCE,
+      pageIndex = 0,
+      pageSize = 15,
     } = searchDto
 
-    const results: SearchResultDto[] = []
-
-    if (type === SearchTypeEnum.TOPIC || type === SearchTypeEnum.ALL) {
-      const topicResults = await this.searchTopics({
-        keyword,
-        sectionId,
-        tagId,
-        sort,
-      })
-      results.push(...topicResults)
+    if (type === SearchTypeEnum.TOPIC) {
+      return this.searchTopics(searchDto)
     }
 
-    if (type === SearchTypeEnum.REPLY || type === SearchTypeEnum.ALL) {
-      const replyResults = await this.searchReplies(
-        keyword,
-        sectionId,
-        tagId,
-        sort,
-      )
-      results.push(...replyResults)
+    if (type === SearchTypeEnum.REPLY) {
+      return this.searchReplies(searchDto)
     }
 
-    const total = results.length
-    const paginatedResults = results.slice(
-      (page - 1) * pageSize,
-      page * pageSize,
-    )
+    const topicPageSize = Math.ceil(pageSize / 2)
+    const replyPageSize = Math.floor(pageSize / 2)
+
+    const [topicResults, replyResults] = await Promise.all([
+      this.searchTopics({ ...searchDto, pageSize: topicPageSize }),
+      this.searchReplies({ ...searchDto, pageSize: replyPageSize }),
+    ])
+
+    const results = [...topicResults.list, ...replyResults.list]
+    const total = topicResults.total + replyResults.total
 
     return {
-      list: paginatedResults,
+      list: results,
       total,
-      page,
+      pageIndex,
       pageSize,
     }
   }
 
   /**
    * 搜索主题
-   * @param keyword 关键词
-   * @param sectionId 板块ID
-   * @param tagId 标签ID
-   * @param sort 排序类型
-   * @param timeFilter 时间筛选
-   * @param page 页码
-   * @param pageSize 每页数量
+   * @param dto 搜索参数
    * @returns 主题搜索结果
    */
   private async searchTopics(dto: SearchTopicDto) {
-    const where: any = {
+    const where: ForumTopicWhereInput = {
       deletedAt: null,
       OR: [
         { title: { contains: dto.keyword } },
@@ -91,7 +82,7 @@ export class SearchService extends RepositoryService {
     }
 
     if (dto.tagId) {
-      where.tags = {
+      where.topicTags = {
         some: {
           tagId: dto.tagId,
         },
@@ -128,51 +119,47 @@ export class SearchService extends RepositoryService {
 
   /**
    * 搜索回复
-   * @param keyword 关键词
-   * @param sectionId 板块ID
-   * @param tagId 标签ID
-   * @param sort 排序类型
-   * @param timeFilter 时间筛选
-   * @param page 页码
-   * @param pageSize 每页数量
+   * @param dto 搜索参数
    * @returns 回复搜索结果
    */
-  private async searchReplies(
-    keyword: string,
-    sectionId?: number,
-    tagId?: number,
-    sort?: SearchSortTypeEnum,
-  ) {
-    const where: any = {
+  private async searchReplies(dto: SearchReplyDto) {
+    const where: ForumReplyWhereInput = {
       deletedAt: null,
       content: {
-        contains: keyword,
+        contains: dto.keyword,
       },
     }
 
-    if (sectionId) {
+    if (dto.sectionId) {
       where.topic = {
-        sectionId,
+        sectionId: dto.sectionId,
       }
     }
 
-    if (tagId) {
+    if (dto.tagId) {
       where.topic = {
-        tags: {
+        topicTags: {
           some: {
-            tagId,
+            tagId: dto.tagId,
           },
         },
       }
     }
 
-    const orderBy = this.getOrderBy(sort)
+    const orderBy = this.getOrderBy(dto.sort)
 
-    const replies = await this.prisma.forumReply.findMany({
+    return this.forumReply.findPagination({
       where,
       include: {
         topic: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            sectionId: true,
+            viewCount: true,
+            replyCount: true,
+            likeCount: true,
             section: {
               select: {
                 id: true,
@@ -185,12 +172,6 @@ export class SearchService extends RepositoryService {
                 nickname: true,
               },
             },
-            _count: {
-              select: {
-                replies: true,
-                likes: true,
-              },
-            },
           },
         },
         user: {
@@ -201,25 +182,7 @@ export class SearchService extends RepositoryService {
         },
       },
       orderBy,
-      take: pageSize,
-      skip: (page - 1) * pageSize,
     })
-
-    return replies.map((reply) => ({
-      topicId: reply.topicId,
-      topicTitle: reply.topic.title,
-      topicContent: reply.topic.content,
-      sectionId: reply.topic.sectionId,
-      sectionName: reply.topic.section.name,
-      userId: reply.topic.userId,
-      userNickname: reply.topic.user.nickname,
-      replyId: reply.id,
-      replyContent: reply.content,
-      createdAt: reply.createdAt,
-      replyCount: reply.topic._count.replies,
-      viewCount: reply.topic.viewCount,
-      likeCount: reply.topic._count.likes,
-    }))
   }
 
   /**
@@ -227,15 +190,19 @@ export class SearchService extends RepositoryService {
    * @param sort 排序类型
    * @returns 排序条件
    */
-  private getOrderBy(sort?: SearchSortTypeEnum): any {
+  private getOrderBy(sort?: SearchSortTypeEnum) {
     switch (sort) {
-      case SearchSortTypeEnum.LATEST:
-        return { createdAt: 'desc' }
       case SearchSortTypeEnum.HOT:
-        return { viewCount: 'desc' }
+        return [
+          { replyCount: 'desc' as const },
+          { likeCount: 'desc' as const },
+          { viewCount: 'desc' as const },
+          { createdAt: 'desc' as const },
+        ]
+      case SearchSortTypeEnum.LATEST:
       case SearchSortTypeEnum.RELEVANCE:
-      default:
-        return { createdAt: 'desc' }
+      case undefined:
+        return { createdAt: 'desc' as const }
     }
   }
 }
