@@ -3372,7 +3372,7 @@ export const ClientUserScalarFieldEnum = {
   id: 'id',
   username: 'username',
   nickname: 'nickname',
-  avatarUrl: 'avatarUrl',
+  avatar: 'avatar',
   phoneNumber: 'phoneNumber',
   emailAddress: 'emailAddress',
   isEnabled: 'isEnabled',
@@ -3487,13 +3487,13 @@ export const ForumNotificationScalarFieldEnum = {
   type: 'type',
   title: 'title',
   content: 'content',
-  objectType: 'objectType',
-  objectId: 'objectId',
+  priority: 'priority',
+  topicId: 'topicId',
+  replyId: 'replyId',
   isRead: 'isRead',
   readAt: 'readAt',
   createdAt: 'createdAt',
-  expiredAt: 'expiredAt',
-  priority: 'priority'
+  expiredAt: 'expiredAt'
 } as const
 
 export type ForumNotificationScalarFieldEnum = (typeof ForumNotificationScalarFieldEnum)[keyof typeof ForumNotificationScalarFieldEnum]

@@ -341,6 +341,7 @@ export type ForumReplyWhereInput = {
   topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
   user?: Prisma.XOR<Prisma.ClientUserScalarRelationFilter, Prisma.ClientUserWhereInput>
   likes?: Prisma.ForumReplyLikeListRelationFilter
+  notifications?: Prisma.ForumNotificationListRelationFilter
 }
 
 export type ForumReplyOrderByWithRelationInput = {
@@ -365,6 +366,7 @@ export type ForumReplyOrderByWithRelationInput = {
   topic?: Prisma.ForumTopicOrderByWithRelationInput
   user?: Prisma.ClientUserOrderByWithRelationInput
   likes?: Prisma.ForumReplyLikeOrderByRelationAggregateInput
+  notifications?: Prisma.ForumNotificationOrderByRelationAggregateInput
 }
 
 export type ForumReplyWhereUniqueInput = Prisma.AtLeast<{
@@ -392,6 +394,7 @@ export type ForumReplyWhereUniqueInput = Prisma.AtLeast<{
   topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
   user?: Prisma.XOR<Prisma.ClientUserScalarRelationFilter, Prisma.ClientUserWhereInput>
   likes?: Prisma.ForumReplyLikeListRelationFilter
+  notifications?: Prisma.ForumNotificationListRelationFilter
 }, "id">
 
 export type ForumReplyOrderByWithAggregationInput = {
@@ -458,6 +461,7 @@ export type ForumReplyCreateInput = {
   topic: Prisma.ForumTopicCreateNestedOneWithoutRepliesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumRepliesInput
   likes?: Prisma.ForumReplyLikeCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyUncheckedCreateInput = {
@@ -479,6 +483,7 @@ export type ForumReplyUncheckedCreateInput = {
   version?: number
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutReplyToInput
   likes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyUpdateInput = {
@@ -499,6 +504,7 @@ export type ForumReplyUpdateInput = {
   topic?: Prisma.ForumTopicUpdateOneRequiredWithoutRepliesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumRepliesNestedInput
   likes?: Prisma.ForumReplyLikeUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUncheckedUpdateInput = {
@@ -520,6 +526,7 @@ export type ForumReplyUncheckedUpdateInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutReplyToNestedInput
   likes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyCreateManyInput = {
@@ -585,14 +592,14 @@ export type ForumReplyOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ForumReplyScalarRelationFilter = {
-  is?: Prisma.ForumReplyWhereInput
-  isNot?: Prisma.ForumReplyWhereInput
-}
-
 export type ForumReplyNullableScalarRelationFilter = {
   is?: Prisma.ForumReplyWhereInput | null
   isNot?: Prisma.ForumReplyWhereInput | null
+}
+
+export type ForumReplyScalarRelationFilter = {
+  is?: Prisma.ForumReplyWhereInput
+  isNot?: Prisma.ForumReplyWhereInput
 }
 
 export type ForumReplyCountOrderByAggregateInput = {
@@ -716,6 +723,22 @@ export type ForumReplyUncheckedUpdateManyWithoutUserNestedInput = {
   update?: Prisma.ForumReplyUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumReplyUpdateWithWhereUniqueWithoutUserInput[]
   updateMany?: Prisma.ForumReplyUpdateManyWithWhereWithoutUserInput | Prisma.ForumReplyUpdateManyWithWhereWithoutUserInput[]
   deleteMany?: Prisma.ForumReplyScalarWhereInput | Prisma.ForumReplyScalarWhereInput[]
+}
+
+export type ForumReplyCreateNestedOneWithoutNotificationsInput = {
+  create?: Prisma.XOR<Prisma.ForumReplyCreateWithoutNotificationsInput, Prisma.ForumReplyUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.ForumReplyCreateOrConnectWithoutNotificationsInput
+  connect?: Prisma.ForumReplyWhereUniqueInput
+}
+
+export type ForumReplyUpdateOneWithoutNotificationsNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumReplyCreateWithoutNotificationsInput, Prisma.ForumReplyUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.ForumReplyCreateOrConnectWithoutNotificationsInput
+  upsert?: Prisma.ForumReplyUpsertWithoutNotificationsInput
+  disconnect?: Prisma.ForumReplyWhereInput | boolean
+  delete?: Prisma.ForumReplyWhereInput | boolean
+  connect?: Prisma.ForumReplyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumReplyUpdateToOneWithWhereWithoutNotificationsInput, Prisma.ForumReplyUpdateWithoutNotificationsInput>, Prisma.ForumReplyUncheckedUpdateWithoutNotificationsInput>
 }
 
 export type ForumReplyCreateNestedOneWithoutLikesInput = {
@@ -849,6 +872,7 @@ export type ForumReplyCreateWithoutUserInput = {
   replies?: Prisma.ForumReplyCreateNestedManyWithoutReplyToInput
   topic: Prisma.ForumTopicCreateNestedOneWithoutRepliesInput
   likes?: Prisma.ForumReplyLikeCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyUncheckedCreateWithoutUserInput = {
@@ -869,6 +893,7 @@ export type ForumReplyUncheckedCreateWithoutUserInput = {
   version?: number
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutReplyToInput
   likes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyCreateOrConnectWithoutUserInput = {
@@ -919,6 +944,104 @@ export type ForumReplyScalarWhereInput = {
   version?: Prisma.IntFilter<"ForumReply"> | number
 }
 
+export type ForumReplyCreateWithoutNotificationsInput = {
+  content: string
+  floor: number
+  isHidden?: boolean
+  auditStatus?: number
+  auditReason?: string | null
+  auditAt?: Date | string | null
+  auditBy?: number | null
+  likeCount?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  version?: number
+  replyTo?: Prisma.ForumReplyCreateNestedOneWithoutRepliesInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutReplyToInput
+  topic: Prisma.ForumTopicCreateNestedOneWithoutRepliesInput
+  user: Prisma.ClientUserCreateNestedOneWithoutForumRepliesInput
+  likes?: Prisma.ForumReplyLikeCreateNestedManyWithoutReplyInput
+}
+
+export type ForumReplyUncheckedCreateWithoutNotificationsInput = {
+  id?: number
+  content: string
+  topicId: number
+  userId: number
+  floor: number
+  replyToId?: number | null
+  isHidden?: boolean
+  auditStatus?: number
+  auditReason?: string | null
+  auditAt?: Date | string | null
+  auditBy?: number | null
+  likeCount?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  version?: number
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutReplyToInput
+  likes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutReplyInput
+}
+
+export type ForumReplyCreateOrConnectWithoutNotificationsInput = {
+  where: Prisma.ForumReplyWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumReplyCreateWithoutNotificationsInput, Prisma.ForumReplyUncheckedCreateWithoutNotificationsInput>
+}
+
+export type ForumReplyUpsertWithoutNotificationsInput = {
+  update: Prisma.XOR<Prisma.ForumReplyUpdateWithoutNotificationsInput, Prisma.ForumReplyUncheckedUpdateWithoutNotificationsInput>
+  create: Prisma.XOR<Prisma.ForumReplyCreateWithoutNotificationsInput, Prisma.ForumReplyUncheckedCreateWithoutNotificationsInput>
+  where?: Prisma.ForumReplyWhereInput
+}
+
+export type ForumReplyUpdateToOneWithWhereWithoutNotificationsInput = {
+  where?: Prisma.ForumReplyWhereInput
+  data: Prisma.XOR<Prisma.ForumReplyUpdateWithoutNotificationsInput, Prisma.ForumReplyUncheckedUpdateWithoutNotificationsInput>
+}
+
+export type ForumReplyUpdateWithoutNotificationsInput = {
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  floor?: Prisma.IntFieldUpdateOperationsInput | number
+  isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  replyTo?: Prisma.ForumReplyUpdateOneWithoutRepliesNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutReplyToNestedInput
+  topic?: Prisma.ForumTopicUpdateOneRequiredWithoutRepliesNestedInput
+  user?: Prisma.ClientUserUpdateOneRequiredWithoutForumRepliesNestedInput
+  likes?: Prisma.ForumReplyLikeUpdateManyWithoutReplyNestedInput
+}
+
+export type ForumReplyUncheckedUpdateWithoutNotificationsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  topicId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  floor?: Prisma.IntFieldUpdateOperationsInput | number
+  replyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutReplyToNestedInput
+  likes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutReplyNestedInput
+}
+
 export type ForumReplyCreateWithoutLikesInput = {
   content: string
   floor: number
@@ -936,6 +1059,7 @@ export type ForumReplyCreateWithoutLikesInput = {
   replies?: Prisma.ForumReplyCreateNestedManyWithoutReplyToInput
   topic: Prisma.ForumTopicCreateNestedOneWithoutRepliesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumRepliesInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyUncheckedCreateWithoutLikesInput = {
@@ -956,6 +1080,7 @@ export type ForumReplyUncheckedCreateWithoutLikesInput = {
   deletedAt?: Date | string | null
   version?: number
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutReplyToInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyCreateOrConnectWithoutLikesInput = {
@@ -991,6 +1116,7 @@ export type ForumReplyUpdateWithoutLikesInput = {
   replies?: Prisma.ForumReplyUpdateManyWithoutReplyToNestedInput
   topic?: Prisma.ForumTopicUpdateOneRequiredWithoutRepliesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumRepliesNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUncheckedUpdateWithoutLikesInput = {
@@ -1011,6 +1137,7 @@ export type ForumReplyUncheckedUpdateWithoutLikesInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutReplyToNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyCreateWithoutRepliesInput = {
@@ -1030,6 +1157,7 @@ export type ForumReplyCreateWithoutRepliesInput = {
   topic: Prisma.ForumTopicCreateNestedOneWithoutRepliesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumRepliesInput
   likes?: Prisma.ForumReplyLikeCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyUncheckedCreateWithoutRepliesInput = {
@@ -1050,6 +1178,7 @@ export type ForumReplyUncheckedCreateWithoutRepliesInput = {
   deletedAt?: Date | string | null
   version?: number
   likes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyCreateOrConnectWithoutRepliesInput = {
@@ -1074,6 +1203,7 @@ export type ForumReplyCreateWithoutReplyToInput = {
   topic: Prisma.ForumTopicCreateNestedOneWithoutRepliesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumRepliesInput
   likes?: Prisma.ForumReplyLikeCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyUncheckedCreateWithoutReplyToInput = {
@@ -1094,6 +1224,7 @@ export type ForumReplyUncheckedCreateWithoutReplyToInput = {
   version?: number
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutReplyToInput
   likes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyCreateOrConnectWithoutReplyToInput = {
@@ -1134,6 +1265,7 @@ export type ForumReplyUpdateWithoutRepliesInput = {
   topic?: Prisma.ForumTopicUpdateOneRequiredWithoutRepliesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumRepliesNestedInput
   likes?: Prisma.ForumReplyLikeUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUncheckedUpdateWithoutRepliesInput = {
@@ -1154,6 +1286,7 @@ export type ForumReplyUncheckedUpdateWithoutRepliesInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
   likes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUpsertWithWhereUniqueWithoutReplyToInput = {
@@ -1189,6 +1322,7 @@ export type ForumReplyCreateWithoutTopicInput = {
   replies?: Prisma.ForumReplyCreateNestedManyWithoutReplyToInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumRepliesInput
   likes?: Prisma.ForumReplyLikeCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyUncheckedCreateWithoutTopicInput = {
@@ -1209,6 +1343,7 @@ export type ForumReplyUncheckedCreateWithoutTopicInput = {
   version?: number
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutReplyToInput
   likes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutReplyInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutReplyInput
 }
 
 export type ForumReplyCreateOrConnectWithoutTopicInput = {
@@ -1272,6 +1407,7 @@ export type ForumReplyUpdateWithoutUserInput = {
   replies?: Prisma.ForumReplyUpdateManyWithoutReplyToNestedInput
   topic?: Prisma.ForumTopicUpdateOneRequiredWithoutRepliesNestedInput
   likes?: Prisma.ForumReplyLikeUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUncheckedUpdateWithoutUserInput = {
@@ -1292,6 +1428,7 @@ export type ForumReplyUncheckedUpdateWithoutUserInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutReplyToNestedInput
   likes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUncheckedUpdateManyWithoutUserInput = {
@@ -1347,6 +1484,7 @@ export type ForumReplyUpdateWithoutReplyToInput = {
   topic?: Prisma.ForumTopicUpdateOneRequiredWithoutRepliesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumRepliesNestedInput
   likes?: Prisma.ForumReplyLikeUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUncheckedUpdateWithoutReplyToInput = {
@@ -1367,6 +1505,7 @@ export type ForumReplyUncheckedUpdateWithoutReplyToInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutReplyToNestedInput
   likes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUncheckedUpdateManyWithoutReplyToInput = {
@@ -1422,6 +1561,7 @@ export type ForumReplyUpdateWithoutTopicInput = {
   replies?: Prisma.ForumReplyUpdateManyWithoutReplyToNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumRepliesNestedInput
   likes?: Prisma.ForumReplyLikeUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUncheckedUpdateWithoutTopicInput = {
@@ -1442,6 +1582,7 @@ export type ForumReplyUncheckedUpdateWithoutTopicInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutReplyToNestedInput
   likes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutReplyNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutReplyNestedInput
 }
 
 export type ForumReplyUncheckedUpdateManyWithoutTopicInput = {
@@ -1470,11 +1611,13 @@ export type ForumReplyUncheckedUpdateManyWithoutTopicInput = {
 export type ForumReplyCountOutputType = {
   replies: number
   likes: number
+  notifications: number
 }
 
 export type ForumReplyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   replies?: boolean | ForumReplyCountOutputTypeCountRepliesArgs
   likes?: boolean | ForumReplyCountOutputTypeCountLikesArgs
+  notifications?: boolean | ForumReplyCountOutputTypeCountNotificationsArgs
 }
 
 /**
@@ -1501,6 +1644,13 @@ export type ForumReplyCountOutputTypeCountLikesArgs<ExtArgs extends runtime.Type
   where?: Prisma.ForumReplyLikeWhereInput
 }
 
+/**
+ * ForumReplyCountOutputType without action
+ */
+export type ForumReplyCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ForumNotificationWhereInput
+}
+
 
 export type ForumReplySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1524,6 +1674,7 @@ export type ForumReplySelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
   likes?: boolean | Prisma.ForumReply$likesArgs<ExtArgs>
+  notifications?: boolean | Prisma.ForumReply$notificationsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumReplyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumReply"]>
 
@@ -1597,6 +1748,7 @@ export type ForumReplyInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
   likes?: boolean | Prisma.ForumReply$likesArgs<ExtArgs>
+  notifications?: boolean | Prisma.ForumReply$notificationsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumReplyCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ForumReplyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1618,6 +1770,7 @@ export type $ForumReplyPayload<ExtArgs extends runtime.Types.Extensions.Internal
     topic: Prisma.$ForumTopicPayload<ExtArgs>
     user: Prisma.$ClientUserPayload<ExtArgs>
     likes: Prisma.$ForumReplyLikePayload<ExtArgs>[]
+    notifications: Prisma.$ForumNotificationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -2083,6 +2236,7 @@ export interface Prisma__ForumReplyClient<T, Null = never, ExtArgs extends runti
   topic<T extends Prisma.ForumTopicDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumTopicDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumTopicClient<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.ClientUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUserDefaultArgs<ExtArgs>>): Prisma.Prisma__ClientUserClient<runtime.Types.Result.GetResult<Prisma.$ClientUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   likes<T extends Prisma.ForumReply$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumReply$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReplyLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  notifications<T extends Prisma.ForumReply$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumReply$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumNotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2597,6 +2751,30 @@ export type ForumReply$likesArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.ForumReplyLikeScalarFieldEnum | Prisma.ForumReplyLikeScalarFieldEnum[]
+}
+
+/**
+ * ForumReply.notifications
+ */
+export type ForumReply$notificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumNotification
+   */
+  select?: Prisma.ForumNotificationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumNotification
+   */
+  omit?: Prisma.ForumNotificationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumNotificationInclude<ExtArgs> | null
+  where?: Prisma.ForumNotificationWhereInput
+  orderBy?: Prisma.ForumNotificationOrderByWithRelationInput | Prisma.ForumNotificationOrderByWithRelationInput[]
+  cursor?: Prisma.ForumNotificationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ForumNotificationScalarFieldEnum | Prisma.ForumNotificationScalarFieldEnum[]
 }
 
 /**

@@ -40,7 +40,7 @@ export type ClientUserMinAggregateOutputType = {
   id: number | null
   username: string | null
   nickname: string | null
-  avatarUrl: string | null
+  avatar: string | null
   phoneNumber: string | null
   emailAddress: string | null
   isEnabled: boolean | null
@@ -58,7 +58,7 @@ export type ClientUserMaxAggregateOutputType = {
   id: number | null
   username: string | null
   nickname: string | null
-  avatarUrl: string | null
+  avatar: string | null
   phoneNumber: string | null
   emailAddress: string | null
   isEnabled: boolean | null
@@ -76,7 +76,7 @@ export type ClientUserCountAggregateOutputType = {
   id: number
   username: number
   nickname: number
-  avatarUrl: number
+  avatar: number
   phoneNumber: number
   emailAddress: number
   isEnabled: number
@@ -106,7 +106,7 @@ export type ClientUserMinAggregateInputType = {
   id?: true
   username?: true
   nickname?: true
-  avatarUrl?: true
+  avatar?: true
   phoneNumber?: true
   emailAddress?: true
   isEnabled?: true
@@ -124,7 +124,7 @@ export type ClientUserMaxAggregateInputType = {
   id?: true
   username?: true
   nickname?: true
-  avatarUrl?: true
+  avatar?: true
   phoneNumber?: true
   emailAddress?: true
   isEnabled?: true
@@ -142,7 +142,7 @@ export type ClientUserCountAggregateInputType = {
   id?: true
   username?: true
   nickname?: true
-  avatarUrl?: true
+  avatar?: true
   phoneNumber?: true
   emailAddress?: true
   isEnabled?: true
@@ -247,7 +247,7 @@ export type ClientUserGroupByOutputType = {
   id: number
   username: string
   nickname: string | null
-  avatarUrl: string | null
+  avatar: string | null
   phoneNumber: string | null
   emailAddress: string | null
   isEnabled: boolean
@@ -288,7 +288,7 @@ export type ClientUserWhereInput = {
   id?: Prisma.IntFilter<"ClientUser"> | number
   username?: Prisma.StringFilter<"ClientUser"> | string
   nickname?: Prisma.StringNullableFilter<"ClientUser"> | string | null
-  avatarUrl?: Prisma.StringNullableFilter<"ClientUser"> | string | null
+  avatar?: Prisma.StringNullableFilter<"ClientUser"> | string | null
   phoneNumber?: Prisma.StringNullableFilter<"ClientUser"> | string | null
   emailAddress?: Prisma.StringNullableFilter<"ClientUser"> | string | null
   isEnabled?: Prisma.BoolFilter<"ClientUser"> | boolean
@@ -310,7 +310,7 @@ export type ClientUserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
   nickname?: Prisma.SortOrderInput | Prisma.SortOrder
-  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   emailAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
@@ -337,7 +337,7 @@ export type ClientUserWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ClientUserWhereInput[]
   NOT?: Prisma.ClientUserWhereInput | Prisma.ClientUserWhereInput[]
   nickname?: Prisma.StringNullableFilter<"ClientUser"> | string | null
-  avatarUrl?: Prisma.StringNullableFilter<"ClientUser"> | string | null
+  avatar?: Prisma.StringNullableFilter<"ClientUser"> | string | null
   isEnabled?: Prisma.BoolFilter<"ClientUser"> | boolean
   genderType?: Prisma.IntFilter<"ClientUser"> | number
   birthDate?: Prisma.DateTimeNullableFilter<"ClientUser"> | Date | string | null
@@ -357,7 +357,7 @@ export type ClientUserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
   nickname?: Prisma.SortOrderInput | Prisma.SortOrder
-  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   emailAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
@@ -383,7 +383,7 @@ export type ClientUserScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"ClientUser"> | number
   username?: Prisma.StringWithAggregatesFilter<"ClientUser"> | string
   nickname?: Prisma.StringNullableWithAggregatesFilter<"ClientUser"> | string | null
-  avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"ClientUser"> | string | null
+  avatar?: Prisma.StringNullableWithAggregatesFilter<"ClientUser"> | string | null
   phoneNumber?: Prisma.StringNullableWithAggregatesFilter<"ClientUser"> | string | null
   emailAddress?: Prisma.StringNullableWithAggregatesFilter<"ClientUser"> | string | null
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ClientUser"> | boolean
@@ -400,7 +400,7 @@ export type ClientUserScalarWhereWithAggregatesInput = {
 export type ClientUserCreateInput = {
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -422,7 +422,7 @@ export type ClientUserUncheckedCreateInput = {
   id?: number
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -443,7 +443,7 @@ export type ClientUserUncheckedCreateInput = {
 export type ClientUserUpdateInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -465,7 +465,7 @@ export type ClientUserUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -487,7 +487,7 @@ export type ClientUserCreateManyInput = {
   id?: number
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -504,7 +504,7 @@ export type ClientUserCreateManyInput = {
 export type ClientUserUpdateManyMutationInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -522,7 +522,7 @@ export type ClientUserUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -540,7 +540,7 @@ export type ClientUserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
   nickname?: Prisma.SortOrder
-  avatarUrl?: Prisma.SortOrder
+  avatar?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
   emailAddress?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
@@ -563,7 +563,7 @@ export type ClientUserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
   nickname?: Prisma.SortOrder
-  avatarUrl?: Prisma.SortOrder
+  avatar?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
   emailAddress?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
@@ -581,7 +581,7 @@ export type ClientUserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   username?: Prisma.SortOrder
   nickname?: Prisma.SortOrder
-  avatarUrl?: Prisma.SortOrder
+  avatar?: Prisma.SortOrder
   phoneNumber?: Prisma.SortOrder
   emailAddress?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
@@ -671,7 +671,7 @@ export type ClientUserUpdateOneWithoutLastReplyTopicsNestedInput = {
 export type ClientUserCreateWithoutForumProfileInput = {
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -692,7 +692,7 @@ export type ClientUserUncheckedCreateWithoutForumProfileInput = {
   id?: number
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -728,7 +728,7 @@ export type ClientUserUpdateToOneWithWhereWithoutForumProfileInput = {
 export type ClientUserUpdateWithoutForumProfileInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -749,7 +749,7 @@ export type ClientUserUncheckedUpdateWithoutForumProfileInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -769,7 +769,7 @@ export type ClientUserUncheckedUpdateWithoutForumProfileInput = {
 export type ClientUserCreateWithoutForumRepliesInput = {
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -790,7 +790,7 @@ export type ClientUserUncheckedCreateWithoutForumRepliesInput = {
   id?: number
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -826,7 +826,7 @@ export type ClientUserUpdateToOneWithWhereWithoutForumRepliesInput = {
 export type ClientUserUpdateWithoutForumRepliesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -847,7 +847,7 @@ export type ClientUserUncheckedUpdateWithoutForumRepliesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -867,7 +867,7 @@ export type ClientUserUncheckedUpdateWithoutForumRepliesInput = {
 export type ClientUserCreateWithoutForumTopicsInput = {
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -888,7 +888,7 @@ export type ClientUserUncheckedCreateWithoutForumTopicsInput = {
   id?: number
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -913,7 +913,7 @@ export type ClientUserCreateOrConnectWithoutForumTopicsInput = {
 export type ClientUserCreateWithoutLastReplyTopicsInput = {
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -934,7 +934,7 @@ export type ClientUserUncheckedCreateWithoutLastReplyTopicsInput = {
   id?: number
   username: string
   nickname?: string | null
-  avatarUrl?: string | null
+  avatar?: string | null
   phoneNumber?: string | null
   emailAddress?: string | null
   isEnabled?: boolean
@@ -970,7 +970,7 @@ export type ClientUserUpdateToOneWithWhereWithoutForumTopicsInput = {
 export type ClientUserUpdateWithoutForumTopicsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -991,7 +991,7 @@ export type ClientUserUncheckedUpdateWithoutForumTopicsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1022,7 +1022,7 @@ export type ClientUserUpdateToOneWithWhereWithoutLastReplyTopicsInput = {
 export type ClientUserUpdateWithoutLastReplyTopicsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1043,7 +1043,7 @@ export type ClientUserUncheckedUpdateWithoutLastReplyTopicsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   username?: Prisma.StringFieldUpdateOperationsInput | string
   nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1113,7 +1113,7 @@ export type ClientUserSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   id?: boolean
   username?: boolean
   nickname?: boolean
-  avatarUrl?: boolean
+  avatar?: boolean
   phoneNumber?: boolean
   emailAddress?: boolean
   isEnabled?: boolean
@@ -1136,7 +1136,7 @@ export type ClientUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   id?: boolean
   username?: boolean
   nickname?: boolean
-  avatarUrl?: boolean
+  avatar?: boolean
   phoneNumber?: boolean
   emailAddress?: boolean
   isEnabled?: boolean
@@ -1154,7 +1154,7 @@ export type ClientUserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   id?: boolean
   username?: boolean
   nickname?: boolean
-  avatarUrl?: boolean
+  avatar?: boolean
   phoneNumber?: boolean
   emailAddress?: boolean
   isEnabled?: boolean
@@ -1172,7 +1172,7 @@ export type ClientUserSelectScalar = {
   id?: boolean
   username?: boolean
   nickname?: boolean
-  avatarUrl?: boolean
+  avatar?: boolean
   phoneNumber?: boolean
   emailAddress?: boolean
   isEnabled?: boolean
@@ -1186,7 +1186,7 @@ export type ClientUserSelectScalar = {
   deletedAt?: boolean
 }
 
-export type ClientUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "nickname" | "avatarUrl" | "phoneNumber" | "emailAddress" | "isEnabled" | "genderType" | "birthDate" | "isSignedIn" | "lastLoginAt" | "lastLoginIp" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["clientUser"]>
+export type ClientUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "nickname" | "avatar" | "phoneNumber" | "emailAddress" | "isEnabled" | "genderType" | "birthDate" | "isSignedIn" | "lastLoginAt" | "lastLoginIp" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["clientUser"]>
 export type ClientUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   forumProfile?: boolean | Prisma.ClientUser$forumProfileArgs<ExtArgs>
   forumTopics?: boolean | Prisma.ClientUser$forumTopicsArgs<ExtArgs>
@@ -1233,7 +1233,7 @@ export type $ClientUserPayload<ExtArgs extends runtime.Types.Extensions.Internal
     /**
      * 头像URL地址
      */
-    avatarUrl: string | null
+    avatar: string | null
     /**
      * 手机号码
      */
@@ -1708,7 +1708,7 @@ export interface ClientUserFieldRefs {
   readonly id: Prisma.FieldRef<"ClientUser", 'Int'>
   readonly username: Prisma.FieldRef<"ClientUser", 'String'>
   readonly nickname: Prisma.FieldRef<"ClientUser", 'String'>
-  readonly avatarUrl: Prisma.FieldRef<"ClientUser", 'String'>
+  readonly avatar: Prisma.FieldRef<"ClientUser", 'String'>
   readonly phoneNumber: Prisma.FieldRef<"ClientUser", 'String'>
   readonly emailAddress: Prisma.FieldRef<"ClientUser", 'String'>
   readonly isEnabled: Prisma.FieldRef<"ClientUser", 'Boolean'>

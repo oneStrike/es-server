@@ -1,16 +1,23 @@
-import { ValidateEnum, ValidateNumber, ValidateString } from '@app/base'
 import {
-  IsOptional,
-} from 'class-validator'
+  ValidateArray,
+  ValidateBoolean,
+  ValidateEnum,
+  ValidateNumber,
+  ValidateString,
+} from '@libs/base/decorators'
+import { BaseDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
-  NotificationObjectTypeEnum,
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
+import {
+  NotificationPriorityEnum,
   NotificationTypeEnum,
 } from '../notification.constant'
 
-/**
- * 创建通知DTO
- */
-export class CreateNotificationDto {
+export class BaseNotificationDto extends BaseDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,
@@ -38,72 +45,68 @@ export class CreateNotificationDto {
     description: '通知内容',
     example: '张三 回复了你的主题《测试主题》',
     required: true,
+    maxLength: 1000,
   })
   content!: string
 
-  @ValidateEnum({
-    description: '关联对象类型',
-    example: NotificationObjectTypeEnum.TOPIC,
+  @ValidateBoolean({
+    description: '是否已读（0=未读, 1=已读）',
+    example: true,
     required: true,
-    enum: NotificationObjectTypeEnum,
   })
-  objectType!: NotificationObjectTypeEnum
+  isRead: boolean
 
   @ValidateNumber({
-    description: '关联对象ID',
+    description: '关联的主题ID（可选）',
     example: 1,
-    required: true,
+    required: false,
   })
-  objectId!: number
+  topicId?: number
+
+  @ValidateNumber({
+    description: '关联的回复ID（可选）',
+    example: 1,
+    required: false,
+  })
+  replyId?: number
+
+  @ValidateEnum({
+    description: '通知优先级',
+    example: NotificationPriorityEnum.NORMAL,
+    required: false,
+    enum: NotificationPriorityEnum,
+  })
+  priority!: NotificationPriorityEnum
 }
+
+/**
+ * 创建通知DTO
+ */
+export class CreateNotificationDto extends OmitType(
+  BaseNotificationDto,
+  OMIT_BASE_FIELDS,
+) {}
+
+/**
+ * 便捷创建通知DTO
+ */
+export class CreateNotificationShortDto extends OmitType(
+  CreateNotificationDto,
+  ['type', 'priority'],
+) {}
 
 /**
  * 查询通知列表DTO
  */
-export class QueryNotificationListDto {
-  @ValidateNumber({
-    description: '页码',
-    example: 1,
-    required: false,
-    min: 1,
-  })
-  @IsOptional()
-  page?: number = 1
-
-  @ValidateNumber({
-    description: '每页数量',
-    example: 20,
-    required: false,
-    min: 1,
-    max: 100,
-  })
-  @IsOptional()
-  pageSize?: number = 20
-
-  @ValidateEnum({
-    description: '通知类型',
-    example: NotificationTypeEnum.REPLY,
-    required: false,
-    enum: NotificationTypeEnum,
-  })
-  @IsOptional()
-  type?: NotificationTypeEnum
-
-  @ValidateNumber({
-    description: '是否已读（0=未读, 1=已读）',
-    example: 0,
-    required: false,
-    min: 0,
-    max: 1,
-  })
-  @IsOptional()
-  isRead?: number
-}
+export class QueryNotificationListDto extends IntersectionType(
+  PageDto,
+  PartialType(PickType(BaseNotificationDto, ['type', 'isRead', 'userId'])),
+) {}
 
 /**
  * 标记通知已读DTO
  */
-export class MarkNotificationReadDto {
+export class NotificationIdDto {
   @ValidateNumber({
     description: '通知ID',
     example: 1,
@@ -115,12 +118,12 @@ export class MarkNotificationReadDto {
 /**
  * 批量标记通知已读DTO
  */
-export class BatchMarkNotificationReadDto {
-  @ValidateNumber({
+export class NotificationIdsDto {
+  @ValidateArray({
     description: '通知ID列表',
     example: [1, 2, 3],
     required: true,
-    isArray: true,
+    itemType: 'number',
   })
   notificationIds!: number[]
 }
@@ -128,44 +131,7 @@ export class BatchMarkNotificationReadDto {
 /**
  * 标记所有通知已读DTO
  */
-export class MarkAllNotificationReadDto {
-  @ValidateNumber({
-    description: '用户ID',
-    example: 1,
-    required: true,
-  })
-  userId!: number
-}
-
-/**
- * 删除通知DTO
- */
-export class DeleteNotificationDto {
-  @ValidateNumber({
-    description: '通知ID',
-    example: 1,
-    required: true,
-  })
-  notificationId!: number
-}
-
-/**
- * 批量删除通知DTO
- */
-export class BatchDeleteNotificationDto {
-  @ValidateNumber({
-    description: '通知ID列表',
-    example: [1, 2, 3],
-    required: true,
-    isArray: true,
-  })
-  notificationIds!: number[]
-}
-
-/**
- * 获取未读通知数量DTO
- */
-export class GetUnreadCountDto {
+export class UserIdDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,

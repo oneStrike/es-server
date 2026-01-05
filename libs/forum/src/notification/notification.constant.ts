@@ -2,6 +2,14 @@
  * 通知模块常量定义
  */
 
+/// 通知优先级枚举
+export enum NotificationPriorityEnum {
+  /** 普通 */
+  NORMAL = 1,
+  /** 重要 */
+  IMPORTANT = 2,
+}
+
 /// 通知类型枚举
 export enum NotificationTypeEnum {
   /** 回复通知 */
@@ -14,14 +22,6 @@ export enum NotificationTypeEnum {
   SYSTEM = 4,
 }
 
-/// 通知对象类型枚举
-export enum NotificationObjectTypeEnum {
-  /** 主题 */
-  TOPIC = 1,
-  /** 回复 */
-  REPLY = 2,
-}
-
 /// 通知标题模板
 export const NotificationTitleTemplates = {
   [NotificationTypeEnum.REPLY]: '有人回复了你的主题',
@@ -32,8 +32,11 @@ export const NotificationTitleTemplates = {
 
 /// 通知内容模板
 export const NotificationContentTemplates = {
-  [NotificationTypeEnum.REPLY]: (userName: string, topicTitle: string) => `${userName} 回复了你的主题《${topicTitle}》`,
-  [NotificationTypeEnum.LIKE]: (userName: string, objectType: string) => `${userName} 赞了你的${objectType}`,
-  [NotificationTypeEnum.FAVORITE]: (userName: string, topicTitle: string) => `${userName} 收藏了你的主题《${topicTitle}》`,
+  [NotificationTypeEnum.REPLY]: (userName: string, topicTitle: string) =>
+    `${userName} 回复了你的主题《${topicTitle}》`,
+  [NotificationTypeEnum.LIKE]: (userName: string, objectType: string) =>
+    `${userName} 赞了你的${objectType}`,
+  [NotificationTypeEnum.FAVORITE]: (userName: string, topicTitle: string) =>
+    `${userName} 收藏了你的主题《${topicTitle}》`,
   [NotificationTypeEnum.SYSTEM]: (content: string) => content,
 }
