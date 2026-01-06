@@ -10,7 +10,7 @@ export enum AuthorTypeEnum {
   /** 轻小说作者 */
   LIGHT_NOVEL = 2,
   /** 插画师 */
-  ILLUSTRATOR = 4,
+  ILLUSTRATOR = 3,
   /** coser */
-  COSER = 8,
+  COSER = 4,
 }

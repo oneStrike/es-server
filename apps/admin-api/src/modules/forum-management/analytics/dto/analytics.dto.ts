@@ -1,4 +1,4 @@
-import { PageDto } from '@libs/common/dto'
+import { PageDto } from '@libs/base/dto'
 import { ApiProperty } from '@nestjs/swagger'
 import { Type } from 'class-transformer'
 import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator'
@@ -60,17 +60,29 @@ export class ActivityTrendPointDto {
  * 活跃度趋势查询 DTO
  */
 export class ActivityTrendQueryDto {
-  @ApiProperty({ description: '时间范围', enum: TimeRangeEnum, example: TimeRangeEnum.LAST_7_DAYS })
+  @ApiProperty({
+    description: '时间范围',
+    enum: TimeRangeEnum,
+    example: TimeRangeEnum.LAST_7_DAYS,
+  })
   @IsEnum(TimeRangeEnum)
   @IsOptional()
   timeRange?: TimeRangeEnum
 
-  @ApiProperty({ description: '开始日期', example: '2024-01-01', required: false })
+  @ApiProperty({
+    description: '开始日期',
+    example: '2024-01-01',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   startDate?: string
 
-  @ApiProperty({ description: '结束日期', example: '2024-01-31', required: false })
+  @ApiProperty({
+    description: '结束日期',
+    example: '2024-01-31',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   endDate?: string
@@ -115,7 +127,12 @@ export class HotTopicDto {
  * 热门主题查询 DTO
  */
 export class HotTopicsQueryDto extends PageDto {
-  @ApiProperty({ description: '时间范围', enum: TimeRangeEnum, example: TimeRangeEnum.LAST_7_DAYS, required: false })
+  @ApiProperty({
+    description: '时间范围',
+    enum: TimeRangeEnum,
+    example: TimeRangeEnum.LAST_7_DAYS,
+    required: false,
+  })
   @IsEnum(TimeRangeEnum)
   @IsOptional()
   timeRange?: TimeRangeEnum
@@ -126,7 +143,11 @@ export class HotTopicsQueryDto extends PageDto {
   @Type(() => Number)
   sectionId?: number
 
-  @ApiProperty({ description: '排序方式', example: 'viewCount', required: false })
+  @ApiProperty({
+    description: '排序方式',
+    example: 'viewCount',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   sortBy?: 'viewCount' | 'replyCount' | 'likeCount'
@@ -142,7 +163,11 @@ export class ActiveUserDto {
   @ApiProperty({ description: '用户昵称', example: '张三' })
   nickname!: string
 
-  @ApiProperty({ description: '头像', example: 'https://example.com/avatar.jpg', required: false })
+  @ApiProperty({
+    description: '头像',
+    example: 'https://example.com/avatar.jpg',
+    required: false,
+  })
   avatar?: string
 
   @ApiProperty({ description: '积分', example: 1000 })
@@ -165,7 +190,12 @@ export class ActiveUserDto {
  * 活跃用户查询 DTO
  */
 export class ActiveUsersQueryDto extends PageDto {
-  @ApiProperty({ description: '时间范围', enum: TimeRangeEnum, example: TimeRangeEnum.LAST_7_DAYS, required: false })
+  @ApiProperty({
+    description: '时间范围',
+    enum: TimeRangeEnum,
+    example: TimeRangeEnum.LAST_7_DAYS,
+    required: false,
+  })
   @IsEnum(TimeRangeEnum)
   @IsOptional()
   timeRange?: TimeRangeEnum
@@ -215,8 +245,17 @@ export class SectionStatsQueryDto extends PageDto {
   @Type(() => Number)
   sectionId?: number
 
-  @ApiProperty({ description: '排序方式', example: 'topicCount', required: false })
+  @ApiProperty({
+    description: '排序方式',
+    example: 'topicCount',
+    required: false,
+  })
   @IsString()
   @IsOptional()
-  sortBy?: 'topicCount' | 'replyCount' | 'userCount' | 'todayTopics' | 'todayReplies'
+  sortBy?:
+    | 'topicCount'
+    | 'replyCount'
+    | 'userCount'
+    | 'todayTopics'
+    | 'todayReplies'
 }

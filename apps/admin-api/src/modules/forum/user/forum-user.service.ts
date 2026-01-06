@@ -1,9 +1,8 @@
-import type { ForumProfileWhereInput } from '@libs/base/database'
 import { RepositoryService } from '@libs/base/database'
 
 import { isNotNil } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { ForumPointObjectTypeEnum } from '../../forum.constant'
+import { ForumPointObjectTypeEnum } from '../forum.constant'
 import {
   AdjustPointsDto,
   CreateForumProfileDto,
@@ -82,16 +81,17 @@ export class ForumUserService extends RepositoryService {
    * @returns 分页的用户资料列表
    */
   async getForumProfilePage(queryForumProfileDto: QueryForumProfileDto) {
-    const { userId, ...otherDto } = queryForumProfileDto
-
-    const where: ForumProfileWhereInput = {}
-
-    if (isNotNil(userId)) {
-      where.userId = userId
-    }
+    const { nickname, ...otherDto } = queryForumProfileDto
 
     return this.forumProfile.findPagination({
-      where,
+      where: {
+        ...otherDto,
+        user: {
+          nickname: {
+            contains: nickname,
+          },
+        },
+      },
       select: {
         id: true,
         userId: true,
