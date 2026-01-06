@@ -98,12 +98,13 @@ export class BaseForumProfileDto extends BaseDto {
   })
   points!: number
 
-  @ApiProperty({
-    description: '等级信息',
-    required: false,
-    type: LevelInfoDto,
+  @ValidateNumber({
+    description: '等级ID',
+    example: 1,
+    required: true,
+    min: 1,
   })
-  level?: LevelInfoDto
+  levelId!: number
 
   @ValidateNumber({
     description: '发表主题数',
@@ -168,16 +169,7 @@ export class CreateForumProfileDto extends OmitType(BaseForumProfileDto, [
   'likeCount',
   'favoriteCount',
   'badges',
-  'level',
-]) {
-  @ValidateNumber({
-    description: '等级ID',
-    example: 1,
-    required: false,
-    min: 1,
-  })
-  levelId?: number
-}
+]) {}
 
 /**
  * 更新论坛用户资料DTO
@@ -199,18 +191,16 @@ export class UpdateForumProfileDto extends IntersectionType(
  */
 export class QueryForumProfileDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(BaseForumProfileDto, [
-      'userId',
-      'points',
-      'topicCount',
-      'replyCount',
-      'likeCount',
-      'favoriteCount',
-      'isBanned',
-    ]),
-  ),
-) {}
+  PartialType(PickType(BaseForumProfileDto, ['levelId', 'isBanned'])),
+) {
+  @ValidateString({
+    description: '用户昵称',
+    example: '张三',
+    required: false,
+    maxLength: 20,
+  })
+  nickname?: string
+}
 
 /**
  * 更新用户封禁状态DTO

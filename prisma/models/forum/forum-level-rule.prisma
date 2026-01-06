@@ -21,7 +21,7 @@ model ForumLevelRule {
   /// 发帖间隔秒数（防刷屏），0表示无限制
   postInterval       Int            @default(0) @map("post_interval") @db.SmallInt
   /// 单个文件最大大小（KB），0表示无限制 
-  maxFileSize        Int            @default(0) @map("max_file_size") @db.SmallInt
+  maxFileSize        Int            @default(0) @map("max_file_size")
   /// 每日点赞次数上限，0表示无限制
   dailyLikeLimit     Int            @default(0) @map("daily_like_limit") @db.SmallInt
   /// 每日收藏次数上限，0表示无限制

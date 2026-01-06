@@ -1,4 +1,4 @@
-import { NotificationModule } from '@app/forum/notification/notification.module'
+import { NotificationModule } from '@libs/forum'
 import { Module } from '@nestjs/common'
 import { AdminForumNotificationController } from './forum-notification.controller'
 

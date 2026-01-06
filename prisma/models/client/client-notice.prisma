@@ -28,8 +28,9 @@ model ClientNotice {
   /// 更新时间
   updatedAt            DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 启用的平台（1=H5, 2=APP, 4=小程序）
-  enablePlatform       Int[]       @map("enable_platform")
-  clientPage           ClientPage? @relation("notices", fields: [pageId], references: [id])
+  enablePlatform       Int[]              @map("enable_platform")
+  clientPage           ClientPage?        @relation("notices", fields: [pageId], references: [id])
+  noticeReads          ClientNoticeRead[]
 
   @@index([isPublished, publishStartTime, publishEndTime])
   @@index([noticeType, isPublished])

@@ -289,7 +289,7 @@ export type ForumModeratorSectionScalarFieldEnum = (typeof ForumModeratorSection
 export const ForumModeratorScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  permissionMask: 'permissionMask',
+  permission: 'permission',
   isEnabled: 'isEnabled',
   remark: 'remark',
   createdAt: 'createdAt',

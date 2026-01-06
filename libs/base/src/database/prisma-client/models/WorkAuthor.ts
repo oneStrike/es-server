@@ -881,7 +881,7 @@ export type $WorkAuthorPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     isRecommended: boolean
     /**
-     * 作者类型，bitmap存储，每个bit表示一种类型（1: 漫画家, 2: 轻小说作者, 4: 插画师, 8: coser）
+     * 作者类型（1: 漫画家, 2: 轻小说作者, 3: 插画师, 4: coser）
      */
     type: number[]
   }, ExtArgs["result"]["workAuthor"]>
