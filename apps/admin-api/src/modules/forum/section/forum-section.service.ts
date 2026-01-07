@@ -46,17 +46,50 @@ export class ForumSectionService extends RepositoryService {
   }
 
   async getSectionTree(rootOnly: boolean = true) {
-    const sections = await this.forumSection.findMany({
-      where: { deletedAt: null },
+    const groups = await this.prisma.forumSectionGroup.findMany({
+      where: {
+        deletedAt: null,
+      },
       orderBy: {
         sortOrder: 'asc',
       },
       include: {
-        group: true,
+        sections: {
+          where: {
+            deletedAt: null,
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+          select: {
+            id: true,
+            name: true,
+            groupId: true,
+            description: true,
+            icon: true,
+            sortOrder: true,
+            isEnabled: true,
+            topicCount: true,
+            replyCount: true,
+            lastPostAt: true,
+            lastTopicId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        sortOrder: true,
+        isEnabled: true,
+        createdAt: true,
+        updatedAt: true,
       },
     })
 
-    return sections
+    return groups
   }
 
   async getForumSectionPage(queryForumSectionDto: QueryForumSectionDto) {

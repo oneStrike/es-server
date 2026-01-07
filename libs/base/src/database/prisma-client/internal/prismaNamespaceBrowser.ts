@@ -71,6 +71,7 @@ export const ModelName = {
   ForumProfile: 'ForumProfile',
   ForumReplyLike: 'ForumReplyLike',
   ForumReply: 'ForumReply',
+  ForumReport: 'ForumReport',
   ForumSectionGroup: 'ForumSectionGroup',
   ForumSection: 'ForumSection',
   ForumSensitiveWord: 'ForumSensitiveWord',
@@ -80,6 +81,7 @@ export const ModelName = {
   ForumTopicTag: 'ForumTopicTag',
   ForumTopic: 'ForumTopic',
   ForumUserActionLog: 'ForumUserActionLog',
+  ForumView: 'ForumView',
   MemberLevel: 'MemberLevel',
   RequestLog: 'RequestLog',
   Dictionary: 'Dictionary',
@@ -198,13 +200,13 @@ export type ClientPageScalarFieldEnum = (typeof ClientPageScalarFieldEnum)[keyof
 
 export const ClientUserScalarFieldEnum = {
   id: 'id',
-  username: 'username',
+  account: 'account',
   nickname: 'nickname',
   avatar: 'avatar',
-  phoneNumber: 'phoneNumber',
-  emailAddress: 'emailAddress',
+  phone: 'phone',
+  email: 'email',
   isEnabled: 'isEnabled',
-  genderType: 'genderType',
+  gender: 'gender',
   birthDate: 'birthDate',
   isSignedIn: 'isSignedIn',
   lastLoginAt: 'lastLoginAt',
@@ -334,7 +336,7 @@ export type ForumModeratorScalarFieldEnum = (typeof ForumModeratorScalarFieldEnu
 
 export const ForumNotificationScalarFieldEnum = {
   id: 'id',
-  userId: 'userId',
+  profileId: 'profileId',
   type: 'type',
   title: 'title',
   content: 'content',
@@ -425,10 +427,11 @@ export const ForumReplyScalarFieldEnum = {
   id: 'id',
   content: 'content',
   topicId: 'topicId',
-  userId: 'userId',
+  profileId: 'profileId',
   floor: 'floor',
-  replyToId: 'replyToId',
   isHidden: 'isHidden',
+  replyToId: 'replyToId',
+  actualReplyToId: 'actualReplyToId',
   auditStatus: 'auditStatus',
   auditReason: 'auditReason',
   auditAt: 'auditAt',
@@ -441,6 +444,24 @@ export const ForumReplyScalarFieldEnum = {
 } as const
 
 export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof typeof ForumReplyScalarFieldEnum]
+
+
+export const ForumReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  type: 'type',
+  targetId: 'targetId',
+  reason: 'reason',
+  description: 'description',
+  evidenceUrl: 'evidenceUrl',
+  status: 'status',
+  handlerId: 'handlerId',
+  handlingNote: 'handlingNote',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ForumReportScalarFieldEnum = (typeof ForumReportScalarFieldEnum)[keyof typeof ForumReportScalarFieldEnum]
 
 
 export const ForumSectionGroupScalarFieldEnum = {
@@ -467,7 +488,6 @@ export const ForumSectionScalarFieldEnum = {
   isEnabled: 'isEnabled',
   topicReviewPolicy: 'topicReviewPolicy',
   userLevelRuleId: 'userLevelRuleId',
-  maxModerators: 'maxModerators',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
   lastPostAt: 'lastPostAt',
@@ -588,6 +608,21 @@ export const ForumUserActionLogScalarFieldEnum = {
 } as const
 
 export type ForumUserActionLogScalarFieldEnum = (typeof ForumUserActionLogScalarFieldEnum)[keyof typeof ForumUserActionLogScalarFieldEnum]
+
+
+export const ForumViewScalarFieldEnum = {
+  id: 'id',
+  topicId: 'topicId',
+  replyId: 'replyId',
+  userId: 'userId',
+  type: 'type',
+  viewedAt: 'viewedAt',
+  duration: 'duration',
+  device: 'device',
+  ipAddress: 'ipAddress'
+} as const
+
+export type ForumViewScalarFieldEnum = (typeof ForumViewScalarFieldEnum)[keyof typeof ForumViewScalarFieldEnum]
 
 
 export const MemberLevelScalarFieldEnum = {

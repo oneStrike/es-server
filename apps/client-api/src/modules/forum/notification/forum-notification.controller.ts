@@ -1,3 +1,4 @@
+import { JwtAuthGuard } from '@app/guards/jwt-auth.guard'
 import {
   BatchDeleteNotificationDto,
   BatchMarkNotificationReadDto,
@@ -7,7 +8,6 @@ import {
   QueryNotificationListDto,
 } from '@libs/forum/notification/dto/notification.dto'
 import { NotificationService } from '@libs/forum/notification/notification.service'
-import { JwtAuthGuard } from '@app/guards/jwt-auth.guard'
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 

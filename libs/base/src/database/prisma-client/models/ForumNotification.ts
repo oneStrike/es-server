@@ -28,7 +28,7 @@ export type AggregateForumNotification = {
 
 export type ForumNotificationAvgAggregateOutputType = {
   id: number | null
-  userId: number | null
+  profileId: number | null
   type: number | null
   priority: number | null
   topicId: number | null
@@ -37,7 +37,7 @@ export type ForumNotificationAvgAggregateOutputType = {
 
 export type ForumNotificationSumAggregateOutputType = {
   id: number | null
-  userId: number | null
+  profileId: number | null
   type: number | null
   priority: number | null
   topicId: number | null
@@ -46,7 +46,7 @@ export type ForumNotificationSumAggregateOutputType = {
 
 export type ForumNotificationMinAggregateOutputType = {
   id: number | null
-  userId: number | null
+  profileId: number | null
   type: number | null
   title: string | null
   content: string | null
@@ -61,7 +61,7 @@ export type ForumNotificationMinAggregateOutputType = {
 
 export type ForumNotificationMaxAggregateOutputType = {
   id: number | null
-  userId: number | null
+  profileId: number | null
   type: number | null
   title: string | null
   content: string | null
@@ -76,7 +76,7 @@ export type ForumNotificationMaxAggregateOutputType = {
 
 export type ForumNotificationCountAggregateOutputType = {
   id: number
-  userId: number
+  profileId: number
   type: number
   title: number
   content: number
@@ -93,7 +93,7 @@ export type ForumNotificationCountAggregateOutputType = {
 
 export type ForumNotificationAvgAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   type?: true
   priority?: true
   topicId?: true
@@ -102,7 +102,7 @@ export type ForumNotificationAvgAggregateInputType = {
 
 export type ForumNotificationSumAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   type?: true
   priority?: true
   topicId?: true
@@ -111,7 +111,7 @@ export type ForumNotificationSumAggregateInputType = {
 
 export type ForumNotificationMinAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   type?: true
   title?: true
   content?: true
@@ -126,7 +126,7 @@ export type ForumNotificationMinAggregateInputType = {
 
 export type ForumNotificationMaxAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   type?: true
   title?: true
   content?: true
@@ -141,7 +141,7 @@ export type ForumNotificationMaxAggregateInputType = {
 
 export type ForumNotificationCountAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   type?: true
   title?: true
   content?: true
@@ -243,7 +243,7 @@ export type ForumNotificationGroupByArgs<ExtArgs extends runtime.Types.Extension
 
 export type ForumNotificationGroupByOutputType = {
   id: number
-  userId: number
+  profileId: number
   type: number
   title: string
   content: string
@@ -281,7 +281,7 @@ export type ForumNotificationWhereInput = {
   OR?: Prisma.ForumNotificationWhereInput[]
   NOT?: Prisma.ForumNotificationWhereInput | Prisma.ForumNotificationWhereInput[]
   id?: Prisma.IntFilter<"ForumNotification"> | number
-  userId?: Prisma.IntFilter<"ForumNotification"> | number
+  profileId?: Prisma.IntFilter<"ForumNotification"> | number
   type?: Prisma.IntFilter<"ForumNotification"> | number
   title?: Prisma.StringFilter<"ForumNotification"> | string
   content?: Prisma.StringFilter<"ForumNotification"> | string
@@ -299,7 +299,7 @@ export type ForumNotificationWhereInput = {
 
 export type ForumNotificationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
@@ -320,7 +320,7 @@ export type ForumNotificationWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.ForumNotificationWhereInput | Prisma.ForumNotificationWhereInput[]
   OR?: Prisma.ForumNotificationWhereInput[]
   NOT?: Prisma.ForumNotificationWhereInput | Prisma.ForumNotificationWhereInput[]
-  userId?: Prisma.IntFilter<"ForumNotification"> | number
+  profileId?: Prisma.IntFilter<"ForumNotification"> | number
   type?: Prisma.IntFilter<"ForumNotification"> | number
   title?: Prisma.StringFilter<"ForumNotification"> | string
   content?: Prisma.StringFilter<"ForumNotification"> | string
@@ -338,7 +338,7 @@ export type ForumNotificationWhereUniqueInput = Prisma.AtLeast<{
 
 export type ForumNotificationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
@@ -361,7 +361,7 @@ export type ForumNotificationScalarWhereWithAggregatesInput = {
   OR?: Prisma.ForumNotificationScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ForumNotificationScalarWhereWithAggregatesInput | Prisma.ForumNotificationScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumNotification"> | number
-  userId?: Prisma.IntWithAggregatesFilter<"ForumNotification"> | number
+  profileId?: Prisma.IntWithAggregatesFilter<"ForumNotification"> | number
   type?: Prisma.IntWithAggregatesFilter<"ForumNotification"> | number
   title?: Prisma.StringWithAggregatesFilter<"ForumNotification"> | string
   content?: Prisma.StringWithAggregatesFilter<"ForumNotification"> | string
@@ -390,7 +390,7 @@ export type ForumNotificationCreateInput = {
 
 export type ForumNotificationUncheckedCreateInput = {
   id?: number
-  userId: number
+  profileId: number
   type: number
   title: string
   content: string
@@ -419,7 +419,7 @@ export type ForumNotificationUpdateInput = {
 
 export type ForumNotificationUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -434,7 +434,7 @@ export type ForumNotificationUncheckedUpdateInput = {
 
 export type ForumNotificationCreateManyInput = {
   id?: number
-  userId: number
+  profileId: number
   type: number
   title: string
   content: string
@@ -460,7 +460,7 @@ export type ForumNotificationUpdateManyMutationInput = {
 
 export type ForumNotificationUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -475,7 +475,7 @@ export type ForumNotificationUncheckedUpdateManyInput = {
 
 export type ForumNotificationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
@@ -490,7 +490,7 @@ export type ForumNotificationCountOrderByAggregateInput = {
 
 export type ForumNotificationAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   priority?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
@@ -499,7 +499,7 @@ export type ForumNotificationAvgOrderByAggregateInput = {
 
 export type ForumNotificationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
@@ -514,7 +514,7 @@ export type ForumNotificationMaxOrderByAggregateInput = {
 
 export type ForumNotificationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
@@ -529,7 +529,7 @@ export type ForumNotificationMinOrderByAggregateInput = {
 
 export type ForumNotificationSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   priority?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
@@ -730,7 +730,7 @@ export type ForumNotificationScalarWhereInput = {
   OR?: Prisma.ForumNotificationScalarWhereInput[]
   NOT?: Prisma.ForumNotificationScalarWhereInput | Prisma.ForumNotificationScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumNotification"> | number
-  userId?: Prisma.IntFilter<"ForumNotification"> | number
+  profileId?: Prisma.IntFilter<"ForumNotification"> | number
   type?: Prisma.IntFilter<"ForumNotification"> | number
   title?: Prisma.StringFilter<"ForumNotification"> | string
   content?: Prisma.StringFilter<"ForumNotification"> | string
@@ -758,7 +758,7 @@ export type ForumNotificationCreateWithoutReplyInput = {
 
 export type ForumNotificationUncheckedCreateWithoutReplyInput = {
   id?: number
-  userId: number
+  profileId: number
   type: number
   title: string
   content: string
@@ -811,7 +811,7 @@ export type ForumNotificationCreateWithoutTopicInput = {
 
 export type ForumNotificationUncheckedCreateWithoutTopicInput = {
   id?: number
-  userId: number
+  profileId: number
   type: number
   title: string
   content: string
@@ -906,7 +906,7 @@ export type ForumNotificationUncheckedUpdateManyWithoutProfileInput = {
 
 export type ForumNotificationCreateManyReplyInput = {
   id?: number
-  userId: number
+  profileId: number
   type: number
   title: string
   content: string
@@ -933,7 +933,7 @@ export type ForumNotificationUpdateWithoutReplyInput = {
 
 export type ForumNotificationUncheckedUpdateWithoutReplyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -947,7 +947,7 @@ export type ForumNotificationUncheckedUpdateWithoutReplyInput = {
 
 export type ForumNotificationUncheckedUpdateManyWithoutReplyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -961,7 +961,7 @@ export type ForumNotificationUncheckedUpdateManyWithoutReplyInput = {
 
 export type ForumNotificationCreateManyTopicInput = {
   id?: number
-  userId: number
+  profileId: number
   type: number
   title: string
   content: string
@@ -988,7 +988,7 @@ export type ForumNotificationUpdateWithoutTopicInput = {
 
 export type ForumNotificationUncheckedUpdateWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1002,7 +1002,7 @@ export type ForumNotificationUncheckedUpdateWithoutTopicInput = {
 
 export type ForumNotificationUncheckedUpdateManyWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1018,7 +1018,7 @@ export type ForumNotificationUncheckedUpdateManyWithoutTopicInput = {
 
 export type ForumNotificationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  userId?: boolean
+  profileId?: boolean
   type?: boolean
   title?: boolean
   content?: boolean
@@ -1036,7 +1036,7 @@ export type ForumNotificationSelect<ExtArgs extends runtime.Types.Extensions.Int
 
 export type ForumNotificationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  userId?: boolean
+  profileId?: boolean
   type?: boolean
   title?: boolean
   content?: boolean
@@ -1054,7 +1054,7 @@ export type ForumNotificationSelectCreateManyAndReturn<ExtArgs extends runtime.T
 
 export type ForumNotificationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  userId?: boolean
+  profileId?: boolean
   type?: boolean
   title?: boolean
   content?: boolean
@@ -1072,7 +1072,7 @@ export type ForumNotificationSelectUpdateManyAndReturn<ExtArgs extends runtime.T
 
 export type ForumNotificationSelectScalar = {
   id?: boolean
-  userId?: boolean
+  profileId?: boolean
   type?: boolean
   title?: boolean
   content?: boolean
@@ -1085,7 +1085,7 @@ export type ForumNotificationSelectScalar = {
   expiredAt?: boolean
 }
 
-export type ForumNotificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "title" | "content" | "priority" | "topicId" | "replyId" | "isRead" | "readAt" | "createdAt" | "expiredAt", ExtArgs["result"]["forumNotification"]>
+export type ForumNotificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "profileId" | "type" | "title" | "content" | "priority" | "topicId" | "replyId" | "isRead" | "readAt" | "createdAt" | "expiredAt", ExtArgs["result"]["forumNotification"]>
 export type ForumNotificationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
   topic?: boolean | Prisma.ForumNotification$topicArgs<ExtArgs>
@@ -1117,7 +1117,7 @@ export type $ForumNotificationPayload<ExtArgs extends runtime.Types.Extensions.I
     /**
      * 关联的用户ID
      */
-    userId: number
+    profileId: number
     /**
      * 通知类型（1=回复, 2=点赞, 3=收藏, 4=系统通知）
      */
@@ -1585,7 +1585,7 @@ export interface Prisma__ForumNotificationClient<T, Null = never, ExtArgs extend
  */
 export interface ForumNotificationFieldRefs {
   readonly id: Prisma.FieldRef<"ForumNotification", 'Int'>
-  readonly userId: Prisma.FieldRef<"ForumNotification", 'Int'>
+  readonly profileId: Prisma.FieldRef<"ForumNotification", 'Int'>
   readonly type: Prisma.FieldRef<"ForumNotification", 'Int'>
   readonly title: Prisma.FieldRef<"ForumNotification", 'String'>
   readonly content: Prisma.FieldRef<"ForumNotification", 'String'>

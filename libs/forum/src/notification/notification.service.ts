@@ -7,8 +7,8 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateNotificationDto,
   CreateNotificationShortDto,
+  ProfileIdDto,
   QueryNotificationListDto,
-  UserIdDto,
 } from './dto/notification.dto'
 import {
   NotificationPriorityEnum,
@@ -39,12 +39,16 @@ export class NotificationService extends RepositoryService {
    * @returns 创建的通知信息
    */
   async createNotification(createNotificationDto: CreateNotificationDto) {
-    if (!createNotificationDto.topicId && !createNotificationDto.replyId && createNotificationDto.type !== NotificationTypeEnum.SYSTEM) {
+    if (
+      !createNotificationDto.topicId &&
+      !createNotificationDto.replyId &&
+      createNotificationDto.type !== NotificationTypeEnum.SYSTEM
+    ) {
       throw new BadRequestException('通知的主体不存在')
     }
 
     const profile = await this.userProfile.findUnique({
-      where: { id: createNotificationDto.userId },
+      where: { id: createNotificationDto.profileId },
       select: {
         user: {
           select: {
@@ -62,7 +66,7 @@ export class NotificationService extends RepositoryService {
       isRead: false,
       profile: {
         connect: {
-          id: createNotificationDto.userId,
+          id: createNotificationDto.profileId,
         },
       },
     }
@@ -166,17 +170,17 @@ export class NotificationService extends RepositoryService {
 
   /**
    * 查询用户通知列表
-   * @param userId 用户ID
+   * @param profileId 用户ID
    * @param queryNotificationListDto 查询参数
    * @returns 通知列表
    */
   async queryUserNotificationList(
-    userId: number,
+    profileId: number,
     queryNotificationListDto: QueryNotificationListDto,
   ) {
     return this.queryNotificationList({
       ...queryNotificationListDto,
-      userId,
+      profileId,
     })
   }
 
@@ -236,10 +240,10 @@ export class NotificationService extends RepositoryService {
    * @param dto 标记所有已读的数据
    * @returns 标记结果
    */
-  async markAllNotificationRead(dto: UserIdDto) {
+  async markAllNotificationRead(dto: ProfileIdDto) {
     return this.notification.updateMany({
       where: {
-        userId: dto.userId,
+        profileId: dto.profileId,
         isRead: false,
       },
       data: {
@@ -300,11 +304,11 @@ export class NotificationService extends RepositoryService {
    * @param dto 获取未读数量的数据
    * @returns 未读通知数量
    */
-  async getUnreadCount(dto: UserIdDto) {
+  async getUnreadCount(dto: ProfileIdDto) {
     return {
       count: await this.notification.count({
         where: {
-          userId: dto.userId,
+          profileId: dto.profileId,
           isRead: false,
         },
       }),
@@ -316,11 +320,11 @@ export class NotificationService extends RepositoryService {
    * @param dto 获取用户未读数量的数据
    * @returns 未读通知数量
    */
-  async getUserUnreadCount(dto: UserIdDto) {
+  async getUserUnreadCount(dto: ProfileIdDto) {
     return {
       count: await this.notification.count({
         where: {
-          userId: dto.userId,
+          profileId: dto.profileId,
           isRead: false,
         },
       }),

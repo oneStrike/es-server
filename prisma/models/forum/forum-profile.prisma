@@ -39,9 +39,13 @@ model ForumProfile {
   level          ForumLevelRule?      @relation(fields: [levelId], references: [id])
   user           ClientUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
   badges         ForumProfileBadge[]
+  replies        ForumReply[]
   replyLikes     ForumReplyLike[]
   topicFavorites ForumTopicFavorite[]
   topicLikes     ForumTopicLike[]
+  views          ForumView[]
+  reports        ForumReport[]
+  handledReports ForumReport[]       @relation("ReportHandler")
 
   @@index([points])
   @@index([levelId])

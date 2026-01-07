@@ -343,9 +343,13 @@ export type ForumProfileWhereInput = {
   level?: Prisma.XOR<Prisma.ForumLevelRuleNullableScalarRelationFilter, Prisma.ForumLevelRuleWhereInput> | null
   user?: Prisma.XOR<Prisma.ClientUserScalarRelationFilter, Prisma.ClientUserWhereInput>
   badges?: Prisma.ForumProfileBadgeListRelationFilter
+  replies?: Prisma.ForumReplyListRelationFilter
   replyLikes?: Prisma.ForumReplyLikeListRelationFilter
   topicFavorites?: Prisma.ForumTopicFavoriteListRelationFilter
   topicLikes?: Prisma.ForumTopicLikeListRelationFilter
+  views?: Prisma.ForumViewListRelationFilter
+  reports?: Prisma.ForumReportListRelationFilter
+  handledReports?: Prisma.ForumReportListRelationFilter
 }
 
 export type ForumProfileOrderByWithRelationInput = {
@@ -372,9 +376,13 @@ export type ForumProfileOrderByWithRelationInput = {
   level?: Prisma.ForumLevelRuleOrderByWithRelationInput
   user?: Prisma.ClientUserOrderByWithRelationInput
   badges?: Prisma.ForumProfileBadgeOrderByRelationAggregateInput
+  replies?: Prisma.ForumReplyOrderByRelationAggregateInput
   replyLikes?: Prisma.ForumReplyLikeOrderByRelationAggregateInput
   topicFavorites?: Prisma.ForumTopicFavoriteOrderByRelationAggregateInput
   topicLikes?: Prisma.ForumTopicLikeOrderByRelationAggregateInput
+  views?: Prisma.ForumViewOrderByRelationAggregateInput
+  reports?: Prisma.ForumReportOrderByRelationAggregateInput
+  handledReports?: Prisma.ForumReportOrderByRelationAggregateInput
 }
 
 export type ForumProfileWhereUniqueInput = Prisma.AtLeast<{
@@ -404,9 +412,13 @@ export type ForumProfileWhereUniqueInput = Prisma.AtLeast<{
   level?: Prisma.XOR<Prisma.ForumLevelRuleNullableScalarRelationFilter, Prisma.ForumLevelRuleWhereInput> | null
   user?: Prisma.XOR<Prisma.ClientUserScalarRelationFilter, Prisma.ClientUserWhereInput>
   badges?: Prisma.ForumProfileBadgeListRelationFilter
+  replies?: Prisma.ForumReplyListRelationFilter
   replyLikes?: Prisma.ForumReplyLikeListRelationFilter
   topicFavorites?: Prisma.ForumTopicFavoriteListRelationFilter
   topicLikes?: Prisma.ForumTopicLikeListRelationFilter
+  views?: Prisma.ForumViewListRelationFilter
+  reports?: Prisma.ForumReportListRelationFilter
+  handledReports?: Prisma.ForumReportListRelationFilter
 }, "id" | "userId">
 
 export type ForumProfileOrderByWithAggregationInput = {
@@ -476,9 +488,13 @@ export type ForumProfileCreateInput = {
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateInput = {
@@ -503,9 +519,13 @@ export type ForumProfileUncheckedCreateInput = {
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUpdateInput = {
@@ -529,9 +549,13 @@ export type ForumProfileUpdateInput = {
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateInput = {
@@ -556,9 +580,13 @@ export type ForumProfileUncheckedUpdateInput = {
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileCreateManyInput = {
@@ -874,6 +902,50 @@ export type ForumProfileUpdateOneRequiredWithoutReplyLikesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ForumProfileUpdateToOneWithWhereWithoutReplyLikesInput, Prisma.ForumProfileUpdateWithoutReplyLikesInput>, Prisma.ForumProfileUncheckedUpdateWithoutReplyLikesInput>
 }
 
+export type ForumProfileCreateNestedOneWithoutRepliesInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileCreateWithoutRepliesInput, Prisma.ForumProfileUncheckedCreateWithoutRepliesInput>
+  connectOrCreate?: Prisma.ForumProfileCreateOrConnectWithoutRepliesInput
+  connect?: Prisma.ForumProfileWhereUniqueInput
+}
+
+export type ForumProfileUpdateOneRequiredWithoutRepliesNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileCreateWithoutRepliesInput, Prisma.ForumProfileUncheckedCreateWithoutRepliesInput>
+  connectOrCreate?: Prisma.ForumProfileCreateOrConnectWithoutRepliesInput
+  upsert?: Prisma.ForumProfileUpsertWithoutRepliesInput
+  connect?: Prisma.ForumProfileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumProfileUpdateToOneWithWhereWithoutRepliesInput, Prisma.ForumProfileUpdateWithoutRepliesInput>, Prisma.ForumProfileUncheckedUpdateWithoutRepliesInput>
+}
+
+export type ForumProfileCreateNestedOneWithoutReportsInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileCreateWithoutReportsInput, Prisma.ForumProfileUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.ForumProfileCreateOrConnectWithoutReportsInput
+  connect?: Prisma.ForumProfileWhereUniqueInput
+}
+
+export type ForumProfileCreateNestedOneWithoutHandledReportsInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileCreateWithoutHandledReportsInput, Prisma.ForumProfileUncheckedCreateWithoutHandledReportsInput>
+  connectOrCreate?: Prisma.ForumProfileCreateOrConnectWithoutHandledReportsInput
+  connect?: Prisma.ForumProfileWhereUniqueInput
+}
+
+export type ForumProfileUpdateOneRequiredWithoutReportsNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileCreateWithoutReportsInput, Prisma.ForumProfileUncheckedCreateWithoutReportsInput>
+  connectOrCreate?: Prisma.ForumProfileCreateOrConnectWithoutReportsInput
+  upsert?: Prisma.ForumProfileUpsertWithoutReportsInput
+  connect?: Prisma.ForumProfileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumProfileUpdateToOneWithWhereWithoutReportsInput, Prisma.ForumProfileUpdateWithoutReportsInput>, Prisma.ForumProfileUncheckedUpdateWithoutReportsInput>
+}
+
+export type ForumProfileUpdateOneWithoutHandledReportsNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileCreateWithoutHandledReportsInput, Prisma.ForumProfileUncheckedCreateWithoutHandledReportsInput>
+  connectOrCreate?: Prisma.ForumProfileCreateOrConnectWithoutHandledReportsInput
+  upsert?: Prisma.ForumProfileUpsertWithoutHandledReportsInput
+  disconnect?: Prisma.ForumProfileWhereInput | boolean
+  delete?: Prisma.ForumProfileWhereInput | boolean
+  connect?: Prisma.ForumProfileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumProfileUpdateToOneWithWhereWithoutHandledReportsInput, Prisma.ForumProfileUpdateWithoutHandledReportsInput>, Prisma.ForumProfileUncheckedUpdateWithoutHandledReportsInput>
+}
+
 export type ForumProfileCreateNestedOneWithoutTopicFavoritesInput = {
   create?: Prisma.XOR<Prisma.ForumProfileCreateWithoutTopicFavoritesInput, Prisma.ForumProfileUncheckedCreateWithoutTopicFavoritesInput>
   connectOrCreate?: Prisma.ForumProfileCreateOrConnectWithoutTopicFavoritesInput
@@ -902,6 +974,20 @@ export type ForumProfileUpdateOneRequiredWithoutTopicLikesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ForumProfileUpdateToOneWithWhereWithoutTopicLikesInput, Prisma.ForumProfileUpdateWithoutTopicLikesInput>, Prisma.ForumProfileUncheckedUpdateWithoutTopicLikesInput>
 }
 
+export type ForumProfileCreateNestedOneWithoutViewsInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileCreateWithoutViewsInput, Prisma.ForumProfileUncheckedCreateWithoutViewsInput>
+  connectOrCreate?: Prisma.ForumProfileCreateOrConnectWithoutViewsInput
+  connect?: Prisma.ForumProfileWhereUniqueInput
+}
+
+export type ForumProfileUpdateOneRequiredWithoutViewsNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileCreateWithoutViewsInput, Prisma.ForumProfileUncheckedCreateWithoutViewsInput>
+  connectOrCreate?: Prisma.ForumProfileCreateOrConnectWithoutViewsInput
+  upsert?: Prisma.ForumProfileUpsertWithoutViewsInput
+  connect?: Prisma.ForumProfileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumProfileUpdateToOneWithWhereWithoutViewsInput, Prisma.ForumProfileUpdateWithoutViewsInput>, Prisma.ForumProfileUncheckedUpdateWithoutViewsInput>
+}
+
 export type ForumProfileCreateWithoutUserInput = {
   points?: number
   topicCount?: number
@@ -922,9 +1008,13 @@ export type ForumProfileCreateWithoutUserInput = {
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutUserInput = {
@@ -948,9 +1038,13 @@ export type ForumProfileUncheckedCreateWithoutUserInput = {
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutUserInput = {
@@ -989,9 +1083,13 @@ export type ForumProfileUpdateWithoutUserInput = {
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutUserInput = {
@@ -1015,9 +1113,13 @@ export type ForumProfileUncheckedUpdateWithoutUserInput = {
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileCreateWithoutLevelInput = {
@@ -1040,9 +1142,13 @@ export type ForumProfileCreateWithoutLevelInput = {
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutLevelInput = {
@@ -1066,9 +1172,13 @@ export type ForumProfileUncheckedCreateWithoutLevelInput = {
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutLevelInput = {
@@ -1139,9 +1249,13 @@ export type ForumProfileCreateWithoutApplicationsInput = {
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutApplicationsInput = {
@@ -1165,9 +1279,13 @@ export type ForumProfileUncheckedCreateWithoutApplicationsInput = {
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutApplicationsInput = {
@@ -1206,9 +1324,13 @@ export type ForumProfileUpdateWithoutApplicationsInput = {
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutApplicationsInput = {
@@ -1232,9 +1354,13 @@ export type ForumProfileUncheckedUpdateWithoutApplicationsInput = {
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileCreateWithoutModeratorInput = {
@@ -1257,9 +1383,13 @@ export type ForumProfileCreateWithoutModeratorInput = {
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutModeratorInput = {
@@ -1283,9 +1413,13 @@ export type ForumProfileUncheckedCreateWithoutModeratorInput = {
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutModeratorInput = {
@@ -1324,9 +1458,13 @@ export type ForumProfileUpdateWithoutModeratorInput = {
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutModeratorInput = {
@@ -1350,9 +1488,13 @@ export type ForumProfileUncheckedUpdateWithoutModeratorInput = {
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileCreateWithoutNotificationsInput = {
@@ -1375,9 +1517,13 @@ export type ForumProfileCreateWithoutNotificationsInput = {
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutNotificationsInput = {
@@ -1401,9 +1547,13 @@ export type ForumProfileUncheckedCreateWithoutNotificationsInput = {
   applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutNotificationsInput = {
@@ -1442,9 +1592,13 @@ export type ForumProfileUpdateWithoutNotificationsInput = {
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutNotificationsInput = {
@@ -1468,9 +1622,13 @@ export type ForumProfileUncheckedUpdateWithoutNotificationsInput = {
   applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileCreateWithoutPointRecordsInput = {
@@ -1493,9 +1651,13 @@ export type ForumProfileCreateWithoutPointRecordsInput = {
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutPointRecordsInput = {
@@ -1519,9 +1681,13 @@ export type ForumProfileUncheckedCreateWithoutPointRecordsInput = {
   applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutPointRecordsInput = {
@@ -1560,9 +1726,13 @@ export type ForumProfileUpdateWithoutPointRecordsInput = {
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutPointRecordsInput = {
@@ -1586,9 +1756,13 @@ export type ForumProfileUncheckedUpdateWithoutPointRecordsInput = {
   applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileCreateWithoutBadgesInput = {
@@ -1611,9 +1785,13 @@ export type ForumProfileCreateWithoutBadgesInput = {
   pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutBadgesInput = {
@@ -1637,9 +1815,13 @@ export type ForumProfileUncheckedCreateWithoutBadgesInput = {
   applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutBadgesInput = {
@@ -1678,9 +1860,13 @@ export type ForumProfileUpdateWithoutBadgesInput = {
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutBadgesInput = {
@@ -1704,9 +1890,13 @@ export type ForumProfileUncheckedUpdateWithoutBadgesInput = {
   applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileCreateWithoutReplyLikesInput = {
@@ -1730,8 +1920,12 @@ export type ForumProfileCreateWithoutReplyLikesInput = {
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutReplyLikesInput = {
@@ -1756,8 +1950,12 @@ export type ForumProfileUncheckedCreateWithoutReplyLikesInput = {
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutReplyLikesInput = {
@@ -1797,8 +1995,12 @@ export type ForumProfileUpdateWithoutReplyLikesInput = {
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutReplyLikesInput = {
@@ -1823,8 +2025,414 @@ export type ForumProfileUncheckedUpdateWithoutReplyLikesInput = {
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
+}
+
+export type ForumProfileCreateWithoutRepliesInput = {
+  points?: number
+  topicCount?: number
+  replyCount?: number
+  likeCount?: number
+  favoriteCount?: number
+  signature?: string | null
+  bio?: string | null
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
+  applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
+  pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
+  level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
+  user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
+  badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
+  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
+  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
+}
+
+export type ForumProfileUncheckedCreateWithoutRepliesInput = {
+  id?: number
+  userId: number
+  points?: number
+  levelId: number
+  topicCount?: number
+  replyCount?: number
+  likeCount?: number
+  favoriteCount?: number
+  signature?: string | null
+  bio?: string | null
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
+  pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
+  badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
+  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
+}
+
+export type ForumProfileCreateOrConnectWithoutRepliesInput = {
+  where: Prisma.ForumProfileWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumProfileCreateWithoutRepliesInput, Prisma.ForumProfileUncheckedCreateWithoutRepliesInput>
+}
+
+export type ForumProfileUpsertWithoutRepliesInput = {
+  update: Prisma.XOR<Prisma.ForumProfileUpdateWithoutRepliesInput, Prisma.ForumProfileUncheckedUpdateWithoutRepliesInput>
+  create: Prisma.XOR<Prisma.ForumProfileCreateWithoutRepliesInput, Prisma.ForumProfileUncheckedCreateWithoutRepliesInput>
+  where?: Prisma.ForumProfileWhereInput
+}
+
+export type ForumProfileUpdateToOneWithWhereWithoutRepliesInput = {
+  where?: Prisma.ForumProfileWhereInput
+  data: Prisma.XOR<Prisma.ForumProfileUpdateWithoutRepliesInput, Prisma.ForumProfileUncheckedUpdateWithoutRepliesInput>
+}
+
+export type ForumProfileUpdateWithoutRepliesInput = {
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
+  applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
+  pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
+  level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
+  user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
+  badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
+  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
+}
+
+export type ForumProfileUncheckedUpdateWithoutRepliesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  levelId?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
+  pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
+  badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
+  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
+}
+
+export type ForumProfileCreateWithoutReportsInput = {
+  points?: number
+  topicCount?: number
+  replyCount?: number
+  likeCount?: number
+  favoriteCount?: number
+  signature?: string | null
+  bio?: string | null
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
+  applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
+  pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
+  level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
+  user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
+  badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
+  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
+  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
+  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
+}
+
+export type ForumProfileUncheckedCreateWithoutReportsInput = {
+  id?: number
+  userId: number
+  points?: number
+  levelId: number
+  topicCount?: number
+  replyCount?: number
+  likeCount?: number
+  favoriteCount?: number
+  signature?: string | null
+  bio?: string | null
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
+  pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
+  badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
+  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
+}
+
+export type ForumProfileCreateOrConnectWithoutReportsInput = {
+  where: Prisma.ForumProfileWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumProfileCreateWithoutReportsInput, Prisma.ForumProfileUncheckedCreateWithoutReportsInput>
+}
+
+export type ForumProfileCreateWithoutHandledReportsInput = {
+  points?: number
+  topicCount?: number
+  replyCount?: number
+  likeCount?: number
+  favoriteCount?: number
+  signature?: string | null
+  bio?: string | null
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
+  applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
+  pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
+  level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
+  user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
+  badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
+  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
+  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
+  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+}
+
+export type ForumProfileUncheckedCreateWithoutHandledReportsInput = {
+  id?: number
+  userId: number
+  points?: number
+  levelId: number
+  topicCount?: number
+  replyCount?: number
+  likeCount?: number
+  favoriteCount?: number
+  signature?: string | null
+  bio?: string | null
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
+  pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
+  badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
+  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+}
+
+export type ForumProfileCreateOrConnectWithoutHandledReportsInput = {
+  where: Prisma.ForumProfileWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumProfileCreateWithoutHandledReportsInput, Prisma.ForumProfileUncheckedCreateWithoutHandledReportsInput>
+}
+
+export type ForumProfileUpsertWithoutReportsInput = {
+  update: Prisma.XOR<Prisma.ForumProfileUpdateWithoutReportsInput, Prisma.ForumProfileUncheckedUpdateWithoutReportsInput>
+  create: Prisma.XOR<Prisma.ForumProfileCreateWithoutReportsInput, Prisma.ForumProfileUncheckedCreateWithoutReportsInput>
+  where?: Prisma.ForumProfileWhereInput
+}
+
+export type ForumProfileUpdateToOneWithWhereWithoutReportsInput = {
+  where?: Prisma.ForumProfileWhereInput
+  data: Prisma.XOR<Prisma.ForumProfileUpdateWithoutReportsInput, Prisma.ForumProfileUncheckedUpdateWithoutReportsInput>
+}
+
+export type ForumProfileUpdateWithoutReportsInput = {
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
+  applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
+  pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
+  level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
+  user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
+  badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
+  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
+}
+
+export type ForumProfileUncheckedUpdateWithoutReportsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  levelId?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
+  pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
+  badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
+  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
+}
+
+export type ForumProfileUpsertWithoutHandledReportsInput = {
+  update: Prisma.XOR<Prisma.ForumProfileUpdateWithoutHandledReportsInput, Prisma.ForumProfileUncheckedUpdateWithoutHandledReportsInput>
+  create: Prisma.XOR<Prisma.ForumProfileCreateWithoutHandledReportsInput, Prisma.ForumProfileUncheckedCreateWithoutHandledReportsInput>
+  where?: Prisma.ForumProfileWhereInput
+}
+
+export type ForumProfileUpdateToOneWithWhereWithoutHandledReportsInput = {
+  where?: Prisma.ForumProfileWhereInput
+  data: Prisma.XOR<Prisma.ForumProfileUpdateWithoutHandledReportsInput, Prisma.ForumProfileUncheckedUpdateWithoutHandledReportsInput>
+}
+
+export type ForumProfileUpdateWithoutHandledReportsInput = {
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
+  applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
+  pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
+  level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
+  user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
+  badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
+  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+}
+
+export type ForumProfileUncheckedUpdateWithoutHandledReportsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  levelId?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
+  pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
+  badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
+  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
 }
 
 export type ForumProfileCreateWithoutTopicFavoritesInput = {
@@ -1848,8 +2456,12 @@ export type ForumProfileCreateWithoutTopicFavoritesInput = {
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutTopicFavoritesInput = {
@@ -1874,8 +2486,12 @@ export type ForumProfileUncheckedCreateWithoutTopicFavoritesInput = {
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutTopicFavoritesInput = {
@@ -1915,8 +2531,12 @@ export type ForumProfileUpdateWithoutTopicFavoritesInput = {
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutTopicFavoritesInput = {
@@ -1941,8 +2561,12 @@ export type ForumProfileUncheckedUpdateWithoutTopicFavoritesInput = {
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileCreateWithoutTopicLikesInput = {
@@ -1966,8 +2590,12 @@ export type ForumProfileCreateWithoutTopicLikesInput = {
   level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
   badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileUncheckedCreateWithoutTopicLikesInput = {
@@ -1992,8 +2620,12 @@ export type ForumProfileUncheckedCreateWithoutTopicLikesInput = {
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
   pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
   badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
+  views?: Prisma.ForumViewUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
 }
 
 export type ForumProfileCreateOrConnectWithoutTopicLikesInput = {
@@ -2033,8 +2665,12 @@ export type ForumProfileUpdateWithoutTopicLikesInput = {
   level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutTopicLikesInput = {
@@ -2059,8 +2695,146 @@ export type ForumProfileUncheckedUpdateWithoutTopicLikesInput = {
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
+}
+
+export type ForumProfileCreateWithoutViewsInput = {
+  points?: number
+  topicCount?: number
+  replyCount?: number
+  likeCount?: number
+  favoriteCount?: number
+  signature?: string | null
+  bio?: string | null
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutProfileInput
+  applications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
+  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutProfileInput
+  pointRecords?: Prisma.ForumPointRecordCreateNestedManyWithoutProfileInput
+  level?: Prisma.ForumLevelRuleCreateNestedOneWithoutProfilesInput
+  user: Prisma.ClientUserCreateNestedOneWithoutForumProfileInput
+  badges?: Prisma.ForumProfileBadgeCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyCreateNestedManyWithoutProfileInput
+  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutProfileInput
+  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutProfileInput
+  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
+}
+
+export type ForumProfileUncheckedCreateWithoutViewsInput = {
+  id?: number
+  userId: number
+  points?: number
+  levelId: number
+  topicCount?: number
+  replyCount?: number
+  likeCount?: number
+  favoriteCount?: number
+  signature?: string | null
+  bio?: string | null
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutProfileInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
+  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutProfileInput
+  pointRecords?: Prisma.ForumPointRecordUncheckedCreateNestedManyWithoutProfileInput
+  badges?: Prisma.ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput
+  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutProfileInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutProfileInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutProfileInput
+  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput
+  reports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
+}
+
+export type ForumProfileCreateOrConnectWithoutViewsInput = {
+  where: Prisma.ForumProfileWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumProfileCreateWithoutViewsInput, Prisma.ForumProfileUncheckedCreateWithoutViewsInput>
+}
+
+export type ForumProfileUpsertWithoutViewsInput = {
+  update: Prisma.XOR<Prisma.ForumProfileUpdateWithoutViewsInput, Prisma.ForumProfileUncheckedUpdateWithoutViewsInput>
+  create: Prisma.XOR<Prisma.ForumProfileCreateWithoutViewsInput, Prisma.ForumProfileUncheckedCreateWithoutViewsInput>
+  where?: Prisma.ForumProfileWhereInput
+}
+
+export type ForumProfileUpdateToOneWithWhereWithoutViewsInput = {
+  where?: Prisma.ForumProfileWhereInput
+  data: Prisma.XOR<Prisma.ForumProfileUpdateWithoutViewsInput, Prisma.ForumProfileUncheckedUpdateWithoutViewsInput>
+}
+
+export type ForumProfileUpdateWithoutViewsInput = {
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  moderator?: Prisma.ForumModeratorUpdateOneWithoutProfileNestedInput
+  applications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
+  notifications?: Prisma.ForumNotificationUpdateManyWithoutProfileNestedInput
+  pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
+  level?: Prisma.ForumLevelRuleUpdateOneWithoutProfilesNestedInput
+  user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
+  badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
+  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
+}
+
+export type ForumProfileUncheckedUpdateWithoutViewsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  levelId?: Prisma.IntFieldUpdateOperationsInput | number
+  topicCount?: Prisma.IntFieldUpdateOperationsInput | number
+  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  signature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutProfileNestedInput
+  applications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
+  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
+  pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
+  badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
+  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
+  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileCreateManyLevelInput = {
@@ -2101,9 +2875,13 @@ export type ForumProfileUpdateWithoutLevelInput = {
   pointRecords?: Prisma.ForumPointRecordUpdateManyWithoutProfileNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateWithoutLevelInput = {
@@ -2127,9 +2905,13 @@ export type ForumProfileUncheckedUpdateWithoutLevelInput = {
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput
   pointRecords?: Prisma.ForumPointRecordUncheckedUpdateManyWithoutProfileNestedInput
   badges?: Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput
+  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutProfileNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutProfileNestedInput
   topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutProfileNestedInput
   topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput
+  views?: Prisma.ForumViewUncheckedUpdateManyWithoutProfileNestedInput
+  reports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
 }
 
 export type ForumProfileUncheckedUpdateManyWithoutLevelInput = {
@@ -2160,9 +2942,13 @@ export type ForumProfileCountOutputType = {
   notifications: number
   pointRecords: number
   badges: number
+  replies: number
   replyLikes: number
   topicFavorites: number
   topicLikes: number
+  views: number
+  reports: number
+  handledReports: number
 }
 
 export type ForumProfileCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2170,9 +2956,13 @@ export type ForumProfileCountOutputTypeSelect<ExtArgs extends runtime.Types.Exte
   notifications?: boolean | ForumProfileCountOutputTypeCountNotificationsArgs
   pointRecords?: boolean | ForumProfileCountOutputTypeCountPointRecordsArgs
   badges?: boolean | ForumProfileCountOutputTypeCountBadgesArgs
+  replies?: boolean | ForumProfileCountOutputTypeCountRepliesArgs
   replyLikes?: boolean | ForumProfileCountOutputTypeCountReplyLikesArgs
   topicFavorites?: boolean | ForumProfileCountOutputTypeCountTopicFavoritesArgs
   topicLikes?: boolean | ForumProfileCountOutputTypeCountTopicLikesArgs
+  views?: boolean | ForumProfileCountOutputTypeCountViewsArgs
+  reports?: boolean | ForumProfileCountOutputTypeCountReportsArgs
+  handledReports?: boolean | ForumProfileCountOutputTypeCountHandledReportsArgs
 }
 
 /**
@@ -2216,6 +3006,13 @@ export type ForumProfileCountOutputTypeCountBadgesArgs<ExtArgs extends runtime.T
 /**
  * ForumProfileCountOutputType without action
  */
+export type ForumProfileCountOutputTypeCountRepliesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ForumReplyWhereInput
+}
+
+/**
+ * ForumProfileCountOutputType without action
+ */
 export type ForumProfileCountOutputTypeCountReplyLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ForumReplyLikeWhereInput
 }
@@ -2232,6 +3029,27 @@ export type ForumProfileCountOutputTypeCountTopicFavoritesArgs<ExtArgs extends r
  */
 export type ForumProfileCountOutputTypeCountTopicLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ForumTopicLikeWhereInput
+}
+
+/**
+ * ForumProfileCountOutputType without action
+ */
+export type ForumProfileCountOutputTypeCountViewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ForumViewWhereInput
+}
+
+/**
+ * ForumProfileCountOutputType without action
+ */
+export type ForumProfileCountOutputTypeCountReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ForumReportWhereInput
+}
+
+/**
+ * ForumProfileCountOutputType without action
+ */
+export type ForumProfileCountOutputTypeCountHandledReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ForumReportWhereInput
 }
 
 
@@ -2259,9 +3077,13 @@ export type ForumProfileSelect<ExtArgs extends runtime.Types.Extensions.Internal
   level?: boolean | Prisma.ForumProfile$levelArgs<ExtArgs>
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
   badges?: boolean | Prisma.ForumProfile$badgesArgs<ExtArgs>
+  replies?: boolean | Prisma.ForumProfile$repliesArgs<ExtArgs>
   replyLikes?: boolean | Prisma.ForumProfile$replyLikesArgs<ExtArgs>
   topicFavorites?: boolean | Prisma.ForumProfile$topicFavoritesArgs<ExtArgs>
   topicLikes?: boolean | Prisma.ForumProfile$topicLikesArgs<ExtArgs>
+  views?: boolean | Prisma.ForumProfile$viewsArgs<ExtArgs>
+  reports?: boolean | Prisma.ForumProfile$reportsArgs<ExtArgs>
+  handledReports?: boolean | Prisma.ForumProfile$handledReportsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumProfileCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumProfile"]>
 
@@ -2335,9 +3157,13 @@ export type ForumProfileInclude<ExtArgs extends runtime.Types.Extensions.Interna
   level?: boolean | Prisma.ForumProfile$levelArgs<ExtArgs>
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
   badges?: boolean | Prisma.ForumProfile$badgesArgs<ExtArgs>
+  replies?: boolean | Prisma.ForumProfile$repliesArgs<ExtArgs>
   replyLikes?: boolean | Prisma.ForumProfile$replyLikesArgs<ExtArgs>
   topicFavorites?: boolean | Prisma.ForumProfile$topicFavoritesArgs<ExtArgs>
   topicLikes?: boolean | Prisma.ForumProfile$topicLikesArgs<ExtArgs>
+  views?: boolean | Prisma.ForumProfile$viewsArgs<ExtArgs>
+  reports?: boolean | Prisma.ForumProfile$reportsArgs<ExtArgs>
+  handledReports?: boolean | Prisma.ForumProfile$handledReportsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumProfileCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ForumProfileIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2359,9 +3185,13 @@ export type $ForumProfilePayload<ExtArgs extends runtime.Types.Extensions.Intern
     level: Prisma.$ForumLevelRulePayload<ExtArgs> | null
     user: Prisma.$ClientUserPayload<ExtArgs>
     badges: Prisma.$ForumProfileBadgePayload<ExtArgs>[]
+    replies: Prisma.$ForumReplyPayload<ExtArgs>[]
     replyLikes: Prisma.$ForumReplyLikePayload<ExtArgs>[]
     topicFavorites: Prisma.$ForumTopicFavoritePayload<ExtArgs>[]
     topicLikes: Prisma.$ForumTopicLikePayload<ExtArgs>[]
+    views: Prisma.$ForumViewPayload<ExtArgs>[]
+    reports: Prisma.$ForumReportPayload<ExtArgs>[]
+    handledReports: Prisma.$ForumReportPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -2829,9 +3659,13 @@ export interface Prisma__ForumProfileClient<T, Null = never, ExtArgs extends run
   level<T extends Prisma.ForumProfile$levelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfile$levelArgs<ExtArgs>>): Prisma.Prisma__ForumLevelRuleClient<runtime.Types.Result.GetResult<Prisma.$ForumLevelRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.ClientUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUserDefaultArgs<ExtArgs>>): Prisma.Prisma__ClientUserClient<runtime.Types.Result.GetResult<Prisma.$ClientUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   badges<T extends Prisma.ForumProfile$badgesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfile$badgesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumProfileBadgePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  replies<T extends Prisma.ForumProfile$repliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfile$repliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReplyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   replyLikes<T extends Prisma.ForumProfile$replyLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfile$replyLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReplyLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   topicFavorites<T extends Prisma.ForumProfile$topicFavoritesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfile$topicFavoritesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicFavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   topicLikes<T extends Prisma.ForumProfile$topicLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfile$topicLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  views<T extends Prisma.ForumProfile$viewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfile$viewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumViewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  reports<T extends Prisma.ForumProfile$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfile$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  handledReports<T extends Prisma.ForumProfile$handledReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfile$handledReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3416,6 +4250,30 @@ export type ForumProfile$badgesArgs<ExtArgs extends runtime.Types.Extensions.Int
 }
 
 /**
+ * ForumProfile.replies
+ */
+export type ForumProfile$repliesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumReply
+   */
+  select?: Prisma.ForumReplySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumReply
+   */
+  omit?: Prisma.ForumReplyOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumReplyInclude<ExtArgs> | null
+  where?: Prisma.ForumReplyWhereInput
+  orderBy?: Prisma.ForumReplyOrderByWithRelationInput | Prisma.ForumReplyOrderByWithRelationInput[]
+  cursor?: Prisma.ForumReplyWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ForumReplyScalarFieldEnum | Prisma.ForumReplyScalarFieldEnum[]
+}
+
+/**
  * ForumProfile.replyLikes
  */
 export type ForumProfile$replyLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3485,6 +4343,78 @@ export type ForumProfile$topicLikesArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.ForumTopicLikeScalarFieldEnum | Prisma.ForumTopicLikeScalarFieldEnum[]
+}
+
+/**
+ * ForumProfile.views
+ */
+export type ForumProfile$viewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumView
+   */
+  select?: Prisma.ForumViewSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumView
+   */
+  omit?: Prisma.ForumViewOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumViewInclude<ExtArgs> | null
+  where?: Prisma.ForumViewWhereInput
+  orderBy?: Prisma.ForumViewOrderByWithRelationInput | Prisma.ForumViewOrderByWithRelationInput[]
+  cursor?: Prisma.ForumViewWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ForumViewScalarFieldEnum | Prisma.ForumViewScalarFieldEnum[]
+}
+
+/**
+ * ForumProfile.reports
+ */
+export type ForumProfile$reportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumReport
+   */
+  select?: Prisma.ForumReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumReport
+   */
+  omit?: Prisma.ForumReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumReportInclude<ExtArgs> | null
+  where?: Prisma.ForumReportWhereInput
+  orderBy?: Prisma.ForumReportOrderByWithRelationInput | Prisma.ForumReportOrderByWithRelationInput[]
+  cursor?: Prisma.ForumReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ForumReportScalarFieldEnum | Prisma.ForumReportScalarFieldEnum[]
+}
+
+/**
+ * ForumProfile.handledReports
+ */
+export type ForumProfile$handledReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ForumReport
+   */
+  select?: Prisma.ForumReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ForumReport
+   */
+  omit?: Prisma.ForumReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ForumReportInclude<ExtArgs> | null
+  where?: Prisma.ForumReportWhereInput
+  orderBy?: Prisma.ForumReportOrderByWithRelationInput | Prisma.ForumReportOrderByWithRelationInput[]
+  cursor?: Prisma.ForumReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ForumReportScalarFieldEnum | Prisma.ForumReportScalarFieldEnum[]
 }
 
 /**

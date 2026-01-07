@@ -1,5 +1,6 @@
 import {
   ValidateBoolean,
+  ValidateEnum,
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
@@ -10,6 +11,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { TopicReviewPolicyEnum } from '../forum-section.constant'
 
 /**
  * 论坛板块基础DTO
@@ -32,22 +34,6 @@ export class BaseForumSectionDto extends BaseDto {
   groupId?: number
 
   @ValidateString({
-    description: '板块分组名称（仅用于响应）',
-    example: '技术讨论',
-    required: false,
-    maxLength: 50,
-  })
-  groupName?: string
-
-  @ValidateString({
-    description: '板块描述',
-    example: '讨论技术相关问题',
-    required: true,
-    maxLength: 500,
-  })
-  description!: string
-
-  @ValidateString({
     description: '板块图标',
     example: 'https://example.com/icon.png',
     required: false,
@@ -64,6 +50,14 @@ export class BaseForumSectionDto extends BaseDto {
   })
   sortOrder!: number
 
+  @ValidateNumber({
+    description: '用户等级规则ID（为空表示所有用户）',
+    example: 0,
+    required: true,
+    min: 0,
+  })
+  userLevelRuleId?: number
+
   @ValidateBoolean({
     description: '是否启用',
     example: true,
@@ -72,47 +66,37 @@ export class BaseForumSectionDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ValidateBoolean({
-    description: '是否需要审核',
-    example: false,
+  @ValidateEnum({
+    description: '审核策略',
+    example: TopicReviewPolicyEnum.None,
     required: true,
-    default: false,
+    default: TopicReviewPolicyEnum.SensitiveWord,
+    enum: TopicReviewPolicyEnum,
   })
-  requireAudit!: boolean
+  topicReviewPolicy!: TopicReviewPolicyEnum
 
-  @ValidateNumber({
-    description: '主题数量',
-    example: 100,
+  @ValidateString({
+    description: '板块描述',
+    example: '讨论技术相关问题',
     required: true,
-    min: 0,
-    default: 0,
+    maxLength: 500,
   })
-  topicCount!: number
-
-  @ValidateNumber({
-    description: '回复数量',
-    example: 500,
-    required: true,
-    min: 0,
-    default: 0,
-  })
-  replyCount!: number
+  description!: string
 }
 
 /**
  * 创建论坛板块DTO
  */
-export class CreateForumSectionDto extends OmitType(BaseForumSectionDto, [
-  ...OMIT_BASE_FIELDS,
-  'topicCount',
-  'replyCount',
-]) {}
+export class CreateForumSectionDto extends OmitType(
+  BaseForumSectionDto,
+  OMIT_BASE_FIELDS,
+) {}
 
 /**
  * 更新论坛板块DTO
  */
 export class UpdateForumSectionDto extends IntersectionType(
-  PartialType(CreateForumSectionDto),
+  CreateForumSectionDto,
   IdDto,
 ) {}
 
@@ -125,16 +109,8 @@ export class QueryForumSectionDto extends IntersectionType(
     PickType(BaseForumSectionDto, [
       'name',
       'isEnabled',
-      'requireAudit',
+      'topicReviewPolicy',
       'groupId',
     ]),
   ),
-) {}
-
-/**
- * 更新板块启用状态DTO
- */
-export class UpdateSectionEnabledDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumSectionDto, ['isEnabled']),
 ) {}

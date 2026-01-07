@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
 import { AdminForumNotificationModule } from './notification/forum-notification.module'
-import { ForumReplyModule } from './reply/forum-reply.module'
+import { AdminForumReplyLikeModule } from './reply-like/forum-reply-like.module'
 import { ForumSectionModule } from './section/forum-section.module'
 import { ForumTopicModule } from './topic/forum-topic.module'
 import { ForumUserModule } from './user/forum-user.module'
@@ -14,7 +14,7 @@ import { ForumUserModule } from './user/forum-user.module'
     ForumUserModule,
     ForumSectionModule,
     ForumTopicModule,
-    ForumReplyModule,
+    AdminForumReplyLikeModule,
     AdminForumNotificationModule,
   ],
   controllers: [],

@@ -35,7 +35,6 @@ model ClientUser {
   /// 关联的论坛主题
   forumTopics     ForumTopic[]
   /// 关联的论坛回复
-  forumReplies    ForumReply[]
   /// 最后回复的主题
   lastReplyTopics ForumTopic[]  @relation("LastReplyUser")
   /// 关联的通知已读记录
@@ -43,10 +42,10 @@ model ClientUser {
 
   /// 索引优化
   @@index([isEnabled]) // 按账户状态查询活跃用户
-  @@index([genderType]) // 按性别类型统计
+  @@index([gender]) // 按性别类型统计
   @@index([createdAt]) // 按注册时间查询
   @@index([lastLoginAt]) // 按最后登录时间查询
-  @@index([phoneNumber]) // 手机号查询优化
-  @@index([emailAddress]) // 邮箱查询优化
+  @@index([phone]) // 手机号查询优化
+  @@index([email]) // 邮箱查询优化
   @@map("client_user")
 }

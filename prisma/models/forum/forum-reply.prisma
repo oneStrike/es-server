@@ -1,4 +1,5 @@
-/// 论坛回复表 - 存储主题的回复内容，支持楼中楼回复
+/// 论坛回复表 - 存储主题的回复内容，支持多层回复
+/// 约束：数据库支持无限层级，但API返回时只展示两层（主题回复 + 一层楼中楼）
 model ForumReply {
   /// 主键ID
   id            Int                 @id @default(autoincrement())
@@ -6,14 +7,16 @@ model ForumReply {
   content       String
   /// 关联的主题ID
   topicId       Int                 @map("topic_id")
-  /// 关联的用户ID
-  userId        Int                 @map("user_id")
-  /// 回复楼层（从1开始）
-  floor         Int
-  /// 回复的回复ID（楼中楼）
-  replyToId     Int?                @map("reply_to_id")
-  /// 是否隐藏（待审核）
+  /// 关联的论坛用户资料ID
+  profileId     Int                 @map("user_id")
+  /// 楼层号（直接回复主题的楼层号，楼中楼为null）
+  floor         Int?                @map("floor")
+  /// 是否隐藏
   isHidden      Boolean             @default(false) @map("is_hidden")
+  /// 回复的回复ID（楼中楼，API返回时用于展示层级关系）
+  replyToId     Int?                @map("reply_to_id")
+  /// 实际回复的回复ID（用于追溯完整回复链，不受层级限制）
+  actualReplyToId Int?              @map("actual_reply_to_id")
   /// 审核状态（0=待审核, 1=已通过, 2=已拒绝）
   auditStatus   Int                 @default(0) @map("audit_status") @db.SmallInt
   /// 审核原因
@@ -34,22 +37,24 @@ model ForumReply {
   version       Int                 @default(0)
   replyTo       ForumReply?         @relation("ReplyTo", fields: [replyToId], references: [id])
   replies       ForumReply[]        @relation("ReplyTo")
+  actualReplyTo ForumReply?         @relation("ActualReplyTo", fields: [actualReplyToId], references: [id])
+  actualReplies ForumReply[]        @relation("ActualReplyTo")
   topic         ForumTopic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  user          ClientUser          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "forum_reply_user_id_fkey")
+  profile       ForumProfile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
   likes         ForumReplyLike[]
   notifications ForumNotification[] @relation("NotificationReply")
 
   @@index([topicId])
-  @@index([userId])
-  @@index([floor])
+  @@index([profileId])
   @@index([replyToId])
+  @@index([actualReplyToId])
+  @@index([floor])
   @@index([isHidden])
   @@index([auditStatus])
   @@index([likeCount])
   @@index([createdAt])
   @@index([updatedAt])
   @@index([deletedAt])
-  @@index([topicId, floor])
   @@index([topicId, createdAt])
   @@map("forum_reply")
 }

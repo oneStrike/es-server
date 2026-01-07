@@ -56,6 +56,7 @@ model ForumTopic {
   topicTags       ForumTopicTag[]
   tags            ForumTag[]           @relation("TopicTags")
   notifications   ForumNotification[]  @relation("NotificationTopic")
+  views           ForumView[]
 
   @@index([sectionId])
   @@index([userId])

@@ -1,7 +1,9 @@
-import { RepositoryService } from '@libs/base/database'
+import {
+  ForumModeratorWhereInput,
+  RepositoryService,
+} from '@libs/base/database'
 import { IdDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { SectionPermissionService } from '../section/section-permission.service'
 import {
   AssignModeratorSectionDto,
   CreateModeratorDto,
@@ -9,7 +11,6 @@ import {
   QueryModeratorDto,
   UpdateModeratorDto,
 } from './dto/moderator.dto'
-import { ModeratorPermissionService } from './moderator-permission.service'
 import {
   ModeratorPermissionEnum,
   ModeratorRoleTypeEnum,
@@ -17,10 +18,7 @@ import {
 
 @Injectable()
 export class ModeratorService extends RepositoryService {
-  constructor(
-    private readonly sectionPermissionService: SectionPermissionService,
-    private readonly permissionService: ModeratorPermissionService,
-  ) {
+  constructor() {
     super()
   }
 
@@ -46,6 +44,10 @@ export class ModeratorService extends RepositoryService {
 
   get clientUser() {
     return this.prisma.clientUser
+  }
+
+  get forumAuditLog() {
+    return this.prisma.forumAuditLog
   }
 
   /**
@@ -172,9 +174,9 @@ export class ModeratorService extends RepositoryService {
    * @returns 版主列表
    */
   async getModeratorPage(queryDto: QueryModeratorDto) {
-    const { username, isEnabled, sectionId } = queryDto
+    const { username, sectionId } = queryDto
 
-    const where: any = {
+    const where: ForumModeratorWhereInput = {
       deletedAt: null,
     }
 
@@ -197,45 +199,12 @@ export class ModeratorService extends RepositoryService {
       }
     }
 
-    const result = await this.forumModerator.findPagination({
-      where: {
-        ...where,
-      },
+    return this.forumModerator.findPagination({
+      where,
       include: {
         profile: true,
       },
     })
-
-    const list = result.list.map((moderator) => {
-      const permissions = moderator.permissions as ModeratorPermissionEnum[]
-
-      const permissionNames =
-        this.permissionService.getPermissionNames(permissions)
-
-      return {
-        id: moderator.id,
-        userId: moderator.userId,
-        username: moderator.profile.user.username,
-        nickname: moderator.profile.nickname,
-        avatar: moderator.profile.user.avatar,
-        permissions,
-        permissionNames,
-        isEnabled: moderator.isEnabled,
-        remark: moderator.remark,
-        sections: moderator.sections.map((ms) => ({
-          id: ms.section.id,
-          name: ms.section.name,
-          customPermissions: ms.customPermissions as ModeratorPermissionEnum[],
-          finalPermissions: ms.finalPermissions as ModeratorPermissionEnum[],
-        })),
-        createdAt: moderator.createdAt,
-      }
-    })
-
-    return {
-      ...result,
-      list,
-    }
   }
 
   /**
@@ -244,7 +213,7 @@ export class ModeratorService extends RepositoryService {
    * @returns 更新结果
    */
   async updateModerator(updateDto: UpdateModeratorDto) {
-    const { id, permissions, isEnabled, remark } = updateDto
+    const { id, ...updateData } = updateDto
 
     const moderator = await this.forumModerator.findUnique({
       where: { id },
@@ -252,20 +221,6 @@ export class ModeratorService extends RepositoryService {
 
     if (!moderator) {
       throw new BadRequestException('版主不存在')
-    }
-
-    const updateData: any = {}
-
-    if (permissions) {
-      updateData.permissions = permissions
-    }
-
-    if (typeof isEnabled === 'boolean') {
-      updateData.isEnabled = isEnabled
-    }
-
-    if (remark !== undefined) {
-      updateData.remark = remark
     }
 
     return this.forumModerator.update({
@@ -280,14 +235,7 @@ export class ModeratorService extends RepositoryService {
    * @returns 操作日志列表
    */
   async getModeratorActionLogPage(queryDto: QueryModeratorActionLogDto) {
-    const {
-      moderatorId,
-      actionType,
-      startTime,
-      endTime,
-      page = 1,
-      pageSize = 20,
-    } = queryDto
+    const { moderatorId, actionType } = queryDto
 
     const where: any = {}
 
@@ -299,52 +247,15 @@ export class ModeratorService extends RepositoryService {
       where.actionType = actionType
     }
 
-    if (startTime || endTime) {
-      where.createdAt = {}
-      if (startTime) {
-        where.createdAt.gte = new Date(startTime)
-      }
-      if (endTime) {
-        where.createdAt.lte = new Date(endTime)
-      }
-    }
-
-    const result = await this.forumAuditLog.findPagination({
+    return this.forumAuditLog.findPagination({
       where,
       include: {
         moderator: {
           include: {
-            profile: {
-              include: {
-                user: true,
-              },
-            },
+            profile: true,
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      page,
-      pageSize,
     })
-
-    const list = result.list.map((log) => ({
-      id: log.id,
-      moderatorId: log.moderatorId,
-      moderatorUsername: log.moderator.profile.user.username,
-      actionType: log.actionType,
-      actionDescription: log.actionDescription,
-      targetType: log.targetType,
-      targetId: log.targetId,
-      beforeData: log.beforeData,
-      afterData: log.afterData,
-      createdAt: log.createdAt,
-    }))
-
-    return {
-      ...result,
-      list,
-    }
   }
 }
