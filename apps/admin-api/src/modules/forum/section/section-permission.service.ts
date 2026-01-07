@@ -1,4 +1,3 @@
-import { PrismaService } from '@libs/prisma'
 import { Injectable } from '@nestjs/common'
 
 export const PERMISSION_MASK = {

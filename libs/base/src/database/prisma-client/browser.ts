@@ -114,9 +114,15 @@ export type ForumProfile = Prisma.ForumProfileModel
 export type ForumReplyLike = Prisma.ForumReplyLikeModel
 /**
  * Model ForumReply
- * 论坛回复表 - 存储主题的回复内容，支持楼中楼回复
+ * 论坛回复表 - 存储主题的回复内容，支持多层回复
+ * 约束：数据库支持无限层级，但API返回时只展示两层（主题回复 + 一层楼中楼）
  */
 export type ForumReply = Prisma.ForumReplyModel
+/**
+ * Model ForumReport
+ * 论坛举报表 - 记录用户举报内容
+ */
+export type ForumReport = Prisma.ForumReportModel
 /**
  * Model ForumSectionGroup
  * 论坛板块分组表 - 管理论坛板块分组信息，用于对板块进行分类组织
@@ -162,6 +168,11 @@ export type ForumTopic = Prisma.ForumTopicModel
  * 论坛用户操作日志表 - 记录用户的所有操作行为，包括创建主题、回复、点赞、收藏等操作
  */
 export type ForumUserActionLog = Prisma.ForumUserActionLogModel
+/**
+ * Model ForumView
+ * 论坛浏览记录表 - 记录用户浏览主题的历史
+ */
+export type ForumView = Prisma.ForumViewModel
 /**
  * Model MemberLevel
  * 会员等级

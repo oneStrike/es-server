@@ -218,7 +218,7 @@ export class AnalyticsService extends RepositoryService {
 
   async getHotTopics(
     query: HotTopicsQueryDto,
-  ): Promise<{ total: number; items: HotTopicDto[] }> {
+  ): Promise<{ total: number, items: HotTopicDto[] }> {
     let startDate: Date
     let endDate: Date
 
@@ -283,7 +283,7 @@ export class AnalyticsService extends RepositoryService {
 
   async getActiveUsers(
     query: ActiveUsersQueryDto,
-  ): Promise<{ total: number; items: ActiveUserDto[] }> {
+  ): Promise<{ total: number, items: ActiveUserDto[] }> {
     let startDate: Date
     let endDate: Date
 
@@ -343,7 +343,7 @@ export class AnalyticsService extends RepositoryService {
 
   async getSectionStats(
     query: SectionStatsQueryDto,
-  ): Promise<{ total: number; items: SectionStatsDto[] }> {
+  ): Promise<{ total: number, items: SectionStatsDto[] }> {
     const today = new Date()
     const todayStart = new Date(
       today.getFullYear(),

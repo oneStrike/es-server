@@ -1,8 +1,10 @@
-import type { ForumSectionWhereInput } from '@libs/base/database'
+import type {
+  ForumSectionCreateInput,
+  ForumSectionWhereInput,
+} from '@libs/base/database'
 import { RepositoryService } from '@libs/base/database'
 
 import { DragReorderDto } from '@libs/base/dto'
-import { isNotNil } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateForumSectionDto,
@@ -79,13 +81,21 @@ export class ForumSectionService extends RepositoryService {
         throw new BadRequestException('板块分组不存在')
       }
     }
+    const createData: ForumSectionCreateInput = {
+      name,
+      ...sectionData,
+    }
+
+    if (groupId) {
+      createData.group = {
+        connect: {
+          id: groupId,
+        },
+      }
+    }
 
     return this.forumSection.create({
-      data: {
-        name,
-        groupId: groupId || null,
-        ...sectionData,
-      },
+      data: createData,
     })
   }
 
@@ -94,24 +104,26 @@ export class ForumSectionService extends RepositoryService {
    * @returns 板块列表
    */
   async getSectionTree() {
-    const sections = await this.forumSection.findMany({
+    return this.forumSectionGroup.findMany({
       where: {
         deletedAt: null,
+        isEnabled: true,
       },
       orderBy: {
         sortOrder: 'asc',
       },
       include: {
-        group: {
-          select: {
-            id: true,
-            name: true,
+        sections: {
+          where: {
+            deletedAt: null,
+            isEnabled: true,
+          },
+          orderBy: {
+            sortOrder: 'asc',
           },
         },
       },
     })
-
-    return sections
   }
 
   /**
@@ -134,24 +146,9 @@ export class ForumSectionService extends RepositoryService {
       }
     }
 
-    if (groupId !== undefined) {
-      where.groupId = groupId
-    }
-
     return this.forumSection.findPagination({
       where,
       select: {
-        id: true,
-        name: true,
-        groupId: true,
-        description: true,
-        icon: true,
-        sortOrder: true,
-        isEnabled: true,
-        topicCount: true,
-        replyCount: true,
-        createdAt: true,
-        updatedAt: true,
         group: {
           select: {
             id: true,
@@ -174,12 +171,7 @@ export class ForumSectionService extends RepositoryService {
     const section = await this.forumSection.findUnique({
       where: { id },
       include: {
-        group: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        group: true,
       },
     })
 
@@ -206,7 +198,7 @@ export class ForumSectionService extends RepositoryService {
       throw new BadRequestException('论坛板块不存在')
     }
 
-    if (isNotNil(name) && name !== existingSection.name) {
+    if (name && name !== existingSection.name) {
       const duplicateSection = await this.forumSection.findFirst({
         where: {
           name,
@@ -219,24 +211,23 @@ export class ForumSectionService extends RepositoryService {
       }
     }
 
-    if (isNotNil(groupId) && groupId !== existingSection.groupId) {
-      if (groupId) {
-        const group = await this.forumSectionGroup.findUnique({
-          where: { id: groupId },
-        })
-        if (!group) {
-          throw new BadRequestException('板块分组不存在')
-        }
+    const updatePayload: any = {
+      name,
+      ...updateData,
+    }
+
+    if (groupId && groupId !== existingSection.groupId) {
+      if (!(await this.forumSectionGroup.exists({ id: groupId }))) {
+        throw new BadRequestException('板块分组不存在')
       }
+      updatePayload.group = { connect: { id: groupId } }
+    } else if (groupId === null && existingSection.groupId !== null) {
+      updatePayload.group = { disconnect: true }
     }
 
     return this.forumSection.update({
       where: { id },
-      data: {
-        name,
-        groupId,
-        ...updateData,
-      },
+      data: updatePayload,
     })
   }
 
@@ -285,27 +276,6 @@ export class ForumSectionService extends RepositoryService {
   }
 
   /**
-   * 更新板块排序
-   * @param id 板块ID
-   * @param sortOrder 排序权重
-   * @returns 更新结果
-   */
-  async updateSortOrder(id: number, sortOrder: number) {
-    const section = await this.forumSection.findUnique({
-      where: { id },
-    })
-
-    if (!section) {
-      throw new BadRequestException('论坛板块不存在')
-    }
-
-    return this.forumSection.update({
-      where: { id },
-      data: { sortOrder },
-    })
-  }
-
-  /**
    * 拖拽排序
    * @param updateSortDto 排序数据
    * @returns 排序结果
@@ -317,31 +287,6 @@ export class ForumSectionService extends RepositoryService {
         { id: updateSortDto.targetId },
         'sortOrder',
       )
-    })
-  }
-
-  /**
-   * 刷新板块统计信息
-   * @param id 板块ID
-   * @returns 更新后的统计信息
-   */
-  async refreshSectionStatistics(id: number) {
-    const section = await this.forumSection.findUnique({
-      where: { id },
-    })
-
-    if (!section) {
-      throw new BadRequestException('论坛板块不存在')
-    }
-
-    const stats = await this.calculateStatistics(id)
-
-    return this.forumSection.update({
-      where: { id },
-      data: {
-        topicCount: stats.topicCount,
-        replyCount: stats.replyCount,
-      },
     })
   }
 }

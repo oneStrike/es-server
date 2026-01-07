@@ -1,13 +1,12 @@
 import { RepositoryService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { ModeratorPermissionService } from '../moderator/moderator-permission.service'
 import { ModeratorPermissionEnum } from '../moderator/moderator.constant'
 
 export type Permission = ModeratorPermissionEnum
 
 @Injectable()
 export class SectionPermissionService extends RepositoryService {
-  constructor(private readonly permissionService: ModeratorPermissionService) {
+  constructor() {
     super()
   }
 

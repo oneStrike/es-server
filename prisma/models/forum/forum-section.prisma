@@ -16,8 +16,6 @@ model ForumSection {
   topicReviewPolicy Int       @default(1) @map("topic_review_policy")
   /// 用户的论坛等级规则ID
   userLevelRuleId   Int?      @map("user_level_rule_id")
-  /// 板块版主数量限制（0表示不限制）
-  maxModerators     Int       @default(0) @map("max_moderators")
   /// 主题数
   topicCount        Int       @default(0) @map("topic_count")
   /// 回复数（包含所有子版块）

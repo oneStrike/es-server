@@ -70,15 +70,5 @@ export class UpdateForumSectionGroupDto extends IntersectionType(
  */
 export class QueryForumSectionGroupDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(BaseForumSectionGroupDto, ['name', 'isEnabled']),
-  ),
-) {}
-
-/**
- * 更新板块分组启用状态DTO
- */
-export class UpdateSectionGroupEnabledDto extends IntersectionType(
-  IdDto,
-  PickType(BaseForumSectionGroupDto, ['isEnabled']),
+  PartialType(PickType(BaseForumSectionGroupDto, ['name', 'isEnabled'])),
 ) {}

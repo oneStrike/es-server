@@ -1,4 +1,4 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
+import { ApiPageDoc } from '@libs/base/decorators'
 import { SearchDto, SearchService } from '@libs/forum'
 import { Controller, Get, Query } from '@nestjs/common'
 import { InjectSearchService } from './forum-search.constant'

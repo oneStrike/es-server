@@ -19,11 +19,11 @@ import {
 
 export class BaseNotificationDto extends BaseDto {
   @ValidateNumber({
-    description: '用户ID',
+    description: '关联的论坛用户ID',
     example: 1,
     required: true,
   })
-  userId!: number
+  profileId!: number
 
   @ValidateEnum({
     description: '通知类型',
@@ -100,7 +100,7 @@ export class CreateNotificationShortDto extends OmitType(
  */
 export class QueryNotificationListDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseNotificationDto, ['type', 'isRead', 'userId'])),
+  PartialType(PickType(BaseNotificationDto, ['type', 'isRead', 'profileId'])),
 ) {}
 
 /**
@@ -131,11 +131,11 @@ export class NotificationIdsDto {
 /**
  * 标记所有通知已读DTO
  */
-export class UserIdDto {
+export class ProfileIdDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,
     required: true,
   })
-  userId!: number
+  profileId!: number
 }
