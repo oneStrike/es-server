@@ -1,8 +1,8 @@
 import { RepositoryService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { SectionPermissionService } from '../../forum/section/section-permission.service'
 import { ModeratorPermissionEnum } from '../moderator.constant'
 import {
-  addPermission,
   AssignModeratorSectionDto,
   CreateModeratorDto,
   QueryModeratorActionLogDto,
@@ -10,7 +10,6 @@ import {
   RemoveModeratorDto,
   UpdateModeratorDto,
 } from './dto/moderator.dto'
-import { SectionPermissionService } from '../../forum/section/section-permission.service'
 
 @Injectable()
 export class ModeratorService extends RepositoryService {
@@ -45,6 +44,20 @@ export class ModeratorService extends RepositoryService {
     return this.prisma.clientUser
   }
 
+  private permissionsToMask(permissions: ModeratorPermissionEnum[]): number {
+    return permissions.reduce((mask, permission) => mask | permission, 0)
+  }
+
+  private maskToPermissions(mask: number): ModeratorPermissionEnum[] {
+    const permissions: ModeratorPermissionEnum[] = []
+    Object.values(ModeratorPermissionEnum).forEach((value) => {
+      if (typeof value === 'number' && (mask & value) === value) {
+        permissions.push(value)
+      }
+    })
+    return permissions
+  }
+
   /**
    * 添加版主
    * @param createDto 创建参数
@@ -69,10 +82,7 @@ export class ModeratorService extends RepositoryService {
       throw new BadRequestException('该用户已是版主')
     }
 
-    let permissionMask = 0
-    permissions.forEach((permission) => {
-      permissionMask = addPermission(permissionMask, permission)
-    })
+    const permissionMask = this.permissionsToMask(permissions)
 
     return this.forumModerator.create({
       data: {
@@ -115,7 +125,7 @@ export class ModeratorService extends RepositoryService {
    * @returns 分配结果
    */
   async assignModeratorSection(assignDto: AssignModeratorSectionDto) {
-    const { moderatorId, sectionIds, inheritFromParent = true, customPermissionMask = 0 } = assignDto
+    const { moderatorId, sectionIds, customPermissionMask = 0 } = assignDto
 
     const moderator = await this.forumModerator.findUnique({
       where: { id: moderatorId },
@@ -139,7 +149,6 @@ export class ModeratorService extends RepositoryService {
       await this.sectionPermissionService.assignModeratorToSection(
         moderatorId,
         sectionId,
-        inheritFromParent,
         customPermissionMask,
       )
     }
@@ -215,17 +224,9 @@ export class ModeratorService extends RepositoryService {
     })
 
     const list = result.list.map((moderator) => {
-      const permissions: ModeratorPermissionEnum[] = []
+      const permissions = this.maskToPermissions(moderator.permissionMask)
+
       const permissionNames: string[] = []
-
-      Object.values(ModeratorPermissionEnum).forEach((value) => {
-        if (typeof value === 'number') {
-          if ((moderator.permissionMask & value) === value) {
-            permissions.push(value)
-          }
-        }
-      })
-
       permissions.forEach((permission) => {
         const permissionName = Object.entries(ModeratorPermissionEnum).find(
           ([key, val]) => val === permission,
@@ -240,7 +241,7 @@ export class ModeratorService extends RepositoryService {
         userId: moderator.userId,
         username: moderator.profile.user.username,
         nickname: moderator.profile.nickname,
-        avatar: moderator.profile.avatar,
+        avatar: moderator.profile.user.avatar,
         permissions,
         permissionNames,
         isEnabled: moderator.isEnabled,
@@ -248,7 +249,6 @@ export class ModeratorService extends RepositoryService {
         sections: moderator.sections.map((ms) => ({
           id: ms.section.id,
           name: ms.section.name,
-          inheritFromParent: ms.inheritFromParent,
           customPermissionMask: ms.customPermissionMask,
           finalPermissionMask: ms.finalPermissionMask,
         })),

@@ -309,6 +309,7 @@ export type ClientNoticeWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
   clientPage?: Prisma.XOR<Prisma.ClientPageNullableScalarRelationFilter, Prisma.ClientPageWhereInput> | null
+  noticeReads?: Prisma.ClientNoticeReadListRelationFilter
 }
 
 export type ClientNoticeOrderByWithRelationInput = {
@@ -328,6 +329,7 @@ export type ClientNoticeOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   enablePlatform?: Prisma.SortOrder
   clientPage?: Prisma.ClientPageOrderByWithRelationInput
+  noticeReads?: Prisma.ClientNoticeReadOrderByRelationAggregateInput
 }
 
 export type ClientNoticeWhereUniqueInput = Prisma.AtLeast<{
@@ -350,6 +352,7 @@ export type ClientNoticeWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"ClientNotice"> | Date | string
   enablePlatform?: Prisma.IntNullableListFilter<"ClientNotice">
   clientPage?: Prisma.XOR<Prisma.ClientPageNullableScalarRelationFilter, Prisma.ClientPageWhereInput> | null
+  noticeReads?: Prisma.ClientNoticeReadListRelationFilter
 }, "id">
 
 export type ClientNoticeOrderByWithAggregationInput = {
@@ -411,6 +414,7 @@ export type ClientNoticeCreateInput = {
   updatedAt?: Date | string
   enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
   clientPage?: Prisma.ClientPageCreateNestedOneWithoutNoticesInput
+  noticeReads?: Prisma.ClientNoticeReadCreateNestedManyWithoutNoticeInput
 }
 
 export type ClientNoticeUncheckedCreateInput = {
@@ -429,6 +433,7 @@ export type ClientNoticeUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
+  noticeReads?: Prisma.ClientNoticeReadUncheckedCreateNestedManyWithoutNoticeInput
 }
 
 export type ClientNoticeUpdateInput = {
@@ -446,6 +451,7 @@ export type ClientNoticeUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
   clientPage?: Prisma.ClientPageUpdateOneWithoutNoticesNestedInput
+  noticeReads?: Prisma.ClientNoticeReadUpdateManyWithoutNoticeNestedInput
 }
 
 export type ClientNoticeUncheckedUpdateInput = {
@@ -464,6 +470,7 @@ export type ClientNoticeUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
+  noticeReads?: Prisma.ClientNoticeReadUncheckedUpdateManyWithoutNoticeNestedInput
 }
 
 export type ClientNoticeCreateManyInput = {
@@ -516,6 +523,11 @@ export type ClientNoticeUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
+}
+
+export type ClientNoticeScalarRelationFilter = {
+  is?: Prisma.ClientNoticeWhereInput
+  isNot?: Prisma.ClientNoticeWhereInput
 }
 
 export type IntNullableListFilter<$PrismaModel = never> = {
@@ -604,6 +616,20 @@ export type ClientNoticeOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type ClientNoticeCreateNestedOneWithoutNoticeReadsInput = {
+  create?: Prisma.XOR<Prisma.ClientNoticeCreateWithoutNoticeReadsInput, Prisma.ClientNoticeUncheckedCreateWithoutNoticeReadsInput>
+  connectOrCreate?: Prisma.ClientNoticeCreateOrConnectWithoutNoticeReadsInput
+  connect?: Prisma.ClientNoticeWhereUniqueInput
+}
+
+export type ClientNoticeUpdateOneRequiredWithoutNoticeReadsNestedInput = {
+  create?: Prisma.XOR<Prisma.ClientNoticeCreateWithoutNoticeReadsInput, Prisma.ClientNoticeUncheckedCreateWithoutNoticeReadsInput>
+  connectOrCreate?: Prisma.ClientNoticeCreateOrConnectWithoutNoticeReadsInput
+  upsert?: Prisma.ClientNoticeUpsertWithoutNoticeReadsInput
+  connect?: Prisma.ClientNoticeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ClientNoticeUpdateToOneWithWhereWithoutNoticeReadsInput, Prisma.ClientNoticeUpdateWithoutNoticeReadsInput>, Prisma.ClientNoticeUncheckedUpdateWithoutNoticeReadsInput>
+}
+
 export type ClientNoticeCreateenablePlatformInput = {
   set: number[]
 }
@@ -663,6 +689,92 @@ export type ClientNoticeUncheckedUpdateManyWithoutClientPageNestedInput = {
   deleteMany?: Prisma.ClientNoticeScalarWhereInput | Prisma.ClientNoticeScalarWhereInput[]
 }
 
+export type ClientNoticeCreateWithoutNoticeReadsInput = {
+  title: string
+  content: string
+  noticeType?: number
+  priorityLevel?: number
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
+  popupBackgroundImage?: string | null
+  isPublished?: boolean
+  isPinned?: boolean
+  showAsPopup?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
+  clientPage?: Prisma.ClientPageCreateNestedOneWithoutNoticesInput
+}
+
+export type ClientNoticeUncheckedCreateWithoutNoticeReadsInput = {
+  id?: number
+  title: string
+  content: string
+  noticeType?: number
+  priorityLevel?: number
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
+  pageId?: number | null
+  popupBackgroundImage?: string | null
+  isPublished?: boolean
+  isPinned?: boolean
+  showAsPopup?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
+}
+
+export type ClientNoticeCreateOrConnectWithoutNoticeReadsInput = {
+  where: Prisma.ClientNoticeWhereUniqueInput
+  create: Prisma.XOR<Prisma.ClientNoticeCreateWithoutNoticeReadsInput, Prisma.ClientNoticeUncheckedCreateWithoutNoticeReadsInput>
+}
+
+export type ClientNoticeUpsertWithoutNoticeReadsInput = {
+  update: Prisma.XOR<Prisma.ClientNoticeUpdateWithoutNoticeReadsInput, Prisma.ClientNoticeUncheckedUpdateWithoutNoticeReadsInput>
+  create: Prisma.XOR<Prisma.ClientNoticeCreateWithoutNoticeReadsInput, Prisma.ClientNoticeUncheckedCreateWithoutNoticeReadsInput>
+  where?: Prisma.ClientNoticeWhereInput
+}
+
+export type ClientNoticeUpdateToOneWithWhereWithoutNoticeReadsInput = {
+  where?: Prisma.ClientNoticeWhereInput
+  data: Prisma.XOR<Prisma.ClientNoticeUpdateWithoutNoticeReadsInput, Prisma.ClientNoticeUncheckedUpdateWithoutNoticeReadsInput>
+}
+
+export type ClientNoticeUpdateWithoutNoticeReadsInput = {
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  noticeType?: Prisma.IntFieldUpdateOperationsInput | number
+  priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
+  clientPage?: Prisma.ClientPageUpdateOneWithoutNoticesNestedInput
+}
+
+export type ClientNoticeUncheckedUpdateWithoutNoticeReadsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  content?: Prisma.StringFieldUpdateOperationsInput | string
+  noticeType?: Prisma.IntFieldUpdateOperationsInput | number
+  priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pageId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
+}
+
 export type ClientNoticeCreateWithoutClientPageInput = {
   title: string
   content: string
@@ -677,6 +789,7 @@ export type ClientNoticeCreateWithoutClientPageInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
+  noticeReads?: Prisma.ClientNoticeReadCreateNestedManyWithoutNoticeInput
 }
 
 export type ClientNoticeUncheckedCreateWithoutClientPageInput = {
@@ -694,6 +807,7 @@ export type ClientNoticeUncheckedCreateWithoutClientPageInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   enablePlatform?: Prisma.ClientNoticeCreateenablePlatformInput | number[]
+  noticeReads?: Prisma.ClientNoticeReadUncheckedCreateNestedManyWithoutNoticeInput
 }
 
 export type ClientNoticeCreateOrConnectWithoutClientPageInput = {
@@ -774,6 +888,7 @@ export type ClientNoticeUpdateWithoutClientPageInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
+  noticeReads?: Prisma.ClientNoticeReadUpdateManyWithoutNoticeNestedInput
 }
 
 export type ClientNoticeUncheckedUpdateWithoutClientPageInput = {
@@ -791,6 +906,7 @@ export type ClientNoticeUncheckedUpdateWithoutClientPageInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   enablePlatform?: Prisma.ClientNoticeUpdateenablePlatformInput | number[]
+  noticeReads?: Prisma.ClientNoticeReadUncheckedUpdateManyWithoutNoticeNestedInput
 }
 
 export type ClientNoticeUncheckedUpdateManyWithoutClientPageInput = {
@@ -811,6 +927,35 @@ export type ClientNoticeUncheckedUpdateManyWithoutClientPageInput = {
 }
 
 
+/**
+ * Count Type ClientNoticeCountOutputType
+ */
+
+export type ClientNoticeCountOutputType = {
+  noticeReads: number
+}
+
+export type ClientNoticeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  noticeReads?: boolean | ClientNoticeCountOutputTypeCountNoticeReadsArgs
+}
+
+/**
+ * ClientNoticeCountOutputType without action
+ */
+export type ClientNoticeCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ClientNoticeCountOutputType
+   */
+  select?: Prisma.ClientNoticeCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * ClientNoticeCountOutputType without action
+ */
+export type ClientNoticeCountOutputTypeCountNoticeReadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ClientNoticeReadWhereInput
+}
+
 
 export type ClientNoticeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -829,6 +974,8 @@ export type ClientNoticeSelect<ExtArgs extends runtime.Types.Extensions.Internal
   updatedAt?: boolean
   enablePlatform?: boolean
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
+  noticeReads?: boolean | Prisma.ClientNotice$noticeReadsArgs<ExtArgs>
+  _count?: boolean | Prisma.ClientNoticeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["clientNotice"]>
 
 export type ClientNoticeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -890,6 +1037,8 @@ export type ClientNoticeSelectScalar = {
 export type ClientNoticeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "noticeType" | "priorityLevel" | "publishStartTime" | "publishEndTime" | "pageId" | "popupBackgroundImage" | "isPublished" | "isPinned" | "showAsPopup" | "createdAt" | "updatedAt" | "enablePlatform", ExtArgs["result"]["clientNotice"]>
 export type ClientNoticeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
+  noticeReads?: boolean | Prisma.ClientNotice$noticeReadsArgs<ExtArgs>
+  _count?: boolean | Prisma.ClientNoticeCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ClientNoticeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   clientPage?: boolean | Prisma.ClientNotice$clientPageArgs<ExtArgs>
@@ -902,6 +1051,7 @@ export type $ClientNoticePayload<ExtArgs extends runtime.Types.Extensions.Intern
   name: "ClientNotice"
   objects: {
     clientPage: Prisma.$ClientPagePayload<ExtArgs> | null
+    noticeReads: Prisma.$ClientNoticeReadPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1359,6 +1509,7 @@ readonly fields: ClientNoticeFieldRefs;
 export interface Prisma__ClientNoticeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   clientPage<T extends Prisma.ClientNotice$clientPageArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientNotice$clientPageArgs<ExtArgs>>): Prisma.Prisma__ClientPageClient<runtime.Types.Result.GetResult<Prisma.$ClientPagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  noticeReads<T extends Prisma.ClientNotice$noticeReadsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientNotice$noticeReadsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ClientNoticeReadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1824,6 +1975,30 @@ export type ClientNotice$clientPageArgs<ExtArgs extends runtime.Types.Extensions
    */
   include?: Prisma.ClientPageInclude<ExtArgs> | null
   where?: Prisma.ClientPageWhereInput
+}
+
+/**
+ * ClientNotice.noticeReads
+ */
+export type ClientNotice$noticeReadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ClientNoticeRead
+   */
+  select?: Prisma.ClientNoticeReadSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ClientNoticeRead
+   */
+  omit?: Prisma.ClientNoticeReadOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ClientNoticeReadInclude<ExtArgs> | null
+  where?: Prisma.ClientNoticeReadWhereInput
+  orderBy?: Prisma.ClientNoticeReadOrderByWithRelationInput | Prisma.ClientNoticeReadOrderByWithRelationInput[]
+  cursor?: Prisma.ClientNoticeReadWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ClientNoticeReadScalarFieldEnum | Prisma.ClientNoticeReadScalarFieldEnum[]
 }
 
 /**

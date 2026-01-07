@@ -29,6 +29,16 @@ CREATE TABLE "client_config" (
 );
 
 -- CreateTable
+CREATE TABLE "client_notice_read" (
+    "id" SERIAL NOT NULL,
+    "notice_id" INTEGER NOT NULL,
+    "user_id" INTEGER NOT NULL,
+    "read_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "client_notice_read_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "client_notice" (
     "id" SERIAL NOT NULL,
     "title" VARCHAR(100) NOT NULL,
@@ -128,7 +138,7 @@ CREATE TABLE "forum_level_rule" (
     "daily_topic_limit" SMALLINT NOT NULL DEFAULT 0,
     "daily_reply_limit" SMALLINT NOT NULL DEFAULT 0,
     "post_interval" SMALLINT NOT NULL DEFAULT 0,
-    "max_file_size" SMALLINT NOT NULL DEFAULT 0,
+    "max_file_size" INTEGER NOT NULL DEFAULT 0,
     "daily_like_limit" SMALLINT NOT NULL DEFAULT 0,
     "daily_favorite_limit" SMALLINT NOT NULL DEFAULT 0,
     "daily_comment_limit" SMALLINT NOT NULL DEFAULT 0,
@@ -156,13 +166,32 @@ CREATE TABLE "forum_moderator_action_log" (
 );
 
 -- CreateTable
+CREATE TABLE "forum_moderator_application" (
+    "id" SERIAL NOT NULL,
+    "applicant_id" INTEGER NOT NULL,
+    "section_id" INTEGER NOT NULL,
+    "permissions" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
+    "reason" VARCHAR(500) NOT NULL,
+    "status" SMALLINT NOT NULL DEFAULT 0,
+    "audit_by" INTEGER,
+    "audit_at" TIMESTAMPTZ(6),
+    "audit_reason" VARCHAR(500),
+    "remark" VARCHAR(500),
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+    "deleted_at" TIMESTAMPTZ(6),
+
+    CONSTRAINT "forum_moderator_application_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "forum_moderator_section" (
     "id" SERIAL NOT NULL,
     "moderator_id" INTEGER NOT NULL,
     "section_id" INTEGER NOT NULL,
     "inherit_from_parent" BOOLEAN NOT NULL DEFAULT true,
-    "custom_permission_mask" INTEGER NOT NULL DEFAULT 0,
-    "final_permission_mask" INTEGER NOT NULL DEFAULT 0,
+    "custom_permissions" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
+    "final_permissions" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
 
@@ -173,7 +202,7 @@ CREATE TABLE "forum_moderator_section" (
 CREATE TABLE "forum_moderator" (
     "id" SERIAL NOT NULL,
     "user_id" INTEGER NOT NULL,
-    "permission" INTEGER NOT NULL DEFAULT 0,
+    "permissions" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
     "is_enabled" BOOLEAN NOT NULL DEFAULT true,
     "remark" VARCHAR(500),
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -295,13 +324,24 @@ CREATE TABLE "forum_reply" (
 );
 
 -- CreateTable
+CREATE TABLE "forum_section_group" (
+    "id" SERIAL NOT NULL,
+    "name" VARCHAR(50) NOT NULL,
+    "description" VARCHAR(500),
+    "sort_order" INTEGER NOT NULL DEFAULT 0,
+    "is_enabled" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMPTZ(6) NOT NULL,
+    "deleted_at" TIMESTAMPTZ(6),
+
+    CONSTRAINT "forum_section_group_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "forum_section" (
     "id" SERIAL NOT NULL,
     "name" VARCHAR(50) NOT NULL,
-    "parent_id" INTEGER,
-    "level" INTEGER NOT NULL DEFAULT 0,
-    "path" VARCHAR(200),
-    "inherit_permission" BOOLEAN NOT NULL DEFAULT true,
+    "group_id" INTEGER,
     "icon" VARCHAR(255),
     "sort_order" INTEGER NOT NULL DEFAULT 0,
     "is_enabled" BOOLEAN NOT NULL DEFAULT true,
@@ -686,6 +726,18 @@ CREATE INDEX "admin_user_last_login_at_idx" ON "admin_user"("last_login_at");
 CREATE INDEX "admin_user_is_locked_idx" ON "admin_user"("is_locked");
 
 -- CreateIndex
+CREATE INDEX "client_notice_read_notice_id_idx" ON "client_notice_read"("notice_id");
+
+-- CreateIndex
+CREATE INDEX "client_notice_read_user_id_idx" ON "client_notice_read"("user_id");
+
+-- CreateIndex
+CREATE INDEX "client_notice_read_read_at_idx" ON "client_notice_read"("read_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "client_notice_read_notice_id_user_id_key" ON "client_notice_read"("notice_id", "user_id");
+
+-- CreateIndex
 CREATE INDEX "client_notice_is_published_publish_start_time_publish_end_t_idx" ON "client_notice"("is_published", "publish_start_time", "publish_end_time");
 
 -- CreateIndex
@@ -785,6 +837,27 @@ CREATE INDEX "forum_moderator_action_log_target_type_target_id_idx" ON "forum_mo
 CREATE INDEX "forum_moderator_action_log_created_at_idx" ON "forum_moderator_action_log"("created_at");
 
 -- CreateIndex
+CREATE INDEX "forum_moderator_application_applicant_id_idx" ON "forum_moderator_application"("applicant_id");
+
+-- CreateIndex
+CREATE INDEX "forum_moderator_application_section_id_idx" ON "forum_moderator_application"("section_id");
+
+-- CreateIndex
+CREATE INDEX "forum_moderator_application_status_idx" ON "forum_moderator_application"("status");
+
+-- CreateIndex
+CREATE INDEX "forum_moderator_application_audit_by_idx" ON "forum_moderator_application"("audit_by");
+
+-- CreateIndex
+CREATE INDEX "forum_moderator_application_created_at_idx" ON "forum_moderator_application"("created_at");
+
+-- CreateIndex
+CREATE INDEX "forum_moderator_application_deleted_at_idx" ON "forum_moderator_application"("deleted_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "forum_moderator_application_applicant_id_section_id_key" ON "forum_moderator_application"("applicant_id", "section_id");
+
+-- CreateIndex
 CREATE INDEX "forum_moderator_section_moderator_id_idx" ON "forum_moderator_section"("moderator_id");
 
 -- CreateIndex
@@ -798,9 +871,6 @@ CREATE UNIQUE INDEX "forum_moderator_section_moderator_id_section_id_key" ON "fo
 
 -- CreateIndex
 CREATE UNIQUE INDEX "forum_moderator_user_id_key" ON "forum_moderator"("user_id");
-
--- CreateIndex
-CREATE INDEX "forum_moderator_permission_idx" ON "forum_moderator"("permission");
 
 -- CreateIndex
 CREATE INDEX "forum_moderator_is_enabled_idx" ON "forum_moderator"("is_enabled");
@@ -959,6 +1029,21 @@ CREATE INDEX "forum_reply_topic_id_floor_idx" ON "forum_reply"("topic_id", "floo
 CREATE INDEX "forum_reply_topic_id_created_at_idx" ON "forum_reply"("topic_id", "created_at");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "forum_section_group_name_key" ON "forum_section_group"("name");
+
+-- CreateIndex
+CREATE INDEX "forum_section_group_sort_order_idx" ON "forum_section_group"("sort_order");
+
+-- CreateIndex
+CREATE INDEX "forum_section_group_is_enabled_idx" ON "forum_section_group"("is_enabled");
+
+-- CreateIndex
+CREATE INDEX "forum_section_group_created_at_idx" ON "forum_section_group"("created_at");
+
+-- CreateIndex
+CREATE INDEX "forum_section_group_deleted_at_idx" ON "forum_section_group"("deleted_at");
+
+-- CreateIndex
 CREATE INDEX "forum_section_sort_order_idx" ON "forum_section"("sort_order");
 
 -- CreateIndex
@@ -977,10 +1062,7 @@ CREATE INDEX "forum_section_created_at_idx" ON "forum_section"("created_at");
 CREATE INDEX "forum_section_deleted_at_idx" ON "forum_section"("deleted_at");
 
 -- CreateIndex
-CREATE INDEX "forum_section_parent_id_idx" ON "forum_section"("parent_id");
-
--- CreateIndex
-CREATE INDEX "forum_section_level_idx" ON "forum_section"("level");
+CREATE INDEX "forum_section_group_id_idx" ON "forum_section"("group_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "forum_sensitive_word_word_key" ON "forum_sensitive_word"("word");
@@ -1337,10 +1419,22 @@ CREATE INDEX "work_tag_is_enabled_idx" ON "work_tag"("is_enabled");
 CREATE INDEX "_TopicTags_B_index" ON "_TopicTags"("B");
 
 -- AddForeignKey
+ALTER TABLE "client_notice_read" ADD CONSTRAINT "client_notice_read_notice_id_fkey" FOREIGN KEY ("notice_id") REFERENCES "client_notice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "client_notice_read" ADD CONSTRAINT "client_notice_read_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "client_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "client_notice" ADD CONSTRAINT "client_notice_page_id_fkey" FOREIGN KEY ("page_id") REFERENCES "client_page"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "forum_moderator_action_log" ADD CONSTRAINT "forum_moderator_action_log_moderator_id_fkey" FOREIGN KEY ("moderator_id") REFERENCES "forum_moderator"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "forum_moderator_application" ADD CONSTRAINT "forum_moderator_application_applicant_id_fkey" FOREIGN KEY ("applicant_id") REFERENCES "forum_profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "forum_moderator_application" ADD CONSTRAINT "forum_moderator_application_section_id_fkey" FOREIGN KEY ("section_id") REFERENCES "forum_section"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "forum_moderator_section" ADD CONSTRAINT "forum_moderator_section_moderator_id_fkey" FOREIGN KEY ("moderator_id") REFERENCES "forum_moderator"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1394,7 +1488,7 @@ ALTER TABLE "forum_reply" ADD CONSTRAINT "forum_reply_topic_id_fkey" FOREIGN KEY
 ALTER TABLE "forum_reply" ADD CONSTRAINT "forum_reply_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "client_user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "forum_section" ADD CONSTRAINT "forum_section_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "forum_section"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "forum_section" ADD CONSTRAINT "forum_section_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "forum_section_group"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "forum_section" ADD CONSTRAINT "forum_section_last_topic_id_fkey" FOREIGN KEY ("last_topic_id") REFERENCES "forum_topic"("id") ON DELETE SET NULL ON UPDATE CASCADE;

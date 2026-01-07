@@ -1,8 +1,8 @@
 import type { ForumTopicWhereInput } from '@libs/base/database'
 
-import { NotificationService } from '@app/forum/notification/notification.service'
 import { RepositoryService } from '@libs/base/database'
 import { isNotNil } from '@libs/base/utils'
+import { NotificationService } from '@libs/forum/notification/notification.service'
 import { BadRequestException, Inject, Injectable } from '@nestjs/common'
 import {
   CreateForumTopicDto,
@@ -39,12 +39,12 @@ export class ForumTopicService extends RepositoryService {
     return this.prisma.forumReply
   }
 
-  get forumLike() {
-    return this.prisma.forumLike
+  get forumTopicLike() {
+    return this.prisma.forumTopicLike
   }
 
-  get forumFavorite() {
-    return this.prisma.forumFavorite
+  get forumTopicFavorite() {
+    return this.prisma.forumTopicFavorite
   }
 
   /**
@@ -74,7 +74,7 @@ export class ForumTopicService extends RepositoryService {
     if (tagIds && tagIds.length > 0) {
       where.tags = {
         some: {
-          tagId: {
+          id: {
             in: tagIds,
           },
         },
@@ -106,19 +106,12 @@ export class ForumTopicService extends RepositoryService {
             name: true,
           },
         },
-        profile: {
+        user: {
           select: {
             id: true,
-            userId: true,
-            points: true,
-            user: {
-              select: {
-                id: true,
-                username: true,
-                nickname: true,
-                avatar: true,
-              },
-            },
+            username: true,
+            nickname: true,
+            avatar: true,
           },
         },
         tags: {
@@ -146,13 +139,7 @@ export class ForumTopicService extends RepositoryService {
       where: { id },
       include: {
         section: true,
-        profile: {
-          include: {
-            user: true,
-            level: true,
-            badges: true,
-          },
-        },
+        user: true,
         tags: true,
       },
     })
@@ -206,14 +193,14 @@ export class ForumTopicService extends RepositoryService {
     }
 
     const profile = await this.forumProfile.findFirst({
-      where: { userId, isBanned: false },
+      where: { userId, status: 1 },
     })
 
     if (!profile) {
       throw new BadRequestException('用户论坛资料不存在或已被封禁')
     }
 
-    const existingLike = await this.forumLike.findFirst({
+    const existingLike = await this.forumTopicLike.findFirst({
       where: {
         topicId,
         userId: profile.id,
@@ -226,7 +213,7 @@ export class ForumTopicService extends RepositoryService {
           throw new BadRequestException('已经点赞过该主题')
         }
 
-        await tx.forumLike.create({
+        await tx.forumTopicLike.create({
           data: {
             topicId,
             userId: profile.id,
@@ -255,7 +242,7 @@ export class ForumTopicService extends RepositoryService {
           throw new BadRequestException('未点赞过该主题')
         }
 
-        await tx.forumLike.deleteMany({
+        await tx.forumTopicLike.deleteMany({
           where: {
             topicId,
             userId: profile.id,
@@ -310,14 +297,14 @@ export class ForumTopicService extends RepositoryService {
     }
 
     const profile = await this.forumProfile.findFirst({
-      where: { userId, isBanned: false },
+      where: { userId, status: 1 },
     })
 
     if (!profile) {
       throw new BadRequestException('用户论坛资料不存在或已被封禁')
     }
 
-    const existingFavorite = await this.forumFavorite.findFirst({
+    const existingFavorite = await this.forumTopicFavorite.findFirst({
       where: {
         topicId,
         userId: profile.id,
@@ -330,7 +317,7 @@ export class ForumTopicService extends RepositoryService {
           throw new BadRequestException('已经收藏过该主题')
         }
 
-        await tx.forumFavorite.create({
+        await tx.forumTopicFavorite.create({
           data: {
             topicId,
             userId: profile.id,
@@ -350,7 +337,7 @@ export class ForumTopicService extends RepositoryService {
           throw new BadRequestException('未收藏过该主题')
         }
 
-        await tx.forumFavorite.deleteMany({
+        await tx.forumTopicFavorite.deleteMany({
           where: {
             topicId,
             userId: profile.id,
@@ -392,7 +379,7 @@ export class ForumTopicService extends RepositoryService {
     }
 
     const profile = await this.forumProfile.findFirst({
-      where: { userId, isBanned: false },
+      where: { userId, status: 1 },
     })
 
     if (!profile) {
@@ -472,7 +459,7 @@ export class ForumTopicService extends RepositoryService {
     const existingTopic = await this.forumTopic.findUnique({
       where: { id },
       include: {
-        profile: true,
+        user: true,
       },
     })
 
@@ -480,7 +467,7 @@ export class ForumTopicService extends RepositoryService {
       throw new BadRequestException('论坛主题不存在')
     }
 
-    if (existingTopic.profile.userId !== userId) {
+    if (existingTopic.user.id !== userId) {
       throw new BadRequestException('无权编辑该主题')
     }
 
@@ -550,7 +537,7 @@ export class ForumTopicService extends RepositoryService {
     const topic = await this.forumTopic.findUnique({
       where: { id },
       include: {
-        profile: true,
+        user: true,
       },
     })
 
@@ -558,7 +545,7 @@ export class ForumTopicService extends RepositoryService {
       throw new BadRequestException('论坛主题不存在')
     }
 
-    if (topic.profile.userId !== userId) {
+    if (topic.user.id !== userId) {
       throw new BadRequestException('无权删除该主题')
     }
 
@@ -574,9 +561,7 @@ export class ForumTopicService extends RepositoryService {
     })
 
     if (replyCount > 0) {
-      throw new BadRequestException(
-        `该主题还有 ${replyCount} 个回复，无法删除`,
-      )
+      throw new BadRequestException(`该主题还有 ${replyCount} 个回复，无法删除`)
     }
 
     return this.prisma.$transaction(async (tx) => {

@@ -27,6 +27,18 @@ export class IdDto {
 }
 
 /**
+ * 用户id
+ */
+export class UserIdDto {
+  @ValidateNumber({
+    description: '用户id',
+    example: 1,
+    required: true,
+  })
+  userId!: number
+}
+
+/**
  * IDs DTO - 用于接收多个实体ID参数
  */
 export class IdsDto {

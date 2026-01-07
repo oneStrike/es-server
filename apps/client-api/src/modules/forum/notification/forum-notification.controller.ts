@@ -5,8 +5,8 @@ import {
   MarkAllNotificationReadDto,
   MarkNotificationReadDto,
   QueryNotificationListDto,
-} from '@app/forum/notification/dto/notification.dto'
-import { NotificationService } from '@app/forum/notification/notification.service'
+} from '@libs/forum/notification/dto/notification.dto'
+import { NotificationService } from '@libs/forum/notification/notification.service'
 import { JwtAuthGuard } from '@app/guards/jwt-auth.guard'
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'

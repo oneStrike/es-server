@@ -48,6 +48,11 @@ export type AdminUser = Prisma.AdminUserModel
  */
 export type ClientConfig = Prisma.ClientConfigModel
 /**
+ * Model ClientNoticeRead
+ * 
+ */
+export type ClientNoticeRead = Prisma.ClientNoticeReadModel
+/**
  * Model ClientNotice
  * 
  */
@@ -83,13 +88,18 @@ export type ForumLevelRule = Prisma.ForumLevelRuleModel
  */
 export type ForumModeratorActionLog = Prisma.ForumModeratorActionLogModel
 /**
+ * Model ForumModeratorApplication
+ * 论坛版主申请表 - 管理用户申请成为版主的申请记录，包括申请信息、审核状态、审核结果等
+ */
+export type ForumModeratorApplication = Prisma.ForumModeratorApplicationModel
+/**
  * Model ForumModeratorSection
- * 论坛版主板块关联表 - 管理版主与板块的多对多关系，一个版主可以管理多个板块
+ * 论坛版主板块关联表 - 管理板块版主与板块的多对多关系，一个板块版主可以管理多个板块
  */
 export type ForumModeratorSection = Prisma.ForumModeratorSectionModel
 /**
  * Model ForumModerator
- * 论坛版主表 - 管理论坛版主信息，包括权限设置、启用状态等
+ * 论坛版主表 - 管理论坛版主信息，包括角色类型、权限设置、启用状态等
  */
 export type ForumModerator = Prisma.ForumModeratorModel
 /**
@@ -127,6 +137,11 @@ export type ForumReplyLike = Prisma.ForumReplyLikeModel
  * 论坛回复表 - 存储主题的回复内容，支持楼中楼回复
  */
 export type ForumReply = Prisma.ForumReplyModel
+/**
+ * Model ForumSectionGroup
+ * 论坛板块分组表 - 管理论坛板块分组信息，用于对板块进行分类组织
+ */
+export type ForumSectionGroup = Prisma.ForumSectionGroupModel
 /**
  * Model ForumSection
  * 论坛板块表 - 管理论坛板块信息，包括板块名称、描述、统计信息等

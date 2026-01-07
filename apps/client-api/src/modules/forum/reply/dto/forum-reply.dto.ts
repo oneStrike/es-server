@@ -34,22 +34,36 @@ class TopicInfoDto {
 }
 
 /**
- * 用户资料信息DTO
+ * 用户信息DTO
  */
-class ProfileInfoDto {
+class UserInfoDto {
   @ApiProperty({
-    description: '用户资料ID',
+    description: '用户ID',
     example: 1,
     required: true,
   })
   id!: number
 
   @ApiProperty({
-    description: '用户ID',
-    example: 1,
+    description: '用户名',
+    example: 'user123',
     required: true,
   })
-  userId!: number
+  username!: string
+
+  @ApiProperty({
+    description: '昵称',
+    example: '张三',
+    required: true,
+  })
+  nickname!: string
+
+  @ApiProperty({
+    description: '头像',
+    example: 'https://example.com/avatar.jpg',
+    required: false,
+  })
+  avatar?: string
 }
 
 /**
@@ -71,11 +85,11 @@ export class BaseForumReplyDto extends BaseDto {
   topic!: TopicInfoDto
 
   @ApiProperty({
-    description: '关联的用户资料',
+    description: '关联的用户',
     required: true,
-    type: ProfileInfoDto,
+    type: UserInfoDto,
   })
-  profile!: ProfileInfoDto
+  user!: UserInfoDto
 
   @ValidateNumber({
     description: '回复楼层（从1开始）',

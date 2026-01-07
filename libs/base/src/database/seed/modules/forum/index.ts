@@ -1,6 +1,7 @@
 export { createInitialForumBadges } from './badge'
 export { createInitialForumLevelRules } from './level-rule'
 export { createInitialForumPointRules } from './point-rule'
+export { createInitialForumSectionGroups } from './section-group'
 export { createInitialForumSections } from './section'
 export { createInitialForumSensitiveWords } from './sensitive-word'
 export { createInitialForumTags } from './tag'

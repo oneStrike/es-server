@@ -1,0 +1,41 @@
+/// 论坛版主申请表 - 管理用户申请成为版主的申请记录，包括申请信息、审核状态、审核结果等
+model ForumModeratorApplication {
+  /// 主键ID
+  id          Int      @id @default(autoincrement())
+  /// 申请人用户ID
+  applicantId Int      @map("applicant_id")
+  /// 申请的板块ID
+  sectionId   Int      @map("section_id")
+  /// 申请的权限数组（1=置顶, 2=加精, 3=锁定, 4=删除, 5=审核, 6=移动）
+  permissions Int[]    @default([]) @map("permissions")
+  /// 申请理由
+  reason      String   @db.VarChar(500)
+  /// 申请状态（0=待审核, 1=已通过, 2=已拒绝）
+  status      Int      @default(0) @map("status") @db.SmallInt
+  /// 审核人ID
+  auditBy     Int?     @map("audit_by")
+  /// 审核时间
+  auditAt     DateTime? @map("audit_at") @db.Timestamptz(6)
+  /// 审核原因（通过或拒绝的原因）
+  auditReason String?  @map("audit_reason") @db.VarChar(500)
+  /// 备注
+  remark      String?  @db.VarChar(500)
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 软删除时间
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  applicant ForumProfile @relation("ModeratorApplicant", fields: [applicantId], references: [id], onDelete: Cascade)
+  section   ForumSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([applicantId, sectionId])
+  @@index([applicantId])
+  @@index([sectionId])
+  @@index([status])
+  @@index([auditBy])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("forum_moderator_application")
+}

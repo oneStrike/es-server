@@ -24,37 +24,20 @@ export class BaseForumSectionDto extends BaseDto {
   name!: string
 
   @ValidateNumber({
-    description: '父板块ID（为空表示主板块）',
+    description: '板块分组ID（为空表示未分组）',
     example: 1,
     required: false,
     min: 1,
   })
-  parentId?: number
-
-  @ValidateNumber({
-    description: '板块层级深度（0为主板块，1为一级子版块）',
-    example: 0,
-    required: false,
-    min: 0,
-    max: 2,
-  })
-  level?: number
+  groupId?: number
 
   @ValidateString({
-    description: '板块路径（如：/1/3/ 表示归属于板块1下的板块3）',
-    example: '/1/',
+    description: '板块分组名称（仅用于响应）',
+    example: '技术讨论',
     required: false,
-    maxLength: 200,
+    maxLength: 50,
   })
-  path?: string
-
-  @ValidateBoolean({
-    description: '是否继承父板块权限',
-    example: true,
-    required: false,
-    default: true,
-  })
-  inheritPermission?: boolean
+  groupName?: string
 
   @ValidateString({
     description: '板块描述',
@@ -139,7 +122,12 @@ export class UpdateForumSectionDto extends IntersectionType(
 export class QueryForumSectionDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumSectionDto, ['name', 'isEnabled', 'requireAudit']),
+    PickType(BaseForumSectionDto, [
+      'name',
+      'isEnabled',
+      'requireAudit',
+      'groupId',
+    ]),
   ),
 ) {}
 
