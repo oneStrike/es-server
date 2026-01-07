@@ -20,69 +20,12 @@ export class ForumSectionService extends RepositoryService {
     return this.prisma.forumSection
   }
 
-  /**
-   * 计算板块路径
-   * @param parentId 父板块ID
-   * @returns 板块路径字符串
-   */
-  private async calculateSectionPath(parentId: number | null) {
-    if (!parentId) {
-      return '/'
-    }
-
-    const parentSection = await this.forumSection.findUnique({
-      where: { id: parentId },
-      select: { path: true, level: true },
-    })
-
-    if (!parentSection) {
-      return '/'
-    }
-
-    const maxLevel = 2
-    if (parentSection.level >= maxLevel) {
-      throw new BadRequestException('板块层级只允许存在2级（包含主板块）')
-    }
-
-    return `${parentSection.path}${parentId}/`
+  get forumSectionGroup() {
+    return this.prisma.forumSectionGroup
   }
 
   /**
-   * 验证是否存在循环引用
-   * @param parentId 父板块ID
-   * @param childId 子板块ID
-   * @returns 是否存在循环引用
-   */
-  private async validateNoCircularReference(parentId: number, childId: number) {
-    if (parentId === childId) {
-      return false
-    }
-
-    const childSection = await this.forumSection.findUnique({
-      where: { id: childId },
-      select: { parentId: true },
-    })
-
-    if (!childSection?.parentId) {
-      return true
-    }
-
-    return this.validateNoCircularReference(parentId, childSection.parentId)
-  }
-
-  /**
-   * 获取父板块信息
-   * @param parentId 父板块ID
-   * @returns 父板块信息
-   */
-  private async getParentSection(parentId: number) {
-    return this.forumSection.findUnique({
-      where: { id: parentId },
-    })
-  }
-
-  /**
-   * 计算板块统计信息（包含子板块）
+   * 计算板块统计信息
    * @param sectionId 板块ID
    * @returns 统计信息对象
    */
@@ -90,10 +33,6 @@ export class ForumSectionService extends RepositoryService {
     const section = await this.forumSection.findUnique({
       where: { id: sectionId },
       include: {
-        children: {
-          where: { deletedAt: null },
-          select: { id: true },
-        },
         topics: {
           where: { deletedAt: null },
           select: { replyCount: true },
@@ -105,15 +44,10 @@ export class ForumSectionService extends RepositoryService {
       return { topicCount: 0, replyCount: 0 }
     }
 
-    let totalReplyCount = section.topics.reduce(
+    const totalReplyCount = section.topics.reduce(
       (sum, topic) => sum + topic.replyCount,
       0,
     )
-
-    for (const child of section.children) {
-      const childStats = await this.calculateStatistics(child.id)
-      totalReplyCount += childStats.replyCount
-    }
 
     return {
       topicCount: section.topics.length,
@@ -127,7 +61,7 @@ export class ForumSectionService extends RepositoryService {
    * @returns 创建的板块信息
    */
   async createForumSection(createForumSectionDto: CreateForumSectionDto) {
-    const { name, parentId, ...sectionData } = createForumSectionDto
+    const { name, groupId, ...sectionData } = createForumSectionDto
 
     const existingSection = await this.forumSection.findFirst({
       where: { name, deletedAt: null },
@@ -137,154 +71,41 @@ export class ForumSectionService extends RepositoryService {
       throw new BadRequestException('板块名称已存在')
     }
 
-    if (parentId) {
-      const parentSection = await this.getParentSection(parentId)
-      if (!parentSection) {
-        throw new BadRequestException('父板块不存在')
+    if (groupId) {
+      const group = await this.forumSectionGroup.findUnique({
+        where: { id: groupId },
+      })
+      if (!group) {
+        throw new BadRequestException('板块分组不存在')
       }
     }
-
-    const path = await this.calculateSectionPath(parentId || null)
-    const level = parentId
-      ? (await this.getParentSection(parentId))!.level + 1
-      : 0
 
     return this.forumSection.create({
       data: {
         name,
-        parentId: parentId || null,
-        level,
-        path,
+        groupId: groupId || null,
         ...sectionData,
       },
     })
   }
 
   /**
-   * 移动板块到新的父板块
-   * @param id 板块ID
-   * @param newParentId 新的父板块ID
-   * @returns 更新后的板块信息
+   * 获取板块列表
+   * @returns 板块列表
    */
-  async moveSection(id: number, newParentId: number | null) {
-    const section = await this.forumSection.findUnique({
-      where: { id },
-      include: {
-        children: {
-          select: { id: true },
-        },
-      },
-    })
-
-    if (!section) {
-      throw new BadRequestException('板块不存在')
-    }
-
-    if (newParentId) {
-      const targetSection = await this.getParentSection(newParentId)
-      if (!targetSection) {
-        throw new BadRequestException('目标父板块不存在')
-      }
-
-      const isCircular = await this.validateNoCircularReference(id, newParentId)
-      if (!isCircular) {
-        throw new BadRequestException('不能将板块移动到其子板块下')
-      }
-    }
-
-    const newPath = await this.calculateSectionPath(newParentId || null)
-    const newLevel = newParentId
-      ? (await this.getParentSection(newParentId))!.level + 1
-      : 0
-
-    await this.forumSection.update({
-      where: { id },
-      data: {
-        parentId: newParentId || null,
-        level: newLevel,
-        path: newPath,
-      },
-    })
-
-    for (const child of section.children) {
-      await this.updateChildSectionPath(child.id, newPath, newLevel)
-    }
-
-    return { id }
-  }
-
-  /**
-   * 递归更新子板块路径和层级
-   * @param childId 子板块ID
-   * @param parentPath 父板块路径
-   * @param parentLevel 父板块层级
-   */
-  private async updateChildSectionPath(
-    childId: number,
-    parentPath: string,
-    parentLevel: number,
-  ): Promise<void> {
-    const child = await this.forumSection.findUnique({
-      where: { id: childId },
-      include: {
-        children: {
-          select: { id: true },
-        },
-      },
-    })
-
-    if (!child) {
-      return
-    }
-
-    const newPath = `${parentPath}${childId}/`
-    const newLevel = parentLevel + 1
-
-    await this.forumSection.update({
-      where: { id: childId },
-      data: {
-        level: newLevel,
-        path: newPath,
-      },
-    })
-
-    for (const grandChild of child.children) {
-      await this.updateChildSectionPath(grandChild.id, newPath, newLevel)
-    }
-  }
-
-  /**
-   * 获取板块树结构
-   * @param rootOnly 是否只获取主板块
-   * @returns 板块树结构
-   */
-  async getSectionTree(rootOnly: boolean = true) {
-    const whereCondition: ForumSectionWhereInput = {
-      deletedAt: null,
-    }
-
-    if (rootOnly) {
-      whereCondition.parentId = null
-    }
-
+  async getSectionTree() {
     const sections = await this.forumSection.findMany({
-      where: whereCondition,
+      where: {
+        deletedAt: null,
+      },
       orderBy: {
         sortOrder: 'asc',
       },
       include: {
-        children: {
-          where: { deletedAt: null },
-          orderBy: {
-            sortOrder: 'asc',
-          },
-          include: {
-            children: {
-              where: { deletedAt: null },
-              orderBy: {
-                sortOrder: 'asc',
-              },
-            },
+        group: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
@@ -299,7 +120,7 @@ export class ForumSectionService extends RepositoryService {
    * @returns 分页的板块列表
    */
   async getForumSectionPage(queryForumSectionDto: QueryForumSectionDto) {
-    const { name, ...otherDto } = queryForumSectionDto
+    const { name, groupId, ...otherDto } = queryForumSectionDto
 
     const where: ForumSectionWhereInput = {
       deletedAt: null,
@@ -313,23 +134,30 @@ export class ForumSectionService extends RepositoryService {
       }
     }
 
+    if (groupId !== undefined) {
+      where.groupId = groupId
+    }
+
     return this.forumSection.findPagination({
       where,
       select: {
         id: true,
         name: true,
-        parentId: true,
-        level: true,
-        path: true,
+        groupId: true,
         description: true,
         icon: true,
         sortOrder: true,
         isEnabled: true,
-        inheritPermission: true,
         topicCount: true,
         replyCount: true,
         createdAt: true,
         updatedAt: true,
+        group: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
         sortOrder: 'asc',
@@ -346,20 +174,10 @@ export class ForumSectionService extends RepositoryService {
     const section = await this.forumSection.findUnique({
       where: { id },
       include: {
-        parent: {
+        group: {
           select: {
             id: true,
             name: true,
-          },
-        },
-        children: {
-          where: { deletedAt: null },
-          select: {
-            id: true,
-            name: true,
-            level: true,
-            topicCount: true,
-            replyCount: true,
           },
         },
       },
@@ -378,7 +196,7 @@ export class ForumSectionService extends RepositoryService {
    * @returns 更新后的板块信息
    */
   async updateForumSection(updateForumSectionDto: UpdateForumSectionDto) {
-    const { id, name, parentId, ...updateData } = updateForumSectionDto
+    const { id, name, groupId, ...updateData } = updateForumSectionDto
 
     const existingSection = await this.forumSection.findUnique({
       where: { id },
@@ -401,40 +219,14 @@ export class ForumSectionService extends RepositoryService {
       }
     }
 
-    if (isNotNil(parentId) && parentId !== existingSection.parentId) {
-      if (parentId === id) {
-        throw new BadRequestException('不能将板块设置为自己的父板块')
-      }
-
-      const targetSection = await this.getParentSection(parentId)
-      if (!targetSection) {
-        throw new BadRequestException('目标父板块不存在')
-      }
-
-      const isCircular = await this.validateNoCircularReference(id, parentId)
-      if (!isCircular) {
-        throw new BadRequestException('不能将板块移动到其子板块下')
-      }
-
-      const newPath = await this.calculateSectionPath(parentId)
-      const newLevel = targetSection.level + 1
-
-      await this.forumSection.update({
-        where: { id },
-        data: {
-          parentId,
-          level: newLevel,
-          path: newPath,
-        },
-      })
-
-      const children = await this.forumSection.findMany({
-        where: { parentId: id },
-        select: { id: true },
-      })
-
-      for (const child of children) {
-        await this.updateChildSectionPath(child.id, newPath, newLevel)
+    if (isNotNil(groupId) && groupId !== existingSection.groupId) {
+      if (groupId) {
+        const group = await this.forumSectionGroup.findUnique({
+          where: { id: groupId },
+        })
+        if (!group) {
+          throw new BadRequestException('板块分组不存在')
+        }
       }
     }
 
@@ -442,6 +234,7 @@ export class ForumSectionService extends RepositoryService {
       where: { id },
       data: {
         name,
+        groupId,
         ...updateData,
       },
     })
@@ -455,19 +248,10 @@ export class ForumSectionService extends RepositoryService {
   async deleteForumSection(id: number) {
     const section = await this.forumSection.findUnique({
       where: { id },
-      include: {
-        children: {
-          where: { deletedAt: null },
-        },
-      },
     })
 
     if (!section) {
       throw new BadRequestException('论坛板块不存在')
-    }
-
-    if (section.children.length > 0) {
-      throw new BadRequestException('请先删除该板块下的子板块')
     }
 
     if (section.topicCount > 0) {

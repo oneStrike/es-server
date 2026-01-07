@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   AdminUser: 'AdminUser',
   ClientConfig: 'ClientConfig',
+  ClientNoticeRead: 'ClientNoticeRead',
   ClientNotice: 'ClientNotice',
   ClientPage: 'ClientPage',
   ClientUser: 'ClientUser',
@@ -60,6 +61,7 @@ export const ModelName = {
   ForumBadge: 'ForumBadge',
   ForumLevelRule: 'ForumLevelRule',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
+  ForumModeratorApplication: 'ForumModeratorApplication',
   ForumModeratorSection: 'ForumModeratorSection',
   ForumModerator: 'ForumModerator',
   ForumNotification: 'ForumNotification',
@@ -69,6 +71,7 @@ export const ModelName = {
   ForumProfile: 'ForumProfile',
   ForumReplyLike: 'ForumReplyLike',
   ForumReply: 'ForumReply',
+  ForumSectionGroup: 'ForumSectionGroup',
   ForumSection: 'ForumSection',
   ForumSensitiveWord: 'ForumSensitiveWord',
   ForumTag: 'ForumTag',
@@ -143,6 +146,16 @@ export const ClientConfigScalarFieldEnum = {
 } as const
 
 export type ClientConfigScalarFieldEnum = (typeof ClientConfigScalarFieldEnum)[keyof typeof ClientConfigScalarFieldEnum]
+
+
+export const ClientNoticeReadScalarFieldEnum = {
+  id: 'id',
+  noticeId: 'noticeId',
+  userId: 'userId',
+  readAt: 'readAt'
+} as const
+
+export type ClientNoticeReadScalarFieldEnum = (typeof ClientNoticeReadScalarFieldEnum)[keyof typeof ClientNoticeReadScalarFieldEnum]
 
 
 export const ClientNoticeScalarFieldEnum = {
@@ -272,13 +285,30 @@ export const ForumModeratorActionLogScalarFieldEnum = {
 export type ForumModeratorActionLogScalarFieldEnum = (typeof ForumModeratorActionLogScalarFieldEnum)[keyof typeof ForumModeratorActionLogScalarFieldEnum]
 
 
+export const ForumModeratorApplicationScalarFieldEnum = {
+  id: 'id',
+  applicantId: 'applicantId',
+  sectionId: 'sectionId',
+  permissions: 'permissions',
+  reason: 'reason',
+  status: 'status',
+  auditBy: 'auditBy',
+  auditAt: 'auditAt',
+  auditReason: 'auditReason',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type ForumModeratorApplicationScalarFieldEnum = (typeof ForumModeratorApplicationScalarFieldEnum)[keyof typeof ForumModeratorApplicationScalarFieldEnum]
+
+
 export const ForumModeratorSectionScalarFieldEnum = {
   id: 'id',
   moderatorId: 'moderatorId',
   sectionId: 'sectionId',
-  inheritFromParent: 'inheritFromParent',
-  customPermissionMask: 'customPermissionMask',
-  finalPermissionMask: 'finalPermissionMask',
+  permissions: 'permissions',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -289,7 +319,9 @@ export type ForumModeratorSectionScalarFieldEnum = (typeof ForumModeratorSection
 export const ForumModeratorScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  permission: 'permission',
+  roleType: 'roleType',
+  groupId: 'groupId',
+  permissions: 'permissions',
   isEnabled: 'isEnabled',
   remark: 'remark',
   createdAt: 'createdAt',
@@ -411,18 +443,31 @@ export const ForumReplyScalarFieldEnum = {
 export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof typeof ForumReplyScalarFieldEnum]
 
 
+export const ForumSectionGroupScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  sortOrder: 'sortOrder',
+  isEnabled: 'isEnabled',
+  maxModerators: 'maxModerators',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type ForumSectionGroupScalarFieldEnum = (typeof ForumSectionGroupScalarFieldEnum)[keyof typeof ForumSectionGroupScalarFieldEnum]
+
+
 export const ForumSectionScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  parentId: 'parentId',
-  level: 'level',
-  path: 'path',
-  inheritPermission: 'inheritPermission',
+  groupId: 'groupId',
   icon: 'icon',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   topicReviewPolicy: 'topicReviewPolicy',
   userLevelRuleId: 'userLevelRuleId',
+  maxModerators: 'maxModerators',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
   lastPostAt: 'lastPostAt',

@@ -1,34 +1,20 @@
 import { RepositoryService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
+import { ModeratorPermissionService } from '../moderator/moderator-permission.service'
+import { ModeratorPermissionEnum } from '../moderator/moderator.constant'
 
-export const PERMISSION_MASK = {
-  PIN: 1 << 0,
-  FEATURE: 1 << 1,
-  LOCK: 1 << 2,
-  DELETE: 1 << 3,
-  AUDIT: 1 << 4,
-  MOVE: 1 << 5,
-} as const
-
-export type PermissionMask =
-  (typeof PERMISSION_MASK)[keyof typeof PERMISSION_MASK]
+export type Permission = ModeratorPermissionEnum
 
 @Injectable()
 export class SectionPermissionService extends RepositoryService {
-  constructor() {
+  constructor(private readonly permissionService: ModeratorPermissionService) {
     super()
   }
 
-  /**
-   * 计算版主在板块的最终权限掩码
-   * @param moderatorId 版主ID
-   * @param sectionId 板块ID
-   * @returns 最终权限掩码
-   */
-  async calculateFinalPermissionMask(
+  async calculateFinalPermissions(
     moderatorId: number,
     sectionId: number,
-  ): Promise<number> {
+  ): Promise<ModeratorPermissionEnum[]> {
     const moderatorSection = await this.prisma.forumModeratorSection.findUnique(
       {
         where: {
@@ -37,144 +23,22 @@ export class SectionPermissionService extends RepositoryService {
             sectionId,
           },
         },
-        include: {
-          section: true,
-        },
       },
     )
 
     if (!moderatorSection) {
-      return 0
+      return []
     }
 
-    if (!moderatorSection.inheritFromParent) {
-      return moderatorSection.customPermissionMask
-    }
-
-    const parentPermissionMask = await this.getParentPermissionMask(
-      moderatorId,
-      moderatorSection.sectionId,
-    )
-
-    return parentPermissionMask | moderatorSection.customPermissionMask
+    return moderatorSection.finalPermissions as ModeratorPermissionEnum[]
   }
 
-  /**
-   * 获取版主在父板块的权限掩码
-   * @param moderatorId 版主ID
-   * @param sectionId 板块ID
-   * @returns 父板块的权限掩码
-   */
-  private async getParentPermissionMask(
-    moderatorId: number,
-    sectionId: number,
-  ): Promise<number> {
-    const section = await this.prisma.forumSection.findUnique({
-      where: { id: sectionId },
-      select: { parentId: true },
-    })
-
-    if (!section?.parentId) {
-      return 0
-    }
-
-    const parentModeratorSection =
-      await this.prisma.forumModeratorSection.findUnique({
-        where: {
-          moderatorId_sectionId: {
-            moderatorId,
-            sectionId: section.parentId,
-          },
-        },
-      })
-
-    if (!parentModeratorSection) {
-      return this.getParentPermissionMask(moderatorId, section.parentId)
-    }
-
-    return parentModeratorSection.finalPermissionMask
-  }
-
-  /**
-   * 递归重新计算所有子板块的权限
-   * @param moderatorId 版主ID
-   * @param sectionId 板块ID
-   */
-  async recalculateAllDescendantPermissions(
-    moderatorId: number,
-    sectionId: number,
-  ): Promise<void> {
-    const childSections = await this.prisma.forumSection.findMany({
-      where: {
-        parentId: sectionId,
-      },
-      select: { id: true },
-    })
-
-    const parentPermissionMask = await this.calculateFinalPermissionMask(
-      moderatorId,
-      sectionId,
-    )
-
-    for (const child of childSections) {
-      const childModeratorSection =
-        await this.prisma.forumModeratorSection.findUnique({
-          where: {
-            moderatorId_sectionId: {
-              moderatorId,
-              sectionId: child.id,
-            },
-          },
-        })
-
-      if (childModeratorSection?.inheritFromParent) {
-        const newFinalPermission =
-          parentPermissionMask | childModeratorSection.customPermissionMask
-
-        await this.prisma.forumModeratorSection.update({
-          where: {
-            moderatorId_sectionId: {
-              moderatorId,
-              sectionId: child.id,
-            },
-          },
-          data: {
-            finalPermissionMask: newFinalPermission,
-          },
-        })
-
-        await this.recalculateAllDescendantPermissions(moderatorId, child.id)
-      }
-    }
-  }
-
-  /**
-   * 分配版主到板块
-   * @param moderatorId 版主ID
-   * @param sectionId 板块ID
-   * @param inheritFromParent 是否继承父板块权限
-   * @param customPermissionMask 自定义权限掩码
-   */
   async assignModeratorToSection(
     moderatorId: number,
     sectionId: number,
-    inheritFromParent: boolean = true,
-    customPermissionMask: number = 0,
+    customPermissions: ModeratorPermissionEnum[] = [],
   ): Promise<void> {
-    const parentSection = await this.prisma.forumSection.findUnique({
-      where: { id: sectionId },
-      select: { parentId: true, inheritPermission: true },
-    })
-
-    let finalPermissionMask = customPermissionMask
-
-    if (inheritFromParent && parentSection?.parentId) {
-      const parentPermissionMask = await this.calculateFinalPermissionMask(
-        moderatorId,
-        parentSection.parentId,
-      )
-      finalPermissionMask = parentPermissionMask | customPermissionMask
-    }
+    const finalPermissions = customPermissions
 
     await this.prisma.forumModeratorSection.upsert({
       where: {
@@ -184,27 +48,18 @@ export class SectionPermissionService extends RepositoryService {
         },
       },
       update: {
-        inheritFromParent,
-        customPermissionMask,
-        finalPermissionMask,
+        customPermissions,
+        finalPermissions,
       },
       create: {
         moderatorId,
         sectionId,
-        inheritFromParent,
-        customPermissionMask,
-        finalPermissionMask,
+        customPermissions,
+        finalPermissions,
       },
     })
-
-    await this.recalculateAllDescendantPermissions(moderatorId, sectionId)
   }
 
-  /**
-   * 从板块移除版主
-   * @param moderatorId 版主ID
-   * @param sectionId 板块ID
-   */
   async removeModeratorFromSection(
     moderatorId: number,
     sectionId: number,
@@ -217,79 +72,24 @@ export class SectionPermissionService extends RepositoryService {
         },
       },
     })
-
-    const childSections = await this.prisma.forumSection.findMany({
-      where: {
-        parentId: sectionId,
-      },
-      select: { id: true },
-    })
-
-    for (const child of childSections) {
-      const childModeratorSection =
-        await this.prisma.forumModeratorSection.findUnique({
-          where: {
-            moderatorId_sectionId: {
-              moderatorId,
-              sectionId: child.id,
-            },
-          },
-        })
-
-      if (childModeratorSection?.inheritFromParent) {
-        const parentPermissionMask = await this.calculateFinalPermissionMask(
-          moderatorId,
-          sectionId,
-        )
-        const newFinalPermission =
-          parentPermissionMask | childModeratorSection.customPermissionMask
-
-        await this.prisma.forumModeratorSection.update({
-          where: {
-            moderatorId_sectionId: {
-              moderatorId,
-              sectionId: child.id,
-            },
-          },
-          data: {
-            finalPermissionMask: newFinalPermission,
-          },
-        })
-
-        await this.recalculateAllDescendantPermissions(moderatorId, child.id)
-      }
-    }
   }
 
-  /**
-   * 检查版主是否具有指定权限
-   * @param moderatorId 版主ID
-   * @param sectionId 板块ID
-   * @param permission 权限掩码
-   * @returns 是否具有该权限
-   */
   async checkPermission(
     moderatorId: number,
     sectionId: number,
-    permission: PermissionMask,
+    permission: Permission,
   ): Promise<boolean> {
-    const finalPermissionMask = await this.calculateFinalPermissionMask(
+    const finalPermissions = await this.calculateFinalPermissions(
       moderatorId,
       sectionId,
     )
-    return (finalPermissionMask & permission) === permission
+    return this.permissionService.hasPermission(finalPermissions, permission)
   }
 
-  /**
-   * 获取版主在板块的权限掩码
-   * @param moderatorId 版主ID
-   * @param sectionId 板块ID
-   * @returns 权限掩码
-   */
   async getModeratorSectionsWithPermission(
     moderatorId: number,
     sectionId: number,
-  ): Promise<number> {
-    return this.calculateFinalPermissionMask(moderatorId, sectionId)
+  ): Promise<ModeratorPermissionEnum[]> {
+    return this.calculateFinalPermissions(moderatorId, sectionId)
   }
 }

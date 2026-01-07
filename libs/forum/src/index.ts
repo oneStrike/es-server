@@ -18,6 +18,11 @@ export * from './search/search.constant'
 export * from './search/search.module'
 export * from './search/search.service'
 
+export * from './section/dto/forum-section.dto'
+export * from './section/forum-section.module'
+export * from './section/forum-section.service'
+export * from './section/section-permission.service'
+
 export * from './user/dto/user.dto'
 export * from './user/user.constant'
 export * from './user/user.module'

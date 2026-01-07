@@ -1,10 +1,12 @@
 import {
+  ValidateBoolean,
   ValidateDate,
   ValidateEnum,
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
+import { GenderEnum } from '@libs/base/enum'
 import {
   ApiProperty,
   IntersectionType,
@@ -13,6 +15,95 @@ import {
 } from '@nestjs/swagger'
 import { UserStatusEnum } from '../user.constant'
 
+/**
+ * 基础用户个人信息数据传输对象
+ */
+
+export class BaseClientUserInfoDto extends BaseDto {
+  @ValidateString({
+    description: '用户名（登录账号）',
+    example: 'user123',
+    required: true,
+    maxLength: 50,
+  })
+  account!: string
+
+  @ValidateString({
+    description: '用户昵称（显示名称）',
+    example: '张三',
+    required: true,
+    maxLength: 100,
+  })
+  nickname!: string
+
+  @ValidateString({
+    description: '头像URL地址',
+    example: 'https://example.com/avatar.jpg',
+    required: false,
+    maxLength: 500,
+  })
+  avatar?: string
+
+  @ValidateString({
+    description: '手机号码',
+    example: '13800000000',
+    required: false,
+    maxLength: 11,
+  })
+  phone?: string
+
+  @ValidateString({
+    description: '邮箱地址',
+    example: 'user@example.com',
+    required: false,
+    maxLength: 255,
+  })
+  email?: string
+
+  @ValidateBoolean({
+    description: '账户状态（true:启用, false:禁用）',
+    example: true,
+    required: true,
+  })
+  isEnabled!: boolean
+
+  @ValidateEnum({
+    description: '性别',
+    example: GenderEnum.MALE,
+    enum: GenderEnum,
+    required: true,
+  })
+  genderType!: GenderEnum
+
+  @ValidateDate({
+    description: '出生日期',
+    example: '2023-09-15T00:00:00.000Z',
+    required: false,
+  })
+  birthDate?: Date
+
+  @ApiProperty({ description: '是否签到', default: false, example: true })
+  isSignedIn!: boolean
+
+  @ApiProperty({
+    description: '最后登录时间',
+    default: null,
+    example: '2023-09-15T00:00:00.000Z',
+  })
+  lastLoginAt?: Date
+
+  @ApiProperty({
+    description: '最后登录IP',
+    default: null,
+    example: '192.168.1.1',
+  })
+  lastLoginIp?: string
+}
+
+/**
+ * 基础用户个人信息数据传输对象
+ * 包含用户ID、积分数量、等级ID、签名、个人简介、用户状态、封禁原因、封禁结束时间等字段
+ */
 export class BaseForumProfileDto extends BaseDto {
   @ValidateNumber({
     description: '用户ID',

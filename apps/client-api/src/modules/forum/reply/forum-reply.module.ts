@@ -1,4 +1,4 @@
-import { NotificationModule } from '@app/forum/notification/notification.module'
+import { NotificationModule } from '@libs/forum/notification/notification.module'
 import { Module } from '@nestjs/common'
 import { ForumReplyController } from './forum-reply.controller'
 import { ForumReplyService } from './forum-reply.service'

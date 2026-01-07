@@ -386,6 +386,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   AdminUser: 'AdminUser',
   ClientConfig: 'ClientConfig',
+  ClientNoticeRead: 'ClientNoticeRead',
   ClientNotice: 'ClientNotice',
   ClientPage: 'ClientPage',
   ClientUser: 'ClientUser',
@@ -393,6 +394,7 @@ export const ModelName = {
   ForumBadge: 'ForumBadge',
   ForumLevelRule: 'ForumLevelRule',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
+  ForumModeratorApplication: 'ForumModeratorApplication',
   ForumModeratorSection: 'ForumModeratorSection',
   ForumModerator: 'ForumModerator',
   ForumNotification: 'ForumNotification',
@@ -402,6 +404,7 @@ export const ModelName = {
   ForumProfile: 'ForumProfile',
   ForumReplyLike: 'ForumReplyLike',
   ForumReply: 'ForumReply',
+  ForumSectionGroup: 'ForumSectionGroup',
   ForumSection: 'ForumSection',
   ForumSensitiveWord: 'ForumSensitiveWord',
   ForumTag: 'ForumTag',
@@ -437,7 +440,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNotice" | "clientPage" | "clientUser" | "forumAuditLog" | "forumBadge" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUser" | "clientConfig" | "clientNoticeRead" | "clientNotice" | "clientPage" | "clientUser" | "forumAuditLog" | "forumBadge" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -586,6 +589,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ClientConfigCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ClientConfigCountAggregateOutputType> | number
+        }
+      }
+    }
+    ClientNoticeRead: {
+      payload: Prisma.$ClientNoticeReadPayload<ExtArgs>
+      fields: Prisma.ClientNoticeReadFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ClientNoticeReadFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ClientNoticeReadFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+        }
+        findFirst: {
+          args: Prisma.ClientNoticeReadFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ClientNoticeReadFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+        }
+        findMany: {
+          args: Prisma.ClientNoticeReadFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>[]
+        }
+        create: {
+          args: Prisma.ClientNoticeReadCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+        }
+        createMany: {
+          args: Prisma.ClientNoticeReadCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ClientNoticeReadCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>[]
+        }
+        delete: {
+          args: Prisma.ClientNoticeReadDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+        }
+        update: {
+          args: Prisma.ClientNoticeReadUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+        }
+        deleteMany: {
+          args: Prisma.ClientNoticeReadDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ClientNoticeReadUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ClientNoticeReadUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>[]
+        }
+        upsert: {
+          args: Prisma.ClientNoticeReadUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+        }
+        aggregate: {
+          args: Prisma.ClientNoticeReadAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateClientNoticeRead>
+        }
+        groupBy: {
+          args: Prisma.ClientNoticeReadGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ClientNoticeReadGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ClientNoticeReadCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ClientNoticeReadCountAggregateOutputType> | number
         }
       }
     }
@@ -1104,6 +1181,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ForumModeratorActionLogCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ForumModeratorActionLogCountAggregateOutputType> | number
+        }
+      }
+    }
+    ForumModeratorApplication: {
+      payload: Prisma.$ForumModeratorApplicationPayload<ExtArgs>
+      fields: Prisma.ForumModeratorApplicationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ForumModeratorApplicationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ForumModeratorApplicationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload>
+        }
+        findFirst: {
+          args: Prisma.ForumModeratorApplicationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ForumModeratorApplicationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload>
+        }
+        findMany: {
+          args: Prisma.ForumModeratorApplicationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload>[]
+        }
+        create: {
+          args: Prisma.ForumModeratorApplicationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload>
+        }
+        createMany: {
+          args: Prisma.ForumModeratorApplicationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ForumModeratorApplicationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload>[]
+        }
+        delete: {
+          args: Prisma.ForumModeratorApplicationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload>
+        }
+        update: {
+          args: Prisma.ForumModeratorApplicationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload>
+        }
+        deleteMany: {
+          args: Prisma.ForumModeratorApplicationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ForumModeratorApplicationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ForumModeratorApplicationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload>[]
+        }
+        upsert: {
+          args: Prisma.ForumModeratorApplicationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumModeratorApplicationPayload>
+        }
+        aggregate: {
+          args: Prisma.ForumModeratorApplicationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateForumModeratorApplication>
+        }
+        groupBy: {
+          args: Prisma.ForumModeratorApplicationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumModeratorApplicationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ForumModeratorApplicationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumModeratorApplicationCountAggregateOutputType> | number
         }
       }
     }
@@ -1770,6 +1921,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ForumReplyCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ForumReplyCountAggregateOutputType> | number
+        }
+      }
+    }
+    ForumSectionGroup: {
+      payload: Prisma.$ForumSectionGroupPayload<ExtArgs>
+      fields: Prisma.ForumSectionGroupFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ForumSectionGroupFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ForumSectionGroupFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload>
+        }
+        findFirst: {
+          args: Prisma.ForumSectionGroupFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ForumSectionGroupFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload>
+        }
+        findMany: {
+          args: Prisma.ForumSectionGroupFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload>[]
+        }
+        create: {
+          args: Prisma.ForumSectionGroupCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload>
+        }
+        createMany: {
+          args: Prisma.ForumSectionGroupCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ForumSectionGroupCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload>[]
+        }
+        delete: {
+          args: Prisma.ForumSectionGroupDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload>
+        }
+        update: {
+          args: Prisma.ForumSectionGroupUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload>
+        }
+        deleteMany: {
+          args: Prisma.ForumSectionGroupDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ForumSectionGroupUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ForumSectionGroupUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload>[]
+        }
+        upsert: {
+          args: Prisma.ForumSectionGroupUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSectionGroupPayload>
+        }
+        aggregate: {
+          args: Prisma.ForumSectionGroupAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateForumSectionGroup>
+        }
+        groupBy: {
+          args: Prisma.ForumSectionGroupGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumSectionGroupGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ForumSectionGroupCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumSectionGroupCountAggregateOutputType> | number
         }
       }
     }
@@ -3330,6 +3555,16 @@ export const ClientConfigScalarFieldEnum = {
 export type ClientConfigScalarFieldEnum = (typeof ClientConfigScalarFieldEnum)[keyof typeof ClientConfigScalarFieldEnum]
 
 
+export const ClientNoticeReadScalarFieldEnum = {
+  id: 'id',
+  noticeId: 'noticeId',
+  userId: 'userId',
+  readAt: 'readAt'
+} as const
+
+export type ClientNoticeReadScalarFieldEnum = (typeof ClientNoticeReadScalarFieldEnum)[keyof typeof ClientNoticeReadScalarFieldEnum]
+
+
 export const ClientNoticeScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -3457,13 +3692,30 @@ export const ForumModeratorActionLogScalarFieldEnum = {
 export type ForumModeratorActionLogScalarFieldEnum = (typeof ForumModeratorActionLogScalarFieldEnum)[keyof typeof ForumModeratorActionLogScalarFieldEnum]
 
 
+export const ForumModeratorApplicationScalarFieldEnum = {
+  id: 'id',
+  applicantId: 'applicantId',
+  sectionId: 'sectionId',
+  permissions: 'permissions',
+  reason: 'reason',
+  status: 'status',
+  auditBy: 'auditBy',
+  auditAt: 'auditAt',
+  auditReason: 'auditReason',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type ForumModeratorApplicationScalarFieldEnum = (typeof ForumModeratorApplicationScalarFieldEnum)[keyof typeof ForumModeratorApplicationScalarFieldEnum]
+
+
 export const ForumModeratorSectionScalarFieldEnum = {
   id: 'id',
   moderatorId: 'moderatorId',
   sectionId: 'sectionId',
-  inheritFromParent: 'inheritFromParent',
-  customPermissionMask: 'customPermissionMask',
-  finalPermissionMask: 'finalPermissionMask',
+  permissions: 'permissions',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -3474,7 +3726,9 @@ export type ForumModeratorSectionScalarFieldEnum = (typeof ForumModeratorSection
 export const ForumModeratorScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  permission: 'permission',
+  roleType: 'roleType',
+  groupId: 'groupId',
+  permissions: 'permissions',
   isEnabled: 'isEnabled',
   remark: 'remark',
   createdAt: 'createdAt',
@@ -3596,18 +3850,31 @@ export const ForumReplyScalarFieldEnum = {
 export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof typeof ForumReplyScalarFieldEnum]
 
 
+export const ForumSectionGroupScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  sortOrder: 'sortOrder',
+  isEnabled: 'isEnabled',
+  maxModerators: 'maxModerators',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type ForumSectionGroupScalarFieldEnum = (typeof ForumSectionGroupScalarFieldEnum)[keyof typeof ForumSectionGroupScalarFieldEnum]
+
+
 export const ForumSectionScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  parentId: 'parentId',
-  level: 'level',
-  path: 'path',
-  inheritPermission: 'inheritPermission',
+  groupId: 'groupId',
   icon: 'icon',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   topicReviewPolicy: 'topicReviewPolicy',
   userLevelRuleId: 'userLevelRuleId',
+  maxModerators: 'maxModerators',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
   lastPostAt: 'lastPostAt',
@@ -4181,6 +4448,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   adminUser?: Prisma.AdminUserOmit
   clientConfig?: Prisma.ClientConfigOmit
+  clientNoticeRead?: Prisma.ClientNoticeReadOmit
   clientNotice?: Prisma.ClientNoticeOmit
   clientPage?: Prisma.ClientPageOmit
   clientUser?: Prisma.ClientUserOmit
@@ -4188,6 +4456,7 @@ export type GlobalOmitConfig = {
   forumBadge?: Prisma.ForumBadgeOmit
   forumLevelRule?: Prisma.ForumLevelRuleOmit
   forumModeratorActionLog?: Prisma.ForumModeratorActionLogOmit
+  forumModeratorApplication?: Prisma.ForumModeratorApplicationOmit
   forumModeratorSection?: Prisma.ForumModeratorSectionOmit
   forumModerator?: Prisma.ForumModeratorOmit
   forumNotification?: Prisma.ForumNotificationOmit
@@ -4197,6 +4466,7 @@ export type GlobalOmitConfig = {
   forumProfile?: Prisma.ForumProfileOmit
   forumReplyLike?: Prisma.ForumReplyLikeOmit
   forumReply?: Prisma.ForumReplyOmit
+  forumSectionGroup?: Prisma.ForumSectionGroupOmit
   forumSection?: Prisma.ForumSectionOmit
   forumSensitiveWord?: Prisma.ForumSensitiveWordOmit
   forumTag?: Prisma.ForumTagOmit

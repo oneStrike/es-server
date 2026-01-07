@@ -4,14 +4,8 @@ model ForumSection {
   id                Int       @id @default(autoincrement())
   /// 板块名称
   name              String    @db.VarChar(50)
-  /// 父板块ID（支持多级子版块）
-  parentId          Int?      @map("parent_id")
-  /// 板块层级深度（0为主板块，1为一级子版块）
-  level             Int       @default(0)
-  /// 板块路径（如：/1/3/ 表示归属于板块1下的板块3）
-  path              String?   @db.VarChar(200)
-  /// 是否继承父板块权限
-  inheritPermission Boolean   @default(true) @map("inherit_permission")
+  /// 板块分组ID（可选，用于将板块分组管理）
+  groupId           Int?      @map("group_id")
   /// 板块图标URL
   icon              String?   @db.VarChar(255)
   /// 排序值（数值越小越靠前）
@@ -22,6 +16,8 @@ model ForumSection {
   topicReviewPolicy Int       @default(1) @map("topic_review_policy")
   /// 用户的论坛等级规则ID
   userLevelRuleId   Int?      @map("user_level_rule_id")
+  /// 板块版主数量限制（0表示不限制）
+  maxModerators     Int       @default(0) @map("max_moderators")
   /// 主题数
   topicCount        Int       @default(0) @map("topic_count")
   /// 回复数（包含所有子版块）
@@ -41,13 +37,12 @@ model ForumSection {
   /// 软删除时间
   deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  /// 父板块（层级关系）
-  parent   ForumSection?  @relation("SectionHierarchy", fields: [parentId], references: [id])
-  /// 子板块列表（层级关系）
-  children ForumSection[] @relation("SectionHierarchy")
+  /// 板块分组（一个板块属于一个分组）
+  group             ForumSectionGroup? @relation(fields: [groupId], references: [id])
 
   moderatorSections ForumModeratorSection[]
-  lastTopic         ForumTopic?             @relation("LastTopic", fields: [lastTopicId], references: [id])
+  applications     ForumModeratorApplication[]
+  lastTopic        ForumTopic?             @relation("LastTopic", fields: [lastTopicId], references: [id])
   userLevelRule     ForumLevelRule?         @relation(fields: [userLevelRuleId], references: [id])
   topics            ForumTopic[]
 
@@ -57,7 +52,6 @@ model ForumSection {
   @@index([lastPostAt])
   @@index([createdAt])
   @@index([deletedAt])
-  @@index([parentId])
-  @@index([level])
+  @@index([groupId])
   @@map("forum_section")
 }

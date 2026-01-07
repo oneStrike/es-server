@@ -15,8 +15,8 @@ import {
 
 @Injectable()
 export class AnalyticsService extends RepositoryService {
-  get forumUser() {
-    return this.prisma.forumUser
+  get forumProfile() {
+    return this.prisma.forumProfile
   }
 
   get forumTopic() {
@@ -32,15 +32,11 @@ export class AnalyticsService extends RepositoryService {
   }
 
   get forumSectionModerator() {
-    return this.prisma.forumSectionModerator
+    return this.prisma.forumModeratorSection
   }
 
-  get forumLike() {
-    return this.prisma.forumLike
-  }
-
-  get forumView() {
-    return this.prisma.forumView
+  get clientUser() {
+    return this.prisma.clientUser
   }
 
   private getDateRange(timeRange: TimeRangeEnum): {
@@ -110,7 +106,7 @@ export class AnalyticsService extends RepositoryService {
       activeUsers,
       onlineUsers,
     ] = await Promise.all([
-      this.forumUser.count({ where: { deletedAt: null } }),
+      this.forumProfile.count({ where: { deletedAt: null } }),
       this.forumTopic.count({ where: { deletedAt: null } }),
       this.forumReply.count({ where: { deletedAt: null } }),
       this.forumSection.count({ where: { deletedAt: null } }),
@@ -126,22 +122,22 @@ export class AnalyticsService extends RepositoryService {
           createdAt: { gte: todayStart },
         },
       }),
-      this.forumUser.count({
+      this.forumProfile.count({
         where: {
           deletedAt: null,
           createdAt: { gte: todayStart },
         },
       }),
-      this.forumUser.count({
+      this.clientUser.count({
         where: {
           deletedAt: null,
-          lastActiveAt: { gte: sevenDaysAgo },
+          lastLoginAt: { gte: sevenDaysAgo },
         },
       }),
-      this.forumUser.count({
+      this.clientUser.count({
         where: {
           deletedAt: null,
-          lastActiveAt: { gte: fiveMinutesAgo },
+          lastLoginAt: { gte: fiveMinutesAgo },
         },
       }),
     ])
@@ -187,40 +183,33 @@ export class AnalyticsService extends RepositoryService {
       const dayEnd = new Date(dayStart)
       dayEnd.setDate(dayEnd.getDate() + 1)
 
-      const [topicCount, replyCount, userCount, visitCount] = await Promise.all(
-        [
-          this.forumTopic.count({
-            where: {
-              deletedAt: null,
-              createdAt: { gte: dayStart, lt: dayEnd },
-            },
-          }),
-          this.forumReply.count({
-            where: {
-              deletedAt: null,
-              createdAt: { gte: dayStart, lt: dayEnd },
-            },
-          }),
-          this.forumUser.count({
-            where: {
-              deletedAt: null,
-              createdAt: { gte: dayStart, lt: dayEnd },
-            },
-          }),
-          this.forumView.count({
-            where: {
-              createdAt: { gte: dayStart, lt: dayEnd },
-            },
-          }),
-        ],
-      )
+      const [topicCount, replyCount, userCount] = await Promise.all([
+        this.forumTopic.count({
+          where: {
+            deletedAt: null,
+            createdAt: { gte: dayStart, lt: dayEnd },
+          },
+        }),
+        this.forumReply.count({
+          where: {
+            deletedAt: null,
+            createdAt: { gte: dayStart, lt: dayEnd },
+          },
+        }),
+        this.forumProfile.count({
+          where: {
+            deletedAt: null,
+            createdAt: { gte: dayStart, lt: dayEnd },
+          },
+        }),
+      ])
 
       trends.push({
         date: dayStart.toISOString().split('T')[0],
         topicCount,
         replyCount,
         userCount,
-        visitCount,
+        visitCount: 0,
       })
     }
 
@@ -281,8 +270,8 @@ export class AnalyticsService extends RepositoryService {
       title: topic.title,
       sectionId: topic.sectionId,
       sectionName: topic.section.name,
-      authorId: topic.authorId,
-      authorNickname: topic.author.nickname,
+      authorId: topic.userId,
+      authorNickname: topic.user.nickname,
       viewCount: topic.viewCount,
       replyCount: topic._count.replies,
       likeCount: topic._count.likes,
@@ -309,37 +298,44 @@ export class AnalyticsService extends RepositoryService {
 
     const sortBy = query.sortBy || 'points'
 
-    const [total, users] = await Promise.all([
-      this.forumUser.count({ where: { deletedAt: null } }),
-      this.forumUser.findMany({
+    const [total, profiles] = await Promise.all([
+      this.forumProfile.count({ where: { deletedAt: null } }),
+      this.forumProfile.findMany({
         where: { deletedAt: null },
         orderBy: {
           [sortBy]: 'desc',
         },
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
-        select: {
-          id: true,
-          nickname: true,
-          avatar: true,
-          points: true,
-          level: true,
-          topicCount: true,
-          replyCount: true,
-          lastActiveAt: true,
+        include: {
+          user: {
+            select: {
+              id: true,
+              nickname: true,
+              avatar: true,
+              lastLoginAt: true,
+            },
+          },
+          level: {
+            select: {
+              id: true,
+              name: true,
+              level: true,
+            },
+          },
         },
       }),
     ])
 
-    const items: ActiveUserDto[] = users.map((user) => ({
-      id: user.id,
-      nickname: user.nickname,
-      avatar: user.avatar || undefined,
-      points: user.points,
-      level: user.level,
-      topicCount: user.topicCount,
-      replyCount: user.replyCount,
-      lastActiveAt: user.lastActiveAt.toISOString(),
+    const items: ActiveUserDto[] = profiles.map((profile) => ({
+      id: profile.user.id,
+      nickname: profile.user.nickname,
+      avatar: profile.user.avatar || undefined,
+      points: profile.points,
+      level: profile.level.level,
+      topicCount: profile.topicCount,
+      replyCount: profile.replyCount,
+      lastActiveAt: profile.user.lastLoginAt?.toISOString(),
     }))
 
     return { total, items }
@@ -399,14 +395,16 @@ export class AnalyticsService extends RepositoryService {
     const items: SectionStatsDto[] = []
 
     for (const section of sections) {
-      const todayActiveUsers = await this.forumUser.count({
+      const todayActiveUsers = await this.forumTopic.findMany({
         where: {
+          sectionId: section.id,
+          createdAt: { gte: todayStart },
           deletedAt: null,
-          lastActiveAt: { gte: todayStart },
-          topics: {
-            some: { sectionId: section.id },
-          },
         },
+        select: {
+          userId: true,
+        },
+        distinct: ['userId'],
       })
 
       items.push({
@@ -417,7 +415,7 @@ export class AnalyticsService extends RepositoryService {
         userCount: 0,
         todayTopics: section.topics.length,
         todayReplies: section.replies.length,
-        todayActiveUsers,
+        todayActiveUsers: todayActiveUsers.length,
       })
     }
 

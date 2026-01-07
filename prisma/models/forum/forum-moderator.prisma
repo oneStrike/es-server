@@ -1,11 +1,15 @@
-/// 论坛版主表 - 管理论坛版主信息，包括权限设置、启用状态等
+/// 论坛版主表 - 管理论坛版主信息，包括角色类型、权限设置、启用状态等
 model ForumModerator {
   /// 主键ID
   id         Int                       @id @default(autoincrement())
   /// 关联的用户ID
   userId     Int                       @unique @map("user_id")
-  /// 权限（1=置顶, 2=加精, 3=锁定, 4=删除, 5=审核, 6=移动）
-  permission Int                       @default(0) @map("permission")
+  /// 版主角色类型（1=超级版主，2=分组版主，3=板块版主）
+  roleType   Int                       @default(3) @map("role_type")
+  /// 关联的分组ID（分组版主时必填）
+  groupId    Int?                      @map("group_id")
+  /// 权限数组（1=置顶, 2=加精, 3=锁定, 4=删除, 5=审核, 6=移动）
+  permissions Int[]                    @default([]) @map("permissions")
   /// 是否启用
   isEnabled  Boolean                   @default(true) @map("is_enabled")
   /// 备注
@@ -17,11 +21,13 @@ model ForumModerator {
   /// 软删除时间
   deletedAt  DateTime?                 @map("deleted_at") @db.Timestamptz(6)
   profile    ForumProfile              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group      ForumSectionGroup?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
   actionLogs ForumModeratorActionLog[]
   sections   ForumModeratorSection[]
 
-  @@index([permission])
   @@index([isEnabled])
+  @@index([roleType])
+  @@index([groupId])
   @@index([createdAt])
   @@index([deletedAt])
   @@map("forum_moderator")

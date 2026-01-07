@@ -33,6 +33,7 @@ model ForumProfile {
   /// 软删除时间
   deletedAt      DateTime?            @map("deleted_at") @db.Timestamptz(6)
   moderator      ForumModerator?
+  applications   ForumModeratorApplication[] @relation("ModeratorApplicant")
   notifications  ForumNotification[]
   pointRecords   ForumPointRecord[]
   level          ForumLevelRule?      @relation(fields: [levelId], references: [id])

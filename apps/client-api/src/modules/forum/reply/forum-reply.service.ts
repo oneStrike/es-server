@@ -66,7 +66,10 @@ export class ForumReplyService extends RepositoryService {
     }
 
     const profile = await this.forumProfile.findFirst({
-      where: { userId, isBanned: false },
+      where: { userId, status: 1 },
+      include: {
+        user: true,
+      },
     })
 
     if (!profile) {
@@ -210,19 +213,12 @@ export class ForumReplyService extends RepositoryService {
             title: true,
           },
         },
-        profile: {
+        user: {
           select: {
             id: true,
-            userId: true,
-            points: true,
-            user: {
-              select: {
-                id: true,
-                username: true,
-                nickname: true,
-                avatar: true,
-              },
-            },
+            username: true,
+            nickname: true,
+            avatar: true,
           },
         },
         replyTo: {
@@ -230,14 +226,10 @@ export class ForumReplyService extends RepositoryService {
             id: true,
             content: true,
             floor: true,
-            profile: {
+            user: {
               select: {
-                user: {
-                  select: {
-                    username: true,
-                    nickname: true,
-                  },
-                },
+                username: true,
+                nickname: true,
               },
             },
           },
@@ -272,11 +264,7 @@ export class ForumReplyService extends RepositoryService {
         },
         replyTo: {
           include: {
-            profile: {
-              include: {
-                user: true,
-              },
-            },
+            user: true,
           },
         },
       },
@@ -431,7 +419,10 @@ export class ForumReplyService extends RepositoryService {
     }
 
     const profile = await this.forumProfile.findFirst({
-      where: { userId, isBanned: false },
+      where: { userId, status: 1 },
+      include: {
+        user: true,
+      },
     })
 
     if (!profile) {
@@ -502,7 +493,10 @@ export class ForumReplyService extends RepositoryService {
     }
 
     const profile = await this.forumProfile.findFirst({
-      where: { userId, isBanned: false },
+      where: { userId, status: 1 },
+      include: {
+        user: true,
+      },
     })
 
     if (!profile) {
