@@ -1,5 +1,5 @@
 import type { ForumLevelRuleWhereInput } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -14,7 +14,7 @@ import { LevelRulePermissionEnum } from './level-rule.constant'
  * 负责管理论坛用户等级规则、权限检查、等级升级等功能
  */
 @Injectable()
-export class LevelRuleService extends RepositoryService {
+export class LevelRuleService extends BaseService {
   // 获取等级规则模型
   get forumLevelRule() {
     return this.prisma.forumLevelRule

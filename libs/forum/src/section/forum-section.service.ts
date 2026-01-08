@@ -2,7 +2,7 @@ import type {
   ForumSectionCreateInput,
   ForumSectionWhereInput,
 } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { DragReorderDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -17,7 +17,7 @@ import {
  * 提供论坛板块的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ForumSectionService extends RepositoryService {
+export class ForumSectionService extends BaseService {
   get forumSection() {
     return this.prisma.forumSection
   }

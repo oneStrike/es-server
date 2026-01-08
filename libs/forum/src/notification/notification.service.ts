@@ -1,6 +1,6 @@
 import {
   ForumNotificationCreateInput,
-  RepositoryService,
+  BaseService,
 } from '@libs/base/database'
 import { IdDto, IdsDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -20,7 +20,7 @@ import {
  * 提供论坛通知的创建、查询、标记已读、删除等核心业务逻辑
  */
 @Injectable()
-export class NotificationService extends RepositoryService {
+export class NotificationService extends BaseService {
   constructor() {
     super()
   }

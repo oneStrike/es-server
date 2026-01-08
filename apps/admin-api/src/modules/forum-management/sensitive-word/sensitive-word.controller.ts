@@ -27,42 +27,28 @@ export class SensitiveWordController {
   @Post('create')
   @ApiDoc({
     summary: '创建敏感词',
-    model: IdDto,
+    model: BaseSensitiveWordDto,
   })
   async createSensitiveWord(@Body() dto: CreateSensitiveWordDto) {
-    return this.sensitiveWordService.sensitiveWord.create({
-      data: dto,
-      select: { id: true },
-    })
+    return this.sensitiveWordService.createSensitiveWord(dto)
   }
 
   @Post('update')
   @ApiDoc({
     summary: '更新敏感词',
-    model: IdDto,
+    model: BaseSensitiveWordDto,
   })
   async updateSensitiveWord(@Body() dto: UpdateSensitiveWordDto) {
-    return this.sensitiveWordService.sensitiveWord.update({
-      where: {
-        id: dto.id,
-      },
-      data: dto,
-      select: { id: true },
-    })
+    return this.sensitiveWordService.updateSensitiveWord(dto)
   }
 
   @Post('delete')
   @ApiDoc({
     summary: '删除敏感词',
-    model: IdDto,
+    model: BaseSensitiveWordDto,
   })
   async deleteSensitiveWord(@Body() dto: IdDto) {
-    return this.sensitiveWordService.sensitiveWord.delete({
-      where: {
-        id: dto.id,
-      },
-      select: { id: true },
-    })
+    return this.sensitiveWordService.deleteSensitiveWord(dto)
   }
 
   @Post('update-status')
@@ -71,13 +57,6 @@ export class SensitiveWordController {
     model: BaseSensitiveWordDto,
   })
   async enableSensitiveWord(@Body() dto: UpdateEnabledStatusDto) {
-    return this.sensitiveWordService.sensitiveWord.update({
-      where: {
-        id: dto.id,
-      },
-      data: {
-        isEnabled: dto.isEnabled,
-      },
-    })
+    return this.sensitiveWordService.updateSensitiveWordStatus(dto)
   }
 }

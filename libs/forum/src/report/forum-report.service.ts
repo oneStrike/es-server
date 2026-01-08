@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { CreateForumReportDto, HandleReportDto, QueryForumReportDto } from './dto/forum-report.dto'
@@ -12,7 +12,7 @@ import {
  * 提供论坛举报的创建、查询、处理、统计等核心业务逻辑
  */
 @Injectable()
-export class ForumReportService extends RepositoryService {
+export class ForumReportService extends BaseService {
   /**
    * 获取论坛举报模型
    */

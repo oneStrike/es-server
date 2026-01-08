@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { UpdateEnabledStatusDto } from '@libs/base/dto'
 import { Injectable, NotFoundException } from '@nestjs/common'
@@ -13,7 +13,7 @@ import {
  * 提供对论坛板块分组的增删改查等操作
  */
 @Injectable()
-export class ForumSectionGroupService extends RepositoryService {
+export class ForumSectionGroupService extends BaseService {
   /**
    * 获取板块分组的 Prisma 模型
    */

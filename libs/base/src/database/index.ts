@@ -1,5 +1,5 @@
+export * from './base.service'
 export * from './prisma-client/client'
 export * from './prisma-client/models'
 export * from './prisma.service'
-export * from './repository.service'
 export * from 'nestjs-prisma/dist/custom'

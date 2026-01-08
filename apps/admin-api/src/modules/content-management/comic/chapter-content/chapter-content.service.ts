@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { UploadService } from '@libs/base/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import fsExtra from 'fs-extra'
@@ -15,7 +15,7 @@ import {
  * 提供漫画章节内容的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ChapterContentService extends RepositoryService {
+export class ChapterContentService extends BaseService {
   get workComicChapter() {
     return this.prisma.workComicChapter
   }

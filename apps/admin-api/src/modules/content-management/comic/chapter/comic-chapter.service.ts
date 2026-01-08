@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { DragReorderDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -12,7 +12,7 @@ import {
  * 提供漫画章节的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ComicChapterService extends RepositoryService {
+export class ComicChapterService extends BaseService {
   get workComicChapter() {
     return this.prisma.workComicChapter
   }

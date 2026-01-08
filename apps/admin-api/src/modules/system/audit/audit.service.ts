@@ -1,6 +1,6 @@
 import type { RequestLogWhereInput } from '@libs/base/database'
 import type { FastifyRequest } from 'fastify'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { parseRequestLogFields } from '@libs/base/utils'
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { ActionTypeEnum } from './audit.constant'
@@ -11,7 +11,7 @@ import {
 } from './dto/audit.dto'
 
 @Injectable()
-export class AuditService extends RepositoryService {
+export class AuditService extends BaseService {
   get requestLog() {
     return this.prisma.requestLog
   }

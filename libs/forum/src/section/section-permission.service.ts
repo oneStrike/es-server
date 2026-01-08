@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { ModeratorPermissionEnum } from '../moderator/moderator.constant'
 
@@ -9,7 +9,7 @@ export type Permission = ModeratorPermissionEnum
  * 提供版主板块权限的计算、分配、移除、检查等核心业务逻辑
  */
 @Injectable()
-export class SectionPermissionService extends RepositoryService {
+export class SectionPermissionService extends BaseService {
   constructor() {
     super()
   }

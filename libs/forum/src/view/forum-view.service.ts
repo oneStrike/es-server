@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { CreateForumViewDto, QueryForumViewDto, ViewStatisticsDto } from './dto/forum-view.dto'
@@ -9,7 +9,7 @@ import { ForumViewTypeEnum } from './forum-view.constant'
  * 提供论坛浏览记录的创建、查询、统计等核心业务逻辑
  */
 @Injectable()
-export class ForumViewService extends RepositoryService {
+export class ForumViewService extends BaseService {
   get forumView() {
     return this.prisma.forumView
   }

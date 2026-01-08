@@ -1,5 +1,5 @@
 import type { WorkCategoryWhereInput } from '@libs/base/database/prisma-client/models'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -14,7 +14,7 @@ import {
  * 继承 BaseRepositoryService，提供分类相关的业务逻辑
  */
 @Injectable()
-export class WorkCategoryService extends RepositoryService {
+export class WorkCategoryService extends BaseService {
   get workCategory() {
     return this.prisma.workCategory
   }

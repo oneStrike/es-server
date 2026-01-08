@@ -1,5 +1,5 @@
 import type { WorkAuthorWhereInput } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateAuthorDto,
@@ -12,7 +12,7 @@ import {
  * 提供作者的增删改查等核心业务逻辑
  */
 @Injectable()
-export class WorkAuthorService extends RepositoryService {
+export class WorkAuthorService extends BaseService {
   get workAuthor() {
     return this.prisma.workAuthor
   }
