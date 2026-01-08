@@ -1,6 +1,6 @@
 import type { ForumTopicWhereInput } from '@libs/base/database'
 
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { isNotNil } from '@libs/base/utils'
 import { NotificationService } from '@libs/forum/notification/notification.service'
 import { BadRequestException, Inject, Injectable } from '@nestjs/common'
@@ -15,7 +15,7 @@ import {
  * 提供客户端论坛主题查询业务逻辑
  */
 @Injectable()
-export class ForumTopicService extends RepositoryService {
+export class ForumTopicService extends BaseService {
   constructor(
     @Inject(NotificationService)
     private readonly notificationService: NotificationService,

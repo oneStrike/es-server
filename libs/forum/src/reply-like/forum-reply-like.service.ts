@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { CreateForumReplyLikeDto, DeleteForumReplyLikeDto } from './dto/forum-reply-like.dto'
@@ -8,7 +8,7 @@ import { CreateForumReplyLikeDto, DeleteForumReplyLikeDto } from './dto/forum-re
  * 提供论坛回复点赞的创建、删除等核心业务逻辑
  */
 @Injectable()
-export class ForumReplyLikeService extends RepositoryService {
+export class ForumReplyLikeService extends BaseService {
   /**
    * 获取论坛回复点赞模型
    * @returns 论坛回复点赞模型

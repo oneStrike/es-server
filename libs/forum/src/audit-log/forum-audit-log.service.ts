@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { DateRangeDto } from '@libs/base/dto'
 import { Injectable } from '@nestjs/common'
@@ -13,7 +13,7 @@ import { AuditRoleEnum } from './forum-audit-log.constant'
  * 提供审核日志的创建、查询、统计等功能
  */
 @Injectable()
-export class ForumAuditLogService extends RepositoryService {
+export class ForumAuditLogService extends BaseService {
   /**
    * 获取论坛审核日志 Prisma 客户端
    */

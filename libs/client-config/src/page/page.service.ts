@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { ClientPageWhereInput } from '@libs/base/database/prisma-client/models'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -12,7 +12,7 @@ import {
  * 提供页面配置的增删改查等核心业务逻辑
  */
 @Injectable()
-export class LibClientPageService extends RepositoryService {
+export class LibClientPageService extends BaseService {
   get clientPage() {
     return this.prisma.clientPage
   }

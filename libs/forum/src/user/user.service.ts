@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { PointService } from '@libs/forum/point/point.service'
 import { Injectable } from '@nestjs/common'
 import { QueryUserListDto, UpdateUserStatusDto } from './dto/user.dto'
@@ -8,7 +8,7 @@ import { QueryUserListDto, UpdateUserStatusDto } from './dto/user.dto'
  * 提供用户资料查询、状态管理、主题收藏、积分记录等核心业务逻辑
  */
 @Injectable()
-export class UserService extends RepositoryService {
+export class UserService extends BaseService {
   constructor(protected readonly pointService: PointService) {
     super()
   }

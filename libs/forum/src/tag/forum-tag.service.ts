@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import {
   BadRequestException,
@@ -19,7 +19,7 @@ import { ForumTagStatusEnum, ForumTagTypeEnum } from './forum-tag.constant'
  * 提供对论坛标签的增删改查、标签与主题的关联管理等操作
  */
 @Injectable()
-export class ForumTagService extends RepositoryService {
+export class ForumTagService extends BaseService {
   /**
    * 获取标签的 Prisma 模型
    */

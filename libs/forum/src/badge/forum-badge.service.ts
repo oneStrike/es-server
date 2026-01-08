@@ -1,4 +1,4 @@
-import { ForumBadgeWhereInput, RepositoryService } from '@libs/base/database'
+import { ForumBadgeWhereInput, BaseService } from '@libs/base/database'
 
 import { IdDto } from '@libs/base/dto'
 import {
@@ -18,7 +18,7 @@ import {
  * 提供论坛徽章的增删改查、徽章分配与撤销、用户徽章管理等核心业务逻辑
  */
 @Injectable()
-export class ForumBadgeService extends RepositoryService {
+export class ForumBadgeService extends BaseService {
   /**
    * 获取徽章的 Prisma 模型
    */

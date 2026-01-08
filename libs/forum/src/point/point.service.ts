@@ -1,5 +1,5 @@
 import type { ForumPointRuleWhereInput } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -17,7 +17,7 @@ import { PointRuleTypeEnum } from './point.constant'
  * 提供论坛积分的增删改查等核心业务逻辑
  */
 @Injectable()
-export class PointService extends RepositoryService {
+export class PointService extends BaseService {
   get forumPointRule() {
     return this.prisma.forumPointRule
   }

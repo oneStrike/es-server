@@ -1,5 +1,5 @@
 import type { WorkComicWhereInput } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { isNotNil } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -10,7 +10,7 @@ import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
  * 提供漫画的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ComicService extends RepositoryService {
+export class ComicService extends BaseService {
   get workComic() {
     return this.prisma.workComic
   }

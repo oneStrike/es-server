@@ -2,7 +2,7 @@ import type {
   DictionaryItemWhereInput,
   DictionaryWhereInput,
 } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { DragReorderDto } from '@libs/base/dto'
 import { Injectable } from '@nestjs/common'
 import {
@@ -16,7 +16,7 @@ import {
  * 提供字典和字典项的增删改查功能
  */
 @Injectable()
-export class LibDictionaryService extends RepositoryService {
+export class LibDictionaryService extends BaseService {
   get dictionary() {
     return this.prisma.dictionary
   }

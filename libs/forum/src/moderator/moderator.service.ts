@@ -1,6 +1,6 @@
 import {
   ForumModeratorWhereInput,
-  RepositoryService,
+  BaseService,
 } from '@libs/base/database'
 import { IdDto } from '@libs/base/dto'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
@@ -21,7 +21,7 @@ import {
  * 提供论坛版主的增删改查、板块分配、权限管理等核心业务逻辑
  */
 @Injectable()
-export class ModeratorService extends RepositoryService {
+export class ModeratorService extends BaseService {
   constructor() {
     super()
   }

@@ -1,5 +1,5 @@
 import type { ForumSectionWhereInput } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { QueryForumSectionDto } from './dto/forum-section.dto'
@@ -9,7 +9,7 @@ import { QueryForumSectionDto } from './dto/forum-section.dto'
  * 提供客户端论坛板块查询业务逻辑
  */
 @Injectable()
-export class ForumSectionService extends RepositoryService {
+export class ForumSectionService extends BaseService {
   get forumSection() {
     return this.prisma.forumSection
   }

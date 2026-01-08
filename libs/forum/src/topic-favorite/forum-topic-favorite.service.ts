@@ -1,10 +1,10 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { CreateForumTopicFavoriteDto, QueryForumTopicFavoriteDto, ToggleTopicFavoriteDto } from './dto/forum-topic-favorite.dto'
 
 @Injectable()
-export class ForumTopicFavoriteService extends RepositoryService {
+export class ForumTopicFavoriteService extends BaseService {
   get forumTopicFavorite() {
     return this.prisma.forumTopicFavorite
   }

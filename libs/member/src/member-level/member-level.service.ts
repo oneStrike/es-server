@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import { Injectable } from '@nestjs/common'
 import {
@@ -8,7 +8,7 @@ import {
 } from './dto/member-level.dto'
 
 @Injectable()
-export class MemberLevelService extends RepositoryService {
+export class MemberLevelService extends BaseService {
   get memberLevel() {
     return this.prisma.memberLevel
   }

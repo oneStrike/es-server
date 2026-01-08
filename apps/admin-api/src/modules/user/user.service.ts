@@ -1,5 +1,5 @@
 import type { AdminUserWhereInput } from '@libs/base/database/prisma-client/models'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { ScryptService } from '@libs/base/modules'
 import {
   BadRequestException,
@@ -17,7 +17,7 @@ import {
 import { EXCLUDE_USER_FIELDS, UserRoleEnum } from './user.constant'
 
 @Injectable()
-export class UserService extends RepositoryService {
+export class UserService extends BaseService {
   get adminUser() {
     return this.prisma.adminUser
   }

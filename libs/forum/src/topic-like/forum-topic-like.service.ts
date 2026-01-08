@@ -1,4 +1,4 @@
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { CreateForumTopicLikeDto, QueryForumTopicLikeDto, ToggleTopicLikeDto } from './dto/forum-topic-like.dto'
@@ -8,7 +8,7 @@ import { CreateForumTopicLikeDto, QueryForumTopicLikeDto, ToggleTopicLikeDto } f
  * 提供主题点赞、取消点赞、切换点赞状态、查询点赞记录等核心业务逻辑
  */
 @Injectable()
-export class ForumTopicLikeService extends RepositoryService {
+export class ForumTopicLikeService extends BaseService {
   /**
    * 获取论坛主题点赞模型
    */

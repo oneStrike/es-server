@@ -3,7 +3,7 @@ import type {
   ForumTopicUpdateInput,
   ForumTopicWhereInput,
 } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import {
   BadRequestException,
@@ -28,7 +28,7 @@ import { ForumTopicAuditStatusEnum } from './forum-topic.constant'
  * 提供论坛主题的增删改查、置顶、精华、锁定等核心业务逻辑
  */
 @Injectable()
-export class ForumTopicService extends RepositoryService {
+export class ForumTopicService extends BaseService {
   constructor(private readonly pointService: PointService) {
     super()
   }

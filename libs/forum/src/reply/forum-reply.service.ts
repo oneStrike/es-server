@@ -2,7 +2,7 @@ import type {
   ForumReplyCreateInput,
   ForumReplyWhereInput,
 } from '@libs/base/database'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { NotificationService } from '../notification/notification.service'
@@ -13,7 +13,7 @@ import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
  * 提供论坛回复的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ForumReplyService extends RepositoryService {
+export class ForumReplyService extends BaseService {
   constructor(private readonly notificationService: NotificationService) {
     super()
   }

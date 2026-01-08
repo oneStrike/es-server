@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import { AdminUser, RepositoryService } from '@libs/base/database'
+import { AdminUser, BaseService } from '@libs/base/database'
 
 import { CaptchaService, RsaService, ScryptService } from '@libs/base/modules'
 import { AuthService as BaseAuthService } from '@libs/base/modules/auth'
@@ -17,7 +17,7 @@ import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
  * 管理端认证服务
  */
 @Injectable()
-export class AuthService extends RepositoryService {
+export class AuthService extends BaseService {
   get adminUser() {
     return this.prisma.adminUser
   }

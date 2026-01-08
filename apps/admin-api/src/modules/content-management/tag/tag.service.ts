@@ -1,15 +1,15 @@
 import type { WorkTagWhereInput } from '@libs/base/database/prisma-client/models'
-import { RepositoryService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { DragReorderDto, IdDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { CreateTagDto, QueryTagDto, UpdateTagDto } from './dto/tag.dto'
 
 /**
  * 标签服务类
- * 继承 RepositoryService，提供标签相关的业务逻辑
+ * 继承 BaseService，提供标签相关的业务逻辑
  */
 @Injectable()
-export class WorkTagService extends RepositoryService {
+export class WorkTagService extends BaseService {
   get workTag() {
     return this.prisma.workTag
   }

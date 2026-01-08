@@ -1,7 +1,7 @@
 import {
   ClientNoticeCreateInput,
   ClientNoticeWhereInput,
-  RepositoryService,
+  BaseService,
 } from '@libs/base/database'
 import { assertValidTimeRange } from '@libs/base/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -15,7 +15,7 @@ import {
  * 客户端通知模块服务
  */
 @Injectable()
-export class LibClientNoticeService extends RepositoryService {
+export class LibClientNoticeService extends BaseService {
   get clientNotice() {
     return this.prisma.clientNotice
   }

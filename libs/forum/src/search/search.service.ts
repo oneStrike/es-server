@@ -1,7 +1,7 @@
 import {
   ForumReplyWhereInput,
   ForumTopicWhereInput,
-  RepositoryService,
+  BaseService,
 } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { SearchDto, SearchReplyDto, SearchTopicDto } from './dto/search.dto'
@@ -11,7 +11,7 @@ import { SearchSortTypeEnum, SearchTypeEnum } from './search.constant'
  * 搜索服务
  */
 @Injectable()
-export class SearchService extends RepositoryService {
+export class SearchService extends BaseService {
   constructor() {
     super()
   }

@@ -15,6 +15,9 @@ import {
   SensitiveWordTypeEnum,
 } from '../sensitive-word-constant'
 
+/**
+ * 敏感词基础DTO
+ */
 export class BaseSensitiveWordDto extends BaseDto {
   @ValidateString({
     description: '敏感词',
@@ -67,16 +70,25 @@ export class BaseSensitiveWordDto extends BaseDto {
   remark?: string
 }
 
+/**
+ * 创建敏感词DTO
+ */
 export class CreateSensitiveWordDto extends OmitType(
   BaseSensitiveWordDto,
   OMIT_BASE_FIELDS,
 ) {}
 
+/**
+ * 更新敏感词DTO
+ */
 export class UpdateSensitiveWordDto extends IntersectionType(
   CreateSensitiveWordDto,
   IdDto,
 ) {}
 
+/**
+ * 查询敏感词DTO
+ */
 export class QuerySensitiveWordDto extends IntersectionType(
   PageDto,
   PartialType(PickType(CreateSensitiveWordDto, ['word', 'isEnabled'])),
