@@ -16,8 +16,6 @@ model ForumSensitiveWord {
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 敏感词级别（1=严重, 2=一般, 3=轻微）
   level       Int      @default(2) @db.SmallInt
-  /// 匹配模式（1=精确匹配, 2=模糊匹配, 3=正则表达式）
-  matchMode   Int      @default(1) @db.SmallInt
   /// 敏感词类型（1=政治, 2=色情, 3=暴力, 4=广告, 5=其他）
   type        Int      @default(5) @db.SmallInt
   /// 版本号（用于乐观锁）

@@ -1,5 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import {
   BaseSensitiveWordDto,
   CreateSensitiveWordDto,
@@ -17,7 +17,7 @@ export class SensitiveWordController {
 
   @Get('page')
   @ApiPageDoc({
-    summary: '获取敏感词列表',
+    summary: '获取敏感词分页',
     model: BaseSensitiveWordDto,
   })
   async getSensitiveWordPage(@Query() query: QuerySensitiveWordDto) {
@@ -68,15 +68,15 @@ export class SensitiveWordController {
   @Post('update-status')
   @ApiDoc({
     summary: '更新敏感词状态',
-    model: IdDto,
+    model: BaseSensitiveWordDto,
   })
-  async enableSensitiveWord(@Body() dto: IdDto) {
+  async enableSensitiveWord(@Body() dto: UpdateEnabledStatusDto) {
     return this.sensitiveWordService.sensitiveWord.update({
       where: {
         id: dto.id,
       },
       data: {
-        isEnabled: true,
+        isEnabled: dto.isEnabled,
       },
     })
   }

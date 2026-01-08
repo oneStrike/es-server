@@ -1,4 +1,8 @@
-import { ValidateBoolean, ValidateString } from '@libs/base/decorators'
+import {
+  ValidateBoolean,
+  ValidateEnum,
+  ValidateString,
+} from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
   IntersectionType,
@@ -6,6 +10,10 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import {
+  SensitiveWordLevelEnum,
+  SensitiveWordTypeEnum,
+} from '../sensitive-word-constant'
 
 export class BaseSensitiveWordDto extends BaseDto {
   @ValidateString({
@@ -32,6 +40,24 @@ export class BaseSensitiveWordDto extends BaseDto {
     default: true,
   })
   isEnabled?: boolean
+
+  @ValidateEnum({
+    description: '敏感词级别',
+    required: true,
+    example: SensitiveWordLevelEnum.SEVERE,
+    default: SensitiveWordLevelEnum.SEVERE,
+    enum: SensitiveWordLevelEnum,
+  })
+  level!: SensitiveWordLevelEnum
+
+  @ValidateEnum({
+    description: '敏感词类型',
+    required: true,
+    example: SensitiveWordTypeEnum.OTHER,
+    default: SensitiveWordTypeEnum.OTHER,
+    enum: SensitiveWordTypeEnum,
+  })
+  type!: SensitiveWordTypeEnum
 
   @ValidateString({
     description: '备注',
