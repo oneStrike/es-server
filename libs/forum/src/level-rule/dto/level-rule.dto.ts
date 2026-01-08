@@ -235,6 +235,7 @@ export class CheckLevelPermissionDto {
 
 /**
  * 等级权限检查结果DTO
+ * 返回等级权限检查的结果
  */
 export class LevelPermissionResultDto {
   hasPermission!: boolean

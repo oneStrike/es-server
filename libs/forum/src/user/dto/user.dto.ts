@@ -205,6 +205,7 @@ export class UpdateUserStatusDto extends PickType(BaseForumProfileDto, [
 
 /**
  * 授予徽章DTO
+ * 用于为用户授予徽章
  */
 export class GrantBadgeDto extends PickType(BaseForumProfileDto, ['userId']) {
   @ValidateNumber({

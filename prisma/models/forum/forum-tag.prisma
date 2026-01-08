@@ -21,7 +21,7 @@ model ForumTag {
   topicTags   ForumTopicTag[]
   topics      ForumTopic[]    @relation("TopicTags")
 
-  @@index([order])
+  @@index([sortOrder])
   @@index([name])
   @@index([isEnabled])
   @@index([useCount])

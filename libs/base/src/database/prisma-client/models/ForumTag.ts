@@ -29,13 +29,13 @@ export type AggregateForumTag = {
 export type ForumTagAvgAggregateOutputType = {
   id: number | null
   useCount: number | null
-  order: number | null
+  sortOrder: number | null
 }
 
 export type ForumTagSumAggregateOutputType = {
   id: number | null
   useCount: number | null
-  order: number | null
+  sortOrder: number | null
 }
 
 export type ForumTagMinAggregateOutputType = {
@@ -43,7 +43,7 @@ export type ForumTagMinAggregateOutputType = {
   name: string | null
   icon: string | null
   useCount: number | null
-  order: number | null
+  sortOrder: number | null
   isEnabled: boolean | null
   description: string | null
   createdAt: Date | null
@@ -55,7 +55,7 @@ export type ForumTagMaxAggregateOutputType = {
   name: string | null
   icon: string | null
   useCount: number | null
-  order: number | null
+  sortOrder: number | null
   isEnabled: boolean | null
   description: string | null
   createdAt: Date | null
@@ -67,7 +67,7 @@ export type ForumTagCountAggregateOutputType = {
   name: number
   icon: number
   useCount: number
-  order: number
+  sortOrder: number
   isEnabled: number
   description: number
   createdAt: number
@@ -79,13 +79,13 @@ export type ForumTagCountAggregateOutputType = {
 export type ForumTagAvgAggregateInputType = {
   id?: true
   useCount?: true
-  order?: true
+  sortOrder?: true
 }
 
 export type ForumTagSumAggregateInputType = {
   id?: true
   useCount?: true
-  order?: true
+  sortOrder?: true
 }
 
 export type ForumTagMinAggregateInputType = {
@@ -93,7 +93,7 @@ export type ForumTagMinAggregateInputType = {
   name?: true
   icon?: true
   useCount?: true
-  order?: true
+  sortOrder?: true
   isEnabled?: true
   description?: true
   createdAt?: true
@@ -105,7 +105,7 @@ export type ForumTagMaxAggregateInputType = {
   name?: true
   icon?: true
   useCount?: true
-  order?: true
+  sortOrder?: true
   isEnabled?: true
   description?: true
   createdAt?: true
@@ -117,7 +117,7 @@ export type ForumTagCountAggregateInputType = {
   name?: true
   icon?: true
   useCount?: true
-  order?: true
+  sortOrder?: true
   isEnabled?: true
   description?: true
   createdAt?: true
@@ -216,7 +216,7 @@ export type ForumTagGroupByOutputType = {
   name: string
   icon: string | null
   useCount: number
-  order: number
+  sortOrder: number
   isEnabled: boolean
   description: string | null
   createdAt: Date
@@ -251,7 +251,7 @@ export type ForumTagWhereInput = {
   name?: Prisma.StringFilter<"ForumTag"> | string
   icon?: Prisma.StringNullableFilter<"ForumTag"> | string | null
   useCount?: Prisma.IntFilter<"ForumTag"> | number
-  order?: Prisma.IntFilter<"ForumTag"> | number
+  sortOrder?: Prisma.IntFilter<"ForumTag"> | number
   isEnabled?: Prisma.BoolFilter<"ForumTag"> | boolean
   description?: Prisma.StringNullableFilter<"ForumTag"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumTag"> | Date | string
@@ -265,7 +265,7 @@ export type ForumTagOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   useCount?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -282,7 +282,7 @@ export type ForumTagWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ForumTagWhereInput | Prisma.ForumTagWhereInput[]
   icon?: Prisma.StringNullableFilter<"ForumTag"> | string | null
   useCount?: Prisma.IntFilter<"ForumTag"> | number
-  order?: Prisma.IntFilter<"ForumTag"> | number
+  sortOrder?: Prisma.IntFilter<"ForumTag"> | number
   isEnabled?: Prisma.BoolFilter<"ForumTag"> | boolean
   description?: Prisma.StringNullableFilter<"ForumTag"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumTag"> | Date | string
@@ -296,7 +296,7 @@ export type ForumTagOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   useCount?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -316,7 +316,7 @@ export type ForumTagScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"ForumTag"> | string
   icon?: Prisma.StringNullableWithAggregatesFilter<"ForumTag"> | string | null
   useCount?: Prisma.IntWithAggregatesFilter<"ForumTag"> | number
-  order?: Prisma.IntWithAggregatesFilter<"ForumTag"> | number
+  sortOrder?: Prisma.IntWithAggregatesFilter<"ForumTag"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ForumTag"> | boolean
   description?: Prisma.StringNullableWithAggregatesFilter<"ForumTag"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumTag"> | Date | string
@@ -327,7 +327,7 @@ export type ForumTagCreateInput = {
   name: string
   icon?: string | null
   useCount?: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -341,7 +341,7 @@ export type ForumTagUncheckedCreateInput = {
   name: string
   icon?: string | null
   useCount?: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -354,7 +354,7 @@ export type ForumTagUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   useCount?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -368,7 +368,7 @@ export type ForumTagUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   useCount?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -382,7 +382,7 @@ export type ForumTagCreateManyInput = {
   name: string
   icon?: string | null
   useCount?: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -393,7 +393,7 @@ export type ForumTagUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   useCount?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -405,7 +405,7 @@ export type ForumTagUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   useCount?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -417,7 +417,7 @@ export type ForumTagCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   useCount?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -427,7 +427,7 @@ export type ForumTagCountOrderByAggregateInput = {
 export type ForumTagAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   useCount?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type ForumTagMaxOrderByAggregateInput = {
@@ -435,7 +435,7 @@ export type ForumTagMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   useCount?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -447,7 +447,7 @@ export type ForumTagMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   useCount?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -457,7 +457,7 @@ export type ForumTagMinOrderByAggregateInput = {
 export type ForumTagSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   useCount?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type ForumTagScalarRelationFilter = {
@@ -531,7 +531,7 @@ export type ForumTagCreateWithoutTopicTagsInput = {
   name: string
   icon?: string | null
   useCount?: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -544,7 +544,7 @@ export type ForumTagUncheckedCreateWithoutTopicTagsInput = {
   name: string
   icon?: string | null
   useCount?: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -572,7 +572,7 @@ export type ForumTagUpdateWithoutTopicTagsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   useCount?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -585,7 +585,7 @@ export type ForumTagUncheckedUpdateWithoutTopicTagsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   useCount?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -597,7 +597,7 @@ export type ForumTagCreateWithoutTopicsInput = {
   name: string
   icon?: string | null
   useCount?: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -610,7 +610,7 @@ export type ForumTagUncheckedCreateWithoutTopicsInput = {
   name: string
   icon?: string | null
   useCount?: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   description?: string | null
   createdAt?: Date | string
@@ -647,7 +647,7 @@ export type ForumTagScalarWhereInput = {
   name?: Prisma.StringFilter<"ForumTag"> | string
   icon?: Prisma.StringNullableFilter<"ForumTag"> | string | null
   useCount?: Prisma.IntFilter<"ForumTag"> | number
-  order?: Prisma.IntFilter<"ForumTag"> | number
+  sortOrder?: Prisma.IntFilter<"ForumTag"> | number
   isEnabled?: Prisma.BoolFilter<"ForumTag"> | boolean
   description?: Prisma.StringNullableFilter<"ForumTag"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumTag"> | Date | string
@@ -658,7 +658,7 @@ export type ForumTagUpdateWithoutTopicsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   useCount?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -671,7 +671,7 @@ export type ForumTagUncheckedUpdateWithoutTopicsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   useCount?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -684,7 +684,7 @@ export type ForumTagUncheckedUpdateManyWithoutTopicsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   useCount?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -736,7 +736,7 @@ export type ForumTagSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   name?: boolean
   icon?: boolean
   useCount?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   description?: boolean
   createdAt?: boolean
@@ -751,7 +751,7 @@ export type ForumTagSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   name?: boolean
   icon?: boolean
   useCount?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   description?: boolean
   createdAt?: boolean
@@ -763,7 +763,7 @@ export type ForumTagSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   name?: boolean
   icon?: boolean
   useCount?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   description?: boolean
   createdAt?: boolean
@@ -775,14 +775,14 @@ export type ForumTagSelectScalar = {
   name?: boolean
   icon?: boolean
   useCount?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   description?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ForumTagOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "useCount" | "order" | "isEnabled" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["forumTag"]>
+export type ForumTagOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "useCount" | "sortOrder" | "isEnabled" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["forumTag"]>
 export type ForumTagInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topicTags?: boolean | Prisma.ForumTag$topicTagsArgs<ExtArgs>
   topics?: boolean | Prisma.ForumTag$topicsArgs<ExtArgs>
@@ -817,7 +817,7 @@ export type $ForumTagPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     /**
      * 排序值（数值越小越靠前）
      */
-    order: number
+    sortOrder: number
     /**
      * 是否启用
      */
@@ -1263,7 +1263,7 @@ export interface ForumTagFieldRefs {
   readonly name: Prisma.FieldRef<"ForumTag", 'String'>
   readonly icon: Prisma.FieldRef<"ForumTag", 'String'>
   readonly useCount: Prisma.FieldRef<"ForumTag", 'Int'>
-  readonly order: Prisma.FieldRef<"ForumTag", 'Int'>
+  readonly sortOrder: Prisma.FieldRef<"ForumTag", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"ForumTag", 'Boolean'>
   readonly description: Prisma.FieldRef<"ForumTag", 'String'>
   readonly createdAt: Prisma.FieldRef<"ForumTag", 'DateTime'>

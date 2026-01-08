@@ -56,6 +56,7 @@ export class SearchReplyDto extends OmitType(SearchDto, ['type']) {}
 
 /**
  * 搜索结果DTO
+ * 返回搜索结果的数据结构
  */
 export class SearchResultDto {
   @ApiProperty({ description: '主题ID', example: 1 })

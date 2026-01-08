@@ -3,7 +3,7 @@ import {
   RepositoryService,
 } from '@libs/base/database'
 import { IdDto } from '@libs/base/dto'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import {
   AssignModeratorSectionDto,
   CreateModeratorDto,
@@ -16,6 +16,10 @@ import {
   ModeratorRoleTypeEnum,
 } from './moderator.constant'
 
+/**
+ * 论坛版主服务类
+ * 提供论坛版主的增删改查、板块分配、权限管理等核心业务逻辑
+ */
 @Injectable()
 export class ModeratorService extends RepositoryService {
   constructor() {
@@ -174,17 +178,17 @@ export class ModeratorService extends RepositoryService {
    * @returns 版主列表
    */
   async getModeratorPage(queryDto: QueryModeratorDto) {
-    const { username, sectionId } = queryDto
+    const { nickname, sectionId } = queryDto
 
     const where: ForumModeratorWhereInput = {
       deletedAt: null,
     }
 
-    if (username) {
+    if (nickname) {
       where.profile = {
         user: {
-          username: {
-            contains: username,
+          nickname: {
+            contains: nickname,
             mode: 'insensitive',
           },
         },

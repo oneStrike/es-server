@@ -4079,7 +4079,7 @@ export const ForumTagScalarFieldEnum = {
   name: 'name',
   icon: 'icon',
   useCount: 'useCount',
-  order: 'order',
+  sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   description: 'description',
   createdAt: 'createdAt',

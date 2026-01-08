@@ -123,7 +123,7 @@ export class QueryModeratorDto extends IntersectionType(
     example: 'zhangsan',
     required: false,
   })
-  username?: string
+  nickname?: string
 
   @ValidateNumber({
     description: '板块ID',
@@ -172,13 +172,6 @@ export class ModeratorDto extends BaseModeratorDto {
     min: 1,
   })
   userId!: number
-
-  @ValidateString({
-    description: '用户名',
-    example: 'zhangsan',
-    required: true,
-  })
-  username!: string
 
   @ValidateString({
     description: '昵称',

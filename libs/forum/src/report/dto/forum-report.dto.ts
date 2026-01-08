@@ -113,6 +113,10 @@ export class UpdateForumReportStatusDto extends PickType(BaseForumReportDto, [
   'handlingNote',
 ]) {}
 
+/**
+ * 处理举报DTO
+ * 用于管理员处理举报记录
+ */
 export class HandleReportDto extends IntersectionType(
   PickType(BaseForumReportDto, ['id']),
   PartialType(

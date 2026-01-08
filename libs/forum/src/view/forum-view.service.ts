@@ -4,6 +4,10 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { CreateForumViewDto, QueryForumViewDto, ViewStatisticsDto } from './dto/forum-view.dto'
 import { ForumViewTypeEnum } from './forum-view.constant'
 
+/**
+ * 论坛浏览记录服务类
+ * 提供论坛浏览记录的创建、查询、统计等核心业务逻辑
+ */
 @Injectable()
 export class ForumViewService extends RepositoryService {
   get forumView() {

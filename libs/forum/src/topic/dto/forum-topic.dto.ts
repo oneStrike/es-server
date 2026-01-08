@@ -239,6 +239,10 @@ export class UpdateTopicLockedDto extends IntersectionType(
   PickType(BaseForumTopicDto, ['isLocked']),
 ) {}
 
+/**
+ * 更新主题隐藏状态DTO
+ * 用于更新主题的隐藏状态
+ */
 export class UpdateTopicHiddenDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['isHidden']),

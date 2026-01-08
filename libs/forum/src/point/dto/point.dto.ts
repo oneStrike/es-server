@@ -148,6 +148,7 @@ export class QueryPointRecordDto extends IntersectionType(
 
 /**
  * 增加积分DTO
+ * 用于为用户增加积分
  */
 export class AddPointsDto {
   @ValidateNumber({
