@@ -66,6 +66,10 @@ export class BaseForumViewDto extends BaseDto {
   duration?: number
 }
 
+/**
+ * 创建浏览记录DTO
+ * 用于创建新的浏览记录
+ */
 export class CreateForumViewDto extends PickType(BaseForumViewDto, [
   'topicId',
   'replyId',

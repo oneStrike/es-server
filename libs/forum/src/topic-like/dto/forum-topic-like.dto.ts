@@ -31,13 +31,21 @@ export class CreateForumTopicLikeDto extends PickType(BaseForumTopicLikeDto, [
   'profileId',
 ]) {}
 
-export class QueryForumTopicLikeDto extends IntersectionType(
+/**
+ * 删除主题点赞DTO
+ * 用于删除主题点赞记录
+ */
+export class DeleteForumTopicLikeDto extends IntersectionType(
   PageDto,
   PartialType(
     PickType(BaseForumTopicLikeDto, ['topicId', 'profileId']),
   ),
 ) {}
 
+/**
+ * 切换主题点赞状态DTO
+ * 用于切换主题的点赞状态（点赞/取消点赞）
+ */
 export class ToggleTopicLikeDto extends PickType(CreateForumTopicLikeDto, [
   'topicId',
   'profileId',

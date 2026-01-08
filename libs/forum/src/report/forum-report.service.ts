@@ -7,24 +7,47 @@ import {
   ForumReportTypeEnum,
 } from './forum-report.constant'
 
+/**
+ * 论坛举报服务类
+ * 提供论坛举报的创建、查询、处理、统计等核心业务逻辑
+ */
 @Injectable()
 export class ForumReportService extends RepositoryService {
+  /**
+   * 获取论坛举报模型
+   */
   get forumReport() {
     return this.prisma.forumReport
   }
 
+  /**
+   * 获取论坛主题模型
+   */
   get forumTopic() {
     return this.prisma.forumTopic
   }
 
+  /**
+   * 获取论坛回复模型
+   */
   get forumReply() {
     return this.prisma.forumReply
   }
 
+  /**
+   * 获取论坛用户资料模型
+   */
   get forumProfile() {
     return this.prisma.forumProfile
   }
 
+  /**
+   * 创建论坛举报
+   * @param createForumReportDto - 创建举报的DTO
+   * @returns 创建的举报记录
+   * @throws BadRequestException 举报人不存在、不能举报自己、重复举报等情况
+   * @throws NotFoundException 目标内容不存在
+   */
   async createForumReport(createForumReportDto: CreateForumReportDto) {
     const { reporterId, type, targetId, reason, ...reportData } = createForumReportDto
 
@@ -106,6 +129,11 @@ export class ForumReportService extends RepositoryService {
     return report
   }
 
+  /**
+   * 获取论坛举报列表（分页）
+   * @param queryForumReportDto - 查询参数，包含类型、原因、状态、举报人ID等过滤条件
+   * @returns 分页的举报列表
+   */
   async getForumReports(queryForumReportDto: QueryForumReportDto) {
     const { type, reason, status, reporterId, pageIndex = 0, pageSize = 15 } = queryForumReportDto
 
@@ -151,6 +179,12 @@ export class ForumReportService extends RepositoryService {
     })
   }
 
+  /**
+   * 根据ID获取论坛举报详情
+   * @param id - 举报记录ID
+   * @returns 包含举报详情和目标内容信息的完整记录
+   * @throws NotFoundException 举报记录不存在
+   */
   async getForumReportById(id: number) {
     const report = await this.forumReport.findUnique({
       where: { id },
@@ -209,6 +243,13 @@ export class ForumReportService extends RepositoryService {
     }
   }
 
+  /**
+   * 处理举报
+   * @param handleReportDto - 处理举报的DTO，包含举报ID、状态、处理人ID和处理备注
+   * @returns 更新后的举报记录
+   * @throws NotFoundException 举报记录不存在
+   * @throws BadRequestException 举报已处理完成
+   */
   async handleReport(handleReportDto: HandleReportDto) {
     const { id, status, handlerId, handlingNote } = handleReportDto
 
@@ -236,6 +277,15 @@ export class ForumReportService extends RepositoryService {
     return updatedReport
   }
 
+  /**
+   * 更新举报状态
+   * @param id - 举报记录ID
+   * @param status - 新的状态
+   * @param handlerId - 处理人ID（可选）
+   * @param handlingNote - 处理备注（可选）
+   * @returns 更新后的举报记录
+   * @throws NotFoundException 举报记录不存在
+   */
   async updateReportStatus(id: number, status: ForumReportStatusEnum, handlerId?: number, handlingNote?: string) {
     const report = await this.forumReport.findUnique({
       where: { id },
@@ -257,6 +307,10 @@ export class ForumReportService extends RepositoryService {
     return updatedReport
   }
 
+  /**
+   * 获取举报统计数据
+   * @returns 包含总举报数、待处理数、按状态/类型/原因分组的统计数据
+   */
   async getReportStatistics() {
     const totalReports = await this.forumReport.count()
 
@@ -305,6 +359,12 @@ export class ForumReportService extends RepositoryService {
     }
   }
 
+  /**
+   * 删除论坛举报记录
+   * @param id - 举报记录ID
+   * @returns 删除成功标识
+   * @throws NotFoundException 举报记录不存在
+   */
   async deleteForumReport(id: number) {
     const report = await this.forumReport.findUnique({
       where: { id },
@@ -321,6 +381,13 @@ export class ForumReportService extends RepositoryService {
     return { success: true }
   }
 
+  /**
+   * 获取指定用户的举报记录
+   * @param profileId - 用户资料ID
+   * @param pageIndex - 页码，默认为0
+   * @param pageSize - 每页大小，默认为15
+   * @returns 分页的用户举报记录
+   */
   async getUserReports(profileId: number, pageIndex = 0, pageSize = 15) {
     return this.forumReport.findPagination({
       where: {

@@ -17,6 +17,10 @@ import {
   NotificationTypeEnum,
 } from '../notification.constant'
 
+/**
+ * 通知基础DTO
+ * 包含论坛通知的所有基础字段定义
+ */
 export class BaseNotificationDto extends BaseDto {
   @ValidateNumber({
     description: '关联的论坛用户ID',

@@ -1,3 +1,11 @@
+export * from './audit-log/dto/forum-audit-log.dto'
+export * from './audit-log/forum-audit-log.module'
+export * from './audit-log/forum-audit-log.service'
+
+export * from './badge/dto/forum-badge.dto'
+export * from './badge/forum-badge.module'
+export * from './badge/forum-badge.service'
+
 export * from './level-rule/dto/level-rule.dto'
 export * from './level-rule/level-rule.constant'
 export * from './level-rule/level-rule.module'
@@ -50,6 +58,10 @@ export * from './topic-like/dto/forum-topic-like.dto'
 export * from './topic-like/forum-topic-like.constant'
 export * from './topic-like/forum-topic-like.module'
 export * from './topic-like/forum-topic-like.service'
+
+export * from './topic-favorite/dto/forum-topic-favorite.dto'
+export * from './topic-favorite/forum-topic-favorite.module'
+export * from './topic-favorite/forum-topic-favorite.service'
 
 export * from './topic/dto/forum-topic.dto'
 export * from './topic/forum-topic.constant'

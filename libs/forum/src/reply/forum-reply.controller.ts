@@ -23,6 +23,8 @@ export class ForumReplyController {
 
   /**
    * 创建论坛回复
+   * @param body - 创建论坛回复的数据传输对象
+   * @returns 创建的论坛回复ID
    */
   @Post('/create')
   @ApiDoc({
@@ -35,6 +37,8 @@ export class ForumReplyController {
 
   /**
    * 分页查询论坛回复列表
+   * @param query - 查询参数
+   * @returns 分页的论坛回复列表
    */
   @Get('/page')
   @ApiPageDoc({
@@ -47,6 +51,8 @@ export class ForumReplyController {
 
   /**
    * 获取论坛回复详情
+   * @param query - 包含回复ID的对象
+   * @returns 论坛回复详情
    */
   @Get('/detail')
   @ApiDoc({
@@ -59,6 +65,8 @@ export class ForumReplyController {
 
   /**
    * 软删除论坛回复
+   * @param body - 包含回复ID的对象
+   * @returns 操作结果
    */
   @Post('/delete')
   @ApiDoc({
@@ -71,6 +79,8 @@ export class ForumReplyController {
 
   /**
    * 更新回复审核状态
+   * @param body - 更新审核状态的数据传输对象
+   * @returns 批量操作响应
    */
   @Post('/update-audit-status')
   @ApiDoc({
@@ -83,6 +93,8 @@ export class ForumReplyController {
 
   /**
    * 更新回复隐藏状态
+   * @param body - 更新隐藏状态的数据传输对象
+   * @returns 批量操作响应
    */
   @Post('/update-hidden')
   @ApiDoc({
@@ -95,6 +107,8 @@ export class ForumReplyController {
 
   /**
    * 批量删除回复
+   * @param body - 包含回复ID列表的对象
+   * @returns 批量操作响应
    */
   @Post('/batch-delete')
   @ApiDoc({

@@ -3,20 +3,40 @@ import { RepositoryService } from '@libs/base/database'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { CreateForumTopicLikeDto, QueryForumTopicLikeDto, ToggleTopicLikeDto } from './dto/forum-topic-like.dto'
 
+/**
+ * 论坛主题点赞服务类
+ * 提供主题点赞、取消点赞、切换点赞状态、查询点赞记录等核心业务逻辑
+ */
 @Injectable()
 export class ForumTopicLikeService extends RepositoryService {
+  /**
+   * 获取论坛主题点赞模型
+   */
   get forumTopicLike() {
     return this.prisma.forumTopicLike
   }
 
+  /**
+   * 获取论坛主题模型
+   */
   get forumTopic() {
     return this.prisma.forumTopic
   }
 
+  /**
+   * 获取论坛用户资料模型
+   */
   get forumProfile() {
     return this.prisma.forumProfile
   }
 
+  /**
+   * 点赞主题
+   * @param createForumTopicLikeDto - 创建点赞的DTO，包含主题ID和用户资料ID
+   * @returns 创建的点赞记录
+   * @throws NotFoundException 主题不存在
+   * @throws BadRequestException 用户资料不存在、已经点赞过该主题
+   */
   async likeTopic(createForumTopicLikeDto: CreateForumTopicLikeDto) {
     const { topicId, profileId } = createForumTopicLikeDto
 
@@ -70,6 +90,13 @@ export class ForumTopicLikeService extends RepositoryService {
     })
   }
 
+  /**
+   * 取消点赞主题
+   * @param topicId - 主题ID
+   * @param profileId - 用户资料ID
+   * @returns 删除的点赞记录
+   * @throws BadRequestException 点赞记录不存在
+   */
   async unlikeTopic(topicId: number, profileId: number) {
     const like = await this.forumTopicLike.findUnique({
       where: {
@@ -105,6 +132,12 @@ export class ForumTopicLikeService extends RepositoryService {
     })
   }
 
+  /**
+   * 切换主题点赞状态
+   * @param toggleTopicLikeDto - 切换点赞的DTO，包含主题ID和用户资料ID
+   * @returns 点赞或取消点赞的结果
+   * @throws NotFoundException 主题不存在
+   */
   async toggleTopicLike(toggleTopicLikeDto: ToggleTopicLikeDto) {
     const { topicId, profileId } = toggleTopicLikeDto
 
@@ -132,6 +165,11 @@ export class ForumTopicLikeService extends RepositoryService {
     }
   }
 
+  /**
+   * 获取主题点赞列表（分页）
+   * @param queryForumTopicLikeDto - 查询参数，包含主题ID、用户资料ID等过滤条件
+   * @returns 分页的点赞列表
+   */
   async getTopicLikes(queryForumTopicLikeDto: QueryForumTopicLikeDto) {
     const { topicId, profileId, pageIndex = 0, pageSize = 15 } = queryForumTopicLikeDto
 
@@ -169,6 +207,12 @@ export class ForumTopicLikeService extends RepositoryService {
     })
   }
 
+  /**
+   * 检查用户是否点赞过指定主题
+   * @param topicId - 主题ID
+   * @param profileId - 用户资料ID
+   * @returns 是否点赞过该主题
+   */
   async checkUserLiked(topicId: number, profileId: number) {
     const like = await this.forumTopicLike.findUnique({
       where: {

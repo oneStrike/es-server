@@ -1,6 +1,8 @@
 import { ApiDoc, ApiPageDoc} from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+
 import {
   AssignModeratorSectionDto,
   CreateModeratorDto,
@@ -10,12 +12,19 @@ import {
 } from './dto/moderator.dto'
 import { ModeratorService } from './moderator.service'
 
+/**
+ * 论坛版主管理控制器
+ * 提供论坛版主相关的API接口
+ */
+@ApiTags('论坛管理/版主管理模块')
 @Controller('forum/moderator')
 export class ModeratorController {
   constructor(private readonly moderatorService: ModeratorService) {}
 
   /**
    * 添加版主
+   * @param createDto - 创建版主的数据传输对象
+   * @returns 创建的版主信息
    */
   @Post('add')
   @ApiDoc({
@@ -27,6 +36,8 @@ export class ModeratorController {
 
   /**
    * 移除版主
+   * @param removeDto - 包含版主ID的对象
+   * @returns 操作结果
    */
   @Post('remove')
   @ApiDoc({
@@ -39,6 +50,8 @@ export class ModeratorController {
 
   /**
    * 分配版主管理的板块
+   * @param assignDto - 分配板块的数据传输对象
+   * @returns 操作成功返回true
    */
   @Post('section/assign')
   @ApiDoc({
@@ -51,6 +64,8 @@ export class ModeratorController {
 
   /**
    * 查看版主列表
+   * @param queryDto - 查询参数
+   * @returns 分页的版主列表
    */
   @Get('list')
   @ApiPageDoc({
@@ -62,6 +77,8 @@ export class ModeratorController {
 
   /**
    * 更新版主信息
+   * @param updateDto - 更新版主信息的数据传输对象
+   * @returns 更新后的版主信息
    */
   @Post('update')
   @ApiDoc({
@@ -73,6 +90,8 @@ export class ModeratorController {
 
   /**
    * 查看版主操作日志
+   * @param queryDto - 查询参数
+   * @returns 分页的版主操作日志列表
    */
   @Get('action/log')
   @ApiPageDoc({
