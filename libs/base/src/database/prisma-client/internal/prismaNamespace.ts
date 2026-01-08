@@ -390,7 +390,6 @@ export const ModelName = {
   ClientNotice: 'ClientNotice',
   ClientPage: 'ClientPage',
   ClientUser: 'ClientUser',
-  ForumAuditLog: 'ForumAuditLog',
   ForumBadge: 'ForumBadge',
   ForumLevelRule: 'ForumLevelRule',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
@@ -442,7 +441,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNoticeRead" | "clientNotice" | "clientPage" | "clientUser" | "forumAuditLog" | "forumBadge" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUser" | "clientConfig" | "clientNoticeRead" | "clientNotice" | "clientPage" | "clientUser" | "forumBadge" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -887,80 +886,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ClientUserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ClientUserCountAggregateOutputType> | number
-        }
-      }
-    }
-    ForumAuditLog: {
-      payload: Prisma.$ForumAuditLogPayload<ExtArgs>
-      fields: Prisma.ForumAuditLogFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumAuditLogFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumAuditLogFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload>
-        }
-        findFirst: {
-          args: Prisma.ForumAuditLogFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumAuditLogFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload>
-        }
-        findMany: {
-          args: Prisma.ForumAuditLogFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload>[]
-        }
-        create: {
-          args: Prisma.ForumAuditLogCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload>
-        }
-        createMany: {
-          args: Prisma.ForumAuditLogCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumAuditLogCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload>[]
-        }
-        delete: {
-          args: Prisma.ForumAuditLogDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload>
-        }
-        update: {
-          args: Prisma.ForumAuditLogUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumAuditLogDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumAuditLogUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumAuditLogUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumAuditLogUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumAuditLogPayload>
-        }
-        aggregate: {
-          args: Prisma.ForumAuditLogAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumAuditLog>
-        }
-        groupBy: {
-          args: Prisma.ForumAuditLogGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumAuditLogGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumAuditLogCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumAuditLogCountAggregateOutputType> | number
         }
       }
     }
@@ -3774,21 +3699,6 @@ export const ClientUserScalarFieldEnum = {
 export type ClientUserScalarFieldEnum = (typeof ClientUserScalarFieldEnum)[keyof typeof ClientUserScalarFieldEnum]
 
 
-export const ForumAuditLogScalarFieldEnum = {
-  id: 'id',
-  objectType: 'objectType',
-  objectId: 'objectId',
-  auditStatus: 'auditStatus',
-  auditReason: 'auditReason',
-  auditBy: 'auditBy',
-  auditRole: 'auditRole',
-  createdAt: 'createdAt',
-  remark: 'remark'
-} as const
-
-export type ForumAuditLogScalarFieldEnum = (typeof ForumAuditLogScalarFieldEnum)[keyof typeof ForumAuditLogScalarFieldEnum]
-
-
 export const ForumBadgeScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -3910,7 +3820,7 @@ export type ForumNotificationScalarFieldEnum = (typeof ForumNotificationScalarFi
 
 export const ForumPointRecordScalarFieldEnum = {
   id: 'id',
-  userId: 'userId',
+  profileId: 'profileId',
   ruleId: 'ruleId',
   points: 'points',
   beforePoints: 'beforePoints',
@@ -3992,6 +3902,7 @@ export const ForumReplyScalarFieldEnum = {
   auditReason: 'auditReason',
   auditAt: 'auditAt',
   auditBy: 'auditBy',
+  auditRole: 'auditRole',
   likeCount: 'likeCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -4133,6 +4044,7 @@ export const ForumTopicScalarFieldEnum = {
   auditReason: 'auditReason',
   auditAt: 'auditAt',
   auditBy: 'auditBy',
+  auditRole: 'auditRole',
   viewCount: 'viewCount',
   replyCount: 'replyCount',
   likeCount: 'likeCount',
@@ -4635,7 +4547,6 @@ export type GlobalOmitConfig = {
   clientNotice?: Prisma.ClientNoticeOmit
   clientPage?: Prisma.ClientPageOmit
   clientUser?: Prisma.ClientUserOmit
-  forumAuditLog?: Prisma.ForumAuditLogOmit
   forumBadge?: Prisma.ForumBadgeOmit
   forumLevelRule?: Prisma.ForumLevelRuleOmit
   forumModeratorActionLog?: Prisma.ForumModeratorActionLogOmit

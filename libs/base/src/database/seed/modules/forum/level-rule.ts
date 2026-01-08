@@ -107,7 +107,23 @@ export async function createInitialForumLevelRules(prisma: any) {
 
     if (!existingLevel) {
       await prisma.forumLevelRule.create({
-        data: levelData,
+        data: {
+          name: levelData.name,
+          requiredPoints: levelData.requiredPoints,
+          icon: levelData.icon,
+          description: levelData.description,
+          sortOrder: levelData.order,
+          isEnabled: levelData.isEnabled,
+          levelColor: levelData.levelColor,
+          levelBadge: levelData.levelBadge,
+          dailyTopicLimit: levelData.dailyTopicLimit,
+          dailyReplyLimit: levelData.dailyReplyLimit,
+          postInterval: levelData.postInterval,
+          maxFileSize: levelData.maxFileSize,
+          dailyLikeLimit: levelData.dailyLikeLimit,
+          dailyFavoriteLimit: levelData.dailyFavoriteLimit,
+          dailyCommentLimit: levelData.dailyCommentLimit,
+        },
       })
     }
   }

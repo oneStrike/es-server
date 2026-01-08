@@ -68,11 +68,6 @@ export type ClientPage = Prisma.ClientPageModel
  */
 export type ClientUser = Prisma.ClientUserModel
 /**
- * Model ForumAuditLog
- * 论坛审核日志表 - 记录主题和回复的审核信息，包括审核状态、审核人、审核原因等
- */
-export type ForumAuditLog = Prisma.ForumAuditLogModel
-/**
  * Model ForumBadge
  * 论坛徽章表 - 存储论坛徽章信息，包括系统徽章、成就徽章、活动徽章等
  */

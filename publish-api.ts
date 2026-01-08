@@ -2,6 +2,7 @@ import { resolve } from 'node:path'
 import process from 'node:process'
 import axios from 'axios'
 import dotenv from 'dotenv'
+import kill from 'tree-kill'
 
 interface AppConfig {
   name: string
@@ -205,8 +206,17 @@ async function stopStartedApp(): Promise<void> {
   if (startedProcessId) {
     console.log(`🔚 正在停止脚本启动的应用进程 (PID: ${startedProcessId})...`)
     try {
-      process.kill(startedProcessId)
-      console.log(`✅ 已成功停止进程 (PID: ${startedProcessId})`)
+      await new Promise<void>((resolve, reject) => {
+        kill(startedProcessId!, 'SIGTERM', (err) => {
+          if (err) {
+            console.error(`❌ 停止进程失败 (PID: ${startedProcessId}):`, err)
+            reject(err)
+          } else {
+            console.log(`✅ 已成功停止进程 (PID: ${startedProcessId})`)
+            resolve()
+          }
+        })
+      })
       startedProcessId = null
     } catch (error) {
       console.error(`❌ 停止进程失败 (PID: ${startedProcessId}):`, error)

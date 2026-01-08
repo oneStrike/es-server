@@ -1,7 +1,7 @@
 import {
+  BaseService,
   ForumReplyWhereInput,
   ForumTopicWhereInput,
-  BaseService,
 } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { SearchDto, SearchReplyDto, SearchTopicDto } from './dto/search.dto'

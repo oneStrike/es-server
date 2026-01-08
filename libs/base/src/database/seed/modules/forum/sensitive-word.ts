@@ -7,6 +7,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '笨蛋',
@@ -15,6 +16,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '白痴',
@@ -23,6 +25,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '傻瓜',
@@ -31,6 +34,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '混蛋',
@@ -39,6 +43,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '废物',
@@ -47,6 +52,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '脑残',
@@ -55,6 +61,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '白眼',
@@ -63,6 +70,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '弱智',
@@ -71,6 +79,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '傻逼',
@@ -79,6 +88,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '严重敏感词',
+      version: 0,
     },
     {
       word: '滚蛋',
@@ -87,6 +97,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '一般敏感词',
+      version: 0,
     },
     {
       word: '该死',
@@ -95,6 +106,7 @@ export async function createInitialForumSensitiveWords(prisma: any) {
       isEnabled: true,
       replaceWord: '***',
       remark: '轻微敏感词',
+      version: 0,
     },
   ]
 

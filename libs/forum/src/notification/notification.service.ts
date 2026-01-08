@@ -1,6 +1,6 @@
 import {
-  ForumNotificationCreateInput,
   BaseService,
+  ForumNotificationCreateInput,
 } from '@libs/base/database'
 import { IdDto, IdsDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'

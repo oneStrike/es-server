@@ -1,5 +1,5 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { BaseDto, UserIdDto } from '@libs/base/dto'
+import { BaseDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

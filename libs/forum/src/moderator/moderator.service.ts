@@ -1,9 +1,9 @@
 import {
-  ForumModeratorWhereInput,
   BaseService,
+  ForumModeratorWhereInput,
 } from '@libs/base/database'
 import { IdDto } from '@libs/base/dto'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   AssignModeratorSectionDto,
   CreateModeratorDto,

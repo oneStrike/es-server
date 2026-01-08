@@ -36,6 +36,7 @@ export type ForumReplyAvgAggregateOutputType = {
   actualReplyToId: number | null
   auditStatus: number | null
   auditBy: number | null
+  auditRole: number | null
   likeCount: number | null
   version: number | null
 }
@@ -49,6 +50,7 @@ export type ForumReplySumAggregateOutputType = {
   actualReplyToId: number | null
   auditStatus: number | null
   auditBy: number | null
+  auditRole: number | null
   likeCount: number | null
   version: number | null
 }
@@ -66,6 +68,7 @@ export type ForumReplyMinAggregateOutputType = {
   auditReason: string | null
   auditAt: Date | null
   auditBy: number | null
+  auditRole: number | null
   likeCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -86,6 +89,7 @@ export type ForumReplyMaxAggregateOutputType = {
   auditReason: string | null
   auditAt: Date | null
   auditBy: number | null
+  auditRole: number | null
   likeCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -106,6 +110,7 @@ export type ForumReplyCountAggregateOutputType = {
   auditReason: number
   auditAt: number
   auditBy: number
+  auditRole: number
   likeCount: number
   createdAt: number
   updatedAt: number
@@ -124,6 +129,7 @@ export type ForumReplyAvgAggregateInputType = {
   actualReplyToId?: true
   auditStatus?: true
   auditBy?: true
+  auditRole?: true
   likeCount?: true
   version?: true
 }
@@ -137,6 +143,7 @@ export type ForumReplySumAggregateInputType = {
   actualReplyToId?: true
   auditStatus?: true
   auditBy?: true
+  auditRole?: true
   likeCount?: true
   version?: true
 }
@@ -154,6 +161,7 @@ export type ForumReplyMinAggregateInputType = {
   auditReason?: true
   auditAt?: true
   auditBy?: true
+  auditRole?: true
   likeCount?: true
   createdAt?: true
   updatedAt?: true
@@ -174,6 +182,7 @@ export type ForumReplyMaxAggregateInputType = {
   auditReason?: true
   auditAt?: true
   auditBy?: true
+  auditRole?: true
   likeCount?: true
   createdAt?: true
   updatedAt?: true
@@ -194,6 +203,7 @@ export type ForumReplyCountAggregateInputType = {
   auditReason?: true
   auditAt?: true
   auditBy?: true
+  auditRole?: true
   likeCount?: true
   createdAt?: true
   updatedAt?: true
@@ -301,6 +311,7 @@ export type ForumReplyGroupByOutputType = {
   auditReason: string | null
   auditAt: Date | null
   auditBy: number | null
+  auditRole: number | null
   likeCount: number
   createdAt: Date
   updatedAt: Date
@@ -344,6 +355,7 @@ export type ForumReplyWhereInput = {
   auditReason?: Prisma.StringNullableFilter<"ForumReply"> | string | null
   auditAt?: Prisma.DateTimeNullableFilter<"ForumReply"> | Date | string | null
   auditBy?: Prisma.IntNullableFilter<"ForumReply"> | number | null
+  auditRole?: Prisma.IntNullableFilter<"ForumReply"> | number | null
   likeCount?: Prisma.IntFilter<"ForumReply"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumReply"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumReply"> | Date | string
@@ -372,6 +384,7 @@ export type ForumReplyOrderByWithRelationInput = {
   auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
   auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   auditBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  auditRole?: Prisma.SortOrderInput | Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -403,6 +416,7 @@ export type ForumReplyWhereUniqueInput = Prisma.AtLeast<{
   auditReason?: Prisma.StringNullableFilter<"ForumReply"> | string | null
   auditAt?: Prisma.DateTimeNullableFilter<"ForumReply"> | Date | string | null
   auditBy?: Prisma.IntNullableFilter<"ForumReply"> | number | null
+  auditRole?: Prisma.IntNullableFilter<"ForumReply"> | number | null
   likeCount?: Prisma.IntFilter<"ForumReply"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumReply"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumReply"> | Date | string
@@ -431,6 +445,7 @@ export type ForumReplyOrderByWithAggregationInput = {
   auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
   auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   auditBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  auditRole?: Prisma.SortOrderInput | Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -459,6 +474,7 @@ export type ForumReplyScalarWhereWithAggregatesInput = {
   auditReason?: Prisma.StringNullableWithAggregatesFilter<"ForumReply"> | string | null
   auditAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumReply"> | Date | string | null
   auditBy?: Prisma.IntNullableWithAggregatesFilter<"ForumReply"> | number | null
+  auditRole?: Prisma.IntNullableWithAggregatesFilter<"ForumReply"> | number | null
   likeCount?: Prisma.IntWithAggregatesFilter<"ForumReply"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumReply"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumReply"> | Date | string
@@ -474,6 +490,7 @@ export type ForumReplyCreateInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -502,6 +519,7 @@ export type ForumReplyUncheckedCreateInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -521,6 +539,7 @@ export type ForumReplyUpdateInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -549,6 +568,7 @@ export type ForumReplyUncheckedUpdateInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -573,6 +593,7 @@ export type ForumReplyCreateManyInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -588,6 +609,7 @@ export type ForumReplyUpdateManyMutationInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -608,6 +630,7 @@ export type ForumReplyUncheckedUpdateManyInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -648,6 +671,7 @@ export type ForumReplyCountOrderByAggregateInput = {
   auditReason?: Prisma.SortOrder
   auditAt?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -664,6 +688,7 @@ export type ForumReplyAvgOrderByAggregateInput = {
   actualReplyToId?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
@@ -681,6 +706,7 @@ export type ForumReplyMaxOrderByAggregateInput = {
   auditReason?: Prisma.SortOrder
   auditAt?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -701,6 +727,7 @@ export type ForumReplyMinOrderByAggregateInput = {
   auditReason?: Prisma.SortOrder
   auditAt?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -717,6 +744,7 @@ export type ForumReplySumOrderByAggregateInput = {
   actualReplyToId?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
@@ -959,6 +987,7 @@ export type ForumReplyCreateWithoutNotificationsInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -986,6 +1015,7 @@ export type ForumReplyUncheckedCreateWithoutNotificationsInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1020,6 +1050,7 @@ export type ForumReplyUpdateWithoutNotificationsInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1047,6 +1078,7 @@ export type ForumReplyUncheckedUpdateWithoutNotificationsInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1065,6 +1097,7 @@ export type ForumReplyCreateWithoutProfileInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1091,6 +1124,7 @@ export type ForumReplyUncheckedCreateWithoutProfileInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1144,6 +1178,7 @@ export type ForumReplyScalarWhereInput = {
   auditReason?: Prisma.StringNullableFilter<"ForumReply"> | string | null
   auditAt?: Prisma.DateTimeNullableFilter<"ForumReply"> | Date | string | null
   auditBy?: Prisma.IntNullableFilter<"ForumReply"> | number | null
+  auditRole?: Prisma.IntNullableFilter<"ForumReply"> | number | null
   likeCount?: Prisma.IntFilter<"ForumReply"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumReply"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumReply"> | Date | string
@@ -1159,6 +1194,7 @@ export type ForumReplyCreateWithoutLikesInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1186,6 +1222,7 @@ export type ForumReplyUncheckedCreateWithoutLikesInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1220,6 +1257,7 @@ export type ForumReplyUpdateWithoutLikesInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1247,6 +1285,7 @@ export type ForumReplyUncheckedUpdateWithoutLikesInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1265,6 +1304,7 @@ export type ForumReplyCreateWithoutRepliesInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1292,6 +1332,7 @@ export type ForumReplyUncheckedCreateWithoutRepliesInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1315,6 +1356,7 @@ export type ForumReplyCreateWithoutReplyToInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1341,6 +1383,7 @@ export type ForumReplyUncheckedCreateWithoutReplyToInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1370,6 +1413,7 @@ export type ForumReplyCreateWithoutActualRepliesInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1397,6 +1441,7 @@ export type ForumReplyUncheckedCreateWithoutActualRepliesInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1420,6 +1465,7 @@ export type ForumReplyCreateWithoutActualReplyToInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1446,6 +1492,7 @@ export type ForumReplyUncheckedCreateWithoutActualReplyToInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1486,6 +1533,7 @@ export type ForumReplyUpdateWithoutRepliesInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1513,6 +1561,7 @@ export type ForumReplyUncheckedUpdateWithoutRepliesInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1558,6 +1607,7 @@ export type ForumReplyUpdateWithoutActualRepliesInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1585,6 +1635,7 @@ export type ForumReplyUncheckedUpdateWithoutActualRepliesInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1619,6 +1670,7 @@ export type ForumReplyCreateWithoutTopicInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1645,6 +1697,7 @@ export type ForumReplyUncheckedCreateWithoutTopicInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1694,6 +1747,7 @@ export type ForumReplyCreateManyProfileInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1709,6 +1763,7 @@ export type ForumReplyUpdateWithoutProfileInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1735,6 +1790,7 @@ export type ForumReplyUncheckedUpdateWithoutProfileInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1758,6 +1814,7 @@ export type ForumReplyUncheckedUpdateManyWithoutProfileInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1777,6 +1834,7 @@ export type ForumReplyCreateManyReplyToInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1796,6 +1854,7 @@ export type ForumReplyCreateManyActualReplyToInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1811,6 +1870,7 @@ export type ForumReplyUpdateWithoutReplyToInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1837,6 +1897,7 @@ export type ForumReplyUncheckedUpdateWithoutReplyToInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1860,6 +1921,7 @@ export type ForumReplyUncheckedUpdateManyWithoutReplyToInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1875,6 +1937,7 @@ export type ForumReplyUpdateWithoutActualReplyToInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1901,6 +1964,7 @@ export type ForumReplyUncheckedUpdateWithoutActualReplyToInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1924,6 +1988,7 @@ export type ForumReplyUncheckedUpdateManyWithoutActualReplyToInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1943,6 +2008,7 @@ export type ForumReplyCreateManyTopicInput = {
   auditReason?: string | null
   auditAt?: Date | string | null
   auditBy?: number | null
+  auditRole?: number | null
   likeCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1958,6 +2024,7 @@ export type ForumReplyUpdateWithoutTopicInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1984,6 +2051,7 @@ export type ForumReplyUncheckedUpdateWithoutTopicInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2007,6 +2075,7 @@ export type ForumReplyUncheckedUpdateManyWithoutTopicInput = {
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2085,6 +2154,7 @@ export type ForumReplySelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   auditReason?: boolean
   auditAt?: boolean
   auditBy?: boolean
+  auditRole?: boolean
   likeCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2114,6 +2184,7 @@ export type ForumReplySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   auditReason?: boolean
   auditAt?: boolean
   auditBy?: boolean
+  auditRole?: boolean
   likeCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2138,6 +2209,7 @@ export type ForumReplySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   auditReason?: boolean
   auditAt?: boolean
   auditBy?: boolean
+  auditRole?: boolean
   likeCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2162,6 +2234,7 @@ export type ForumReplySelectScalar = {
   auditReason?: boolean
   auditAt?: boolean
   auditBy?: boolean
+  auditRole?: boolean
   likeCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2169,7 +2242,7 @@ export type ForumReplySelectScalar = {
   version?: boolean
 }
 
-export type ForumReplyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "content" | "topicId" | "profileId" | "floor" | "isHidden" | "replyToId" | "actualReplyToId" | "auditStatus" | "auditReason" | "auditAt" | "auditBy" | "likeCount" | "createdAt" | "updatedAt" | "deletedAt" | "version", ExtArgs["result"]["forumReply"]>
+export type ForumReplyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "content" | "topicId" | "profileId" | "floor" | "isHidden" | "replyToId" | "actualReplyToId" | "auditStatus" | "auditReason" | "auditAt" | "auditBy" | "auditRole" | "likeCount" | "createdAt" | "updatedAt" | "deletedAt" | "version", ExtArgs["result"]["forumReply"]>
 export type ForumReplyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   replyTo?: boolean | Prisma.ForumReply$replyToArgs<ExtArgs>
   replies?: boolean | Prisma.ForumReply$repliesArgs<ExtArgs>
@@ -2255,6 +2328,10 @@ export type $ForumReplyPayload<ExtArgs extends runtime.Types.Extensions.Internal
      * 审核人ID
      */
     auditBy: number | null
+    /**
+     * 审核人角色（0=版主, 1=管理员）
+     */
+    auditRole: number | null
     /**
      * 点赞数
      */
@@ -2718,6 +2795,7 @@ export interface ForumReplyFieldRefs {
   readonly auditReason: Prisma.FieldRef<"ForumReply", 'String'>
   readonly auditAt: Prisma.FieldRef<"ForumReply", 'DateTime'>
   readonly auditBy: Prisma.FieldRef<"ForumReply", 'Int'>
+  readonly auditRole: Prisma.FieldRef<"ForumReply", 'Int'>
   readonly likeCount: Prisma.FieldRef<"ForumReply", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ForumReply", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumReply", 'DateTime'>

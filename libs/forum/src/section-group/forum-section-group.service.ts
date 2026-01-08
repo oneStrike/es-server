@@ -36,7 +36,7 @@ export class ForumSectionGroupService extends BaseService {
   async createForumSectionGroup(
     createForumSectionGroupDto: CreateForumSectionGroupDto,
   ) {
-    return await this.forumSectionGroup.create({
+    return this.forumSectionGroup.create({
       data: createForumSectionGroupDto,
     })
   }

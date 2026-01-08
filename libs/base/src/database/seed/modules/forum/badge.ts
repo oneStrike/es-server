@@ -66,7 +66,14 @@ export async function createInitialForumBadges(prisma: any) {
 
     if (!existingBadge) {
       await prisma.forumBadge.create({
-        data: badgeData,
+        data: {
+          name: badgeData.name,
+          description: badgeData.description,
+          icon: badgeData.icon,
+          type: badgeData.type,
+          sortOrder: badgeData.order,
+          isEnabled: badgeData.isEnabled,
+        },
       })
     }
   }

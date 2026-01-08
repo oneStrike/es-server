@@ -5,11 +5,13 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   AddPointsDto,
   ConsumePointsDto,
-  CreatePointRuleDto,
   QueryPointRecordDto,
+} from './dto/point-record.dto'
+import {
+  CreatePointRuleDto,
   QueryPointRuleDto,
   UpdatePointRuleDto,
-} from './dto/point.dto'
+} from './dto/point-rule.dto'
 import { PointRuleTypeEnum } from './point.constant'
 
 /**
@@ -98,10 +100,10 @@ export class PointService extends BaseService {
    * @returns 增加积分的结果
    */
   async addPoints(addPointsDto: AddPointsDto) {
-    const { userId, ruleType, remark } = addPointsDto
+    const { profileId, ruleType, remark } = addPointsDto
 
     const profile = await this.forumProfile.findUnique({
-      where: { id: userId },
+      where: { id: profileId },
     })
 
     if (!profile) {
@@ -129,7 +131,7 @@ export class PointService extends BaseService {
 
       const todayCount = await this.forumPointRecord.count({
         where: {
-          userId,
+          profileId,
           ruleId: rule.id,
           createdAt: {
             gte: today,
@@ -148,7 +150,7 @@ export class PointService extends BaseService {
 
       const record = await tx.forumPointRecord.create({
         data: {
-          userId,
+          profileId,
           ruleId: rule.id,
           points: rule.points,
           beforePoints,
@@ -158,7 +160,7 @@ export class PointService extends BaseService {
       })
 
       await tx.forumProfile.update({
-        where: { id: userId },
+        where: { id: profileId },
         data: {
           points: afterPoints,
         },
@@ -174,10 +176,10 @@ export class PointService extends BaseService {
    * @returns 消费积分的结果
    */
   async consumePoints(consumePointsDto: ConsumePointsDto) {
-    const { userId, points, remark } = consumePointsDto
+    const { profileId, points, remark } = consumePointsDto
 
     const profile = await this.forumProfile.findUnique({
-      where: { id: userId },
+      where: { id: profileId },
     })
 
     if (!profile) {
@@ -194,7 +196,7 @@ export class PointService extends BaseService {
 
       const record = await tx.forumPointRecord.create({
         data: {
-          userId,
+          profileId,
           points: -points,
           beforePoints,
           afterPoints,
@@ -203,7 +205,7 @@ export class PointService extends BaseService {
       })
 
       await tx.forumProfile.update({
-        where: { id: userId },
+        where: { id: profileId },
         data: {
           points: afterPoints,
         },
@@ -216,12 +218,20 @@ export class PointService extends BaseService {
   /**
    * 分页查询积分记录列表
    * @param dto 查询条件
-   * @param userId 用户ID
    * @returns 分页的记录列表
    */
-  async getPointRecordPage(dto: QueryPointRecordDto, userId: number) {
+  async getPointRecordPage(dto: QueryPointRecordDto) {
+    const { profileId, ruleId, ...otherDto } = dto
     return this.forumPointRecord.findPagination({
-      where: { ...dto, userId },
+      where: {
+        ...otherDto,
+        rule: {
+          id: ruleId,
+        },
+        profile: {
+          id: profileId,
+        },
+      },
     })
   }
 
@@ -252,12 +262,12 @@ export class PointService extends BaseService {
 
   /**
    * 获取用户积分统计
-   * @param userId 用户ID
+   * @param profileId 用户ID
    * @returns 积分统计信息
    */
-  async getUserPointStats(userId: number) {
+  async getUserPointStats(profileId: number) {
     const profile = await this.forumProfile.findUnique({
-      where: { id: userId },
+      where: { id: profileId },
     })
 
     if (!profile) {
@@ -269,7 +279,7 @@ export class PointService extends BaseService {
 
     const todayEarned = await this.forumPointRecord.aggregate({
       where: {
-        userId,
+        profileId,
         points: {
           gt: 0,
         },
@@ -284,7 +294,7 @@ export class PointService extends BaseService {
 
     const todayConsumed = await this.forumPointRecord.aggregate({
       where: {
-        userId,
+        profileId,
         points: {
           lt: 0,
         },
@@ -306,18 +316,18 @@ export class PointService extends BaseService {
 
   /**
    * 与漫画系统互通接口
-   * @param userId 用户ID
+   * @param profileId 用户ID
    * @param points 积分数量
    * @param operation 操作类型（add=增加, consume=消费）
    * @returns 操作结果
    */
   async syncWithComicSystem(
-    userId: number,
+    profileId: number,
     points: number,
     operation: 'add' | 'consume',
   ) {
     const profile = await this.forumProfile.findUnique({
-      where: { id: userId },
+      where: { id: profileId },
     })
 
     if (!profile) {
@@ -339,7 +349,7 @@ export class PointService extends BaseService {
       }
 
       await tx.forumProfile.update({
-        where: { id: userId },
+        where: { id: profileId },
         data: {
           points: afterPoints,
         },
@@ -356,17 +366,17 @@ export class PointService extends BaseService {
 
   /**
    * 根据规则类型获取积分
-   * @param userId 用户ID
+   * @param profileId 用户ID
    * @param remark 备注
    * @returns 操作结果
    */
   async addPointsByRuleType(
-    userId: number,
+    profileId: number,
     ruleType: PointRuleTypeEnum,
     remark?: string,
   ) {
     return this.addPoints({
-      userId,
+      profileId,
       ruleType,
       remark,
     })

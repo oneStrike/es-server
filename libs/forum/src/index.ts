@@ -1,8 +1,3 @@
-// 审计日志模块 - 记录论坛操作日志
-export * from './audit-log/dto/forum-audit-log.dto'
-export * from './audit-log/forum-audit-log.module'
-export * from './audit-log/forum-audit-log.service'
-
 // 徽章模块 - 用户徽章系统
 export * from './badge/dto/forum-badge.dto'
 export * from './badge/forum-badge.module'
@@ -27,7 +22,8 @@ export * from './notification/notification.module'
 export * from './notification/notification.service'
 
 // 积分模块 - 用户积分系统
-export * from './point/dto/point.dto'
+export * from './point/dto/point-record.dto'
+export * from './point/dto/point-rule.dto'
 export * from './point/point.constant'
 export * from './point/point.module'
 export * from './point/point.service'

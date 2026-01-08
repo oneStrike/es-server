@@ -4,6 +4,7 @@ interface IForumTagData {
   order: number
   isEnabled: boolean
   icon?: string
+  useCount?: number
 }
 
 export async function createInitialForumTags(prisma: any) {
@@ -14,6 +15,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 1,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg',
+      useCount: 0,
     },
     {
       name: 'TypeScript',
@@ -21,6 +23,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 2,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg',
+      useCount: 0,
     },
     {
       name: 'Node.js',
@@ -28,6 +31,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 3,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg',
+      useCount: 0,
     },
     {
       name: 'React',
@@ -35,6 +39,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 4,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg',
+      useCount: 0,
     },
     {
       name: 'Vue',
@@ -42,6 +47,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 5,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg',
+      useCount: 0,
     },
     {
       name: 'Angular',
@@ -49,6 +55,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 6,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/angularjs/angularjs-original.svg',
+      useCount: 0,
     },
     {
       name: 'Python',
@@ -56,6 +63,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 7,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg',
+      useCount: 0,
     },
     {
       name: 'Java',
@@ -63,6 +71,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 8,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
+      useCount: 0,
     },
     {
       name: 'Go',
@@ -70,6 +79,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 9,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg',
+      useCount: 0,
     },
     {
       name: 'Rust',
@@ -77,6 +87,7 @@ export async function createInitialForumTags(prisma: any) {
       order: 10,
       isEnabled: true,
       icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-plain.svg',
+      useCount: 0,
     },
   ]
 
@@ -87,7 +98,14 @@ export async function createInitialForumTags(prisma: any) {
 
     if (!existingTag) {
       await prisma.forumTag.create({
-        data: tagData,
+        data: {
+          name: tagData.name,
+          icon: tagData.icon,
+          useCount: tagData.useCount || 0,
+          sortOrder: tagData.order,
+          isEnabled: tagData.isEnabled,
+          description: tagData.description,
+        },
       })
     }
   }
