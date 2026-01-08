@@ -8,6 +8,8 @@ interface IForumSectionData {
   topicReviewPolicy?: number
   userLevelRuleId?: number | null
   remark?: string
+  topicCount?: number
+  replyCount?: number
 }
 
 export async function createInitialForumSections(prisma: any) {
@@ -18,6 +20,8 @@ export async function createInitialForumSections(prisma: any) {
       sortOrder: 1,
       isEnabled: true,
       topicReviewPolicy: 1,
+      topicCount: 0,
+      replyCount: 0,
     },
     {
       name: '后端开发',
@@ -25,6 +29,8 @@ export async function createInitialForumSections(prisma: any) {
       sortOrder: 2,
       isEnabled: true,
       topicReviewPolicy: 1,
+      topicCount: 0,
+      replyCount: 0,
     },
     {
       name: '数据库',
@@ -32,6 +38,8 @@ export async function createInitialForumSections(prisma: any) {
       sortOrder: 3,
       isEnabled: true,
       topicReviewPolicy: 1,
+      topicCount: 0,
+      replyCount: 0,
     },
   ]
 
@@ -48,8 +56,17 @@ export async function createInitialForumSections(prisma: any) {
 
       await prisma.forumSection.create({
         data: {
-          ...sectionData,
+          name: sectionData.name,
+          description: sectionData.description,
+          sortOrder: sectionData.sortOrder,
+          isEnabled: sectionData.isEnabled,
           groupId: group?.id || null,
+          icon: sectionData.icon,
+          topicReviewPolicy: sectionData.topicReviewPolicy || 1,
+          userLevelRuleId: sectionData.userLevelRuleId,
+          remark: sectionData.remark,
+          topicCount: sectionData.topicCount || 0,
+          replyCount: sectionData.replyCount || 0,
         },
       })
     }

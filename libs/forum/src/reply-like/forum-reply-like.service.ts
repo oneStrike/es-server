@@ -1,6 +1,6 @@
 import { BaseService } from '@libs/base/database'
 
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { CreateForumReplyLikeDto, DeleteForumReplyLikeDto } from './dto/forum-reply-like.dto'
 
 /**

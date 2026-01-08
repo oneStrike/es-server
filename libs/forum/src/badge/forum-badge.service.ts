@@ -1,4 +1,4 @@
-import { ForumBadgeWhereInput, BaseService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { IdDto } from '@libs/base/dto'
 import {

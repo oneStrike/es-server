@@ -57,7 +57,6 @@ export const ModelName = {
   ClientNotice: 'ClientNotice',
   ClientPage: 'ClientPage',
   ClientUser: 'ClientUser',
-  ForumAuditLog: 'ForumAuditLog',
   ForumBadge: 'ForumBadge',
   ForumLevelRule: 'ForumLevelRule',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
@@ -219,21 +218,6 @@ export const ClientUserScalarFieldEnum = {
 export type ClientUserScalarFieldEnum = (typeof ClientUserScalarFieldEnum)[keyof typeof ClientUserScalarFieldEnum]
 
 
-export const ForumAuditLogScalarFieldEnum = {
-  id: 'id',
-  objectType: 'objectType',
-  objectId: 'objectId',
-  auditStatus: 'auditStatus',
-  auditReason: 'auditReason',
-  auditBy: 'auditBy',
-  auditRole: 'auditRole',
-  createdAt: 'createdAt',
-  remark: 'remark'
-} as const
-
-export type ForumAuditLogScalarFieldEnum = (typeof ForumAuditLogScalarFieldEnum)[keyof typeof ForumAuditLogScalarFieldEnum]
-
-
 export const ForumBadgeScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -355,7 +339,7 @@ export type ForumNotificationScalarFieldEnum = (typeof ForumNotificationScalarFi
 
 export const ForumPointRecordScalarFieldEnum = {
   id: 'id',
-  userId: 'userId',
+  profileId: 'profileId',
   ruleId: 'ruleId',
   points: 'points',
   beforePoints: 'beforePoints',
@@ -437,6 +421,7 @@ export const ForumReplyScalarFieldEnum = {
   auditReason: 'auditReason',
   auditAt: 'auditAt',
   auditBy: 'auditBy',
+  auditRole: 'auditRole',
   likeCount: 'likeCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -578,6 +563,7 @@ export const ForumTopicScalarFieldEnum = {
   auditReason: 'auditReason',
   auditAt: 'auditAt',
   auditBy: 'auditBy',
+  auditRole: 'auditRole',
   viewCount: 'viewCount',
   replyCount: 'replyCount',
   likeCount: 'likeCount',

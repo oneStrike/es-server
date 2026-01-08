@@ -4,6 +4,7 @@ interface IForumSectionGroupData {
   sortOrder: number
   isEnabled: boolean
   icon?: string
+  maxModerators?: number
 }
 
 export async function createInitialForumSectionGroups(prisma: any) {
@@ -13,30 +14,35 @@ export async function createInitialForumSectionGroups(prisma: any) {
       description: '讨论各种技术问题和解决方案',
       sortOrder: 1,
       isEnabled: true,
+      maxModerators: 0,
     },
     {
       name: '经验分享',
       description: '分享项目经验和心得体会',
       sortOrder: 2,
       isEnabled: true,
+      maxModerators: 0,
     },
     {
       name: '问答专区',
       description: '提问和回答问题的地方',
       sortOrder: 3,
       isEnabled: true,
+      maxModerators: 0,
     },
     {
       name: '活动公告',
       description: '官方活动通知和公告发布',
       sortOrder: 4,
       isEnabled: true,
+      maxModerators: 0,
     },
     {
       name: '建议反馈',
       description: '产品建议和用户反馈收集',
       sortOrder: 5,
       isEnabled: true,
+      maxModerators: 0,
     },
   ]
 
@@ -47,7 +53,14 @@ export async function createInitialForumSectionGroups(prisma: any) {
 
     if (!existingGroup) {
       await prisma.forumSectionGroup.create({
-        data: groupData,
+        data: {
+          name: groupData.name,
+          description: groupData.description,
+          sortOrder: groupData.sortOrder,
+          isEnabled: groupData.isEnabled,
+          icon: groupData.icon,
+          maxModerators: groupData.maxModerators || 0,
+        },
       })
     }
   }

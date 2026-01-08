@@ -4,13 +4,7 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import {
-  BaseDto,
-  IdDto,
-  OMIT_BASE_FIELDS,
-  PageDto,
-  UserIdDto,
-} from '@libs/base/dto'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
   IntersectionType,
   OmitType,

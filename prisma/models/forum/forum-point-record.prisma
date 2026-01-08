@@ -3,7 +3,7 @@ model ForumPointRecord {
   /// 主键ID
   id           Int             @id @default(autoincrement())
   /// 关联的用户ID
-  userId       Int             @map("user_id")
+  profileId       Int             @map("user_id")
   /// 关联的规则ID
   ruleId       Int?            @map("rule_id")
   /// 积分变化（正数为获得，负数为消费）
@@ -17,11 +17,11 @@ model ForumPointRecord {
   /// 创建时间
   createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   rule         ForumPointRule? @relation(fields: [ruleId], references: [id])
-  profile      ForumProfile    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile      ForumProfile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([profileId])
   @@index([ruleId])
   @@index([createdAt])
-  @@index([userId, createdAt])
+  @@index([profileId, createdAt])
   @@map("forum_point_record")
 }

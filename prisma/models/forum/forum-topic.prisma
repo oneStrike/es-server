@@ -26,6 +26,8 @@ model ForumTopic {
   auditAt         DateTime?            @map("audit_at") @db.Timestamptz(6)
   /// 审核人ID
   auditBy         Int?                 @map("audit_by")
+  /// 审核人角色（0=版主, 1=管理员）
+  auditRole       Int?                 @map("audit_role") @db.SmallInt
   /// 浏览量
   viewCount       Int                  @default(0) @map("view_count")
   /// 回复数
