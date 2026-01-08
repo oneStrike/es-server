@@ -4067,7 +4067,6 @@ export const ForumSensitiveWordScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   level: 'level',
-  matchMode: 'matchMode',
   type: 'type',
   version: 'version'
 } as const

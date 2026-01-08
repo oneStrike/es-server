@@ -1,26 +1,26 @@
 /// 论坛板块分组表 - 管理论坛板块分组信息，用于对板块进行分类组织
 model ForumSectionGroup {
   /// 主键ID
-  id          Int       @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   /// 分组名称
-  name        String    @unique @db.VarChar(50)
+  name          String    @unique @db.VarChar(50)
   /// 分组描述
-  description String?   @db.VarChar(500)
+  description   String?   @db.VarChar(500)
   /// 排序值（数值越小越靠前）
-  sortOrder   Int       @default(0) @map("sort_order")
+  sortOrder     Int       @default(0) @map("sort_order")
   /// 是否启用
-  isEnabled   Boolean   @default(true) @map("is_enabled")
+  isEnabled     Boolean   @default(true) @map("is_enabled")
   /// 分组版主数量限制（0表示不限制）
-  maxModerators Int     @default(0) @map("max_moderators")
+  maxModerators Int       @default(0) @map("max_moderators")
   /// 创建时间
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   /// 板块列表（一个分组包含多个板块）
-  sections ForumSection[]
+  sections   ForumSection[]
   /// 分组版主列表
   moderators ForumModerator[]
 

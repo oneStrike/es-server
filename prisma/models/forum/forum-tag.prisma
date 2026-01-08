@@ -9,7 +9,7 @@ model ForumTag {
   /// 使用次数
   useCount    Int             @default(0) @map("use_count")
   /// 排序值（数值越小越靠前）
-  sortOrder       Int             @default(0) @db.SmallInt
+  sortOrder   Int             @default(0) @db.SmallInt
   /// 是否启用
   isEnabled   Boolean         @default(true) @map("is_enabled")
   /// 标签描述

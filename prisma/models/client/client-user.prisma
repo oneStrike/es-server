@@ -1,34 +1,34 @@
 model ClientUser {
   /// 主键ID
-  id           Int       @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   /// 用户名（登录账号）
-  account      String    @unique @map("account") @db.VarChar(50)
+  account     String    @unique @map("account") @db.VarChar(50)
   /// 用户昵称（显示名称）
-  nickname     String?   @map("nickname") @db.VarChar(100)
+  nickname    String?   @map("nickname") @db.VarChar(100)
   /// 头像URL地址
-  avatar       String?   @map("avatar_url") @db.VarChar(500)
+  avatar      String?   @map("avatar_url") @db.VarChar(500)
   /// 手机号码
-  phone  String?   @unique @map("phone_number") @db.VarChar(20)
+  phone       String?   @unique @map("phone_number") @db.VarChar(20)
   /// 邮箱地址
-  email String?   @unique @map("email_address") @db.VarChar(255)
+  email       String?   @unique @map("email_address") @db.VarChar(255)
   /// 账户状态（true:启用, false:禁用）
-  isEnabled    Boolean   @default(true) @map("is_enabled")
+  isEnabled   Boolean   @default(true) @map("is_enabled")
   /// 性别类型（0:未知, 1:男性, 2:女性, 3:其他）
-  gender   Int       @default(0) @map("gender_type") @db.SmallInt
+  gender      Int       @default(0) @map("gender_type") @db.SmallInt
   /// 出生日期
-  birthDate    DateTime? @map("birth_date") @db.Date
+  birthDate   DateTime? @map("birth_date") @db.Date
   /// 签到状态（true:已签到, false:未签到）
-  isSignedIn   Boolean   @default(false) @map("is_signed_in")
+  isSignedIn  Boolean   @default(false) @map("is_signed_in")
   /// 最后登录时间
-  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz
   /// 最后登录IP地址
-  lastLoginIp  String?   @map("last_login_ip") @db.VarChar(45)
+  lastLoginIp String?   @map("last_login_ip") @db.VarChar(45)
   /// 账户创建时间
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
   /// 账户更新时间
-  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   /// 软删除时间
-  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
 
   /// 关联的论坛资料
   forumProfile    ForumProfile?
@@ -36,7 +36,7 @@ model ClientUser {
   forumTopics     ForumTopic[]
   /// 关联的论坛回复
   /// 最后回复的主题
-  lastReplyTopics ForumTopic[]  @relation("LastReplyUser")
+  lastReplyTopics ForumTopic[]       @relation("LastReplyUser")
   /// 关联的通知已读记录
   noticeReads     ClientNoticeRead[]
 
