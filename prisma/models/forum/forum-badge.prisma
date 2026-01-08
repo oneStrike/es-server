@@ -11,7 +11,7 @@ model ForumBadge {
   /// 徽章类型（1=系统徽章, 2=成就徽章, 3=活动徽章）
   type        Int                 @db.SmallInt
   /// 排序值（数值越小越靠前）
-  order       Int                 @default(0) @db.SmallInt
+  sortOrder       Int                 @default(0) @db.SmallInt
   /// 是否启用
   isEnabled   Boolean             @default(true) @map("is_enabled")
   /// 创建时间
@@ -21,7 +21,7 @@ model ForumBadge {
   badges      ForumProfileBadge[]
 
   @@index([type])
-  @@index([order])
+  @@index([sortOrder])
   @@index([isEnabled])
   @@index([createdAt])
   @@map("forum_badge")

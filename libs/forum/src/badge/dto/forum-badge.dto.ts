@@ -1,16 +1,27 @@
 import {
   ValidateBoolean,
+  ValidateEnum,
   ValidateNumber,
-  ValidateOptional,
   ValidateString,
 } from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
+import {
+  BaseDto,
+  IdDto,
+  OMIT_BASE_FIELDS,
+  PageDto,
+  UserIdDto,
+} from '@libs/base/dto'
 import {
   IntersectionType,
+  OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { ForumBadgeTypeEnum } from '../forum-badge-constant'
 
+/**
+ * 论坛徽章基础数据传输对象
+ */
 export class BaseForumBadgeDto extends BaseDto {
   @ValidateString({
     description: '徽章名称',
@@ -20,96 +31,80 @@ export class BaseForumBadgeDto extends BaseDto {
   })
   name!: string
 
-  @ValidateOptional({
+  @ValidateString({
     description: '徽章描述',
     example: '连续登录7天',
     maxLength: 200,
   })
   description?: string
 
-  @ValidateOptional({
+  @ValidateString({
     description: '徽章图标URL',
     example: 'https://example.com/badge.png',
     maxLength: 255,
   })
   icon?: string
 
-  @ValidateNumber({
+  @ValidateEnum({
     description: '徽章类型（1=系统徽章, 2=成就徽章, 3=活动徽章）',
-    example: 2,
+    example: ForumBadgeTypeEnum.System,
     required: true,
-    min: 1,
-    max: 3,
+    enum: ForumBadgeTypeEnum,
   })
-  type!: number
+  type!: ForumBadgeTypeEnum
 
-  @ValidateOptional({
+  @ValidateNumber({
     description: '排序值（数值越小越靠前）',
     example: 0,
     min: 0,
   })
-  order?: number
+  sortOrder?: number
 
-  @ValidateOptional({
+  @ValidateBoolean({
     description: '是否启用',
     example: true,
   })
   isEnabled?: boolean
 }
 
-export class CreateForumBadgeDto extends PickType(BaseForumBadgeDto, [
-  'name',
-  'description',
-  'icon',
-  'type',
-  'order',
-  'isEnabled',
-]) {}
-
-export class UpdateForumBadgeDto extends IntersectionType(
-  PickType(BaseForumBadgeDto, ['id']),
-  PartialType(CreateForumBadgeDto),
+/**
+ * 创建论坛徽章数据传输对象
+ */
+export class CreateForumBadgeDto extends OmitType(
+  BaseForumBadgeDto,
+  OMIT_BASE_FIELDS,
 ) {}
 
+/**
+ * 更新论坛徽章数据传输对象
+ */
+export class UpdateForumBadgeDto extends IntersectionType(
+  CreateForumBadgeDto,
+  IdDto,
+) {}
+/**
+ * 查询论坛徽章数据传输对象
+ */
 export class QueryForumBadgeDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(BaseForumBadgeDto, ['type', 'isEnabled']),
-  ),
+  PartialType(PickType(BaseForumBadgeDto, ['name', 'type', 'isEnabled'])),
 ) {}
 
-export class AssignBadgeDto {
+/**
+ * 分配徽章数据传输对象
+ */
+export class ProfileBadgeDto {
   @ValidateNumber({
-    description: '用户资料ID',
+    description: '徽章id',
     example: 1,
     required: true,
-    min: 1,
-  })
-  profileId!: number
-
-  @ValidateNumber({
-    description: '徽章ID',
-    example: 1,
-    required: true,
-    min: 1,
   })
   badgeId!: number
-}
 
-export class RevokeBadgeDto {
   @ValidateNumber({
-    description: '用户资料ID',
+    description: '用户id',
     example: 1,
     required: true,
-    min: 1,
   })
   profileId!: number
-
-  @ValidateNumber({
-    description: '徽章ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  badgeId!: number
 }

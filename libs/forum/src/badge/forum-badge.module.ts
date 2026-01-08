@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common'
-import { ForumBadgeController } from './forum-badge.controller'
 import { ForumBadgeService } from './forum-badge.service'
 
 @Module({
-  controllers: [ForumBadgeController],
+  controllers: [],
   providers: [ForumBadgeService],
   exports: [ForumBadgeService],
 })

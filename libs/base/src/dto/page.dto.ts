@@ -4,7 +4,28 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 
-export class PageDto {
+/**
+ * 日期范围
+ */
+export class DateRangeDto {
+  @ValidateString({
+    description: '开始时间',
+    example: '2025-05-29',
+    required: false,
+    type: 'ISO8601',
+  })
+  startDate?: string
+
+  @ValidateString({
+    description: '结束时间',
+    example: '2025-05-29',
+    required: false,
+    type: 'ISO8601',
+  })
+  endDate?: string
+}
+
+export class PageDto extends DateRangeDto {
   @ValidateNumber({
     description: '单页大小，最大500，默认15',
     example: 15,
@@ -31,20 +52,4 @@ export class PageDto {
     required: false,
   })
   orderBy?: string
-
-  @ValidateString({
-    description: '开始时间',
-    example: '2025-05-29',
-    required: false,
-    type: 'ISO8601',
-  })
-  startDate?: string
-
-  @ValidateString({
-    description: '结束时间',
-    example: '2025-05-29',
-    required: false,
-    type: 'ISO8601',
-  })
-  endDate?: string
 }

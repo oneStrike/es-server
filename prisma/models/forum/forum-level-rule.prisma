@@ -11,7 +11,7 @@ model ForumLevelRule {
   /// 所需积分
   requiredPoints     Int            @map("required_points")
   /// 排序值（数值越小越靠前）
-  order              Int            @default(0) @db.SmallInt
+  sortOrder              Int            @default(0) @db.SmallInt
   /// 是否启用
   isEnabled          Boolean        @default(true) @map("is_enabled")
   /// 每日发帖数量上限，0表示无限制
@@ -39,7 +39,7 @@ model ForumLevelRule {
   profiles           ForumProfile[]
   sections           ForumSection[]
 
-  @@index([isEnabled, order])
+  @@index([isEnabled, sortOrder])
   @@index([isEnabled, requiredPoints])
   @@index([createdAt])
   @@map("forum_level_rule")

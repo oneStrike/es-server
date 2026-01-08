@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common'
-import { ForumAuditLogController } from './forum-audit-log.controller'
 import { ForumAuditLogService } from './forum-audit-log.service'
 
+/**
+ * 论坛审核日志模块
+ * 提供审核日志的管理功能
+ */
 @Module({
-  controllers: [ForumAuditLogController],
+  controllers: [],
   providers: [ForumAuditLogService],
   exports: [ForumAuditLogService],
 })

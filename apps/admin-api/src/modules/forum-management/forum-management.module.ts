@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
-import { AnalyticsModule } from './analytics/analytics.module'
+import { SensitiveWordModule } from './sensitive-word/sensitive-word.module'
 
 @Module({
-  imports: [AnalyticsModule],
+  imports: [SensitiveWordModule],
 })
 export class ForumManagementModule {}
