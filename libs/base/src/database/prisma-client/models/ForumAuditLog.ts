@@ -32,6 +32,7 @@ export type ForumAuditLogAvgAggregateOutputType = {
   objectId: number | null
   auditStatus: number | null
   auditBy: number | null
+  auditRole: number | null
 }
 
 export type ForumAuditLogSumAggregateOutputType = {
@@ -40,6 +41,7 @@ export type ForumAuditLogSumAggregateOutputType = {
   objectId: number | null
   auditStatus: number | null
   auditBy: number | null
+  auditRole: number | null
 }
 
 export type ForumAuditLogMinAggregateOutputType = {
@@ -49,7 +51,8 @@ export type ForumAuditLogMinAggregateOutputType = {
   auditStatus: number | null
   auditReason: string | null
   auditBy: number | null
-  auditAt: Date | null
+  auditRole: number | null
+  createdAt: Date | null
   remark: string | null
 }
 
@@ -60,7 +63,8 @@ export type ForumAuditLogMaxAggregateOutputType = {
   auditStatus: number | null
   auditReason: string | null
   auditBy: number | null
-  auditAt: Date | null
+  auditRole: number | null
+  createdAt: Date | null
   remark: string | null
 }
 
@@ -71,7 +75,8 @@ export type ForumAuditLogCountAggregateOutputType = {
   auditStatus: number
   auditReason: number
   auditBy: number
-  auditAt: number
+  auditRole: number
+  createdAt: number
   remark: number
   _all: number
 }
@@ -83,6 +88,7 @@ export type ForumAuditLogAvgAggregateInputType = {
   objectId?: true
   auditStatus?: true
   auditBy?: true
+  auditRole?: true
 }
 
 export type ForumAuditLogSumAggregateInputType = {
@@ -91,6 +97,7 @@ export type ForumAuditLogSumAggregateInputType = {
   objectId?: true
   auditStatus?: true
   auditBy?: true
+  auditRole?: true
 }
 
 export type ForumAuditLogMinAggregateInputType = {
@@ -100,7 +107,8 @@ export type ForumAuditLogMinAggregateInputType = {
   auditStatus?: true
   auditReason?: true
   auditBy?: true
-  auditAt?: true
+  auditRole?: true
+  createdAt?: true
   remark?: true
 }
 
@@ -111,7 +119,8 @@ export type ForumAuditLogMaxAggregateInputType = {
   auditStatus?: true
   auditReason?: true
   auditBy?: true
-  auditAt?: true
+  auditRole?: true
+  createdAt?: true
   remark?: true
 }
 
@@ -122,7 +131,8 @@ export type ForumAuditLogCountAggregateInputType = {
   auditStatus?: true
   auditReason?: true
   auditBy?: true
-  auditAt?: true
+  auditRole?: true
+  createdAt?: true
   remark?: true
   _all?: true
 }
@@ -220,7 +230,8 @@ export type ForumAuditLogGroupByOutputType = {
   auditStatus: number
   auditReason: string | null
   auditBy: number
-  auditAt: Date
+  auditRole: number
+  createdAt: Date
   remark: string | null
   _count: ForumAuditLogCountAggregateOutputType | null
   _avg: ForumAuditLogAvgAggregateOutputType | null
@@ -254,7 +265,8 @@ export type ForumAuditLogWhereInput = {
   auditStatus?: Prisma.IntFilter<"ForumAuditLog"> | number
   auditReason?: Prisma.StringNullableFilter<"ForumAuditLog"> | string | null
   auditBy?: Prisma.IntFilter<"ForumAuditLog"> | number
-  auditAt?: Prisma.DateTimeFilter<"ForumAuditLog"> | Date | string
+  auditRole?: Prisma.IntFilter<"ForumAuditLog"> | number
+  createdAt?: Prisma.DateTimeFilter<"ForumAuditLog"> | Date | string
   remark?: Prisma.StringNullableFilter<"ForumAuditLog"> | string | null
 }
 
@@ -265,7 +277,8 @@ export type ForumAuditLogOrderByWithRelationInput = {
   auditStatus?: Prisma.SortOrder
   auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
   auditBy?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
 }
 
@@ -279,7 +292,8 @@ export type ForumAuditLogWhereUniqueInput = Prisma.AtLeast<{
   auditStatus?: Prisma.IntFilter<"ForumAuditLog"> | number
   auditReason?: Prisma.StringNullableFilter<"ForumAuditLog"> | string | null
   auditBy?: Prisma.IntFilter<"ForumAuditLog"> | number
-  auditAt?: Prisma.DateTimeFilter<"ForumAuditLog"> | Date | string
+  auditRole?: Prisma.IntFilter<"ForumAuditLog"> | number
+  createdAt?: Prisma.DateTimeFilter<"ForumAuditLog"> | Date | string
   remark?: Prisma.StringNullableFilter<"ForumAuditLog"> | string | null
 }, "id">
 
@@ -290,7 +304,8 @@ export type ForumAuditLogOrderByWithAggregationInput = {
   auditStatus?: Prisma.SortOrder
   auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
   auditBy?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ForumAuditLogCountOrderByAggregateInput
   _avg?: Prisma.ForumAuditLogAvgOrderByAggregateInput
@@ -309,7 +324,8 @@ export type ForumAuditLogScalarWhereWithAggregatesInput = {
   auditStatus?: Prisma.IntWithAggregatesFilter<"ForumAuditLog"> | number
   auditReason?: Prisma.StringNullableWithAggregatesFilter<"ForumAuditLog"> | string | null
   auditBy?: Prisma.IntWithAggregatesFilter<"ForumAuditLog"> | number
-  auditAt?: Prisma.DateTimeWithAggregatesFilter<"ForumAuditLog"> | Date | string
+  auditRole?: Prisma.IntWithAggregatesFilter<"ForumAuditLog"> | number
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumAuditLog"> | Date | string
   remark?: Prisma.StringNullableWithAggregatesFilter<"ForumAuditLog"> | string | null
 }
 
@@ -319,7 +335,8 @@ export type ForumAuditLogCreateInput = {
   auditStatus: number
   auditReason?: string | null
   auditBy: number
-  auditAt?: Date | string
+  auditRole: number
+  createdAt?: Date | string
   remark?: string | null
 }
 
@@ -330,7 +347,8 @@ export type ForumAuditLogUncheckedCreateInput = {
   auditStatus: number
   auditReason?: string | null
   auditBy: number
-  auditAt?: Date | string
+  auditRole: number
+  createdAt?: Date | string
   remark?: string | null
 }
 
@@ -340,7 +358,8 @@ export type ForumAuditLogUpdateInput = {
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditRole?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
@@ -351,7 +370,8 @@ export type ForumAuditLogUncheckedUpdateInput = {
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditRole?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
@@ -362,7 +382,8 @@ export type ForumAuditLogCreateManyInput = {
   auditStatus: number
   auditReason?: string | null
   auditBy: number
-  auditAt?: Date | string
+  auditRole: number
+  createdAt?: Date | string
   remark?: string | null
 }
 
@@ -372,7 +393,8 @@ export type ForumAuditLogUpdateManyMutationInput = {
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditRole?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
@@ -383,7 +405,8 @@ export type ForumAuditLogUncheckedUpdateManyInput = {
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   auditBy?: Prisma.IntFieldUpdateOperationsInput | number
-  auditAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  auditRole?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
@@ -394,7 +417,8 @@ export type ForumAuditLogCountOrderByAggregateInput = {
   auditStatus?: Prisma.SortOrder
   auditReason?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   remark?: Prisma.SortOrder
 }
 
@@ -404,6 +428,7 @@ export type ForumAuditLogAvgOrderByAggregateInput = {
   objectId?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
 }
 
 export type ForumAuditLogMaxOrderByAggregateInput = {
@@ -413,7 +438,8 @@ export type ForumAuditLogMaxOrderByAggregateInput = {
   auditStatus?: Prisma.SortOrder
   auditReason?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   remark?: Prisma.SortOrder
 }
 
@@ -424,7 +450,8 @@ export type ForumAuditLogMinOrderByAggregateInput = {
   auditStatus?: Prisma.SortOrder
   auditReason?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   remark?: Prisma.SortOrder
 }
 
@@ -434,6 +461,7 @@ export type ForumAuditLogSumOrderByAggregateInput = {
   objectId?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
   auditBy?: Prisma.SortOrder
+  auditRole?: Prisma.SortOrder
 }
 
 
@@ -445,7 +473,8 @@ export type ForumAuditLogSelect<ExtArgs extends runtime.Types.Extensions.Interna
   auditStatus?: boolean
   auditReason?: boolean
   auditBy?: boolean
-  auditAt?: boolean
+  auditRole?: boolean
+  createdAt?: boolean
   remark?: boolean
 }, ExtArgs["result"]["forumAuditLog"]>
 
@@ -456,7 +485,8 @@ export type ForumAuditLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   auditStatus?: boolean
   auditReason?: boolean
   auditBy?: boolean
-  auditAt?: boolean
+  auditRole?: boolean
+  createdAt?: boolean
   remark?: boolean
 }, ExtArgs["result"]["forumAuditLog"]>
 
@@ -467,7 +497,8 @@ export type ForumAuditLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   auditStatus?: boolean
   auditReason?: boolean
   auditBy?: boolean
-  auditAt?: boolean
+  auditRole?: boolean
+  createdAt?: boolean
   remark?: boolean
 }, ExtArgs["result"]["forumAuditLog"]>
 
@@ -478,11 +509,12 @@ export type ForumAuditLogSelectScalar = {
   auditStatus?: boolean
   auditReason?: boolean
   auditBy?: boolean
-  auditAt?: boolean
+  auditRole?: boolean
+  createdAt?: boolean
   remark?: boolean
 }
 
-export type ForumAuditLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "objectType" | "objectId" | "auditStatus" | "auditReason" | "auditBy" | "auditAt" | "remark", ExtArgs["result"]["forumAuditLog"]>
+export type ForumAuditLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "objectType" | "objectId" | "auditStatus" | "auditReason" | "auditBy" | "auditRole" | "createdAt" | "remark", ExtArgs["result"]["forumAuditLog"]>
 
 export type $ForumAuditLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumAuditLog"
@@ -513,9 +545,13 @@ export type $ForumAuditLogPayload<ExtArgs extends runtime.Types.Extensions.Inter
      */
     auditBy: number
     /**
-     * 审核时间
+     * 审核人角色（0=版主, 1=管理员）
      */
-    auditAt: Date
+    auditRole: number
+    /**
+     * 创建时间
+     */
+    createdAt: Date
     /**
      * 备注
      */
@@ -949,7 +985,8 @@ export interface ForumAuditLogFieldRefs {
   readonly auditStatus: Prisma.FieldRef<"ForumAuditLog", 'Int'>
   readonly auditReason: Prisma.FieldRef<"ForumAuditLog", 'String'>
   readonly auditBy: Prisma.FieldRef<"ForumAuditLog", 'Int'>
-  readonly auditAt: Prisma.FieldRef<"ForumAuditLog", 'DateTime'>
+  readonly auditRole: Prisma.FieldRef<"ForumAuditLog", 'Int'>
+  readonly createdAt: Prisma.FieldRef<"ForumAuditLog", 'DateTime'>
   readonly remark: Prisma.FieldRef<"ForumAuditLog", 'String'>
 }
     

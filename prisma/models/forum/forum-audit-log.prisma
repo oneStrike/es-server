@@ -11,15 +11,17 @@ model ForumAuditLog {
   /// 审核原因
   auditReason String?  @map("audit_reason") @db.VarChar(500)
   /// 审核人ID
-  auditBy     Int      @map("audit_by")
-  /// 审核时间
-  auditAt     DateTime @default(now()) @map("audit_at") @db.Timestamptz(6)
+  auditBy     Int      @map("audit_by") @db.SmallInt
+  /// 审核人角色（0=版主, 1=管理员）
+  auditRole   Int      @map("audit_role") @db.SmallInt
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 备注
   remark      String?  @db.VarChar(500)
 
   @@index([objectType, objectId])
   @@index([auditStatus])
   @@index([auditBy])
-  @@index([auditAt])
+  @@index([createdAt])
   @@map("forum_audit_log")
 }

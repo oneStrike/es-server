@@ -1,11 +1,11 @@
+import { SensitiveWordModule as SensitiveWordModuleLib } from '@libs/forum'
 import { Module } from '@nestjs/common'
 import { SensitiveWordController } from './sensitive-word.controller'
-import { SensitiveWordService } from './sensitive-word.service'
 
 @Module({
-  imports: [],
+  imports: [SensitiveWordModuleLib],
   controllers: [SensitiveWordController],
-  providers: [SensitiveWordService],
-  exports: [SensitiveWordService],
+  providers: [],
+  exports: [],
 })
 export class SensitiveWordModule {}

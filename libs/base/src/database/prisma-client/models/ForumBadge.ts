@@ -29,13 +29,13 @@ export type AggregateForumBadge = {
 export type ForumBadgeAvgAggregateOutputType = {
   id: number | null
   type: number | null
-  order: number | null
+  sortOrder: number | null
 }
 
 export type ForumBadgeSumAggregateOutputType = {
   id: number | null
   type: number | null
-  order: number | null
+  sortOrder: number | null
 }
 
 export type ForumBadgeMinAggregateOutputType = {
@@ -44,7 +44,7 @@ export type ForumBadgeMinAggregateOutputType = {
   description: string | null
   icon: string | null
   type: number | null
-  order: number | null
+  sortOrder: number | null
   isEnabled: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -56,7 +56,7 @@ export type ForumBadgeMaxAggregateOutputType = {
   description: string | null
   icon: string | null
   type: number | null
-  order: number | null
+  sortOrder: number | null
   isEnabled: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -68,7 +68,7 @@ export type ForumBadgeCountAggregateOutputType = {
   description: number
   icon: number
   type: number
-  order: number
+  sortOrder: number
   isEnabled: number
   createdAt: number
   updatedAt: number
@@ -79,13 +79,13 @@ export type ForumBadgeCountAggregateOutputType = {
 export type ForumBadgeAvgAggregateInputType = {
   id?: true
   type?: true
-  order?: true
+  sortOrder?: true
 }
 
 export type ForumBadgeSumAggregateInputType = {
   id?: true
   type?: true
-  order?: true
+  sortOrder?: true
 }
 
 export type ForumBadgeMinAggregateInputType = {
@@ -94,7 +94,7 @@ export type ForumBadgeMinAggregateInputType = {
   description?: true
   icon?: true
   type?: true
-  order?: true
+  sortOrder?: true
   isEnabled?: true
   createdAt?: true
   updatedAt?: true
@@ -106,7 +106,7 @@ export type ForumBadgeMaxAggregateInputType = {
   description?: true
   icon?: true
   type?: true
-  order?: true
+  sortOrder?: true
   isEnabled?: true
   createdAt?: true
   updatedAt?: true
@@ -118,7 +118,7 @@ export type ForumBadgeCountAggregateInputType = {
   description?: true
   icon?: true
   type?: true
-  order?: true
+  sortOrder?: true
   isEnabled?: true
   createdAt?: true
   updatedAt?: true
@@ -217,7 +217,7 @@ export type ForumBadgeGroupByOutputType = {
   description: string | null
   icon: string | null
   type: number
-  order: number
+  sortOrder: number
   isEnabled: boolean
   createdAt: Date
   updatedAt: Date
@@ -252,7 +252,7 @@ export type ForumBadgeWhereInput = {
   description?: Prisma.StringNullableFilter<"ForumBadge"> | string | null
   icon?: Prisma.StringNullableFilter<"ForumBadge"> | string | null
   type?: Prisma.IntFilter<"ForumBadge"> | number
-  order?: Prisma.IntFilter<"ForumBadge"> | number
+  sortOrder?: Prisma.IntFilter<"ForumBadge"> | number
   isEnabled?: Prisma.BoolFilter<"ForumBadge"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ForumBadge"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumBadge"> | Date | string
@@ -265,7 +265,7 @@ export type ForumBadgeOrderByWithRelationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -281,7 +281,7 @@ export type ForumBadgeWhereUniqueInput = Prisma.AtLeast<{
   description?: Prisma.StringNullableFilter<"ForumBadge"> | string | null
   icon?: Prisma.StringNullableFilter<"ForumBadge"> | string | null
   type?: Prisma.IntFilter<"ForumBadge"> | number
-  order?: Prisma.IntFilter<"ForumBadge"> | number
+  sortOrder?: Prisma.IntFilter<"ForumBadge"> | number
   isEnabled?: Prisma.BoolFilter<"ForumBadge"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ForumBadge"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumBadge"> | Date | string
@@ -294,7 +294,7 @@ export type ForumBadgeOrderByWithAggregationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -314,7 +314,7 @@ export type ForumBadgeScalarWhereWithAggregatesInput = {
   description?: Prisma.StringNullableWithAggregatesFilter<"ForumBadge"> | string | null
   icon?: Prisma.StringNullableWithAggregatesFilter<"ForumBadge"> | string | null
   type?: Prisma.IntWithAggregatesFilter<"ForumBadge"> | number
-  order?: Prisma.IntWithAggregatesFilter<"ForumBadge"> | number
+  sortOrder?: Prisma.IntWithAggregatesFilter<"ForumBadge"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ForumBadge"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumBadge"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumBadge"> | Date | string
@@ -325,7 +325,7 @@ export type ForumBadgeCreateInput = {
   description?: string | null
   icon?: string | null
   type: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -338,7 +338,7 @@ export type ForumBadgeUncheckedCreateInput = {
   description?: string | null
   icon?: string | null
   type: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -350,7 +350,7 @@ export type ForumBadgeUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -363,7 +363,7 @@ export type ForumBadgeUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -376,7 +376,7 @@ export type ForumBadgeCreateManyInput = {
   description?: string | null
   icon?: string | null
   type: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -387,7 +387,7 @@ export type ForumBadgeUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -399,7 +399,7 @@ export type ForumBadgeUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -411,7 +411,7 @@ export type ForumBadgeCountOrderByAggregateInput = {
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   type?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -420,7 +420,7 @@ export type ForumBadgeCountOrderByAggregateInput = {
 export type ForumBadgeAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   type?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type ForumBadgeMaxOrderByAggregateInput = {
@@ -429,7 +429,7 @@ export type ForumBadgeMaxOrderByAggregateInput = {
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   type?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -441,7 +441,7 @@ export type ForumBadgeMinOrderByAggregateInput = {
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   type?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -450,7 +450,7 @@ export type ForumBadgeMinOrderByAggregateInput = {
 export type ForumBadgeSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   type?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type ForumBadgeScalarRelationFilter = {
@@ -477,7 +477,7 @@ export type ForumBadgeCreateWithoutBadgesInput = {
   description?: string | null
   icon?: string | null
   type: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -489,7 +489,7 @@ export type ForumBadgeUncheckedCreateWithoutBadgesInput = {
   description?: string | null
   icon?: string | null
   type: number
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -516,7 +516,7 @@ export type ForumBadgeUpdateWithoutBadgesInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -528,7 +528,7 @@ export type ForumBadgeUncheckedUpdateWithoutBadgesInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -571,7 +571,7 @@ export type ForumBadgeSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   description?: boolean
   icon?: boolean
   type?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -585,7 +585,7 @@ export type ForumBadgeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   description?: boolean
   icon?: boolean
   type?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -597,7 +597,7 @@ export type ForumBadgeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   description?: boolean
   icon?: boolean
   type?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -609,13 +609,13 @@ export type ForumBadgeSelectScalar = {
   description?: boolean
   icon?: boolean
   type?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ForumBadgeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "icon" | "type" | "order" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["forumBadge"]>
+export type ForumBadgeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "icon" | "type" | "sortOrder" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["forumBadge"]>
 export type ForumBadgeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   badges?: boolean | Prisma.ForumBadge$badgesArgs<ExtArgs>
   _count?: boolean | Prisma.ForumBadgeCountOutputTypeDefaultArgs<ExtArgs>
@@ -652,7 +652,7 @@ export type $ForumBadgePayload<ExtArgs extends runtime.Types.Extensions.Internal
     /**
      * 排序值（数值越小越靠前）
      */
-    order: number
+    sortOrder: number
     /**
      * 是否启用
      */
@@ -1094,7 +1094,7 @@ export interface ForumBadgeFieldRefs {
   readonly description: Prisma.FieldRef<"ForumBadge", 'String'>
   readonly icon: Prisma.FieldRef<"ForumBadge", 'String'>
   readonly type: Prisma.FieldRef<"ForumBadge", 'Int'>
-  readonly order: Prisma.FieldRef<"ForumBadge", 'Int'>
+  readonly sortOrder: Prisma.FieldRef<"ForumBadge", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"ForumBadge", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"ForumBadge", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumBadge", 'DateTime'>

@@ -1,14 +1,14 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
 import {
   BaseSensitiveWordDto,
   CreateSensitiveWordDto,
   QuerySensitiveWordDto,
+  SensitiveWordService,
   UpdateSensitiveWordDto,
-} from './dto/sensitive-word.dto'
-import { SensitiveWordService } from './sensitive-word.service'
+} from '@libs/forum'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 @Controller('/admin/forum/sensitive-word')
 @ApiTags('论坛模块/敏感词管理')

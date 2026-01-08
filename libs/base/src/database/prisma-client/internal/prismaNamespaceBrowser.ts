@@ -226,7 +226,8 @@ export const ForumAuditLogScalarFieldEnum = {
   auditStatus: 'auditStatus',
   auditReason: 'auditReason',
   auditBy: 'auditBy',
-  auditAt: 'auditAt',
+  auditRole: 'auditRole',
+  createdAt: 'createdAt',
   remark: 'remark'
 } as const
 
@@ -239,7 +240,7 @@ export const ForumBadgeScalarFieldEnum = {
   description: 'description',
   icon: 'icon',
   type: 'type',
-  order: 'order',
+  sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -254,7 +255,7 @@ export const ForumLevelRuleScalarFieldEnum = {
   description: 'description',
   icon: 'icon',
   requiredPoints: 'requiredPoints',
-  order: 'order',
+  sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   dailyTopicLimit: 'dailyTopicLimit',
   dailyReplyLimit: 'dailyReplyLimit',
