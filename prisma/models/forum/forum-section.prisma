@@ -36,12 +36,12 @@ model ForumSection {
   deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   /// 板块分组（一个板块属于一个分组）
-  group             ForumSectionGroup? @relation(fields: [groupId], references: [id])
+  group ForumSectionGroup? @relation(fields: [groupId], references: [id])
 
   moderatorSections ForumModeratorSection[]
-  applications     ForumModeratorApplication[]
-  lastTopic        ForumTopic?             @relation("LastTopic", fields: [lastTopicId], references: [id])
-  userLevelRule     ForumLevelRule?         @relation(fields: [userLevelRuleId], references: [id])
+  applications      ForumModeratorApplication[]
+  lastTopic         ForumTopic?                 @relation("LastTopic", fields: [lastTopicId], references: [id])
+  userLevelRule     ForumLevelRule?             @relation(fields: [userLevelRuleId], references: [id])
   topics            ForumTopic[]
 
   @@index([sortOrder])

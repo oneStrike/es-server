@@ -3,7 +3,7 @@ model ForumNotification {
   /// 主键ID
   id        Int       @id @default(autoincrement())
   /// 关联的用户ID
-  profileId    Int       @map("user_id")
+  profileId Int       @map("user_id")
   /// 通知类型（1=回复, 2=点赞, 3=收藏, 4=系统通知）
   type      Int       @db.SmallInt
   /// 通知标题

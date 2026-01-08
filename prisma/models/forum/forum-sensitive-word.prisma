@@ -24,7 +24,6 @@ model ForumSensitiveWord {
   @@index([word])
   @@index([type])
   @@index([level])
-  @@index([matchMode])
   @@index([isEnabled])
   @@index([createdAt])
   @@map("forum_sensitive_word")

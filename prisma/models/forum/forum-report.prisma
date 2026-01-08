@@ -1,31 +1,31 @@
 /// 论坛举报表 - 记录用户举报内容
 model ForumReport {
   /// 主键ID
-  id           Int             @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   /// 举报人ID
-  reporterId   Int             @map("reporter_id")
+  reporterId   Int           @map("reporter_id")
   /// 举报类型（topic=主题, reply=回复, user=用户）
-  type         String          @db.VarChar(20)
+  type         String        @db.VarChar(20)
   /// 被举报对象ID（主题ID/回复ID/用户ID）
-  targetId     Int             @map("target_id")
+  targetId     Int           @map("target_id")
   /// 举报原因
-  reason       String          @db.VarChar(50)
+  reason       String        @db.VarChar(50)
   /// 举报详细说明
-  description  String?         @db.VarChar(500)
+  description  String?       @db.VarChar(500)
   /// 证据截图URL
-  evidenceUrl  String?         @map("evidence_url") @db.VarChar(500)
+  evidenceUrl  String?       @map("evidence_url") @db.VarChar(500)
   /// 处理状态（pending=待处理, processing=处理中, resolved=已解决, rejected=已拒绝）
-  status       String          @default("pending") @db.VarChar(20)
+  status       String        @default("pending") @db.VarChar(20)
   /// 处理人ID
-  handlerId    Int?            @map("handler_id")
+  handlerId    Int?          @map("handler_id")
   /// 处理结果说明
-  handlingNote String?         @map("handling_note") @db.VarChar(500)
+  handlingNote String?       @map("handling_note") @db.VarChar(500)
   /// 创建时间
-  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt    DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  reporter     ForumProfile    @relation(fields: [reporterId], references: [id], onDelete: Cascade)
-  handler      ForumProfile?   @relation("ReportHandler", fields: [handlerId], references: [id])
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  reporter     ForumProfile  @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  handler      ForumProfile? @relation("ReportHandler", fields: [handlerId], references: [id])
 
   @@index([reporterId])
   @@index([type])

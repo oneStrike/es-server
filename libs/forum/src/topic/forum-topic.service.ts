@@ -456,7 +456,9 @@ export class ForumTopicService extends BaseService {
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async updateTopicAuditStatus(updateTopicAuditStatusDto: UpdateTopicAuditStatusDto) {
+  async updateTopicAuditStatus(
+    updateTopicAuditStatusDto: UpdateTopicAuditStatusDto,
+  ) {
     const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
 
     const topic = await this.forumTopic.findUnique({
@@ -513,7 +515,11 @@ export class ForumTopicService extends BaseService {
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async incrementReplyCount(id: number, replyProfileId: number, replyNickname: string) {
+  async incrementReplyCount(
+    id: number,
+    replyProfileId: number,
+    replyNickname: string,
+  ) {
     const topic = await this.forumTopic.findUnique({
       where: { id, deletedAt: null },
     })
