@@ -117,12 +117,16 @@ export class SensitiveWordService extends BaseService {
       _count: {
         id: true,
       },
+      _sum: {
+        hitCount: true,
+      },
     })
 
     return results.map((result) => ({
       level: result.level,
       count: result._count.id,
       levelName: SensitiveWordLevelNames[result.level] || '未知',
+      hitCount: result._sum.hitCount || 0,
     }))
   }
 
@@ -135,12 +139,16 @@ export class SensitiveWordService extends BaseService {
       _count: {
         id: true,
       },
+      _sum: {
+        hitCount: true,
+      },
     })
 
     return results.map((result) => ({
       type: result.type,
       count: result._count.id,
       typeName: SensitiveWordTypeNames[result.type] || '未知',
+      hitCount: result._sum.hitCount || 0,
     }))
   }
 

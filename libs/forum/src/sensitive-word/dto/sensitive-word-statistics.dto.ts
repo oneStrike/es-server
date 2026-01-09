@@ -111,7 +111,7 @@ export class TopHitStatisticsDto {
     description: '最后命中时间',
     example: '2024-01-01T00:00:00.000Z',
   })
-  lastHitAt!: Date
+  lastHitAt!: Date | null
 }
 
 /**
