@@ -135,6 +135,7 @@ export type ForumTopicCountAggregateOutputType = {
   updatedAt: number
   deletedAt: number
   version: number
+  sensitiveWordHits: number
   _all: number
 }
 
@@ -248,6 +249,7 @@ export type ForumTopicCountAggregateInputType = {
   updatedAt?: true
   deletedAt?: true
   version?: true
+  sensitiveWordHits?: true
   _all?: true
 }
 
@@ -362,6 +364,7 @@ export type ForumTopicGroupByOutputType = {
   updatedAt: Date
   deletedAt: Date | null
   version: number
+  sensitiveWordHits: runtime.JsonValue | null
   _count: ForumTopicCountAggregateOutputType | null
   _avg: ForumTopicAvgAggregateOutputType | null
   _sum: ForumTopicSumAggregateOutputType | null
@@ -412,6 +415,7 @@ export type ForumTopicWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"ForumTopic"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumTopic"> | Date | string | null
   version?: Prisma.IntFilter<"ForumTopic"> | number
+  sensitiveWordHits?: Prisma.JsonNullableFilter<"ForumTopic">
   replies?: Prisma.ForumReplyListRelationFilter
   lastSections?: Prisma.ForumSectionListRelationFilter
   user?: Prisma.XOR<Prisma.ClientUserScalarRelationFilter, Prisma.ClientUserWhereInput>
@@ -450,6 +454,7 @@ export type ForumTopicOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrder
+  sensitiveWordHits?: Prisma.SortOrderInput | Prisma.SortOrder
   replies?: Prisma.ForumReplyOrderByRelationAggregateInput
   lastSections?: Prisma.ForumSectionOrderByRelationAggregateInput
   user?: Prisma.ClientUserOrderByWithRelationInput
@@ -491,6 +496,7 @@ export type ForumTopicWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"ForumTopic"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumTopic"> | Date | string | null
   version?: Prisma.IntFilter<"ForumTopic"> | number
+  sensitiveWordHits?: Prisma.JsonNullableFilter<"ForumTopic">
   replies?: Prisma.ForumReplyListRelationFilter
   lastSections?: Prisma.ForumSectionListRelationFilter
   user?: Prisma.XOR<Prisma.ClientUserScalarRelationFilter, Prisma.ClientUserWhereInput>
@@ -529,6 +535,7 @@ export type ForumTopicOrderByWithAggregationInput = {
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrder
+  sensitiveWordHits?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ForumTopicCountOrderByAggregateInput
   _avg?: Prisma.ForumTopicAvgOrderByAggregateInput
   _max?: Prisma.ForumTopicMaxOrderByAggregateInput
@@ -564,6 +571,7 @@ export type ForumTopicScalarWhereWithAggregatesInput = {
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumTopic"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumTopic"> | Date | string | null
   version?: Prisma.IntWithAggregatesFilter<"ForumTopic"> | number
+  sensitiveWordHits?: Prisma.JsonNullableWithAggregatesFilter<"ForumTopic">
 }
 
 export type ForumTopicCreateInput = {
@@ -587,6 +595,7 @@ export type ForumTopicCreateInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
@@ -625,6 +634,7 @@ export type ForumTopicUncheckedCreateInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
@@ -656,6 +666,7 @@ export type ForumTopicUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
@@ -694,6 +705,7 @@ export type ForumTopicUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
@@ -729,6 +741,7 @@ export type ForumTopicCreateManyInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type ForumTopicUpdateManyMutationInput = {
@@ -752,6 +765,7 @@ export type ForumTopicUpdateManyMutationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type ForumTopicUncheckedUpdateManyInput = {
@@ -779,6 +793,7 @@ export type ForumTopicUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type ForumTopicListRelationFilter = {
@@ -826,6 +841,7 @@ export type ForumTopicCountOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
+  sensitiveWordHits?: Prisma.SortOrder
 }
 
 export type ForumTopicAvgOrderByAggregateInput = {
@@ -1199,6 +1215,7 @@ export type ForumTopicCreateWithoutUserInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   lastReplyUser?: Prisma.ClientUserCreateNestedOneWithoutLastReplyTopicsInput
@@ -1235,6 +1252,7 @@ export type ForumTopicUncheckedCreateWithoutUserInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
@@ -1276,6 +1294,7 @@ export type ForumTopicCreateWithoutLastReplyUserInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
@@ -1312,6 +1331,7 @@ export type ForumTopicUncheckedCreateWithoutLastReplyUserInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
@@ -1376,6 +1396,7 @@ export type ForumTopicScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"ForumTopic"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumTopic"> | Date | string | null
   version?: Prisma.IntFilter<"ForumTopic"> | number
+  sensitiveWordHits?: Prisma.JsonNullableFilter<"ForumTopic">
 }
 
 export type ForumTopicUpsertWithWhereUniqueWithoutLastReplyUserInput = {
@@ -1415,6 +1436,7 @@ export type ForumTopicCreateWithoutNotificationsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
@@ -1452,6 +1474,7 @@ export type ForumTopicUncheckedCreateWithoutNotificationsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
@@ -1498,6 +1521,7 @@ export type ForumTopicUpdateWithoutNotificationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
@@ -1535,6 +1559,7 @@ export type ForumTopicUncheckedUpdateWithoutNotificationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
@@ -1565,6 +1590,7 @@ export type ForumTopicCreateWithoutRepliesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
   lastReplyUser?: Prisma.ClientUserCreateNestedOneWithoutLastReplyTopicsInput
@@ -1602,6 +1628,7 @@ export type ForumTopicUncheckedCreateWithoutRepliesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
   likes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutTopicInput
@@ -1648,6 +1675,7 @@ export type ForumTopicUpdateWithoutRepliesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
   lastReplyUser?: Prisma.ClientUserUpdateOneWithoutLastReplyTopicsNestedInput
@@ -1685,6 +1713,7 @@ export type ForumTopicUncheckedUpdateWithoutRepliesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
   likes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutTopicNestedInput
@@ -1715,6 +1744,7 @@ export type ForumTopicCreateWithoutLastSectionsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
   lastReplyUser?: Prisma.ClientUserCreateNestedOneWithoutLastReplyTopicsInput
@@ -1752,6 +1782,7 @@ export type ForumTopicUncheckedCreateWithoutLastSectionsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
   likes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutTopicInput
@@ -1787,6 +1818,7 @@ export type ForumTopicCreateWithoutSectionInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
@@ -1823,6 +1855,7 @@ export type ForumTopicUncheckedCreateWithoutSectionInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
@@ -1875,6 +1908,7 @@ export type ForumTopicUpdateWithoutLastSectionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
   lastReplyUser?: Prisma.ClientUserUpdateOneWithoutLastReplyTopicsNestedInput
@@ -1912,6 +1946,7 @@ export type ForumTopicUncheckedUpdateWithoutLastSectionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
   likes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutTopicNestedInput
@@ -1958,6 +1993,7 @@ export type ForumTopicCreateWithoutTagsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
@@ -1995,6 +2031,7 @@ export type ForumTopicUncheckedCreateWithoutTagsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
@@ -2046,6 +2083,7 @@ export type ForumTopicCreateWithoutFavoritesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
@@ -2083,6 +2121,7 @@ export type ForumTopicUncheckedCreateWithoutFavoritesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   likes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutTopicInput
@@ -2129,6 +2168,7 @@ export type ForumTopicUpdateWithoutFavoritesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
@@ -2166,6 +2206,7 @@ export type ForumTopicUncheckedUpdateWithoutFavoritesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   likes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutTopicNestedInput
@@ -2196,6 +2237,7 @@ export type ForumTopicCreateWithoutLikesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
@@ -2233,6 +2275,7 @@ export type ForumTopicUncheckedCreateWithoutLikesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
@@ -2279,6 +2322,7 @@ export type ForumTopicUpdateWithoutLikesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
@@ -2316,6 +2360,7 @@ export type ForumTopicUncheckedUpdateWithoutLikesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
@@ -2346,6 +2391,7 @@ export type ForumTopicCreateWithoutTopicTagsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
@@ -2383,6 +2429,7 @@ export type ForumTopicUncheckedCreateWithoutTopicTagsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
@@ -2429,6 +2476,7 @@ export type ForumTopicUpdateWithoutTopicTagsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
@@ -2466,6 +2514,7 @@ export type ForumTopicUncheckedUpdateWithoutTopicTagsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
@@ -2496,6 +2545,7 @@ export type ForumTopicCreateWithoutViewsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   user: Prisma.ClientUserCreateNestedOneWithoutForumTopicsInput
@@ -2533,6 +2583,7 @@ export type ForumTopicUncheckedCreateWithoutViewsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutTopicInput
@@ -2579,6 +2630,7 @@ export type ForumTopicUpdateWithoutViewsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
@@ -2616,6 +2668,7 @@ export type ForumTopicUncheckedUpdateWithoutViewsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
@@ -2649,6 +2702,7 @@ export type ForumTopicCreateManyUserInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type ForumTopicCreateManyLastReplyUserInput = {
@@ -2675,6 +2729,7 @@ export type ForumTopicCreateManyLastReplyUserInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type ForumTopicUpdateWithoutUserInput = {
@@ -2698,6 +2753,7 @@ export type ForumTopicUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   lastReplyUser?: Prisma.ClientUserUpdateOneWithoutLastReplyTopicsNestedInput
@@ -2734,6 +2790,7 @@ export type ForumTopicUncheckedUpdateWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
@@ -2768,6 +2825,7 @@ export type ForumTopicUncheckedUpdateManyWithoutUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type ForumTopicUpdateWithoutLastReplyUserInput = {
@@ -2791,6 +2849,7 @@ export type ForumTopicUpdateWithoutLastReplyUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
@@ -2827,6 +2886,7 @@ export type ForumTopicUncheckedUpdateWithoutLastReplyUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
@@ -2861,6 +2921,7 @@ export type ForumTopicUncheckedUpdateManyWithoutLastReplyUserInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type ForumTopicCreateManySectionInput = {
@@ -2887,6 +2948,7 @@ export type ForumTopicCreateManySectionInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   version?: number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type ForumTopicUpdateWithoutSectionInput = {
@@ -2910,6 +2972,7 @@ export type ForumTopicUpdateWithoutSectionInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
@@ -2946,6 +3009,7 @@ export type ForumTopicUncheckedUpdateWithoutSectionInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
@@ -2980,6 +3044,7 @@ export type ForumTopicUncheckedUpdateManyWithoutSectionInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 export type ForumTopicUpdateWithoutTagsInput = {
@@ -3003,6 +3068,7 @@ export type ForumTopicUpdateWithoutTagsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   user?: Prisma.ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput
@@ -3040,6 +3106,7 @@ export type ForumTopicUncheckedUpdateWithoutTagsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   favorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutTopicNestedInput
@@ -3074,6 +3141,7 @@ export type ForumTopicUncheckedUpdateManyWithoutTagsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
 }
 
 
@@ -3195,6 +3263,7 @@ export type ForumTopicSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   updatedAt?: boolean
   deletedAt?: boolean
   version?: boolean
+  sensitiveWordHits?: boolean
   replies?: boolean | Prisma.ForumTopic$repliesArgs<ExtArgs>
   lastSections?: boolean | Prisma.ForumTopic$lastSectionsArgs<ExtArgs>
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
@@ -3234,6 +3303,7 @@ export type ForumTopicSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   updatedAt?: boolean
   deletedAt?: boolean
   version?: boolean
+  sensitiveWordHits?: boolean
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
   lastReplyUser?: boolean | Prisma.ForumTopic$lastReplyUserArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
@@ -3264,6 +3334,7 @@ export type ForumTopicSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   updatedAt?: boolean
   deletedAt?: boolean
   version?: boolean
+  sensitiveWordHits?: boolean
   user?: boolean | Prisma.ClientUserDefaultArgs<ExtArgs>
   lastReplyUser?: boolean | Prisma.ForumTopic$lastReplyUserArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
@@ -3294,9 +3365,10 @@ export type ForumTopicSelectScalar = {
   updatedAt?: boolean
   deletedAt?: boolean
   version?: boolean
+  sensitiveWordHits?: boolean
 }
 
-export type ForumTopicOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "sectionId" | "userId" | "isPinned" | "isFeatured" | "isLocked" | "isHidden" | "auditStatus" | "auditReason" | "auditAt" | "auditBy" | "auditRole" | "viewCount" | "replyCount" | "likeCount" | "favoriteCount" | "lastReplyAt" | "lastReplyUserId" | "createdAt" | "updatedAt" | "deletedAt" | "version", ExtArgs["result"]["forumTopic"]>
+export type ForumTopicOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "sectionId" | "userId" | "isPinned" | "isFeatured" | "isLocked" | "isHidden" | "auditStatus" | "auditReason" | "auditAt" | "auditBy" | "auditRole" | "viewCount" | "replyCount" | "likeCount" | "favoriteCount" | "lastReplyAt" | "lastReplyUserId" | "createdAt" | "updatedAt" | "deletedAt" | "version" | "sensitiveWordHits", ExtArgs["result"]["forumTopic"]>
 export type ForumTopicInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   replies?: boolean | Prisma.ForumTopic$repliesArgs<ExtArgs>
   lastSections?: boolean | Prisma.ForumTopic$lastSectionsArgs<ExtArgs>
@@ -3434,6 +3506,10 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      * 版本号（用于乐观锁）
      */
     version: number
+    /**
+     * 敏感词命中记录
+     */
+    sensitiveWordHits: runtime.JsonValue | null
   }, ExtArgs["result"]["forumTopic"]>
   composites: {}
 }
@@ -3892,6 +3968,7 @@ export interface ForumTopicFieldRefs {
   readonly updatedAt: Prisma.FieldRef<"ForumTopic", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"ForumTopic", 'DateTime'>
   readonly version: Prisma.FieldRef<"ForumTopic", 'Int'>
+  readonly sensitiveWordHits: Prisma.FieldRef<"ForumTopic", 'Json'>
 }
     
 

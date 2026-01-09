@@ -1,15 +1,35 @@
 import { BaseService } from '@libs/base/database'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
+
+import {
+  LevelStatisticsDto,
+  RecentHitStatisticsDto,
+  StatisticsQueryDto,
+  StatisticsResponseDto,
+  TopHitStatisticsDto,
+  TypeStatisticsDto,
+} from './dto/sensitive-word-statistics.dto'
 import {
   CreateSensitiveWordDto,
   QuerySensitiveWordDto,
   UpdateSensitiveWordDto,
 } from './dto/sensitive-word.dto'
+import { SensitiveWordCacheService } from './sensitive-word-cache.service'
+import {
+  SensitiveWordLevelNames,
+  SensitiveWordTypeNames,
+} from './sensitive-word-constant'
+import { SensitiveWordDetectService } from './sensitive-word-detect.service'
 
 @Injectable()
 export class SensitiveWordService extends BaseService {
-  constructor() {
+  private readonly logger = new Logger(SensitiveWordService.name)
+
+  constructor(
+    private readonly cacheService: SensitiveWordCacheService,
+    private readonly detectService: SensitiveWordDetectService,
+  ) {
     super()
   }
 
@@ -35,67 +55,191 @@ export class SensitiveWordService extends BaseService {
    * 创建敏感词
    */
   async createSensitiveWord(dto: CreateSensitiveWordDto) {
-    // 检查敏感词是否已存在
-    const existingWord = await this.sensitiveWord.findFirst({
-      where: {
-        word: dto.word,
-      },
-    })
-    if (existingWord) {
-      this.throwHttpException('敏感词已存在')
-    }
-    return this.sensitiveWord.create({
+    const result = await this.sensitiveWord.create({
       data: dto,
     })
+    await this.cacheService.invalidateAll()
+    await this.detectService.reloadWords()
+    return result
   }
 
   /**
    * 更新敏感词
    */
   async updateSensitiveWord(dto: UpdateSensitiveWordDto) {
-    // 检查敏感词是否已存在
-    const existingWord = await this.sensitiveWord.findFirst({
-      where: {
-        word: dto.word,
-      },
-      select: { id: true },
-    })
-    if (existingWord && existingWord.id !== dto.id) {
-      this.throwHttpException('敏感词已存在')
-    }
-
     await this.checkDataExists(dto.id, this.sensitiveWord)
-
-    return this.sensitiveWord.update({
+    const result = await this.sensitiveWord.update({
       where: {
         id: dto.id,
       },
       data: dto,
     })
+    await this.cacheService.invalidateAll()
+    await this.detectService.reloadWords()
+    return result
   }
 
   /**
    * 删除敏感词
    */
   async deleteSensitiveWord(dto: IdDto) {
-    await this.checkDataExists(dto.id, this.sensitiveWord)
-    return this.sensitiveWord.delete({
+    const result = await this.sensitiveWord.delete({
       where: {
         id: dto.id,
       },
     })
+    await this.cacheService.invalidateAll()
+    await this.detectService.reloadWords()
+    return result
   }
 
   /**
    * 更新敏感词状态
    */
   async updateSensitiveWordStatus(dto: UpdateEnabledStatusDto) {
-    await this.checkDataExists(dto.id, this.sensitiveWord)
-    return this.sensitiveWord.update({
+    const result = await this.sensitiveWord.update({
       where: {
         id: dto.id,
       },
       data: dto,
     })
+    await this.cacheService.invalidateAll()
+    await this.detectService.reloadWords()
+    return result
+  }
+
+  /**
+   * 获取级别统计
+   */
+  private async getLevelStatistics(): Promise<LevelStatisticsDto[]> {
+    const results = await this.sensitiveWord.groupBy({
+      by: ['level'],
+      _count: {
+        id: true,
+      },
+    })
+
+    return results.map((result) => ({
+      level: result.level,
+      count: result._count.id,
+      levelName: SensitiveWordLevelNames[result.level] || '未知',
+    }))
+  }
+
+  /**
+   * 获取类型统计
+   */
+  private async getTypeStatistics(): Promise<TypeStatisticsDto[]> {
+    const results = await this.sensitiveWord.groupBy({
+      by: ['type'],
+      _count: {
+        id: true,
+      },
+    })
+
+    return results.map((result) => ({
+      type: result.type,
+      count: result._count.id,
+      typeName: SensitiveWordTypeNames[result.type] || '未知',
+    }))
+  }
+
+  /**
+   * 获取顶部命中统计
+   */
+  private async getTopHitStatistics(): Promise<TopHitStatisticsDto[]> {
+    const results = await this.sensitiveWord.findMany({
+      where: {
+        hitCount: {
+          gt: 0,
+        },
+      },
+      orderBy: {
+        hitCount: 'desc',
+      },
+      take: 20,
+      select: {
+        word: true,
+        hitCount: true,
+        level: true,
+        type: true,
+        lastHitAt: true,
+      },
+    })
+
+    return results.map((result) => ({
+      word: result.word,
+      hitCount: result.hitCount,
+      level: result.level,
+      type: result.type,
+      lastHitAt: result.lastHitAt,
+    }))
+  }
+
+  /**
+   * 获取最近命中统计
+   */
+  private async getRecentHitStatistics(): Promise<RecentHitStatisticsDto[]> {
+    const results = await this.sensitiveWord.findMany({
+      where: {
+        lastHitAt: {
+          not: null,
+        },
+      },
+      orderBy: {
+        lastHitAt: 'desc',
+      },
+      take: 20,
+      select: {
+        word: true,
+        hitCount: true,
+        level: true,
+        type: true,
+        lastHitAt: true,
+      },
+    })
+
+    return results.map((result) => ({
+      word: result.word,
+      hitCount: result.hitCount,
+      level: result.level,
+      type: result.type,
+      lastHitAt: result.lastHitAt!,
+    }))
+  }
+
+  /**
+   * 获取统计查询结果
+   */
+  async getStatistics(dto: StatisticsQueryDto): Promise<StatisticsResponseDto> {
+    const type = dto.type || 'level'
+
+    let data:
+      | LevelStatisticsDto[]
+      | TypeStatisticsDto[]
+      | TopHitStatisticsDto[]
+      | RecentHitStatisticsDto[]
+
+    switch (type) {
+      case 'level':
+        data = await this.getLevelStatistics()
+        break
+      case 'type':
+        data = await this.getTypeStatistics()
+        break
+      case 'topHits':
+        data = await this.getTopHitStatistics()
+        break
+      case 'recentHits':
+        data = await this.getRecentHitStatistics()
+        break
+      default:
+        data = await this.getLevelStatistics()
+    }
+
+    return {
+      type,
+      data,
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { NotificationModule } from '../notification/notification.module'
+import { SensitiveWordModule } from '../sensitive-word/sensitive-word.module'
 import { ForumReplyController } from './forum-reply.controller'
 import { ForumReplyService } from './forum-reply.service'
 
@@ -8,7 +9,7 @@ import { ForumReplyService } from './forum-reply.service'
  * 提供论坛回复管理的完整功能
  */
 @Module({
-  imports: [NotificationModule],
+  imports: [NotificationModule, SensitiveWordModule],
   controllers: [ForumReplyController],
   providers: [ForumReplyService],
   exports: [ForumReplyService],

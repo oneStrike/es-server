@@ -48,6 +48,8 @@ model ForumTopic {
   deletedAt       DateTime?            @map("deleted_at") @db.Timestamptz(6)
   /// 版本号（用于乐观锁）
   version         Int                  @default(0)
+  /// 敏感词命中记录
+  sensitiveWordHits Json?               @map("sensitive_word_hits") @db.JsonB
   replies         ForumReply[]
   lastSections    ForumSection[]       @relation("LastTopic")
   user            ClientUser           @relation(fields: [userId], references: [id], map: "forum_topic_client_user_id_fkey")

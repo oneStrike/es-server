@@ -37,6 +37,8 @@ model ForumReply {
   deletedAt       DateTime?           @map("deleted_at") @db.Timestamptz(6)
   /// 版本号（用于乐观锁）
   version         Int                 @default(0)
+  /// 敏感词命中记录
+  sensitiveWordHits Json?              @map("sensitive_word_hits") @db.JsonB
   replyTo         ForumReply?         @relation("ReplyTo", fields: [replyToId], references: [id])
   replies         ForumReply[]        @relation("ReplyTo")
   actualReplyTo   ForumReply?         @relation("ActualReplyTo", fields: [actualReplyToId], references: [id])

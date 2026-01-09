@@ -6,6 +6,7 @@ import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { NotificationService } from '../notification/notification.service'
+import { SensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
 
 /**
@@ -14,7 +15,10 @@ import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
  */
 @Injectable()
 export class ForumReplyService extends BaseService {
-  constructor(private readonly notificationService: NotificationService) {
+  constructor(
+    private readonly notificationService: NotificationService,
+    private readonly sensitiveWordDetectService: SensitiveWordDetectService,
+  ) {
     super()
   }
 
@@ -93,9 +97,24 @@ export class ForumReplyService extends BaseService {
       newFloor = (maxFloorReply?.floor ?? 0) + 1
     }
 
+    const detectResult = await this.sensitiveWordDetectService.detect({
+      content: replyData.content,
+    })
+
+    let auditStatus = 0
+    let auditReason: string | undefined
+
+    if (detectResult.hasSevere) {
+      auditStatus = 2
+      auditReason = '包含严重敏感词，需要审核'
+    }
+
     const updatePayload: ForumReplyCreateInput = {
       ...replyData,
       floor: newFloor,
+      auditStatus,
+      auditReason,
+      sensitiveWordHits: detectResult.hits.length > 0 ? detectResult.hits : null,
       actualReplyTo: replyToId
         ? {
             connect: {
