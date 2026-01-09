@@ -1,12 +1,12 @@
 import type { ForumSensitiveWord } from '@libs/base/database'
 import type { Cache } from 'cache-manager'
+import { BaseService } from '@libs/base/database'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import {
   SENSITIVE_WORD_CACHE_KEYS,
   SENSITIVE_WORD_CACHE_TTL,
 } from './sensitive-word-cache.constant'
-import { SensitiveWordService } from './sensitive-word.service'
 
 /**
  * 缓存查询配置接口
@@ -23,13 +23,16 @@ interface CacheQueryConfig<T> {
  * 使用 Redis 作为缓存后端，提升敏感词查询性能
  */
 @Injectable()
-export class SensitiveWordCacheService {
+export class SensitiveWordCacheService extends BaseService {
   private readonly logger = new Logger(SensitiveWordCacheService.name)
 
-  constructor(
-    private readonly sensitiveWordService: SensitiveWordService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  get sensitiveWord() {
+    return this.prisma.forumSensitiveWord
+  }
+
+  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
+    super()
+  }
 
   /**
    * 通用缓存查询方法
@@ -63,7 +66,7 @@ export class SensitiveWordCacheService {
       cacheKey: SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS,
       logMessage: (words) => `已缓存 ${words.length} 个敏感词`,
       queryFn: async () =>
-        this.sensitiveWordService.sensitiveWord.findMany({
+        this.sensitiveWord.findMany({
           where: {
             isEnabled: true,
           },
@@ -82,7 +85,7 @@ export class SensitiveWordCacheService {
       cacheKey: SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_LEVEL(level),
       logMessage: (words) => `已缓存等级 ${level} 的 ${words.length} 个敏感词`,
       queryFn: async () =>
-        this.sensitiveWordService.sensitiveWord.findMany({
+        this.sensitiveWord.findMany({
           where: {
             isEnabled: true,
             level,
@@ -102,7 +105,7 @@ export class SensitiveWordCacheService {
       cacheKey: SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_TYPE(type),
       logMessage: (words) => `已缓存类型 ${type} 的 ${words.length} 个敏感词`,
       queryFn: async () =>
-        this.sensitiveWordService.sensitiveWord.findMany({
+        this.sensitiveWord.findMany({
           where: {
             isEnabled: true,
             type,
@@ -123,7 +126,7 @@ export class SensitiveWordCacheService {
       logMessage: (words) =>
         `已缓存匹配模式 ${matchMode} 的 ${words.length} 个敏感词`,
       queryFn: async () =>
-        this.sensitiveWordService.sensitiveWord.findMany({
+        this.sensitiveWord.findMany({
           where: {
             isEnabled: true,
             matchMode,
