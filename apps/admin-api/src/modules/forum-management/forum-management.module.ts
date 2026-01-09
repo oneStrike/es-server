@@ -6,6 +6,6 @@ import { PointModule } from './point/point.module'
 import { SensitiveWordModule } from './sensitive-word/sensitive-word.module'
 
 @Module({
-  imports: [SensitiveWordModule, ForumBadgeModule, LevelRuleModule, ModeratorModule, PointModule],
+  imports: [ForumBadgeModule, LevelRuleModule, ModeratorModule, PointModule, SensitiveWordModule],
 })
 export class ForumManagementModule {}

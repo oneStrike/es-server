@@ -11,6 +11,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { PointService } from '../point/point.service'
+import { SensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import {
   CreateForumTopicDto,
   QueryForumTopicDto,
@@ -29,7 +30,10 @@ import { ForumTopicAuditStatusEnum } from './forum-topic.constant'
  */
 @Injectable()
 export class ForumTopicService extends BaseService {
-  constructor(private readonly pointService: PointService) {
+  constructor(
+    private readonly pointService: PointService,
+    private readonly sensitiveWordDetectService: SensitiveWordDetectService,
+  ) {
     super()
   }
 
@@ -82,6 +86,19 @@ export class ForumTopicService extends BaseService {
       throw new BadRequestException('用户论坛资料不存在或已被封禁')
     }
 
+    const detectResult = await this.sensitiveWordDetectService.detect({
+      title: topicData.title,
+      content: topicData.content,
+    })
+
+    let auditStatus = ForumTopicAuditStatusEnum.APPROVED
+    let auditReason: string | undefined
+
+    if (detectResult.hasSevere) {
+      auditStatus = ForumTopicAuditStatusEnum.PENDING
+      auditReason = '包含严重敏感词，需要审核'
+    }
+
     const createPayload: ForumTopicCreateInput = {
       ...topicData,
       section: {
@@ -93,7 +110,9 @@ export class ForumTopicService extends BaseService {
       viewCount: 0,
       replyCount: 0,
       likeCount: 0,
-      auditStatus: ForumTopicAuditStatusEnum.APPROVED,
+      auditStatus,
+      auditReason,
+      sensitiveWordHits: detectResult.hits.length > 0 ? detectResult.hits : null,
     }
 
     const topic = await this.forumTopic.create({
@@ -114,6 +133,10 @@ export class ForumTopicService extends BaseService {
         },
       },
     })
+
+    if (detectResult.hits.length > 0) {
+      await this.sensitiveWordDetectService.updateHitCount(detectResult.hits)
+    }
 
     await this.pointService.addPoint(profile.userId, 'CREATE_TOPIC', topic.id)
 

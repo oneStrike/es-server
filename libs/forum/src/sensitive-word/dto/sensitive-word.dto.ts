@@ -11,6 +11,7 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
+  MatchModeEnum,
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
 } from '../sensitive-word-constant'
@@ -62,6 +63,15 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   type!: SensitiveWordTypeEnum
 
+  @ValidateEnum({
+    description: '匹配模式',
+    required: false,
+    example: MatchModeEnum.EXACT,
+    default: MatchModeEnum.EXACT,
+    enum: MatchModeEnum,
+  })
+  matchMode?: MatchModeEnum
+
   @ValidateString({
     description: '备注',
     maxLength: 500,
@@ -91,5 +101,13 @@ export class UpdateSensitiveWordDto extends IntersectionType(
  */
 export class QuerySensitiveWordDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(CreateSensitiveWordDto, ['word', 'isEnabled'])),
+  PartialType(
+    PickType(CreateSensitiveWordDto, [
+      'word',
+      'isEnabled',
+      'level',
+      'matchMode',
+      'type',
+    ]),
+  ),
 ) {}

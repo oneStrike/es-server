@@ -426,7 +426,8 @@ export const ForumReplyScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
-  version: 'version'
+  version: 'version',
+  sensitiveWordHits: 'sensitiveWordHits'
 } as const
 
 export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof typeof ForumReplyScalarFieldEnum]
@@ -498,7 +499,12 @@ export const ForumSensitiveWordScalarFieldEnum = {
   updatedAt: 'updatedAt',
   level: 'level',
   type: 'type',
-  version: 'version'
+  version: 'version',
+  matchMode: 'matchMode',
+  hitCount: 'hitCount',
+  lastHitAt: 'lastHitAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
 } as const
 
 export type ForumSensitiveWordScalarFieldEnum = (typeof ForumSensitiveWordScalarFieldEnum)[keyof typeof ForumSensitiveWordScalarFieldEnum]
@@ -573,7 +579,8 @@ export const ForumTopicScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
-  version: 'version'
+  version: 'version',
+  sensitiveWordHits: 'sensitiveWordHits'
 } as const
 
 export type ForumTopicScalarFieldEnum = (typeof ForumTopicScalarFieldEnum)[keyof typeof ForumTopicScalarFieldEnum]
