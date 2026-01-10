@@ -13,13 +13,14 @@ import {
 import {
   createInitialForumBadges,
   createInitialForumConfig,
+  createInitialForumExperienceRules,
   createInitialForumLevelRules,
   createInitialForumPointRules,
+  createInitialForumProfile,
   createInitialForumSectionGroups,
   createInitialForumSections,
   createInitialForumSensitiveWords,
   createInitialForumTags,
-  createInitialForumProfile,
 } from './modules/forum' // 论坛模块种子数据
 import { createInitialMemberLevels } from './modules/operationManagement' // 会员等级管理
 import { createInitialDataDictionary } from './modules/system' // 数据字典（语言、国籍、出版社等）
@@ -58,6 +59,7 @@ async function runSeeds() {
     createInitialForumTags(prisma), // 论坛标签配置
     createInitialForumBadges(prisma), // 论坛徽章配置
     createInitialForumPointRules(prisma), // 论坛积分规则
+    createInitialForumExperienceRules(prisma), // 论坛经验规则
     createInitialForumLevelRules(prisma), // 论坛等级规则
     createInitialForumSensitiveWords(prisma), // 论坛敏感词配置
   ])

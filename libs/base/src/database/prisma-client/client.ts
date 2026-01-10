@@ -83,6 +83,16 @@ export type ForumConfigHistory = Prisma.ForumConfigHistoryModel
  */
 export type ForumConfig = Prisma.ForumConfigModel
 /**
+ * Model ForumExperienceRecord
+ * 论坛经验记录表 - 记录用户经验变化历史
+ */
+export type ForumExperienceRecord = Prisma.ForumExperienceRecordModel
+/**
+ * Model ForumExperienceRule
+ * 论坛经验规则表 - 定义经验获取规则，包括发表主题、回复、点赞、签到等
+ */
+export type ForumExperienceRule = Prisma.ForumExperienceRuleModel
+/**
  * Model ForumLevelRule
  * 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级权益等
  */

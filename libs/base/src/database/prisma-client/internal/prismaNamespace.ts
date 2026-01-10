@@ -393,6 +393,8 @@ export const ModelName = {
   ForumBadge: 'ForumBadge',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
+  ForumExperienceRecord: 'ForumExperienceRecord',
+  ForumExperienceRule: 'ForumExperienceRule',
   ForumLevelRule: 'ForumLevelRule',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
   ForumModeratorApplication: 'ForumModeratorApplication',
@@ -443,7 +445,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNoticeRead" | "clientNotice" | "clientPage" | "clientUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUser" | "clientConfig" | "clientNoticeRead" | "clientNotice" | "clientPage" | "clientUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumExperienceRecord" | "forumExperienceRule" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1110,6 +1112,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ForumConfigCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ForumConfigCountAggregateOutputType> | number
+        }
+      }
+    }
+    ForumExperienceRecord: {
+      payload: Prisma.$ForumExperienceRecordPayload<ExtArgs>
+      fields: Prisma.ForumExperienceRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ForumExperienceRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ForumExperienceRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.ForumExperienceRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ForumExperienceRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
+        }
+        findMany: {
+          args: Prisma.ForumExperienceRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>[]
+        }
+        create: {
+          args: Prisma.ForumExperienceRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
+        }
+        createMany: {
+          args: Prisma.ForumExperienceRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ForumExperienceRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.ForumExperienceRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
+        }
+        update: {
+          args: Prisma.ForumExperienceRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.ForumExperienceRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ForumExperienceRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ForumExperienceRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.ForumExperienceRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.ForumExperienceRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateForumExperienceRecord>
+        }
+        groupBy: {
+          args: Prisma.ForumExperienceRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumExperienceRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ForumExperienceRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumExperienceRecordCountAggregateOutputType> | number
+        }
+      }
+    }
+    ForumExperienceRule: {
+      payload: Prisma.$ForumExperienceRulePayload<ExtArgs>
+      fields: Prisma.ForumExperienceRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ForumExperienceRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ForumExperienceRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
+        }
+        findFirst: {
+          args: Prisma.ForumExperienceRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ForumExperienceRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
+        }
+        findMany: {
+          args: Prisma.ForumExperienceRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>[]
+        }
+        create: {
+          args: Prisma.ForumExperienceRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
+        }
+        createMany: {
+          args: Prisma.ForumExperienceRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ForumExperienceRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>[]
+        }
+        delete: {
+          args: Prisma.ForumExperienceRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
+        }
+        update: {
+          args: Prisma.ForumExperienceRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.ForumExperienceRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ForumExperienceRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ForumExperienceRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.ForumExperienceRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
+        }
+        aggregate: {
+          args: Prisma.ForumExperienceRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateForumExperienceRule>
+        }
+        groupBy: {
+          args: Prisma.ForumExperienceRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumExperienceRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ForumExperienceRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ForumExperienceRuleCountAggregateOutputType> | number
         }
       }
     }
@@ -3920,14 +4070,45 @@ export const ForumConfigScalarFieldEnum = {
 export type ForumConfigScalarFieldEnum = (typeof ForumConfigScalarFieldEnum)[keyof typeof ForumConfigScalarFieldEnum]
 
 
+export const ForumExperienceRecordScalarFieldEnum = {
+  id: 'id',
+  profileId: 'profileId',
+  ruleId: 'ruleId',
+  experience: 'experience',
+  beforeExperience: 'beforeExperience',
+  afterExperience: 'afterExperience',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type ForumExperienceRecordScalarFieldEnum = (typeof ForumExperienceRecordScalarFieldEnum)[keyof typeof ForumExperienceRecordScalarFieldEnum]
+
+
+export const ForumExperienceRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  experience: 'experience',
+  dailyLimit: 'dailyLimit',
+  isEnabled: 'isEnabled',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ForumExperienceRuleScalarFieldEnum = (typeof ForumExperienceRuleScalarFieldEnum)[keyof typeof ForumExperienceRuleScalarFieldEnum]
+
+
 export const ForumLevelRuleScalarFieldEnum = {
   id: 'id',
   name: 'name',
   description: 'description',
-  icon: 'icon',
-  requiredPoints: 'requiredPoints',
+  requiredExperience: 'requiredExperience',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
+  icon: 'icon',
+  badge: 'badge',
+  color: 'color',
   dailyTopicLimit: 'dailyTopicLimit',
   dailyReplyLimit: 'dailyReplyLimit',
   postInterval: 'postInterval',
@@ -3935,8 +4116,6 @@ export const ForumLevelRuleScalarFieldEnum = {
   dailyLikeLimit: 'dailyLikeLimit',
   dailyFavoriteLimit: 'dailyFavoriteLimit',
   dailyCommentLimit: 'dailyCommentLimit',
-  levelColor: 'levelColor',
-  levelBadge: 'levelBadge',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -4067,6 +4246,7 @@ export const ForumProfileScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   points: 'points',
+  experience: 'experience',
   levelId: 'levelId',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
@@ -4088,7 +4268,7 @@ export type ForumProfileScalarFieldEnum = (typeof ForumProfileScalarFieldEnum)[k
 export const ForumReplyLikeScalarFieldEnum = {
   id: 'id',
   replyId: 'replyId',
-  userId: 'userId',
+  profileId: 'profileId',
   createdAt: 'createdAt'
 } as const
 
@@ -4215,7 +4395,7 @@ export type ForumTagScalarFieldEnum = (typeof ForumTagScalarFieldEnum)[keyof typ
 export const ForumTopicFavoriteScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
-  userId: 'userId',
+  profileId: 'profileId',
   createdAt: 'createdAt'
 } as const
 
@@ -4225,7 +4405,7 @@ export type ForumTopicFavoriteScalarFieldEnum = (typeof ForumTopicFavoriteScalar
 export const ForumTopicLikeScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
-  userId: 'userId',
+  profileId: 'profileId',
   createdAt: 'createdAt'
 } as const
 
@@ -4770,6 +4950,8 @@ export type GlobalOmitConfig = {
   forumBadge?: Prisma.ForumBadgeOmit
   forumConfigHistory?: Prisma.ForumConfigHistoryOmit
   forumConfig?: Prisma.ForumConfigOmit
+  forumExperienceRecord?: Prisma.ForumExperienceRecordOmit
+  forumExperienceRule?: Prisma.ForumExperienceRuleOmit
   forumLevelRule?: Prisma.ForumLevelRuleOmit
   forumModeratorActionLog?: Prisma.ForumModeratorActionLogOmit
   forumModeratorApplication?: Prisma.ForumModeratorApplicationOmit

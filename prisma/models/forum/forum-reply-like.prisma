@@ -5,15 +5,15 @@ model ForumReplyLike {
   /// 关联的回复ID
   replyId   Int          @map("reply_id")
   /// 关联的用户ID
-  userId    Int          @map("user_id")
+  profileId    Int          @map("profile_id")
   /// 创建时间
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   reply     ForumReply   @relation(fields: [replyId], references: [id], onDelete: Cascade)
-  profile   ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile   ForumProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
-  @@unique([replyId, userId])
+  @@unique([replyId, profileId])
   @@index([replyId])
-  @@index([userId])
+  @@index([profileId])
   @@index([createdAt])
   @@map("forum_reply_like")
 }

@@ -6,6 +6,8 @@ model ForumProfile {
   userId                  Int                         @unique @map("user_id")
   /// 论坛积分
   points                  Int                         @default(0)
+  /// 论坛经验值
+  experience              Int                         @default(0)
   /// 等级ID
   levelId                 Int                         @map("level_id")
   /// 发表主题数
@@ -36,6 +38,7 @@ model ForumProfile {
   applications            ForumModeratorApplication[] @relation("ModeratorApplicant")
   notifications           ForumNotification[]
   pointRecords            ForumPointRecord[]
+  experienceRecords        ForumExperienceRecord[]
   level                   ForumLevelRule?             @relation(fields: [levelId], references: [id])
   user                    ClientUser                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   badges                  ForumProfileBadge[]

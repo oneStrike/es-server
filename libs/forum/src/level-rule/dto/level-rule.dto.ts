@@ -1,15 +1,18 @@
 import {
   ValidateBoolean,
+  ValidateEnum,
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
+  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { LevelRulePermissionEnum } from '../level-rule.constant'
 
 /**
  * 等级规则基础DTO
@@ -40,18 +43,18 @@ export class BaseLevelRuleDto extends BaseDto {
   icon?: string
 
   @ValidateNumber({
-    description: '所需积分',
+    description: '所需经验值',
     example: 0,
     required: true,
   })
-  requiredPoints!: number
+  requiredExperience!: number
 
   @ValidateNumber({
     description: '排序值（数值越小越靠前）',
     example: 1,
     required: true,
   })
-  order!: number
+  sortOrder!: number
 
   @ValidateBoolean({
     description: '是否启用',
@@ -115,7 +118,7 @@ export class BaseLevelRuleDto extends BaseDto {
     required: false,
     maxLength: 20,
   })
-  levelColor?: string
+  color?: string
 
   @ValidateString({
     description: '等级徽章URL',
@@ -123,7 +126,7 @@ export class BaseLevelRuleDto extends BaseDto {
     required: false,
     maxLength: 255,
   })
-  levelBadge?: string
+  badge?: string
 }
 
 /**
@@ -147,71 +150,94 @@ export class UpdateLevelRuleDto extends IntersectionType(
  */
 export class QueryLevelRuleDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(BaseLevelRuleDto, ['name', 'isEnabled', 'requiredPoints']),
-  ),
-) {
-  @ValidateString({
-    description: '排序字段',
-    example: 'order',
-    required: false,
-  })
-  sortBy?: string
-
-  @ValidateString({
-    description: '排序方向',
-    example: 'asc',
-    required: false,
-  })
-  sortOrder?: 'asc' | 'desc'
-}
+  PartialType(PickType(BaseLevelRuleDto, ['name', 'isEnabled'])),
+) {}
 
 /**
  * 等级规则详情DTO
  */
-export class LevelRuleDetailDto {
-  id!: number
-  name!: string
-  description?: string
-  icon?: string
-  requiredPoints!: number
-  order!: number
-  isEnabled!: boolean
-  dailyTopicLimit!: number
-  dailyReplyLimit!: number
-  postInterval!: number
-  maxFileSize!: number
-  dailyLikeLimit!: number
-  dailyFavoriteLimit!: number
-  dailyCommentLimit!: number
-  levelColor?: string
-  levelBadge?: string
-  createdAt!: Date
-  updatedAt!: Date
-}
+export class LevelRuleDetailDto extends IntersectionType(
+  BaseLevelRuleDto,
+  PickType(BaseDto, ['id', 'createdAt', 'updatedAt']),
+) {}
+
+/**
+ * 等级权限DTO
+ */
+export class LevelPermissionsDto extends PickType(BaseLevelRuleDto, [
+  'dailyTopicLimit',
+  'dailyReplyLimit',
+  'postInterval',
+  'maxFileSize',
+  'dailyLikeLimit',
+  'dailyFavoriteLimit',
+  'dailyCommentLimit',
+]) {}
 
 /**
  * 用户等级信息DTO
  */
 export class UserLevelInfoDto {
+  @ApiProperty({ description: '等级ID', example: 1 })
   levelId!: number
+
+  @ApiProperty({ description: '等级名称', example: '新手' })
   levelName!: string
+
+  @ApiProperty({
+    description: '等级描述',
+    example: '新手用户等级',
+    required: false,
+    nullable: true,
+  })
   levelDescription?: string
+
+  @ApiProperty({
+    description: '等级图标URL',
+    example: 'https://example.com/icons/level1.png',
+    required: false,
+    nullable: true,
+  })
   levelIcon?: string
+
+  @ApiProperty({
+    description: '等级专属颜色（十六进制）',
+    example: '#FF5733',
+    required: false,
+    nullable: true,
+  })
   levelColor?: string
+
+  @ApiProperty({
+    description: '等级徽章URL',
+    example: 'https://example.com/badges/level1.png',
+    required: false,
+    nullable: true,
+  })
   levelBadge?: string
-  currentPoints!: number
-  nextLevelPoints?: number
+
+  @ApiProperty({ description: '当前经验值', example: 100 })
+  currentExperience!: number
+
+  @ApiProperty({
+    description: '下一等级所需经验值',
+    example: 500,
+    required: false,
+  })
+  nextLevelExperience?: number
+
+  @ApiProperty({
+    description: '升级进度百分比',
+    example: 20,
+    required: false,
+  })
   progressPercentage?: number
-  permissions: {
-    dailyTopicLimit: number
-    dailyReplyLimit: number
-    postInterval: number
-    maxFileSize: number
-    dailyLikeLimit: number
-    dailyFavoriteLimit: number
-    dailyCommentLimit: number
-  }
+
+  @ApiProperty({
+    description: '等级权限',
+    type: LevelPermissionsDto,
+  })
+  permissions!: LevelPermissionsDto
 }
 
 /**
@@ -223,14 +249,16 @@ export class CheckLevelPermissionDto {
     example: 1,
     required: true,
   })
-  userId!: number
+  @ApiProperty({ description: '用户ID', example: 1 })
+  profileId!: number
 
-  @ValidateString({
+  @ValidateEnum({
     description: '权限类型',
     example: 'dailyTopicLimit',
     required: true,
+    enum: LevelRulePermissionEnum,
   })
-  permissionType!: string
+  permissionType!: LevelRulePermissionEnum
 }
 
 /**
@@ -238,10 +266,63 @@ export class CheckLevelPermissionDto {
  * 返回等级权限检查的结果
  */
 export class LevelPermissionResultDto {
+  @ApiProperty({ description: '是否有权限', example: true })
   hasPermission!: boolean
+
+  @ApiProperty({ description: '当前等级名称', example: '新手' })
   currentLevel!: string
+
+  @ApiProperty({
+    description: '限制数量',
+    example: 10,
+    required: false,
+  })
   limit?: number
+
+  @ApiProperty({
+    description: '已使用数量',
+    example: 5,
+    required: false,
+  })
   used?: number
+
+  @ApiProperty({
+    description: '剩余数量',
+    example: 5,
+    required: false,
+  })
   remaining?: number
-  message?: string
+}
+
+/**
+ * 等级分布项DTO
+ * 单个等级的用户分布情况
+ */
+export class LevelDistributionItemDto {
+  @ApiProperty({ description: '等级ID', example: 1 })
+  levelId!: number
+
+  @ApiProperty({ description: '等级名称', example: '新手' })
+  levelName!: string
+
+  @ApiProperty({ description: '该等级用户数量', example: 150 })
+  userCount!: number
+}
+
+/**
+ * 等级统计DTO
+ * 等级系统整体统计数据
+ */
+export class LevelStatisticsDto {
+  @ApiProperty({ description: '总等级数量', example: 10 })
+  totalLevels!: number
+
+  @ApiProperty({ description: '启用的等级数量', example: 8 })
+  enabledLevels!: number
+
+  @ApiProperty({
+    description: '等级分布',
+    type: [LevelDistributionItemDto],
+  })
+  levelDistribution!: LevelDistributionItemDto[]
 }

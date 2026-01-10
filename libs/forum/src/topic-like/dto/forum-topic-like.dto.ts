@@ -50,3 +50,10 @@ export class ToggleTopicLikeDto extends PickType(CreateForumTopicLikeDto, [
   'topicId',
   'profileId',
 ]) {}
+
+export class QueryForumTopicLikeDto extends IntersectionType(
+  PageDto,
+  PartialType(
+    PickType(BaseForumTopicLikeDto, ['topicId', 'profileId']),
+  ),
+) {}

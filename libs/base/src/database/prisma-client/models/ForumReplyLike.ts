@@ -29,33 +29,33 @@ export type AggregateForumReplyLike = {
 export type ForumReplyLikeAvgAggregateOutputType = {
   id: number | null
   replyId: number | null
-  userId: number | null
+  profileId: number | null
 }
 
 export type ForumReplyLikeSumAggregateOutputType = {
   id: number | null
   replyId: number | null
-  userId: number | null
+  profileId: number | null
 }
 
 export type ForumReplyLikeMinAggregateOutputType = {
   id: number | null
   replyId: number | null
-  userId: number | null
+  profileId: number | null
   createdAt: Date | null
 }
 
 export type ForumReplyLikeMaxAggregateOutputType = {
   id: number | null
   replyId: number | null
-  userId: number | null
+  profileId: number | null
   createdAt: Date | null
 }
 
 export type ForumReplyLikeCountAggregateOutputType = {
   id: number
   replyId: number
-  userId: number
+  profileId: number
   createdAt: number
   _all: number
 }
@@ -64,33 +64,33 @@ export type ForumReplyLikeCountAggregateOutputType = {
 export type ForumReplyLikeAvgAggregateInputType = {
   id?: true
   replyId?: true
-  userId?: true
+  profileId?: true
 }
 
 export type ForumReplyLikeSumAggregateInputType = {
   id?: true
   replyId?: true
-  userId?: true
+  profileId?: true
 }
 
 export type ForumReplyLikeMinAggregateInputType = {
   id?: true
   replyId?: true
-  userId?: true
+  profileId?: true
   createdAt?: true
 }
 
 export type ForumReplyLikeMaxAggregateInputType = {
   id?: true
   replyId?: true
-  userId?: true
+  profileId?: true
   createdAt?: true
 }
 
 export type ForumReplyLikeCountAggregateInputType = {
   id?: true
   replyId?: true
-  userId?: true
+  profileId?: true
   createdAt?: true
   _all?: true
 }
@@ -184,7 +184,7 @@ export type ForumReplyLikeGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 export type ForumReplyLikeGroupByOutputType = {
   id: number
   replyId: number
-  userId: number
+  profileId: number
   createdAt: Date
   _count: ForumReplyLikeCountAggregateOutputType | null
   _avg: ForumReplyLikeAvgAggregateOutputType | null
@@ -214,7 +214,7 @@ export type ForumReplyLikeWhereInput = {
   NOT?: Prisma.ForumReplyLikeWhereInput | Prisma.ForumReplyLikeWhereInput[]
   id?: Prisma.IntFilter<"ForumReplyLike"> | number
   replyId?: Prisma.IntFilter<"ForumReplyLike"> | number
-  userId?: Prisma.IntFilter<"ForumReplyLike"> | number
+  profileId?: Prisma.IntFilter<"ForumReplyLike"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumReplyLike"> | Date | string
   reply?: Prisma.XOR<Prisma.ForumReplyScalarRelationFilter, Prisma.ForumReplyWhereInput>
   profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
@@ -223,7 +223,7 @@ export type ForumReplyLikeWhereInput = {
 export type ForumReplyLikeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   replyId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   reply?: Prisma.ForumReplyOrderByWithRelationInput
   profile?: Prisma.ForumProfileOrderByWithRelationInput
@@ -231,21 +231,21 @@ export type ForumReplyLikeOrderByWithRelationInput = {
 
 export type ForumReplyLikeWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  replyId_userId?: Prisma.ForumReplyLikeReplyIdUserIdCompoundUniqueInput
+  replyId_profileId?: Prisma.ForumReplyLikeReplyIdProfileIdCompoundUniqueInput
   AND?: Prisma.ForumReplyLikeWhereInput | Prisma.ForumReplyLikeWhereInput[]
   OR?: Prisma.ForumReplyLikeWhereInput[]
   NOT?: Prisma.ForumReplyLikeWhereInput | Prisma.ForumReplyLikeWhereInput[]
   replyId?: Prisma.IntFilter<"ForumReplyLike"> | number
-  userId?: Prisma.IntFilter<"ForumReplyLike"> | number
+  profileId?: Prisma.IntFilter<"ForumReplyLike"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumReplyLike"> | Date | string
   reply?: Prisma.XOR<Prisma.ForumReplyScalarRelationFilter, Prisma.ForumReplyWhereInput>
   profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
-}, "id" | "replyId_userId">
+}, "id" | "replyId_profileId">
 
 export type ForumReplyLikeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   replyId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ForumReplyLikeCountOrderByAggregateInput
   _avg?: Prisma.ForumReplyLikeAvgOrderByAggregateInput
@@ -260,7 +260,7 @@ export type ForumReplyLikeScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumReplyLikeScalarWhereWithAggregatesInput | Prisma.ForumReplyLikeScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumReplyLike"> | number
   replyId?: Prisma.IntWithAggregatesFilter<"ForumReplyLike"> | number
-  userId?: Prisma.IntWithAggregatesFilter<"ForumReplyLike"> | number
+  profileId?: Prisma.IntWithAggregatesFilter<"ForumReplyLike"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumReplyLike"> | Date | string
 }
 
@@ -273,7 +273,7 @@ export type ForumReplyLikeCreateInput = {
 export type ForumReplyLikeUncheckedCreateInput = {
   id?: number
   replyId: number
-  userId: number
+  profileId: number
   createdAt?: Date | string
 }
 
@@ -286,14 +286,14 @@ export type ForumReplyLikeUpdateInput = {
 export type ForumReplyLikeUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   replyId?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumReplyLikeCreateManyInput = {
   id?: number
   replyId: number
-  userId: number
+  profileId: number
   createdAt?: Date | string
 }
 
@@ -304,7 +304,7 @@ export type ForumReplyLikeUpdateManyMutationInput = {
 export type ForumReplyLikeUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   replyId?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -318,42 +318,42 @@ export type ForumReplyLikeOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ForumReplyLikeReplyIdUserIdCompoundUniqueInput = {
+export type ForumReplyLikeReplyIdProfileIdCompoundUniqueInput = {
   replyId: number
-  userId: number
+  profileId: number
 }
 
 export type ForumReplyLikeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   replyId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumReplyLikeAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   replyId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
 }
 
 export type ForumReplyLikeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   replyId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumReplyLikeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   replyId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumReplyLikeSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   replyId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
 }
 
 export type ForumReplyLikeCreateNestedManyWithoutProfileInput = {
@@ -483,7 +483,7 @@ export type ForumReplyLikeScalarWhereInput = {
   NOT?: Prisma.ForumReplyLikeScalarWhereInput | Prisma.ForumReplyLikeScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumReplyLike"> | number
   replyId?: Prisma.IntFilter<"ForumReplyLike"> | number
-  userId?: Prisma.IntFilter<"ForumReplyLike"> | number
+  profileId?: Prisma.IntFilter<"ForumReplyLike"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumReplyLike"> | Date | string
 }
 
@@ -494,7 +494,7 @@ export type ForumReplyLikeCreateWithoutReplyInput = {
 
 export type ForumReplyLikeUncheckedCreateWithoutReplyInput = {
   id?: number
-  userId: number
+  profileId: number
   createdAt?: Date | string
 }
 
@@ -549,7 +549,7 @@ export type ForumReplyLikeUncheckedUpdateManyWithoutProfileInput = {
 
 export type ForumReplyLikeCreateManyReplyInput = {
   id?: number
-  userId: number
+  profileId: number
   createdAt?: Date | string
 }
 
@@ -560,13 +560,13 @@ export type ForumReplyLikeUpdateWithoutReplyInput = {
 
 export type ForumReplyLikeUncheckedUpdateWithoutReplyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumReplyLikeUncheckedUpdateManyWithoutReplyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -575,7 +575,7 @@ export type ForumReplyLikeUncheckedUpdateManyWithoutReplyInput = {
 export type ForumReplyLikeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   replyId?: boolean
-  userId?: boolean
+  profileId?: boolean
   createdAt?: boolean
   reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
@@ -584,7 +584,7 @@ export type ForumReplyLikeSelect<ExtArgs extends runtime.Types.Extensions.Intern
 export type ForumReplyLikeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   replyId?: boolean
-  userId?: boolean
+  profileId?: boolean
   createdAt?: boolean
   reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
@@ -593,7 +593,7 @@ export type ForumReplyLikeSelectCreateManyAndReturn<ExtArgs extends runtime.Type
 export type ForumReplyLikeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   replyId?: boolean
-  userId?: boolean
+  profileId?: boolean
   createdAt?: boolean
   reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
@@ -602,11 +602,11 @@ export type ForumReplyLikeSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
 export type ForumReplyLikeSelectScalar = {
   id?: boolean
   replyId?: boolean
-  userId?: boolean
+  profileId?: boolean
   createdAt?: boolean
 }
 
-export type ForumReplyLikeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "replyId" | "userId" | "createdAt", ExtArgs["result"]["forumReplyLike"]>
+export type ForumReplyLikeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "replyId" | "profileId" | "createdAt", ExtArgs["result"]["forumReplyLike"]>
 export type ForumReplyLikeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reply?: boolean | Prisma.ForumReplyDefaultArgs<ExtArgs>
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
@@ -638,7 +638,7 @@ export type $ForumReplyLikePayload<ExtArgs extends runtime.Types.Extensions.Inte
     /**
      * 关联的用户ID
      */
-    userId: number
+    profileId: number
     /**
      * 创建时间
      */
@@ -1070,7 +1070,7 @@ export interface Prisma__ForumReplyLikeClient<T, Null = never, ExtArgs extends r
 export interface ForumReplyLikeFieldRefs {
   readonly id: Prisma.FieldRef<"ForumReplyLike", 'Int'>
   readonly replyId: Prisma.FieldRef<"ForumReplyLike", 'Int'>
-  readonly userId: Prisma.FieldRef<"ForumReplyLike", 'Int'>
+  readonly profileId: Prisma.FieldRef<"ForumReplyLike", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ForumReplyLike", 'DateTime'>
 }
     

@@ -1,11 +1,11 @@
 interface IForumLevelRuleData {
   name: string
-  requiredPoints: number
+  requiredExperience: number
   icon: string
   description: string
   order: number
   isEnabled: boolean
-  levelColor?: string
+  color?: string
   levelBadge?: string
   dailyTopicLimit?: number
   dailyReplyLimit?: number
@@ -20,12 +20,12 @@ export async function createInitialForumLevelRules(prisma: any) {
   const INITIAL_FORUM_LEVEL_RULES: IForumLevelRuleData[] = [
     {
       name: '初级会员',
-      requiredPoints: 0,
+      requiredExperience: 0,
       icon: '🥉',
       description: '新注册用户，享受基础权益',
       order: 1,
       isEnabled: true,
-      levelColor: '#909399',
+      color: '#909399',
       dailyTopicLimit: 5,
       dailyReplyLimit: 20,
       postInterval: 30,
@@ -36,12 +36,12 @@ export async function createInitialForumLevelRules(prisma: any) {
     },
     {
       name: '中级会员',
-      requiredPoints: 100,
+      requiredExperience: 100,
       icon: '🥈',
       description: '累计100积分，享受中级会员权益',
       order: 2,
       isEnabled: true,
-      levelColor: '#409EFF',
+      color: '#409EFF',
       dailyTopicLimit: 10,
       dailyReplyLimit: 50,
       postInterval: 20,
@@ -52,12 +52,12 @@ export async function createInitialForumLevelRules(prisma: any) {
     },
     {
       name: '高级会员',
-      requiredPoints: 500,
+      requiredExperience: 500,
       icon: '🥇',
       description: '累计500积分，享受高级会员权益',
       order: 3,
       isEnabled: true,
-      levelColor: '#67C23A',
+      color: '#67C23A',
       dailyTopicLimit: 20,
       dailyReplyLimit: 100,
       postInterval: 10,
@@ -68,12 +68,12 @@ export async function createInitialForumLevelRules(prisma: any) {
     },
     {
       name: '资深会员',
-      requiredPoints: 2000,
+      requiredExperience: 2000,
       icon: '💎',
       description: '累计2000积分，享受资深会员权益',
       order: 4,
       isEnabled: true,
-      levelColor: '#E6A23C',
+      color: '#E6A23C',
       dailyTopicLimit: 30,
       dailyReplyLimit: 200,
       postInterval: 5,
@@ -84,12 +84,12 @@ export async function createInitialForumLevelRules(prisma: any) {
     },
     {
       name: '专家会员',
-      requiredPoints: 5000,
+      requiredExperience: 5000,
       icon: '👑',
       description: '累计5000积分，享受专家会员权益',
       order: 5,
       isEnabled: true,
-      levelColor: '#F56C6C',
+      color: '#F56C6C',
       dailyTopicLimit: 50,
       dailyReplyLimit: 500,
       postInterval: 0,
@@ -109,12 +109,12 @@ export async function createInitialForumLevelRules(prisma: any) {
       await prisma.forumLevelRule.create({
         data: {
           name: levelData.name,
-          requiredPoints: levelData.requiredPoints,
+          requiredExperience: levelData.requiredExperience,
           icon: levelData.icon,
           description: levelData.description,
           sortOrder: levelData.order,
           isEnabled: levelData.isEnabled,
-          levelColor: levelData.levelColor,
+          color: levelData.color,
           levelBadge: levelData.levelBadge,
           dailyTopicLimit: levelData.dailyTopicLimit,
           dailyReplyLimit: levelData.dailyReplyLimit,

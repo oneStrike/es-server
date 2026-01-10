@@ -5,6 +5,7 @@ import type {
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { ForumCounterService } from '../counter/forum-counter.service'
 import { NotificationService } from '../notification/notification.service'
 import { SensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
@@ -18,6 +19,7 @@ export class ForumReplyService extends BaseService {
   constructor(
     private readonly notificationService: NotificationService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
+    private readonly forumCounterService: ForumCounterService,
   ) {
     super()
   }
@@ -147,32 +149,13 @@ export class ForumReplyService extends BaseService {
         data: updatePayload,
       })
 
-      await tx.forumTopic.update({
-        where: { id: topicId },
-        data: {
-          replyCount: {
-            increment: 1,
-          },
-        },
-      })
-
-      await tx.forumSection.update({
-        where: { id: topic.sectionId },
-        data: {
-          replyCount: {
-            increment: 1,
-          },
-        },
-      })
-
-      await tx.forumProfile.update({
-        where: { id: profile.id },
-        data: {
-          replyCount: {
-            increment: 1,
-          },
-        },
-      })
+      await this.forumCounterService.updateReplyRelatedCounts(
+        tx,
+        topicId,
+        topic.sectionId,
+        profile.id,
+        1,
+      )
 
       if (replyToId) {
         const replyTo = await tx.forumReply.findUnique({
@@ -319,25 +302,19 @@ export class ForumReplyService extends BaseService {
         })
 
         for (const childReply of childReplies) {
-          await tx.forumProfile.update({
-            where: { id: childReply.profileId },
-            data: {
-              replyCount: {
-                decrement: 1,
-              },
-            },
-          })
+          await this.forumCounterService.updateProfileReplyCount(
+            tx,
+            childReply.profileId,
+            -1,
+          )
         }
       }
 
-      await tx.forumTopic.update({
-        where: { id: reply.topicId },
-        data: {
-          replyCount: {
-            decrement: totalDeleteCount,
-          },
-        },
-      })
+      await this.forumCounterService.updateTopicReplyCount(
+        tx,
+        reply.topicId,
+        -totalDeleteCount,
+      )
 
       const topic = await tx.forumTopic.findUnique({
         where: { id: reply.topicId },
@@ -345,24 +322,18 @@ export class ForumReplyService extends BaseService {
       })
 
       if (topic) {
-        await tx.forumSection.update({
-          where: { id: topic.sectionId },
-          data: {
-            replyCount: {
-              decrement: totalDeleteCount,
-            },
-          },
-        })
+        await this.forumCounterService.updateSectionReplyCount(
+          tx,
+          topic.sectionId,
+          -totalDeleteCount,
+        )
       }
 
-      await tx.forumProfile.update({
-        where: { id: reply.profileId },
-        data: {
-          replyCount: {
-            decrement: 1,
-          },
-        },
-      })
+      await this.forumCounterService.updateProfileReplyCount(
+        tx,
+        reply.profileId,
+        -1,
+      )
 
       return this.forumReply.softDelete({ id })
     })
@@ -439,14 +410,11 @@ export class ForumReplyService extends BaseService {
 
     return this.prisma.$transaction(async (tx) => {
       for (const reply of replies) {
-        await tx.forumTopic.update({
-          where: { id: reply.topicId },
-          data: {
-            replyCount: {
-              decrement: 1,
-            },
-          },
-        })
+        await this.forumCounterService.updateTopicReplyCount(
+          tx,
+          reply.topicId,
+          -1,
+        )
 
         const topic = await tx.forumTopic.findUnique({
           where: { id: reply.topicId },
@@ -454,24 +422,18 @@ export class ForumReplyService extends BaseService {
         })
 
         if (topic) {
-          await tx.forumSection.update({
-            where: { id: topic.sectionId },
-            data: {
-              replyCount: {
-                decrement: 1,
-              },
-            },
-          })
+          await this.forumCounterService.updateSectionReplyCount(
+            tx,
+            topic.sectionId,
+            -1,
+          )
         }
 
-        await tx.forumProfile.update({
-          where: { id: reply.profileId },
-          data: {
-            replyCount: {
-              decrement: 1,
-            },
-          },
-        })
+        await this.forumCounterService.updateProfileReplyCount(
+          tx,
+          reply.profileId,
+          -1,
+        )
       }
 
       const result = await tx.forumReply.deleteMany({
