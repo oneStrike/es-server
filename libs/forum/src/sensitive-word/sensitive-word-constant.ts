@@ -57,3 +57,27 @@ export enum MatchModeEnum {
   /** 正则匹配 */
   REGEX = 3,
 }
+
+/**
+ * 统计类型
+ */
+export enum StatisticsTypeEnum {
+  /** 按级别统计 */
+  LEVEL = 'level',
+  /** 按类型统计 */
+  TYPE = 'type',
+  /** 热门敏感词统计 */
+  TOP_HITS = 'topHits',
+  /** 最近命中统计 */
+  RECENT_HITS = 'recentHits',
+}
+
+/**
+ * 统计类型名称映射
+ */
+export const StatisticsTypeNames: Record<StatisticsTypeEnum, string> = {
+  [StatisticsTypeEnum.LEVEL]: '按级别统计',
+  [StatisticsTypeEnum.TYPE]: '按类型统计',
+  [StatisticsTypeEnum.TOP_HITS]: '热门敏感词统计',
+  [StatisticsTypeEnum.RECENT_HITS]: '最近命中统计',
+}

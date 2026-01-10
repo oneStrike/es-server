@@ -16,17 +16,6 @@ import { ACAutomaton, MatchResult } from './utils/ac-automaton'
 import { FuzzyMatcher, FuzzyMatchResult } from './utils/fuzzy-matcher'
 
 /**
- * 敏感词检测结果接口
- */
-export interface DetectResult {
-  hasSensitiveWord: boolean
-  matchedWords: MatchedWord[]
-  filteredText?: string
-  needReview: boolean
-  hits: MatchedWord[]
-}
-
-/**
  * 匹配到的敏感词信息接口
  */
 export interface MatchedWord {
@@ -140,11 +129,11 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @param matchMode - 匹配模式，默认为精确匹配
    * @returns 匹配的敏感词列表
    */
-  getMatchedWords(dto: SensitiveWordDetectDto): MatchedWordDto[] {
+  getMatchedWords(dto: SensitiveWordDetectDto) {
     const { content, matchMode = MatchModeEnum.EXACT } = dto
 
     if (!this.isInitialized || !content) {
-      return []
+      return {}
     }
 
     let results: (MatchResult | FuzzyMatchResult)[] = []
@@ -156,6 +145,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
     }
 
     const matchedWords: MatchedWordDto[] = []
+    let highestLevel: SensitiveWordLevelEnum | undefined
 
     results.forEach((result) => {
       const wordInfo = this.wordMap.get(result.word)
@@ -168,10 +158,17 @@ export class SensitiveWordDetectService implements OnModuleInit {
           type: wordInfo.type,
           replaceWord: wordInfo.replaceWord,
         })
+
+        if (highestLevel === undefined || wordInfo.level < highestLevel) {
+          highestLevel = wordInfo.level
+        }
       }
     })
 
-    return matchedWords
+    return {
+      hits: matchedWords,
+      highestLevel,
+    }
   }
 
   /**
@@ -184,15 +181,9 @@ export class SensitiveWordDetectService implements OnModuleInit {
       return undefined
     }
 
-    const matchedWords = this.getMatchedWords(dto)
+    const { highestLevel } = this.getMatchedWords(dto)
 
-    if (matchedWords.length === 0) {
-      return undefined
-    }
-
-    return matchedWords.reduce((highestLevel, matchedWord) => {
-      return matchedWord.level < highestLevel ? matchedWord.level : highestLevel
-    }, matchedWords[0].level)
+    return highestLevel
   }
 
   /**
@@ -200,18 +191,21 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @param dto - 替换请求对象
    * @returns 替换后的文本
    */
-  replaceSensitiveWords(dto: SensitiveWordReplaceDto): string {
+  replaceSensitiveWords(dto: SensitiveWordReplaceDto) {
     if (!this.isInitialized || !dto.content) {
       return dto.content
     }
 
-    const matchedWords = this.getMatchedWords(dto)
+    const { hits: matchedWords } = this.getMatchedWords(dto)
 
-    if (matchedWords.length === 0) {
+    if (matchedWords?.length === 0) {
       return dto.content
     }
 
-    return this.replaceWords(dto.content, matchedWords, dto.replaceChar)
+    if (matchedWords) {
+      return this.replaceWords(dto.content, matchedWords, dto.replaceChar)
+    }
+    return dto.content
   }
 
   /**

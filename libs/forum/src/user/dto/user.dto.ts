@@ -13,7 +13,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { UserStatusEnum } from '../user.constant'
+import { ProfileStatusEnum } from '../user.constant'
 
 /**
  * 基础用户个人信息数据传输对象
@@ -144,11 +144,11 @@ export class BaseForumProfileDto extends BaseDto {
 
   @ValidateEnum({
     description: '用户状态',
-    example: UserStatusEnum.NORMAL,
-    enum: UserStatusEnum,
+    example: ProfileStatusEnum.NORMAL,
+    enum: ProfileStatusEnum,
     required: true,
   })
-  status!: UserStatusEnum
+  status!: ProfileStatusEnum
 
   @ValidateString({
     description: '封禁原因',

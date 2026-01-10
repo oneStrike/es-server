@@ -1,7 +1,7 @@
 /**
  * 用户状态枚举
  */
-export enum UserStatusEnum {
+export enum ProfileStatusEnum {
   /** 正常 */
   NORMAL = 1,
   /** 禁言 */

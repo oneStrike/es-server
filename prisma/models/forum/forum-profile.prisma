@@ -1,51 +1,55 @@
 /// 论坛用户资料表 - 存储用户的论坛信息，包括积分、等级、统计数据、签名等
 model ForumProfile {
   /// 主键ID
-  id             Int                         @id @default(autoincrement())
+  id                      Int                         @id @default(autoincrement())
   /// 关联的用户ID
-  userId         Int                         @unique @map("user_id")
+  userId                  Int                         @unique @map("user_id")
   /// 论坛积分
-  points         Int                         @default(0)
+  points                  Int                         @default(0)
   /// 等级ID
-  levelId        Int                         @map("level_id")
+  levelId                 Int                         @map("level_id")
   /// 发表主题数
-  topicCount     Int                         @default(0) @map("topic_count")
+  topicCount              Int                         @default(0) @map("topic_count")
   /// 发表回复数
-  replyCount     Int                         @default(0) @map("reply_count")
+  replyCount              Int                         @default(0) @map("reply_count")
   /// 获得点赞数
-  likeCount      Int                         @default(0) @map("like_count")
+  likeCount               Int                         @default(0) @map("like_count")
   /// 获得收藏数
-  favoriteCount  Int                         @default(0) @map("favorite_count")
+  favoriteCount           Int                         @default(0) @map("favorite_count")
   /// 签名
-  signature      String?                     @db.VarChar(200)
+  signature               String?                     @db.VarChar(200)
   /// 个人简介
-  bio            String?                     @db.VarChar(500)
+  bio                     String?                     @db.VarChar(500)
   /// 用户状态（1:正常, 2:被禁言, 3:永久禁言，4:被封禁，5:永久封禁）
-  status         Int                         @default(1) @map("status")
+  status                  Int                         @default(1) @map("status")
   /// 封禁原因
-  banReason      String?                     @map("ban_reason") @db.VarChar(500)
+  banReason               String?                     @map("ban_reason") @db.VarChar(500)
   /// 封禁到期时间
-  banUntil       DateTime?                   @map("ban_until") @db.Timestamptz(6)
+  banUntil                DateTime?                   @map("ban_until") @db.Timestamptz(6)
   /// 创建时间
-  createdAt      DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt               DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt      DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt               DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
-  deletedAt      DateTime?                   @map("deleted_at") @db.Timestamptz(6)
-  moderator      ForumModerator?
-  applications   ForumModeratorApplication[] @relation("ModeratorApplicant")
-  notifications  ForumNotification[]
-  pointRecords   ForumPointRecord[]
-  level          ForumLevelRule?             @relation(fields: [levelId], references: [id])
-  user           ClientUser                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badges         ForumProfileBadge[]
-  replies        ForumReply[]
-  replyLikes     ForumReplyLike[]
-  topicFavorites ForumTopicFavorite[]
-  topicLikes     ForumTopicLike[]
-  views          ForumView[]
-  reports        ForumReport[]
-  handledReports ForumReport[]               @relation("ReportHandler")
+  deletedAt               DateTime?                   @map("deleted_at") @db.Timestamptz(6)
+  moderator               ForumModerator?
+  applications            ForumModeratorApplication[] @relation("ModeratorApplicant")
+  notifications           ForumNotification[]
+  pointRecords            ForumPointRecord[]
+  level                   ForumLevelRule?             @relation(fields: [levelId], references: [id])
+  user                    ClientUser                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badges                  ForumProfileBadge[]
+  topics                  ForumTopic[]
+  lastReplyTopics         ForumTopic[]                @relation("LastReplyUser")
+  replies                 ForumReply[]
+  replyLikes              ForumReplyLike[]
+  topicFavorites          ForumTopicFavorite[]
+  topicLikes              ForumTopicLike[]
+  views                   ForumView[]
+  reports                 ForumReport[]
+  handledReports          ForumReport[]               @relation("ReportHandler")
+  updatedConfigs          ForumConfig[]               @relation("ForumConfigUpdater")
+  operatedConfigHistories ForumConfigHistory[]        @relation("ForumConfigHistoryOperator")
 
   @@index([points])
   @@index([levelId])

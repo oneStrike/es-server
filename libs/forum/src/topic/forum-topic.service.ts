@@ -1,6 +1,5 @@
 import type {
   ForumTopicCreateInput,
-  ForumTopicUpdateInput,
   ForumTopicWhereInput,
 } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
@@ -10,8 +9,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { PointRuleTypeEnum } from '../point/point.constant'
 import { PointService } from '../point/point.service'
+import { SensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
+import { ProfileStatusEnum } from '../user/user.constant'
 import {
   CreateForumTopicDto,
   QueryForumTopicDto,
@@ -53,6 +55,39 @@ export class ForumTopicService extends BaseService {
     return this.prisma.forumProfile
   }
 
+  private get topicInclude() {
+    return {
+      section: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    }
+  }
+
+  private get topicWithTagsInclude() {
+    return {
+      ...this.topicInclude,
+      topicTags: {
+        include: {
+          tag: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          replies: true,
+          likes: true,
+        },
+      },
+    }
+  }
+
   /**
    * 创建论坛主题
    * @param createForumTopicDto - 创建论坛主题的数据传输对象
@@ -63,82 +98,44 @@ export class ForumTopicService extends BaseService {
   async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
     const { sectionId, profileId, ...topicData } = createForumTopicDto
 
-    const section = await this.forumSection.findUnique({
-      where: { id: sectionId },
-    })
-
-    if (!section) {
-      throw new BadRequestException('板块不存在')
-    }
-
-    if (!section.isEnabled) {
-      throw new BadRequestException('板块已禁用')
-    }
-
-    const profile = await this.forumProfile.findFirst({
-      where: { id: profileId, status: 1 },
-      include: {
-        user: true,
-      },
-    })
-
-    if (!profile) {
-      throw new BadRequestException('用户论坛资料不存在或已被封禁')
-    }
-
-    const detectResult = await this.sensitiveWordDetectService.detect({
-      title: topicData.title,
-      content: topicData.content,
-    })
-
-    let auditStatus = ForumTopicAuditStatusEnum.APPROVED
-    let auditReason: string | undefined
-
-    if (detectResult.hasSevere) {
-      auditStatus = ForumTopicAuditStatusEnum.PENDING
-      auditReason = '包含严重敏感词，需要审核'
-    }
+    const { hits, highestLevel } =
+      this.sensitiveWordDetectService.getMatchedWords({
+        content: topicData.content + topicData.title,
+      })
 
     const createPayload: ForumTopicCreateInput = {
       ...topicData,
       section: {
-        connect: { id: sectionId },
+        connect: { id: sectionId, isEnabled: true },
       },
-      user: {
-        connect: { id: profileId },
+      profile: {
+        connect: { id: profileId, status: ProfileStatusEnum.NORMAL },
       },
-      viewCount: 0,
-      replyCount: 0,
-      likeCount: 0,
-      auditStatus,
-      auditReason,
-      sensitiveWordHits: detectResult.hits.length > 0 ? detectResult.hits : null,
+    }
+    if (highestLevel) {
+      createPayload.sensitiveWordHits = JSON.stringify(hits)
+      if (highestLevel >= SensitiveWordLevelEnum.SEVERE) {
+        createPayload.isHidden = true
+        createPayload.auditStatus = ForumTopicAuditStatusEnum.PENDING
+      }
     }
 
     const topic = await this.forumTopic.create({
       data: createPayload,
-      include: {
-        section: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
-          },
-        },
+      omit: {
+        version: true,
+        deletedAt: true,
+        sensitiveWordHits: true,
       },
     })
 
-    if (detectResult.hits.length > 0) {
-      await this.sensitiveWordDetectService.updateHitCount(detectResult.hits)
+    if (topic.auditStatus !== ForumTopicAuditStatusEnum.PENDING) {
+      await this.pointService.addPoints({
+        profileId,
+        ruleType: PointRuleTypeEnum.CREATE_TOPIC,
+        remark: `创建主题 ${topic.id}`,
+      })
     }
-
-    await this.pointService.addPoint(profile.userId, 'CREATE_TOPIC', topic.id)
 
     return topic
   }
@@ -153,34 +150,11 @@ export class ForumTopicService extends BaseService {
     const topic = await this.forumTopic.findUnique({
       where: { id, deletedAt: null },
       include: {
-        section: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
-            level: true,
-          },
-        },
-        topicTags: {
+        topicTags: true,
+        section: true,
+        profile: {
           include: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        _count: {
-          select: {
-            replies: true,
-            likes: true,
+            user: true,
           },
         },
       },
@@ -199,23 +173,17 @@ export class ForumTopicService extends BaseService {
    * @returns 分页的论坛主题列表
    */
   async getForumTopics(queryForumTopicDto: QueryForumTopicDto) {
-    const {
-      keyword,
-      sectionId,
-      profileId,
-      isPinned,
-      isFeatured,
-      isLocked,
-      isHidden,
-      auditStatus,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-      pageIndex = 0,
-      pageSize = 15,
-    } = queryForumTopicDto
+    const { keyword, sectionId, profileId, ...otherDto } = queryForumTopicDto
 
     const where: ForumTopicWhereInput = {
+      ...otherDto,
       deletedAt: null,
+      section: {
+        id: sectionId,
+      },
+      profile: {
+        id: profileId,
+      },
     }
 
     if (keyword) {
@@ -225,74 +193,8 @@ export class ForumTopicService extends BaseService {
       ]
     }
 
-    if (sectionId) {
-      where.sectionId = sectionId
-    }
-
-    if (profileId) {
-      where.profileId = profileId
-    }
-
-    if (isPinned !== undefined) {
-      where.isPinned = isPinned
-    }
-
-    if (isFeatured !== undefined) {
-      where.isFeatured = isFeatured
-    }
-
-    if (isLocked !== undefined) {
-      where.isLocked = isLocked
-    }
-
-    if (isHidden !== undefined) {
-      where.isHidden = isHidden
-    }
-
-    if (auditStatus !== undefined) {
-      where.auditStatus = auditStatus
-    }
-
-    const orderBy = {
-      [sortBy]: sortOrder,
-    }
-
     return this.forumTopic.findPagination({
       where,
-      include: {
-        section: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
-          },
-        },
-        topicTags: {
-          include: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        _count: {
-          select: {
-            replies: true,
-            likes: true,
-          },
-        },
-      },
-      orderBy,
-      pageIndex,
-      pageSize,
     })
   }
 
@@ -318,27 +220,10 @@ export class ForumTopicService extends BaseService {
       throw new BadRequestException('主题已锁定，无法编辑')
     }
 
-    const updatePayload: ForumTopicUpdateInput = {
-      ...updateData,
-    }
-
     const updatedTopic = await this.forumTopic.update({
       where: { id },
-      data: updatePayload,
-      include: {
-        section: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-          },
-        },
-      },
+      data: updateData,
+      include: this.topicInclude,
     })
 
     return updatedTopic
@@ -359,18 +244,22 @@ export class ForumTopicService extends BaseService {
       throw new NotFoundException('主题不存在')
     }
 
-    await this.prisma.$transaction([
-      this.prisma.forumReply.updateMany({
-        where: { topicId: id },
-        data: { deletedAt: new Date() },
-      }),
-      this.prisma.forumTopic.update({
-        where: { id },
-        data: { deletedAt: new Date() },
-      }),
-    ])
+    await this.prisma.$transaction(async (tx) => {
+      await tx.forumReply.softDeleteMany({ topicId: id })
+      await tx.forumTopic.softDelete({ id })
+    })
 
-    return { success: true }
+    return topic
+  }
+
+  private async updateTopicStatus(id: number, updateData: Record<string, any>) {
+    const topic = await this.forumTopic.update({
+      where: { id, deletedAt: null },
+      data: updateData,
+      include: this.topicInclude,
+    })
+
+    return topic
   }
 
   /**
@@ -380,22 +269,9 @@ export class ForumTopicService extends BaseService {
    * @throws {NotFoundException} 主题不存在
    */
   async updateTopicPinned(updateTopicPinnedDto: UpdateTopicPinnedDto) {
-    const { id, isPinned } = updateTopicPinnedDto
-
-    const topic = await this.forumTopic.findUnique({
-      where: { id, deletedAt: null },
+    return this.updateTopicStatus(updateTopicPinnedDto.id, {
+      isPinned: updateTopicPinnedDto.isPinned,
     })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
-      data: { isPinned },
-    })
-
-    return updatedTopic
   }
 
   /**
@@ -405,22 +281,9 @@ export class ForumTopicService extends BaseService {
    * @throws {NotFoundException} 主题不存在
    */
   async updateTopicFeatured(updateTopicFeaturedDto: UpdateTopicFeaturedDto) {
-    const { id, isFeatured } = updateTopicFeaturedDto
-
-    const topic = await this.forumTopic.findUnique({
-      where: { id, deletedAt: null },
+    return this.updateTopicStatus(updateTopicFeaturedDto.id, {
+      isFeatured: updateTopicFeaturedDto.isFeatured,
     })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
-      data: { isFeatured },
-    })
-
-    return updatedTopic
   }
 
   /**
@@ -430,22 +293,9 @@ export class ForumTopicService extends BaseService {
    * @throws {NotFoundException} 主题不存在
    */
   async updateTopicLocked(updateTopicLockedDto: UpdateTopicLockedDto) {
-    const { id, isLocked } = updateTopicLockedDto
-
-    const topic = await this.forumTopic.findUnique({
-      where: { id, deletedAt: null },
+    return this.updateTopicStatus(updateTopicLockedDto.id, {
+      isLocked: updateTopicLockedDto.isLocked,
     })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
-      data: { isLocked },
-    })
-
-    return updatedTopic
   }
 
   /**
@@ -455,22 +305,9 @@ export class ForumTopicService extends BaseService {
    * @throws {NotFoundException} 主题不存在
    */
   async updateTopicHidden(updateTopicHiddenDto: UpdateTopicHiddenDto) {
-    const { id, isHidden } = updateTopicHiddenDto
-
-    const topic = await this.forumTopic.findUnique({
-      where: { id, deletedAt: null },
+    return this.updateTopicStatus(updateTopicHiddenDto.id, {
+      isHidden: updateTopicHiddenDto.isHidden,
     })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
-      data: { isHidden },
-    })
-
-    return updatedTopic
   }
 
   /**
@@ -483,24 +320,10 @@ export class ForumTopicService extends BaseService {
     updateTopicAuditStatusDto: UpdateTopicAuditStatusDto,
   ) {
     const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
-
-    const topic = await this.forumTopic.findUnique({
-      where: { id, deletedAt: null },
+    return this.updateTopicStatus(id, {
+      auditStatus,
+      auditReason,
     })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
-      data: {
-        auditStatus,
-        auditReason,
-      },
-    })
-
-    return updatedTopic
   }
 
   /**
@@ -510,60 +333,34 @@ export class ForumTopicService extends BaseService {
    * @throws {NotFoundException} 主题不存在
    */
   async incrementViewCount(id: number) {
-    const topic = await this.forumTopic.findUnique({
+    return this.forumTopic.update({
       where: { id, deletedAt: null },
-    })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
       data: {
         viewCount: {
           increment: 1,
         },
       },
     })
-
-    return updatedTopic
   }
 
   /**
    * 增加主题回复数并更新最后回复信息
    * @param id - 论坛主题ID
    * @param replyProfileId - 回复者资料ID
-   * @param replyNickname - 回复者昵称
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async incrementReplyCount(
-    id: number,
-    replyProfileId: number,
-    replyNickname: string,
-  ) {
-    const topic = await this.forumTopic.findUnique({
+  async incrementReplyCount(id: number, replyProfileId: number) {
+    return this.forumTopic.update({
       where: { id, deletedAt: null },
-    })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
       data: {
         replyCount: {
           increment: 1,
         },
         lastReplyProfileId: replyProfileId,
-        lastReplyNickname: replyNickname,
-        lastReplyAt: Date.now(),
+        lastReplyAt: new Date(),
       },
     })
-
-    return updatedTopic
   }
 
   /**
@@ -573,24 +370,14 @@ export class ForumTopicService extends BaseService {
    * @throws {NotFoundException} 主题不存在
    */
   async incrementLikeCount(id: number) {
-    const topic = await this.forumTopic.findUnique({
+    return this.forumTopic.update({
       where: { id, deletedAt: null },
-    })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
       data: {
         likeCount: {
           increment: 1,
         },
       },
     })
-
-    return updatedTopic
   }
 
   /**
@@ -600,23 +387,13 @@ export class ForumTopicService extends BaseService {
    * @throws {NotFoundException} 主题不存在
    */
   async decrementLikeCount(id: number) {
-    const topic = await this.forumTopic.findUnique({
+    return this.forumTopic.update({
       where: { id, deletedAt: null },
-    })
-
-    if (!topic) {
-      throw new NotFoundException('主题不存在')
-    }
-
-    const updatedTopic = await this.forumTopic.update({
-      where: { id },
       data: {
         likeCount: {
           decrement: 1,
         },
       },
     })
-
-    return updatedTopic
   }
 }

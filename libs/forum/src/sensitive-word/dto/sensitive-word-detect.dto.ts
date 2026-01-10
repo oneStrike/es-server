@@ -79,6 +79,7 @@ export class MatchedWordDto {
     description: '替换词',
     example: '***',
     required: false,
+    type: String,
   })
   replaceWord?: string | null
 }

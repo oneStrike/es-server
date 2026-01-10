@@ -58,6 +58,8 @@ export const ModelName = {
   ClientPage: 'ClientPage',
   ClientUser: 'ClientUser',
   ForumBadge: 'ForumBadge',
+  ForumConfigHistory: 'ForumConfigHistory',
+  ForumConfig: 'ForumConfig',
   ForumLevelRule: 'ForumLevelRule',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
   ForumModeratorApplication: 'ForumModeratorApplication',
@@ -233,6 +235,62 @@ export const ForumBadgeScalarFieldEnum = {
 export type ForumBadgeScalarFieldEnum = (typeof ForumBadgeScalarFieldEnum)[keyof typeof ForumBadgeScalarFieldEnum]
 
 
+export const ForumConfigHistoryScalarFieldEnum = {
+  id: 'id',
+  configId: 'configId',
+  changes: 'changes',
+  changeType: 'changeType',
+  reason: 'reason',
+  operatedById: 'operatedById',
+  operatedAt: 'operatedAt',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent'
+} as const
+
+export type ForumConfigHistoryScalarFieldEnum = (typeof ForumConfigHistoryScalarFieldEnum)[keyof typeof ForumConfigHistoryScalarFieldEnum]
+
+
+export const ForumConfigScalarFieldEnum = {
+  id: 'id',
+  siteName: 'siteName',
+  siteDescription: 'siteDescription',
+  siteKeywords: 'siteKeywords',
+  siteLogo: 'siteLogo',
+  siteFavicon: 'siteFavicon',
+  contactEmail: 'contactEmail',
+  icpNumber: 'icpNumber',
+  topicTitleMaxLength: 'topicTitleMaxLength',
+  topicContentMaxLength: 'topicContentMaxLength',
+  replyContentMaxLength: 'replyContentMaxLength',
+  reviewPolicy: 'reviewPolicy',
+  allowAnonymousView: 'allowAnonymousView',
+  allowAnonymousPost: 'allowAnonymousPost',
+  allowAnonymousReply: 'allowAnonymousReply',
+  allowUserRegister: 'allowUserRegister',
+  registerRequireEmailVerify: 'registerRequireEmailVerify',
+  registerRequirePhoneVerify: 'registerRequirePhoneVerify',
+  usernameMinLength: 'usernameMinLength',
+  usernameMaxLength: 'usernameMaxLength',
+  signatureMaxLength: 'signatureMaxLength',
+  bioMaxLength: 'bioMaxLength',
+  defaultPointsForNewUser: 'defaultPointsForNewUser',
+  enableEmailNotification: 'enableEmailNotification',
+  enableInAppNotification: 'enableInAppNotification',
+  enableNewTopicNotification: 'enableNewTopicNotification',
+  enableNewReplyNotification: 'enableNewReplyNotification',
+  enableLikeNotification: 'enableLikeNotification',
+  enableFavoriteNotification: 'enableFavoriteNotification',
+  enableSystemNotification: 'enableSystemNotification',
+  enableMaintenanceMode: 'enableMaintenanceMode',
+  maintenanceMessage: 'maintenanceMessage',
+  updatedById: 'updatedById',
+  updatedAt: 'updatedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type ForumConfigScalarFieldEnum = (typeof ForumConfigScalarFieldEnum)[keyof typeof ForumConfigScalarFieldEnum]
+
+
 export const ForumLevelRuleScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -279,7 +337,7 @@ export const ForumModeratorApplicationScalarFieldEnum = {
   permissions: 'permissions',
   reason: 'reason',
   status: 'status',
-  auditBy: 'auditBy',
+  auditById: 'auditById',
   auditAt: 'auditAt',
   auditReason: 'auditReason',
   remark: 'remark',
@@ -305,7 +363,7 @@ export type ForumModeratorSectionScalarFieldEnum = (typeof ForumModeratorSection
 
 export const ForumModeratorScalarFieldEnum = {
   id: 'id',
-  userId: 'userId',
+  profileId: 'profileId',
   roleType: 'roleType',
   groupId: 'groupId',
   permissions: 'permissions',
@@ -420,7 +478,7 @@ export const ForumReplyScalarFieldEnum = {
   auditStatus: 'auditStatus',
   auditReason: 'auditReason',
   auditAt: 'auditAt',
-  auditBy: 'auditBy',
+  auditById: 'auditById',
   auditRole: 'auditRole',
   likeCount: 'likeCount',
   createdAt: 'createdAt',
@@ -560,7 +618,7 @@ export const ForumTopicScalarFieldEnum = {
   title: 'title',
   content: 'content',
   sectionId: 'sectionId',
-  userId: 'userId',
+  profileId: 'profileId',
   isPinned: 'isPinned',
   isFeatured: 'isFeatured',
   isLocked: 'isLocked',
@@ -568,14 +626,14 @@ export const ForumTopicScalarFieldEnum = {
   auditStatus: 'auditStatus',
   auditReason: 'auditReason',
   auditAt: 'auditAt',
-  auditBy: 'auditBy',
+  auditById: 'auditById',
   auditRole: 'auditRole',
   viewCount: 'viewCount',
   replyCount: 'replyCount',
   likeCount: 'likeCount',
   favoriteCount: 'favoriteCount',
   lastReplyAt: 'lastReplyAt',
-  lastReplyUserId: 'lastReplyUserId',
+  lastReplyProfileId: 'lastReplyProfileId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt',
@@ -855,6 +913,13 @@ export const SortOrder = {
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: 'JsonNull'
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const NullableJsonNullValueInput = {

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common'
 import { PointModule } from '../point/point.module'
 import { SensitiveWordModule } from '../sensitive-word/sensitive-word.module'
-import { ForumTopicController } from './forum-topic.controller'
 import { ForumTopicService } from './forum-topic.service'
 
 /**
@@ -10,7 +9,7 @@ import { ForumTopicService } from './forum-topic.service'
  */
 @Module({
   imports: [PointModule, SensitiveWordModule],
-  controllers: [ForumTopicController],
+  controllers: [],
   providers: [ForumTopicService],
   exports: [ForumTopicService],
 })

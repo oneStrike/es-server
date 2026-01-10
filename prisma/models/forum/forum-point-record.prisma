@@ -3,7 +3,7 @@ model ForumPointRecord {
   /// 主键ID
   id           Int             @id @default(autoincrement())
   /// 关联的用户ID
-  profileId       Int             @map("user_id")
+  profileId    Int             @map("user_id")
   /// 关联的规则ID
   ruleId       Int?            @map("rule_id")
   /// 积分变化（正数为获得，负数为消费）

@@ -28,7 +28,7 @@ export type AggregateForumModerator = {
 
 export type ForumModeratorAvgAggregateOutputType = {
   id: number | null
-  userId: number | null
+  profileId: number | null
   roleType: number | null
   groupId: number | null
   permissions: number | null
@@ -36,7 +36,7 @@ export type ForumModeratorAvgAggregateOutputType = {
 
 export type ForumModeratorSumAggregateOutputType = {
   id: number | null
-  userId: number | null
+  profileId: number | null
   roleType: number | null
   groupId: number | null
   permissions: number[]
@@ -44,7 +44,7 @@ export type ForumModeratorSumAggregateOutputType = {
 
 export type ForumModeratorMinAggregateOutputType = {
   id: number | null
-  userId: number | null
+  profileId: number | null
   roleType: number | null
   groupId: number | null
   isEnabled: boolean | null
@@ -56,7 +56,7 @@ export type ForumModeratorMinAggregateOutputType = {
 
 export type ForumModeratorMaxAggregateOutputType = {
   id: number | null
-  userId: number | null
+  profileId: number | null
   roleType: number | null
   groupId: number | null
   isEnabled: boolean | null
@@ -68,7 +68,7 @@ export type ForumModeratorMaxAggregateOutputType = {
 
 export type ForumModeratorCountAggregateOutputType = {
   id: number
-  userId: number
+  profileId: number
   roleType: number
   groupId: number
   permissions: number
@@ -83,7 +83,7 @@ export type ForumModeratorCountAggregateOutputType = {
 
 export type ForumModeratorAvgAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   roleType?: true
   groupId?: true
   permissions?: true
@@ -91,7 +91,7 @@ export type ForumModeratorAvgAggregateInputType = {
 
 export type ForumModeratorSumAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   roleType?: true
   groupId?: true
   permissions?: true
@@ -99,7 +99,7 @@ export type ForumModeratorSumAggregateInputType = {
 
 export type ForumModeratorMinAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   roleType?: true
   groupId?: true
   isEnabled?: true
@@ -111,7 +111,7 @@ export type ForumModeratorMinAggregateInputType = {
 
 export type ForumModeratorMaxAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   roleType?: true
   groupId?: true
   isEnabled?: true
@@ -123,7 +123,7 @@ export type ForumModeratorMaxAggregateInputType = {
 
 export type ForumModeratorCountAggregateInputType = {
   id?: true
-  userId?: true
+  profileId?: true
   roleType?: true
   groupId?: true
   permissions?: true
@@ -223,7 +223,7 @@ export type ForumModeratorGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 
 export type ForumModeratorGroupByOutputType = {
   id: number
-  userId: number
+  profileId: number
   roleType: number
   groupId: number | null
   permissions: number[]
@@ -259,7 +259,7 @@ export type ForumModeratorWhereInput = {
   OR?: Prisma.ForumModeratorWhereInput[]
   NOT?: Prisma.ForumModeratorWhereInput | Prisma.ForumModeratorWhereInput[]
   id?: Prisma.IntFilter<"ForumModerator"> | number
-  userId?: Prisma.IntFilter<"ForumModerator"> | number
+  profileId?: Prisma.IntFilter<"ForumModerator"> | number
   roleType?: Prisma.IntFilter<"ForumModerator"> | number
   groupId?: Prisma.IntNullableFilter<"ForumModerator"> | number | null
   permissions?: Prisma.IntNullableListFilter<"ForumModerator">
@@ -276,7 +276,7 @@ export type ForumModeratorWhereInput = {
 
 export type ForumModeratorOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   roleType?: Prisma.SortOrder
   groupId?: Prisma.SortOrderInput | Prisma.SortOrder
   permissions?: Prisma.SortOrder
@@ -293,7 +293,7 @@ export type ForumModeratorOrderByWithRelationInput = {
 
 export type ForumModeratorWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  userId?: number
+  profileId?: number
   AND?: Prisma.ForumModeratorWhereInput | Prisma.ForumModeratorWhereInput[]
   OR?: Prisma.ForumModeratorWhereInput[]
   NOT?: Prisma.ForumModeratorWhereInput | Prisma.ForumModeratorWhereInput[]
@@ -309,11 +309,11 @@ export type ForumModeratorWhereUniqueInput = Prisma.AtLeast<{
   group?: Prisma.XOR<Prisma.ForumSectionGroupNullableScalarRelationFilter, Prisma.ForumSectionGroupWhereInput> | null
   actionLogs?: Prisma.ForumModeratorActionLogListRelationFilter
   sections?: Prisma.ForumModeratorSectionListRelationFilter
-}, "id" | "userId">
+}, "id" | "profileId">
 
 export type ForumModeratorOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   roleType?: Prisma.SortOrder
   groupId?: Prisma.SortOrderInput | Prisma.SortOrder
   permissions?: Prisma.SortOrder
@@ -334,7 +334,7 @@ export type ForumModeratorScalarWhereWithAggregatesInput = {
   OR?: Prisma.ForumModeratorScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ForumModeratorScalarWhereWithAggregatesInput | Prisma.ForumModeratorScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumModerator"> | number
-  userId?: Prisma.IntWithAggregatesFilter<"ForumModerator"> | number
+  profileId?: Prisma.IntWithAggregatesFilter<"ForumModerator"> | number
   roleType?: Prisma.IntWithAggregatesFilter<"ForumModerator"> | number
   groupId?: Prisma.IntNullableWithAggregatesFilter<"ForumModerator"> | number | null
   permissions?: Prisma.IntNullableListFilter<"ForumModerator">
@@ -361,7 +361,7 @@ export type ForumModeratorCreateInput = {
 
 export type ForumModeratorUncheckedCreateInput = {
   id?: number
-  userId: number
+  profileId: number
   roleType?: number
   groupId?: number | null
   permissions?: Prisma.ForumModeratorCreatepermissionsInput | number[]
@@ -390,7 +390,7 @@ export type ForumModeratorUpdateInput = {
 
 export type ForumModeratorUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   roleType?: Prisma.IntFieldUpdateOperationsInput | number
   groupId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   permissions?: Prisma.ForumModeratorUpdatepermissionsInput | number[]
@@ -405,7 +405,7 @@ export type ForumModeratorUncheckedUpdateInput = {
 
 export type ForumModeratorCreateManyInput = {
   id?: number
-  userId: number
+  profileId: number
   roleType?: number
   groupId?: number | null
   permissions?: Prisma.ForumModeratorCreatepermissionsInput | number[]
@@ -428,7 +428,7 @@ export type ForumModeratorUpdateManyMutationInput = {
 
 export type ForumModeratorUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   roleType?: Prisma.IntFieldUpdateOperationsInput | number
   groupId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   permissions?: Prisma.ForumModeratorUpdatepermissionsInput | number[]
@@ -446,7 +446,7 @@ export type ForumModeratorScalarRelationFilter = {
 
 export type ForumModeratorCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   roleType?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   permissions?: Prisma.SortOrder
@@ -459,7 +459,7 @@ export type ForumModeratorCountOrderByAggregateInput = {
 
 export type ForumModeratorAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   roleType?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   permissions?: Prisma.SortOrder
@@ -467,7 +467,7 @@ export type ForumModeratorAvgOrderByAggregateInput = {
 
 export type ForumModeratorMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   roleType?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
@@ -479,7 +479,7 @@ export type ForumModeratorMaxOrderByAggregateInput = {
 
 export type ForumModeratorMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   roleType?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
@@ -491,7 +491,7 @@ export type ForumModeratorMinOrderByAggregateInput = {
 
 export type ForumModeratorSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   roleType?: Prisma.SortOrder
   groupId?: Prisma.SortOrder
   permissions?: Prisma.SortOrder
@@ -638,7 +638,7 @@ export type ForumModeratorCreateWithoutActionLogsInput = {
 
 export type ForumModeratorUncheckedCreateWithoutActionLogsInput = {
   id?: number
-  userId: number
+  profileId: number
   roleType?: number
   groupId?: number | null
   permissions?: Prisma.ForumModeratorCreatepermissionsInput | number[]
@@ -681,7 +681,7 @@ export type ForumModeratorUpdateWithoutActionLogsInput = {
 
 export type ForumModeratorUncheckedUpdateWithoutActionLogsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   roleType?: Prisma.IntFieldUpdateOperationsInput | number
   groupId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   permissions?: Prisma.ForumModeratorUpdatepermissionsInput | number[]
@@ -708,7 +708,7 @@ export type ForumModeratorCreateWithoutSectionsInput = {
 
 export type ForumModeratorUncheckedCreateWithoutSectionsInput = {
   id?: number
-  userId: number
+  profileId: number
   roleType?: number
   groupId?: number | null
   permissions?: Prisma.ForumModeratorCreatepermissionsInput | number[]
@@ -751,7 +751,7 @@ export type ForumModeratorUpdateWithoutSectionsInput = {
 
 export type ForumModeratorUncheckedUpdateWithoutSectionsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   roleType?: Prisma.IntFieldUpdateOperationsInput | number
   groupId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   permissions?: Prisma.ForumModeratorUpdatepermissionsInput | number[]
@@ -848,7 +848,7 @@ export type ForumModeratorCreateWithoutGroupInput = {
 
 export type ForumModeratorUncheckedCreateWithoutGroupInput = {
   id?: number
-  userId: number
+  profileId: number
   roleType?: number
   permissions?: Prisma.ForumModeratorCreatepermissionsInput | number[]
   isEnabled?: boolean
@@ -891,7 +891,7 @@ export type ForumModeratorScalarWhereInput = {
   OR?: Prisma.ForumModeratorScalarWhereInput[]
   NOT?: Prisma.ForumModeratorScalarWhereInput | Prisma.ForumModeratorScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumModerator"> | number
-  userId?: Prisma.IntFilter<"ForumModerator"> | number
+  profileId?: Prisma.IntFilter<"ForumModerator"> | number
   roleType?: Prisma.IntFilter<"ForumModerator"> | number
   groupId?: Prisma.IntNullableFilter<"ForumModerator"> | number | null
   permissions?: Prisma.IntNullableListFilter<"ForumModerator">
@@ -904,7 +904,7 @@ export type ForumModeratorScalarWhereInput = {
 
 export type ForumModeratorCreateManyGroupInput = {
   id?: number
-  userId: number
+  profileId: number
   roleType?: number
   permissions?: Prisma.ForumModeratorCreatepermissionsInput | number[]
   isEnabled?: boolean
@@ -929,7 +929,7 @@ export type ForumModeratorUpdateWithoutGroupInput = {
 
 export type ForumModeratorUncheckedUpdateWithoutGroupInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   roleType?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorUpdatepermissionsInput | number[]
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -943,7 +943,7 @@ export type ForumModeratorUncheckedUpdateWithoutGroupInput = {
 
 export type ForumModeratorUncheckedUpdateManyWithoutGroupInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   roleType?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorUpdatepermissionsInput | number[]
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -995,7 +995,7 @@ export type ForumModeratorCountOutputTypeCountSectionsArgs<ExtArgs extends runti
 
 export type ForumModeratorSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  userId?: boolean
+  profileId?: boolean
   roleType?: boolean
   groupId?: boolean
   permissions?: boolean
@@ -1013,7 +1013,7 @@ export type ForumModeratorSelect<ExtArgs extends runtime.Types.Extensions.Intern
 
 export type ForumModeratorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  userId?: boolean
+  profileId?: boolean
   roleType?: boolean
   groupId?: boolean
   permissions?: boolean
@@ -1028,7 +1028,7 @@ export type ForumModeratorSelectCreateManyAndReturn<ExtArgs extends runtime.Type
 
 export type ForumModeratorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  userId?: boolean
+  profileId?: boolean
   roleType?: boolean
   groupId?: boolean
   permissions?: boolean
@@ -1043,7 +1043,7 @@ export type ForumModeratorSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
 
 export type ForumModeratorSelectScalar = {
   id?: boolean
-  userId?: boolean
+  profileId?: boolean
   roleType?: boolean
   groupId?: boolean
   permissions?: boolean
@@ -1054,7 +1054,7 @@ export type ForumModeratorSelectScalar = {
   deletedAt?: boolean
 }
 
-export type ForumModeratorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "roleType" | "groupId" | "permissions" | "isEnabled" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumModerator"]>
+export type ForumModeratorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "profileId" | "roleType" | "groupId" | "permissions" | "isEnabled" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumModerator"]>
 export type ForumModeratorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
   group?: boolean | Prisma.ForumModerator$groupArgs<ExtArgs>
@@ -1085,9 +1085,9 @@ export type $ForumModeratorPayload<ExtArgs extends runtime.Types.Extensions.Inte
      */
     id: number
     /**
-     * 关联的用户ID
+     * 关联的论坛资料ID
      */
-    userId: number
+    profileId: number
     /**
      * 版主角色类型（1=超级版主，2=分组版主，3=板块版主）
      */
@@ -1548,7 +1548,7 @@ export interface Prisma__ForumModeratorClient<T, Null = never, ExtArgs extends r
  */
 export interface ForumModeratorFieldRefs {
   readonly id: Prisma.FieldRef<"ForumModerator", 'Int'>
-  readonly userId: Prisma.FieldRef<"ForumModerator", 'Int'>
+  readonly profileId: Prisma.FieldRef<"ForumModerator", 'Int'>
   readonly roleType: Prisma.FieldRef<"ForumModerator", 'Int'>
   readonly groupId: Prisma.FieldRef<"ForumModerator", 'Int'>
   readonly permissions: Prisma.FieldRef<"ForumModerator", 'Int[]'>

@@ -2,8 +2,8 @@
 model ForumModerator {
   /// 主键ID
   id          Int                       @id @default(autoincrement())
-  /// 关联的用户ID
-  userId      Int                       @unique @map("user_id")
+  /// 关联的论坛资料ID
+  profileId   Int                       @unique @map("profile_id")
   /// 版主角色类型（1=超级版主，2=分组版主，3=板块版主）
   roleType    Int                       @default(3) @map("role_type")
   /// 关联的分组ID（分组版主时必填）
@@ -20,7 +20,7 @@ model ForumModerator {
   updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
   deletedAt   DateTime?                 @map("deleted_at") @db.Timestamptz(6)
-  profile     ForumProfile              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile     ForumProfile              @relation(fields: [profileId], references: [id], onDelete: Cascade)
   group       ForumSectionGroup?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
   actionLogs  ForumModeratorActionLog[]
   sections    ForumModeratorSection[]

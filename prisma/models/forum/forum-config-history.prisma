@@ -1,0 +1,33 @@
+/// 论坛配置历史表 - 记录配置项的变更历史，支持版本控制和回滚功能
+model ForumConfigHistory {
+  /// 主键ID
+  id           Int      @id @default(autoincrement())
+  /// 配置ID
+  configId     Int      @map("config_id")
+  /// 变更的配置项（JSON格式，存储字段名和变更详情）
+  /// 示例：{"siteName": {"old": "旧站点名", "new": "新站点名"}, "topicTitleMaxLength": {"old": 200, "new": 300}}
+  changes      Json     @map("changes") @db.JsonB
+  /// 变更类型（create, update, restore）
+  changeType   String   @map("change_type") @db.VarChar(20)
+  /// 变更原因
+  reason       String?  @map("reason") @db.VarChar(500)
+  /// 操作人ID
+  operatedById Int?     @map("operated_by_id")
+  /// 操作时间
+  operatedAt   DateTime @default(now()) @map("operated_at") @db.Timestamptz(6)
+  /// IP地址
+  ipAddress    String?  @map("ip_address") @db.VarChar(50)
+  /// 用户代理
+  userAgent    String?  @map("user_agent") @db.VarChar(500)
+
+  /// 配置
+  config     ForumConfig   @relation(fields: [configId], references: [id], onDelete: Cascade)
+  /// 操作人
+  operatedBy ForumProfile? @relation("ForumConfigHistoryOperator", fields: [operatedById], references: [id])
+
+  @@index([configId])
+  @@index([changeType])
+  @@index([operatedById])
+  @@index([operatedAt])
+  @@map("forum_config_history")
+}

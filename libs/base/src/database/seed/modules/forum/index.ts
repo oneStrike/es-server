@@ -1,4 +1,5 @@
 export { createInitialForumBadges } from './badge'
+export { createInitialForumConfig } from './config'
 export { createInitialForumLevelRules } from './level-rule'
 export { createInitialForumPointRules } from './point-rule'
 export { createInitialForumSections } from './section'

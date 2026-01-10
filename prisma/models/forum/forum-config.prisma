@@ -1,0 +1,96 @@
+/// 论坛配置表 - 存储论坛系统的各项配置，采用直接字段方式定义
+model ForumConfig {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  // ========== 基础配置 ==========
+  /// 站点名称
+  siteName        String  @map("site_name") @db.VarChar(100)
+  /// 站点描述
+  siteDescription String? @map("site_description") @db.VarChar(500)
+  /// 站点关键词
+  siteKeywords    String? @map("site_keywords") @db.VarChar(200)
+  /// 站点Logo URL
+  siteLogo        String? @map("site_logo") @db.VarChar(255)
+  /// 站点Favicon URL
+  siteFavicon     String? @map("site_favicon") @db.VarChar(255)
+  /// 联系邮箱
+  contactEmail    String? @map("contact_email") @db.VarChar(100)
+  /// 备案号
+  icpNumber       String? @map("icp_number") @db.VarChar(50)
+
+  // ========== 内容管理配置 ==========
+  /// 主题标题最大长度
+  topicTitleMaxLength   Int     @default(200) @map("topic_title_max_length")
+  /// 主题内容最大长度
+  topicContentMaxLength Int     @default(10000) @map("topic_content_max_length")
+  /// 回复内容最大长度
+  replyContentMaxLength Int     @default(5000) @map("reply_content_max_length")
+  /// 审核策略（0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）
+  reviewPolicy     Int     @default(1) @map("review_policy")
+  /// 是否允许匿名浏览
+  allowAnonymousView    Boolean @default(true) @map("allow_anonymous_view")
+  /// 是否允许匿名发帖
+  allowAnonymousPost    Boolean @default(false) @map("allow_anonymous_post")
+  /// 是否允许匿名回复
+  allowAnonymousReply   Boolean @default(false) @map("allow_anonymous_reply")
+
+  // ========== 用户管理配置 ==========
+  /// 是否允许用户注册
+  allowUserRegister          Boolean @default(true) @map("allow_user_register")
+  /// 注册是否需要邮箱验证
+  registerRequireEmailVerify Boolean @default(true) @map("register_require_email_verify")
+  /// 注册是否需要手机验证
+  registerRequirePhoneVerify Boolean @default(false) @map("register_require_phone_verify")
+  /// 用户名最小长度
+  usernameMinLength          Int     @default(3) @map("username_min_length")
+  /// 用户名最大长度
+  usernameMaxLength          Int     @default(20) @map("username_max_length")
+  /// 签名最大长度
+  signatureMaxLength         Int     @default(200) @map("signature_max_length")
+  /// 个人简介最大长度
+  bioMaxLength               Int     @default(500) @map("bio_max_length")
+  /// 新注册用户默认发放的积分
+  defaultPointsForNewUser    Int     @default(100) @map("default_points_for_new_user")
+
+
+  // ========== 通知配置 ==========
+  /// 是否启用邮件通知
+  enableEmailNotification    Boolean @default(true) @map("enable_email_notification")
+  /// 是否启用站内通知
+  enableInAppNotification    Boolean @default(true) @map("enable_in_app_notification")
+  /// 是否启用新主题通知
+  enableNewTopicNotification Boolean @default(true) @map("enable_new_topic_notification")
+  /// 是否启用新回复通知
+  enableNewReplyNotification Boolean @default(true) @map("enable_new_reply_notification")
+  /// 是否启用点赞通知
+  enableLikeNotification     Boolean @default(true) @map("enable_like_notification")
+  /// 是否启用收藏通知
+  enableFavoriteNotification Boolean @default(true) @map("enable_favorite_notification")
+  /// 是否启用系统通知
+  enableSystemNotification   Boolean @default(true) @map("enable_system_notification")
+
+
+  // ========== 其他配置 ==========
+  /// 是否启用站点维护模式
+  enableMaintenanceMode   Boolean @default(false) @map("enable_maintenance_mode")
+  /// 维护模式提示信息
+  maintenanceMessage      String? @map("maintenance_message") @db.VarChar(500)
+
+  // ========== 审计字段 ==========
+  /// 最后修改人ID
+  updatedById Int?     @map("updated_by_id")
+  /// 最后修改时间
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 配置历史记录
+  histories ForumConfigHistory[]
+  /// 最后修改人
+  updatedBy ForumProfile?        @relation("ForumConfigUpdater", fields: [updatedById], references: [id])
+
+  @@index([updatedById])
+  @@index([createdAt])
+  @@map("forum_config")
+}

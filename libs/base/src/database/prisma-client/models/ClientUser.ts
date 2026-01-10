@@ -301,8 +301,6 @@ export type ClientUserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"ClientUser"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ClientUser"> | Date | string | null
   forumProfile?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
-  forumTopics?: Prisma.ForumTopicListRelationFilter
-  lastReplyTopics?: Prisma.ForumTopicListRelationFilter
   noticeReads?: Prisma.ClientNoticeReadListRelationFilter
 }
 
@@ -323,8 +321,6 @@ export type ClientUserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   forumProfile?: Prisma.ForumProfileOrderByWithRelationInput
-  forumTopics?: Prisma.ForumTopicOrderByRelationAggregateInput
-  lastReplyTopics?: Prisma.ForumTopicOrderByRelationAggregateInput
   noticeReads?: Prisma.ClientNoticeReadOrderByRelationAggregateInput
 }
 
@@ -348,8 +344,6 @@ export type ClientUserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"ClientUser"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ClientUser"> | Date | string | null
   forumProfile?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
-  forumTopics?: Prisma.ForumTopicListRelationFilter
-  lastReplyTopics?: Prisma.ForumTopicListRelationFilter
   noticeReads?: Prisma.ClientNoticeReadListRelationFilter
 }, "id" | "account" | "phone" | "email">
 
@@ -413,8 +407,6 @@ export type ClientUserCreateInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
   noticeReads?: Prisma.ClientNoticeReadCreateNestedManyWithoutUserInput
 }
 
@@ -435,8 +427,6 @@ export type ClientUserUncheckedCreateInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
   noticeReads?: Prisma.ClientNoticeReadUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -456,8 +446,6 @@ export type ClientUserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
   noticeReads?: Prisma.ClientNoticeReadUpdateManyWithoutUserNestedInput
 }
 
@@ -478,8 +466,6 @@ export type ClientUserUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
   noticeReads?: Prisma.ClientNoticeReadUncheckedUpdateManyWithoutUserNestedInput
 }
 
@@ -605,11 +591,6 @@ export type ClientUserSumOrderByAggregateInput = {
   gender?: Prisma.SortOrder
 }
 
-export type ClientUserNullableScalarRelationFilter = {
-  is?: Prisma.ClientUserWhereInput | null
-  isNot?: Prisma.ClientUserWhereInput | null
-}
-
 export type ClientUserCreateNestedOneWithoutNoticeReadsInput = {
   create?: Prisma.XOR<Prisma.ClientUserCreateWithoutNoticeReadsInput, Prisma.ClientUserUncheckedCreateWithoutNoticeReadsInput>
   connectOrCreate?: Prisma.ClientUserCreateOrConnectWithoutNoticeReadsInput
@@ -638,36 +619,6 @@ export type ClientUserUpdateOneRequiredWithoutForumProfileNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ClientUserUpdateToOneWithWhereWithoutForumProfileInput, Prisma.ClientUserUpdateWithoutForumProfileInput>, Prisma.ClientUserUncheckedUpdateWithoutForumProfileInput>
 }
 
-export type ClientUserCreateNestedOneWithoutForumTopicsInput = {
-  create?: Prisma.XOR<Prisma.ClientUserCreateWithoutForumTopicsInput, Prisma.ClientUserUncheckedCreateWithoutForumTopicsInput>
-  connectOrCreate?: Prisma.ClientUserCreateOrConnectWithoutForumTopicsInput
-  connect?: Prisma.ClientUserWhereUniqueInput
-}
-
-export type ClientUserCreateNestedOneWithoutLastReplyTopicsInput = {
-  create?: Prisma.XOR<Prisma.ClientUserCreateWithoutLastReplyTopicsInput, Prisma.ClientUserUncheckedCreateWithoutLastReplyTopicsInput>
-  connectOrCreate?: Prisma.ClientUserCreateOrConnectWithoutLastReplyTopicsInput
-  connect?: Prisma.ClientUserWhereUniqueInput
-}
-
-export type ClientUserUpdateOneRequiredWithoutForumTopicsNestedInput = {
-  create?: Prisma.XOR<Prisma.ClientUserCreateWithoutForumTopicsInput, Prisma.ClientUserUncheckedCreateWithoutForumTopicsInput>
-  connectOrCreate?: Prisma.ClientUserCreateOrConnectWithoutForumTopicsInput
-  upsert?: Prisma.ClientUserUpsertWithoutForumTopicsInput
-  connect?: Prisma.ClientUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ClientUserUpdateToOneWithWhereWithoutForumTopicsInput, Prisma.ClientUserUpdateWithoutForumTopicsInput>, Prisma.ClientUserUncheckedUpdateWithoutForumTopicsInput>
-}
-
-export type ClientUserUpdateOneWithoutLastReplyTopicsNestedInput = {
-  create?: Prisma.XOR<Prisma.ClientUserCreateWithoutLastReplyTopicsInput, Prisma.ClientUserUncheckedCreateWithoutLastReplyTopicsInput>
-  connectOrCreate?: Prisma.ClientUserCreateOrConnectWithoutLastReplyTopicsInput
-  upsert?: Prisma.ClientUserUpsertWithoutLastReplyTopicsInput
-  disconnect?: Prisma.ClientUserWhereInput | boolean
-  delete?: Prisma.ClientUserWhereInput | boolean
-  connect?: Prisma.ClientUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ClientUserUpdateToOneWithWhereWithoutLastReplyTopicsInput, Prisma.ClientUserUpdateWithoutLastReplyTopicsInput>, Prisma.ClientUserUncheckedUpdateWithoutLastReplyTopicsInput>
-}
-
 export type ClientUserCreateWithoutNoticeReadsInput = {
   account: string
   nickname?: string | null
@@ -684,8 +635,6 @@ export type ClientUserCreateWithoutNoticeReadsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
 }
 
 export type ClientUserUncheckedCreateWithoutNoticeReadsInput = {
@@ -705,8 +654,6 @@ export type ClientUserUncheckedCreateWithoutNoticeReadsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
 }
 
 export type ClientUserCreateOrConnectWithoutNoticeReadsInput = {
@@ -741,8 +688,6 @@ export type ClientUserUpdateWithoutNoticeReadsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
 }
 
 export type ClientUserUncheckedUpdateWithoutNoticeReadsInput = {
@@ -762,8 +707,6 @@ export type ClientUserUncheckedUpdateWithoutNoticeReadsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
 }
 
 export type ClientUserCreateWithoutForumProfileInput = {
@@ -781,8 +724,6 @@ export type ClientUserCreateWithoutForumProfileInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
   noticeReads?: Prisma.ClientNoticeReadCreateNestedManyWithoutUserInput
 }
 
@@ -802,8 +743,6 @@ export type ClientUserUncheckedCreateWithoutForumProfileInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
   noticeReads?: Prisma.ClientNoticeReadUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -838,8 +777,6 @@ export type ClientUserUpdateWithoutForumProfileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
   noticeReads?: Prisma.ClientNoticeReadUpdateManyWithoutUserNestedInput
 }
 
@@ -859,204 +796,6 @@ export type ClientUserUncheckedUpdateWithoutForumProfileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  noticeReads?: Prisma.ClientNoticeReadUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type ClientUserCreateWithoutForumTopicsInput = {
-  account: string
-  nickname?: string | null
-  avatar?: string | null
-  phone?: string | null
-  email?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  isSignedIn?: boolean
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  noticeReads?: Prisma.ClientNoticeReadCreateNestedManyWithoutUserInput
-}
-
-export type ClientUserUncheckedCreateWithoutForumTopicsInput = {
-  id?: number
-  account: string
-  nickname?: string | null
-  avatar?: string | null
-  phone?: string | null
-  email?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  isSignedIn?: boolean
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  noticeReads?: Prisma.ClientNoticeReadUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type ClientUserCreateOrConnectWithoutForumTopicsInput = {
-  where: Prisma.ClientUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.ClientUserCreateWithoutForumTopicsInput, Prisma.ClientUserUncheckedCreateWithoutForumTopicsInput>
-}
-
-export type ClientUserCreateWithoutLastReplyTopicsInput = {
-  account: string
-  nickname?: string | null
-  avatar?: string | null
-  phone?: string | null
-  email?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  isSignedIn?: boolean
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  noticeReads?: Prisma.ClientNoticeReadCreateNestedManyWithoutUserInput
-}
-
-export type ClientUserUncheckedCreateWithoutLastReplyTopicsInput = {
-  id?: number
-  account: string
-  nickname?: string | null
-  avatar?: string | null
-  phone?: string | null
-  email?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  isSignedIn?: boolean
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  noticeReads?: Prisma.ClientNoticeReadUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type ClientUserCreateOrConnectWithoutLastReplyTopicsInput = {
-  where: Prisma.ClientUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.ClientUserCreateWithoutLastReplyTopicsInput, Prisma.ClientUserUncheckedCreateWithoutLastReplyTopicsInput>
-}
-
-export type ClientUserUpsertWithoutForumTopicsInput = {
-  update: Prisma.XOR<Prisma.ClientUserUpdateWithoutForumTopicsInput, Prisma.ClientUserUncheckedUpdateWithoutForumTopicsInput>
-  create: Prisma.XOR<Prisma.ClientUserCreateWithoutForumTopicsInput, Prisma.ClientUserUncheckedCreateWithoutForumTopicsInput>
-  where?: Prisma.ClientUserWhereInput
-}
-
-export type ClientUserUpdateToOneWithWhereWithoutForumTopicsInput = {
-  where?: Prisma.ClientUserWhereInput
-  data: Prisma.XOR<Prisma.ClientUserUpdateWithoutForumTopicsInput, Prisma.ClientUserUncheckedUpdateWithoutForumTopicsInput>
-}
-
-export type ClientUserUpdateWithoutForumTopicsInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  noticeReads?: Prisma.ClientNoticeReadUpdateManyWithoutUserNestedInput
-}
-
-export type ClientUserUncheckedUpdateWithoutForumTopicsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  noticeReads?: Prisma.ClientNoticeReadUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type ClientUserUpsertWithoutLastReplyTopicsInput = {
-  update: Prisma.XOR<Prisma.ClientUserUpdateWithoutLastReplyTopicsInput, Prisma.ClientUserUncheckedUpdateWithoutLastReplyTopicsInput>
-  create: Prisma.XOR<Prisma.ClientUserCreateWithoutLastReplyTopicsInput, Prisma.ClientUserUncheckedCreateWithoutLastReplyTopicsInput>
-  where?: Prisma.ClientUserWhereInput
-}
-
-export type ClientUserUpdateToOneWithWhereWithoutLastReplyTopicsInput = {
-  where?: Prisma.ClientUserWhereInput
-  data: Prisma.XOR<Prisma.ClientUserUpdateWithoutLastReplyTopicsInput, Prisma.ClientUserUncheckedUpdateWithoutLastReplyTopicsInput>
-}
-
-export type ClientUserUpdateWithoutLastReplyTopicsInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  noticeReads?: Prisma.ClientNoticeReadUpdateManyWithoutUserNestedInput
-}
-
-export type ClientUserUncheckedUpdateWithoutLastReplyTopicsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   noticeReads?: Prisma.ClientNoticeReadUncheckedUpdateManyWithoutUserNestedInput
 }
 
@@ -1066,14 +805,10 @@ export type ClientUserUncheckedUpdateWithoutLastReplyTopicsInput = {
  */
 
 export type ClientUserCountOutputType = {
-  forumTopics: number
-  lastReplyTopics: number
   noticeReads: number
 }
 
 export type ClientUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  forumTopics?: boolean | ClientUserCountOutputTypeCountForumTopicsArgs
-  lastReplyTopics?: boolean | ClientUserCountOutputTypeCountLastReplyTopicsArgs
   noticeReads?: boolean | ClientUserCountOutputTypeCountNoticeReadsArgs
 }
 
@@ -1085,20 +820,6 @@ export type ClientUserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.E
    * Select specific fields to fetch from the ClientUserCountOutputType
    */
   select?: Prisma.ClientUserCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * ClientUserCountOutputType without action
- */
-export type ClientUserCountOutputTypeCountForumTopicsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ForumTopicWhereInput
-}
-
-/**
- * ClientUserCountOutputType without action
- */
-export type ClientUserCountOutputTypeCountLastReplyTopicsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ForumTopicWhereInput
 }
 
 /**
@@ -1126,8 +847,6 @@ export type ClientUserSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   updatedAt?: boolean
   deletedAt?: boolean
   forumProfile?: boolean | Prisma.ClientUser$forumProfileArgs<ExtArgs>
-  forumTopics?: boolean | Prisma.ClientUser$forumTopicsArgs<ExtArgs>
-  lastReplyTopics?: boolean | Prisma.ClientUser$lastReplyTopicsArgs<ExtArgs>
   noticeReads?: boolean | Prisma.ClientUser$noticeReadsArgs<ExtArgs>
   _count?: boolean | Prisma.ClientUserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["clientUser"]>
@@ -1189,8 +908,6 @@ export type ClientUserSelectScalar = {
 export type ClientUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "account" | "nickname" | "avatar" | "phone" | "email" | "isEnabled" | "gender" | "birthDate" | "isSignedIn" | "lastLoginAt" | "lastLoginIp" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["clientUser"]>
 export type ClientUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   forumProfile?: boolean | Prisma.ClientUser$forumProfileArgs<ExtArgs>
-  forumTopics?: boolean | Prisma.ClientUser$forumTopicsArgs<ExtArgs>
-  lastReplyTopics?: boolean | Prisma.ClientUser$lastReplyTopicsArgs<ExtArgs>
   noticeReads?: boolean | Prisma.ClientUser$noticeReadsArgs<ExtArgs>
   _count?: boolean | Prisma.ClientUserCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -1204,15 +921,6 @@ export type $ClientUserPayload<ExtArgs extends runtime.Types.Extensions.Internal
      * 关联的论坛资料
      */
     forumProfile: Prisma.$ForumProfilePayload<ExtArgs> | null
-    /**
-     * 关联的论坛主题
-     */
-    forumTopics: Prisma.$ForumTopicPayload<ExtArgs>[]
-    /**
-     * 关联的论坛回复
-     * 最后回复的主题
-     */
-    lastReplyTopics: Prisma.$ForumTopicPayload<ExtArgs>[]
     /**
      * 关联的通知已读记录
      */
@@ -1674,8 +1382,6 @@ readonly fields: ClientUserFieldRefs;
 export interface Prisma__ClientUserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   forumProfile<T extends Prisma.ClientUser$forumProfileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUser$forumProfileArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  forumTopics<T extends Prisma.ClientUser$forumTopicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUser$forumTopicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  lastReplyTopics<T extends Prisma.ClientUser$lastReplyTopicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUser$lastReplyTopicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   noticeReads<T extends Prisma.ClientUser$noticeReadsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClientUser$noticeReadsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ClientNoticeReadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2134,54 +1840,6 @@ export type ClientUser$forumProfileArgs<ExtArgs extends runtime.Types.Extensions
    */
   include?: Prisma.ForumProfileInclude<ExtArgs> | null
   where?: Prisma.ForumProfileWhereInput
-}
-
-/**
- * ClientUser.forumTopics
- */
-export type ClientUser$forumTopicsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ForumTopic
-   */
-  select?: Prisma.ForumTopicSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ForumTopic
-   */
-  omit?: Prisma.ForumTopicOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumTopicInclude<ExtArgs> | null
-  where?: Prisma.ForumTopicWhereInput
-  orderBy?: Prisma.ForumTopicOrderByWithRelationInput | Prisma.ForumTopicOrderByWithRelationInput[]
-  cursor?: Prisma.ForumTopicWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ForumTopicScalarFieldEnum | Prisma.ForumTopicScalarFieldEnum[]
-}
-
-/**
- * ClientUser.lastReplyTopics
- */
-export type ClientUser$lastReplyTopicsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ForumTopic
-   */
-  select?: Prisma.ForumTopicSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ForumTopic
-   */
-  omit?: Prisma.ForumTopicOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumTopicInclude<ExtArgs> | null
-  where?: Prisma.ForumTopicWhereInput
-  orderBy?: Prisma.ForumTopicOrderByWithRelationInput | Prisma.ForumTopicOrderByWithRelationInput[]
-  cursor?: Prisma.ForumTopicWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ForumTopicScalarFieldEnum | Prisma.ForumTopicScalarFieldEnum[]
 }
 
 /**
