@@ -31,14 +31,9 @@ model ClientUser {
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
 
   /// 关联的论坛资料
-  forumProfile    ForumProfile?
-  /// 关联的论坛主题
-  forumTopics     ForumTopic[]
-  /// 关联的论坛回复
-  /// 最后回复的主题
-  lastReplyTopics ForumTopic[]       @relation("LastReplyUser")
+  forumProfile ForumProfile?
   /// 关联的通知已读记录
-  noticeReads     ClientNoticeRead[]
+  noticeReads  ClientNoticeRead[]
 
   /// 索引优化
   @@index([isEnabled]) // 按账户状态查询活跃用户

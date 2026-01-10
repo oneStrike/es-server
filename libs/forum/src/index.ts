@@ -3,6 +3,14 @@ export * from './badge/dto/forum-badge.dto'
 export * from './badge/forum-badge.module'
 export * from './badge/forum-badge.service'
 
+// 配置模块 - 系统配置管理
+export * from './config/dto/forum-config.dto'
+export * from './config/forum-config-cache.constant'
+export * from './config/forum-config-cache.service'
+export * from './config/forum-config.constants'
+export * from './config/forum-config.module'
+export * from './config/forum-config.service'
+
 // 等级规则模块 - 用户等级与规则配置
 export * from './level-rule/dto/level-rule.dto'
 export * from './level-rule/level-rule.constant'
@@ -63,7 +71,11 @@ export * from './section/forum-section.service'
 export * from './section/section-permission.service'
 
 // 敏感词模块 - 敏感词过滤
+export * from './sensitive-word/dto/sensitive-word-detect.dto'
+export * from './sensitive-word/dto/sensitive-word-statistics.dto'
 export * from './sensitive-word/dto/sensitive-word.dto'
+export * from './sensitive-word/sensitive-word-detect.service'
+export * from './sensitive-word/sensitive-word-statistics.service'
 export * from './sensitive-word/sensitive-word.module'
 export * from './sensitive-word/sensitive-word.service'
 

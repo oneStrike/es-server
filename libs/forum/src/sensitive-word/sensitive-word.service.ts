@@ -19,6 +19,7 @@ import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import {
   SensitiveWordLevelNames,
   SensitiveWordTypeNames,
+  StatisticsTypeEnum,
 } from './sensitive-word-constant'
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'
 
@@ -220,7 +221,7 @@ export class SensitiveWordService extends BaseService {
    * 获取统计查询结果
    */
   async getStatistics(dto: StatisticsQueryDto): Promise<StatisticsResponseDto> {
-    const type = dto.type || 'level'
+    const type = dto.type || StatisticsTypeEnum.LEVEL
 
     let data:
       | LevelStatisticsDto[]
@@ -229,16 +230,16 @@ export class SensitiveWordService extends BaseService {
       | RecentHitStatisticsDto[]
 
     switch (type) {
-      case 'level':
+      case StatisticsTypeEnum.LEVEL:
         data = await this.getLevelStatistics()
         break
-      case 'type':
+      case StatisticsTypeEnum.TYPE:
         data = await this.getTypeStatistics()
         break
-      case 'topHits':
+      case StatisticsTypeEnum.TOP_HITS:
         data = await this.getTopHitStatistics()
         break
-      case 'recentHits':
+      case StatisticsTypeEnum.RECENT_HITS:
         data = await this.getRecentHitStatistics()
         break
       default:

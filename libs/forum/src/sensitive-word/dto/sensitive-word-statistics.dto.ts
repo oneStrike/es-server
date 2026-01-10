@@ -3,18 +3,20 @@ import { ApiProperty } from '@nestjs/swagger'
 import {
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
+  StatisticsTypeEnum,
 } from '../sensitive-word-constant'
 
 /**
  * 统计查询请求DTO
  */
-export class StatisticsQueryDto extends BaseDto {
+export class StatisticsQueryDto {
   @ApiProperty({
     description: '统计类型',
     required: false,
     example: 'level',
+    enum: StatisticsTypeEnum,
   })
-  type?: 'level' | 'type' | 'topHits' | 'recentHits'
+  type?: StatisticsTypeEnum
 }
 
 /**
@@ -229,8 +231,9 @@ export class StatisticsResponseDto {
   @ApiProperty({
     description: '统计类型',
     example: 'level',
+    enum: StatisticsTypeEnum,
   })
-  type!: string
+  type!: StatisticsTypeEnum
 
   @ApiProperty({
     description: '统计数据',

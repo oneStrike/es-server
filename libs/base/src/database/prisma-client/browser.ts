@@ -53,6 +53,16 @@ export type ClientUser = Prisma.ClientUserModel
  */
 export type ForumBadge = Prisma.ForumBadgeModel
 /**
+ * Model ForumConfigHistory
+ * 论坛配置历史表 - 记录配置项的变更历史，支持版本控制和回滚功能
+ */
+export type ForumConfigHistory = Prisma.ForumConfigHistoryModel
+/**
+ * Model ForumConfig
+ * 论坛配置表 - 存储论坛系统的各项配置，采用直接字段方式定义
+ */
+export type ForumConfig = Prisma.ForumConfigModel
+/**
  * Model ForumLevelRule
  * 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级权益等
  */

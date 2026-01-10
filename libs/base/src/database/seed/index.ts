@@ -12,6 +12,7 @@ import {
 } from './modules/client' // 客户端配置模块
 import {
   createInitialForumBadges,
+  createInitialForumConfig,
   createInitialForumLevelRules,
   createInitialForumPointRules,
   createInitialForumSectionGroups,
@@ -51,6 +52,7 @@ async function runSeeds() {
     createInitialWorkCategory(prisma), // 作品分类
     createInitialWorkTag(prisma), // 作品标签
     createInitialClientPage(prisma), // 页面配置
+    createInitialForumConfig(prisma), // 论坛系统配置
     createInitialForumSectionGroups(prisma), // 论坛板块分组配置（必须在板块之前）
     createInitialForumSections(prisma), // 论坛板块配置
     createInitialForumTags(prisma), // 论坛标签配置

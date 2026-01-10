@@ -1,31 +1,27 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-
-import {
-  MatchedWordDto,
-  SensitiveWordDetectDto,
-} from './dto/sensitive-word-detect.dto'
-
-import {
-  StatisticsQueryDto,
-  StatisticsResponseDto,
-} from './dto/sensitive-word-statistics.dto'
 import {
   CreateSensitiveWordDto,
+  MatchedWordDto,
   QuerySensitiveWordDto,
+  SensitiveWordDetectDto,
+  SensitiveWordDetectService,
+  SensitiveWordService,
+  SensitiveWordStatisticsService,
+  StatisticsDataDto,
+  StatisticsQueryDto,
+  StatisticsResponseDto,
   UpdateSensitiveWordDto,
-} from './dto/sensitive-word.dto'
-import { SensitiveWordDetectService } from './sensitive-word-detect.service'
-import { SensitiveWordStatisticsService } from './sensitive-word-statistics.service'
-import { SensitiveWordService } from './sensitive-word.service'
+} from '@libs/forum'
+
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 /**
  * 敏感词管理控制器
  * 提供敏感词管理、检测、统计相关的API接口
  */
-@ApiTags('论坛管理/敏感词管理模块')
+@ApiTags('论坛模块/敏感词管理模块')
 @Controller('admin/forum/sensitive-word')
 export class SensitiveWordController {
   constructor(
@@ -121,26 +117,26 @@ export class SensitiveWordController {
 
   /**
    * 获取统计查询结果
-   * @param body - 统计查询请求对象
+   * @param query - 统计查询请求对象
    * @returns 统计查询结果
    */
-  @Post('/statistics')
+  @Get('/statistics')
   @ApiDoc({
     summary: '获取统计查询结果',
     model: StatisticsResponseDto,
   })
-  async getStatistics(@Body() body: StatisticsQueryDto) {
-    return this.sensitiveWordService.getStatistics(body)
+  async getStatistics(@Query() query: StatisticsQueryDto) {
+    return this.sensitiveWordService.getStatistics(query)
   }
 
   /**
    * 获取完整统计数据
    * @returns 完整统计数据
    */
-  @Post('/statistics/full')
+  @Get('/statistics/full')
   @ApiDoc({
     summary: '获取完整统计数据',
-    model: StatisticsResponseDto,
+    model: StatisticsDataDto,
   })
   async getFullStatistics() {
     return this.statisticsService.getStatistics()
