@@ -1,4 +1,3 @@
-import { BaseDto } from '@libs/base/dto'
 import { ApiProperty } from '@nestjs/swagger'
 import {
   SensitiveWordLevelEnum,

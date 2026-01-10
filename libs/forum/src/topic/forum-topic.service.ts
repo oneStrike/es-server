@@ -9,6 +9,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { ForumConfigCacheService } from '../config/forum-config-cache.service'
+import { ReviewPolicyEnum } from '../config/forum-config.constants'
+import { ForumCounterService } from '../counter/forum-counter.service'
 import { PointRuleTypeEnum } from '../point/point.constant'
 import { PointService } from '../point/point.service'
 import { SensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
@@ -34,7 +37,9 @@ import { ForumTopicAuditStatusEnum } from './forum-topic.constant'
 export class ForumTopicService extends BaseService {
   constructor(
     private readonly pointService: PointService,
+    private readonly forumConfigCacheService: ForumConfigCacheService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
+    private readonly forumCounterService: ForumCounterService,
   ) {
     super()
   }
@@ -55,36 +60,36 @@ export class ForumTopicService extends BaseService {
     return this.prisma.forumProfile
   }
 
-  private get topicInclude() {
-    return {
-      section: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    }
-  }
+  private calculateAuditStatus(
+    reviewPolicy: ReviewPolicyEnum,
+    highestLevel?: SensitiveWordLevelEnum,
+  ) {
+    let needAudit = false
+    let isHidden = false
 
-  private get topicWithTagsInclude() {
+    if (reviewPolicy === ReviewPolicyEnum.MANUAL) {
+      needAudit = true
+    } else if (highestLevel) {
+      if (highestLevel === SensitiveWordLevelEnum.SEVERE) {
+        isHidden = true
+      }
+
+      if (reviewPolicy === ReviewPolicyEnum.SEVERE_SENSITIVE_WORD) {
+        needAudit = highestLevel === SensitiveWordLevelEnum.SEVERE
+      } else if (reviewPolicy === ReviewPolicyEnum.GENERAL_SENSITIVE_WORD) {
+        needAudit =
+          highestLevel === SensitiveWordLevelEnum.SEVERE ||
+          highestLevel === SensitiveWordLevelEnum.GENERAL
+      } else if (reviewPolicy === ReviewPolicyEnum.MILD_SENSITIVE_WORD) {
+        needAudit = true
+      }
+    }
+
     return {
-      ...this.topicInclude,
-      topicTags: {
-        include: {
-          tag: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          replies: true,
-          likes: true,
-        },
-      },
+      auditStatus: needAudit
+        ? ForumTopicAuditStatusEnum.PENDING
+        : ForumTopicAuditStatusEnum.APPROVED,
+      isHidden,
     }
   }
 
@@ -112,21 +117,42 @@ export class ForumTopicService extends BaseService {
         connect: { id: profileId, status: ProfileStatusEnum.NORMAL },
       },
     }
+
+    const { reviewPolicy } = await this.forumConfigCacheService.getConfig()
+
+    const { auditStatus, isHidden } = this.calculateAuditStatus(
+      reviewPolicy,
+      highestLevel,
+    )
+
     if (highestLevel) {
       createPayload.sensitiveWordHits = JSON.stringify(hits)
-      if (highestLevel >= SensitiveWordLevelEnum.SEVERE) {
-        createPayload.isHidden = true
-        createPayload.auditStatus = ForumTopicAuditStatusEnum.PENDING
-      }
     }
 
-    const topic = await this.forumTopic.create({
-      data: createPayload,
-      omit: {
-        version: true,
-        deletedAt: true,
-        sensitiveWordHits: true,
-      },
+    if (isHidden) {
+      createPayload.isHidden = true
+    }
+
+    createPayload.auditStatus = auditStatus
+
+    const topic = await this.prisma.$transaction(async (tx) => {
+      const newTopic = await tx.forumTopic.create({
+        data: createPayload,
+        omit: {
+          version: true,
+          deletedAt: true,
+          sensitiveWordHits: true,
+        },
+      })
+
+      await this.forumCounterService.updateTopicRelatedCounts(
+        tx,
+        sectionId,
+        profileId,
+        1,
+      )
+
+      return newTopic
     })
 
     if (topic.auditStatus !== ForumTopicAuditStatusEnum.PENDING) {
@@ -220,10 +246,35 @@ export class ForumTopicService extends BaseService {
       throw new BadRequestException('主题已锁定，无法编辑')
     }
 
+    const { reviewPolicy } = await this.forumConfigCacheService.getConfig()
+
+    const { hits, highestLevel } =
+      this.sensitiveWordDetectService.getMatchedWords({
+        content:
+          (updateData.content || topic.content) +
+          (updateData.title || topic.title),
+      })
+
+    const { auditStatus, isHidden } = this.calculateAuditStatus(
+      reviewPolicy,
+      highestLevel,
+    )
+
+    const updatePayload: any = { ...updateData }
+
+    if (highestLevel) {
+      updatePayload.sensitiveWordHits = JSON.stringify(hits)
+    }
+
+    if (isHidden) {
+      updatePayload.isHidden = true
+    }
+
+    updatePayload.auditStatus = auditStatus
+
     const updatedTopic = await this.forumTopic.update({
       where: { id },
-      data: updateData,
-      include: this.topicInclude,
+      data: updatePayload,
     })
 
     return updatedTopic
@@ -247,6 +298,13 @@ export class ForumTopicService extends BaseService {
     await this.prisma.$transaction(async (tx) => {
       await tx.forumReply.softDeleteMany({ topicId: id })
       await tx.forumTopic.softDelete({ id })
+
+      await this.forumCounterService.updateTopicRelatedCounts(
+        tx,
+        topic.sectionId,
+        topic.profileId,
+        -1,
+      )
     })
 
     return topic
@@ -256,7 +314,6 @@ export class ForumTopicService extends BaseService {
     const topic = await this.forumTopic.update({
       where: { id, deletedAt: null },
       data: updateData,
-      include: this.topicInclude,
     })
 
     return topic

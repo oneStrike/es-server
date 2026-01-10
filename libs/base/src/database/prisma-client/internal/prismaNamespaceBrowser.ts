@@ -60,6 +60,8 @@ export const ModelName = {
   ForumBadge: 'ForumBadge',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
+  ForumExperienceRecord: 'ForumExperienceRecord',
+  ForumExperienceRule: 'ForumExperienceRule',
   ForumLevelRule: 'ForumLevelRule',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
   ForumModeratorApplication: 'ForumModeratorApplication',
@@ -291,14 +293,45 @@ export const ForumConfigScalarFieldEnum = {
 export type ForumConfigScalarFieldEnum = (typeof ForumConfigScalarFieldEnum)[keyof typeof ForumConfigScalarFieldEnum]
 
 
+export const ForumExperienceRecordScalarFieldEnum = {
+  id: 'id',
+  profileId: 'profileId',
+  ruleId: 'ruleId',
+  experience: 'experience',
+  beforeExperience: 'beforeExperience',
+  afterExperience: 'afterExperience',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type ForumExperienceRecordScalarFieldEnum = (typeof ForumExperienceRecordScalarFieldEnum)[keyof typeof ForumExperienceRecordScalarFieldEnum]
+
+
+export const ForumExperienceRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  experience: 'experience',
+  dailyLimit: 'dailyLimit',
+  isEnabled: 'isEnabled',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ForumExperienceRuleScalarFieldEnum = (typeof ForumExperienceRuleScalarFieldEnum)[keyof typeof ForumExperienceRuleScalarFieldEnum]
+
+
 export const ForumLevelRuleScalarFieldEnum = {
   id: 'id',
   name: 'name',
   description: 'description',
-  icon: 'icon',
-  requiredPoints: 'requiredPoints',
+  requiredExperience: 'requiredExperience',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
+  icon: 'icon',
+  badge: 'badge',
+  color: 'color',
   dailyTopicLimit: 'dailyTopicLimit',
   dailyReplyLimit: 'dailyReplyLimit',
   postInterval: 'postInterval',
@@ -306,8 +339,6 @@ export const ForumLevelRuleScalarFieldEnum = {
   dailyLikeLimit: 'dailyLikeLimit',
   dailyFavoriteLimit: 'dailyFavoriteLimit',
   dailyCommentLimit: 'dailyCommentLimit',
-  levelColor: 'levelColor',
-  levelBadge: 'levelBadge',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -438,6 +469,7 @@ export const ForumProfileScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   points: 'points',
+  experience: 'experience',
   levelId: 'levelId',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
@@ -459,7 +491,7 @@ export type ForumProfileScalarFieldEnum = (typeof ForumProfileScalarFieldEnum)[k
 export const ForumReplyLikeScalarFieldEnum = {
   id: 'id',
   replyId: 'replyId',
-  userId: 'userId',
+  profileId: 'profileId',
   createdAt: 'createdAt'
 } as const
 
@@ -586,7 +618,7 @@ export type ForumTagScalarFieldEnum = (typeof ForumTagScalarFieldEnum)[keyof typ
 export const ForumTopicFavoriteScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
-  userId: 'userId',
+  profileId: 'profileId',
   createdAt: 'createdAt'
 } as const
 
@@ -596,7 +628,7 @@ export type ForumTopicFavoriteScalarFieldEnum = (typeof ForumTopicFavoriteScalar
 export const ForumTopicLikeScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
-  userId: 'userId',
+  profileId: 'profileId',
   createdAt: 'createdAt'
 } as const
 

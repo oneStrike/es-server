@@ -1,7 +1,16 @@
 import { BaseService } from '@libs/base/database'
 
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
-import { CreateForumTopicLikeDto, QueryForumTopicLikeDto, ToggleTopicLikeDto } from './dto/forum-topic-like.dto'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import { ForumCounterService } from '../counter/forum-counter.service'
+import {
+  CreateForumTopicLikeDto,
+  QueryForumTopicLikeDto,
+  ToggleTopicLikeDto,
+} from './dto/forum-topic-like.dto'
 
 /**
  * 论坛主题点赞服务类
@@ -9,6 +18,10 @@ import { CreateForumTopicLikeDto, QueryForumTopicLikeDto, ToggleTopicLikeDto } f
  */
 @Injectable()
 export class ForumTopicLikeService extends BaseService {
+  constructor(private readonly forumCounterService: ForumCounterService) {
+    super()
+  }
+
   /**
    * 获取论坛主题点赞模型
    */
@@ -77,14 +90,12 @@ export class ForumTopicLikeService extends BaseService {
         },
       })
 
-      await tx.forumTopic.update({
-        where: { id: topicId },
-        data: {
-          likeCount: {
-            increment: 1,
-          },
-        },
-      })
+      await this.forumCounterService.updateTopicLikeRelatedCounts(
+        tx,
+        topicId,
+        topic.profileId,
+        1,
+      )
 
       return like
     })
@@ -111,15 +122,22 @@ export class ForumTopicLikeService extends BaseService {
       throw new BadRequestException('点赞记录不存在')
     }
 
+    const topic = await this.forumTopic.findUnique({
+      where: { id: topicId },
+      select: { profileId: true },
+    })
+
+    if (!topic) {
+      throw new BadRequestException('主题不存在')
+    }
+
     return this.prisma.$transaction(async (tx) => {
-      await tx.forumTopic.update({
-        where: { id: topicId },
-        data: {
-          likeCount: {
-            decrement: 1,
-          },
-        },
-      })
+      await this.forumCounterService.updateTopicLikeRelatedCounts(
+        tx,
+        topicId,
+        topic.profileId,
+        -1,
+      )
 
       return tx.forumTopicLike.delete({
         where: {
@@ -171,9 +189,9 @@ export class ForumTopicLikeService extends BaseService {
    * @returns 分页的点赞列表
    */
   async getTopicLikes(queryForumTopicLikeDto: QueryForumTopicLikeDto) {
-    const { topicId, profileId, pageIndex = 0, pageSize = 15 } = queryForumTopicLikeDto
+    const { topicId, profileId, ...otherDto } = queryForumTopicLikeDto
 
-    const where: any = {}
+    const where: any = { ...otherDto }
 
     if (topicId) {
       where.topicId = topicId
@@ -199,11 +217,6 @@ export class ForumTopicLikeService extends BaseService {
           },
         },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      pageIndex,
-      pageSize,
     })
   }
 

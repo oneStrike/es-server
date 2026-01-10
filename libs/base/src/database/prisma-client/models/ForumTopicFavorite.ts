@@ -29,33 +29,33 @@ export type AggregateForumTopicFavorite = {
 export type ForumTopicFavoriteAvgAggregateOutputType = {
   id: number | null
   topicId: number | null
-  userId: number | null
+  profileId: number | null
 }
 
 export type ForumTopicFavoriteSumAggregateOutputType = {
   id: number | null
   topicId: number | null
-  userId: number | null
+  profileId: number | null
 }
 
 export type ForumTopicFavoriteMinAggregateOutputType = {
   id: number | null
   topicId: number | null
-  userId: number | null
+  profileId: number | null
   createdAt: Date | null
 }
 
 export type ForumTopicFavoriteMaxAggregateOutputType = {
   id: number | null
   topicId: number | null
-  userId: number | null
+  profileId: number | null
   createdAt: Date | null
 }
 
 export type ForumTopicFavoriteCountAggregateOutputType = {
   id: number
   topicId: number
-  userId: number
+  profileId: number
   createdAt: number
   _all: number
 }
@@ -64,33 +64,33 @@ export type ForumTopicFavoriteCountAggregateOutputType = {
 export type ForumTopicFavoriteAvgAggregateInputType = {
   id?: true
   topicId?: true
-  userId?: true
+  profileId?: true
 }
 
 export type ForumTopicFavoriteSumAggregateInputType = {
   id?: true
   topicId?: true
-  userId?: true
+  profileId?: true
 }
 
 export type ForumTopicFavoriteMinAggregateInputType = {
   id?: true
   topicId?: true
-  userId?: true
+  profileId?: true
   createdAt?: true
 }
 
 export type ForumTopicFavoriteMaxAggregateInputType = {
   id?: true
   topicId?: true
-  userId?: true
+  profileId?: true
   createdAt?: true
 }
 
 export type ForumTopicFavoriteCountAggregateInputType = {
   id?: true
   topicId?: true
-  userId?: true
+  profileId?: true
   createdAt?: true
   _all?: true
 }
@@ -184,7 +184,7 @@ export type ForumTopicFavoriteGroupByArgs<ExtArgs extends runtime.Types.Extensio
 export type ForumTopicFavoriteGroupByOutputType = {
   id: number
   topicId: number
-  userId: number
+  profileId: number
   createdAt: Date
   _count: ForumTopicFavoriteCountAggregateOutputType | null
   _avg: ForumTopicFavoriteAvgAggregateOutputType | null
@@ -214,7 +214,7 @@ export type ForumTopicFavoriteWhereInput = {
   NOT?: Prisma.ForumTopicFavoriteWhereInput | Prisma.ForumTopicFavoriteWhereInput[]
   id?: Prisma.IntFilter<"ForumTopicFavorite"> | number
   topicId?: Prisma.IntFilter<"ForumTopicFavorite"> | number
-  userId?: Prisma.IntFilter<"ForumTopicFavorite"> | number
+  profileId?: Prisma.IntFilter<"ForumTopicFavorite"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumTopicFavorite"> | Date | string
   topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
   profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
@@ -223,7 +223,7 @@ export type ForumTopicFavoriteWhereInput = {
 export type ForumTopicFavoriteOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   topic?: Prisma.ForumTopicOrderByWithRelationInput
   profile?: Prisma.ForumProfileOrderByWithRelationInput
@@ -231,21 +231,21 @@ export type ForumTopicFavoriteOrderByWithRelationInput = {
 
 export type ForumTopicFavoriteWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  topicId_userId?: Prisma.ForumTopicFavoriteTopicIdUserIdCompoundUniqueInput
+  topicId_profileId?: Prisma.ForumTopicFavoriteTopicIdProfileIdCompoundUniqueInput
   AND?: Prisma.ForumTopicFavoriteWhereInput | Prisma.ForumTopicFavoriteWhereInput[]
   OR?: Prisma.ForumTopicFavoriteWhereInput[]
   NOT?: Prisma.ForumTopicFavoriteWhereInput | Prisma.ForumTopicFavoriteWhereInput[]
   topicId?: Prisma.IntFilter<"ForumTopicFavorite"> | number
-  userId?: Prisma.IntFilter<"ForumTopicFavorite"> | number
+  profileId?: Prisma.IntFilter<"ForumTopicFavorite"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumTopicFavorite"> | Date | string
   topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
   profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
-}, "id" | "topicId_userId">
+}, "id" | "topicId_profileId">
 
 export type ForumTopicFavoriteOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ForumTopicFavoriteCountOrderByAggregateInput
   _avg?: Prisma.ForumTopicFavoriteAvgOrderByAggregateInput
@@ -260,7 +260,7 @@ export type ForumTopicFavoriteScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumTopicFavoriteScalarWhereWithAggregatesInput | Prisma.ForumTopicFavoriteScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumTopicFavorite"> | number
   topicId?: Prisma.IntWithAggregatesFilter<"ForumTopicFavorite"> | number
-  userId?: Prisma.IntWithAggregatesFilter<"ForumTopicFavorite"> | number
+  profileId?: Prisma.IntWithAggregatesFilter<"ForumTopicFavorite"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumTopicFavorite"> | Date | string
 }
 
@@ -273,7 +273,7 @@ export type ForumTopicFavoriteCreateInput = {
 export type ForumTopicFavoriteUncheckedCreateInput = {
   id?: number
   topicId: number
-  userId: number
+  profileId: number
   createdAt?: Date | string
 }
 
@@ -286,14 +286,14 @@ export type ForumTopicFavoriteUpdateInput = {
 export type ForumTopicFavoriteUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumTopicFavoriteCreateManyInput = {
   id?: number
   topicId: number
-  userId: number
+  profileId: number
   createdAt?: Date | string
 }
 
@@ -304,7 +304,7 @@ export type ForumTopicFavoriteUpdateManyMutationInput = {
 export type ForumTopicFavoriteUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -318,42 +318,42 @@ export type ForumTopicFavoriteOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ForumTopicFavoriteTopicIdUserIdCompoundUniqueInput = {
+export type ForumTopicFavoriteTopicIdProfileIdCompoundUniqueInput = {
   topicId: number
-  userId: number
+  profileId: number
 }
 
 export type ForumTopicFavoriteCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumTopicFavoriteAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
 }
 
 export type ForumTopicFavoriteMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumTopicFavoriteMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumTopicFavoriteSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
+  profileId?: Prisma.SortOrder
 }
 
 export type ForumTopicFavoriteCreateNestedManyWithoutProfileInput = {
@@ -483,7 +483,7 @@ export type ForumTopicFavoriteScalarWhereInput = {
   NOT?: Prisma.ForumTopicFavoriteScalarWhereInput | Prisma.ForumTopicFavoriteScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumTopicFavorite"> | number
   topicId?: Prisma.IntFilter<"ForumTopicFavorite"> | number
-  userId?: Prisma.IntFilter<"ForumTopicFavorite"> | number
+  profileId?: Prisma.IntFilter<"ForumTopicFavorite"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumTopicFavorite"> | Date | string
 }
 
@@ -494,7 +494,7 @@ export type ForumTopicFavoriteCreateWithoutTopicInput = {
 
 export type ForumTopicFavoriteUncheckedCreateWithoutTopicInput = {
   id?: number
-  userId: number
+  profileId: number
   createdAt?: Date | string
 }
 
@@ -549,7 +549,7 @@ export type ForumTopicFavoriteUncheckedUpdateManyWithoutProfileInput = {
 
 export type ForumTopicFavoriteCreateManyTopicInput = {
   id?: number
-  userId: number
+  profileId: number
   createdAt?: Date | string
 }
 
@@ -560,13 +560,13 @@ export type ForumTopicFavoriteUpdateWithoutTopicInput = {
 
 export type ForumTopicFavoriteUncheckedUpdateWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumTopicFavoriteUncheckedUpdateManyWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  profileId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -575,7 +575,7 @@ export type ForumTopicFavoriteUncheckedUpdateManyWithoutTopicInput = {
 export type ForumTopicFavoriteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   topicId?: boolean
-  userId?: boolean
+  profileId?: boolean
   createdAt?: boolean
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
@@ -584,7 +584,7 @@ export type ForumTopicFavoriteSelect<ExtArgs extends runtime.Types.Extensions.In
 export type ForumTopicFavoriteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   topicId?: boolean
-  userId?: boolean
+  profileId?: boolean
   createdAt?: boolean
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
@@ -593,7 +593,7 @@ export type ForumTopicFavoriteSelectCreateManyAndReturn<ExtArgs extends runtime.
 export type ForumTopicFavoriteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   topicId?: boolean
-  userId?: boolean
+  profileId?: boolean
   createdAt?: boolean
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
@@ -602,11 +602,11 @@ export type ForumTopicFavoriteSelectUpdateManyAndReturn<ExtArgs extends runtime.
 export type ForumTopicFavoriteSelectScalar = {
   id?: boolean
   topicId?: boolean
-  userId?: boolean
+  profileId?: boolean
   createdAt?: boolean
 }
 
-export type ForumTopicFavoriteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "topicId" | "userId" | "createdAt", ExtArgs["result"]["forumTopicFavorite"]>
+export type ForumTopicFavoriteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "topicId" | "profileId" | "createdAt", ExtArgs["result"]["forumTopicFavorite"]>
 export type ForumTopicFavoriteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
@@ -638,7 +638,7 @@ export type $ForumTopicFavoritePayload<ExtArgs extends runtime.Types.Extensions.
     /**
      * 关联的用户ID
      */
-    userId: number
+    profileId: number
     /**
      * 创建时间
      */
@@ -1070,7 +1070,7 @@ export interface Prisma__ForumTopicFavoriteClient<T, Null = never, ExtArgs exten
 export interface ForumTopicFavoriteFieldRefs {
   readonly id: Prisma.FieldRef<"ForumTopicFavorite", 'Int'>
   readonly topicId: Prisma.FieldRef<"ForumTopicFavorite", 'Int'>
-  readonly userId: Prisma.FieldRef<"ForumTopicFavorite", 'Int'>
+  readonly profileId: Prisma.FieldRef<"ForumTopicFavorite", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ForumTopicFavorite", 'DateTime'>
 }
     

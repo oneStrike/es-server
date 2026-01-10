@@ -1,4 +1,4 @@
-import { ApiDoc, ApiPageDoc} from '@libs/base/decorators'
+import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -6,7 +6,6 @@ import { ApiTags } from '@nestjs/swagger'
 import {
   AssignModeratorSectionDto,
   CreateModeratorDto,
-  QueryModeratorActionLogDto,
   QueryModeratorDto,
   UpdateModeratorDto,
 } from './dto/moderator.dto'
@@ -86,18 +85,5 @@ export class ModeratorController {
   })
   async updateModerator(@Body() updateDto: UpdateModeratorDto) {
     return this.moderatorService.updateModerator(updateDto)
-  }
-
-  /**
-   * 查看版主操作日志
-   * @param queryDto - 查询参数
-   * @returns 分页的版主操作日志列表
-   */
-  @Get('action/log')
-  @ApiPageDoc({
-    summary: '查看版主操作日志',
-  })
-  async getModeratorActionLog(@Query() queryDto: QueryModeratorActionLogDto) {
-    return this.moderatorService.getModeratorActionLogPage(queryDto)
   }
 }

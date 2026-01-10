@@ -21,13 +21,7 @@ export class ForumConfigService extends BaseService {
   }
 
   async getForumConfig() {
-    const config = await this.cacheService.getConfig()
-
-    if (!config) {
-      return this.createDefaultConfig()
-    }
-
-    return config
+    return this.cacheService.getConfig()
   }
 
   async updateForumConfig(

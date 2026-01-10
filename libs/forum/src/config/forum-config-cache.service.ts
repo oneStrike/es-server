@@ -8,6 +8,7 @@ import {
   FORUM_CONFIG_CACHE_METRICS,
   FORUM_CONFIG_CACHE_TTL,
 } from './forum-config-cache.constant'
+import { DEFAULT_FORUM_CONFIG } from './forum-config.constants'
 
 /**
  * 论坛配置缓存服务
@@ -25,7 +26,7 @@ import {
 export class ForumConfigCacheService extends BaseService {
   private readonly logger = new Logger(ForumConfigCacheService.name)
 
-  private pendingRequests = new Map<string, Promise<ForumConfig | null>>()
+  private pendingRequests = new Map<string, Promise<ForumConfig>>()
 
   get forumConfig() {
     return this.prisma.forumConfig
@@ -38,56 +39,48 @@ export class ForumConfigCacheService extends BaseService {
   /**
    * 获取论坛配置
    * 优先从缓存读取，缓存未命中时从数据库查询并更新缓存
+   * 如果数据库中没有配置，自动创建默认配置
    *
    * 缓存保护：
    * - 缓存穿透：缓存空值（NULL_VALUE TTL）
    * - 缓存击穿：使用单飞模式
    * - 缓存雪崩：TTL 加上随机值
    *
-   * @returns 论坛配置
+   * @returns 论坛配置（保证返回有效配置）
    */
   async getConfig() {
     const cacheKey = FORUM_CONFIG_CACHE_KEYS.CONFIG
     const requestKey = `lock:${cacheKey}`
 
-    try {
-      const config = await this.cacheManager.get<ForumConfig | null>(cacheKey)
+    const config = await this.cacheManager.get<ForumConfig | null>(cacheKey)
 
-      if (config) {
-        await this.incrementMetric(FORUM_CONFIG_CACHE_METRICS.HIT_COUNT)
-        return config
-      }
-
-      await this.incrementMetric(FORUM_CONFIG_CACHE_METRICS.MISS_COUNT)
-
-      if (this.pendingRequests.has(requestKey)) {
-        await this.incrementMetric(FORUM_CONFIG_CACHE_METRICS.PENETRATION_COUNT)
-        return await this.pendingRequests.get(requestKey)
-      }
-
-      const promise = this.loadConfigFromDatabase(cacheKey)
-      this.pendingRequests.set(requestKey, promise)
-
-      try {
-        return await promise
-      } finally {
-        this.pendingRequests.delete(requestKey)
-      }
-    } catch (error) {
-      this.logger.error(`获取论坛配置失败: ${error.message}`, error.stack)
-      throw error
+    if (config) {
+      await this.incrementMetric(FORUM_CONFIG_CACHE_METRICS.HIT_COUNT)
+      return config
     }
+
+    await this.incrementMetric(FORUM_CONFIG_CACHE_METRICS.MISS_COUNT)
+
+    if (this.pendingRequests.has(requestKey)) {
+      await this.incrementMetric(FORUM_CONFIG_CACHE_METRICS.PENETRATION_COUNT)
+      return this.pendingRequests.get(requestKey)!
+    }
+
+    const promise = this.loadConfigFromDatabase(cacheKey)
+    this.pendingRequests.set(requestKey, promise)
+    return promise
   }
 
   /**
    * 从数据库加载配置并更新缓存
+   * 如果数据库中没有配置，自动创建默认配置
    * @param cacheKey - 缓存键
    * @returns 论坛配置
    */
-  private async loadConfigFromDatabase(
-    cacheKey: string,
-  ): Promise<ForumConfig | null> {
+  private async loadConfigFromDatabase(cacheKey: string): Promise<ForumConfig> {
     try {
+      const requestKey = `lock:${cacheKey}`
+
       const config = await this.forumConfig.findFirst()
 
       if (config) {
@@ -95,16 +88,22 @@ export class ForumConfigCacheService extends BaseService {
         await this.cacheManager.set(cacheKey, config, ttl)
         this.logger.log(`已缓存论坛配置 ID: ${config.id}, TTL: ${ttl}秒`)
       } else {
-        await this.cacheManager.set(
-          cacheKey,
-          null,
-          FORUM_CONFIG_CACHE_TTL.NULL_VALUE,
+        this.logger.warn('未找到论坛配置，正在创建默认配置...')
+        const newConfig = await this.createDefaultConfig()
+        const ttl = this.getRandomTTL(FORUM_CONFIG_CACHE_TTL.LONG)
+        await this.cacheManager.set(cacheKey, newConfig, ttl)
+        this.logger.log(
+          `已创建并缓存默认论坛配置 ID: ${newConfig.id}, TTL: ${ttl}秒`,
         )
-        this.logger.warn('未找到论坛配置，已缓存空值')
+        this.pendingRequests.delete(requestKey)
+        return newConfig
       }
 
+      this.pendingRequests.delete(requestKey)
       return config
     } catch (error) {
+      const requestKey = `lock:${cacheKey}`
+      this.pendingRequests.delete(requestKey)
       this.logger.error(
         `从数据库加载论坛配置失败: ${error.message}`,
         error.stack,
@@ -123,6 +122,23 @@ export class ForumConfigCacheService extends BaseService {
       this.logger.log('已清除论坛配置缓存')
     } catch (error) {
       this.logger.error(`清除论坛配置缓存失败: ${error.message}`, error.stack)
+      throw error
+    }
+  }
+
+  /**
+   * 创建默认论坛配置
+   * @returns 论坛配置
+   */
+  private async createDefaultConfig(): Promise<ForumConfig> {
+    try {
+      const config = await this.forumConfig.create({
+        data: DEFAULT_FORUM_CONFIG,
+      })
+      this.logger.log(`已创建默认论坛配置 ID: ${config.id}`)
+      return config
+    } catch (error) {
+      this.logger.error(`创建默认论坛配置失败: ${error.message}`, error.stack)
       throw error
     }
   }

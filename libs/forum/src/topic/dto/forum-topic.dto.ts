@@ -88,19 +88,19 @@ export class BaseForumTopicDto extends BaseDto {
   @ValidateEnum({
     description: '审核角色（0=版主, 1=管理员）',
     example: ForumTopicAuditRoleEnum.MODERATOR,
-    required: true,
+    required: false,
     enum: ForumTopicAuditRoleEnum,
     default: ForumTopicAuditRoleEnum.MODERATOR,
   })
-  auditRole!: ForumTopicAuditRoleEnum
+  auditRole?: ForumTopicAuditRoleEnum
 
   @ValidateNumber({
     description: '关联的审核用户ID',
     example: 1,
-    required: true,
+    required: false,
     min: 1,
   })
-  auditById!: number
+  auditById?: number
 
   @ValidateEnum({
     description: '审核状态（0=待审核, 1=已通过, 2=已拒绝）',
@@ -155,8 +155,8 @@ export class BaseForumTopicDto extends BaseDto {
     description: '最后回复时间',
     example: '2022-01-01T00:00:00.000Z',
     required: false,
-    type: 'string',
-    format: 'date-time',
+    type: Date,
+    nullable: true,
   })
   lastReplyAt?: Date
 

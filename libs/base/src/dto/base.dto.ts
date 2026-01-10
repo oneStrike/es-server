@@ -35,7 +35,7 @@ export class UserIdDto {
     example: 1,
     required: true,
   })
-  userId!: number
+  profileId!: number
 }
 
 /**

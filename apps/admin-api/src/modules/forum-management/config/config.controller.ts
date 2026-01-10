@@ -1,5 +1,5 @@
 import type { JwtUserInfoInterface } from '@libs/base/types'
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
+import { ApiDoc } from '@libs/base/decorators'
 import { CurrentUser } from '@libs/base/decorators/current-user.decorator'
 import { IdDto } from '@libs/base/dto'
 import {

@@ -1,13 +1,9 @@
-import {
-  BaseService,
-  ForumModeratorWhereInput,
-} from '@libs/base/database'
+import { BaseService, ForumModeratorWhereInput } from '@libs/base/database'
 import { IdDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   AssignModeratorSectionDto,
   CreateModeratorDto,
-  QueryModeratorActionLogDto,
   QueryModeratorDto,
   UpdateModeratorDto,
 } from './dto/moderator.dto'
@@ -50,10 +46,6 @@ export class ModeratorService extends BaseService {
     return this.prisma.clientUser
   }
 
-  get forumAuditLog() {
-    return this.prisma.forumAuditLog
-  }
-
   /**
    * 添加版主
    * @param dto 创建参数
@@ -61,7 +53,7 @@ export class ModeratorService extends BaseService {
    */
   async createModerator(dto: CreateModeratorDto) {
     const profile = await this.forumProfile.findUnique({
-      where: { userId: dto.userId },
+      where: { id: dto.profileId },
     })
 
     if (!profile) {
@@ -69,7 +61,7 @@ export class ModeratorService extends BaseService {
     }
 
     const existing = await this.forumModerator.findUnique({
-      where: { userId: dto.userId },
+      where: { profileId: profile.id },
     })
 
     if (existing) {
@@ -99,6 +91,9 @@ export class ModeratorService extends BaseService {
   async removeModerator(dto: IdDto) {
     const moderator = await this.forumModerator.findUnique({
       where: { id: dto.id },
+      include: {
+        sections: true,
+      },
     })
 
     if (!moderator) {
@@ -230,36 +225,6 @@ export class ModeratorService extends BaseService {
     return this.forumModerator.update({
       where: { id },
       data: updateData,
-    })
-  }
-
-  /**
-   * 查看版主操作日志
-   * @param queryDto 查询参数
-   * @returns 操作日志列表
-   */
-  async getModeratorActionLogPage(queryDto: QueryModeratorActionLogDto) {
-    const { moderatorId, actionType } = queryDto
-
-    const where: any = {}
-
-    if (moderatorId) {
-      where.moderatorId = moderatorId
-    }
-
-    if (actionType) {
-      where.actionType = actionType
-    }
-
-    return this.forumAuditLog.findPagination({
-      where,
-      include: {
-        moderator: {
-          include: {
-            profile: true,
-          },
-        },
-      },
     })
   }
 }

@@ -1,10 +1,15 @@
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { ForumCounterService } from '../counter/forum-counter.service'
 import { CreateForumTopicFavoriteDto, QueryForumTopicFavoriteDto, ToggleTopicFavoriteDto } from './dto/forum-topic-favorite.dto'
 
 @Injectable()
 export class ForumTopicFavoriteService extends BaseService {
+  constructor(private readonly forumCounterService: ForumCounterService) {
+    super()
+  }
+
   get forumTopicFavorite() {
     return this.prisma.forumTopicFavorite
   }
@@ -57,14 +62,12 @@ export class ForumTopicFavoriteService extends BaseService {
         },
       })
 
-      await tx.forumTopic.update({
-        where: { id: topicId },
-        data: {
-          favoriteCount: {
-            increment: 1,
-          },
-        },
-      })
+      await this.forumCounterService.updateTopicFavoriteRelatedCounts(
+        tx,
+        topicId,
+        topic.profileId,
+        1,
+      )
 
       return favorite
     })
@@ -84,15 +87,22 @@ export class ForumTopicFavoriteService extends BaseService {
       throw new BadRequestException('收藏记录不存在')
     }
 
+    const topic = await this.forumTopic.findUnique({
+      where: { id: topicId },
+      select: { profileId: true },
+    })
+
+    if (!topic) {
+      throw new BadRequestException('主题不存在')
+    }
+
     return this.prisma.$transaction(async (tx) => {
-      await tx.forumTopic.update({
-        where: { id: topicId },
-        data: {
-          favoriteCount: {
-            decrement: 1,
-          },
-        },
-      })
+      await this.forumCounterService.updateTopicFavoriteRelatedCounts(
+        tx,
+        topicId,
+        topic.profileId,
+        -1,
+      )
 
       return tx.forumTopicFavorite.delete({
         where: {

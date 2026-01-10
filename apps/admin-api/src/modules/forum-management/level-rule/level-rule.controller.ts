@@ -68,8 +68,8 @@ export class LevelRuleController {
     summary: '获取用户等级信息',
     model: UserLevelInfoDto,
   })
-  async getUserLevelInfo(@Query('userId') userId: number) {
-    return this.levelRuleService.getUserLevelInfo(userId)
+  async getUserLevelInfo(@Query() dto: IdDto) {
+    return this.levelRuleService.getUserLevelInfo(dto.id)
   }
 
   @Post('check-permission')
@@ -78,19 +78,7 @@ export class LevelRuleController {
     model: LevelPermissionResultDto,
   })
   async checkLevelPermission(@Body() dto: CheckLevelPermissionDto) {
-    return this.levelRuleService.checkLevelPermission(
-      dto.userId,
-      dto.permissionType as any,
-    )
-  }
-
-  @Post('update-user-level')
-  @ApiDoc({
-    summary: '根据积分更新用户等级',
-    model: BaseLevelRuleDto,
-  })
-  async updateUserLevelByPoints(@Body('userId') userId: number) {
-    return this.levelRuleService.updateUserLevelByPoints(userId)
+    return this.levelRuleService.checkLevelPermission(dto)
   }
 
   @Get('statistics')
