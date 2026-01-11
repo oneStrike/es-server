@@ -5,7 +5,11 @@ import { ExperienceModule } from './experience/experience.module'
 import { LevelRuleModule } from './level-rule/level-rule.module'
 import { ModeratorModule } from './moderator/moderator.module'
 import { PointModule } from './point/point.module'
+import { ForumReportModule } from './report/forum-report.module'
+import { ForumSectionGroupModule } from './section-group/forum-section-group.module'
+import { ForumSectionModule } from './section/forum-section.module'
 import { SensitiveWordModule } from './sensitive-word/sensitive-word.module'
+import { ForumTagModule } from './tag/forum-tag.module'
 import { ForumTopicModule } from './topic/topic.module'
 
 @Module({
@@ -18,6 +22,10 @@ import { ForumTopicModule } from './topic/topic.module'
     PointModule,
     SensitiveWordModule,
     ForumTopicModule,
+    ForumSectionModule,
+    ForumSectionGroupModule,
+    ForumReportModule,
+    ForumTagModule,
   ],
 })
 export class ForumManagementModule {}

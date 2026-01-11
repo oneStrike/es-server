@@ -52,16 +52,12 @@ export class ModeratorService extends BaseService {
    * @returns 创建结果
    */
   async createModerator(dto: CreateModeratorDto) {
-    const profile = await this.forumProfile.findUnique({
-      where: { id: dto.profileId },
-    })
-
-    if (!profile) {
-      throw new BadRequestException('用户不存在')
+    if (!(await this.forumProfile.exists({ id: dto.profileId }))) {
+      throw new BadRequestException(`ID【${dto.profileId}】数据不存在`)
     }
 
     const existing = await this.forumModerator.findUnique({
-      where: { profileId: profile.id },
+      where: { profileId: dto.profileId },
     })
 
     if (existing) {
@@ -89,15 +85,8 @@ export class ModeratorService extends BaseService {
    * @returns 移除结果
    */
   async removeModerator(dto: IdDto) {
-    const moderator = await this.forumModerator.findUnique({
-      where: { id: dto.id },
-      include: {
-        sections: true,
-      },
-    })
-
-    if (!moderator) {
-      throw new BadRequestException('版主不存在')
+    if (!(await this.forumModerator.exists({ id: dto.id }))) {
+      throw new BadRequestException(`ID【${dto.id}】数据不存在`)
     }
 
     await this.prisma.$transaction(async (tx) => {

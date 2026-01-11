@@ -53,7 +53,7 @@ export class ModeratorController {
     return this.moderatorService.removeModerator(dto)
   }
 
-  @Post('section/assign')
+  @Post('section-assign')
   @ApiDoc({
     summary: '分配版主管理的板块',
     model: ModeratorDto,
@@ -63,7 +63,7 @@ export class ModeratorController {
     return true
   }
 
-  @Get('action/log')
+  @Get('action-log-page')
   @ApiPageDoc({
     summary: '查看版主操作日志',
     model: ModeratorDto,

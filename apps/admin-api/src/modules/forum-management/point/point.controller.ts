@@ -18,7 +18,7 @@ import { ApiTags } from '@nestjs/swagger'
 export class PointController {
   constructor(private readonly pointService: PointService) {}
 
-  @Get('rules/page')
+  @Get('rules-page')
   @ApiPageDoc({
     summary: '获取积分规则分页',
     model: BasePointRuleDto,
@@ -27,7 +27,7 @@ export class PointController {
     return this.pointService.getPointRulePage(query)
   }
 
-  @Get('rules/detail')
+  @Get('rules-detail')
   @ApiDoc({
     summary: '获取积分规则详情',
     model: BasePointRuleDto,
@@ -36,7 +36,7 @@ export class PointController {
     return this.pointService.getPointRuleDetail(dto.id)
   }
 
-  @Post('rules/create')
+  @Post('rules-create')
   @ApiDoc({
     summary: '创建积分规则',
     model: BasePointRuleDto,
@@ -45,7 +45,7 @@ export class PointController {
     return this.pointService.createPointRule(dto)
   }
 
-  @Post('rules/update')
+  @Post('rules-update')
   @ApiDoc({
     summary: '更新积分规则',
     model: BasePointRuleDto,
@@ -54,7 +54,7 @@ export class PointController {
     return this.pointService.updatePointRule(dto)
   }
 
-  @Post('add')
+  @Post('add-points')
   @ApiDoc({
     summary: '增加积分',
     model: BasePointRuleDto,
@@ -63,7 +63,7 @@ export class PointController {
     return this.pointService.addPoints(dto)
   }
 
-  @Post('consume')
+  @Post('consume-points')
   @ApiDoc({
     summary: '消费积分',
     model: BasePointRuleDto,
@@ -72,7 +72,7 @@ export class PointController {
     return this.pointService.consumePoints(dto)
   }
 
-  @Get('records/page')
+  @Get('records-page')
   @ApiPageDoc({
     summary: '获取积分记录分页',
     model: BasePointRuleDto,
@@ -81,7 +81,7 @@ export class PointController {
     return this.pointService.getPointRecordPage(query)
   }
 
-  @Get('records/detail')
+  @Get('records-detail')
   @ApiDoc({
     summary: '获取积分记录详情',
     model: BasePointRuleDto,

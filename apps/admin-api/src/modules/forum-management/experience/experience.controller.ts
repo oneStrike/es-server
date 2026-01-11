@@ -17,7 +17,7 @@ import { ApiTags } from '@nestjs/swagger'
 export class ExperienceController {
   constructor(private readonly experienceService: ExperienceService) {}
 
-  @Get('rules/page')
+  @Get('rules-page')
   @ApiPageDoc({
     summary: '获取经验规则分页',
     model: BaseExperienceRuleDto,
@@ -26,7 +26,7 @@ export class ExperienceController {
     return this.experienceService.getExperienceRulePage(query)
   }
 
-  @Get('rules/detail')
+  @Get('rules-detail')
   @ApiDoc({
     summary: '获取经验规则详情',
     model: BaseExperienceRuleDto,
@@ -35,7 +35,7 @@ export class ExperienceController {
     return this.experienceService.getExperienceRuleDetail(dto.id)
   }
 
-  @Post('rules/create')
+  @Post('rules-create')
   @ApiDoc({
     summary: '创建经验规则',
     model: BaseExperienceRuleDto,
@@ -44,7 +44,7 @@ export class ExperienceController {
     return this.experienceService.createExperienceRule(dto)
   }
 
-  @Post('rules/update')
+  @Post('rules-update')
   @ApiDoc({
     summary: '更新经验规则',
     model: BaseExperienceRuleDto,
@@ -53,7 +53,7 @@ export class ExperienceController {
     return this.experienceService.updateExperienceRule(dto)
   }
 
-  @Post('rules/delete')
+  @Post('rules-delete')
   @ApiDoc({
     summary: '删除经验规则',
     model: BaseExperienceRuleDto,
@@ -71,7 +71,7 @@ export class ExperienceController {
     return this.experienceService.addExperience(dto)
   }
 
-  @Get('records/page')
+  @Get('records-page')
   @ApiPageDoc({
     summary: '获取经验记录分页',
     model: BaseExperienceRuleDto,
@@ -80,7 +80,7 @@ export class ExperienceController {
     return this.experienceService.getExperienceRecordPage(query)
   }
 
-  @Get('records/detail')
+  @Get('records-detail')
   @ApiDoc({
     summary: '获取经验记录详情',
     model: BaseExperienceRuleDto,
