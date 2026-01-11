@@ -1,4 +1,3 @@
-import type { ForumExperienceRuleWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -13,7 +12,6 @@ import {
   QueryExperienceRuleDto,
   UpdateExperienceRuleDto,
 } from './dto/experience-rule.dto'
-import { ExperienceRuleTypeEnum } from './experience.constant'
 
 /**
  * 经验服务类
@@ -25,14 +23,23 @@ export class ExperienceService extends BaseService {
     super()
   }
 
+  /**
+   * 获取经验规则数据库访问器
+   */
   get forumExperienceRule() {
     return this.prisma.forumExperienceRule
   }
 
+  /**
+   * 获取经验记录数据库访问器
+   */
   get forumExperienceRecord() {
     return this.prisma.forumExperienceRecord
   }
 
+  /**
+   * 获取用户资料数据库访问器
+   */
   get forumProfile() {
     return this.prisma.forumProfile
   }
@@ -43,6 +50,9 @@ export class ExperienceService extends BaseService {
    * @returns 创建的规则信息
    */
   async createExperienceRule(dto: CreateExperienceRuleDto) {
+    if (await this.forumExperienceRule.exists({ name: dto.name })) {
+      throw new BadRequestException('经验规则名称已存在')
+    }
     return this.forumExperienceRule.create({
       data: dto,
     })
@@ -50,21 +60,20 @@ export class ExperienceService extends BaseService {
 
   /**
    * 分页查询经验规则列表
-   * @param queryExperienceRuleDto 查询条件
+   * @param dto 查询条件
    * @returns 分页的规则列表
    */
-  async getExperienceRulePage(queryExperienceRuleDto: QueryExperienceRuleDto) {
-    const where: ForumExperienceRuleWhereInput = queryExperienceRuleDto
-
-    if (queryExperienceRuleDto.name) {
-      where.name = {
-        contains: queryExperienceRuleDto.name,
-        mode: 'insensitive',
-      }
-    }
-
+  async getExperienceRulePage(dto: QueryExperienceRuleDto) {
     return this.forumExperienceRule.findPagination({
-      where,
+      where: {
+        ...dto,
+        isEnabled: dto.isEnabled,
+        type: dto.type,
+        name: {
+          contains: dto.name,
+          mode: 'insensitive',
+        },
+      },
     })
   }
 
@@ -74,9 +83,15 @@ export class ExperienceService extends BaseService {
    * @returns 规则详情信息
    */
   async getExperienceRuleDetail(id: number) {
-    return this.forumExperienceRule.findUnique({
+    const rule = await this.forumExperienceRule.findUnique({
       where: { id },
     })
+
+    if (!rule) {
+      throw new BadRequestException('经验规则不存在')
+    }
+
+    return rule
   }
 
   /**
@@ -86,13 +101,22 @@ export class ExperienceService extends BaseService {
    */
   async updateExperienceRule(dto: UpdateExperienceRuleDto) {
     const { id, ...updateData } = dto
-
+    if (
+      await this.forumExperienceRule.exists({ name: dto.name, id: { not: id } })
+    ) {
+      throw new BadRequestException('经验规则名称已存在')
+    }
     return this.forumExperienceRule.update({
       where: { id },
       data: updateData,
     })
   }
 
+  /**
+   * 删除经验规则
+   * @param id 规则ID
+   * @returns 删除结果
+   */
   async deleteExperienceRule(id: number) {
     const rule = await this.forumExperienceRule.findUnique({
       where: { id },
@@ -226,25 +250,16 @@ export class ExperienceService extends BaseService {
    * @returns 分页的记录列表
    */
   async getExperienceRecordPage(dto: QueryExperienceRecordDto) {
-    const { profileId, ruleId, ...otherDto } = dto
-    const where: any = {
-      ...otherDto,
-    }
-
-    if (ruleId !== undefined) {
-      where.rule = {
-        id: ruleId,
-      }
-    }
-
-    if (profileId !== undefined) {
-      where.profile = {
-        id: profileId,
-      }
-    }
-
     return this.forumExperienceRecord.findPagination({
-      where,
+      where: {
+        ...dto,
+        rule: {
+          id: dto.ruleId,
+        },
+        profile: {
+          id: dto.profileId,
+        },
+      },
     })
   }
 
@@ -310,24 +325,5 @@ export class ExperienceService extends BaseService {
       todayEarned: todayEarned._sum.experience || 0,
       level: profile.level,
     }
-  }
-
-  /**
-   * 根据规则类型获取经验
-   * @param profileId 用户ID
-   * @param ruleType 规则类型
-   * @param remark 备注
-   * @returns 操作结果
-   */
-  async addExperienceByRuleType(
-    profileId: number,
-    ruleType: ExperienceRuleTypeEnum,
-    remark?: string,
-  ) {
-    return this.addExperience({
-      profileId,
-      ruleType,
-      remark,
-    })
   }
 }

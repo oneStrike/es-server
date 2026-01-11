@@ -79,18 +79,14 @@ export * from './section/section-permission.service'
 
 // 敏感词模块 - 敏感词过滤
 export * from './sensitive-word/dto/sensitive-word-detect.dto'
-export * from './sensitive-word/dto/sensitive-word-statistics.dto'
 export * from './sensitive-word/dto/sensitive-word.dto'
 export * from './sensitive-word/sensitive-word-detect.service'
-
 export * from './sensitive-word/sensitive-word-statistics.service'
 export * from './sensitive-word/sensitive-word.module'
 export * from './sensitive-word/sensitive-word.service'
 
 // 标签模块 - 内容标签管理
 export * from './tag/dto/forum-tag.dto'
-export * from './tag/forum-tag.constant'
-
 export * from './tag/forum-tag.module'
 export * from './tag/forum-tag.service'
 // 主题收藏模块 - 帖子收藏功能

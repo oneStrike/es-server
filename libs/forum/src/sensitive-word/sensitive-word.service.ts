@@ -1,6 +1,6 @@
 import { BaseService } from '@libs/base/database'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
-import { Injectable, Logger } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 
 import {
   LevelStatisticsDto,
@@ -68,7 +68,9 @@ export class SensitiveWordService extends BaseService {
    * 更新敏感词
    */
   async updateSensitiveWord(dto: UpdateSensitiveWordDto) {
-    await this.checkDataExists(dto.id, this.sensitiveWord)
+    if (!(await this.sensitiveWord.exists({ id: dto.id }))) {
+      throw new BadRequestException(`ID【${dto.id}】数据不存在`)
+    }
     const result = await this.sensitiveWord.update({
       where: {
         id: dto.id,

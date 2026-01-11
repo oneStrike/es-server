@@ -1,7 +1,11 @@
 import type { ForumConfig, ForumConfigHistory } from '@libs/base/database'
 
 import { BaseService } from '@libs/base/database'
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { UpdateForumConfigDto } from './dto/forum-config.dto'
 import { ForumConfigCacheService } from './forum-config-cache.service'
 import { ChangeTypeEnum, DEFAULT_FORUM_CONFIG } from './forum-config.constants'
@@ -29,7 +33,7 @@ export class ForumConfigService extends BaseService {
     userId?: number,
   ) {
     if (!userId || !(await this.adminUser.exists({ id: userId }))) {
-      this.throwHttpException('更新失败，无法获取用户信息')
+      throw new BadRequestException('更新失败，无法获取用户信息')
     }
     const { id, reason, ...updateData } = updateForumConfigDto
 
@@ -88,7 +92,7 @@ export class ForumConfigService extends BaseService {
 
   async restoreFromHistory(historyId: number, userId?: number) {
     if (!userId || !(await this.adminUser.exists({ id: userId }))) {
-      this.throwHttpException('更新失败，无法获取用户信息')
+      throw new BadRequestException('更新失败，无法获取用户信息')
     }
     const history = await this.prisma.forumConfigHistory.findUnique({
       where: { id: historyId },

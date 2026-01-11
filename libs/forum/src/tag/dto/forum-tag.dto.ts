@@ -15,7 +15,7 @@ export class BaseForumTagDto extends BaseDto {
     description: '标签名称',
     example: '技术讨论',
     required: true,
-    maxLength: 50,
+    maxLength: 20,
   })
   name!: string
 
@@ -25,7 +25,7 @@ export class BaseForumTagDto extends BaseDto {
     required: false,
     maxLength: 255,
   })
-  icon!: string
+  icon?: string
 
   @ValidateString({
     description: '标签描述',
@@ -35,20 +35,12 @@ export class BaseForumTagDto extends BaseDto {
   })
   description?: string
 
-  @ValidateNumber({
-    description: '主题ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  topicId!: number
-
   @ValidateBoolean({
-    description: '是否系统标签',
+    description: '是否启用',
     example: true,
-    required: true,
+    required: false,
   })
-  isEnabled!: boolean
+  isEnabled?: boolean
 
   @ValidateNumber({
     description: '使用次数',
@@ -74,9 +66,9 @@ export class BaseForumTagDto extends BaseDto {
 export class CreateForumTagDto extends PickType(BaseForumTagDto, [
   'icon',
   'name',
-  'topicId',
   'description',
   'sortOrder',
+  'isEnabled',
 ]) {}
 
 /**
@@ -101,9 +93,15 @@ export class QueryForumTagDto extends IntersectionType(
  * 为主题分配标签 DTO
  * 用于将标签分配给指定的主题
  */
-export class AssignTagToTopicDto extends PickType(BaseForumTagDto, [
-  'topicId',
-]) {
+export class AssignTagToTopicDto {
+  @ValidateNumber({
+    description: '主题ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
+  topicId!: number
+
   @ValidateNumber({
     description: '标签ID',
     example: 1,

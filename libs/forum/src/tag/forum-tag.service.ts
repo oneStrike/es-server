@@ -12,7 +12,6 @@ import {
   RemoveTagFromTopicDto,
   UpdateForumTagDto,
 } from './dto/forum-tag.dto'
-import { ForumTagStatusEnum, ForumTagTypeEnum } from './forum-tag.constant'
 
 /**
  * 论坛标签服务类
@@ -48,7 +47,7 @@ export class ForumTagService extends BaseService {
    * @throws BadRequestException 如果标签名称已存在
    */
   async createForumTag(createForumTagDto: CreateForumTagDto) {
-    const { name, topicId, ...tagData } = createForumTagDto
+    const { name, ...tagData } = createForumTagDto
 
     const existingTag = await this.forumTag.findFirst({
       where: {
@@ -63,11 +62,6 @@ export class ForumTagService extends BaseService {
     const tag = await this.forumTag.create({
       data: {
         ...tagData,
-        topicTags: {
-          create: {
-            topicId,
-          },
-        },
         name,
       },
     })
@@ -81,7 +75,7 @@ export class ForumTagService extends BaseService {
    * @returns 分页后的标签列表
    */
   async getForumTags(queryForumTagDto: QueryForumTagDto) {
-    const { name } = queryForumTagDto
+    const { name, isEnabled } = queryForumTagDto
 
     const where: any = {}
 
@@ -89,6 +83,10 @@ export class ForumTagService extends BaseService {
       where.name = {
         contains: name,
       }
+    }
+
+    if (isEnabled !== undefined) {
+      where.isEnabled = isEnabled
     }
 
     return this.forumTag.findPagination({
@@ -116,7 +114,7 @@ export class ForumTagService extends BaseService {
     const tag = await this.forumTag.findUnique({
       where: { id },
       include: {
-        topics: {
+        topicTags: {
           where: {
             topic: {
               deletedAt: null,
@@ -132,9 +130,7 @@ export class ForumTagService extends BaseService {
             },
           },
           orderBy: {
-            topic: {
-              createdAt: 'desc',
-            },
+            createdAt: 'desc',
           },
           take: 10,
         },
@@ -145,7 +141,10 @@ export class ForumTagService extends BaseService {
       throw new NotFoundException('标签不存在')
     }
 
-    return tag
+    return {
+      ...tag,
+      topics: tag.topicTags.map((item) => item.topic),
+    }
   }
 
   /**
@@ -156,7 +155,7 @@ export class ForumTagService extends BaseService {
    * @throws BadRequestException 如果标签名称已存在
    */
   async updateForumTag(updateForumTagDto: UpdateForumTagDto) {
-    const { id, name, type, ...updateData } = updateForumTagDto
+    const { id, name, ...updateData } = updateForumTagDto
 
     const tag = await this.forumTag.findUnique({
       where: { id },
@@ -166,11 +165,10 @@ export class ForumTagService extends BaseService {
       throw new NotFoundException('标签不存在')
     }
 
-    if (name && type) {
+    if (name) {
       const existingTag = await this.forumTag.findFirst({
         where: {
           name,
-          type,
           id: {
             not: id,
           },
@@ -250,7 +248,7 @@ export class ForumTagService extends BaseService {
       throw new NotFoundException('标签不存在')
     }
 
-    if (tag.status !== ForumTagStatusEnum.ACTIVE) {
+    if (!tag.isEnabled) {
       throw new BadRequestException('该标签未启用')
     }
 
@@ -267,23 +265,25 @@ export class ForumTagService extends BaseService {
       throw new BadRequestException('该主题已关联此标签')
     }
 
-    const topicTag = await this.forumTopicTag.create({
-      data: {
-        topicId,
-        tagId,
-      },
-    })
-
-    await this.forumTag.update({
-      where: { id: tagId },
-      data: {
-        usageCount: {
-          increment: 1,
+    return this.prisma.$transaction(async (tx) => {
+      const topicTag = await tx.forumTopicTag.create({
+        data: {
+          topicId,
+          tagId,
         },
-      },
-    })
+      })
 
-    return topicTag
+      await tx.forumTag.update({
+        where: { id: tagId },
+        data: {
+          useCount: {
+            increment: 1,
+          },
+        },
+      })
+
+      return topicTag
+    })
   }
 
   /**
@@ -308,25 +308,27 @@ export class ForumTagService extends BaseService {
       throw new NotFoundException('该主题未关联此标签')
     }
 
-    await this.forumTopicTag.delete({
-      where: {
-        topicId_tagId: {
-          topicId,
-          tagId,
+    return this.prisma.$transaction(async (tx) => {
+      await tx.forumTopicTag.delete({
+        where: {
+          topicId_tagId: {
+            topicId,
+            tagId,
+          },
         },
-      },
-    })
+      })
 
-    await this.forumTag.update({
-      where: { id: tagId },
-      data: {
-        usageCount: {
-          decrement: 1,
+      await tx.forumTag.update({
+        where: { id: tagId },
+        data: {
+          useCount: {
+            decrement: 1,
+          },
         },
-      },
-    })
+      })
 
-    return { success: true }
+      return { success: true }
+    })
   }
 
   /**
@@ -369,40 +371,23 @@ export class ForumTagService extends BaseService {
   async getPopularTags(limit = 10) {
     return this.forumTag.findMany({
       where: {
-        status: ForumTagStatusEnum.ACTIVE,
+        isEnabled: true,
       },
       orderBy: {
-        usageCount: 'desc',
+        useCount: 'desc',
       },
       take: limit,
     })
   }
 
   /**
-   * 获取系统标签
-   * @returns 系统标签列表
+   * 获取启用的标签列表
+   * @returns 启用的标签列表，按排序值升序排列
    */
-  async getSystemTags() {
+  async getEnabledTags() {
     return this.forumTag.findMany({
       where: {
-        type: ForumTagTypeEnum.SYSTEM,
-        status: ForumTagStatusEnum.ACTIVE,
-      },
-      orderBy: {
-        sortOrder: 'asc',
-      },
-    })
-  }
-
-  /**
-   * 获取用户标签
-   * @returns 用户标签列表
-   */
-  async getUserTags() {
-    return this.forumTag.findMany({
-      where: {
-        type: ForumTagTypeEnum.USER,
-        status: ForumTagStatusEnum.ACTIVE,
+        isEnabled: true,
       },
       orderBy: {
         sortOrder: 'asc',

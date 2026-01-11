@@ -1,6 +1,6 @@
 import { BaseService } from '@libs/base/database'
 
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CheckLevelPermissionDto,
   CreateLevelRuleDto,
@@ -59,7 +59,7 @@ export class LevelRuleService extends BaseService {
    */
   async createLevelRule(dto: CreateLevelRuleDto) {
     if (await this.forumLevelRule.exists({ name: dto.name })) {
-      this.throwHttpException('已存在相同等级规则')
+      throw new BadRequestException('已存在相同等级规则')
     }
 
     return this.forumLevelRule.create({
@@ -110,7 +110,7 @@ export class LevelRuleService extends BaseService {
         id: { not: id },
       })
     ) {
-      this.throwHttpException('已存在相同等级规则')
+      throw new BadRequestException('已存在相同等级规则')
     }
 
     return this.forumLevelRule.update({
@@ -137,11 +137,11 @@ export class LevelRuleService extends BaseService {
     })
 
     if (!rule) {
-      throw this.throwHttpException('等级规则不存在')
+      throw new BadRequestException('等级规则不存在')
     }
 
     if (rule._count.profiles > 0) {
-      throw this.throwHttpException('该等级规则下还有用户，无法删除')
+      throw new BadRequestException('该等级规则下还有用户，无法删除')
     }
 
     return this.forumLevelRule.delete({
@@ -163,11 +163,11 @@ export class LevelRuleService extends BaseService {
     })
 
     if (!profile) {
-      throw this.throwHttpException('用户资料不存在')
+      throw new BadRequestException('用户资料不存在')
     }
 
     if (!profile.level) {
-      throw this.throwHttpException('用户等级规则不存在')
+      throw new BadRequestException('用户等级规则不存在')
     }
 
     const nextLevelRule = await this.forumLevelRule.findFirst({
@@ -234,11 +234,11 @@ export class LevelRuleService extends BaseService {
     })
 
     if (!profile) {
-      throw this.throwHttpException('用户资料不存在')
+      throw new BadRequestException('用户资料不存在')
     }
 
     if (!profile.level) {
-      throw this.throwHttpException('用户等级规则不存在')
+      throw new BadRequestException('用户等级规则不存在')
     }
 
     const level = profile.level
@@ -366,7 +366,7 @@ export class LevelRuleService extends BaseService {
         break
 
       default:
-        throw this.throwHttpException('不支持的权限类型')
+        throw new BadRequestException('不支持的权限类型')
     }
 
     return {
