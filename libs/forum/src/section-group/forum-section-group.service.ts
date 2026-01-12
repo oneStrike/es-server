@@ -1,7 +1,11 @@
 import { BaseService } from '@libs/base/database'
 
-import { UpdateEnabledStatusDto } from '@libs/base/dto'
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import {
   CreateForumSectionGroupDto,
   QueryForumSectionGroupDto,
@@ -30,14 +34,15 @@ export class ForumSectionGroupService extends BaseService {
 
   /**
    * 创建新的论坛板块分组
-   * @param createForumSectionGroupDto 创建板块分组的数据传输对象
+   * @param dto 创建板块分组的数据传输对象
    * @returns 创建成功的板块分组
    */
-  async createForumSectionGroup(
-    createForumSectionGroupDto: CreateForumSectionGroupDto,
-  ) {
+  async createForumSectionGroup(dto: CreateForumSectionGroupDto) {
+    if (await this.forumSectionGroup.exists({ name: dto.name })) {
+      throw new BadRequestException('板块分组名称已存在')
+    }
     return this.forumSectionGroup.create({
-      data: createForumSectionGroupDto,
+      data: dto,
     })
   }
 
@@ -50,62 +55,37 @@ export class ForumSectionGroupService extends BaseService {
   async getForumSectionGroupById(id: number) {
     const group = await this.forumSectionGroup.findUnique({
       where: { id },
-      include: {
-        sections: {
-          where: {
-            deletedAt: null,
-          },
-          orderBy: {
-            sortOrder: 'asc',
-          },
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            sortOrder: true,
-            isEnabled: true,
-            _count: {
-              select: {
-                topics: true,
-              },
-            },
-          },
-        },
+      omit: {
+        deletedAt: true,
       },
     })
 
     if (!group) {
       throw new NotFoundException('板块分组不存在')
     }
-
     return group
   }
 
   /**
    * 查询论坛板块分组列表（支持分页）
-   * @param queryForumSectionGroupDto 查询条件的数据传输对象
+   * @param dto 查询条件的数据传输对象
    * @returns 分页后的板块分组列表
    */
-  async getForumSectionGroups(
-    queryForumSectionGroupDto: QueryForumSectionGroupDto,
-  ) {
-    const { name } = queryForumSectionGroupDto
-
-    const where: any = {}
-
-    if (name) {
-      where.name = {
-        contains: name,
-      }
-    }
-
+  async getForumSectionGroupPage(dto: QueryForumSectionGroupDto) {
     return this.forumSectionGroup.findPagination({
-      where,
-      include: {
-        sections: true,
+      where: {
+        deletedAt: null,
+        ...dto,
+        isEnabled: dto.isEnabled,
+        name: {
+          contains: dto.name,
+        },
       },
       orderBy: {
-        sortOrder: 'asc',
+        sortOrder: dto.orderBy ? undefined : 'desc',
+      },
+      omit: {
+        deletedAt: true,
       },
     })
   }
@@ -160,6 +140,22 @@ export class ForumSectionGroupService extends BaseService {
 
     return this.forumSectionGroup.delete({
       where: { id },
+    })
+  }
+
+  /**
+   * 交换板块分组的排序顺序
+   * @param dto 拖拽重新排序的数据传输对象
+   * @returns 更新后的板块分组
+   * @throws NotFoundException 如果板块分组不存在
+   */
+  async swapSectionGroupSortOrder(dto: DragReorderDto) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.forumSectionGroup.swapField(
+        { id: dto.dragId },
+        { id: dto.targetId },
+        'sortOrder',
+      )
     })
   }
 

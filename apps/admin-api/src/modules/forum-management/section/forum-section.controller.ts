@@ -1,6 +1,7 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import {
+  BaseForumSectionDto,
   CreateForumSectionDto,
   ForumSectionService,
   QueryForumSectionDto,
@@ -14,19 +15,19 @@ import { ApiTags } from '@nestjs/swagger'
 export class ForumSectionController {
   constructor(private readonly forumSectionService: ForumSectionService) {}
 
-  @Get('list')
+  @Get('page')
   @ApiPageDoc({
     summary: '查看板块列表',
-    model: CreateForumSectionDto,
+    model: BaseForumSectionDto,
   })
-  async getSectionList(@Query() query: QueryForumSectionDto) {
+  async getSectionPage(@Query() query: QueryForumSectionDto) {
     return this.forumSectionService.getForumSectionPage(query)
   }
 
   @Get('detail')
   @ApiDoc({
     summary: '查看板块详情',
-    model: CreateForumSectionDto,
+    model: BaseForumSectionDto,
   })
   async getSectionDetail(@Query() query: IdDto) {
     return this.forumSectionService.getForumSectionDetail(query.id)
@@ -40,37 +41,48 @@ export class ForumSectionController {
     return this.forumSectionService.getSectionTree()
   }
 
-  @Post('add')
+  @Post('create')
   @ApiDoc({
     summary: '添加板块',
-    model: CreateForumSectionDto,
+    model: BaseForumSectionDto,
   })
-  async addSection(@Body() dto: CreateForumSectionDto) {
+  async createSection(@Body() dto: CreateForumSectionDto) {
     return this.forumSectionService.createForumSection(dto)
   }
 
   @Post('update')
   @ApiDoc({
     summary: '更新板块',
-    model: UpdateForumSectionDto,
+    model: BaseForumSectionDto,
   })
   async updateSection(@Body() dto: UpdateForumSectionDto) {
     return this.forumSectionService.updateForumSection(dto)
   }
 
-  @Post('remove')
+  @Post('delete')
   @ApiDoc({
     summary: '删除板块',
+    model: BaseForumSectionDto,
   })
-  async removeSection(@Body() dto: IdDto) {
+  async deleteSection(@Body() dto: IdDto) {
     return this.forumSectionService.deleteForumSection(dto.id)
   }
 
   @Post('update-enabled')
   @ApiDoc({
     summary: '更新板块启用状态',
+    model: BaseForumSectionDto,
   })
-  async updateEnabledStatus(@Body() dto: { id: number, isEnabled: boolean }) {
-    return this.forumSectionService.updateEnabledStatus(dto.id, dto.isEnabled)
+  async updateEnabledStatus(@Body() dto: UpdateEnabledStatusDto) {
+    return this.forumSectionService.updateEnabledStatus(dto)
+  }
+
+  @Post('swap-sort-order')
+  @ApiDoc({
+    summary: '交换板块排序顺序',
+    model: BaseForumSectionDto,
+  })
+  async swapSortOrder(@Body() dto: DragReorderDto) {
+    return this.forumSectionService.updateSectionSort(dto)
   }
 }
