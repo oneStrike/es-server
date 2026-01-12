@@ -4,7 +4,7 @@ import type {
 } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 
-import { DragReorderDto } from '@libs/base/dto'
+import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateForumSectionDto,
@@ -148,16 +148,13 @@ export class ForumSectionService extends BaseService {
 
     return this.forumSection.findPagination({
       where,
-      select: {
+      include: {
         group: {
           select: {
             id: true,
             name: true,
           },
         },
-      },
-      orderBy: {
-        sortOrder: 'asc',
       },
     })
   }
@@ -256,22 +253,17 @@ export class ForumSectionService extends BaseService {
 
   /**
    * 更新板块启用状态
-   * @param id 板块ID
-   * @param isEnabled 是否启用
+   * @param dto 更新状态数据
    * @returns 更新结果
    */
-  async updateEnabledStatus(id: number, isEnabled: boolean) {
-    const section = await this.forumSection.findUnique({
-      where: { id },
-    })
-
-    if (!section) {
+  async updateEnabledStatus(dto: UpdateEnabledStatusDto) {
+    if (!(await this.forumSection.exists({ id: dto.id }))) {
       throw new BadRequestException('论坛板块不存在')
     }
 
     return this.forumSection.update({
-      where: { id },
-      data: { isEnabled },
+      where: { id: dto.id },
+      data: { isEnabled: dto.isEnabled },
     })
   }
 
