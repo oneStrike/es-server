@@ -62,11 +62,11 @@
 
 - [ ] 任务12: 编写集成测试(6小时)
   - 创建 `apps/admin-api/test/forum-config.e2e-spec.ts`
-  - 创建 `apps/client-api/test/forum-config.e2e-spec.ts`
+  - 创建 `apps/app-api/test/forum-config.e2e-spec.ts`
 
 - [ ] 任务13: 集成到Forum模块(2小时)
   - 更新 `apps/admin-api/src/modules/forum-management/forum-management.module.ts`
-  - 更新 `apps/client-api/src/modules/forum/forum.module.ts`
+  - 更新 `apps/app-api/src/modules/forum/forum.module.ts`
   - 更新 `libs/forum/src/index.ts`
 
 ### 1.2 数据库迁移
@@ -232,7 +232,7 @@ npm run test:cov
 ```bash
 # 运行集成测试
 npm test apps/admin-api/test/forum-config.e2e-spec.ts
-npm test apps/client-api/test/forum-config.e2e-spec.ts
+npm test apps/app-api/test/forum-config.e2e-spec.ts
 ```
 
 **手动测试:**
@@ -241,7 +241,7 @@ npm test apps/client-api/test/forum-config.e2e-spec.ts
 npm run start:dev admin-api
 
 # 启动客户端API
-npm run start:dev client-api
+npm run start:dev app-api
 
 # 使用Postman或curl测试API接口
 ```

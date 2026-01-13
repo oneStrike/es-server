@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.6
 # --------------------------------
 # Client API 专用 Dockerfile
-# 构建独立的 client-api 服务镜像
+# 构建独立的 app-api 服务镜像
 # --------------------------------
 # --------------------------------
 # 运行时阶段
@@ -25,11 +25,11 @@ WORKDIR /app
 
 # 从构建上下文复制生产依赖和构建产物
 COPY --chown=nestjs:nodejs ./node_modules ./node_modules
-COPY --chown=nestjs:nodejs ./dist/apps/client-api ./dist
+COPY --chown=nestjs:nodejs ./dist/apps/app-api ./dist
 COPY --chown=nestjs:nodejs ./package.json ./
 COPY --chown=nestjs:nodejs ./prisma ./prisma
 COPY --chown=nestjs:nodejs ./prisma.config.ts ./
-COPY --chown=nestjs:nodejs ./apps/client-api/ecosystem.config.cjs ./
+COPY --chown=nestjs:nodejs ./apps/app-api/ecosystem.config.cjs ./
 
 # 预创建上传目录并授予权限（供命名卷首次挂载继承）
 RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads \

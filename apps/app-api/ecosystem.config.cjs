@@ -10,8 +10,8 @@ const process = require('node:process')
 module.exports = {
   apps: [
     {
-      name: 'client-api',
-      script: 'dist/apps/client-api/src/main.js',
+      name: 'app-api',
+      script: 'dist/apps/app-api/src/main.js',
       // Default one process per container; allow enabling cluster by env
       instances: process.env.PM2_INSTANCES || 1,
       exec_mode: process.env.PM2_EXEC_MODE || 'fork', // set 'cluster' to enable cluster mode

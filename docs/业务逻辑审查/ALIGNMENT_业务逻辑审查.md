@@ -17,7 +17,7 @@
 - **架构模式**: Monorepo (使用NestJS Monorepo)
 - **应用结构**:
   - `apps/admin-api`: 管理后台API
-  - `apps/client-api`: 客户端API
+  - `apps/app-api`: 客户端API
 - **库结构**:
   - `libs/base`: 基础服务（数据库、配置、日志等）
   - `libs/forum`: 论坛核心业务逻辑
@@ -130,7 +130,7 @@
 
 ### 审查范围
 - **核心模块**: 主要关注`libs/forum`模块的业务逻辑
-- **应用层**: 审查`apps/admin-api`和`apps/client-api`中的forum相关模块
+- **应用层**: 审查`apps/admin-api`和`apps/app-api`中的forum相关模块
 - **基础服务**: 审查`libs/base`中与forum相关的部分
 - **数据库模型**: 审查Prisma模型定义
 
