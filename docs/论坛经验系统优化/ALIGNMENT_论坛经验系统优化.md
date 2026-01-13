@@ -90,7 +90,7 @@ const newLevelRule = await this.forumLevelRule.findFirst({
   - `libs/forum`: 论坛核心业务逻辑
   - `libs/base`: 基础服务和工具
   - `apps/admin-api`: 管理端API
-  - `apps/client-api`: 客户端API
+  - `apps/app-api`: 客户端API
 
 #### 4.1.2 现有模块结构
 ```

@@ -386,8 +386,8 @@ enum ConfigPermission {
 - 在admin-api中添加配置管理权限
 
 **与Client API集成**
-- 在client-api中添加配置查询接口
-- 在client-api中添加配置缓存
+- 在app-api中添加配置查询接口
+- 在app-api中添加配置缓存
 
 ### 5.2 数据库集成
 

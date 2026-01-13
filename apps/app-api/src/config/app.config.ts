@@ -5,7 +5,7 @@ import { registerAs } from '@nestjs/config'
 
 export const AppConfigRegister = registerAs('app', (): AppConfigInterface => {
   const {
-    APP_NAME = 'client-api',
+    APP_NAME = 'app-api',
     APP_PORT = '8080',
     APP_VERSION = '1.0.0',
     APP_FILE_URL_PREFIX = '/files/',

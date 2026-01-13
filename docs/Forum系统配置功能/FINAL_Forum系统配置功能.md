@@ -542,7 +542,7 @@
 - libs/forum/src/config/__tests__/forum-config-history.service.spec.ts
 - libs/forum/src/config/__tests__/forum-config.validator.spec.ts
 - apps/admin-api/test/forum-config.e2e-spec.ts
-- apps/client-api/test/forum-config.e2e-spec.ts
+- apps/app-api/test/forum-config.e2e-spec.ts
 
 ### 11.3 配置交付物
 

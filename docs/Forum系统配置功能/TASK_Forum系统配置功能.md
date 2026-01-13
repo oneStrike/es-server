@@ -486,7 +486,7 @@ graph TD
 **输出契约**
 - 输出数据:
   - `apps/admin-api/test/forum-config.e2e-spec.ts`
-  - `apps/client-api/test/forum-config.e2e-spec.ts`
+  - `apps/app-api/test/forum-config.e2e-spec.ts`
 - 交付物: 所有API接口的集成测试
 - 验收标准:
   - 所有API接口有测试
@@ -523,7 +523,7 @@ graph TD
 **输出契约**
 - 输出数据:
   - 更新 `apps/admin-api/src/modules/forum-management/forum-management.module.ts`
-  - 更新 `apps/client-api/src/modules/forum/forum.module.ts`
+  - 更新 `apps/app-api/src/modules/forum/forum.module.ts`
   - 更新 `libs/forum/src/index.ts`
 - 交付物: 配置管理模块的完整集成
 - 验收标准:

@@ -25,7 +25,7 @@ const APPS: Record<string, AppConfig> = {
   client: {
     name: 'client',
     port: '8081',
-    envPath: 'apps/client-api/.env.development',
+    envPath: 'apps/app-api/.env.development',
     startCommand: 'start:client',
     swaggerPath: 'api-doc-json',
     projectId: process.env.APIFOX_CLIENT_PROJECT_ID || '',

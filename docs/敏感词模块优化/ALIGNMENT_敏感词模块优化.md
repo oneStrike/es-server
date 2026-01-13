@@ -26,7 +26,7 @@
 es-server/
 ├── apps/
 │   ├── admin-api/        # 管理端API
-│   └── client-api/       # 客户端API
+│   └── app-api/       # 客户端API
 ├── libs/
 │   ├── base/             # 基础模块(数据库、工具等)
 │   └── forum/            # 论坛业务模块

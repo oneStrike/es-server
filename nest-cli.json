@@ -28,13 +28,13 @@
         "tsConfigPath": "libs/base/tsconfig.lib.json"
       }
     },
-    "client-api": {
+    "app-api": {
       "type": "application",
-      "root": "apps/client-api",
+      "root": "apps/app-api",
       "entryFile": "main",
-      "sourceRoot": "apps/client-api/src",
+      "sourceRoot": "apps/app-api/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/client-api/tsconfig.app.json"
+        "tsConfigPath": "apps/app-api/tsconfig.app.json"
       }
     },
     "client-config": {

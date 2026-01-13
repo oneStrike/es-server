@@ -57,7 +57,7 @@ graph TB
   - 经验记录查询
   - 用户经验统计
 
-- **客户端 API** (`apps/client-api/src/modules/forum/experience/`)
+- **客户端 API** (`apps/app-api/src/modules/forum/experience/`)
   - 用户经验信息查询
 
 #### 1.2.2 服务层 (`libs/forum/src/experience/`)
