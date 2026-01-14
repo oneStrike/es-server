@@ -8,12 +8,10 @@ interface IForumLevelRuleData {
   color?: string
   levelBadge?: string
   dailyTopicLimit?: number
-  dailyReplyLimit?: number
+  dailyReplyCommentLimit?: number
   postInterval?: number
-  maxFileSize?: number
   dailyLikeLimit?: number
   dailyFavoriteLimit?: number
-  dailyCommentLimit?: number
 }
 
 export async function createInitialForumLevelRules(prisma: any) {
@@ -27,12 +25,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       isEnabled: true,
       color: '#909399',
       dailyTopicLimit: 5,
-      dailyReplyLimit: 20,
+      dailyReplyCommentLimit: 70,
       postInterval: 30,
-      maxFileSize: 2048,
       dailyLikeLimit: 30,
       dailyFavoriteLimit: 10,
-      dailyCommentLimit: 50,
     },
     {
       name: '中级会员',
@@ -43,12 +39,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       isEnabled: true,
       color: '#409EFF',
       dailyTopicLimit: 10,
-      dailyReplyLimit: 50,
+      dailyReplyCommentLimit: 150,
       postInterval: 20,
-      maxFileSize: 5120,
       dailyLikeLimit: 50,
       dailyFavoriteLimit: 20,
-      dailyCommentLimit: 100,
     },
     {
       name: '高级会员',
@@ -59,12 +53,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       isEnabled: true,
       color: '#67C23A',
       dailyTopicLimit: 20,
-      dailyReplyLimit: 100,
+      dailyReplyCommentLimit: 300,
       postInterval: 10,
-      maxFileSize: 10240,
       dailyLikeLimit: 100,
       dailyFavoriteLimit: 50,
-      dailyCommentLimit: 200,
     },
     {
       name: '资深会员',
@@ -75,12 +67,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       isEnabled: true,
       color: '#E6A23C',
       dailyTopicLimit: 30,
-      dailyReplyLimit: 200,
+      dailyReplyCommentLimit: 700,
       postInterval: 5,
-      maxFileSize: 20480,
       dailyLikeLimit: 200,
       dailyFavoriteLimit: 100,
-      dailyCommentLimit: 500,
     },
     {
       name: '专家会员',
@@ -91,12 +81,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       isEnabled: true,
       color: '#F56C6C',
       dailyTopicLimit: 50,
-      dailyReplyLimit: 500,
+      dailyReplyCommentLimit: 1500,
       postInterval: 0,
-      maxFileSize: 51200,
       dailyLikeLimit: 500,
       dailyFavoriteLimit: 200,
-      dailyCommentLimit: 1000,
     },
   ]
 
@@ -117,12 +105,10 @@ export async function createInitialForumLevelRules(prisma: any) {
           color: levelData.color,
           levelBadge: levelData.levelBadge,
           dailyTopicLimit: levelData.dailyTopicLimit,
-          dailyReplyLimit: levelData.dailyReplyLimit,
+          dailyReplyCommentLimit: levelData.dailyReplyCommentLimit,
           postInterval: levelData.postInterval,
-          maxFileSize: levelData.maxFileSize,
           dailyLikeLimit: levelData.dailyLikeLimit,
           dailyFavoriteLimit: levelData.dailyFavoriteLimit,
-          dailyCommentLimit: levelData.dailyCommentLimit,
         },
       })
     }

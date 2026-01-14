@@ -12,7 +12,7 @@ model ForumSection {
   sortOrder         Int       @default(0) @map("sort_order")
   /// 是否启用
   isEnabled         Boolean   @default(true) @map("is_enabled")
-  /// 主题审核策略（0：无需审核，1：敏感词审核，2：人工审核）
+  /// 主题审核策略 （0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）
   topicReviewPolicy Int       @default(1) @map("topic_review_policy")
   /// 用户的论坛等级规则ID
   userLevelRuleId   Int?      @map("user_level_rule_id")

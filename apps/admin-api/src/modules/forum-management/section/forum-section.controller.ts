@@ -17,7 +17,7 @@ export class ForumSectionController {
 
   @Get('page')
   @ApiPageDoc({
-    summary: '查看板块列表',
+    summary: '查看板块分页',
     model: BaseForumSectionDto,
   })
   async getSectionPage(@Query() query: QueryForumSectionDto) {

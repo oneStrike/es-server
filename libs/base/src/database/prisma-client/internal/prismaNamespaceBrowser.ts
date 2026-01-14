@@ -333,12 +333,10 @@ export const ForumLevelRuleScalarFieldEnum = {
   badge: 'badge',
   color: 'color',
   dailyTopicLimit: 'dailyTopicLimit',
-  dailyReplyLimit: 'dailyReplyLimit',
+  dailyReplyCommentLimit: 'dailyReplyCommentLimit',
   postInterval: 'postInterval',
-  maxFileSize: 'maxFileSize',
   dailyLikeLimit: 'dailyLikeLimit',
   dailyFavoriteLimit: 'dailyFavoriteLimit',
-  dailyCommentLimit: 'dailyCommentLimit',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

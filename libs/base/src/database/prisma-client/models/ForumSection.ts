@@ -1843,7 +1843,7 @@ export type $ForumSectionPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     isEnabled: boolean
     /**
-     * 主题审核策略（0：无需审核，1：敏感词审核，2：人工审核）
+     * 主题审核策略 （0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）
      */
     topicReviewPolicy: number
     /**
