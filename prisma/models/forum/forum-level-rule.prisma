@@ -20,18 +20,14 @@ model ForumLevelRule {
   color         String?        @map("color") @db.VarChar(20)
   /// 每日发帖数量上限，0表示无限制
   dailyTopicLimit    Int            @default(0) @map("daily_topic_limit") @db.SmallInt
-  /// 每日回复数量上限，0表示无限制
-  dailyReplyLimit    Int            @default(0) @map("daily_reply_limit") @db.SmallInt
+  /// 每日回复和评论数量上限，0表示无限制
+  dailyReplyCommentLimit Int            @default(0) @map("daily_reply_comment_limit") @db.SmallInt
   /// 发帖间隔秒数（防刷屏），0表示无限制
   postInterval       Int            @default(0) @map("post_interval") @db.SmallInt
-  /// 单个文件最大大小（KB），0表示无限制 
-  maxFileSize        Int            @default(0) @map("max_file_size")
   /// 每日点赞次数上限，0表示无限制
   dailyLikeLimit     Int            @default(0) @map("daily_like_limit") @db.SmallInt
   /// 每日收藏次数上限，0表示无限制
   dailyFavoriteLimit Int            @default(0) @map("daily_favorite_limit") @db.SmallInt
-  /// 每日评论次数上限，0表示无限制
-  dailyCommentLimit  Int            @default(0) @map("daily_comment_limit") @db.SmallInt
   /// 创建时间
   createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间

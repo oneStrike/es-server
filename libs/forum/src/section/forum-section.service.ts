@@ -1,10 +1,6 @@
-import type {
-  ForumSectionCreateInput,
-  ForumSectionWhereInput,
-} from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
-
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
+
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateForumSectionDto,
@@ -24,6 +20,10 @@ export class ForumSectionService extends BaseService {
 
   get forumSectionGroup() {
     return this.prisma.forumSectionGroup
+  }
+
+  get forumLevelRule() {
+    return this.prisma.forumLevelRule
   }
 
   /**
@@ -63,39 +63,45 @@ export class ForumSectionService extends BaseService {
    * @returns 创建的板块信息
    */
   async createForumSection(createForumSectionDto: CreateForumSectionDto) {
-    const { name, groupId, ...sectionData } = createForumSectionDto
+    const { name, groupId, userLevelRuleId, ...sectionData } =
+      createForumSectionDto
 
-    const existingSection = await this.forumSection.findFirst({
-      where: { name, deletedAt: null },
-    })
-
-    if (existingSection) {
+    if (!(await this.forumSection.exists({ name, deletedAt: null }))) {
       throw new BadRequestException('板块名称已存在')
     }
 
     if (groupId) {
-      const group = await this.forumSectionGroup.findUnique({
-        where: { id: groupId },
-      })
-      if (!group) {
+      if (
+        !(await this.forumSectionGroup.exists({ id: groupId, deletedAt: null }))
+      ) {
         throw new BadRequestException('板块分组不存在')
       }
     }
-    const createData: ForumSectionCreateInput = {
-      name,
-      ...sectionData,
-    }
-
-    if (groupId) {
-      createData.group = {
-        connect: {
-          id: groupId,
-        },
+    if (userLevelRuleId) {
+      if (
+        !(await this.forumLevelRule.exists({
+          id: userLevelRuleId,
+        }))
+      ) {
+        throw new BadRequestException('用户等级规则不存在')
       }
     }
 
     return this.forumSection.create({
-      data: createData,
+      data: {
+        name,
+        ...sectionData,
+        userLevelRule: {
+          connect: {
+            id: userLevelRuleId,
+          },
+        },
+        group: {
+          connect: {
+            id: groupId,
+          },
+        },
+      },
     })
   }
 
@@ -107,21 +113,9 @@ export class ForumSectionService extends BaseService {
     return this.forumSectionGroup.findMany({
       where: {
         deletedAt: null,
-        isEnabled: true,
       },
       orderBy: {
         sortOrder: 'asc',
-      },
-      include: {
-        sections: {
-          where: {
-            deletedAt: null,
-            isEnabled: true,
-          },
-          orderBy: {
-            sortOrder: 'asc',
-          },
-        },
       },
     })
   }
@@ -134,27 +128,17 @@ export class ForumSectionService extends BaseService {
   async getForumSectionPage(queryForumSectionDto: QueryForumSectionDto) {
     const { name, groupId, ...otherDto } = queryForumSectionDto
 
-    const where: ForumSectionWhereInput = {
-      deletedAt: null,
-      ...otherDto,
-    }
-
-    if (name) {
-      where.name = {
-        contains: name,
-        mode: 'insensitive',
-      }
-    }
-
     return this.forumSection.findPagination({
-      where,
-      include: {
-        group: {
-          select: {
-            id: true,
-            name: true,
-          },
+      where: {
+        name: {
+          contains: name,
+          mode: 'insensitive',
         },
+        group: {
+          id: groupId,
+        },
+        ...otherDto,
+        deletedAt: null,
       },
     })
   }

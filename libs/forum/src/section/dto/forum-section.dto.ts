@@ -11,7 +11,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { TopicReviewPolicyEnum } from '../forum-section.constant'
+import { ReviewPolicyEnum } from '../../config/forum-config.constants'
 
 /**
  * 论坛板块基础DTO
@@ -33,6 +33,14 @@ export class BaseForumSectionDto extends BaseDto {
   })
   groupId?: number
 
+  @ValidateNumber({
+    description: '用户等级规则ID（为空表示所有用户）',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  userLevelRuleId?: number
+
   @ValidateString({
     description: '板块图标',
     example: 'https://example.com/icon.png',
@@ -50,14 +58,6 @@ export class BaseForumSectionDto extends BaseDto {
   })
   sortOrder!: number
 
-  @ValidateNumber({
-    description: '用户等级规则ID（为空表示所有用户）',
-    example: 0,
-    required: true,
-    min: 0,
-  })
-  userLevelRuleId?: number
-
   @ValidateBoolean({
     description: '是否启用',
     example: true,
@@ -68,12 +68,12 @@ export class BaseForumSectionDto extends BaseDto {
 
   @ValidateEnum({
     description: '审核策略',
-    example: TopicReviewPolicyEnum.None,
+    example: ReviewPolicyEnum.NONE,
     required: true,
-    default: TopicReviewPolicyEnum.SensitiveWord,
-    enum: TopicReviewPolicyEnum,
+    default: ReviewPolicyEnum.SEVERE_SENSITIVE_WORD,
+    enum: ReviewPolicyEnum,
   })
-  topicReviewPolicy!: TopicReviewPolicyEnum
+  topicReviewPolicy!: ReviewPolicyEnum
 
   @ValidateString({
     description: '板块描述',

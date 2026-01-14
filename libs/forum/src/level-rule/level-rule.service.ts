@@ -208,12 +208,10 @@ export class LevelRuleService extends BaseService {
       progressPercentage,
       permissions: {
         dailyTopicLimit: profile.level.dailyTopicLimit,
-        dailyReplyLimit: profile.level.dailyReplyLimit,
+        dailyReplyCommentLimit: profile.level.dailyReplyCommentLimit,
         postInterval: profile.level.postInterval,
-        maxFileSize: profile.level.maxFileSize,
         dailyLikeLimit: profile.level.dailyLikeLimit,
         dailyFavoriteLimit: profile.level.dailyFavoriteLimit,
-        dailyCommentLimit: profile.level.dailyCommentLimit,
       },
     }
   }
@@ -263,8 +261,8 @@ export class LevelRuleService extends BaseService {
         }
         break
 
-      case LevelRulePermissionEnum.DAILY_REPLY_LIMIT:
-        limit = level.dailyReplyLimit
+      case LevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT:
+        limit = level.dailyReplyCommentLimit
         if (limit > 0) {
           used = await this.forumReply.count({
             where: {
@@ -314,11 +312,6 @@ export class LevelRuleService extends BaseService {
         }
         break
 
-      case LevelRulePermissionEnum.MAX_FILE_SIZE:
-        limit = level.maxFileSize
-        hasPermission = limit > 0
-        break
-
       case LevelRulePermissionEnum.DAILY_LIKE_LIMIT:
         limit = level.dailyLikeLimit
         if (limit > 0) {
@@ -343,19 +336,6 @@ export class LevelRuleService extends BaseService {
         limit = level.dailyFavoriteLimit
         if (limit > 0) {
           used = await this.forumTopicFavorite.count({
-            where: {
-              profileId,
-              createdAt: { gte: today },
-            },
-          })
-          hasPermission = used < limit
-        }
-        break
-
-      case LevelRulePermissionEnum.DAILY_COMMENT_LIMIT:
-        limit = level.dailyCommentLimit
-        if (limit > 0) {
-          used = await this.forumReply.count({
             where: {
               profileId,
               createdAt: { gte: today },

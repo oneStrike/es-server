@@ -8,18 +8,14 @@
 export enum LevelRulePermissionEnum {
   /** 每日发帖数量上限 */
   DAILY_TOPIC_LIMIT = 'dailyTopicLimit',
-  /** 每日回复数量上限 */
-  DAILY_REPLY_LIMIT = 'dailyReplyLimit',
+  /** 每日回复和评论数量上限 */
+  DAILY_REPLY_COMMENT_LIMIT = 'dailyReplyCommentLimit',
   /** 发帖间隔秒数 */
   POST_INTERVAL = 'postInterval',
-  /** 单个文件最大大小 */
-  MAX_FILE_SIZE = 'maxFileSize',
   /** 每日点赞次数上限 */
   DAILY_LIKE_LIMIT = 'dailyLikeLimit',
   /** 每日收藏次数上限 */
   DAILY_FAVORITE_LIMIT = 'dailyFavoriteLimit',
-  /** 每日评论次数上限 */
-  DAILY_COMMENT_LIMIT = 'dailyCommentLimit',
 }
 
 /**
@@ -28,10 +24,8 @@ export enum LevelRulePermissionEnum {
 export const LevelRulePermissionNames: Record<LevelRulePermissionEnum, string> =
   {
     [LevelRulePermissionEnum.DAILY_TOPIC_LIMIT]: '每日发帖数量上限',
-    [LevelRulePermissionEnum.DAILY_REPLY_LIMIT]: '每日回复数量上限',
+    [LevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT]: '每日回复和评论数量上限',
     [LevelRulePermissionEnum.POST_INTERVAL]: '发帖间隔秒数',
-    [LevelRulePermissionEnum.MAX_FILE_SIZE]: '单个文件最大大小(KB)',
     [LevelRulePermissionEnum.DAILY_LIKE_LIMIT]: '每日点赞次数上限',
     [LevelRulePermissionEnum.DAILY_FAVORITE_LIMIT]: '每日收藏次数上限',
-    [LevelRulePermissionEnum.DAILY_COMMENT_LIMIT]: '每日评论次数上限',
   }

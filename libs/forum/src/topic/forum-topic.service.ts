@@ -118,7 +118,15 @@ export class ForumTopicService extends BaseService {
       },
     }
 
-    const { reviewPolicy } = await this.forumConfigCacheService.getConfig()
+    const section = await this.forumSection.findUnique({
+      where: { id: sectionId },
+      select: { topicReviewPolicy: true },
+    })
+
+    const { reviewPolicy: globalReviewPolicy } =
+      await this.forumConfigCacheService.getConfig()
+
+    const reviewPolicy = section?.topicReviewPolicy ?? globalReviewPolicy
 
     const { auditStatus, isHidden } = this.calculateAuditStatus(
       reviewPolicy,
@@ -246,7 +254,15 @@ export class ForumTopicService extends BaseService {
       throw new BadRequestException('主题已锁定，无法编辑')
     }
 
-    const { reviewPolicy } = await this.forumConfigCacheService.getConfig()
+    const section = await this.forumSection.findUnique({
+      where: { id: topic.sectionId },
+      select: { topicReviewPolicy: true },
+    })
+
+    const { reviewPolicy: globalReviewPolicy } =
+      await this.forumConfigCacheService.getConfig()
+
+    const reviewPolicy = section?.topicReviewPolicy ?? globalReviewPolicy
 
     const { hits, highestLevel } =
       this.sensitiveWordDetectService.getMatchedWords({

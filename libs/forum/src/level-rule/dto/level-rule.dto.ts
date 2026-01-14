@@ -71,11 +71,11 @@ export class BaseLevelRuleDto extends BaseDto {
   dailyTopicLimit!: number
 
   @ValidateNumber({
-    description: '每日回复数量上限，0表示无限制',
+    description: '每日回复和评论数量上限，0表示无限制',
     example: 50,
     required: true,
   })
-  dailyReplyLimit!: number
+  dailyReplyCommentLimit!: number
 
   @ValidateNumber({
     description: '发帖间隔秒数（防刷屏），0表示无限制',
@@ -83,13 +83,6 @@ export class BaseLevelRuleDto extends BaseDto {
     required: true,
   })
   postInterval!: number
-
-  @ValidateNumber({
-    description: '单个文件最大大小（KB），0表示无限制',
-    example: 5120,
-    required: true,
-  })
-  maxFileSize!: number
 
   @ValidateNumber({
     description: '每日点赞次数上限，0表示无限制',
@@ -104,13 +97,6 @@ export class BaseLevelRuleDto extends BaseDto {
     required: true,
   })
   dailyFavoriteLimit!: number
-
-  @ValidateNumber({
-    description: '每日评论次数上限，0表示无限制',
-    example: 30,
-    required: true,
-  })
-  dailyCommentLimit!: number
 
   @ValidateString({
     description: '等级专属颜色（十六进制）',
@@ -166,12 +152,10 @@ export class LevelRuleDetailDto extends IntersectionType(
  */
 export class LevelPermissionsDto extends PickType(BaseLevelRuleDto, [
   'dailyTopicLimit',
-  'dailyReplyLimit',
+  'dailyReplyCommentLimit',
   'postInterval',
-  'maxFileSize',
   'dailyLikeLimit',
   'dailyFavoriteLimit',
-  'dailyCommentLimit',
 ]) {}
 
 /**
