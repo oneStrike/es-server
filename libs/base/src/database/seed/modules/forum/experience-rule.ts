@@ -75,7 +75,6 @@ export async function createInitialForumExperienceRules(prisma: any) {
     if (!existingRule) {
       await prisma.forumExperienceRule.create({
         data: {
-          name: ruleData.name,
           type: ruleData.type,
           experience: ruleData.experience,
           dailyLimit: ruleData.dailyLimit || 0,
