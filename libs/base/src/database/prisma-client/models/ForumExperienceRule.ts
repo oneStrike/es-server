@@ -42,7 +42,6 @@ export type ForumExperienceRuleSumAggregateOutputType = {
 
 export type ForumExperienceRuleMinAggregateOutputType = {
   id: number | null
-  name: string | null
   type: number | null
   experience: number | null
   dailyLimit: number | null
@@ -54,7 +53,6 @@ export type ForumExperienceRuleMinAggregateOutputType = {
 
 export type ForumExperienceRuleMaxAggregateOutputType = {
   id: number | null
-  name: string | null
   type: number | null
   experience: number | null
   dailyLimit: number | null
@@ -66,7 +64,6 @@ export type ForumExperienceRuleMaxAggregateOutputType = {
 
 export type ForumExperienceRuleCountAggregateOutputType = {
   id: number
-  name: number
   type: number
   experience: number
   dailyLimit: number
@@ -94,7 +91,6 @@ export type ForumExperienceRuleSumAggregateInputType = {
 
 export type ForumExperienceRuleMinAggregateInputType = {
   id?: true
-  name?: true
   type?: true
   experience?: true
   dailyLimit?: true
@@ -106,7 +102,6 @@ export type ForumExperienceRuleMinAggregateInputType = {
 
 export type ForumExperienceRuleMaxAggregateInputType = {
   id?: true
-  name?: true
   type?: true
   experience?: true
   dailyLimit?: true
@@ -118,7 +113,6 @@ export type ForumExperienceRuleMaxAggregateInputType = {
 
 export type ForumExperienceRuleCountAggregateInputType = {
   id?: true
-  name?: true
   type?: true
   experience?: true
   dailyLimit?: true
@@ -217,7 +211,6 @@ export type ForumExperienceRuleGroupByArgs<ExtArgs extends runtime.Types.Extensi
 
 export type ForumExperienceRuleGroupByOutputType = {
   id: number
-  name: string
   type: number
   experience: number
   dailyLimit: number
@@ -252,7 +245,6 @@ export type ForumExperienceRuleWhereInput = {
   OR?: Prisma.ForumExperienceRuleWhereInput[]
   NOT?: Prisma.ForumExperienceRuleWhereInput | Prisma.ForumExperienceRuleWhereInput[]
   id?: Prisma.IntFilter<"ForumExperienceRule"> | number
-  name?: Prisma.StringFilter<"ForumExperienceRule"> | string
   type?: Prisma.IntFilter<"ForumExperienceRule"> | number
   experience?: Prisma.IntFilter<"ForumExperienceRule"> | number
   dailyLimit?: Prisma.IntFilter<"ForumExperienceRule"> | number
@@ -265,7 +257,6 @@ export type ForumExperienceRuleWhereInput = {
 
 export type ForumExperienceRuleOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
   type?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
@@ -278,7 +269,6 @@ export type ForumExperienceRuleOrderByWithRelationInput = {
 
 export type ForumExperienceRuleWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  name?: string
   type?: number
   AND?: Prisma.ForumExperienceRuleWhereInput | Prisma.ForumExperienceRuleWhereInput[]
   OR?: Prisma.ForumExperienceRuleWhereInput[]
@@ -290,11 +280,10 @@ export type ForumExperienceRuleWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"ForumExperienceRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumExperienceRule"> | Date | string
   records?: Prisma.ForumExperienceRecordListRelationFilter
-}, "id" | "name" | "type">
+}, "id" | "type">
 
 export type ForumExperienceRuleOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
   type?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
@@ -314,7 +303,6 @@ export type ForumExperienceRuleScalarWhereWithAggregatesInput = {
   OR?: Prisma.ForumExperienceRuleScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ForumExperienceRuleScalarWhereWithAggregatesInput | Prisma.ForumExperienceRuleScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumExperienceRule"> | number
-  name?: Prisma.StringWithAggregatesFilter<"ForumExperienceRule"> | string
   type?: Prisma.IntWithAggregatesFilter<"ForumExperienceRule"> | number
   experience?: Prisma.IntWithAggregatesFilter<"ForumExperienceRule"> | number
   dailyLimit?: Prisma.IntWithAggregatesFilter<"ForumExperienceRule"> | number
@@ -325,7 +313,6 @@ export type ForumExperienceRuleScalarWhereWithAggregatesInput = {
 }
 
 export type ForumExperienceRuleCreateInput = {
-  name: string
   type: number
   experience: number
   dailyLimit?: number
@@ -338,7 +325,6 @@ export type ForumExperienceRuleCreateInput = {
 
 export type ForumExperienceRuleUncheckedCreateInput = {
   id?: number
-  name: string
   type: number
   experience: number
   dailyLimit?: number
@@ -350,7 +336,6 @@ export type ForumExperienceRuleUncheckedCreateInput = {
 }
 
 export type ForumExperienceRuleUpdateInput = {
-  name?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -363,7 +348,6 @@ export type ForumExperienceRuleUpdateInput = {
 
 export type ForumExperienceRuleUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -376,7 +360,6 @@ export type ForumExperienceRuleUncheckedUpdateInput = {
 
 export type ForumExperienceRuleCreateManyInput = {
   id?: number
-  name: string
   type: number
   experience: number
   dailyLimit?: number
@@ -387,7 +370,6 @@ export type ForumExperienceRuleCreateManyInput = {
 }
 
 export type ForumExperienceRuleUpdateManyMutationInput = {
-  name?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -399,7 +381,6 @@ export type ForumExperienceRuleUpdateManyMutationInput = {
 
 export type ForumExperienceRuleUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -416,7 +397,6 @@ export type ForumExperienceRuleNullableScalarRelationFilter = {
 
 export type ForumExperienceRuleCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
   type?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
@@ -435,7 +415,6 @@ export type ForumExperienceRuleAvgOrderByAggregateInput = {
 
 export type ForumExperienceRuleMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
   type?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
@@ -447,7 +426,6 @@ export type ForumExperienceRuleMaxOrderByAggregateInput = {
 
 export type ForumExperienceRuleMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  name?: Prisma.SortOrder
   type?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
@@ -481,7 +459,6 @@ export type ForumExperienceRuleUpdateOneWithoutRecordsNestedInput = {
 }
 
 export type ForumExperienceRuleCreateWithoutRecordsInput = {
-  name: string
   type: number
   experience: number
   dailyLimit?: number
@@ -493,7 +470,6 @@ export type ForumExperienceRuleCreateWithoutRecordsInput = {
 
 export type ForumExperienceRuleUncheckedCreateWithoutRecordsInput = {
   id?: number
-  name: string
   type: number
   experience: number
   dailyLimit?: number
@@ -520,7 +496,6 @@ export type ForumExperienceRuleUpdateToOneWithWhereWithoutRecordsInput = {
 }
 
 export type ForumExperienceRuleUpdateWithoutRecordsInput = {
-  name?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -532,7 +507,6 @@ export type ForumExperienceRuleUpdateWithoutRecordsInput = {
 
 export type ForumExperienceRuleUncheckedUpdateWithoutRecordsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
@@ -575,7 +549,6 @@ export type ForumExperienceRuleCountOutputTypeCountRecordsArgs<ExtArgs extends r
 
 export type ForumExperienceRuleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  name?: boolean
   type?: boolean
   experience?: boolean
   dailyLimit?: boolean
@@ -589,7 +562,6 @@ export type ForumExperienceRuleSelect<ExtArgs extends runtime.Types.Extensions.I
 
 export type ForumExperienceRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  name?: boolean
   type?: boolean
   experience?: boolean
   dailyLimit?: boolean
@@ -601,7 +573,6 @@ export type ForumExperienceRuleSelectCreateManyAndReturn<ExtArgs extends runtime
 
 export type ForumExperienceRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  name?: boolean
   type?: boolean
   experience?: boolean
   dailyLimit?: boolean
@@ -613,7 +584,6 @@ export type ForumExperienceRuleSelectUpdateManyAndReturn<ExtArgs extends runtime
 
 export type ForumExperienceRuleSelectScalar = {
   id?: boolean
-  name?: boolean
   type?: boolean
   experience?: boolean
   dailyLimit?: boolean
@@ -623,7 +593,7 @@ export type ForumExperienceRuleSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ForumExperienceRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "type" | "experience" | "dailyLimit" | "isEnabled" | "remark" | "createdAt" | "updatedAt", ExtArgs["result"]["forumExperienceRule"]>
+export type ForumExperienceRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "experience" | "dailyLimit" | "isEnabled" | "remark" | "createdAt" | "updatedAt", ExtArgs["result"]["forumExperienceRule"]>
 export type ForumExperienceRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   records?: boolean | Prisma.ForumExperienceRule$recordsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumExperienceRuleCountOutputTypeDefaultArgs<ExtArgs>
@@ -641,10 +611,6 @@ export type $ForumExperienceRulePayload<ExtArgs extends runtime.Types.Extensions
      * 主键ID
      */
     id: number
-    /**
-     * 规则名称
-     */
-    name: string
     /**
      * 规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）
      */
@@ -1098,7 +1064,6 @@ export interface Prisma__ForumExperienceRuleClient<T, Null = never, ExtArgs exte
  */
 export interface ForumExperienceRuleFieldRefs {
   readonly id: Prisma.FieldRef<"ForumExperienceRule", 'Int'>
-  readonly name: Prisma.FieldRef<"ForumExperienceRule", 'String'>
   readonly type: Prisma.FieldRef<"ForumExperienceRule", 'Int'>
   readonly experience: Prisma.FieldRef<"ForumExperienceRule", 'Int'>
   readonly dailyLimit: Prisma.FieldRef<"ForumExperienceRule", 'Int'>
