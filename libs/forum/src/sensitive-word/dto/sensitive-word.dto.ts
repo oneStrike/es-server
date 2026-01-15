@@ -39,11 +39,11 @@ export class BaseSensitiveWordDto extends BaseDto {
 
   @ValidateBoolean({
     description: '是否启用',
-    required: false,
+    required: true,
     example: true,
     default: true,
   })
-  isEnabled?: boolean
+  isEnabled!: boolean
 
   @ValidateEnum({
     description: '敏感词级别',

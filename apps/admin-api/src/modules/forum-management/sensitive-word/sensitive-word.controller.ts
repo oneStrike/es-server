@@ -7,12 +7,12 @@ import {
   SensitiveWordDetectDto,
   SensitiveWordDetectService,
   SensitiveWordService,
+  SensitiveWordStatisticsDataDto,
+  SensitiveWordStatisticsQueryDto,
+  SensitiveWordStatisticsResponseDto,
   SensitiveWordStatisticsService,
-  StatisticsDataDto,
-  StatisticsQueryDto,
-  StatisticsResponseDto,
-  UpdateSensitiveWordDto,
-} from '@libs/forum'
+UpdateSensitiveWordDto
+} from '@libs/forum/sensitive-word'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -123,9 +123,9 @@ export class SensitiveWordController {
   @Get('/statistics')
   @ApiDoc({
     summary: '获取统计查询结果',
-    model: StatisticsResponseDto,
+    model: SensitiveWordStatisticsResponseDto,
   })
-  async getStatistics(@Query() query: StatisticsQueryDto) {
+  async getStatistics(@Query() query: SensitiveWordStatisticsQueryDto) {
     return this.sensitiveWordService.getStatistics(query)
   }
 
@@ -136,7 +136,7 @@ export class SensitiveWordController {
   @Get('/statistics/full')
   @ApiDoc({
     summary: '获取完整统计数据',
-    model: StatisticsDataDto,
+    model: SensitiveWordStatisticsDataDto,
   })
   async getFullStatistics() {
     return this.statisticsService.getStatistics()

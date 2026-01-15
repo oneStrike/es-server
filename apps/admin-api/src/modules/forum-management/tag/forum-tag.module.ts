@@ -1,4 +1,4 @@
-import { ForumTagModule as ForumTagModuleLib } from '@libs/forum'
+import { ForumTagModule as ForumTagModuleLib } from '@libs/forum/tag'
 import { Module } from '@nestjs/common'
 import { ForumTagController } from './forum-tag.controller'
 

@@ -8,7 +8,7 @@ import {
 /**
  * 统计查询请求DTO
  */
-export class StatisticsQueryDto {
+export class SensitiveWordStatisticsQueryDto {
   @ApiProperty({
     description: '统计类型',
     required: false,
@@ -21,7 +21,7 @@ export class StatisticsQueryDto {
 /**
  * 级别统计结果DTO
  */
-export class LevelStatisticsDto {
+export class SensitiveWordLevelStatisticsDto {
   @ApiProperty({
     description: '敏感词级别',
     example: SensitiveWordLevelEnum.SEVERE,
@@ -51,7 +51,7 @@ export class LevelStatisticsDto {
 /**
  * 类型统计结果DTO
  */
-export class TypeStatisticsDto {
+export class SensitiveWordTypeStatisticsDto {
   @ApiProperty({
     description: '敏感词类型',
     example: SensitiveWordTypeEnum.POLITICS,
@@ -81,7 +81,7 @@ export class TypeStatisticsDto {
 /**
  * 热门敏感词统计DTO
  */
-export class TopHitStatisticsDto {
+export class SensitiveWordTopHitStatisticsDto {
   @ApiProperty({
     description: '敏感词内容',
     example: '测试',
@@ -118,7 +118,7 @@ export class TopHitStatisticsDto {
 /**
  * 最近命中统计DTO
  */
-export class RecentHitStatisticsDto {
+export class SensitiveWordRecentHitStatisticsDto {
   @ApiProperty({
     description: '敏感词内容',
     example: '测试',
@@ -155,7 +155,7 @@ export class RecentHitStatisticsDto {
 /**
  * 完整统计数据DTO
  */
-export class StatisticsDataDto {
+export class SensitiveWordStatisticsDataDto {
   @ApiProperty({
     description: '敏感词总数',
     example: 500,
@@ -200,33 +200,33 @@ export class StatisticsDataDto {
 
   @ApiProperty({
     description: '按级别分组的统计信息',
-    type: [LevelStatisticsDto],
+    type: [SensitiveWordLevelStatisticsDto],
   })
-  levelStatistics!: LevelStatisticsDto[]
+  levelStatistics!: SensitiveWordLevelStatisticsDto[]
 
   @ApiProperty({
     description: '按类型分组的统计信息',
-    type: [TypeStatisticsDto],
+    type: [SensitiveWordTypeStatisticsDto],
   })
-  typeStatistics!: TypeStatisticsDto[]
+  typeStatistics!: SensitiveWordTypeStatisticsDto[]
 
   @ApiProperty({
     description: '命中次数最多的敏感词（Top 20）',
-    type: [TopHitStatisticsDto],
+    type: [SensitiveWordTopHitStatisticsDto],
   })
-  topHitWords!: TopHitStatisticsDto[]
+  topHitWords!: SensitiveWordTopHitStatisticsDto[]
 
   @ApiProperty({
     description: '最近命中的敏感词（Top 20）',
-    type: [RecentHitStatisticsDto],
+    type: [SensitiveWordRecentHitStatisticsDto],
   })
-  recentHitWords!: RecentHitStatisticsDto[]
+  recentHitWords!: SensitiveWordRecentHitStatisticsDto[]
 }
 
 /**
  * 统计查询响应DTO
  */
-export class StatisticsResponseDto {
+export class SensitiveWordStatisticsResponseDto {
   @ApiProperty({
     description: '统计类型',
     example: 'level',
@@ -256,8 +256,8 @@ export class StatisticsResponseDto {
     ],
   })
   data!:
-    | LevelStatisticsDto[]
-    | TypeStatisticsDto[]
-    | TopHitStatisticsDto[]
-    | RecentHitStatisticsDto[]
+    | SensitiveWordLevelStatisticsDto[]
+    | SensitiveWordTypeStatisticsDto[]
+    | SensitiveWordTopHitStatisticsDto[]
+    | SensitiveWordRecentHitStatisticsDto[]
 }

@@ -11,7 +11,7 @@ import {
   UpdateTopicHiddenDto,
   UpdateTopicLockedDto,
   UpdateTopicPinnedDto,
-} from '@libs/forum'
+} from '@libs/forum/topic'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

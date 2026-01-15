@@ -7,7 +7,7 @@ import {
   QueryForumTagDto,
   RemoveTagFromTopicDto,
   UpdateForumTagDto,
-} from '@libs/forum'
+} from '@libs/forum/tag'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

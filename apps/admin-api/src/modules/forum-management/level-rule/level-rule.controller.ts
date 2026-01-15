@@ -9,7 +9,7 @@ import {
   QueryLevelRuleDto,
   UpdateLevelRuleDto,
   UserLevelInfoDto,
-} from '@libs/forum'
+} from '@libs/forum/level-rule'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

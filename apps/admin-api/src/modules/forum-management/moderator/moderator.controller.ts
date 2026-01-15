@@ -8,7 +8,7 @@ import {
   QueryModeratorActionLogDto,
   QueryModeratorDto,
   UpdateModeratorDto,
-} from '@libs/forum'
+} from '@libs/forum/moderator'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

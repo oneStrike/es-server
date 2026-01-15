@@ -1,4 +1,4 @@
-import { ForumConfigModule as ForumConfigModuleLib } from '@libs/forum'
+import { ForumConfigModule as ForumConfigModuleLib } from '@libs/forum/config'
 import { Module } from '@nestjs/common'
 import { ForumConfigController } from './config.controller'
 
