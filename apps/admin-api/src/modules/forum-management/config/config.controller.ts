@@ -6,7 +6,7 @@ import {
   BaseForumConfigDto,
   ForumConfigService,
   UpdateForumConfigDto,
-} from '@libs/forum'
+} from '@libs/forum/config'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

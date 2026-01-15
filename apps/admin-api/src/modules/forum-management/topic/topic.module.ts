@@ -1,4 +1,4 @@
-import { ForumTopicModule as ForumTopicModuleLib } from '@libs/forum'
+import { ForumTopicModule as ForumTopicModuleLib } from '@libs/forum/topic'
 import { Module } from '@nestjs/common'
 import { ForumTopicController } from './topic.controller'
 

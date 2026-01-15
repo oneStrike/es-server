@@ -7,7 +7,7 @@ import {
   ProfileBadgeDto,
   QueryForumBadgeDto,
   UpdateForumBadgeDto,
-} from '@libs/forum'
+} from '@libs/forum/badge'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

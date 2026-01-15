@@ -3,10 +3,10 @@ import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import {
   BaseForumSectionGroupDto,
   CreateForumSectionGroupDto,
-  /*  */ ForumSectionGroupService,
+  ForumSectionGroupService,
   QueryForumSectionGroupDto,
   UpdateForumSectionGroupDto,
-} from '@libs/forum'
+} from '@libs/forum/section-group'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
