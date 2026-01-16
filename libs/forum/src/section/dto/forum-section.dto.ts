@@ -11,7 +11,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ReviewPolicyEnum } from '../../config/forum-config.constants'
+import { ForumReviewPolicyEnum } from '../../config/forum-config.constants'
 
 /**
  * 论坛板块基础DTO
@@ -68,12 +68,12 @@ export class BaseForumSectionDto extends BaseDto {
 
   @ValidateEnum({
     description: '审核策略',
-    example: ReviewPolicyEnum.NONE,
+    example: ForumReviewPolicyEnum.NONE,
     required: true,
-    default: ReviewPolicyEnum.SEVERE_SENSITIVE_WORD,
-    enum: ReviewPolicyEnum,
+    default: ForumReviewPolicyEnum.SEVERE_SENSITIVE_WORD,
+    enum: ForumReviewPolicyEnum,
   })
-  topicReviewPolicy!: ReviewPolicyEnum
+  topicReviewPolicy!: ForumReviewPolicyEnum
 
   @ValidateString({
     description: '板块描述',

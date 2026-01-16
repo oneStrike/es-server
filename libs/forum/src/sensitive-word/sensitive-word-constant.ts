@@ -1,7 +1,7 @@
 /**
  * 敏感词级别
  */
-export enum SensitiveWordLevelEnum {
+export enum ForumSensitiveWordLevelEnum {
   /** 严重 */
   SEVERE = 1,
   /** 一般 */
@@ -13,16 +13,19 @@ export enum SensitiveWordLevelEnum {
 /**
  * 敏感词级别名称映射
  */
-export const SensitiveWordLevelNames: Record<SensitiveWordLevelEnum, string> = {
-  [SensitiveWordLevelEnum.SEVERE]: '严重',
-  [SensitiveWordLevelEnum.GENERAL]: '一般',
-  [SensitiveWordLevelEnum.LIGHT]: '轻微',
+export const ForumSensitiveWordLevelNames: Record<
+  ForumSensitiveWordLevelEnum,
+  string
+> = {
+  [ForumSensitiveWordLevelEnum.SEVERE]: '严重',
+  [ForumSensitiveWordLevelEnum.GENERAL]: '一般',
+  [ForumSensitiveWordLevelEnum.LIGHT]: '轻微',
 }
 
 /**
  * 敏感词类型
  */
-export enum SensitiveWordTypeEnum {
+export enum ForumSensitiveWordTypeEnum {
   /** 政治 */
   POLITICS = 1,
   /** 色情 */
@@ -38,18 +41,21 @@ export enum SensitiveWordTypeEnum {
 /**
  * 敏感词类型名称映射
  */
-export const SensitiveWordTypeNames: Record<SensitiveWordTypeEnum, string> = {
-  [SensitiveWordTypeEnum.POLITICS]: '政治',
-  [SensitiveWordTypeEnum.PORN]: '色情',
-  [SensitiveWordTypeEnum.VIOLENCE]: '暴力',
-  [SensitiveWordTypeEnum.AD]: '广告',
-  [SensitiveWordTypeEnum.OTHER]: '其他',
+export const ForumSensitiveWordTypeNames: Record<
+  ForumSensitiveWordTypeEnum,
+  string
+> = {
+  [ForumSensitiveWordTypeEnum.POLITICS]: '政治',
+  [ForumSensitiveWordTypeEnum.PORN]: '色情',
+  [ForumSensitiveWordTypeEnum.VIOLENCE]: '暴力',
+  [ForumSensitiveWordTypeEnum.AD]: '广告',
+  [ForumSensitiveWordTypeEnum.OTHER]: '其他',
 }
 
 /**
  * 匹配模式
  */
-export enum MatchModeEnum {
+export enum ForumMatchModeEnum {
   /** 精确匹配 */
   EXACT = 1,
   /** 模糊匹配 */
@@ -61,7 +67,7 @@ export enum MatchModeEnum {
 /**
  * 统计类型
  */
-export enum StatisticsTypeEnum {
+export enum ForumStatisticsTypeEnum {
   /** 按级别统计 */
   LEVEL = 'level',
   /** 按类型统计 */
@@ -75,9 +81,10 @@ export enum StatisticsTypeEnum {
 /**
  * 统计类型名称映射
  */
-export const StatisticsTypeNames: Record<StatisticsTypeEnum, string> = {
-  [StatisticsTypeEnum.LEVEL]: '按级别统计',
-  [StatisticsTypeEnum.TYPE]: '按类型统计',
-  [StatisticsTypeEnum.TOP_HITS]: '热门敏感词统计',
-  [StatisticsTypeEnum.RECENT_HITS]: '最近命中统计',
-}
+export const ForumStatisticsTypeNames: Record<ForumStatisticsTypeEnum, string> =
+  {
+    [ForumStatisticsTypeEnum.LEVEL]: '按级别统计',
+    [ForumStatisticsTypeEnum.TYPE]: '按类型统计',
+    [ForumStatisticsTypeEnum.TOP_HITS]: '热门敏感词统计',
+    [ForumStatisticsTypeEnum.RECENT_HITS]: '最近命中统计',
+  }

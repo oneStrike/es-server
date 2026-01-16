@@ -87,7 +87,7 @@ export class QueryForumViewDto extends IntersectionType(
   ),
 ) {}
 
-export class ViewStatisticsDto {
+export class ForumViewStatisticsDto {
   @ValidateNumber({
     description: '主题ID',
     example: 1,

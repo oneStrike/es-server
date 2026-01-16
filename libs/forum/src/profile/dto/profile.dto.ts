@@ -13,7 +13,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ProfileStatusEnum } from '../profile.constant'
+import { ForumProfileStatusEnum } from '../profile.constant'
 
 /**
  * 基础用户个人信息数据传输对象
@@ -144,11 +144,11 @@ export class BaseForumProfileDto extends BaseDto {
 
   @ValidateEnum({
     description: '用户状态',
-    example: ProfileStatusEnum.NORMAL,
-    enum: ProfileStatusEnum,
+    example: ForumProfileStatusEnum.NORMAL,
+    enum: ForumProfileStatusEnum,
     required: true,
   })
-  status!: ProfileStatusEnum
+  status!: ForumProfileStatusEnum
 
   @ValidateString({
     description: '封禁原因',
@@ -181,7 +181,7 @@ export class BaseForumProfileDto extends BaseDto {
 /**
  * 查询用户资料列表DTO
  */
-export class QueryProfileListDto extends IntersectionType(
+export class QueryForumProfileListDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseForumProfileDto, ['levelId', 'status'])),
 ) {
@@ -197,7 +197,7 @@ export class QueryProfileListDto extends IntersectionType(
 /**
  * 更新用户资料状态DTO
  */
-export class UpdateProfileStatusDto extends PickType(BaseForumProfileDto, [
+export class UpdateForumProfileStatusDto extends PickType(BaseForumProfileDto, [
   'userId',
   'status',
   'banReason',
@@ -207,7 +207,9 @@ export class UpdateProfileStatusDto extends PickType(BaseForumProfileDto, [
  * 授予徽章DTO
  * 用于为用户授予徽章
  */
-export class GrantBadgeDto extends PickType(BaseForumProfileDto, ['userId']) {
+export class GrantForumBadgeDto extends PickType(BaseForumProfileDto, [
+  'userId',
+]) {
   @ValidateNumber({
     description: '徽章ID',
     example: 1,

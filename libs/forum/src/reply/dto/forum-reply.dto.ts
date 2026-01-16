@@ -5,11 +5,7 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { ForumAuditStatusEnum } from '../forum-reply.constant'
 
 export enum ForumReplySortFieldEnum {
@@ -121,13 +117,19 @@ export class QueryForumReplyDto extends IntersectionType(
   PageDto,
   IntersectionType(
     PartialType(
-      PickType(BaseForumReplyDto, ['content', 'isHidden', 'auditStatus', 'floor']),
+      PickType(BaseForumReplyDto, [
+        'content',
+        'isHidden',
+        'auditStatus',
+        'floor',
+      ]),
     ),
     PartialType(PickType(CreateForumReplyDto, ['topicId', 'replyToId'])),
   ),
 ) {
   @ValidateEnum({
-    description: '排序字段（floor=楼层号, createdAt=创建时间, likeCount=点赞数）',
+    description:
+      '排序字段（floor=楼层号, createdAt=创建时间, likeCount=点赞数）',
     example: ForumReplySortFieldEnum.FLOOR,
     required: false,
     enum: ForumReplySortFieldEnum,
@@ -146,7 +148,7 @@ export class QueryForumReplyDto extends IntersectionType(
 /**
  * 更新回复审核状态DTO
  */
-export class UpdateReplyAuditStatusDto extends IntersectionType(
+export class UpdateForumReplyAuditStatusDto extends IntersectionType(
   IdDto,
   PickType(BaseForumReplyDto, ['auditStatus']),
 ) {}
@@ -154,7 +156,7 @@ export class UpdateReplyAuditStatusDto extends IntersectionType(
 /**
  * 更新回复隐藏状态DTO
  */
-export class UpdateReplyHiddenDto extends IntersectionType(
+export class UpdateForumReplyHiddenDto extends IntersectionType(
   IdDto,
   PickType(BaseForumReplyDto, ['isHidden']),
 ) {}

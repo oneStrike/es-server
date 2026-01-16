@@ -72,7 +72,7 @@ graph TD
 
 **实现约束**:
 - 技术栈: TypeScript
-- 接口规范: 参考现有 PointRuleTypeEnum 实现
+- 接口规范: 参考现有 ForumPointRuleTypeEnum 实现
 - 质量要求: 代码风格一致，注释清晰
 
 **依赖关系**:

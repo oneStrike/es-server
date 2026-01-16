@@ -230,8 +230,8 @@ model ForumSection {
 **改进建议**:
 
 ```typescript
-async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
-  const { sectionId, profileId, ...topicData } = createForumTopicDto
+async createForumTopic(createTopicDto: CreateForumTopicDto) {
+  const { sectionId, profileId, ...topicData } = createTopicDto
 
   // 1. 验证板块和用户
   const [section, profile] = await Promise.all([
@@ -239,7 +239,7 @@ async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
       where: { id: sectionId, isEnabled: true },
     }),
     this.forumProfile.findUnique({
-      where: { id: profileId, status: ProfileStatusEnum.NORMAL },
+      where: { id: profileId, status: ForumProfileStatusEnum.NORMAL },
     }),
   ])
 
@@ -905,15 +905,15 @@ model ForumConfig {
 **修复方案**:
 
 ```typescript
-async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
-  const { sectionId, profileId, ...topicData } = createForumTopicDto
+async createForumTopic(createTopicDto: CreateForumTopicDto) {
+  const { sectionId, profileId, ...topicData } = createTopicDto
 
   const [section, profile] = await Promise.all([
     this.forumSection.findUnique({
       where: { id: sectionId, isEnabled: true },
     }),
     this.forumProfile.findUnique({
-      where: { id: profileId, status: ProfileStatusEnum.NORMAL },
+      where: { id: profileId, status: ForumProfileStatusEnum.NORMAL },
     }),
   ])
 

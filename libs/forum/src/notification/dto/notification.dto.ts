@@ -13,15 +13,15 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
-  NotificationPriorityEnum,
-  NotificationTypeEnum,
+  ForumNotificationPriorityEnum,
+  ForumNotificationTypeEnum,
 } from '../notification.constant'
 
 /**
  * 通知基础DTO
  * 包含论坛通知的所有基础字段定义
  */
-export class BaseNotificationDto extends BaseDto {
+export class BaseForumNotificationDto extends BaseDto {
   @ValidateNumber({
     description: '关联的论坛用户ID',
     example: 1,
@@ -31,11 +31,11 @@ export class BaseNotificationDto extends BaseDto {
 
   @ValidateEnum({
     description: '通知类型',
-    example: NotificationTypeEnum.REPLY,
+    example: ForumNotificationTypeEnum.REPLY,
     required: true,
-    enum: NotificationTypeEnum,
+    enum: ForumNotificationTypeEnum,
   })
-  type!: NotificationTypeEnum
+  type!: ForumNotificationTypeEnum
 
   @ValidateString({
     description: '通知标题',
@@ -76,41 +76,43 @@ export class BaseNotificationDto extends BaseDto {
 
   @ValidateEnum({
     description: '通知优先级',
-    example: NotificationPriorityEnum.NORMAL,
+    example: ForumNotificationPriorityEnum.NORMAL,
     required: false,
-    enum: NotificationPriorityEnum,
+    enum: ForumNotificationPriorityEnum,
   })
-  priority!: NotificationPriorityEnum
+  priority!: ForumNotificationPriorityEnum
 }
 
 /**
  * 创建通知DTO
  */
-export class CreateNotificationDto extends OmitType(
-  BaseNotificationDto,
+export class CreateForumNotificationDto extends OmitType(
+  BaseForumNotificationDto,
   OMIT_BASE_FIELDS,
 ) {}
 
 /**
  * 便捷创建通知DTO
  */
-export class CreateNotificationShortDto extends OmitType(
-  CreateNotificationDto,
+export class CreateForumNotificationShortDto extends OmitType(
+  CreateForumNotificationDto,
   ['type', 'priority'],
 ) {}
 
 /**
  * 查询通知列表DTO
  */
-export class QueryNotificationListDto extends IntersectionType(
+export class QueryForumNotificationListDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseNotificationDto, ['type', 'isRead', 'profileId'])),
+  PartialType(
+    PickType(BaseForumNotificationDto, ['type', 'isRead', 'profileId']),
+  ),
 ) {}
 
 /**
  * 标记通知已读DTO
  */
-export class NotificationIdDto {
+export class ForumNotificationIdDto {
   @ValidateNumber({
     description: '通知ID',
     example: 1,
@@ -122,7 +124,7 @@ export class NotificationIdDto {
 /**
  * 批量标记通知已读DTO
  */
-export class NotificationIdsDto {
+export class ForumNotificationIdsDto {
   @ValidateArray({
     description: '通知ID列表',
     example: [1, 2, 3],
@@ -135,7 +137,7 @@ export class NotificationIdsDto {
 /**
  * 标记所有通知已读DTO
  */
-export class ProfileIdDto {
+export class ForumProfileIdDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,

@@ -107,9 +107,9 @@ throw new Error('maxDistance must be non-negative')
 | 方法 | 异常类型 | 异常信息 | 评估 |
 |------|---------|---------|------|
 | createForumTopic | - | - | ✗ 缺少异常处理 |
-| getForumTopicById | NotFoundException | 主题不存在 | ✓ 良好 |
-| updateForumTopic | NotFoundException | 主题不存在 | ✓ 良好 |
-| updateForumTopic | BadRequestException | 主题已锁定，无法编辑 | ✓ 良好 |
+| getTopicById | NotFoundException | 主题不存在 | ✓ 良好 |
+| updateTopic | NotFoundException | 主题不存在 | ✓ 良好 |
+| updateTopic | BadRequestException | 主题已锁定，无法编辑 | ✓ 良好 |
 | deleteForumTopic | NotFoundException | 主题不存在 | ✓ 良好 |
 
 #### 异常处理完整性
@@ -121,8 +121,8 @@ throw new Error('maxDistance must be non-negative')
 
 **建议**:
 ```typescript
-async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
-  const { sectionId, profileId, ...topicData } = createForumTopicDto
+async createForumTopic(createTopicDto: CreateForumTopicDto) {
+  const { sectionId, profileId, ...topicData } = createTopicDto
 
   // 检查版块是否存在
   const section = await this.forumSection.findUnique({
@@ -134,7 +134,7 @@ async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
 
   // 检查用户资料是否存在
   const profile = await this.forumProfile.findUnique({
-    where: { id: profileId, status: ProfileStatusEnum.NORMAL }
+    where: { id: profileId, status: ForumProfileStatusEnum.NORMAL }
   })
   if (!profile) {
     throw new BadRequestException('用户论坛资料不存在或已被封禁')
@@ -476,8 +476,8 @@ throw new NotFoundException('论坛回复不存在')
 
 **ForumTopicService.createForumTopic**:
 ```typescript
-async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
-  const { sectionId, profileId, ...topicData } = createForumTopicDto
+async createForumTopic(createTopicDto: CreateForumTopicDto) {
+  const { sectionId, profileId, ...topicData } = createTopicDto
 
   // 检查版块是否存在
   const section = await this.forumSection.findUnique({
@@ -489,7 +489,7 @@ async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
 
   // 检查用户资料是否存在
   const profile = await this.forumProfile.findUnique({
-    where: { id: profileId, status: ProfileStatusEnum.NORMAL }
+    where: { id: profileId, status: ForumProfileStatusEnum.NORMAL }
   })
   if (!profile) {
     throw new BadRequestException('用户论坛资料不存在或已被封禁')
@@ -519,7 +519,7 @@ try {
     try {
       await this.pointService.addPoints({
         profileId,
-        ruleType: PointRuleTypeEnum.CREATE_TOPIC,
+        ruleType: ForumPointRuleTypeEnum.CREATE_TOPIC,
         remark: `创建主题 ${topic.id}`,
       })
     } catch (error) {

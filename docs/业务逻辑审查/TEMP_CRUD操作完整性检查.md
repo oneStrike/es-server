@@ -18,9 +18,9 @@
 | 操作 | 方法名 | 状态 | 说明 |
 |------|--------|------|------|
 | Create | createForumTopic | ✓ | 完整实现，包含敏感词检测和审核状态计算 |
-| Read | getForumTopicById | ✓ | 根据ID获取主题详情 |
+| Read | getTopicById | ✓ | 根据ID获取主题详情 |
 | Read | getForumTopicPage | ✓ | 分页查询主题列表 |
-| Update | updateForumTopic | ✓ | 更新主题信息 |
+| Update | updateTopic | ✓ | 更新主题信息 |
 | Delete | deleteForumTopic | ✓ | 软删除，使用事务保证数据一致性 |
 
 **完整性评分**: 100% (4/4)
@@ -91,11 +91,11 @@
 
 | 操作 | 方法名 | 状态 | 说明 |
 |------|--------|------|------|
-| Create | createForumSectionGroup | ✓ | 创建版块组 |
+| Create | createSectionGroup | ✓ | 创建版块组 |
 | Read | getForumSectionGroups | ✓ | 查询版块组列表 |
-| Read | getForumSectionGroupById | ✓ | 根据ID获取版块组详情 |
-| Update | updateForumSectionGroup | ✓ | 更新版块组信息 |
-| Delete | deleteForumSectionGroup | ✓ | 删除版块组 |
+| Read | getSectionGroupById | ✓ | 根据ID获取版块组详情 |
+| Update | updateSectionGroup | ✓ | 更新版块组信息 |
+| Delete | deleteSectionGroup | ✓ | 删除版块组 |
 
 **完整性评分**: 100% (4/4)
 

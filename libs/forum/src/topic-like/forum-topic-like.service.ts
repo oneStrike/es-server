@@ -9,7 +9,7 @@ import { ForumCounterService } from '../counter/forum-counter.service'
 import {
   CreateForumTopicLikeDto,
   QueryForumTopicLikeDto,
-  ToggleTopicLikeDto,
+  ToggleForumTopicLikeDto,
 } from './dto/forum-topic-like.dto'
 
 /**
@@ -156,7 +156,7 @@ export class ForumTopicLikeService extends BaseService {
    * @returns 点赞或取消点赞的结果
    * @throws NotFoundException 主题不存在
    */
-  async toggleTopicLike(toggleTopicLikeDto: ToggleTopicLikeDto) {
+  async toggleTopicLike(toggleTopicLikeDto: ToggleForumTopicLikeDto) {
     const { topicId, profileId } = toggleTopicLikeDto
 
     const topic = await this.forumTopic.findUnique({

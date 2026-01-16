@@ -160,7 +160,7 @@
 - 位置：[experience-rule.dto.ts](file:///e:/Code/es/es-server/libs/forum/src/experience/dto/experience-rule.dto.ts)
 - 包含：
   - `BaseExperienceRuleDto`：基础DTO
-  - `CreateExperienceRuleDto`：创建DTO
+  - `CreateForumExperienceRuleDto`：创建DTO
   - `UpdateExperienceRuleDto`：更新DTO
   - `ExperienceRuleQueryDto`：查询DTO
 
@@ -168,7 +168,7 @@
 - 位置：[experience-record.dto.ts](file:///e:/Code/es/es-server/libs/forum/src/experience/dto/experience-record.dto.ts)
 - 包含：
   - `BaseExperienceRecordDto`：基础DTO
-  - `AddExperienceDto`：增加经验DTO
+  - `AddForumExperienceDto`：增加经验DTO
   - `SubtractExperienceDto`：减少经验DTO
   - `ExperienceRecordQueryDto`：查询DTO
 

@@ -10,22 +10,22 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { ForumConfigCacheService } from '../config/forum-config-cache.service'
-import { ReviewPolicyEnum } from '../config/forum-config.constants'
+import { ForumReviewPolicyEnum } from '../config/forum-config.constants'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import { PointRuleTypeEnum } from '../point/point.constant'
+import { ForumPointRuleTypeEnum } from '../point/point.constant'
 import { ForumPointService } from '../point/point.service'
-import { SensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
+import { ForumProfileStatusEnum } from '../profile/profile.constant'
+import { ForumSensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
 import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
-import { ProfileStatusEnum } from '../profile/profile.constant'
 import {
   CreateForumTopicDto,
   QueryForumTopicDto,
+  UpdateForumTopicAuditStatusDto,
   UpdateForumTopicDto,
-  UpdateTopicAuditStatusDto,
-  UpdateTopicFeaturedDto,
-  UpdateTopicHiddenDto,
-  UpdateTopicLockedDto,
-  UpdateTopicPinnedDto,
+  UpdateForumTopicFeaturedDto,
+  UpdateForumTopicHiddenDto,
+  UpdateForumTopicLockedDto,
+  UpdateForumTopicPinnedDto,
 } from './dto/forum-topic.dto'
 import { ForumTopicAuditStatusEnum } from './forum-topic.constant'
 
@@ -61,26 +61,26 @@ export class ForumTopicService extends BaseService {
   }
 
   private calculateAuditStatus(
-    reviewPolicy: ReviewPolicyEnum,
-    highestLevel?: SensitiveWordLevelEnum,
+    reviewPolicy: ForumReviewPolicyEnum,
+    highestLevel?: ForumSensitiveWordLevelEnum,
   ) {
     let needAudit = false
     let isHidden = false
 
-    if (reviewPolicy === ReviewPolicyEnum.MANUAL) {
+    if (reviewPolicy === ForumReviewPolicyEnum.MANUAL) {
       needAudit = true
     } else if (highestLevel) {
-      if (highestLevel === SensitiveWordLevelEnum.SEVERE) {
+      if (highestLevel === ForumSensitiveWordLevelEnum.SEVERE) {
         isHidden = true
       }
 
-      if (reviewPolicy === ReviewPolicyEnum.SEVERE_SENSITIVE_WORD) {
-        needAudit = highestLevel === SensitiveWordLevelEnum.SEVERE
-      } else if (reviewPolicy === ReviewPolicyEnum.GENERAL_SENSITIVE_WORD) {
+      if (reviewPolicy === ForumReviewPolicyEnum.SEVERE_SENSITIVE_WORD) {
+        needAudit = highestLevel === ForumSensitiveWordLevelEnum.SEVERE
+      } else if (reviewPolicy === ForumReviewPolicyEnum.GENERAL_SENSITIVE_WORD) {
         needAudit =
-          highestLevel === SensitiveWordLevelEnum.SEVERE ||
-          highestLevel === SensitiveWordLevelEnum.GENERAL
-      } else if (reviewPolicy === ReviewPolicyEnum.MILD_SENSITIVE_WORD) {
+          highestLevel === ForumSensitiveWordLevelEnum.SEVERE ||
+          highestLevel === ForumSensitiveWordLevelEnum.GENERAL
+      } else if (reviewPolicy === ForumReviewPolicyEnum.MILD_SENSITIVE_WORD) {
         needAudit = true
       }
     }
@@ -95,13 +95,13 @@ export class ForumTopicService extends BaseService {
 
   /**
    * 创建论坛主题
-   * @param createForumTopicDto - 创建论坛主题的数据传输对象
+   * @param createTopicDto - 创建论坛主题的数据传输对象
    * @returns 创建的论坛主题信息
    * @throws {BadRequestException} 板块不存在或已禁用
    * @throws {BadRequestException} 用户论坛资料不存在或已被封禁
    */
-  async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
-    const { sectionId, profileId, ...topicData } = createForumTopicDto
+  async createForumTopic(createTopicDto: CreateForumTopicDto) {
+    const { sectionId, profileId, ...topicData } = createTopicDto
 
     const { hits, highestLevel } =
       this.sensitiveWordDetectService.getMatchedWords({
@@ -114,7 +114,7 @@ export class ForumTopicService extends BaseService {
         connect: { id: sectionId, isEnabled: true },
       },
       profile: {
-        connect: { id: profileId, status: ProfileStatusEnum.NORMAL },
+        connect: { id: profileId, status: ForumProfileStatusEnum.NORMAL },
       },
     }
 
@@ -166,7 +166,7 @@ export class ForumTopicService extends BaseService {
     if (topic.auditStatus !== ForumTopicAuditStatusEnum.PENDING) {
       await this.pointService.addPoints({
         profileId,
-        ruleType: PointRuleTypeEnum.CREATE_TOPIC,
+        ruleType: ForumPointRuleTypeEnum.CREATE_TOPIC,
         remark: `创建主题 ${topic.id}`,
       })
     }
@@ -180,7 +180,7 @@ export class ForumTopicService extends BaseService {
    * @returns 论坛主题详情信息
    * @throws {NotFoundException} 主题不存在
    */
-  async getForumTopicById(id: number) {
+  async getTopicById(id: number) {
     const topic = await this.forumTopic.findUnique({
       where: { id, deletedAt: null },
       include: {
@@ -206,7 +206,7 @@ export class ForumTopicService extends BaseService {
    * @param queryForumTopicDto - 查询参数对象
    * @returns 分页的论坛主题列表
    */
-  async getForumTopics(queryForumTopicDto: QueryForumTopicDto) {
+  async getTopics(queryForumTopicDto: QueryForumTopicDto) {
     const { keyword, sectionId, profileId, ...otherDto } = queryForumTopicDto
 
     const where: ForumTopicWhereInput = {
@@ -239,7 +239,7 @@ export class ForumTopicService extends BaseService {
    * @throws {NotFoundException} 主题不存在
    * @throws {BadRequestException} 主题已锁定，无法编辑
    */
-  async updateForumTopic(updateForumTopicDto: UpdateForumTopicDto) {
+  async updateTopic(updateForumTopicDto: UpdateForumTopicDto) {
     const { id, ...updateData } = updateForumTopicDto
 
     const topic = await this.forumTopic.findUnique({
@@ -341,7 +341,7 @@ export class ForumTopicService extends BaseService {
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async updateTopicPinned(updateTopicPinnedDto: UpdateTopicPinnedDto) {
+  async updateTopicPinned(updateTopicPinnedDto: UpdateForumTopicPinnedDto) {
     return this.updateTopicStatus(updateTopicPinnedDto.id, {
       isPinned: updateTopicPinnedDto.isPinned,
     })
@@ -353,7 +353,9 @@ export class ForumTopicService extends BaseService {
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async updateTopicFeatured(updateTopicFeaturedDto: UpdateTopicFeaturedDto) {
+  async updateTopicFeatured(
+    updateTopicFeaturedDto: UpdateForumTopicFeaturedDto,
+  ) {
     return this.updateTopicStatus(updateTopicFeaturedDto.id, {
       isFeatured: updateTopicFeaturedDto.isFeatured,
     })
@@ -365,7 +367,7 @@ export class ForumTopicService extends BaseService {
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async updateTopicLocked(updateTopicLockedDto: UpdateTopicLockedDto) {
+  async updateTopicLocked(updateTopicLockedDto: UpdateForumTopicLockedDto) {
     return this.updateTopicStatus(updateTopicLockedDto.id, {
       isLocked: updateTopicLockedDto.isLocked,
     })
@@ -377,7 +379,7 @@ export class ForumTopicService extends BaseService {
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async updateTopicHidden(updateTopicHiddenDto: UpdateTopicHiddenDto) {
+  async updateTopicHidden(updateTopicHiddenDto: UpdateForumTopicHiddenDto) {
     return this.updateTopicStatus(updateTopicHiddenDto.id, {
       isHidden: updateTopicHiddenDto.isHidden,
     })
@@ -390,7 +392,7 @@ export class ForumTopicService extends BaseService {
    * @throws {NotFoundException} 主题不存在
    */
   async updateTopicAuditStatus(
-    updateTopicAuditStatusDto: UpdateTopicAuditStatusDto,
+    updateTopicAuditStatusDto: UpdateForumTopicAuditStatusDto,
   ) {
     const { id, auditStatus, auditReason } = updateTopicAuditStatusDto
     return this.updateTopicStatus(id, {

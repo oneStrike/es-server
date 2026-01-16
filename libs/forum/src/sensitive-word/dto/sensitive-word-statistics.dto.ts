@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger'
 import {
-  SensitiveWordLevelEnum,
-  SensitiveWordTypeEnum,
-  StatisticsTypeEnum,
+  ForumSensitiveWordLevelEnum,
+  ForumSensitiveWordTypeEnum,
+  ForumStatisticsTypeEnum,
 } from '../sensitive-word-constant'
 
 /**
@@ -13,19 +13,19 @@ export class ForumSensitiveWordStatisticsQueryDto {
     description: '统计类型',
     required: false,
     example: 'level',
-    enum: StatisticsTypeEnum,
+    enum: ForumStatisticsTypeEnum,
   })
-  type?: StatisticsTypeEnum
+  type?: ForumStatisticsTypeEnum
 }
 
 /**
  * 级别统计结果DTO
  */
-export class SensitiveWordLevelStatisticsDto {
+export class ForumForumSensitiveWordLevelStatisticsDto {
   @ApiProperty({
     description: '敏感词级别',
-    example: SensitiveWordLevelEnum.SEVERE,
-    enum: SensitiveWordLevelEnum,
+    example: ForumSensitiveWordLevelEnum.SEVERE,
+    enum: ForumSensitiveWordLevelEnum,
   })
   level!: number
 
@@ -51,11 +51,11 @@ export class SensitiveWordLevelStatisticsDto {
 /**
  * 类型统计结果DTO
  */
-export class ForumSensitiveWordTypeStatisticsDto {
+export class ForumForumSensitiveWordTypeStatisticsDto {
   @ApiProperty({
     description: '敏感词类型',
-    example: SensitiveWordTypeEnum.POLITICS,
-    enum: SensitiveWordTypeEnum,
+    example: ForumSensitiveWordTypeEnum.POLITICS,
+    enum: ForumSensitiveWordTypeEnum,
   })
   type!: number
 
@@ -96,15 +96,15 @@ export class ForumSensitiveWordTopHitStatisticsDto {
 
   @ApiProperty({
     description: '敏感词级别',
-    example: SensitiveWordLevelEnum.SEVERE,
-    enum: SensitiveWordLevelEnum,
+    example: ForumSensitiveWordLevelEnum.SEVERE,
+    enum: ForumSensitiveWordLevelEnum,
   })
   level!: number
 
   @ApiProperty({
     description: '敏感词类型',
-    example: SensitiveWordTypeEnum.POLITICS,
-    enum: SensitiveWordTypeEnum,
+    example: ForumSensitiveWordTypeEnum.POLITICS,
+    enum: ForumSensitiveWordTypeEnum,
   })
   type!: number
 
@@ -133,15 +133,15 @@ export class ForumSensitiveWordRecentHitStatisticsDto {
 
   @ApiProperty({
     description: '敏感词级别',
-    example: SensitiveWordLevelEnum.GENERAL,
-    enum: SensitiveWordLevelEnum,
+    example: ForumSensitiveWordLevelEnum.GENERAL,
+    enum: ForumSensitiveWordLevelEnum,
   })
   level!: number
 
   @ApiProperty({
     description: '敏感词类型',
-    example: SensitiveWordTypeEnum.VIOLENCE,
-    enum: SensitiveWordTypeEnum,
+    example: ForumSensitiveWordTypeEnum.VIOLENCE,
+    enum: ForumSensitiveWordTypeEnum,
   })
   type!: number
 
@@ -200,15 +200,15 @@ export class ForumSensitiveWordStatisticsDataDto {
 
   @ApiProperty({
     description: '按级别分组的统计信息',
-    type: [ForumSensitiveWordLevelStatisticsDto],
+    type: [ForumForumSensitiveWordLevelStatisticsDto],
   })
-  levelStatistics!: ForumSensitiveWordLevelStatisticsDto[]
+  levelStatistics!: ForumForumSensitiveWordLevelStatisticsDto[]
 
   @ApiProperty({
     description: '按类型分组的统计信息',
-    type: [ForumSensitiveWordTypeStatisticsDto],
+    type: [ForumForumSensitiveWordTypeStatisticsDto],
   })
-  typeStatistics!: ForumSensitiveWordTypeStatisticsDto[]
+  typeStatistics!: ForumForumSensitiveWordTypeStatisticsDto[]
 
   @ApiProperty({
     description: '命中次数最多的敏感词（Top 20）',
@@ -230,34 +230,42 @@ export class ForumSensitiveWordStatisticsResponseDto {
   @ApiProperty({
     description: '统计类型',
     example: 'level',
-    enum: StatisticsTypeEnum,
+    enum: ForumStatisticsTypeEnum,
   })
-  type!: StatisticsTypeEnum
+  type!: ForumStatisticsTypeEnum
 
   @ApiProperty({
     description: '统计数据',
     oneOf: [
       {
         type: 'array',
-        items: { $ref: '#/components/schemas/ForumSensitiveWordLevelStatisticsDto' },
+        items: {
+          $ref: '#/components/schemas/ForumForumSensitiveWordLevelStatisticsDto',
+        },
       },
       {
         type: 'array',
-        items: { $ref: '#/components/schemas/ForumSensitiveWordTypeStatisticsDto' },
+        items: {
+          $ref: '#/components/schemas/ForumForumSensitiveWordTypeStatisticsDto',
+        },
       },
       {
         type: 'array',
-        items: { $ref: '#/components/schemas/ForumSensitiveWordTopHitStatisticsDto' },
+        items: {
+          $ref: '#/components/schemas/ForumSensitiveWordTopHitStatisticsDto',
+        },
       },
       {
         type: 'array',
-        items: { $ref: '#/components/schemas/ForumSensitiveWordRecentHitStatisticsDto' },
+        items: {
+          $ref: '#/components/schemas/ForumSensitiveWordRecentHitStatisticsDto',
+        },
       },
     ],
   })
   data!:
-    | ForumSensitiveWordLevelStatisticsDto[]
-    | ForumSensitiveWordTypeStatisticsDto[]
+    | ForumForumSensitiveWordLevelStatisticsDto[]
+    | ForumForumSensitiveWordTypeStatisticsDto[]
     | ForumSensitiveWordTopHitStatisticsDto[]
     | ForumSensitiveWordRecentHitStatisticsDto[]
 }

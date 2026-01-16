@@ -5,12 +5,12 @@ import {
 } from '@libs/base/decorators'
 import { PageDto } from '@libs/base/dto'
 import { ApiProperty, OmitType } from '@nestjs/swagger'
-import { SearchSortTypeEnum, SearchTypeEnum } from '../search.constant'
+import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '../search.constant'
 
 /**
  * 搜索DTO
  */
-export class SearchDto extends PageDto {
+export class ForumSearchDto extends PageDto {
   @ValidateString({
     description: '搜索关键词',
     example: '测试',
@@ -22,11 +22,11 @@ export class SearchDto extends PageDto {
 
   @ValidateEnum({
     description: '搜索类型',
-    example: SearchTypeEnum.ALL,
+    example: ForumSearchTypeEnum.ALL,
     required: false,
-    enum: SearchTypeEnum,
+    enum: ForumSearchTypeEnum,
   })
-  type?: SearchTypeEnum
+  type?: ForumSearchTypeEnum
 
   @ValidateNumber({
     description: '板块ID',
@@ -44,21 +44,21 @@ export class SearchDto extends PageDto {
 
   @ValidateEnum({
     description: '排序类型',
-    example: SearchSortTypeEnum.RELEVANCE,
+    example: ForumSearchSortTypeEnum.RELEVANCE,
     required: false,
-    enum: SearchSortTypeEnum,
+    enum: ForumSearchSortTypeEnum,
   })
-  sort?: SearchSortTypeEnum
+  sort?: ForumSearchSortTypeEnum
 }
 
-export class SearchTopicDto extends OmitType(SearchDto, ['type']) {}
-export class SearchReplyDto extends OmitType(SearchDto, ['type']) {}
+export class ForumSearchTopicDto extends OmitType(ForumSearchDto, ['type']) {}
+export class ForumSearchReplyDto extends OmitType(ForumSearchDto, ['type']) {}
 
 /**
  * 搜索结果DTO
  * 返回搜索结果的数据结构
  */
-export class SearchResultDto {
+export class ForumSearchResultDto {
   @ApiProperty({ description: '主题ID', example: 1 })
   topicId!: number
 

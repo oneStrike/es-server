@@ -43,7 +43,7 @@ export const DEFAULT_FORUM_CONFIG: Omit<
 /**
  * 内容审核策略枚举
  */
-export enum ReviewPolicyEnum {
+export enum ForumReviewPolicyEnum {
   /** 不审核 */
   NONE = 0,
   /** 严格敏感词过滤 */

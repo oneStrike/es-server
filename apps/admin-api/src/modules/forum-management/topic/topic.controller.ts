@@ -5,12 +5,12 @@ import {
   CreateForumTopicDto,
   ForumTopicService,
   QueryForumTopicDto,
+  UpdateForumTopicAuditStatusDto,
   UpdateForumTopicDto,
-  UpdateTopicAuditStatusDto,
-  UpdateTopicFeaturedDto,
-  UpdateTopicHiddenDto,
-  UpdateTopicLockedDto,
-  UpdateTopicPinnedDto,
+  UpdateForumTopicFeaturedDto,
+  UpdateForumTopicHiddenDto,
+  UpdateForumTopicLockedDto,
+  UpdateForumTopicPinnedDto,
 } from '@libs/forum/topic'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -53,7 +53,7 @@ export class ForumTopicController {
     model: BaseForumTopicDto,
   })
   async update(@Body() body: UpdateForumTopicDto) {
-    return this.forumTopicService.updateForumTopic(body)
+    return this.forumTopicService.updateTopic(body)
   }
 
   @Post('/delete')
@@ -70,7 +70,7 @@ export class ForumTopicController {
     summary: '更新主题置顶状态',
     model: BaseForumTopicDto,
   })
-  async updatePinned(@Body() body: UpdateTopicPinnedDto) {
+  async updatePinned(@Body() body: UpdateForumTopicPinnedDto) {
     return this.forumTopicService.updateTopicPinned(body)
   }
 
@@ -79,7 +79,7 @@ export class ForumTopicController {
     summary: '更新主题精华状态',
     model: BaseForumTopicDto,
   })
-  async updateFeatured(@Body() body: UpdateTopicFeaturedDto) {
+  async updateFeatured(@Body() body: UpdateForumTopicFeaturedDto) {
     return this.forumTopicService.updateTopicFeatured(body)
   }
 
@@ -88,7 +88,7 @@ export class ForumTopicController {
     summary: '更新主题锁定状态',
     model: BaseForumTopicDto,
   })
-  async updateLocked(@Body() body: UpdateTopicLockedDto) {
+  async updateLocked(@Body() body: UpdateForumTopicLockedDto) {
     return this.forumTopicService.updateTopicLocked(body)
   }
 
@@ -97,7 +97,7 @@ export class ForumTopicController {
     summary: '更新主题隐藏状态',
     model: BaseForumTopicDto,
   })
-  async updateHidden(@Body() body: UpdateTopicHiddenDto) {
+  async updateHidden(@Body() body: UpdateForumTopicHiddenDto) {
     return this.forumTopicService.updateTopicHidden(body)
   }
 
@@ -106,7 +106,7 @@ export class ForumTopicController {
     summary: '更新主题审核状态',
     model: BaseForumTopicDto,
   })
-  async updateAuditStatus(@Body() body: UpdateTopicAuditStatusDto) {
+  async updateAuditStatus(@Body() body: UpdateForumTopicAuditStatusDto) {
     return this.forumTopicService.updateTopicAuditStatus(body)
   }
 

@@ -76,7 +76,7 @@ model ForumSensitiveWord {
 }
 ```
 
-**敏感词级别** (SensitiveWordLevelEnum):
+**敏感词级别** (ForumSensitiveWordLevelEnum):
 - `SEVERE = 1` - 严重
 - `GENERAL = 2` - 一般
 - `LIGHT = 3` - 轻微

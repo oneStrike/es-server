@@ -116,7 +116,8 @@ export class ForumReplyService extends BaseService {
       floor: newFloor,
       auditStatus,
       auditReason,
-      sensitiveWordHits: detectResult.hits.length > 0 ? detectResult.hits : null,
+      sensitiveWordHits:
+        detectResult.hits.length > 0 ? detectResult.hits : null,
       actualReplyTo: replyToId
         ? {
             connect: {

@@ -37,7 +37,7 @@ export class ForumSectionGroupService extends BaseService {
    * @param dto 创建板块分组的数据传输对象
    * @returns 创建成功的板块分组
    */
-  async createForumSectionGroup(dto: CreateForumSectionGroupDto) {
+  async createSectionGroup(dto: CreateForumSectionGroupDto) {
     if (await this.forumSectionGroup.exists({ name: dto.name })) {
       throw new BadRequestException('板块分组名称已存在')
     }
@@ -52,7 +52,7 @@ export class ForumSectionGroupService extends BaseService {
    * @returns 板块分组详情，包含其下的板块信息
    * @throws NotFoundException 如果板块分组不存在
    */
-  async getForumSectionGroupById(id: number) {
+  async getSectionGroupById(id: number) {
     const group = await this.forumSectionGroup.findUnique({
       where: { id },
       omit: {
@@ -71,7 +71,7 @@ export class ForumSectionGroupService extends BaseService {
    * @param dto 查询条件的数据传输对象
    * @returns 分页后的板块分组列表
    */
-  async getForumSectionGroupPage(dto: QueryForumSectionGroupDto) {
+  async getSectionGroupPage(dto: QueryForumSectionGroupDto) {
     return this.forumSectionGroup.findPagination({
       where: {
         deletedAt: null,
@@ -92,14 +92,14 @@ export class ForumSectionGroupService extends BaseService {
 
   /**
    * 更新论坛板块分组信息
-   * @param updateForumSectionGroupDto 更新板块分组的数据传输对象
+   * @param updateSectionGroupDto 更新板块分组的数据传输对象
    * @returns 更新后的板块分组
    * @throws NotFoundException 如果板块分组不存在
    */
-  async updateForumSectionGroup(
-    updateForumSectionGroupDto: UpdateForumSectionGroupDto,
+  async updateSectionGroup(
+    updateSectionGroupDto: UpdateForumSectionGroupDto,
   ) {
-    const { id, ...updateData } = updateForumSectionGroupDto
+    const { id, ...updateData } = updateSectionGroupDto
 
     if (!(await this.forumSectionGroup.exists({ id }))) {
       throw new NotFoundException('板块分组不存在')
@@ -118,7 +118,7 @@ export class ForumSectionGroupService extends BaseService {
    * @throws NotFoundException 如果板块分组不存在
    * @throws Error 如果板块分组下还有板块，则无法删除
    */
-  async deleteForumSectionGroup(id: number) {
+  async deleteSectionGroup(id: number) {
     const group = await this.forumSectionGroup.findUnique({
       where: { id },
       include: {

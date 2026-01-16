@@ -1,7 +1,7 @@
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
-import { CreateForumReportDto, HandleReportDto, QueryForumReportDto } from './dto/forum-report.dto'
+import { CreateForumReportDto, HandleForumReportDto, QueryForumReportDto } from './dto/forum-report.dto'
 import {
   ForumReportStatusEnum,
   ForumReportTypeEnum,
@@ -250,7 +250,7 @@ export class ForumReportService extends BaseService {
    * @throws NotFoundException 举报记录不存在
    * @throws BadRequestException 举报已处理完成
    */
-  async handleReport(handleReportDto: HandleReportDto) {
+  async handleReport(handleReportDto: HandleForumReportDto) {
     const { id, status, handlerId, handlingNote } = handleReportDto
 
     const report = await this.forumReport.findUnique({

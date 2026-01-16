@@ -2,7 +2,7 @@ import { ValidateNumber, ValidateString } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
-export class BaseExperienceRecordDto extends BaseDto {
+export class BaseForumExperienceRecordDto extends BaseDto {
   @ValidateNumber({
     description: '关联的用户ID',
     example: 1,

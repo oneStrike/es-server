@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common'
 import { ForumSectionModule } from '../section/forum-section.module'
-import { ModeratorController } from './moderator.controller'
 import { ForumModeratorService } from './moderator.service'
 
 /**
@@ -9,7 +8,7 @@ import { ForumModeratorService } from './moderator.service'
  */
 @Module({
   imports: [ForumSectionModule],
-  controllers: [ModeratorController],
+  controllers: [],
   providers: [ForumModeratorService],
   exports: [ForumModeratorService],
 })

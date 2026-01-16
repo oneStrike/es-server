@@ -55,7 +55,7 @@ export abstract class BaseService {
 ### 2.2 Singleton (单例模式)
 
 **实现位置**: 
-- [SensitiveWordCacheService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word-cache.service.ts)
+- [ForumSensitiveWordCacheService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word-cache.service.ts)
 - [ForumConfigCacheService](file:///e:/Code/es/es-server/libs/forum/src/config/forum-config-cache.service.ts)
 
 **实现描述**:
@@ -141,13 +141,13 @@ class SensitiveWordDetectService {
 ### 2.4 Observer (观察者模式)
 
 **实现位置**: 
-- [SensitiveWordCacheService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word-cache.service.ts)
+- [ForumSensitiveWordCacheService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word-cache.service.ts)
 - [ForumConfigCacheService](file:///e:/Code/es/es-server/libs/forum/src/config/forum-config-cache.service.ts)
 
 **实现描述**:
 ```typescript
 @Injectable()
-export class SensitiveWordCacheService extends BaseService {
+export class ForumSensitiveWordCacheService extends BaseService {
   async invalidateAll(): Promise<void> {
     await this.cacheManager.del(SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS)
     this.logger.log('已清除所有敏感词缓存')

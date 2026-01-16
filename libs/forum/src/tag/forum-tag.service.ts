@@ -6,10 +6,10 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import {
-  AssignTagToTopicDto,
+  AssignForumTagToTopicDto,
   CreateForumTagDto,
   QueryForumTagDto,
-  RemoveTagFromTopicDto,
+  RemoveForumTagFromTopicDto,
   UpdateForumTagDto,
 } from './dto/forum-tag.dto'
 
@@ -229,7 +229,7 @@ export class ForumTagService extends BaseService {
    * @throws NotFoundException 如果主题或标签不存在
    * @throws BadRequestException 如果标签未启用或已关联
    */
-  async assignTagToTopic(assignTagToTopicDto: AssignTagToTopicDto) {
+  async assignTagToTopic(assignTagToTopicDto: AssignForumTagToTopicDto) {
     const { topicId, tagId } = assignTagToTopicDto
 
     const topic = await this.forumTopic.findUnique({
@@ -292,7 +292,7 @@ export class ForumTagService extends BaseService {
    * @returns 移除操作结果
    * @throws NotFoundException 如果主题未关联该标签
    */
-  async removeTagFromTopic(removeTagFromTopicDto: RemoveTagFromTopicDto) {
+  async removeTagFromTopic(removeTagFromTopicDto: RemoveForumTagFromTopicDto) {
     const { topicId, tagId } = removeTagFromTopicDto
 
     const topicTag = await this.forumTopicTag.findUnique({

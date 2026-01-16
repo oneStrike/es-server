@@ -12,7 +12,7 @@ import {
   QueryForumPointRuleDto,
   UpdateForumPointRuleDto,
 } from './dto/point-rule.dto'
-import { PointRuleTypeEnum } from './point.constant'
+import { ForumPointRuleTypeEnum } from './point.constant'
 
 /**
  * 积分服务类
@@ -37,7 +37,7 @@ export class ForumPointService extends BaseService {
    * @param createPointRuleDto 创建规则的数据
    * @returns 创建的规则信息
    */
-  async createPointRule(dto: CreatePointRuleDto) {
+  async createPointRule(dto: CreateForumPointRuleDto) {
     return this.forumPointRule.create({
       data: dto,
     })
@@ -85,7 +85,7 @@ export class ForumPointService extends BaseService {
    * @param dto 更新规则的数据
    * @returns 更新后的规则信息
    */
-  async updatePointRule(dto: UpdatePointRuleDto) {
+  async updatePointRule(dto: UpdateForumPointRuleDto) {
     const { id, ...updateData } = dto
 
     return this.forumPointRule.update({
@@ -99,7 +99,7 @@ export class ForumPointService extends BaseService {
    * @param addPointsDto 增加积分的数据
    * @returns 增加积分的结果
    */
-  async addPoints(addPointsDto: AddPointsDto) {
+  async addPoints(addPointsDto: AddForumPointsDto) {
     const { profileId, ruleType, remark } = addPointsDto
 
     const profile = await this.forumProfile.findUnique({
@@ -372,7 +372,7 @@ export class ForumPointService extends BaseService {
    */
   async addPointsByRuleType(
     profileId: number,
-    ruleType: PointRuleTypeEnum,
+    ruleType: ForumPointRuleTypeEnum,
     remark?: string,
   ) {
     return this.addPoints({

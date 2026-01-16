@@ -2,7 +2,7 @@ import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ForumLevelRuleService } from '../level-rule/level-rule.service'
-import { ProfileStatusEnum } from '../profile/profile.constant'
+import { ForumProfileStatusEnum } from '../profile/profile.constant'
 import {
   AddForumExperienceDto,
   QueryForumExperienceRecordDto,
@@ -49,7 +49,7 @@ export class ForumExperienceService extends BaseService {
    * @param dto 创建规则的数据
    * @returns 创建的规则信息
    */
-  async createExperienceRule(dto: CreateExperienceRuleDto) {
+  async createExperienceRule(dto: CreateForumExperienceRuleDto) {
     if (
       await this.forumExperienceRule.exists({ type: dto.type, isEnabled: true })
     ) {
@@ -65,7 +65,7 @@ export class ForumExperienceService extends BaseService {
    * @param dto 查询条件
    * @returns 分页的规则列表
    */
-  async getExperienceRulePage(dto: QueryExperienceRuleDto) {
+  async getExperienceRulePage(dto: QueryForumExperienceRuleDto) {
     return this.forumExperienceRule.findPagination({
       where: {
         ...dto,
@@ -97,7 +97,7 @@ export class ForumExperienceService extends BaseService {
    * @param dto 更新规则的数据
    * @returns 更新后的规则信息
    */
-  async updateExperienceRule(dto: UpdateExperienceRuleDto) {
+  async updateExperienceRule(dto: UpdateForumExperienceRuleDto) {
     const { id, ...updateData } = dto
 
     if (
@@ -146,14 +146,14 @@ export class ForumExperienceService extends BaseService {
    * @param addExperienceDto 增加经验的数据
    * @returns 增加经验的结果
    */
-  async addExperience(addExperienceDto: AddExperienceDto) {
+  async addExperience(addExperienceDto: AddForumExperienceDto) {
     const { profileId, ruleType, remark } = addExperienceDto
 
     const profile = await this.forumProfile.findUnique({
       where: {
         id: profileId,
         status: {
-          not: ProfileStatusEnum.PERMANENT_BANNED,
+          not: ForumProfileStatusEnum.PERMANENT_BANNED,
         },
       },
     })

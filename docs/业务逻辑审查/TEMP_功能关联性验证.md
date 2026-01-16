@@ -264,7 +264,7 @@
 
 | 依赖服务 | 用途 | 调用方法 |
 |---------|------|---------|
-| SensitiveWordCacheService | 缓存管理 | invalidateAll() |
+| ForumSensitiveWordCacheService | 缓存管理 | invalidateAll() |
 | SensitiveWordDetectService | 敏感词检测 | reloadWords() |
 
 #### 数据关联关系
@@ -277,18 +277,18 @@
 
 **创建敏感词流程**:
 1. 创建敏感词记录
-2. 清空缓存 → SensitiveWordCacheService
+2. 清空缓存 → ForumSensitiveWordCacheService
 3. 重新加载敏感词 → SensitiveWordDetectService
 
 **更新敏感词流程**:
 1. 验证敏感词存在
 2. 更新敏感词记录
-3. 清空缓存 → SensitiveWordCacheService
+3. 清空缓存 → ForumSensitiveWordCacheService
 4. 重新加载敏感词 → SensitiveWordDetectService
 
 **删除敏感词流程**:
 1. 删除敏感词记录
-2. 清空缓存 → SensitiveWordCacheService
+2. 清空缓存 → ForumSensitiveWordCacheService
 3. 重新加载敏感词 → SensitiveWordDetectService
 
 **关联完整性**: ✓ 完整

@@ -23,8 +23,8 @@ import {
  * - 最近命中的敏感词
  */
 @Injectable()
-export class SensitiveWordStatisticsService extends BaseService {
-  private readonly logger = new Logger(SensitiveWordStatisticsService.name)
+export class ForumSensitiveWordStatisticsService extends BaseService {
+  private readonly logger = new Logger(ForumSensitiveWordStatisticsService.name)
 
   get sensitiveWord() {
     return this.prisma.forumSensitiveWord

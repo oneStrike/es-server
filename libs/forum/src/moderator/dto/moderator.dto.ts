@@ -20,8 +20,8 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
-  ModeratorPermissionEnum,
-  ModeratorRoleTypeEnum,
+  ForumModeratorPermissionEnum,
+  ForumModeratorRoleTypeEnum,
 } from '../moderator.constant'
 
 /**
@@ -34,14 +34,17 @@ import {
  * 定义版主的基本属性，包括用户ID、角色类型、权限列表等
  * 其他版主相关的DTO可以继承此类
  */
-export class BaseModeratorDto extends IntersectionType(BaseDto, UserIdDto) {
+export class BaseForumModeratorDto extends IntersectionType(
+  BaseDto,
+  UserIdDto,
+) {
   @ValidateEnum({
     description: '版主角色类型',
-    example: ModeratorRoleTypeEnum.SUPER,
+    example: ForumModeratorRoleTypeEnum.SUPER,
     required: true,
-    enum: ModeratorRoleTypeEnum,
+    enum: ForumModeratorRoleTypeEnum,
   })
-  roleType!: ModeratorRoleTypeEnum
+  roleType!: ForumModeratorRoleTypeEnum
 
   @ValidateArray({
     description: '权限列表',
@@ -49,7 +52,7 @@ export class BaseModeratorDto extends IntersectionType(BaseDto, UserIdDto) {
     example: [1, 2, 3, 4, 5, 6],
     required: true,
   })
-  permissions!: ModeratorPermissionEnum[]
+  permissions!: ForumModeratorPermissionEnum[]
 
   @ValidateBoolean({
     description: '是否启用',
@@ -71,8 +74,8 @@ export class BaseModeratorDto extends IntersectionType(BaseDto, UserIdDto) {
  * 创建版主数据传输对象
  * 用于创建新版主时的请求参数
  */
-export class CreateModeratorDto extends OmitType(
-  BaseModeratorDto,
+export class CreateForumModeratorDto extends OmitType(
+  BaseForumModeratorDto,
   OMIT_BASE_FIELDS,
 ) {
   @ValidateArray({
@@ -88,8 +91,8 @@ export class CreateModeratorDto extends OmitType(
  * 更新版主数据传输对象
  * 用于更新版主信息时的请求参数，需要包含版主ID
  */
-export class UpdateModeratorDto extends IntersectionType(
-  CreateModeratorDto,
+export class UpdateForumModeratorDto extends IntersectionType(
+  CreateForumModeratorDto,
   IdDto,
 ) {}
 
@@ -97,10 +100,10 @@ export class UpdateModeratorDto extends IntersectionType(
  * 分配板块数据传输对象
  * 用于将板块分配给版主，并设置权限继承和自定义权限
  */
-export class AssignModeratorSectionDto extends PickType(CreateModeratorDto, [
-  'permissions',
-  'sectionIds',
-]) {
+export class AssignForumModeratorSectionDto extends PickType(
+  CreateForumModeratorDto,
+  ['permissions', 'sectionIds'],
+) {
   @ValidateNumber({
     description: '版主ID',
     example: 1,
@@ -114,9 +117,9 @@ export class AssignModeratorSectionDto extends PickType(CreateModeratorDto, [
  * 查询版主数据传输对象
  * 用于分页查询版主列表，支持按用户ID、用户名、板块ID等条件筛选
  */
-export class QueryModeratorDto extends IntersectionType(
+export class QueryForumModeratorDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseModeratorDto, ['isEnabled', 'userId'])),
+  PartialType(PickType(BaseForumModeratorDto, ['isEnabled', 'profileId'])),
 ) {
   @ValidateString({
     description: '用户名',
@@ -164,7 +167,7 @@ export class QueryForumModeratorActionLogDto extends IntersectionType(
  * 版主响应数据传输对象
  * 用于返回版主详细信息，包含用户基本信息、权限列表和管理的板块列表
  */
-export class ModeratorDto extends BaseModeratorDto {
+export class ForumModeratorDto extends BaseForumModeratorDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,
@@ -193,7 +196,7 @@ export class ModeratorDto extends BaseModeratorDto {
     example: [1, 2, 4, 8, 16, 32],
     required: true,
   })
-  permissions!: ModeratorPermissionEnum[]
+  permissions!: ForumModeratorPermissionEnum[]
 
   @ValidateArray({
     description: '权限名称列表',
@@ -227,8 +230,8 @@ export class ModeratorDto extends BaseModeratorDto {
     id: number
     name: string
     inheritFromParent: boolean
-    customPermissions: ModeratorPermissionEnum[]
-    finalPermissions: ModeratorPermissionEnum[]
+    customPermissions: ForumModeratorPermissionEnum[]
+    finalPermissions: ForumModeratorPermissionEnum[]
   }>
 }
 
@@ -269,7 +272,7 @@ export class ForumModeratorPageDto {
  * 版主操作日志数据传输对象
  * 用于记录版主的操作行为，包括操作类型、目标信息和操作时间等
  */
-export class ModeratorActionLogDto {
+export class ForumModeratorActionLogDto {
   @ValidateNumber({
     description: '日志ID',
     example: 1,
@@ -353,8 +356,11 @@ export class ModeratorActionLogDto {
  * 用于返回分页的版主操作日志列表数据
  */
 export class ModeratorActionLogPageDto {
-  @ApiProperty({ description: '操作日志列表', type: [ModeratorActionLogDto] })
-  list!: ModeratorActionLogDto[]
+  @ApiProperty({
+    description: '操作日志列表',
+    type: [ForumModeratorActionLogDto],
+  })
+  list!: ForumModeratorActionLogDto[]
 
   @ValidateNumber({
     description: '总数',

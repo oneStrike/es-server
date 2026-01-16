@@ -19,8 +19,8 @@
 **流程描述**:
 
 ```typescript
-async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
-  const { sectionId, profileId, ...topicData } = createForumTopicDto
+async createForumTopic(createTopicDto: CreateForumTopicDto) {
+  const { sectionId, profileId, ...topicData } = createTopicDto
 
   // 1. 敏感词检测
   const { hits, highestLevel } =
@@ -35,7 +35,7 @@ async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
       connect: { id: sectionId, isEnabled: true },
     },
     profile: {
-      connect: { id: profileId, status: ProfileStatusEnum.NORMAL },
+      connect: { id: profileId, status: ForumProfileStatusEnum.NORMAL },
     },
   }
 
@@ -72,7 +72,7 @@ async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
   if (topic.auditStatus !== ForumTopicAuditStatusEnum.PENDING) {
     await this.pointService.addPoints({
       profileId,
-      ruleType: PointRuleTypeEnum.CREATE_TOPIC,
+      ruleType: ForumPointRuleTypeEnum.CREATE_TOPIC,
       remark: `创建主题 ${topic.id}`,
     })
   }
@@ -131,8 +131,8 @@ flowchart TD
 **改进建议**:
 
 ```typescript
-async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
-  const { sectionId, profileId, ...topicData } = createForumTopicDto
+async createForumTopic(createTopicDto: CreateForumTopicDto) {
+  const { sectionId, profileId, ...topicData } = createTopicDto
 
   // 1. 验证板块和用户
   const [section, profile] = await Promise.all([
@@ -140,7 +140,7 @@ async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
       where: { id: sectionId, isEnabled: true },
     }),
     this.forumProfile.findUnique({
-      where: { id: profileId, status: ProfileStatusEnum.NORMAL },
+      where: { id: profileId, status: ForumProfileStatusEnum.NORMAL },
     }),
   ])
 
@@ -206,7 +206,7 @@ async createForumTopic(createForumTopicDto: CreateForumTopicDto) {
       await Promise.all([
         this.pointService.addPoints({
           profileId,
-          ruleType: PointRuleTypeEnum.CREATE_TOPIC,
+          ruleType: ForumPointRuleTypeEnum.CREATE_TOPIC,
           remark: `创建主题 ${topic.id}`,
         }),
         this.experienceService.addExperience({
@@ -560,7 +560,7 @@ async createForumReply(createForumReplyDto: CreateForumReplyDto) {
     await Promise.all([
       this.pointService.addPoints({
         profileId: profile.id,
-        ruleType: PointRuleTypeEnum.CREATE_REPLY,
+        ruleType: ForumPointRuleTypeEnum.CREATE_REPLY,
         remark: `创建回复 ${reply.id}`,
       }),
       this.experienceService.addExperience({
@@ -602,7 +602,7 @@ async createForumReply(createForumReplyDto: CreateForumReplyDto) {
 **流程描述**:
 
 ```typescript
-async addPoints(addPointsDto: AddPointsDto) {
+async addPoints(addPointsDto: AddForumPointsDto) {
   const { profileId, ruleType, remark } = addPointsDto
 
   // 1. 验证用户
@@ -719,7 +719,7 @@ flowchart TD
 **改进建议**:
 
 ```typescript
-async addPoints(addPointsDto: AddPointsDto) {
+async addPoints(addPointsDto: AddForumPointsDto) {
   const { profileId, ruleType, remark } = addPointsDto
 
   // 1. 验证用户
@@ -804,7 +804,7 @@ async addPoints(addPointsDto: AddPointsDto) {
 **流程描述**:
 
 ```typescript
-async addExperience(addExperienceDto: AddExperienceDto) {
+async addExperience(addExperienceDto: AddForumExperienceDto) {
   const { profileId, ruleType, remark } = addExperienceDto
 
   // 1. 验证用户
@@ -812,7 +812,7 @@ async addExperience(addExperienceDto: AddExperienceDto) {
     where: {
       id: profileId,
       status: {
-        not: ProfileStatusEnum.PERMANENT_BANNED,
+        not: ForumProfileStatusEnum.PERMANENT_BANNED,
       },
     },
   })
@@ -932,7 +932,7 @@ flowchart TD
 **改进建议**:
 
 ```typescript
-async addExperience(addExperienceDto: AddExperienceDto) {
+async addExperience(addExperienceDto: AddForumExperienceDto) {
   const { profileId, ruleType, remark } = addExperienceDto
 
   // 1. 验证用户
@@ -940,7 +940,7 @@ async addExperience(addExperienceDto: AddExperienceDto) {
     where: {
       id: profileId,
       status: {
-        not: ProfileStatusEnum.PERMANENT_BANNED,
+        not: ForumProfileStatusEnum.PERMANENT_BANNED,
       },
     },
     include: {

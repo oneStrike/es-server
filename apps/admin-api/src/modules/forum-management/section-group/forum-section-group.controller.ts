@@ -23,7 +23,7 @@ export class ForumSectionGroupController {
     model: BaseForumSectionGroupDto,
   })
   async getSectionGroupPage(@Query() query: QueryForumSectionGroupDto) {
-    return this.forumSectionGroupService.getForumSectionGroupPage(query)
+    return this.forumSectionGroupService.getSectionGroupPage(query)
   }
 
   @Get('detail')
@@ -32,7 +32,7 @@ export class ForumSectionGroupController {
     model: BaseForumSectionGroupDto,
   })
   async getSectionGroupDetail(@Query() query: IdDto) {
-    return this.forumSectionGroupService.getForumSectionGroupById(query.id)
+    return this.forumSectionGroupService.getSectionGroupById(query.id)
   }
 
   @Post('create')
@@ -41,7 +41,7 @@ export class ForumSectionGroupController {
     model: BaseForumSectionGroupDto,
   })
   async createSectionGroup(@Body() dto: CreateForumSectionGroupDto) {
-    return this.forumSectionGroupService.createForumSectionGroup(dto)
+    return this.forumSectionGroupService.createSectionGroup(dto)
   }
 
   @Post('update')
@@ -50,7 +50,7 @@ export class ForumSectionGroupController {
     model: BaseForumSectionGroupDto,
   })
   async updateSectionGroup(@Body() dto: UpdateForumSectionGroupDto) {
-    return this.forumSectionGroupService.updateForumSectionGroup(dto)
+    return this.forumSectionGroupService.updateSectionGroup(dto)
   }
 
   @Post('delete')
@@ -59,7 +59,7 @@ export class ForumSectionGroupController {
     model: BaseForumSectionGroupDto,
   })
   async deleteSectionGroup(@Body() dto: IdDto) {
-    return this.forumSectionGroupService.deleteForumSectionGroup(dto.id)
+    return this.forumSectionGroupService.deleteSectionGroup(dto.id)
   }
 
   @Post('update-enabled')

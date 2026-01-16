@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
-import { SensitiveWordCacheService } from './sensitive-word-cache.service'
+import { ForumSensitiveWordCacheService } from './sensitive-word-cache.service'
 import { ForumSensitiveWordDetectService } from './sensitive-word-detect.service'
-import { SensitiveWordStatisticsService } from './sensitive-word-statistics.service'
+import { ForumSensitiveWordStatisticsService } from './sensitive-word-statistics.service'
 import { ForumSensitiveWordService } from './sensitive-word.service'
 
 @Module({
@@ -10,14 +10,14 @@ import { ForumSensitiveWordService } from './sensitive-word.service'
   providers: [
     ForumSensitiveWordService,
     ForumSensitiveWordDetectService,
-    SensitiveWordCacheService,
-    SensitiveWordStatisticsService,
+    ForumSensitiveWordCacheService,
+    ForumSensitiveWordStatisticsService,
   ],
   exports: [
     ForumSensitiveWordService,
     ForumSensitiveWordDetectService,
-    SensitiveWordCacheService,
-    SensitiveWordStatisticsService,
+    ForumSensitiveWordCacheService,
+    ForumSensitiveWordStatisticsService,
   ],
 })
 export class ForumSensitiveWordModule {}

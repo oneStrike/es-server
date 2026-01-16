@@ -109,11 +109,11 @@ export enum ModeratorRoleTypeEnum {
 **问题**:
 - 无
 
-#### 3.1.2 版主权限 (ModeratorPermissionEnum)
+#### 3.1.2 版主权限 (ForumModeratorPermissionEnum)
 **位置**: `e:\Code\es\es-server\libs\forum\src\moderator\moderator.constant.ts`
 
 ```typescript
-export enum ModeratorPermissionEnum {
+export enum ForumModeratorPermissionEnum {
   /** 置顶 */
   PIN = 1,
   /** 加精 */
@@ -160,7 +160,7 @@ export enum ModeratorPermissionEnum {
 
 ### 3.3 权限服务
 
-#### 3.3.1 板块权限服务 (SectionPermissionService)
+#### 3.3.1 板块权限服务 (ForumSectionPermissionService)
 **位置**: `e:\Code\es\es-server\libs\forum\src\section\section-permission.service.ts`
 
 **功能**:
@@ -270,9 +270,9 @@ export enum ModeratorPermissionEnum {
 | 敏感操作 | 版主管理接口无权限保护 | ModeratorController | 🔴 高 | 高 |
 | 敏感操作 | 举报处理接口无权限保护 | ForumReportController | 🔴 高 | 高 |
 | 管理员角色 | 缺少管理员角色定义 | Forum模块 | 🟡 中 | 中 |
-| 权限粒度 | 权限粒度较粗 | ModeratorPermissionEnum | 🟡 中 | 中 |
-| 权限继承 | GROUP角色没有权限继承 | SectionPermissionService | 🟡 中 | 中 |
-| 服务引用 | permissionService不存在 | SectionPermissionService | 🟡 中 | 中 |
+| 权限粒度 | 权限粒度较粗 | ForumModeratorPermissionEnum | 🟡 中 | 中 |
+| 权限继承 | GROUP角色没有权限继承 | ForumSectionPermissionService | 🟡 中 | 中 |
+| 服务引用 | permissionService不存在 | ForumSectionPermissionService | 🟡 中 | 中 |
 
 ### 5.2 高风险问题详情
 

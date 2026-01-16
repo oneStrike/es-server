@@ -1,8 +1,10 @@
 import { BaseService, Prisma } from '@libs/base/database'
-import { ForumLevelRuleService } from '../level-rule/level-rule.service'
-import { ForumPointService } from '../point/point.service'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { QueryProfileListDto, UpdateProfileStatusDto } from './dto/profile.dto'
+import { ForumPointService } from '../point/point.service'
+import {
+  QueryForumProfileListDto,
+  UpdateForumProfileStatusDto,
+} from './dto/profile.dto'
 import { ForumProfileDefaults } from './profile.constant'
 
 /**
@@ -11,10 +13,7 @@ import { ForumProfileDefaults } from './profile.constant'
  */
 @Injectable()
 export class ForumProfileService extends BaseService {
-  constructor(
-    protected readonly pointService: ForumPointService,
-    private readonly levelRuleService: ForumLevelRuleService,
-  ) {
+  constructor(protected readonly pointService: ForumPointService) {
     super()
   }
 
@@ -30,7 +29,7 @@ export class ForumProfileService extends BaseService {
    * @param queryDto - 查询参数，包含用户ID、昵称、状态等过滤条件
    * @returns 分页的用户资料列表，包含用户信息和徽章信息
    */
-  async queryProfileList(queryDto: QueryProfileListDto) {
+  async queryProfileList(queryDto: QueryForumProfileListDto) {
     return this.forumProfile.findPagination({
       where: {
         ...queryDto,
@@ -84,7 +83,9 @@ export class ForumProfileService extends BaseService {
    * @param updateDto - 更新参数，包含用户ID、状态和封禁原因
    * @throws Error 用户不存在
    */
-  async updateProfileStatus(updateDto: UpdateProfileStatusDto): Promise<void> {
+  async updateProfileStatus(
+    updateDto: UpdateForumProfileStatusDto,
+  ): Promise<void> {
     const { userId, status, banReason } = updateDto
 
     const profile = await this.prisma.forumProfile.findUnique({

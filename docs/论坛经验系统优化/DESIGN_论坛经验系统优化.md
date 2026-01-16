@@ -206,21 +206,21 @@ export class ExperienceService extends BaseService {
    * @param addExperienceDto 增加经验的数据
    * @returns 增加经验的结果
    */
-  async addExperience(addExperienceDto: AddExperienceDto)
+  async addExperience(addExperienceDto: AddForumExperienceDto)
 
   /**
    * 创建经验规则
    * @param createExperienceRuleDto 创建规则的数据
    * @returns 创建的规则信息
    */
-  async createExperienceRule(createExperienceRuleDto: CreateExperienceRuleDto)
+  async createExperienceRule(createExperienceRuleDto: CreateForumExperienceRuleDto)
 
   /**
    * 分页查询经验规则列表
    * @param queryExperienceRuleDto 查询条件
    * @returns 分页的规则列表
    */
-  async getExperienceRulePage(queryExperienceRuleDto: QueryExperienceRuleDto)
+  async getExperienceRulePage(queryExperienceRuleDto: QueryForumExperienceRuleDto)
 
   /**
    * 获取经验规则详情
@@ -241,7 +241,7 @@ export class ExperienceService extends BaseService {
    * @param queryExperienceRecordDto 查询条件
    * @returns 分页的记录列表
    */
-  async getExperienceRecordPage(queryExperienceRecordDto: QueryExperienceRecordDto)
+  async getExperienceRecordPage(queryExperienceRecordDto: QueryForumExperienceRecordDto)
 
   /**
    * 获取经验记录详情
@@ -307,19 +307,19 @@ export class BaseExperienceRuleDto extends BaseDto {
 }
 
 // 创建 DTO
-export class CreateExperienceRuleDto extends OmitType(
+export class CreateForumExperienceRuleDto extends OmitType(
   BaseExperienceRuleDto,
   OMIT_BASE_FIELDS,
 ) {}
 
 // 更新 DTO
 export class UpdateExperienceRuleDto extends IntersectionType(
-  PartialType(CreateExperienceRuleDto),
+  PartialType(CreateForumExperienceRuleDto),
   IdDto,
 ) {}
 
 // 查询 DTO
-export class QueryExperienceRuleDto extends IntersectionType(
+export class QueryForumExperienceRuleDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseExperienceRuleDto, ['name', 'type', 'isEnabled'])),
 ) {}
@@ -338,7 +338,7 @@ export class BaseExperienceRecordDto extends BaseDto {
 }
 
 // 查询 DTO
-export class QueryExperienceRecordDto extends IntersectionType(
+export class QueryForumExperienceRecordDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseExperienceRecordDto, ['ruleId'])),
 ) {
@@ -346,7 +346,7 @@ export class QueryExperienceRecordDto extends IntersectionType(
 }
 
 // 增加经验 DTO
-export class AddExperienceDto {
+export class AddForumExperienceDto {
   profileId!: number
   ruleType!: ExperienceRuleTypeEnum
   remark?: string
@@ -406,12 +406,12 @@ graph LR
 ```typescript
 // 创建经验规则
 POST /forum/experience-rule
-Body: CreateExperienceRuleDto
+Body: CreateForumExperienceRuleDto
 Response: BaseExperienceRuleDto
 
 // 查询经验规则列表
 GET /forum/experience-rule
-Query: QueryExperienceRuleDto
+Query: QueryForumExperienceRuleDto
 Response: PaginationResult<BaseExperienceRuleDto>
 
 // 获取经验规则详情
@@ -432,7 +432,7 @@ Response: { success: boolean }
 ```typescript
 // 查询经验记录列表
 GET /forum/experience-record
-Query: QueryExperienceRecordDto
+Query: QueryForumExperienceRecordDto
 Response: PaginationResult<BaseExperienceRecordDto>
 
 // 获取经验记录详情

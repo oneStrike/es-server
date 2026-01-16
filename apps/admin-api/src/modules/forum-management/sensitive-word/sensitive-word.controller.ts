@@ -3,15 +3,15 @@ import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import {
   CreateForumSensitiveWordDto,
   ForumMatchedWordDto,
-  QueryForumSensitiveWordDto,
   ForumSensitiveWordDetectDto,
   ForumSensitiveWordDetectService,
   ForumSensitiveWordService,
   ForumSensitiveWordStatisticsDataDto,
   ForumSensitiveWordStatisticsQueryDto,
   ForumSensitiveWordStatisticsResponseDto,
-  SensitiveWordStatisticsService,
-UpdateForumSensitiveWordDto
+  ForumSensitiveWordStatisticsService,
+  QueryForumSensitiveWordDto,
+  UpdateForumSensitiveWordDto,
 } from '@libs/forum/sensitive-word'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -26,7 +26,7 @@ import { ApiTags } from '@nestjs/swagger'
 export class SensitiveWordController {
   constructor(
     private readonly sensitiveWordService: ForumSensitiveWordService,
-    private readonly statisticsService: SensitiveWordStatisticsService,
+    private readonly statisticsService: ForumSensitiveWordStatisticsService,
     private readonly detectService: ForumSensitiveWordDetectService,
   ) {}
 

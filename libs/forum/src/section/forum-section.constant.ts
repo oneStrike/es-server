@@ -1,1 +1,1 @@
-export { ReviewPolicyEnum } from '../config/forum-config.constants'
+export { ForumReviewPolicyEnum } from '../config/forum-config.constants'

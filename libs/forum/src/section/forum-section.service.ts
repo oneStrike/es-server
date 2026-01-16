@@ -59,12 +59,12 @@ export class ForumSectionService extends BaseService {
 
   /**
    * 创建论坛板块
-   * @param createForumSectionDto 创建板块的数据
+   * @param createSectionDto 创建板块的数据
    * @returns 创建的板块信息
    */
-  async createForumSection(createForumSectionDto: CreateForumSectionDto) {
+  async createSection(createSectionDto: CreateForumSectionDto) {
     const { name, groupId, userLevelRuleId, ...sectionData } =
-      createForumSectionDto
+      createSectionDto
 
     if (!(await this.forumSection.exists({ name, deletedAt: null }))) {
       throw new BadRequestException('板块名称已存在')
@@ -125,7 +125,7 @@ export class ForumSectionService extends BaseService {
    * @param queryForumSectionDto 查询条件
    * @returns 分页的板块列表
    */
-  async getForumSectionPage(queryForumSectionDto: QueryForumSectionDto) {
+  async getSectionPage(queryForumSectionDto: QueryForumSectionDto) {
     const { name, groupId, ...otherDto } = queryForumSectionDto
 
     return this.forumSection.findPagination({
@@ -148,7 +148,7 @@ export class ForumSectionService extends BaseService {
    * @param id 板块ID
    * @returns 板块详情信息
    */
-  async getForumSectionDetail(id: number) {
+  async getSectionDetail(id: number) {
     const section = await this.forumSection.findUnique({
       where: { id },
       include: {
@@ -165,11 +165,11 @@ export class ForumSectionService extends BaseService {
 
   /**
    * 更新论坛板块
-   * @param updateForumSectionDto 更新板块的数据
+   * @param updateSectionDto 更新板块的数据
    * @returns 更新后的板块信息
    */
-  async updateForumSection(updateForumSectionDto: UpdateForumSectionDto) {
-    const { id, name, groupId, ...updateData } = updateForumSectionDto
+  async updateSection(updateSectionDto: UpdateForumSectionDto) {
+    const { id, name, groupId, ...updateData } = updateSectionDto
 
     const existingSection = await this.forumSection.findUnique({
       where: { id },

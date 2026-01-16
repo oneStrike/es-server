@@ -4,8 +4,8 @@ import { BaseService } from '@libs/base/database'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import {
-  SENSITIVE_WORD_CACHE_KEYS,
-  SENSITIVE_WORD_CACHE_TTL,
+  FORUM_SENSITIVE_WORD_CACHE_KEYS,
+  FORUM_SENSITIVE_WORD_CACHE_TTL,
 } from './sensitive-word-cache.constant'
 
 /**
@@ -23,8 +23,8 @@ interface CacheQueryConfig<T> {
  * 使用 Redis 作为缓存后端，提升敏感词查询性能
  */
 @Injectable()
-export class SensitiveWordCacheService extends BaseService {
-  private readonly logger = new Logger(SensitiveWordCacheService.name)
+export class ForumSensitiveWordCacheService extends BaseService {
+  private readonly logger = new Logger(ForumSensitiveWordCacheService.name)
 
   get sensitiveWord() {
     return this.prisma.forumSensitiveWord
@@ -48,7 +48,7 @@ export class SensitiveWordCacheService extends BaseService {
       await this.cacheManager.set(
         config.cacheKey,
         data,
-        SENSITIVE_WORD_CACHE_TTL.LONG,
+        FORUM_SENSITIVE_WORD_CACHE_TTL.LONG,
       )
       this.logger.log(config.logMessage(data))
     }
@@ -63,7 +63,7 @@ export class SensitiveWordCacheService extends BaseService {
    */
   async getAllWords(): Promise<ForumSensitiveWord[]> {
     return this.getFromCache<ForumSensitiveWord>({
-      cacheKey: SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS,
+      cacheKey: FORUM_SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS,
       logMessage: (words) => `已缓存 ${words.length} 个敏感词`,
       queryFn: async () =>
         this.sensitiveWord.findMany({
@@ -82,7 +82,7 @@ export class SensitiveWordCacheService extends BaseService {
    */
   async getWordsByLevel(level: number): Promise<ForumSensitiveWord[]> {
     return this.getFromCache<ForumSensitiveWord>({
-      cacheKey: SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_LEVEL(level),
+      cacheKey: FORUM_SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_LEVEL(level),
       logMessage: (words) => `已缓存等级 ${level} 的 ${words.length} 个敏感词`,
       queryFn: async () =>
         this.sensitiveWord.findMany({
@@ -102,7 +102,7 @@ export class SensitiveWordCacheService extends BaseService {
    */
   async getWordsByType(type: number): Promise<ForumSensitiveWord[]> {
     return this.getFromCache<ForumSensitiveWord>({
-      cacheKey: SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_TYPE(type),
+      cacheKey: FORUM_SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_TYPE(type),
       logMessage: (words) => `已缓存类型 ${type} 的 ${words.length} 个敏感词`,
       queryFn: async () =>
         this.sensitiveWord.findMany({
@@ -122,7 +122,7 @@ export class SensitiveWordCacheService extends BaseService {
    */
   async getWordsByMatchMode(matchMode: number): Promise<ForumSensitiveWord[]> {
     return this.getFromCache<ForumSensitiveWord>({
-      cacheKey: SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_MATCH_MODE(matchMode),
+      cacheKey: FORUM_SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_MATCH_MODE(matchMode),
       logMessage: (words) =>
         `已缓存匹配模式 ${matchMode} 的 ${words.length} 个敏感词`,
       queryFn: async () =>
@@ -140,7 +140,7 @@ export class SensitiveWordCacheService extends BaseService {
    * 包括所有维度的缓存和总缓存
    */
   async invalidateAll(): Promise<void> {
-    await this.cacheManager.del(SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS)
+    await this.cacheManager.del(FORUM_SENSITIVE_WORD_CACHE_KEYS.ALL_WORDS)
     this.logger.log('已清除所有敏感词缓存')
   }
 
@@ -150,7 +150,9 @@ export class SensitiveWordCacheService extends BaseService {
    * @param level - 敏感等级
    */
   async invalidateByLevel(level: number): Promise<void> {
-    await this.cacheManager.del(SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_LEVEL(level))
+    await this.cacheManager.del(
+      FORUM_SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_LEVEL(level),
+    )
     this.logger.log(`已清除等级 ${level} 的敏感词缓存`)
   }
 
@@ -160,7 +162,9 @@ export class SensitiveWordCacheService extends BaseService {
    * @param type - 敏感词类型
    */
   async invalidateByType(type: number): Promise<void> {
-    await this.cacheManager.del(SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_TYPE(type))
+    await this.cacheManager.del(
+      FORUM_SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_TYPE(type),
+    )
     this.logger.log(`已清除类型 ${type} 的敏感词缓存`)
   }
 
@@ -171,7 +175,7 @@ export class SensitiveWordCacheService extends BaseService {
    */
   async invalidateByMatchMode(matchMode: number): Promise<void> {
     await this.cacheManager.del(
-      SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_MATCH_MODE(matchMode),
+      FORUM_SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_MATCH_MODE(matchMode),
     )
     this.logger.log(`已清除匹配模式 ${matchMode} 的敏感词缓存`)
   }
@@ -188,14 +192,18 @@ export class SensitiveWordCacheService extends BaseService {
 
     const deletePromises = [
       ...levels.map(async (level) =>
-        this.cacheManager.del(SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_LEVEL(level)),
+        this.cacheManager.del(
+          FORUM_SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_LEVEL(level),
+        ),
       ),
       ...types.map(async (type) =>
-        this.cacheManager.del(SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_TYPE(type)),
+        this.cacheManager.del(
+          FORUM_SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_TYPE(type),
+        ),
       ),
       ...matchModes.map(async (matchMode) =>
         this.cacheManager.del(
-          SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_MATCH_MODE(matchMode),
+          FORUM_SENSITIVE_WORD_CACHE_KEYS.WORDS_BY_MATCH_MODE(matchMode),
         ),
       ),
     ]

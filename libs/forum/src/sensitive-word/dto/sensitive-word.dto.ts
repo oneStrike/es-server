@@ -11,9 +11,9 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
-  MatchModeEnum,
-  SensitiveWordLevelEnum,
-  SensitiveWordTypeEnum,
+  ForumMatchModeEnum,
+  ForumSensitiveWordLevelEnum,
+  ForumSensitiveWordTypeEnum,
 } from '../sensitive-word-constant'
 
 /**
@@ -48,29 +48,29 @@ export class BaseForumSensitiveWordDto extends BaseDto {
   @ValidateEnum({
     description: '敏感词级别',
     required: true,
-    example: SensitiveWordLevelEnum.SEVERE,
-    default: SensitiveWordLevelEnum.SEVERE,
-    enum: SensitiveWordLevelEnum,
+    example: ForumSensitiveWordLevelEnum.SEVERE,
+    default: ForumSensitiveWordLevelEnum.SEVERE,
+    enum: ForumSensitiveWordLevelEnum,
   })
-  level!: SensitiveWordLevelEnum
+  level!: ForumSensitiveWordLevelEnum
 
   @ValidateEnum({
     description: '敏感词类型',
     required: true,
-    example: SensitiveWordTypeEnum.OTHER,
-    default: SensitiveWordTypeEnum.OTHER,
-    enum: SensitiveWordTypeEnum,
+    example: ForumSensitiveWordTypeEnum.OTHER,
+    default: ForumSensitiveWordTypeEnum.OTHER,
+    enum: ForumSensitiveWordTypeEnum,
   })
-  type!: SensitiveWordTypeEnum
+  type!: ForumSensitiveWordTypeEnum
 
   @ValidateEnum({
     description: '匹配模式',
     required: false,
-    example: MatchModeEnum.EXACT,
-    default: MatchModeEnum.EXACT,
-    enum: MatchModeEnum,
+    example: ForumMatchModeEnum.EXACT,
+    default: ForumMatchModeEnum.EXACT,
+    enum: ForumMatchModeEnum,
   })
-  matchMode?: MatchModeEnum
+  matchMode?: ForumMatchModeEnum
 
   @ValidateString({
     description: '备注',
