@@ -5,7 +5,6 @@ import {
   CreateForumModeratorDto,
   ForumModeratorDto,
   ForumModeratorService,
-  QueryForumModeratorActionLogDto,
   QueryForumModeratorDto,
   UpdateForumModeratorDto,
 } from '@libs/forum/moderator'
@@ -15,60 +14,51 @@ import { ApiTags } from '@nestjs/swagger'
 @Controller('/admin/forum/moderators')
 @ApiTags('论坛模块/版主管理')
 export class ModeratorController {
-  constructor(private readonly moderatorService: ForumModeratorService) {}
+  constructor(private readonly forumModeratorService: ForumModeratorService) {}
 
   @Get('list')
   @ApiPageDoc({
     summary: '查看版主列表',
-    model: ModeratorDto,
+    model: ForumModeratorDto,
   })
-  async getModeratorList(@Query() query: QueryModeratorDto) {
-    return this.moderatorService.getModeratorPage(query)
+  async getModeratorList(@Query() query: QueryForumModeratorDto) {
+    return this.forumModeratorService.getModeratorPage(query)
   }
 
   @Post('add')
   @ApiDoc({
     summary: '添加版主',
-    model: ModeratorDto,
+    model: ForumModeratorDto,
   })
-  async addModerator(@Body() dto: CreateModeratorDto) {
-    return this.moderatorService.createModerator(dto)
+  async addModerator(@Body() dto: CreateForumModeratorDto) {
+    return this.forumModeratorService.createModerator(dto)
   }
 
   @Post('update')
   @ApiDoc({
     summary: '更新版主信息',
-    model: ModeratorDto,
+    model: ForumModeratorDto,
   })
-  async updateModerator(@Body() dto: UpdateModeratorDto) {
-    return this.moderatorService.updateModerator(dto)
+  async updateModerator(@Body() dto: UpdateForumModeratorDto) {
+    return this.forumModeratorService.updateModerator(dto)
   }
 
   @Post('remove')
   @ApiDoc({
     summary: '移除版主',
-    model: ModeratorDto,
+    model: ForumModeratorDto,
   })
   async removeModerator(@Body() dto: IdDto) {
-    return this.moderatorService.removeModerator(dto)
+    return this.forumModeratorService.removeModerator(dto)
   }
 
   @Post('section-assign')
   @ApiDoc({
     summary: '分配版主管理的板块',
-    model: ModeratorDto,
+    model: ForumModeratorDto,
   })
-  async assignModeratorSection(@Body() dto: AssignModeratorSectionDto) {
-    await this.moderatorService.assignModeratorSection(dto)
+  async assignModeratorSection(@Body() dto: AssignForumModeratorSectionDto) {
+    await this.forumModeratorService.assignModeratorSection(dto)
     return true
-  }
-
-  @Get('action-log-page')
-  @ApiPageDoc({
-    summary: '查看版主操作日志',
-    model: ModeratorDto,
-  })
-  async getModeratorActionLog(@Query() query: QueryForumModeratorActionLogDto) {
-    return this.moderatorService.getModeratorActionLogPage(query)
   }
 }

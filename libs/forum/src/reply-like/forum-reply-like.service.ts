@@ -1,7 +1,10 @@
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { CreateForumReplyLikeDto, DeleteForumReplyLikeDto } from './dto/forum-reply-like.dto'
+import {
+  CreateForumReplyLikeDto,
+  DeleteForumReplyLikeDto,
+} from './dto/forum-reply-like.dto'
 
 /**
  * 论坛回复点赞服务类

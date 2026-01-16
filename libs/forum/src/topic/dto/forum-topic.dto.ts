@@ -230,7 +230,7 @@ export class QueryForumTopicDto extends IntersectionType(
  * 更新主题审核状态 DTO
  * 用于更新论坛主题的审核状态
  */
-export class UpdateTopicAuditStatusDto extends IntersectionType(
+export class UpdateForumTopicAuditStatusDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['auditStatus', 'auditReason']),
 ) {}
@@ -239,7 +239,7 @@ export class UpdateTopicAuditStatusDto extends IntersectionType(
  * 更新主题置顶状态 DTO
  * 用于更新论坛主题的置顶状态
  */
-export class UpdateTopicPinnedDto extends IntersectionType(
+export class UpdateForumTopicPinnedDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['isPinned']),
 ) {}
@@ -248,7 +248,7 @@ export class UpdateTopicPinnedDto extends IntersectionType(
  * 更新主题精华状态 DTO
  * 用于更新论坛主题的精华状态
  */
-export class UpdateTopicFeaturedDto extends IntersectionType(
+export class UpdateForumTopicFeaturedDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['isFeatured']),
 ) {}
@@ -257,7 +257,7 @@ export class UpdateTopicFeaturedDto extends IntersectionType(
  * 更新主题锁定状态 DTO
  * 用于更新论坛主题的锁定状态
  */
-export class UpdateTopicLockedDto extends IntersectionType(
+export class UpdateForumTopicLockedDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['isLocked']),
 ) {}
@@ -266,7 +266,7 @@ export class UpdateTopicLockedDto extends IntersectionType(
  * 更新主题隐藏状态 DTO
  * 用于更新论坛主题的隐藏状态
  */
-export class UpdateTopicHiddenDto extends IntersectionType(
+export class UpdateForumTopicHiddenDto extends IntersectionType(
   IdDto,
   PickType(BaseForumTopicDto, ['isHidden']),
 ) {}

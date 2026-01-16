@@ -1,15 +1,15 @@
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { ModeratorPermissionEnum } from '../moderator/moderator.constant'
+import { ForumModeratorPermissionEnum } from '../moderator/moderator.constant'
 
-export type Permission = ModeratorPermissionEnum
+export type Permission = ForumModeratorPermissionEnum
 
 /**
  * 板块权限服务类
  * 提供版主板块权限的计算、分配、移除、检查等核心业务逻辑
  */
 @Injectable()
-export class SectionPermissionService extends BaseService {
+export class ForumSectionPermissionService extends BaseService {
   constructor() {
     super()
   }
@@ -23,7 +23,7 @@ export class SectionPermissionService extends BaseService {
   async calculateFinalPermissions(
     moderatorId: number,
     sectionId: number,
-  ): Promise<ModeratorPermissionEnum[]> {
+  ): Promise<ForumModeratorPermissionEnum[]> {
     const moderatorSection = await this.prisma.forumModeratorSection.findUnique(
       {
         where: {
@@ -39,7 +39,7 @@ export class SectionPermissionService extends BaseService {
       return []
     }
 
-    return moderatorSection.finalPermissions as ModeratorPermissionEnum[]
+    return moderatorSection.permissions as ForumModeratorPermissionEnum[]
   }
 
   /**
@@ -51,7 +51,7 @@ export class SectionPermissionService extends BaseService {
   async assignModeratorToSection(
     moderatorId: number,
     sectionId: number,
-    customPermissions: ModeratorPermissionEnum[] = [],
+    customPermissions: ForumModeratorPermissionEnum[] = [],
   ): Promise<void> {
     const finalPermissions = customPermissions
 
@@ -122,7 +122,7 @@ export class SectionPermissionService extends BaseService {
   async getModeratorSectionsWithPermission(
     moderatorId: number,
     sectionId: number,
-  ): Promise<ModeratorPermissionEnum[]> {
+  ): Promise<ForumModeratorPermissionEnum[]> {
     return this.calculateFinalPermissions(moderatorId, sectionId)
   }
 }

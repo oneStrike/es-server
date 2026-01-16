@@ -8,7 +8,7 @@ import {
   ForumLevelRuleService,
   QueryForumLevelRuleDto,
   UpdateForumLevelRuleDto,
-  ForumUserLevelInfoDto,
+  UserForumLevelInfoDto,
 } from '@libs/forum/level-rule'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -21,16 +21,16 @@ export class LevelRuleController {
   @Get('page')
   @ApiPageDoc({
     summary: '获取等级规则分页',
-    model: BaseLevelRuleDto,
+    model: BaseForumLevelRuleDto,
   })
-  async getLevelRules(@Query() query: QueryLevelRuleDto) {
+  async getLevelRules(@Query() query: QueryForumLevelRuleDto) {
     return this.levelRuleService.getLevelRulePage(query)
   }
 
   @Get('detail')
   @ApiDoc({
     summary: '获取等级规则详情',
-    model: BaseLevelRuleDto,
+    model: BaseForumLevelRuleDto,
   })
   async getLevelRule(@Query() dto: IdDto) {
     return this.levelRuleService.getLevelRuleDetail(dto.id)
@@ -39,25 +39,25 @@ export class LevelRuleController {
   @Post('create')
   @ApiDoc({
     summary: '创建等级规则',
-    model: BaseLevelRuleDto,
+    model: BaseForumLevelRuleDto,
   })
-  async createLevelRule(@Body() dto: CreateLevelRuleDto) {
+  async createLevelRule(@Body() dto: CreateForumLevelRuleDto) {
     return this.levelRuleService.createLevelRule(dto)
   }
 
   @Post('update')
   @ApiDoc({
     summary: '更新等级规则',
-    model: BaseLevelRuleDto,
+    model: BaseForumLevelRuleDto,
   })
-  async updateLevelRule(@Body() dto: UpdateLevelRuleDto) {
+  async updateLevelRule(@Body() dto: UpdateForumLevelRuleDto) {
     return this.levelRuleService.updateLevelRule(dto)
   }
 
   @Post('delete')
   @ApiDoc({
     summary: '删除等级规则',
-    model: BaseLevelRuleDto,
+    model: BaseForumLevelRuleDto,
   })
   async deleteLevelRule(@Body() dto: IdDto) {
     return this.levelRuleService.deleteLevelRule(dto.id)
@@ -66,7 +66,7 @@ export class LevelRuleController {
   @Get('user-level-info')
   @ApiDoc({
     summary: '获取用户等级信息',
-    model: UserLevelInfoDto,
+    model: UserForumLevelInfoDto,
   })
   async getUserLevelInfo(@Query() dto: IdDto) {
     return this.levelRuleService.getUserLevelInfo(dto.id)
@@ -84,7 +84,7 @@ export class LevelRuleController {
   @Get('statistics')
   @ApiDoc({
     summary: '获取等级统计信息',
-    model: BaseLevelRuleDto,
+    model: BaseForumLevelRuleDto,
   })
   async getLevelStatistics() {
     return this.levelRuleService.getLevelStatistics()

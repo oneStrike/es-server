@@ -8,8 +8,8 @@ import {
   UpdateForumModeratorDto,
 } from './dto/moderator.dto'
 import {
-  ModeratorPermissionEnum,
-  ModeratorRoleTypeEnum,
+  ForumModeratorPermissionEnum,
+  ForumModeratorRoleTypeEnum,
 } from './moderator.constant'
 
 /**
@@ -42,8 +42,8 @@ export class ForumModeratorService extends BaseService {
     return this.prisma.forumSection
   }
 
-  get clientUser() {
-    return this.prisma.clientUser
+  get appUser() {
+    return this.prisma.appUser
   }
 
   /**
@@ -51,7 +51,7 @@ export class ForumModeratorService extends BaseService {
    * @param dto 创建参数
    * @returns 创建结果
    */
-  async createModerator(dto: CreateModeratorDto) {
+  async createModerator(dto: CreateForumModeratorDto) {
     if (!(await this.forumProfile.exists({ id: dto.profileId }))) {
       throw new BadRequestException(`ID【${dto.profileId}】数据不存在`)
     }
@@ -64,11 +64,11 @@ export class ForumModeratorService extends BaseService {
       throw new BadRequestException('该用户已是版主')
     }
 
-    if (dto.roleType === ModeratorRoleTypeEnum.SUPER) {
+    if (dto.roleType === ForumModeratorRoleTypeEnum.SUPER) {
       // 超级版主拥有所有的权限
       dto.permissions = [
-        ...Object.values(ModeratorPermissionEnum),
-      ] as ModeratorPermissionEnum[]
+        ...Object.values(ForumModeratorPermissionEnum),
+      ] as ForumModeratorPermissionEnum[]
     }
 
     return this.forumModerator.create({
@@ -161,7 +161,7 @@ export class ForumModeratorService extends BaseService {
    * @param queryDto 查询参数
    * @returns 版主列表
    */
-  async getModeratorPage(queryDto: QueryModeratorDto) {
+  async getModeratorPage(queryDto: QueryForumModeratorDto) {
     const { nickname, sectionId } = queryDto
 
     const where: ForumModeratorWhereInput = {
@@ -200,7 +200,7 @@ export class ForumModeratorService extends BaseService {
    * @param updateDto 更新参数
    * @returns 更新结果
    */
-  async updateModerator(updateDto: UpdateModeratorDto) {
+  async updateModerator(updateDto: UpdateForumModeratorDto) {
     const { id, ...updateData } = updateDto
 
     const moderator = await this.forumModerator.findUnique({

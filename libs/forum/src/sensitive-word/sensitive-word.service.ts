@@ -3,33 +3,31 @@ import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 
 import {
-  ForumSensitiveWordLevelStatisticsDto,
   ForumSensitiveWordRecentHitStatisticsDto,
   ForumSensitiveWordStatisticsQueryDto,
   ForumSensitiveWordStatisticsResponseDto,
   ForumSensitiveWordTopHitStatisticsDto,
-  ForumSensitiveWordTypeStatisticsDto,
 } from './dto/sensitive-word-statistics.dto'
 import {
   CreateForumSensitiveWordDto,
   QueryForumSensitiveWordDto,
   UpdateForumSensitiveWordDto,
 } from './dto/sensitive-word.dto'
-import { SensitiveWordCacheService } from './sensitive-word-cache.service'
+import { ForumSensitiveWordCacheService } from './sensitive-word-cache.service'
 import {
-  SensitiveWordLevelNames,
-  SensitiveWordTypeNames,
-  StatisticsTypeEnum,
+  ForumSensitiveWordLevelNames,
+  ForumSensitiveWordTypeNames,
+  ForumStatisticsTypeEnum,
 } from './sensitive-word-constant'
-import { SensitiveWordDetectService } from './sensitive-word-detect.service'
+import { ForumSensitiveWordDetectService } from './sensitive-word-detect.service'
 
 @Injectable()
 export class ForumSensitiveWordService extends BaseService {
-  private readonly logger = new Logger(SensitiveWordService.name)
+  private readonly logger = new Logger(ForumSensitiveWordDetectService.name)
 
   constructor(
-    private readonly cacheService: SensitiveWordCacheService,
-    private readonly detectService: SensitiveWordDetectService,
+    private readonly cacheService: ForumSensitiveWordCacheService,
+    private readonly detectService: ForumSensitiveWordDetectService,
   ) {
     super()
   }
@@ -114,7 +112,9 @@ export class ForumSensitiveWordService extends BaseService {
   /**
    * 获取级别统计
    */
-  private async getLevelStatistics(): Promise<ForumSensitiveWordLevelStatisticsDto[]> {
+  private async getLevelStatistics(): Promise<
+    ForumSensitiveWordRecentHitStatisticsDto[]
+  > {
     const results = await this.sensitiveWord.groupBy({
       by: ['level'],
       _count: {
@@ -128,7 +128,7 @@ export class ForumSensitiveWordService extends BaseService {
     return results.map((result) => ({
       level: result.level,
       count: result._count.id,
-      levelName: SensitiveWordLevelNames[result.level] || '未知',
+      levelName: ForumSensitiveWordLevelNames[result.level] || '未知',
       hitCount: result._sum.hitCount || 0,
     }))
   }
@@ -136,7 +136,9 @@ export class ForumSensitiveWordService extends BaseService {
   /**
    * 获取类型统计
    */
-  private async getTypeStatistics(): Promise<ForumSensitiveWordTypeStatisticsDto[]> {
+  private async getTypeStatistics(): Promise<
+    ForumSensitiveWordTopHitStatisticsDto[]
+  > {
     const results = await this.sensitiveWord.groupBy({
       by: ['type'],
       _count: {
@@ -150,7 +152,7 @@ export class ForumSensitiveWordService extends BaseService {
     return results.map((result) => ({
       type: result.type,
       count: result._count.id,
-      typeName: SensitiveWordTypeNames[result.type] || '未知',
+      typeName: ForumSensitiveWordTypeNames[result.type] || '未知',
       hitCount: result._sum.hitCount || 0,
     }))
   }
@@ -158,7 +160,9 @@ export class ForumSensitiveWordService extends BaseService {
   /**
    * 获取顶部命中统计
    */
-  private async getTopHitStatistics(): Promise<ForumSensitiveWordTopHitStatisticsDto[]> {
+  private async getTopHitStatistics(): Promise<
+    ForumSensitiveWordTopHitStatisticsDto[]
+  > {
     const results = await this.sensitiveWord.findMany({
       where: {
         hitCount: {
@@ -190,7 +194,9 @@ export class ForumSensitiveWordService extends BaseService {
   /**
    * 获取最近命中统计
    */
-  private async getRecentHitStatistics(): Promise<ForumSensitiveWordRecentHitStatisticsDto[]> {
+  private async getRecentHitStatistics(): Promise<
+    ForumSensitiveWordRecentHitStatisticsDto[]
+  > {
     const results = await this.sensitiveWord.findMany({
       where: {
         lastHitAt: {
@@ -222,26 +228,28 @@ export class ForumSensitiveWordService extends BaseService {
   /**
    * 获取统计查询结果
    */
-  async getStatistics(dto: ForumSensitiveWordStatisticsQueryDto): Promise<ForumSensitiveWordStatisticsResponseDto> {
-    const type = dto.type || StatisticsTypeEnum.LEVEL
+  async getStatistics(
+    dto: ForumSensitiveWordStatisticsQueryDto,
+  ): Promise<ForumSensitiveWordStatisticsResponseDto> {
+    const type = dto.type || ForumStatisticsTypeEnum.LEVEL
 
     let data:
-      | ForumSensitiveWordLevelStatisticsDto[]
-      | ForumSensitiveWordTypeStatisticsDto[]
+      | ForumSensitiveWordRecentHitStatisticsDto[]
+      | ForumSensitiveWordTopHitStatisticsDto[]
       | ForumSensitiveWordTopHitStatisticsDto[]
       | ForumSensitiveWordRecentHitStatisticsDto[]
 
     switch (type) {
-      case StatisticsTypeEnum.LEVEL:
+      case ForumStatisticsTypeEnum.LEVEL:
         data = await this.getLevelStatistics()
         break
-      case StatisticsTypeEnum.TYPE:
+      case ForumStatisticsTypeEnum.TYPE:
         data = await this.getTypeStatistics()
         break
-      case StatisticsTypeEnum.TOP_HITS:
+      case ForumStatisticsTypeEnum.TOP_HITS:
         data = await this.getTopHitStatistics()
         break
-      case StatisticsTypeEnum.RECENT_HITS:
+      case ForumStatisticsTypeEnum.RECENT_HITS:
         data = await this.getRecentHitStatistics()
         break
       default:

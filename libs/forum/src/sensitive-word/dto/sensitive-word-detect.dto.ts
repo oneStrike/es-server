@@ -2,7 +2,7 @@ import { ValidateEnum, ValidateString } from '@libs/base/decorators'
 import { ApiProperty } from '@nestjs/swagger'
 import {
   MatchModeEnum,
-  SensitiveWordLevelEnum,
+  ForumSensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
 } from '../sensitive-word-constant'
 
@@ -63,8 +63,8 @@ export class ForumMatchedWordDto {
 
   @ApiProperty({
     description: '敏感词级别',
-    example: SensitiveWordLevelEnum.SEVERE,
-    enum: SensitiveWordLevelEnum,
+    example: ForumSensitiveWordLevelEnum.SEVERE,
+    enum: ForumSensitiveWordLevelEnum,
   })
   level!: number
 

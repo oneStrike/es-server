@@ -3,7 +3,7 @@
  */
 
 /// 通知优先级枚举
-export enum NotificationPriorityEnum {
+export enum ForumNotificationPriorityEnum {
   /** 普通 */
   NORMAL = 1,
   /** 重要 */
@@ -11,7 +11,7 @@ export enum NotificationPriorityEnum {
 }
 
 /// 通知类型枚举
-export enum NotificationTypeEnum {
+export enum ForumNotificationTypeEnum {
   /** 回复通知 */
   REPLY = 1,
   /** 点赞通知 */
@@ -23,20 +23,22 @@ export enum NotificationTypeEnum {
 }
 
 /// 通知标题模板
-export const NotificationTitleTemplates = {
-  [NotificationTypeEnum.REPLY]: '有人回复了你的主题',
-  [NotificationTypeEnum.LIKE]: '有人赞了你的内容',
-  [NotificationTypeEnum.FAVORITE]: '有人收藏了你的主题',
-  [NotificationTypeEnum.SYSTEM]: '系统通知',
+export const ForumNotificationTitleTemplates = {
+  [ForumNotificationTypeEnum.REPLY]: '有人回复了你的主题',
+  [ForumNotificationTypeEnum.LIKE]: '有人赞了你的内容',
+  [ForumNotificationTypeEnum.FAVORITE]: '有人收藏了你的主题',
+  [ForumNotificationTypeEnum.SYSTEM]: '系统通知',
 }
 
 /// 通知内容模板
 export const NotificationContentTemplates = {
-  [NotificationTypeEnum.REPLY]: (userName: string, topicTitle: string) =>
+  [ForumNotificationTypeEnum.REPLY]: (userName: string, topicTitle: string) =>
     `${userName} 回复了你的主题《${topicTitle}》`,
-  [NotificationTypeEnum.LIKE]: (userName: string, objectType: string) =>
+  [ForumNotificationTypeEnum.LIKE]: (userName: string, objectType: string) =>
     `${userName} 赞了你的${objectType}`,
-  [NotificationTypeEnum.FAVORITE]: (userName: string, topicTitle: string) =>
-    `${userName} 收藏了你的主题《${topicTitle}》`,
-  [NotificationTypeEnum.SYSTEM]: (content: string) => content,
+  [ForumNotificationTypeEnum.FAVORITE]: (
+    userName: string,
+    topicTitle: string,
+  ) => `${userName} 收藏了你的主题《${topicTitle}》`,
+  [ForumNotificationTypeEnum.SYSTEM]: (content: string) => content,
 }

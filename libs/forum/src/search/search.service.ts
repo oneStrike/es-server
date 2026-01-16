@@ -4,8 +4,12 @@ import {
   ForumTopicWhereInput,
 } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { SearchDto, SearchReplyDto, SearchTopicDto } from './dto/search.dto'
-import { SearchSortTypeEnum, SearchTypeEnum } from './search.constant'
+import {
+  ForumSearchDto,
+  ForumSearchReplyDto,
+  ForumSearchTopicDto,
+} from './dto/search.dto'
+import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
 
 /**
  * 搜索服务
@@ -29,18 +33,18 @@ export class ForumSearchService extends BaseService {
    * @param searchDto 搜索参数
    * @returns 搜索结果
    */
-  async search(searchDto: SearchDto) {
+  async search(searchDto: ForumSearchDto) {
     const {
-      type = SearchTypeEnum.ALL,
+      type = ForumSearchTypeEnum.ALL,
       pageIndex = 0,
       pageSize = 15,
     } = searchDto
 
-    if (type === SearchTypeEnum.TOPIC) {
+    if (type === ForumSearchTypeEnum.TOPIC) {
       return this.searchTopics(searchDto)
     }
 
-    if (type === SearchTypeEnum.REPLY) {
+    if (type === ForumSearchTypeEnum.REPLY) {
       return this.searchReplies(searchDto)
     }
 
@@ -68,7 +72,7 @@ export class ForumSearchService extends BaseService {
    * @param dto 搜索参数
    * @returns 主题搜索结果
    */
-  private async searchTopics(dto: SearchTopicDto) {
+  private async searchTopics(dto: ForumSearchTopicDto) {
     const where: ForumTopicWhereInput = {
       deletedAt: null,
       OR: [
@@ -122,7 +126,7 @@ export class ForumSearchService extends BaseService {
    * @param dto 搜索参数
    * @returns 回复搜索结果
    */
-  private async searchReplies(dto: SearchReplyDto) {
+  private async searchReplies(dto: ForumSearchReplyDto) {
     const where: ForumReplyWhereInput = {
       deletedAt: null,
       content: {
@@ -190,17 +194,17 @@ export class ForumSearchService extends BaseService {
    * @param sort 排序类型
    * @returns 排序条件
    */
-  private getOrderBy(sort?: SearchSortTypeEnum) {
+  private getOrderBy(sort?: ForumSearchSortTypeEnum) {
     switch (sort) {
-      case SearchSortTypeEnum.HOT:
+      case ForumSearchSortTypeEnum.HOT:
         return [
           { replyCount: 'desc' as const },
           { likeCount: 'desc' as const },
           { viewCount: 'desc' as const },
           { createdAt: 'desc' as const },
         ]
-      case SearchSortTypeEnum.LATEST:
-      case SearchSortTypeEnum.RELEVANCE:
+      case ForumSearchSortTypeEnum.LATEST:
+      case ForumSearchSortTypeEnum.RELEVANCE:
       case undefined:
         return { createdAt: 'desc' as const }
     }

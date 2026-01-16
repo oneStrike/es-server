@@ -286,8 +286,8 @@
 | 代码质量 | 部分Service缺少错误处理 | 部分Service | 🟢 低 |
 | 代码质量 | 部分Service缺少日志记录 | 部分Service | 🟢 低 |
 | 代码质量 | 部分Service缺少参数验证 | 部分Service | 🟢 低 |
-| 权限控制 | 权限粒度较粗 | ModeratorPermissionEnum | 🟢 低 |
-| 权限控制 | GROUP角色没有权限继承 | SectionPermissionService | 🟢 低 |
+| 权限控制 | 权限粒度较粗 | ForumModeratorPermissionEnum | 🟢 低 |
+| 权限控制 | GROUP角色没有权限继承 | ForumSectionPermissionService | 🟢 低 |
 | 权限控制 | 缺少管理员角色定义 | Forum模块 | 🟢 低 |
 | 审计日志 | 缺少审计日志 | 所有操作 | 🟢 低 |
 | 审计日志 | 缺少操作记录 | 所有操作 | 🟢 低 |

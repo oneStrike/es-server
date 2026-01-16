@@ -49,14 +49,14 @@
 #### 1.3 数据传输对象（DTO）
 - [x] 创建了 `experience-rule.dto.ts`
   - `BaseExperienceRuleDto`：基础经验规则DTO
-  - `CreateExperienceRuleDto`：创建经验规则DTO
+  - `CreateForumExperienceRuleDto`：创建经验规则DTO
   - `UpdateExperienceRuleDto`：更新经验规则DTO
   - `ExperienceRuleQueryDto`：查询经验规则DTO
   - 所有DTO都使用了项目统一的验证装饰器
 
 - [x] 创建了 `experience-record.dto.ts`
   - `BaseExperienceRecordDto`：基础经验记录DTO
-  - `AddExperienceDto`：增加经验DTO
+  - `AddForumExperienceDto`：增加经验DTO
   - `SubtractExperienceDto`：减少经验DTO
   - `ExperienceRecordQueryDto`：查询经验记录DTO
   - 所有DTO都使用了项目统一的验证装饰器

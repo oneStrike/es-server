@@ -5,7 +5,7 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/base/dto'
 import { ApiProperty, IntersectionType, OmitType } from '@nestjs/swagger'
-import { ReviewPolicyEnum } from '../forum-config.constants'
+import { ForumReviewPolicyEnum } from '../forum-config.constants'
 
 export class BaseForumConfigDto extends BaseDto {
   @ValidateString({
@@ -94,12 +94,12 @@ export class BaseForumConfigDto extends BaseDto {
   @ValidateNumber({
     description:
       '审核策略（0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）',
-    example: ReviewPolicyEnum.SEVERE_SENSITIVE_WORD,
+    example: ForumReviewPolicyEnum.SEVERE_SENSITIVE_WORD,
     required: true,
-    min: ReviewPolicyEnum.NONE,
-    max: ReviewPolicyEnum.MANUAL,
+    min: ForumReviewPolicyEnum.NONE,
+    max: ForumReviewPolicyEnum.MANUAL,
   })
-  reviewPolicy!: ReviewPolicyEnum
+  reviewPolicy!: ForumReviewPolicyEnum
 
   @ValidateBoolean({
     description: '是否允许匿名浏览',

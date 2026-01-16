@@ -154,9 +154,9 @@
 - [PointService](file:///e:/Code/es/es-server/libs/forum/src/point/point.service.ts) - 积分管理服务
 - [SensitiveWordService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word.service.ts) - 敏感词管理服务
 - [SensitiveWordDetectService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word-detect.service.ts) - 敏感词检测服务
-- [SensitiveWordStatisticsService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word-statistics.service.ts) - 敏感词统计服务
+- [ForumSensitiveWordStatisticsService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word-statistics.service.ts) - 敏感词统计服务
 - [ForumSectionService](file:///e:/Code/es/es-server/libs/forum/src/section/forum-section.service.ts) - 板块管理服务
-- [SectionPermissionService](file:///e:/Code/es/es-server/libs/forum/src/section/section-permission.service.ts) - 板块权限服务
+- [ForumSectionPermissionService](file:///e:/Code/es/es-server/libs/forum/src/section/section-permission.service.ts) - 板块权限服务
 - [ForumSectionGroupService](file:///e:/Code/es/es-server/libs/forum/src/section-group/forum-section-group.service.ts) - 板块组管理服务
 - [ForumTopicLikeService](file:///e:/Code/es/es-server/libs/forum/src/topic-like/forum-topic-like.service.ts) - 主题点赞服务
 - [ForumTopicFavoriteService](file:///e:/Code/es/es-server/libs/forum/src/topic-favorite/forum-topic-favorite.service.ts) - 主题收藏服务
@@ -172,7 +172,7 @@
 - [ForumConfigService](file:///e:/Code/es/es-server/libs/forum/src/config/forum-config.service.ts) - 论坛配置服务
 
 ### 2.2 缓存服务类
-- [SensitiveWordCacheService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word-cache.service.ts) - 敏感词缓存服务
+- [ForumSensitiveWordCacheService](file:///e:/Code/es/es-server/libs/forum/src/sensitive-word/sensitive-word-cache.service.ts) - 敏感词缓存服务
 - [ForumConfigCacheService](file:///e:/Code/es/es-server/libs/forum/src/config/forum-config-cache.service.ts) - 论坛配置缓存服务
 
 ### 2.3 工具类

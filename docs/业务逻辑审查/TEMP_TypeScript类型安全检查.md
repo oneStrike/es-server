@@ -65,7 +65,7 @@ export class BaseExperienceRecordDto extends BaseDto {
 ```typescript
 @Injectable()
 export class ExperienceService extends BaseService {
-  async createExperienceRule(dto: CreateExperienceRuleDto) {
+  async createExperienceRule(dto: CreateForumExperienceRuleDto) {
     return this.forumExperienceRule.create({
       data: dto,
     })
@@ -77,7 +77,7 @@ export class ExperienceService extends BaseService {
     })
   }
 
-  async addExperience(addExperienceDto: AddExperienceDto) {
+  async addExperience(addExperienceDto: AddForumExperienceDto) {
     const { profileId, ruleType, remark } = addExperienceDto
     // ...
   }
@@ -102,7 +102,7 @@ export interface MatchedWord {
   word: string
   start: number
   end: number
-  level: SensitiveWordLevelEnum
+  level: ForumSensitiveWordLevelEnum
   type: SensitiveWordTypeEnum
   replaceWord?: string | null
 }
@@ -360,7 +360,7 @@ const oldValue = existingConfig[key as keyof ForumConfig]
 
 **类型工具示例**:
 ```typescript
-export class QueryExperienceRecordDto extends IntersectionType(
+export class QueryForumExperienceRecordDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseExperienceRecordDto, ['ruleId'])),
 ) {}
@@ -416,7 +416,7 @@ export enum ExperienceRuleTypeEnum {
   DAILY_LOGIN = 6,
 }
 
-export enum PointRuleTypeEnum {
+export enum ForumPointRuleTypeEnum {
   CREATE_TOPIC = 1,
   CREATE_REPLY = 2,
   LIKE_TOPIC = 3,

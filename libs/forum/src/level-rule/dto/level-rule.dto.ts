@@ -12,7 +12,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { LevelRulePermissionEnum } from '../level-rule.constant'
+import { ForumLevelRulePermissionEnum } from '../level-rule.constant'
 
 /**
  * 等级规则基础DTO
@@ -118,39 +118,39 @@ export class BaseForumLevelRuleDto extends BaseDto {
 /**
  * 创建等级规则DTO
  */
-export class CreateLevelRuleDto extends OmitType(
-  BaseLevelRuleDto,
+export class CreateForumLevelRuleDto extends OmitType(
+  BaseForumLevelRuleDto,
   OMIT_BASE_FIELDS,
 ) {}
 
 /**
  * 更新等级规则DTO
  */
-export class UpdateLevelRuleDto extends IntersectionType(
-  PartialType(CreateLevelRuleDto),
+export class UpdateForumLevelRuleDto extends IntersectionType(
+  PartialType(CreateForumLevelRuleDto),
   IdDto,
 ) {}
 
 /**
  * 查询等级规则DTO
  */
-export class QueryLevelRuleDto extends IntersectionType(
+export class QueryForumLevelRuleDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseLevelRuleDto, ['name', 'isEnabled'])),
+  PartialType(PickType(BaseForumLevelRuleDto, ['name', 'isEnabled'])),
 ) {}
 
 /**
  * 等级规则详情DTO
  */
-export class LevelRuleDetailDto extends IntersectionType(
-  BaseLevelRuleDto,
+export class ForumLevelRuleDetailDto extends IntersectionType(
+  BaseForumLevelRuleDto,
   PickType(BaseDto, ['id', 'createdAt', 'updatedAt']),
 ) {}
 
 /**
  * 等级权限DTO
  */
-export class LevelPermissionsDto extends PickType(BaseLevelRuleDto, [
+export class ForumLevelPermissionsDto extends PickType(BaseForumLevelRuleDto, [
   'dailyTopicLimit',
   'dailyReplyCommentLimit',
   'postInterval',
@@ -161,7 +161,7 @@ export class LevelPermissionsDto extends PickType(BaseLevelRuleDto, [
 /**
  * 用户等级信息DTO
  */
-export class UserLevelInfoDto {
+export class UserForumLevelInfoDto {
   @ApiProperty({ description: '等级ID', example: 1 })
   levelId!: number
 
@@ -219,15 +219,15 @@ export class UserLevelInfoDto {
 
   @ApiProperty({
     description: '等级权限',
-    type: LevelPermissionsDto,
+    type: ForumLevelPermissionsDto,
   })
-  permissions!: LevelPermissionsDto
+  permissions!: ForumLevelPermissionsDto
 }
 
 /**
  * 等级权限检查DTO
  */
-export class CheckLevelPermissionDto {
+export class CheckForumLevelPermissionDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,
@@ -238,18 +238,18 @@ export class CheckLevelPermissionDto {
 
   @ValidateEnum({
     description: '权限类型',
-    example: 'dailyTopicLimit',
+    example: ForumLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT,
     required: true,
-    enum: LevelRulePermissionEnum,
+    enum: ForumLevelRulePermissionEnum,
   })
-  permissionType!: LevelRulePermissionEnum
+  permissionType!: ForumLevelRulePermissionEnum
 }
 
 /**
  * 等级权限检查结果DTO
  * 返回等级权限检查的结果
  */
-export class LevelPermissionResultDto {
+export class ForumLevelPermissionResultDto {
   @ApiProperty({ description: '是否有权限', example: true })
   hasPermission!: boolean
 
@@ -282,7 +282,7 @@ export class LevelPermissionResultDto {
  * 等级分布项DTO
  * 单个等级的用户分布情况
  */
-export class LevelDistributionItemDto {
+export class ForumLevelDistributionItemDto {
   @ApiProperty({ description: '等级ID', example: 1 })
   levelId!: number
 
@@ -306,7 +306,7 @@ export class ForumLevelStatisticsDto {
 
   @ApiProperty({
     description: '等级分布',
-    type: [LevelDistributionItemDto],
+    type: [ForumLevelDistributionItemDto],
   })
-  levelDistribution!: LevelDistributionItemDto[]
+  levelDistribution!: ForumLevelDistributionItemDto[]
 }

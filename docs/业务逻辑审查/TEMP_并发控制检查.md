@@ -78,7 +78,7 @@ version Int @default(0)
 
 **当前实现**:
 ```typescript
-// ForumTopicService.getForumTopicById
+// ForumTopicService.getTopicById
 const topic = await this.forumTopic.findUnique({
   where: { id, deletedAt: null },
   include: {
@@ -250,7 +250,7 @@ return this.prisma.$transaction(async (tx) => {
 
 **问题代码**:
 ```typescript
-async addPoints(addPointsDto: AddPointsDto) {
+async addPoints(addPointsDto: AddForumPointsDto) {
   const { profileId, ruleType, remark } = addPointsDto
 
   const profile = await this.forumProfile.findUnique({
@@ -337,14 +337,14 @@ async addPoints(addPointsDto: AddPointsDto) {
 
 **问题代码**:
 ```typescript
-async addExperience(addExperienceDto: AddExperienceDto) {
+async addExperience(addExperienceDto: AddForumExperienceDto) {
   const { profileId, ruleType, remark } = addExperienceDto
 
   const profile = await this.forumProfile.findUnique({
     where: {
       id: profileId,
       status: {
-        not: ProfileStatusEnum.PERMANENT_BANNED,
+        not: ForumProfileStatusEnum.PERMANENT_BANNED,
       },
     },
   })

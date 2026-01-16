@@ -1,11 +1,11 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  AssignTagToTopicDto,
+  AssignForumTagToTopicDto,
   CreateForumTagDto,
   ForumTagService,
   QueryForumTagDto,
-  RemoveTagFromTopicDto,
+  RemoveForumTagFromTopicDto,
   UpdateForumTagDto,
 } from '@libs/forum/tag'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -100,7 +100,7 @@ export class ForumTagController {
   @ApiDoc({
     summary: '为主题分配标签',
   })
-  async assignTagToTopic(@Body() dto: AssignTagToTopicDto) {
+  async assignTagToTopic(@Body() dto: AssignForumTagToTopicDto) {
     return this.forumTagService.assignTagToTopic(dto)
   }
 
@@ -108,7 +108,7 @@ export class ForumTagController {
   @ApiDoc({
     summary: '从主题移除标签',
   })
-  async removeTagFromTopic(@Body() dto: RemoveTagFromTopicDto) {
+  async removeTagFromTopic(@Body() dto: RemoveForumTagFromTopicDto) {
     return this.forumTagService.removeTagFromTopic(dto)
   }
 }

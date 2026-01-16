@@ -331,7 +331,7 @@ async unfavoriteTopic(topicId: number, userId: number) {
 
 ```typescript
 // libs/forum/src/moderator/moderator.service.ts
-async createModerator(dto: CreateModeratorDto) {
+async createModerator(dto: CreateForumModeratorDto) {
   return this.prisma.$transaction(async (tx) => {
     const profile = await this.forumProfile.findUnique({
       where: { userId: dto.userId },
@@ -351,8 +351,8 @@ async createModerator(dto: CreateModeratorDto) {
 
     if (dto.roleType === ModeratorRoleTypeEnum.SUPER) {
       dto.permissions = [
-        ...Object.values(ModeratorPermissionEnum),
-      ] as ModeratorPermissionEnum[]
+        ...Object.values(ForumModeratorPermissionEnum),
+      ] as ForumModeratorPermissionEnum[]
     }
 
     const moderator = await tx.forumModerator.create({
@@ -853,11 +853,11 @@ async likeTopic(topicId: number, userId: number) {
 ```typescript
 // libs/forum/src/permissions/decorators/permissions.decorator.ts
 import { SetMetadata } from '@nestjs/common'
-import { ModeratorPermissionEnum } from '../../moderator/moderator.constant'
+import { ForumModeratorPermissionEnum } from '../../moderator/moderator.constant'
 
 export const PERMISSIONS_KEY = 'permissions'
 
-export const Permissions = (...permissions: ModeratorPermissionEnum[]) =>
+export const Permissions = (...permissions: ForumModeratorPermissionEnum[]) =>
   SetMetadata(PERMISSIONS_KEY, permissions)
 ```
 
@@ -885,22 +885,22 @@ import {
   ForbiddenException,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { ModeratorPermissionEnum } from '../../moderator/moderator.constant'
+import { ForumModeratorPermissionEnum } from '../../moderator/moderator.constant'
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator'
 import { ModeratorService } from '../../moderator/moderator.service'
-import { SectionPermissionService } from '../../section/section-permission.service'
+import { ForumSectionPermissionService } from '../../section/section-permission.service'
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private moderatorService: ModeratorService,
-    private sectionPermissionService: SectionPermissionService,
+    private sectionPermissionService: ForumSectionPermissionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredPermissions = this.reflector.getAllAndOverride<
-      ModeratorPermissionEnum[]
+      ForumModeratorPermissionEnum[]
     >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()])
 
     if (!requiredPermissions) {
@@ -1004,12 +1004,12 @@ export class RolesGuard implements CanActivate {
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '@server/prisma/prisma.service'
 import { ModeratorRoleTypeEnum } from '../moderator/moderator.constant'
-import { ModeratorPermissionEnum } from '../moderator/moderator.constant'
+import { ForumModeratorPermissionEnum } from '../moderator/moderator.constant'
 
-export type Permission = ModeratorPermissionEnum
+export type Permission = ForumModeratorPermissionEnum
 
 @Injectable()
-export class SectionPermissionService {
+export class ForumSectionPermissionService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -1029,7 +1029,7 @@ export class SectionPermissionService {
 
     switch (moderator.roleType) {
       case ModeratorRoleTypeEnum.SUPER:
-        return Object.values(ModeratorPermissionEnum) as Permission[]
+        return Object.values(ForumModeratorPermissionEnum) as Permission[]
 
       case ModeratorRoleTypeEnum.GROUP:
         const section = await this.prisma.forumSection.findUnique({
@@ -1114,7 +1114,7 @@ import { PermissionsGuard } from '../permissions/guards/permissions.guard'
 import { RolesGuard } from '../permissions/guards/roles.guard'
 import { Permissions } from '../permissions/decorators/permissions.decorator'
 import { Roles } from '../permissions/decorators/roles.decorator'
-import { ModeratorPermissionEnum } from './moderator.constant'
+import { ForumModeratorPermissionEnum } from './moderator.constant'
 import { ModeratorRoleTypeEnum } from './moderator.constant'
 
 @Controller('forum/moderators')
@@ -1122,14 +1122,14 @@ import { ModeratorRoleTypeEnum } from './moderator.constant'
 export class ForumModeratorController {
   @Post()
   @Roles(ModeratorRoleTypeEnum.SUPER)
-  @Permissions(ModeratorPermissionEnum.AUDIT)
-  async create(@Body() dto: CreateModeratorDto) {
+  @Permissions(ForumModeratorPermissionEnum.AUDIT)
+  async create(@Body() dto: CreateForumModeratorDto) {
     return this.moderatorService.createModerator(dto)
   }
 
   @Delete(':id')
   @Roles(ModeratorRoleTypeEnum.SUPER)
-  @Permissions(ModeratorPermissionEnum.DELETE)
+  @Permissions(ForumModeratorPermissionEnum.DELETE)
   async remove(@Param('id') id: string) {
     return this.moderatorService.deleteModerator(+id)
   }
@@ -1145,7 +1145,7 @@ import { PermissionsGuard } from '../permissions/guards/permissions.guard'
 import { RolesGuard } from '../permissions/guards/roles.guard'
 import { Permissions } from '../permissions/decorators/permissions.decorator'
 import { Roles } from '../permissions/decorators/roles.decorator'
-import { ModeratorPermissionEnum } from '../moderator/moderator.constant'
+import { ForumModeratorPermissionEnum } from '../moderator/moderator.constant'
 import { ModeratorRoleTypeEnum } from '../moderator/moderator.constant'
 
 @Controller('forum/reports')
@@ -1153,8 +1153,8 @@ import { ModeratorRoleTypeEnum } from '../moderator/moderator.constant'
 export class ForumReportController {
   @Patch(':id/handle')
   @Roles(ModeratorRoleTypeEnum.SUPER, ModeratorRoleTypeEnum.GROUP, ModeratorRoleTypeEnum.SECTION)
-  @Permissions(ModeratorPermissionEnum.AUDIT)
-  async handle(@Param('id') id: string, @Body() dto: HandleReportDto) {
+  @Permissions(ForumModeratorPermissionEnum.AUDIT)
+  async handle(@Param('id') id: string, @Body() dto: HandleForumReportDto) {
     return this.reportService.handleReport(+id, dto)
   }
 }
@@ -1428,7 +1428,7 @@ import { RolesGuard } from '../permissions/guards/roles.guard'
 import { PermissionsGuard } from '../permissions/guards/permissions.guard'
 import { Roles } from '../permissions/decorators/roles.decorator'
 import { Permissions } from '../permissions/decorators/permissions.decorator'
-import { ModeratorPermissionEnum } from '../moderator/moderator.constant'
+import { ForumModeratorPermissionEnum } from '../moderator/moderator.constant'
 import { ModeratorRoleTypeEnum } from '../moderator/moderator.constant'
 import { TopicService } from './topic.service'
 import { CreateTopicDto } from './dto/create-topic.dto'
@@ -1468,7 +1468,7 @@ export class ForumTopicController {
   @Patch(':id/pin')
   @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(ModeratorRoleTypeEnum.SUPER, ModeratorRoleTypeEnum.GROUP, ModeratorRoleTypeEnum.SECTION)
-  @Permissions(ModeratorPermissionEnum.PIN)
+  @Permissions(ForumModeratorPermissionEnum.PIN)
   async pin(@Param('id') id: string) {
     return this.topicService.pinTopic(+id)
   }
@@ -1476,7 +1476,7 @@ export class ForumTopicController {
   @Patch(':id/unpin')
   @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(ModeratorRoleTypeEnum.SUPER, ModeratorRoleTypeEnum.GROUP, ModeratorRoleTypeEnum.SECTION)
-  @Permissions(ModeratorPermissionEnum.PIN)
+  @Permissions(ForumModeratorPermissionEnum.PIN)
   async unpin(@Param('id') id: string) {
     return this.topicService.unpinTopic(+id)
   }
@@ -1484,7 +1484,7 @@ export class ForumTopicController {
   @Patch(':id/feature')
   @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(ModeratorRoleTypeEnum.SUPER, ModeratorRoleTypeEnum.GROUP, ModeratorRoleTypeEnum.SECTION)
-  @Permissions(ModeratorPermissionEnum.FEATURE)
+  @Permissions(ForumModeratorPermissionEnum.FEATURE)
   async feature(@Param('id') id: string) {
     return this.topicService.featureTopic(+id)
   }
@@ -1492,7 +1492,7 @@ export class ForumTopicController {
   @Patch(':id/unfeature')
   @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(ModeratorRoleTypeEnum.SUPER, ModeratorRoleTypeEnum.GROUP, ModeratorRoleTypeEnum.SECTION)
-  @Permissions(ModeratorPermissionEnum.FEATURE)
+  @Permissions(ForumModeratorPermissionEnum.FEATURE)
   async unfeature(@Param('id') id: string) {
     return this.topicService.unfeatureTopic(+id)
   }
@@ -1500,7 +1500,7 @@ export class ForumTopicController {
   @Patch(':id/lock')
   @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(ModeratorRoleTypeEnum.SUPER, ModeratorRoleTypeEnum.GROUP, ModeratorRoleTypeEnum.SECTION)
-  @Permissions(ModeratorPermissionEnum.LOCK)
+  @Permissions(ForumModeratorPermissionEnum.LOCK)
   async lock(@Param('id') id: string) {
     return this.topicService.lockTopic(+id)
   }
@@ -1508,7 +1508,7 @@ export class ForumTopicController {
   @Patch(':id/unlock')
   @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(ModeratorRoleTypeEnum.SUPER, ModeratorRoleTypeEnum.GROUP, ModeratorRoleTypeEnum.SECTION)
-  @Permissions(ModeratorPermissionEnum.LOCK)
+  @Permissions(ForumModeratorPermissionEnum.LOCK)
   async unlock(@Param('id') id: string) {
     return this.topicService.unlockTopic(+id)
   }
@@ -1516,7 +1516,7 @@ export class ForumTopicController {
   @Patch(':id/move')
   @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(ModeratorRoleTypeEnum.SUPER, ModeratorRoleTypeEnum.GROUP, ModeratorRoleTypeEnum.SECTION)
-  @Permissions(ModeratorPermissionEnum.MOVE)
+  @Permissions(ForumModeratorPermissionEnum.MOVE)
   async move(@Param('id') id: string, @Body() dto: MoveTopicDto) {
     return this.topicService.moveTopic(+id, dto.sectionId)
   }
@@ -1937,7 +1937,7 @@ async createTopic(dto: CreateTopicDto, userId: number) {
 
 ```typescript
 // libs/forum/src/moderator/moderator.constant.ts
-export enum ModeratorPermissionEnum {
+export enum ForumModeratorPermissionEnum {
   /** 置顶 */
   PIN = 1,
   /** 加精 */
@@ -1979,7 +1979,7 @@ async calculateFinalPermissions(
 
   switch (moderator.roleType) {
     case ModeratorRoleTypeEnum.SUPER:
-      return Object.values(ModeratorPermissionEnum) as Permission[]
+      return Object.values(ForumModeratorPermissionEnum) as Permission[]
 
     case ModeratorRoleTypeEnum.GROUP:
       const section = await this.prisma.forumSection.findUnique({
@@ -2011,13 +2011,13 @@ async calculateFinalPermissions(
 private inheritPermissions(permissions: Permission[]): Permission[] {
   const inheritedPermissions: Permission[] = [...permissions]
 
-  if (permissions.includes(ModeratorPermissionEnum.MANAGE_MODERATOR)) {
-    inheritedPermissions.push(ModeratorPermissionEnum.VIEW_SENSITIVE)
-    inheritedPermissions.push(ModeratorPermissionEnum.AUDIT)
+  if (permissions.includes(ForumModeratorPermissionEnum.MANAGE_MODERATOR)) {
+    inheritedPermissions.push(ForumModeratorPermissionEnum.VIEW_SENSITIVE)
+    inheritedPermissions.push(ForumModeratorPermissionEnum.AUDIT)
   }
 
-  if (permissions.includes(ModeratorPermissionEnum.DELETE)) {
-    inheritedPermissions.push(ModeratorPermissionEnum.EDIT)
+  if (permissions.includes(ForumModeratorPermissionEnum.DELETE)) {
+    inheritedPermissions.push(ForumModeratorPermissionEnum.EDIT)
   }
 
   return inheritedPermissions

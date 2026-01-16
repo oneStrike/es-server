@@ -1,7 +1,15 @@
 import { BaseService } from '@libs/base/database'
 
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
-import { CreateForumViewDto, QueryForumViewDto, ViewStatisticsDto } from './dto/forum-view.dto'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import {
+  CreateForumViewDto,
+  ForumViewStatisticsDto,
+  QueryForumViewDto,
+} from './dto/forum-view.dto'
 import { ForumViewTypeEnum } from './forum-view.constant'
 
 /**
@@ -27,7 +35,8 @@ export class ForumViewService extends BaseService {
   }
 
   async createView(createForumViewDto: CreateForumViewDto) {
-    const { topicId, replyId, profileId, type, ...viewData } = createForumViewDto
+    const { topicId, replyId, profileId, type, ...viewData } =
+      createForumViewDto
 
     const topic = await this.forumTopic.findUnique({
       where: { id: topicId, deletedAt: null },
@@ -84,9 +93,10 @@ export class ForumViewService extends BaseService {
   }
 
   async getForumViews(queryForumViewDto: QueryForumViewDto) {
-    const { topicId, profileId, type, ipAddress, pageIndex = 0, pageSize = 15 } = queryForumViewDto
+    const { topicId, profileId, type, ipAddress, ...otherDto } =
+      queryForumViewDto
 
-    const where: any = {}
+    const where: any = { ...otherDto }
 
     if (topicId) {
       where.topicId = topicId
@@ -120,15 +130,10 @@ export class ForumViewService extends BaseService {
           },
         },
       },
-      orderBy: {
-        viewedAt: 'desc',
-      },
-      pageIndex,
-      pageSize,
     })
   }
 
-  async getViewStatistics(viewStatisticsDto: ViewStatisticsDto) {
+  async getViewStatistics(viewStatisticsDto: ForumViewStatisticsDto) {
     const { topicId } = viewStatisticsDto
 
     const topic = await this.forumTopic.findUnique({
@@ -183,17 +188,20 @@ export class ForumViewService extends BaseService {
     return {
       totalViews,
       uniqueViewers: uniqueViewers.length,
-      viewsByType: viewsByType.reduce((acc, item) => {
-        if (item.type) {
-          acc[item.type] = item._count.type
-        }
-        return acc
-      }, {} as Record<string, number>),
+      viewsByType: viewsByType.reduce(
+        (acc, item) => {
+          if (item.type) {
+            acc[item.type] = item._count.type
+          }
+          return acc
+        },
+        {} as Record<string, number>,
+      ),
       recentViews,
     }
   }
 
-  async getUserViewHistory(profileId: number, pageIndex = 0, pageSize = 15) {
+  async getUserViewHistory(profileId: number) {
     return this.forumView.findPagination({
       where: {
         userId: profileId,
@@ -207,11 +215,6 @@ export class ForumViewService extends BaseService {
           },
         },
       },
-      orderBy: {
-        viewedAt: 'desc',
-      },
-      pageIndex,
-      pageSize,
     })
   }
 

@@ -1,8 +1,16 @@
 import { BaseService } from '@libs/base/database'
 
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import { CreateForumTopicFavoriteDto, QueryForumTopicFavoriteDto, ToggleTopicFavoriteDto } from './dto/forum-topic-favorite.dto'
+import {
+  CreateForumTopicFavoriteDto,
+  QueryForumTopicFavoriteDto,
+  ToggleForumTopicFavoriteDto,
+} from './dto/forum-topic-favorite.dto'
 
 @Injectable()
 export class ForumTopicFavoriteService extends BaseService {
@@ -115,7 +123,9 @@ export class ForumTopicFavoriteService extends BaseService {
     })
   }
 
-  async toggleTopicFavorite(toggleTopicFavoriteDto: ToggleTopicFavoriteDto) {
+  async toggleTopicFavorite(
+    toggleTopicFavoriteDto: ToggleForumTopicFavoriteDto,
+  ) {
     const { topicId, profileId } = toggleTopicFavoriteDto
 
     const topic = await this.forumTopic.findUnique({
@@ -142,8 +152,14 @@ export class ForumTopicFavoriteService extends BaseService {
     }
   }
 
-  async getUserFavorites(queryForumTopicFavoriteDto: QueryForumTopicFavoriteDto) {
-    const { profileId, pageIndex = 0, pageSize = 15 } = queryForumTopicFavoriteDto
+  async getUserFavorites(
+    queryForumTopicFavoriteDto: QueryForumTopicFavoriteDto,
+  ) {
+    const {
+      profileId,
+      pageIndex = 0,
+      pageSize = 15,
+    } = queryForumTopicFavoriteDto
 
     const where: any = {}
 

@@ -30,7 +30,7 @@ export class ForumSectionController {
     model: BaseForumSectionDto,
   })
   async getSectionDetail(@Query() query: IdDto) {
-    return this.forumSectionService.getForumSectionDetail(query.id)
+    return this.forumSectionService.getSectionDetail(query.id)
   }
 
   @Get('tree')
@@ -47,7 +47,7 @@ export class ForumSectionController {
     model: BaseForumSectionDto,
   })
   async createSection(@Body() dto: CreateForumSectionDto) {
-    return this.forumSectionService.createForumSection(dto)
+    return this.forumSectionService.createSection(dto)
   }
 
   @Post('update')
@@ -56,7 +56,7 @@ export class ForumSectionController {
     model: BaseForumSectionDto,
   })
   async updateSection(@Body() dto: UpdateForumSectionDto) {
-    return this.forumSectionService.updateForumSection(dto)
+    return this.forumSectionService.updateSection(dto)
   }
 
   @Post('delete')

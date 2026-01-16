@@ -1,18 +1,15 @@
-import {
-  BaseService,
-  ForumNotificationCreateInput,
-} from '@libs/base/database'
+import { BaseService, ForumNotificationCreateInput } from '@libs/base/database'
 import { IdDto, IdsDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  CreateNotificationDto,
-  CreateNotificationShortDto,
-  ProfileIdDto,
-  QueryNotificationListDto,
+  CreateForumNotificationDto,
+  CreateForumNotificationShortDto,
+  ForumProfileIdDto,
+  QueryForumNotificationListDto,
 } from './dto/notification.dto'
 import {
-  NotificationPriorityEnum,
-  NotificationTypeEnum,
+  ForumNotificationPriorityEnum,
+  ForumNotificationTypeEnum,
 } from './notification.constant'
 
 /**
@@ -25,7 +22,7 @@ export class ForumNotificationService extends BaseService {
     super()
   }
 
-  get userProfile() {
+  get forumProfile() {
     return this.prisma.forumProfile
   }
 
@@ -38,16 +35,16 @@ export class ForumNotificationService extends BaseService {
    * @param createNotificationDto 创建通知的数据
    * @returns 创建的通知信息
    */
-  async createNotification(createNotificationDto: CreateNotificationDto) {
+  async createNotification(createNotificationDto: CreateForumNotificationDto) {
     if (
       !createNotificationDto.topicId &&
       !createNotificationDto.replyId &&
-      createNotificationDto.type !== NotificationTypeEnum.SYSTEM
+      createNotificationDto.type !== ForumNotificationTypeEnum.SYSTEM
     ) {
       throw new BadRequestException('通知的主体不存在')
     }
 
-    const profile = await this.userProfile.findUnique({
+    const profile = await this.forumProfile.findUnique({
       where: { id: createNotificationDto.profileId },
       select: {
         user: {
@@ -94,11 +91,11 @@ export class ForumNotificationService extends BaseService {
    * @param dto 创建通知的数据
    * @returns 创建的通知信息
    */
-  async createReplyNotification(dto: CreateNotificationShortDto) {
+  async createReplyNotification(dto: CreateForumNotificationShortDto) {
     return this.createNotification({
       ...dto,
-      type: NotificationTypeEnum.REPLY,
-      priority: NotificationPriorityEnum.NORMAL,
+      type: ForumNotificationTypeEnum.REPLY,
+      priority: ForumNotificationPriorityEnum.NORMAL,
     })
   }
 
@@ -107,11 +104,11 @@ export class ForumNotificationService extends BaseService {
    * @param dto 创建通知的数据
    * @returns 创建的通知信息
    */
-  async createLikeNotification(dto: CreateNotificationShortDto) {
+  async createLikeNotification(dto: CreateForumNotificationShortDto) {
     return this.createNotification({
       ...dto,
-      type: NotificationTypeEnum.LIKE,
-      priority: NotificationPriorityEnum.NORMAL,
+      type: ForumNotificationTypeEnum.LIKE,
+      priority: ForumNotificationPriorityEnum.NORMAL,
     })
   }
 
@@ -120,11 +117,11 @@ export class ForumNotificationService extends BaseService {
    * @param dto 创建通知的数据
    * @returns 创建的通知信息
    */
-  async createFavoriteNotification(dto: CreateNotificationShortDto) {
+  async createFavoriteNotification(dto: CreateForumNotificationShortDto) {
     return this.createNotification({
       ...dto,
-      type: NotificationTypeEnum.FAVORITE,
-      priority: NotificationPriorityEnum.NORMAL,
+      type: ForumNotificationTypeEnum.FAVORITE,
+      priority: ForumNotificationPriorityEnum.NORMAL,
     })
   }
 
@@ -133,11 +130,11 @@ export class ForumNotificationService extends BaseService {
    * @param dto 创建通知的数据
    * @returns 创建的通知信息
    */
-  async createSystemNotification(dto: CreateNotificationShortDto) {
+  async createSystemNotification(dto: CreateForumNotificationShortDto) {
     return this.createNotification({
       ...dto,
-      type: NotificationTypeEnum.SYSTEM,
-      priority: NotificationPriorityEnum.NORMAL,
+      type: ForumNotificationTypeEnum.SYSTEM,
+      priority: ForumNotificationPriorityEnum.NORMAL,
     })
   }
 
@@ -147,7 +144,7 @@ export class ForumNotificationService extends BaseService {
    * @returns 通知列表
    */
   async queryNotificationList(
-    queryNotificationListDto: QueryNotificationListDto,
+    queryNotificationListDto: QueryForumNotificationListDto,
   ) {
     return this.notification.findPagination({
       where: queryNotificationListDto,
@@ -176,7 +173,7 @@ export class ForumNotificationService extends BaseService {
    */
   async queryUserNotificationList(
     profileId: number,
-    queryNotificationListDto: QueryNotificationListDto,
+    queryNotificationListDto: QueryForumNotificationListDto,
   ) {
     return this.queryNotificationList({
       ...queryNotificationListDto,
@@ -240,7 +237,7 @@ export class ForumNotificationService extends BaseService {
    * @param dto 标记所有已读的数据
    * @returns 标记结果
    */
-  async markAllNotificationRead(dto: ProfileIdDto) {
+  async markAllNotificationRead(dto: ForumProfileIdDto) {
     return this.notification.updateMany({
       where: {
         profileId: dto.profileId,
@@ -304,7 +301,7 @@ export class ForumNotificationService extends BaseService {
    * @param dto 获取未读数量的数据
    * @returns 未读通知数量
    */
-  async getUnreadCount(dto: ProfileIdDto) {
+  async getUnreadCount(dto: ForumProfileIdDto) {
     return {
       count: await this.notification.count({
         where: {
@@ -320,7 +317,7 @@ export class ForumNotificationService extends BaseService {
    * @param dto 获取用户未读数量的数据
    * @returns 未读通知数量
    */
-  async getUserUnreadCount(dto: ProfileIdDto) {
+  async getUserUnreadCount(dto: ForumProfileIdDto) {
     return {
       count: await this.notification.count({
         where: {

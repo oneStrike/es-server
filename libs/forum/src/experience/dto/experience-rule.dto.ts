@@ -11,17 +11,17 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ExperienceRuleTypeEnum } from '../experience.constant'
+import { ForumExperienceRuleTypeEnum } from '../experience.constant'
 
-export class BaseExperienceRuleDto extends BaseDto {
+export class BaseForumExperienceRuleDto extends BaseDto {
   @ValidateEnum({
     description:
       '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）',
-    example: ExperienceRuleTypeEnum.CREATE_TOPIC,
+    example: ForumExperienceRuleTypeEnum.CREATE_TOPIC,
     required: true,
-    enum: ExperienceRuleTypeEnum,
+    enum: ForumExperienceRuleTypeEnum,
   })
-  type!: ExperienceRuleTypeEnum
+  type!: ForumExperienceRuleTypeEnum
 
   @ValidateNumber({
     description: '经验值变化',

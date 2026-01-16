@@ -93,7 +93,7 @@ export class QueryForumTagDto extends IntersectionType(
  * 为主题分配标签 DTO
  * 用于将标签分配给指定的主题
  */
-export class AssignTagToTopicDto {
+export class AssignForumTagToTopicDto {
   @ValidateNumber({
     description: '主题ID',
     example: 1,
@@ -115,4 +115,4 @@ export class AssignTagToTopicDto {
  * 从主题移除标签 DTO
  * 用于从指定主题中移除标签
  */
-export class RemoveTagFromTopicDto extends AssignTagToTopicDto {}
+export class RemoveForumTagFromTopicDto extends AssignForumTagToTopicDto {}

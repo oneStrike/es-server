@@ -46,7 +46,7 @@ export class DeleteForumTopicLikeDto extends IntersectionType(
  * 切换主题点赞状态DTO
  * 用于切换主题的点赞状态（点赞/取消点赞）
  */
-export class ToggleTopicLikeDto extends PickType(CreateForumTopicLikeDto, [
+export class ToggleForumTopicLikeDto extends PickType(CreateForumTopicLikeDto, [
   'topicId',
   'profileId',
 ]) {}

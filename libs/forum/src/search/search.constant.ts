@@ -1,7 +1,7 @@
 /**
  * 搜索类型枚举
  */
-export enum SearchTypeEnum {
+export enum ForumSearchTypeEnum {
   /** 主题 */
   TOPIC = 'topic',
   /** 回复 */
@@ -13,7 +13,7 @@ export enum SearchTypeEnum {
 /**
  * 排序类型枚举
  */
-export enum SearchSortTypeEnum {
+export enum ForumSearchSortTypeEnum {
   /** 最新 */
   LATEST = 'latest',
   /** 最热 */

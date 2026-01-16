@@ -11,9 +11,9 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { PointRuleTypeEnum } from '../point.constant'
+import { ForumPointRuleTypeEnum } from '../point.constant'
 
-export class BasePointRuleDto extends BaseDto {
+export class BaseForumPointRuleDto extends BaseDto {
   @ValidateString({
     description: '规则名称',
     example: '发表主题奖励',
@@ -25,11 +25,11 @@ export class BasePointRuleDto extends BaseDto {
   @ValidateEnum({
     description:
       '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）',
-    example: PointRuleTypeEnum.CREATE_TOPIC,
+    example: ForumPointRuleTypeEnum.CREATE_TOPIC,
     required: true,
-    enum: PointRuleTypeEnum,
+    enum: ForumPointRuleTypeEnum,
   })
-  type!: PointRuleTypeEnum
+  type!: ForumPointRuleTypeEnum
 
   @ValidateNumber({
     description: '积分变化（正数为获得，负数为消费）',

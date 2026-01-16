@@ -20,16 +20,16 @@ export class ExperienceController {
   @Get('rules-page')
   @ApiPageDoc({
     summary: '获取经验规则分页',
-    model: BaseExperienceRuleDto,
+    model: BaseForumExperienceRuleDto,
   })
-  async getExperienceRules(@Query() query: QueryExperienceRuleDto) {
+  async getExperienceRules(@Query() query: QueryForumExperienceRuleDto) {
     return this.experienceService.getExperienceRulePage(query)
   }
 
   @Get('rules-detail')
   @ApiDoc({
     summary: '获取经验规则详情',
-    model: BaseExperienceRuleDto,
+    model: BaseForumExperienceRuleDto,
   })
   async getExperienceRule(@Query() dto: IdDto) {
     return this.experienceService.getExperienceRuleDetail(dto.id)
@@ -38,16 +38,16 @@ export class ExperienceController {
   @Post('rules-create')
   @ApiDoc({
     summary: '创建经验规则',
-    model: BaseExperienceRuleDto,
+    model: BaseForumExperienceRuleDto,
   })
-  async createExperienceRule(@Body() dto: CreateExperienceRuleDto) {
+  async createExperienceRule(@Body() dto: CreateForumExperienceRuleDto) {
     return this.experienceService.createExperienceRule(dto)
   }
 
   @Post('rules-update')
   @ApiDoc({
     summary: '更新经验规则',
-    model: BaseExperienceRuleDto,
+    model: BaseForumExperienceRuleDto,
   })
   async updateExperienceRule(@Body() dto: UpdateForumExperienceRuleDto) {
     return this.experienceService.updateExperienceRule(dto)
@@ -56,7 +56,7 @@ export class ExperienceController {
   @Post('rules-delete')
   @ApiDoc({
     summary: '删除经验规则',
-    model: BaseExperienceRuleDto,
+    model: BaseForumExperienceRuleDto,
   })
   async deleteExperienceRule(@Body() dto: IdDto) {
     return this.experienceService.deleteExperienceRule(dto.id)
@@ -65,25 +65,25 @@ export class ExperienceController {
   @Post('add')
   @ApiDoc({
     summary: '增加经验',
-    model: BaseExperienceRuleDto,
+    model: BaseForumExperienceRuleDto,
   })
-  async addExperience(@Body() dto: AddExperienceDto) {
+  async addExperience(@Body() dto: AddForumExperienceDto) {
     return this.experienceService.addExperience(dto)
   }
 
   @Get('records-page')
   @ApiPageDoc({
     summary: '获取经验记录分页',
-    model: BaseExperienceRuleDto,
+    model: BaseForumExperienceRuleDto,
   })
-  async getExperienceRecords(@Query() query: QueryExperienceRecordDto) {
+  async getExperienceRecords(@Query() query: QueryForumExperienceRecordDto) {
     return this.experienceService.getExperienceRecordPage(query)
   }
 
   @Get('records-detail')
   @ApiDoc({
     summary: '获取经验记录详情',
-    model: BaseExperienceRuleDto,
+    model: BaseForumExperienceRuleDto,
   })
   async getExperienceRecord(@Query() dto: IdDto) {
     return this.experienceService.getExperienceRecordDetail(dto.id)
@@ -92,7 +92,7 @@ export class ExperienceController {
   @Get('user-stats')
   @ApiDoc({
     summary: '获取用户经验统计',
-    model: BaseExperienceRuleDto,
+    model: BaseForumExperienceRuleDto,
   })
   async getUserExperienceStats(@Query('profileId') profileId: number) {
     return this.experienceService.getUserExperienceStats(profileId)

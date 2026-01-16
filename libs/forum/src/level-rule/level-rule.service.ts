@@ -7,9 +7,9 @@ import {
   ForumLevelStatisticsDto,
   QueryForumLevelRuleDto,
   UpdateForumLevelRuleDto,
-  ForumUserLevelInfoDto,
+  UserForumLevelInfoDto,
 } from './dto/level-rule.dto'
-import { LevelRulePermissionEnum } from './level-rule.constant'
+import { ForumLevelRulePermissionEnum } from './level-rule.constant'
 
 /**
  * 等级规则服务
@@ -57,7 +57,7 @@ export class ForumLevelRuleService extends BaseService {
    * @param dto 等级规则数据
    * @returns 创建的等级规则
    */
-  async createLevelRule(dto: CreateLevelRuleDto) {
+  async createLevelRule(dto: CreateForumLevelRuleDto) {
     if (await this.forumLevelRule.exists({ name: dto.name })) {
       throw new BadRequestException('已存在相同等级规则')
     }
@@ -101,7 +101,7 @@ export class ForumLevelRuleService extends BaseService {
    * @param updateLevelRuleDto 更新数据
    * @returns 更新后的等级规则
    */
-  async updateLevelRule(updateLevelRuleDto: UpdateLevelRuleDto) {
+  async updateLevelRule(updateLevelRuleDto: UpdateForumLevelRuleDto) {
     const { id, ...updateData } = updateLevelRuleDto
 
     if (
@@ -154,7 +154,7 @@ export class ForumLevelRuleService extends BaseService {
    * @param profileId 用户ID
    * @returns 用户等级信息，包括当前等级、进度、权限等
    */
-  async getUserLevelInfo(profileId: number): Promise<UserLevelInfoDto> {
+  async getUserLevelInfo(profileId: number): Promise<UserForumLevelInfoDto> {
     const profile = await this.forumProfile.findUnique({
       where: { id: profileId },
       include: {
@@ -221,7 +221,7 @@ export class ForumLevelRuleService extends BaseService {
    * @param dto 等级权限检查DTO
    * @returns 权限检查结果
    */
-  async checkLevelPermission(dto: CheckLevelPermissionDto) {
+  async checkLevelPermission(dto: CheckForumLevelPermissionDto) {
     const { profileId, permissionType } = dto
 
     const profile = await this.forumProfile.findUnique({
@@ -248,7 +248,7 @@ export class ForumLevelRuleService extends BaseService {
     let hasPermission = true
 
     switch (permissionType) {
-      case LevelRulePermissionEnum.DAILY_TOPIC_LIMIT:
+      case ForumLevelRulePermissionEnum.DAILY_TOPIC_LIMIT:
         limit = level.dailyTopicLimit
         if (limit > 0) {
           used = await this.forumTopic.count({
@@ -261,7 +261,7 @@ export class ForumLevelRuleService extends BaseService {
         }
         break
 
-      case LevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT:
+      case ForumLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT:
         limit = level.dailyReplyCommentLimit
         if (limit > 0) {
           used = await this.forumReply.count({
@@ -274,7 +274,7 @@ export class ForumLevelRuleService extends BaseService {
         }
         break
 
-      case LevelRulePermissionEnum.POST_INTERVAL:
+      case ForumLevelRulePermissionEnum.POST_INTERVAL:
         limit = level.postInterval
         if (limit > 0) {
           const lastTopic = await this.forumTopic.findFirst({
@@ -312,7 +312,7 @@ export class ForumLevelRuleService extends BaseService {
         }
         break
 
-      case LevelRulePermissionEnum.DAILY_LIKE_LIMIT:
+      case ForumLevelRulePermissionEnum.DAILY_LIKE_LIMIT:
         limit = level.dailyLikeLimit
         if (limit > 0) {
           const topicLikes = await this.forumTopicLike.count({
@@ -332,7 +332,7 @@ export class ForumLevelRuleService extends BaseService {
         }
         break
 
-      case LevelRulePermissionEnum.DAILY_FAVORITE_LIMIT:
+      case ForumLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT:
         limit = level.dailyFavoriteLimit
         if (limit > 0) {
           used = await this.forumTopicFavorite.count({
