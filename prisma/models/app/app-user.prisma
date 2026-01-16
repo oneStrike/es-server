@@ -1,0 +1,28 @@
+model AppUser {
+  id          Int       @id @default(autoincrement())
+  account     String    @unique @map("account") @db.VarChar(50)
+  nickname    String?   @map("nickname") @db.VarChar(100)
+  avatar      String?   @map("avatar_url") @db.VarChar(500)
+  phone       String?   @unique @map("phone_number") @db.VarChar(20)
+  email       String?   @unique @map("email_address") @db.VarChar(255)
+  isEnabled   Boolean   @default(true) @map("is_enabled")
+  gender      Int       @default(0) @map("gender_type") @db.SmallInt
+  birthDate   DateTime? @map("birth_date") @db.Date
+  isSignedIn  Boolean   @default(false) @map("is_signed_in")
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz
+  lastLoginIp String?   @map("last_login_ip") @db.VarChar(45)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  forumProfile ForumProfile?
+  noticeReads  AppNoticeRead[]
+
+  @@index([isEnabled])
+  @@index([gender])
+  @@index([createdAt])
+  @@index([lastLoginAt])
+  @@index([phone])
+  @@index([email])
+  @@map("app_user")
+}

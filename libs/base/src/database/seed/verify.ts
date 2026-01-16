@@ -75,8 +75,8 @@ async function verifySeedData() {
   results.push(await checkTable('workComicTag', 10))
 
   console.log('\n🖥️ 检查客户端配置数据...')
-  results.push(await checkTable('clientPage', 1))
-  results.push(await checkTable('clientNotice', 1))
+  results.push(await checkTable('appPage', 1))
+  results.push(await checkTable('appNotice', 1))
 
   console.log('\n💬 检查论坛配置数据...')
   results.push(await checkTable('forumSection', 3))

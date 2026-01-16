@@ -9,11 +9,11 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/AdminUser'
-export type * from './models/ClientConfig'
-export type * from './models/ClientNoticeRead'
-export type * from './models/ClientNotice'
-export type * from './models/ClientPage'
-export type * from './models/ClientUser'
+export type * from './models/AppConfig'
+export type * from './models/AppNoticeRead'
+export type * from './models/AppNotice'
+export type * from './models/AppPage'
+export type * from './models/AppUser'
 export type * from './models/ForumBadge'
 export type * from './models/ForumConfigHistory'
 export type * from './models/ForumConfig'

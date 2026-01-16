@@ -52,11 +52,11 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   AdminUser: 'AdminUser',
-  ClientConfig: 'ClientConfig',
-  ClientNoticeRead: 'ClientNoticeRead',
-  ClientNotice: 'ClientNotice',
-  ClientPage: 'ClientPage',
-  ClientUser: 'ClientUser',
+  AppConfig: 'AppConfig',
+  AppNoticeRead: 'AppNoticeRead',
+  AppNotice: 'AppNotice',
+  AppPage: 'AppPage',
+  AppUser: 'AppUser',
   ForumBadge: 'ForumBadge',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
@@ -144,26 +144,26 @@ export const RelationLoadStrategy = {
 export type RelationLoadStrategy = (typeof RelationLoadStrategy)[keyof typeof RelationLoadStrategy]
 
 
-export const ClientConfigScalarFieldEnum = {
+export const AppConfigScalarFieldEnum = {
   id: 'id',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type ClientConfigScalarFieldEnum = (typeof ClientConfigScalarFieldEnum)[keyof typeof ClientConfigScalarFieldEnum]
+export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
-export const ClientNoticeReadScalarFieldEnum = {
+export const AppNoticeReadScalarFieldEnum = {
   id: 'id',
   noticeId: 'noticeId',
   userId: 'userId',
   readAt: 'readAt'
 } as const
 
-export type ClientNoticeReadScalarFieldEnum = (typeof ClientNoticeReadScalarFieldEnum)[keyof typeof ClientNoticeReadScalarFieldEnum]
+export type AppNoticeReadScalarFieldEnum = (typeof AppNoticeReadScalarFieldEnum)[keyof typeof AppNoticeReadScalarFieldEnum]
 
 
-export const ClientNoticeScalarFieldEnum = {
+export const AppNoticeScalarFieldEnum = {
   id: 'id',
   title: 'title',
   content: 'content',
@@ -181,10 +181,10 @@ export const ClientNoticeScalarFieldEnum = {
   enablePlatform: 'enablePlatform'
 } as const
 
-export type ClientNoticeScalarFieldEnum = (typeof ClientNoticeScalarFieldEnum)[keyof typeof ClientNoticeScalarFieldEnum]
+export type AppNoticeScalarFieldEnum = (typeof AppNoticeScalarFieldEnum)[keyof typeof AppNoticeScalarFieldEnum]
 
 
-export const ClientPageScalarFieldEnum = {
+export const AppPageScalarFieldEnum = {
   id: 'id',
   code: 'code',
   path: 'path',
@@ -198,10 +198,10 @@ export const ClientPageScalarFieldEnum = {
   enablePlatform: 'enablePlatform'
 } as const
 
-export type ClientPageScalarFieldEnum = (typeof ClientPageScalarFieldEnum)[keyof typeof ClientPageScalarFieldEnum]
+export type AppPageScalarFieldEnum = (typeof AppPageScalarFieldEnum)[keyof typeof AppPageScalarFieldEnum]
 
 
-export const ClientUserScalarFieldEnum = {
+export const AppUserScalarFieldEnum = {
   id: 'id',
   account: 'account',
   nickname: 'nickname',
@@ -219,7 +219,7 @@ export const ClientUserScalarFieldEnum = {
   deletedAt: 'deletedAt'
 } as const
 
-export type ClientUserScalarFieldEnum = (typeof ClientUserScalarFieldEnum)[keyof typeof ClientUserScalarFieldEnum]
+export type AppUserScalarFieldEnum = (typeof AppUserScalarFieldEnum)[keyof typeof AppUserScalarFieldEnum]
 
 
 export const ForumBadgeScalarFieldEnum = {

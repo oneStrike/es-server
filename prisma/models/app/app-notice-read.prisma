@@ -1,0 +1,15 @@
+model AppNoticeRead {
+  id       Int      @id @default(autoincrement())
+  noticeId Int      @map("notice_id")
+  userId   Int      @map("user_id")
+  readAt   DateTime @default(now()) @map("read_at") @db.Timestamptz(6)
+
+  notice AppNotice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  user   AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([noticeId, userId])
+  @@index([noticeId])
+  @@index([userId])
+  @@index([readAt])
+  @@map("app_notice_read")
+}
