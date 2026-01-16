@@ -14,14 +14,6 @@ import {
 import { ExperienceRuleTypeEnum } from '../experience.constant'
 
 export class BaseExperienceRuleDto extends BaseDto {
-  @ValidateString({
-    description: '规则名称',
-    example: '发表主题奖励',
-    required: true,
-    maxLength: 50,
-  })
-  name!: string
-
   @ValidateEnum({
     description:
       '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）',
@@ -75,5 +67,5 @@ export class UpdateExperienceRuleDto extends IntersectionType(
 
 export class QueryExperienceRuleDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseExperienceRuleDto, ['name', 'type', 'isEnabled'])),
+  PartialType(PickType(BaseExperienceRuleDto, ['type', 'isEnabled'])),
 ) {}
