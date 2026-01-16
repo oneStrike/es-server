@@ -50,8 +50,10 @@ export class ExperienceService extends BaseService {
    * @returns 创建的规则信息
    */
   async createExperienceRule(dto: CreateExperienceRuleDto) {
-    if (await this.forumExperienceRule.exists({ name: dto.name })) {
-      throw new BadRequestException('经验规则名称已存在')
+    if (
+      await this.forumExperienceRule.exists({ type: dto.type, isEnabled: true })
+    ) {
+      throw new BadRequestException('经验规则类型已存在')
     }
     return this.forumExperienceRule.create({
       data: dto,
@@ -69,10 +71,6 @@ export class ExperienceService extends BaseService {
         ...dto,
         isEnabled: dto.isEnabled,
         type: dto.type,
-        name: {
-          contains: dto.name,
-          mode: 'insensitive',
-        },
       },
     })
   }
@@ -101,10 +99,11 @@ export class ExperienceService extends BaseService {
    */
   async updateExperienceRule(dto: UpdateExperienceRuleDto) {
     const { id, ...updateData } = dto
+
     if (
-      await this.forumExperienceRule.exists({ name: dto.name, id: { not: id } })
+      await this.forumExperienceRule.exists({ type: dto.type, id: { not: id } })
     ) {
-      throw new BadRequestException('经验规则名称已存在')
+      throw new BadRequestException('经验规则类型已存在')
     }
     return this.forumExperienceRule.update({
       where: { id },

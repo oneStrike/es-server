@@ -309,7 +309,6 @@ export type ForumExperienceRecordScalarFieldEnum = (typeof ForumExperienceRecord
 
 export const ForumExperienceRuleScalarFieldEnum = {
   id: 'id',
-  name: 'name',
   type: 'type',
   experience: 'experience',
   dailyLimit: 'dailyLimit',
