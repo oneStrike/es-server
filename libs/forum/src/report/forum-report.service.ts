@@ -185,7 +185,7 @@ export class ForumReportService extends BaseService {
    * @returns 包含举报详情和目标内容信息的完整记录
    * @throws NotFoundException 举报记录不存在
    */
-  async getForumReportById(id: number) {
+  async getReportById(id: number) {
     const report = await this.forumReport.findUnique({
       where: { id },
       include: {

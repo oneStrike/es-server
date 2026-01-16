@@ -20,7 +20,7 @@ import {
  * 提供论坛通知的创建、查询、标记已读、删除等核心业务逻辑
  */
 @Injectable()
-export class NotificationService extends BaseService {
+export class ForumNotificationService extends BaseService {
   constructor() {
     super()
   }

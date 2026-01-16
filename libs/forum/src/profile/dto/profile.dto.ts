@@ -13,7 +13,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ProfileStatusEnum } from '../user.constant'
+import { ProfileStatusEnum } from '../profile.constant'
 
 /**
  * 基础用户个人信息数据传输对象
@@ -101,7 +101,7 @@ export class BaseClientUserInfoDto extends BaseDto {
 }
 
 /**
- * 基础用户个人信息数据传输对象
+ * 基础用户资料数据传输对象
  * 包含用户ID、积分数量、等级ID、签名、个人简介、用户状态、封禁原因、封禁结束时间等字段
  */
 export class BaseForumProfileDto extends BaseDto {
@@ -179,9 +179,9 @@ export class BaseForumProfileDto extends BaseDto {
 }
 
 /**
- * 查询用户列表DTO
+ * 查询用户资料列表DTO
  */
-export class QueryUserListDto extends IntersectionType(
+export class QueryProfileListDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseForumProfileDto, ['levelId', 'status'])),
 ) {
@@ -195,9 +195,9 @@ export class QueryUserListDto extends IntersectionType(
 }
 
 /**
- * 更新用户状态DTO
+ * 更新用户资料状态DTO
  */
-export class UpdateUserStatusDto extends PickType(BaseForumProfileDto, [
+export class UpdateProfileStatusDto extends PickType(BaseForumProfileDto, [
   'userId',
   'status',
   'banReason',
@@ -219,4 +219,4 @@ export class GrantBadgeDto extends PickType(BaseForumProfileDto, ['userId']) {
 /**
  * 撤销徽章DTO
  */
-export class RevokeBadgeDto extends GrantBadgeDto {}
+export class RevokeForumBadgeDto extends GrantForumBadgeDto {}

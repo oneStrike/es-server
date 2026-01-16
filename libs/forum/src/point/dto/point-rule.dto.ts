@@ -63,17 +63,17 @@ export class BasePointRuleDto extends BaseDto {
   remark?: string
 }
 
-export class CreatePointRuleDto extends OmitType(
-  BasePointRuleDto,
+export class CreateForumPointRuleDto extends OmitType(
+  BaseForumPointRuleDto,
   OMIT_BASE_FIELDS,
 ) {}
 
-export class UpdatePointRuleDto extends IntersectionType(
-  PartialType(CreatePointRuleDto),
+export class UpdateForumPointRuleDto extends IntersectionType(
+  PartialType(CreateForumPointRuleDto),
   IdDto,
 ) {}
 
-export class QueryPointRuleDto extends IntersectionType(
+export class QueryForumPointRuleDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BasePointRuleDto, ['name', 'type', 'isEnabled'])),
+  PartialType(PickType(BaseForumPointRuleDto, ['name', 'type', 'isEnabled'])),
 ) {}

@@ -33,7 +33,7 @@ export class ForumConfigController {
     @Body() updateDto: UpdateForumConfigDto,
     @CurrentUser() currentUser: JwtUserInfoInterface,
   ) {
-    return this.forumConfigService.updateForumConfig(updateDto, currentUser.sub)
+    return this.forumConfigService.updateConfig(updateDto, currentUser.sub)
   }
 
   @Post('reset')

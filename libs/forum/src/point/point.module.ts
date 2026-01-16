@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { PointService } from './point.service'
+import { ForumPointService } from './point.service'
 
 /**
  * 积分模块
@@ -7,7 +7,7 @@ import { PointService } from './point.service'
  */
 @Module({
   imports: [],
-  providers: [PointService],
-  exports: [PointService],
+  providers: [ForumPointService],
+  exports: [ForumPointService],
 })
-export class PointModule {}
+export class ForumPointModule {}

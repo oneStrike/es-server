@@ -1,17 +1,17 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import {
-  CreateSensitiveWordDto,
-  MatchedWordDto,
-  QuerySensitiveWordDto,
-  SensitiveWordDetectDto,
-  SensitiveWordDetectService,
-  SensitiveWordService,
-  SensitiveWordStatisticsDataDto,
-  SensitiveWordStatisticsQueryDto,
-  SensitiveWordStatisticsResponseDto,
+  CreateForumSensitiveWordDto,
+  ForumMatchedWordDto,
+  QueryForumSensitiveWordDto,
+  ForumSensitiveWordDetectDto,
+  ForumSensitiveWordDetectService,
+  ForumSensitiveWordService,
+  ForumSensitiveWordStatisticsDataDto,
+  ForumSensitiveWordStatisticsQueryDto,
+  ForumSensitiveWordStatisticsResponseDto,
   SensitiveWordStatisticsService,
-UpdateSensitiveWordDto
+UpdateForumSensitiveWordDto
 } from '@libs/forum/sensitive-word'
 
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
@@ -25,9 +25,9 @@ import { ApiTags } from '@nestjs/swagger'
 @Controller('admin/forum/sensitive-word')
 export class SensitiveWordController {
   constructor(
-    private readonly sensitiveWordService: SensitiveWordService,
+    private readonly sensitiveWordService: ForumSensitiveWordService,
     private readonly statisticsService: SensitiveWordStatisticsService,
-    private readonly detectService: SensitiveWordDetectService,
+    private readonly detectService: ForumSensitiveWordDetectService,
   ) {}
 
   /**
@@ -38,9 +38,9 @@ export class SensitiveWordController {
   @Get('/page')
   @ApiPageDoc({
     summary: '获取敏感词分页列表',
-    model: CreateSensitiveWordDto,
+    model: CreateForumSensitiveWordDto,
   })
-  async getSensitiveWordPage(@Query() query: QuerySensitiveWordDto) {
+  async getSensitiveWordPage(@Query() query: QueryForumSensitiveWordDto) {
     return this.sensitiveWordService.getSensitiveWordPage(query)
   }
 
@@ -52,9 +52,9 @@ export class SensitiveWordController {
   @Post('/create')
   @ApiDoc({
     summary: '创建敏感词',
-    model: CreateSensitiveWordDto,
+    model: CreateForumSensitiveWordDto,
   })
-  async createSensitiveWord(@Body() body: CreateSensitiveWordDto) {
+  async createSensitiveWord(@Body() body: CreateForumSensitiveWordDto) {
     return this.sensitiveWordService.createSensitiveWord(body)
   }
 
@@ -66,9 +66,9 @@ export class SensitiveWordController {
   @Post('/update')
   @ApiDoc({
     summary: '更新敏感词',
-    model: UpdateSensitiveWordDto,
+    model: UpdateForumSensitiveWordDto,
   })
-  async updateSensitiveWord(@Body() body: UpdateSensitiveWordDto) {
+  async updateSensitiveWord(@Body() body: UpdateForumSensitiveWordDto) {
     return this.sensitiveWordService.updateSensitiveWord(body)
   }
 
@@ -108,10 +108,10 @@ export class SensitiveWordController {
   @Post('/detect')
   @ApiDoc({
     summary: '检测文本中的敏感词',
-    model: MatchedWordDto,
+    model: ForumMatchedWordDto,
     isArray: true,
   })
-  async detect(@Body() body: SensitiveWordDetectDto) {
+  async detect(@Body() body: ForumSensitiveWordDetectDto) {
     return this.detectService.getMatchedWords(body)
   }
 
@@ -123,9 +123,9 @@ export class SensitiveWordController {
   @Get('/statistics')
   @ApiDoc({
     summary: '获取统计查询结果',
-    model: SensitiveWordStatisticsResponseDto,
+    model: ForumSensitiveWordStatisticsResponseDto,
   })
-  async getStatistics(@Query() query: SensitiveWordStatisticsQueryDto) {
+  async getStatistics(@Query() query: ForumSensitiveWordStatisticsQueryDto) {
     return this.sensitiveWordService.getStatistics(query)
   }
 
@@ -136,7 +136,7 @@ export class SensitiveWordController {
   @Get('/statistics/full')
   @ApiDoc({
     summary: '获取完整统计数据',
-    model: SensitiveWordStatisticsDataDto,
+    model: ForumSensitiveWordStatisticsDataDto,
   })
   async getFullStatistics() {
     return this.statisticsService.getStatistics()

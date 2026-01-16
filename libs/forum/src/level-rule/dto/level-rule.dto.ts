@@ -17,7 +17,7 @@ import { LevelRulePermissionEnum } from '../level-rule.constant'
 /**
  * 等级规则基础DTO
  */
-export class BaseLevelRuleDto extends BaseDto {
+export class BaseForumLevelRuleDto extends BaseDto {
   @ValidateString({
     description: '等级名称',
     example: '新手',
@@ -297,7 +297,7 @@ export class LevelDistributionItemDto {
  * 等级统计DTO
  * 等级系统整体统计数据
  */
-export class LevelStatisticsDto {
+export class ForumLevelStatisticsDto {
   @ApiProperty({ description: '总等级数量', example: 10 })
   totalLevels!: number
 

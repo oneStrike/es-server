@@ -1,11 +1,11 @@
 import { BaseService } from '@libs/base/database'
 import { Injectable, Logger } from '@nestjs/common'
 import {
-  LevelStatisticsDto,
-  RecentHitStatisticsDto,
-  StatisticsDataDto,
-  TopHitStatisticsDto,
-  TypeStatisticsDto,
+  ForumSensitiveWordLevelStatisticsDto,
+  ForumSensitiveWordRecentHitStatisticsDto,
+  ForumSensitiveWordStatisticsDataDto,
+  ForumSensitiveWordTopHitStatisticsDto,
+  ForumSensitiveWordTypeStatisticsDto,
 } from './dto/sensitive-word-statistics.dto'
 import {
   SensitiveWordLevelNames,
@@ -35,7 +35,7 @@ export class SensitiveWordStatisticsService extends BaseService {
    * 包含所有维度的统计信息
    * @returns 完整的统计数据
    */
-  async getStatistics(): Promise<StatisticsDataDto> {
+  async getStatistics(): Promise<ForumSensitiveWordStatisticsDataDto> {
     const [
       totalWords,
       enabledWords,
@@ -183,7 +183,7 @@ export class SensitiveWordStatisticsService extends BaseService {
    * 按敏感词级别分组统计，包含每个级别的敏感词数量和命中次数
    * @returns 级别统计列表
    */
-  private async getLevelStatistics(): Promise<LevelStatisticsDto[]> {
+  private async getLevelStatistics(): Promise<ForumSensitiveWordLevelStatisticsDto[]> {
     const results = await this.sensitiveWord.groupBy({
       by: ['level'],
       _count: {
@@ -207,7 +207,7 @@ export class SensitiveWordStatisticsService extends BaseService {
    * 按敏感词类型分组统计，包含每个类型的敏感词数量和命中次数
    * @returns 类型统计列表
    */
-  private async getTypeStatistics(): Promise<TypeStatisticsDto[]> {
+  private async getTypeStatistics(): Promise<ForumSensitiveWordTypeStatisticsDto[]> {
     const results = await this.sensitiveWord.groupBy({
       by: ['type'],
       _count: {
@@ -231,7 +231,7 @@ export class SensitiveWordStatisticsService extends BaseService {
    * 返回命中次数最高的20个敏感词
    * @returns 热门敏感词列表
    */
-  private async getTopHitWords(): Promise<TopHitStatisticsDto[]> {
+  private async getTopHitWords(): Promise<ForumSensitiveWordTopHitStatisticsDto[]> {
     const results = await this.sensitiveWord.findMany({
       where: {
         hitCount: {
@@ -265,7 +265,7 @@ export class SensitiveWordStatisticsService extends BaseService {
    * 返回最近命中的20个敏感词，按最后命中时间倒序排列
    * @returns 最近命中的敏感词列表
    */
-  private async getRecentHitWords(): Promise<RecentHitStatisticsDto[]> {
+  private async getRecentHitWords(): Promise<ForumSensitiveWordRecentHitStatisticsDto[]> {
     const results = await this.sensitiveWord.findMany({
       where: {
         lastHitAt: {

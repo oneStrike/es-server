@@ -26,7 +26,7 @@ export class ForumViewService extends BaseService {
     return this.prisma.forumProfile
   }
 
-  async createForumView(createForumViewDto: CreateForumViewDto) {
+  async createView(createForumViewDto: CreateForumViewDto) {
     const { topicId, replyId, profileId, type, ...viewData } = createForumViewDto
 
     const topic = await this.forumTopic.findUnique({

@@ -1,9 +1,9 @@
-import { ApiPageDoc, Public } from '@libs/base/decorators'
 import {
   LibAppNoticeService,
   NoticePageResponseDto,
   QueryNoticeDto,
 } from '@libs/app-config/notice'
+import { ApiPageDoc, Public } from '@libs/base/decorators'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

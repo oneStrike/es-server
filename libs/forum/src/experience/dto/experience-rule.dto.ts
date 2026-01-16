@@ -55,17 +55,17 @@ export class BaseExperienceRuleDto extends BaseDto {
   remark?: string
 }
 
-export class CreateExperienceRuleDto extends OmitType(
-  BaseExperienceRuleDto,
+export class CreateForumExperienceRuleDto extends OmitType(
+  BaseForumExperienceRuleDto,
   OMIT_BASE_FIELDS,
 ) {}
 
-export class UpdateExperienceRuleDto extends IntersectionType(
-  PartialType(CreateExperienceRuleDto),
+export class UpdateForumExperienceRuleDto extends IntersectionType(
+  PartialType(CreateForumExperienceRuleDto),
   IdDto,
 ) {}
 
-export class QueryExperienceRuleDto extends IntersectionType(
+export class QueryForumExperienceRuleDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseExperienceRuleDto, ['type', 'isEnabled'])),
+  PartialType(PickType(BaseForumExperienceRuleDto, ['type', 'isEnabled'])),
 ) {}

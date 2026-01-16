@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { SearchService } from './search.service'
+import { ForumSearchService } from './search.service'
 
 /**
  * 搜索模块
@@ -7,7 +7,7 @@ import { SearchService } from './search.service'
  */
 @Module({
   imports: [],
-  providers: [SearchService],
-  exports: [SearchService],
+  providers: [ForumSearchService],
+  exports: [ForumSearchService],
 })
-export class SearchModule {}
+export class ForumSearchModule {}

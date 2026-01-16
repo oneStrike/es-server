@@ -1,16 +1,16 @@
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { LevelRuleService } from '../level-rule/level-rule.service'
-import { ProfileStatusEnum } from '../user/user.constant'
+import { ForumLevelRuleService } from '../level-rule/level-rule.service'
+import { ProfileStatusEnum } from '../profile/profile.constant'
 import {
-  AddExperienceDto,
-  QueryExperienceRecordDto,
+  AddForumExperienceDto,
+  QueryForumExperienceRecordDto,
 } from './dto/experience-record.dto'
 import {
-  CreateExperienceRuleDto,
-  QueryExperienceRuleDto,
-  UpdateExperienceRuleDto,
+  CreateForumExperienceRuleDto,
+  QueryForumExperienceRuleDto,
+  UpdateForumExperienceRuleDto,
 } from './dto/experience-rule.dto'
 
 /**
@@ -18,8 +18,8 @@ import {
  * 提供论坛经验的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ExperienceService extends BaseService {
-  constructor(private readonly levelRuleService: LevelRuleService) {
+export class ForumExperienceService extends BaseService {
+  constructor(private readonly levelRuleService: ForumLevelRuleService) {
     super()
   }
 
@@ -248,7 +248,7 @@ export class ExperienceService extends BaseService {
    * @param dto 查询条件
    * @returns 分页的记录列表
    */
-  async getExperienceRecordPage(dto: QueryExperienceRecordDto) {
+  async getExperienceRecordPage(dto: QueryForumExperienceRecordDto) {
     return this.forumExperienceRecord.findPagination({
       where: {
         ...dto,

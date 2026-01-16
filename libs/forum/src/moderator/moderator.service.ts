@@ -2,10 +2,10 @@ import { BaseService, ForumModeratorWhereInput } from '@libs/base/database'
 import { IdDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  AssignModeratorSectionDto,
-  CreateModeratorDto,
-  QueryModeratorDto,
-  UpdateModeratorDto,
+  AssignForumModeratorSectionDto,
+  CreateForumModeratorDto,
+  QueryForumModeratorDto,
+  UpdateForumModeratorDto,
 } from './dto/moderator.dto'
 import {
   ModeratorPermissionEnum,
@@ -17,7 +17,7 @@ import {
  * 提供论坛版主的增删改查、板块分配、权限管理等核心业务逻辑
  */
 @Injectable()
-export class ModeratorService extends BaseService {
+export class ForumModeratorService extends BaseService {
   constructor() {
     super()
   }
@@ -105,7 +105,7 @@ export class ModeratorService extends BaseService {
    * @param assignDto 分配参数
    * @returns 分配结果
    */
-  async assignModeratorSection(assignDto: AssignModeratorSectionDto) {
+  async assignModeratorSection(assignDto: AssignForumModeratorSectionDto) {
     const { moderatorId, sectionIds, permissions = [] } = assignDto
 
     const uniqueSectionIds = [...new Set(sectionIds)]

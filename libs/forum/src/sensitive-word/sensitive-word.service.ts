@@ -3,17 +3,17 @@ import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 
 import {
-  LevelStatisticsDto,
-  RecentHitStatisticsDto,
-  StatisticsQueryDto,
-  StatisticsResponseDto,
-  TopHitStatisticsDto,
-  TypeStatisticsDto,
+  ForumSensitiveWordLevelStatisticsDto,
+  ForumSensitiveWordRecentHitStatisticsDto,
+  ForumSensitiveWordStatisticsQueryDto,
+  ForumSensitiveWordStatisticsResponseDto,
+  ForumSensitiveWordTopHitStatisticsDto,
+  ForumSensitiveWordTypeStatisticsDto,
 } from './dto/sensitive-word-statistics.dto'
 import {
-  CreateSensitiveWordDto,
-  QuerySensitiveWordDto,
-  UpdateSensitiveWordDto,
+  CreateForumSensitiveWordDto,
+  QueryForumSensitiveWordDto,
+  UpdateForumSensitiveWordDto,
 } from './dto/sensitive-word.dto'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import {
@@ -24,7 +24,7 @@ import {
 import { SensitiveWordDetectService } from './sensitive-word-detect.service'
 
 @Injectable()
-export class SensitiveWordService extends BaseService {
+export class ForumSensitiveWordService extends BaseService {
   private readonly logger = new Logger(SensitiveWordService.name)
 
   constructor(
@@ -41,7 +41,7 @@ export class SensitiveWordService extends BaseService {
   /**
    * 获取敏感词列表
    */
-  async getSensitiveWordPage(dto: QuerySensitiveWordDto) {
+  async getSensitiveWordPage(dto: QueryForumSensitiveWordDto) {
     return this.sensitiveWord.findPagination({
       where: {
         ...dto,
@@ -55,7 +55,7 @@ export class SensitiveWordService extends BaseService {
   /**
    * 创建敏感词
    */
-  async createSensitiveWord(dto: CreateSensitiveWordDto) {
+  async createSensitiveWord(dto: CreateForumSensitiveWordDto) {
     const result = await this.sensitiveWord.create({
       data: dto,
     })
@@ -67,7 +67,7 @@ export class SensitiveWordService extends BaseService {
   /**
    * 更新敏感词
    */
-  async updateSensitiveWord(dto: UpdateSensitiveWordDto) {
+  async updateSensitiveWord(dto: UpdateForumSensitiveWordDto) {
     if (!(await this.sensitiveWord.exists({ id: dto.id }))) {
       throw new BadRequestException(`ID【${dto.id}】数据不存在`)
     }
@@ -114,7 +114,7 @@ export class SensitiveWordService extends BaseService {
   /**
    * 获取级别统计
    */
-  private async getLevelStatistics(): Promise<LevelStatisticsDto[]> {
+  private async getLevelStatistics(): Promise<ForumSensitiveWordLevelStatisticsDto[]> {
     const results = await this.sensitiveWord.groupBy({
       by: ['level'],
       _count: {
@@ -136,7 +136,7 @@ export class SensitiveWordService extends BaseService {
   /**
    * 获取类型统计
    */
-  private async getTypeStatistics(): Promise<TypeStatisticsDto[]> {
+  private async getTypeStatistics(): Promise<ForumSensitiveWordTypeStatisticsDto[]> {
     const results = await this.sensitiveWord.groupBy({
       by: ['type'],
       _count: {
@@ -158,7 +158,7 @@ export class SensitiveWordService extends BaseService {
   /**
    * 获取顶部命中统计
    */
-  private async getTopHitStatistics(): Promise<TopHitStatisticsDto[]> {
+  private async getTopHitStatistics(): Promise<ForumSensitiveWordTopHitStatisticsDto[]> {
     const results = await this.sensitiveWord.findMany({
       where: {
         hitCount: {
@@ -190,7 +190,7 @@ export class SensitiveWordService extends BaseService {
   /**
    * 获取最近命中统计
    */
-  private async getRecentHitStatistics(): Promise<RecentHitStatisticsDto[]> {
+  private async getRecentHitStatistics(): Promise<ForumSensitiveWordRecentHitStatisticsDto[]> {
     const results = await this.sensitiveWord.findMany({
       where: {
         lastHitAt: {
@@ -222,14 +222,14 @@ export class SensitiveWordService extends BaseService {
   /**
    * 获取统计查询结果
    */
-  async getStatistics(dto: StatisticsQueryDto): Promise<StatisticsResponseDto> {
+  async getStatistics(dto: ForumSensitiveWordStatisticsQueryDto): Promise<ForumSensitiveWordStatisticsResponseDto> {
     const type = dto.type || StatisticsTypeEnum.LEVEL
 
     let data:
-      | LevelStatisticsDto[]
-      | TypeStatisticsDto[]
-      | TopHitStatisticsDto[]
-      | RecentHitStatisticsDto[]
+      | ForumSensitiveWordLevelStatisticsDto[]
+      | ForumSensitiveWordTypeStatisticsDto[]
+      | ForumSensitiveWordTopHitStatisticsDto[]
+      | ForumSensitiveWordRecentHitStatisticsDto[]
 
     switch (type) {
       case StatisticsTypeEnum.LEVEL:

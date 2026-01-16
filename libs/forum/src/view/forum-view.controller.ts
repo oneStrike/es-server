@@ -33,7 +33,7 @@ export class ForumViewController {
     model: BaseForumViewDto,
   })
   async create(@Body() body: CreateForumViewDto) {
-    return this.forumViewService.createForumView(body)
+    return this.forumViewService.createView(body)
   }
 
   /**
@@ -100,7 +100,7 @@ export class ForumViewController {
     model: BaseDto,
   })
   async delete(@Body() body: IdDto) {
-    return this.forumViewService.deleteForumView(body.id)
+    return this.forumViewService.deleteView(body.id)
   }
 
   /**

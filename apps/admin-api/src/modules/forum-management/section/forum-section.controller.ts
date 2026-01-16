@@ -21,7 +21,7 @@ export class ForumSectionController {
     model: BaseForumSectionDto,
   })
   async getSectionPage(@Query() query: QueryForumSectionDto) {
-    return this.forumSectionService.getForumSectionPage(query)
+    return this.forumSectionService.getSectionPage(query)
   }
 
   @Get('detail')
@@ -65,7 +65,7 @@ export class ForumSectionController {
     model: BaseForumSectionDto,
   })
   async deleteSection(@Body() dto: IdDto) {
-    return this.forumSectionService.deleteForumSection(dto.id)
+    return this.forumSectionService.deleteSection(dto.id)
   }
 
   @Post('update-enabled')

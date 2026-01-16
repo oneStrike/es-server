@@ -138,9 +138,9 @@ export class QueryModeratorDto extends IntersectionType(
  * 查询版主操作日志数据传输对象
  * 用于分页查询版主的操作日志，支持按版主ID、操作类型、目标类型和时间范围筛选
  */
-export class QueryModeratorActionLogDto extends IntersectionType(
+export class QueryForumModeratorActionLogDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(AssignModeratorSectionDto, ['moderatorId'])),
+  PartialType(PickType(AssignForumModeratorSectionDto, ['moderatorId'])),
 ) {
   @ValidateNumber({
     description:
@@ -236,9 +236,9 @@ export class ModeratorDto extends BaseModeratorDto {
  * 版主分页响应数据传输对象
  * 用于返回分页的版主列表数据
  */
-export class ModeratorPageDto {
-  @ApiProperty({ description: '版主列表', type: [ModeratorDto] })
-  list!: ModeratorDto[]
+export class ForumModeratorPageDto {
+  @ApiProperty({ description: '版主列表', type: [ForumModeratorDto] })
+  list!: ForumModeratorDto[]
 
   @ValidateNumber({
     description: '总数',

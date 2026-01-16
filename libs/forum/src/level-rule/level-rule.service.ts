@@ -2,12 +2,12 @@ import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  CheckLevelPermissionDto,
-  CreateLevelRuleDto,
-  LevelStatisticsDto,
-  QueryLevelRuleDto,
-  UpdateLevelRuleDto,
-  UserLevelInfoDto,
+  CheckForumLevelPermissionDto,
+  CreateForumLevelRuleDto,
+  ForumLevelStatisticsDto,
+  QueryForumLevelRuleDto,
+  UpdateForumLevelRuleDto,
+  ForumUserLevelInfoDto,
 } from './dto/level-rule.dto'
 import { LevelRulePermissionEnum } from './level-rule.constant'
 
@@ -16,7 +16,7 @@ import { LevelRulePermissionEnum } from './level-rule.constant'
  * 负责管理论坛用户等级规则、权限检查、等级升级等功能
  */
 @Injectable()
-export class LevelRuleService extends BaseService {
+export class ForumLevelRuleService extends BaseService {
   // 获取等级规则模型
   get forumLevelRule() {
     return this.prisma.forumLevelRule
@@ -72,7 +72,7 @@ export class LevelRuleService extends BaseService {
    * @param dto 查询参数
    * @returns 分页的等级规则列表
    */
-  async getLevelRulePage(dto: QueryLevelRuleDto) {
+  async getLevelRulePage(dto: QueryForumLevelRuleDto) {
     return this.forumLevelRule.findPagination({
       where: {
         ...dto,
@@ -362,7 +362,7 @@ export class LevelRuleService extends BaseService {
    * 获取等级统计信息
    * @returns 等级统计数据
    */
-  async getLevelStatistics(): Promise<LevelStatisticsDto> {
+  async getLevelStatistics(): Promise<ForumLevelStatisticsDto> {
     const levels = await this.forumLevelRule.findMany({
       where: {
         isEnabled: true,

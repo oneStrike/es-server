@@ -1,13 +1,13 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  AddExperienceDto,
-  BaseExperienceRuleDto,
-  CreateExperienceRuleDto,
-  ExperienceService,
-  QueryExperienceRecordDto,
-  QueryExperienceRuleDto,
-  UpdateExperienceRuleDto,
+  AddForumExperienceDto,
+  BaseForumExperienceRuleDto,
+  CreateForumExperienceRuleDto,
+  ForumExperienceService,
+  QueryForumExperienceRecordDto,
+  QueryForumExperienceRuleDto,
+  UpdateForumExperienceRuleDto,
 } from '@libs/forum/experience'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -15,7 +15,7 @@ import { ApiTags } from '@nestjs/swagger'
 @Controller('/admin/forum/experience')
 @ApiTags('论坛模块/经验管理')
 export class ExperienceController {
-  constructor(private readonly experienceService: ExperienceService) {}
+  constructor(private readonly experienceService: ForumExperienceService) {}
 
   @Get('rules-page')
   @ApiPageDoc({
@@ -49,7 +49,7 @@ export class ExperienceController {
     summary: '更新经验规则',
     model: BaseExperienceRuleDto,
   })
-  async updateExperienceRule(@Body() dto: UpdateExperienceRuleDto) {
+  async updateExperienceRule(@Body() dto: UpdateForumExperienceRuleDto) {
     return this.experienceService.updateExperienceRule(dto)
   }
 

@@ -217,7 +217,7 @@ export class ForumSectionService extends BaseService {
    * @param id 板块ID
    * @returns 删除结果
    */
-  async deleteForumSection(id: number) {
+  async deleteSection(id: number) {
     const section = await this.forumSection.findUnique({
       where: { id },
     })

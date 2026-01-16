@@ -1,13 +1,13 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  AssignModeratorSectionDto,
-  CreateModeratorDto,
-  ModeratorDto,
-  ModeratorService,
-  QueryModeratorActionLogDto,
-  QueryModeratorDto,
-  UpdateModeratorDto,
+  AssignForumModeratorSectionDto,
+  CreateForumModeratorDto,
+  ForumModeratorDto,
+  ForumModeratorService,
+  QueryForumModeratorActionLogDto,
+  QueryForumModeratorDto,
+  UpdateForumModeratorDto,
 } from '@libs/forum/moderator'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -15,7 +15,7 @@ import { ApiTags } from '@nestjs/swagger'
 @Controller('/admin/forum/moderators')
 @ApiTags('论坛模块/版主管理')
 export class ModeratorController {
-  constructor(private readonly moderatorService: ModeratorService) {}
+  constructor(private readonly moderatorService: ForumModeratorService) {}
 
   @Get('list')
   @ApiPageDoc({
@@ -68,7 +68,7 @@ export class ModeratorController {
     summary: '查看版主操作日志',
     model: ModeratorDto,
   })
-  async getModeratorActionLog(@Query() query: QueryModeratorActionLogDto) {
+  async getModeratorActionLog(@Query() query: QueryForumModeratorActionLogDto) {
     return this.moderatorService.getModeratorActionLogPage(query)
   }
 }

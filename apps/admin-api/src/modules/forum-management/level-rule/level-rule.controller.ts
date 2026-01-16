@@ -1,14 +1,14 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  BaseLevelRuleDto,
-  CheckLevelPermissionDto,
-  CreateLevelRuleDto,
-  LevelPermissionResultDto,
-  LevelRuleService,
-  QueryLevelRuleDto,
-  UpdateLevelRuleDto,
-  UserLevelInfoDto,
+  BaseForumLevelRuleDto,
+  CheckForumLevelPermissionDto,
+  CreateForumLevelRuleDto,
+  ForumLevelPermissionResultDto,
+  ForumLevelRuleService,
+  QueryForumLevelRuleDto,
+  UpdateForumLevelRuleDto,
+  ForumUserLevelInfoDto,
 } from '@libs/forum/level-rule'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -16,7 +16,7 @@ import { ApiTags } from '@nestjs/swagger'
 @Controller('/admin/forum/level-rules')
 @ApiTags('论坛模块/等级规则管理')
 export class LevelRuleController {
-  constructor(private readonly levelRuleService: LevelRuleService) {}
+  constructor(private readonly levelRuleService: ForumLevelRuleService) {}
 
   @Get('page')
   @ApiPageDoc({
@@ -75,9 +75,9 @@ export class LevelRuleController {
   @Post('check-permission')
   @ApiDoc({
     summary: '检查用户等级权限',
-    model: LevelPermissionResultDto,
+    model: ForumLevelPermissionResultDto,
   })
-  async checkLevelPermission(@Body() dto: CheckLevelPermissionDto) {
+  async checkLevelPermission(@Body() dto: CheckForumLevelPermissionDto) {
     return this.levelRuleService.checkLevelPermission(dto)
   }
 

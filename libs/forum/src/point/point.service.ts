@@ -3,14 +3,14 @@ import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  AddPointsDto,
-  ConsumePointsDto,
-  QueryPointRecordDto,
+  AddForumPointsDto,
+  ConsumeForumPointsDto,
+  QueryForumPointRecordDto,
 } from './dto/point-record.dto'
 import {
-  CreatePointRuleDto,
-  QueryPointRuleDto,
-  UpdatePointRuleDto,
+  CreateForumPointRuleDto,
+  QueryForumPointRuleDto,
+  UpdateForumPointRuleDto,
 } from './dto/point-rule.dto'
 import { PointRuleTypeEnum } from './point.constant'
 
@@ -19,7 +19,7 @@ import { PointRuleTypeEnum } from './point.constant'
  * 提供论坛积分的增删改查等核心业务逻辑
  */
 @Injectable()
-export class PointService extends BaseService {
+export class ForumPointService extends BaseService {
   get forumPointRule() {
     return this.prisma.forumPointRule
   }
@@ -48,7 +48,7 @@ export class PointService extends BaseService {
    * @param queryPointRuleDto 查询条件
    * @returns 分页的规则列表
    */
-  async getPointRulePage(queryPointRuleDto: QueryPointRuleDto) {
+  async getPointRulePage(queryPointRuleDto: QueryForumPointRuleDto) {
     const where: ForumPointRuleWhereInput = queryPointRuleDto
 
     if (queryPointRuleDto.name) {
@@ -175,7 +175,7 @@ export class PointService extends BaseService {
    * @param consumePointsDto 消费积分的数据
    * @returns 消费积分的结果
    */
-  async consumePoints(consumePointsDto: ConsumePointsDto) {
+  async consumePoints(consumePointsDto: ConsumeForumPointsDto) {
     const { profileId, points, remark } = consumePointsDto
 
     const profile = await this.forumProfile.findUnique({
@@ -220,7 +220,7 @@ export class PointService extends BaseService {
    * @param dto 查询条件
    * @returns 分页的记录列表
    */
-  async getPointRecordPage(dto: QueryPointRecordDto) {
+  async getPointRecordPage(dto: QueryForumPointRecordDto) {
     const { profileId, ruleId, ...otherDto } = dto
     return this.forumPointRecord.findPagination({
       where: {

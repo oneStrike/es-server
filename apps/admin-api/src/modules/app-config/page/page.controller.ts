@@ -1,5 +1,3 @@
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
 import {
   BaseClientPageDto,
   ClientPageResponseDto,
@@ -7,6 +5,8 @@ import {
   QueryClientPageDto,
   UpdateClientPageDto,
 } from '@libs/app-config/page'
+import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
+import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
 import {
   Body,
   Controller,

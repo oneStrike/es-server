@@ -47,9 +47,9 @@ export class BaseExperienceRecordDto extends BaseDto {
   remark?: string
 }
 
-export class QueryExperienceRecordDto extends IntersectionType(
+export class QueryForumExperienceRecordDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseExperienceRecordDto, ['ruleId'])),
+  PartialType(PickType(BaseForumExperienceRecordDto, ['ruleId'])),
 ) {
   @ValidateNumber({
     description: '用户论坛资料ID',
@@ -59,7 +59,7 @@ export class QueryExperienceRecordDto extends IntersectionType(
   profileId!: number
 }
 
-export class AddExperienceDto {
+export class AddForumExperienceDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,

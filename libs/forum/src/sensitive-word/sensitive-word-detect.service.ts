@@ -1,9 +1,9 @@
 import type { ForumSensitiveWord } from '@libs/base/database/prisma-client/client'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import {
-  MatchedWordDto,
-  SensitiveWordDetectDto,
-  SensitiveWordReplaceDto,
+  ForumMatchedWordDto,
+  ForumSensitiveWordDetectDto,
+  ForumSensitiveWordReplaceDto,
 } from './dto/sensitive-word-detect.dto'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
 import {
@@ -42,7 +42,7 @@ export interface DetectOptions {
  * 支持精确匹配和模糊匹配两种模式
  */
 @Injectable()
-export class SensitiveWordDetectService implements OnModuleInit {
+export class ForumSensitiveWordDetectService implements OnModuleInit {
   private readonly logger = new Logger(SensitiveWordDetectService.name)
   private automaton: ACAutomaton
   private fuzzyMatcher: FuzzyMatcher
@@ -129,7 +129,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @param matchMode - 匹配模式，默认为精确匹配
    * @returns 匹配的敏感词列表
    */
-  getMatchedWords(dto: SensitiveWordDetectDto) {
+  getMatchedWords(dto: ForumSensitiveWordDetectDto) {
     const { content, matchMode = MatchModeEnum.EXACT } = dto
 
     if (!this.isInitialized || !content) {
@@ -144,7 +144,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
       results = this.automaton.match(content)
     }
 
-    const matchedWords: MatchedWordDto[] = []
+    const matchedWords: ForumMatchedWordDto[] = []
     let highestLevel: SensitiveWordLevelEnum | undefined
 
     results.forEach((result) => {
@@ -176,7 +176,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    * @param dto - 检测请求对象
    * @returns 敏感词最高等级，如果没有敏感词则返回 undefined
    */
-  getHighestSensitiveWordLevel(dto: SensitiveWordDetectDto) {
+  getHighestSensitiveWordLevel(dto: ForumSensitiveWordDetectDto) {
     if (!this.isInitialized || !dto.content) {
       return undefined
     }
@@ -217,7 +217,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
    */
   private replaceWords(
     text: string,
-    matchedWords: MatchedWordDto[],
+    matchedWords: ForumMatchedWordDto[],
     replaceChar?: string,
   ): string {
     if (matchedWords.length === 0) {
