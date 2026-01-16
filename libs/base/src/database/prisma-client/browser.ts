@@ -23,30 +23,30 @@ export * from './enums';
  */
 export type AdminUser = Prisma.AdminUserModel
 /**
- * Model ClientConfig
- * 客户端系统配置
- */
-export type ClientConfig = Prisma.ClientConfigModel
-/**
- * Model ClientNoticeRead
+ * Model AppConfig
  * 
  */
-export type ClientNoticeRead = Prisma.ClientNoticeReadModel
+export type AppConfig = Prisma.AppConfigModel
 /**
- * Model ClientNotice
+ * Model AppNoticeRead
  * 
  */
-export type ClientNotice = Prisma.ClientNoticeModel
+export type AppNoticeRead = Prisma.AppNoticeReadModel
 /**
- * Model ClientPage
- * 客户端页面配置
- */
-export type ClientPage = Prisma.ClientPageModel
-/**
- * Model ClientUser
+ * Model AppNotice
  * 
  */
-export type ClientUser = Prisma.ClientUserModel
+export type AppNotice = Prisma.AppNoticeModel
+/**
+ * Model AppPage
+ * 
+ */
+export type AppPage = Prisma.AppPageModel
+/**
+ * Model AppUser
+ * 
+ */
+export type AppUser = Prisma.AppUserModel
 /**
  * Model ForumBadge
  * 论坛徽章表 - 存储论坛徽章信息，包括系统徽章、成就徽章、活动徽章等

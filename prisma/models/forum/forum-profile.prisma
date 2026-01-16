@@ -40,7 +40,7 @@ model ForumProfile {
   pointRecords            ForumPointRecord[]
   experienceRecords        ForumExperienceRecord[]
   level                   ForumLevelRule?             @relation(fields: [levelId], references: [id])
-  user                    ClientUser                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                    AppUser                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   badges                  ForumProfileBadge[]
   topics                  ForumTopic[]
   lastReplyTopics         ForumTopic[]                @relation("LastReplyUser")

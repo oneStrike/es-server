@@ -4,12 +4,12 @@ import { isProduction } from '@libs/base/utils'
 import { DbConfig } from '../../config'
 
 // ==================== 模块化种子数据导入 ====================
-import { createInitialAdminAccount } from './modules/admin' // 管理员账户初始化
+import { createInitialAdminAccount } from './modules/admin'
 import {
-  createInitialClientNotice,
-  createInitialClientPage,
+  createInitialAppNotice,
+  createInitialAppPage,
   createInitialClientUser,
-} from './modules/client' // 客户端配置模块
+} from './modules/app'
 import {
   createInitialForumBadges,
   createInitialForumConfig,
@@ -21,9 +21,9 @@ import {
   createInitialForumSections,
   createInitialForumSensitiveWords,
   createInitialForumTags,
-} from './modules/forum' // 论坛模块种子数据
-import { createInitialMemberLevels } from './modules/operationManagement' // 会员等级管理
-import { createInitialDataDictionary } from './modules/system' // 数据字典（语言、国籍、出版社等）
+} from './modules/forum'
+import { createInitialMemberLevels } from './modules/operationManagement'
+import { createInitialDataDictionary } from './modules/system'
 import {
   createInitialAuthors,
   createInitialComicAuthors,
@@ -33,7 +33,7 @@ import {
   createInitialComicTags,
   createInitialWorkCategory,
   createInitialWorkTag,
-} from './modules/work' // 作品管理模块
+} from './modules/work'
 
 const connectUrl = isProduction()
   ? DbConfig.connection.url
@@ -47,21 +47,21 @@ async function runSeeds() {
 
   // 第一批：基础配置和枚举数据（必须先执行）
   await Promise.all([
-    createInitialAdminAccount(prisma), // 管理员账户
-    createInitialDataDictionary(prisma), // 数据字典
-    createInitialMemberLevels(prisma), // 会员等级配置
-    createInitialWorkCategory(prisma), // 作品分类
-    createInitialWorkTag(prisma), // 作品标签
-    createInitialClientPage(prisma), // 页面配置
-    createInitialForumConfig(prisma), // 论坛系统配置
-    createInitialForumSectionGroups(prisma), // 论坛板块分组配置（必须在板块之前）
-    createInitialForumSections(prisma), // 论坛板块配置
-    createInitialForumTags(prisma), // 论坛标签配置
-    createInitialForumBadges(prisma), // 论坛徽章配置
-    createInitialForumPointRules(prisma), // 论坛积分规则
-    createInitialForumExperienceRules(prisma), // 论坛经验规则
-    createInitialForumLevelRules(prisma), // 论坛等级规则
-    createInitialForumSensitiveWords(prisma), // 论坛敏感词配置
+    createInitialAdminAccount(prisma),
+    createInitialDataDictionary(prisma),
+    createInitialMemberLevels(prisma),
+    createInitialWorkCategory(prisma),
+    createInitialWorkTag(prisma),
+    createInitialAppPage(prisma),
+    createInitialForumConfig(prisma),
+    createInitialForumSectionGroups(prisma),
+    createInitialForumSections(prisma),
+    createInitialForumTags(prisma),
+    createInitialForumBadges(prisma),
+    createInitialForumPointRules(prisma),
+    createInitialForumExperienceRules(prisma),
+    createInitialForumLevelRules(prisma),
+    createInitialForumSensitiveWords(prisma),
   ])
 
   console.log('✅ 基础配置数据初始化完成')
@@ -73,13 +73,13 @@ async function runSeeds() {
   console.log('✅ 核心业务数据初始化完成')
 
   // 第三批：关联关系和详细数据
-  await createInitialComicAuthors(prisma) // 漫画-作者关联
-  await createInitialComicCategories(prisma) // 漫画-分类关联
-  await createInitialComicTags(prisma) // 漫画-标签关联
-  await createInitialComicChapters(prisma) // 漫画章节
-  await createInitialClientNotice(prisma) // 客户端通知
-  await createInitialClientUser(prisma) // 客户端用户
-  await createInitialForumProfile(prisma) // 论坛用户资料
+  await createInitialComicAuthors(prisma)
+  await createInitialComicCategories(prisma)
+  await createInitialComicTags(prisma)
+  await createInitialComicChapters(prisma)
+  await createInitialAppNotice(prisma)
+  await createInitialClientUser(prisma)
+  await createInitialForumProfile(prisma)
 
   console.log('🎉 所有种子数据初始化完成！')
 }

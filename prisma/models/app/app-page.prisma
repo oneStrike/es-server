@@ -1,0 +1,17 @@
+model AppPage {
+  id             Int            @id @default(autoincrement())
+  code           String         @unique @map("code") @db.VarChar(50)
+  path           String         @unique @map("path") @db.VarChar(300)
+  name           String         @map("name") @db.VarChar(100)
+  title          String         @map("title") @db.VarChar(200)
+  accessLevel    Int            @default(0) @map("access_level") @db.SmallInt
+  isEnabled      Boolean        @default(true) @map("is_enabled")
+  description    String?        @map("description") @db.VarChar(500)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  enablePlatform Int[]          @map("enable_platform")
+  notices        AppNotice[] @relation("notices")
+
+  @@index([accessLevel, isEnabled])
+  @@map("app_page")
+}

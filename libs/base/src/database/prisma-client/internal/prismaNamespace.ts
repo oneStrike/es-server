@@ -385,11 +385,11 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   AdminUser: 'AdminUser',
-  ClientConfig: 'ClientConfig',
-  ClientNoticeRead: 'ClientNoticeRead',
-  ClientNotice: 'ClientNotice',
-  ClientPage: 'ClientPage',
-  ClientUser: 'ClientUser',
+  AppConfig: 'AppConfig',
+  AppNoticeRead: 'AppNoticeRead',
+  AppNotice: 'AppNotice',
+  AppPage: 'AppPage',
+  AppUser: 'AppUser',
   ForumBadge: 'ForumBadge',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
@@ -445,7 +445,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "clientConfig" | "clientNoticeRead" | "clientNotice" | "clientPage" | "clientUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumExperienceRecord" | "forumExperienceRule" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUser" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumExperienceRecord" | "forumExperienceRule" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -523,373 +523,373 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    ClientConfig: {
-      payload: Prisma.$ClientConfigPayload<ExtArgs>
-      fields: Prisma.ClientConfigFieldRefs
+    AppConfig: {
+      payload: Prisma.$AppConfigPayload<ExtArgs>
+      fields: Prisma.AppConfigFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.ClientConfigFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload> | null
+          args: Prisma.AppConfigFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.ClientConfigFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload>
+          args: Prisma.AppConfigFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         findFirst: {
-          args: Prisma.ClientConfigFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload> | null
+          args: Prisma.AppConfigFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.ClientConfigFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload>
+          args: Prisma.AppConfigFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         findMany: {
-          args: Prisma.ClientConfigFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload>[]
+          args: Prisma.AppConfigFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>[]
         }
         create: {
-          args: Prisma.ClientConfigCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload>
+          args: Prisma.AppConfigCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         createMany: {
-          args: Prisma.ClientConfigCreateManyArgs<ExtArgs>
+          args: Prisma.AppConfigCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.ClientConfigCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload>[]
+          args: Prisma.AppConfigCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>[]
         }
         delete: {
-          args: Prisma.ClientConfigDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload>
+          args: Prisma.AppConfigDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         update: {
-          args: Prisma.ClientConfigUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload>
+          args: Prisma.AppConfigUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         deleteMany: {
-          args: Prisma.ClientConfigDeleteManyArgs<ExtArgs>
+          args: Prisma.AppConfigDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.ClientConfigUpdateManyArgs<ExtArgs>
+          args: Prisma.AppConfigUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.ClientConfigUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload>[]
+          args: Prisma.AppConfigUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>[]
         }
         upsert: {
-          args: Prisma.ClientConfigUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientConfigPayload>
+          args: Prisma.AppConfigUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppConfigPayload>
         }
         aggregate: {
-          args: Prisma.ClientConfigAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateClientConfig>
+          args: Prisma.AppConfigAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppConfig>
         }
         groupBy: {
-          args: Prisma.ClientConfigGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientConfigGroupByOutputType>[]
+          args: Prisma.AppConfigGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppConfigGroupByOutputType>[]
         }
         count: {
-          args: Prisma.ClientConfigCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientConfigCountAggregateOutputType> | number
+          args: Prisma.AppConfigCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppConfigCountAggregateOutputType> | number
         }
       }
     }
-    ClientNoticeRead: {
-      payload: Prisma.$ClientNoticeReadPayload<ExtArgs>
-      fields: Prisma.ClientNoticeReadFieldRefs
+    AppNoticeRead: {
+      payload: Prisma.$AppNoticeReadPayload<ExtArgs>
+      fields: Prisma.AppNoticeReadFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.ClientNoticeReadFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload> | null
+          args: Prisma.AppNoticeReadFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.ClientNoticeReadFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+          args: Prisma.AppNoticeReadFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
         }
         findFirst: {
-          args: Prisma.ClientNoticeReadFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload> | null
+          args: Prisma.AppNoticeReadFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.ClientNoticeReadFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+          args: Prisma.AppNoticeReadFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
         }
         findMany: {
-          args: Prisma.ClientNoticeReadFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>[]
+          args: Prisma.AppNoticeReadFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>[]
         }
         create: {
-          args: Prisma.ClientNoticeReadCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+          args: Prisma.AppNoticeReadCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
         }
         createMany: {
-          args: Prisma.ClientNoticeReadCreateManyArgs<ExtArgs>
+          args: Prisma.AppNoticeReadCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.ClientNoticeReadCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>[]
+          args: Prisma.AppNoticeReadCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>[]
         }
         delete: {
-          args: Prisma.ClientNoticeReadDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+          args: Prisma.AppNoticeReadDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
         }
         update: {
-          args: Prisma.ClientNoticeReadUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+          args: Prisma.AppNoticeReadUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
         }
         deleteMany: {
-          args: Prisma.ClientNoticeReadDeleteManyArgs<ExtArgs>
+          args: Prisma.AppNoticeReadDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.ClientNoticeReadUpdateManyArgs<ExtArgs>
+          args: Prisma.AppNoticeReadUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.ClientNoticeReadUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>[]
+          args: Prisma.AppNoticeReadUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>[]
         }
         upsert: {
-          args: Prisma.ClientNoticeReadUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticeReadPayload>
+          args: Prisma.AppNoticeReadUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
         }
         aggregate: {
-          args: Prisma.ClientNoticeReadAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateClientNoticeRead>
+          args: Prisma.AppNoticeReadAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppNoticeRead>
         }
         groupBy: {
-          args: Prisma.ClientNoticeReadGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientNoticeReadGroupByOutputType>[]
+          args: Prisma.AppNoticeReadGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppNoticeReadGroupByOutputType>[]
         }
         count: {
-          args: Prisma.ClientNoticeReadCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientNoticeReadCountAggregateOutputType> | number
+          args: Prisma.AppNoticeReadCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppNoticeReadCountAggregateOutputType> | number
         }
       }
     }
-    ClientNotice: {
-      payload: Prisma.$ClientNoticePayload<ExtArgs>
-      fields: Prisma.ClientNoticeFieldRefs
+    AppNotice: {
+      payload: Prisma.$AppNoticePayload<ExtArgs>
+      fields: Prisma.AppNoticeFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.ClientNoticeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload> | null
+          args: Prisma.AppNoticeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.ClientNoticeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload>
+          args: Prisma.AppNoticeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
         }
         findFirst: {
-          args: Prisma.ClientNoticeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload> | null
+          args: Prisma.AppNoticeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.ClientNoticeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload>
+          args: Prisma.AppNoticeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
         }
         findMany: {
-          args: Prisma.ClientNoticeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload>[]
+          args: Prisma.AppNoticeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>[]
         }
         create: {
-          args: Prisma.ClientNoticeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload>
+          args: Prisma.AppNoticeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
         }
         createMany: {
-          args: Prisma.ClientNoticeCreateManyArgs<ExtArgs>
+          args: Prisma.AppNoticeCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.ClientNoticeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload>[]
+          args: Prisma.AppNoticeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>[]
         }
         delete: {
-          args: Prisma.ClientNoticeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload>
+          args: Prisma.AppNoticeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
         }
         update: {
-          args: Prisma.ClientNoticeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload>
+          args: Prisma.AppNoticeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
         }
         deleteMany: {
-          args: Prisma.ClientNoticeDeleteManyArgs<ExtArgs>
+          args: Prisma.AppNoticeDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.ClientNoticeUpdateManyArgs<ExtArgs>
+          args: Prisma.AppNoticeUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.ClientNoticeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload>[]
+          args: Prisma.AppNoticeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>[]
         }
         upsert: {
-          args: Prisma.ClientNoticeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientNoticePayload>
+          args: Prisma.AppNoticeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
         }
         aggregate: {
-          args: Prisma.ClientNoticeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateClientNotice>
+          args: Prisma.AppNoticeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppNotice>
         }
         groupBy: {
-          args: Prisma.ClientNoticeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientNoticeGroupByOutputType>[]
+          args: Prisma.AppNoticeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppNoticeGroupByOutputType>[]
         }
         count: {
-          args: Prisma.ClientNoticeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientNoticeCountAggregateOutputType> | number
+          args: Prisma.AppNoticeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppNoticeCountAggregateOutputType> | number
         }
       }
     }
-    ClientPage: {
-      payload: Prisma.$ClientPagePayload<ExtArgs>
-      fields: Prisma.ClientPageFieldRefs
+    AppPage: {
+      payload: Prisma.$AppPagePayload<ExtArgs>
+      fields: Prisma.AppPageFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.ClientPageFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload> | null
+          args: Prisma.AppPageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.ClientPageFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload>
+          args: Prisma.AppPageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload>
         }
         findFirst: {
-          args: Prisma.ClientPageFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload> | null
+          args: Prisma.AppPageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.ClientPageFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload>
+          args: Prisma.AppPageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload>
         }
         findMany: {
-          args: Prisma.ClientPageFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload>[]
+          args: Prisma.AppPageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload>[]
         }
         create: {
-          args: Prisma.ClientPageCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload>
+          args: Prisma.AppPageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload>
         }
         createMany: {
-          args: Prisma.ClientPageCreateManyArgs<ExtArgs>
+          args: Prisma.AppPageCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.ClientPageCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload>[]
+          args: Prisma.AppPageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload>[]
         }
         delete: {
-          args: Prisma.ClientPageDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload>
+          args: Prisma.AppPageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload>
         }
         update: {
-          args: Prisma.ClientPageUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload>
+          args: Prisma.AppPageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload>
         }
         deleteMany: {
-          args: Prisma.ClientPageDeleteManyArgs<ExtArgs>
+          args: Prisma.AppPageDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.ClientPageUpdateManyArgs<ExtArgs>
+          args: Prisma.AppPageUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.ClientPageUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload>[]
+          args: Prisma.AppPageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload>[]
         }
         upsert: {
-          args: Prisma.ClientPageUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientPagePayload>
+          args: Prisma.AppPageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPagePayload>
         }
         aggregate: {
-          args: Prisma.ClientPageAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateClientPage>
+          args: Prisma.AppPageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppPage>
         }
         groupBy: {
-          args: Prisma.ClientPageGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientPageGroupByOutputType>[]
+          args: Prisma.AppPageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppPageGroupByOutputType>[]
         }
         count: {
-          args: Prisma.ClientPageCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientPageCountAggregateOutputType> | number
+          args: Prisma.AppPageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppPageCountAggregateOutputType> | number
         }
       }
     }
-    ClientUser: {
-      payload: Prisma.$ClientUserPayload<ExtArgs>
-      fields: Prisma.ClientUserFieldRefs
+    AppUser: {
+      payload: Prisma.$AppUserPayload<ExtArgs>
+      fields: Prisma.AppUserFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.ClientUserFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload> | null
+          args: Prisma.AppUserFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.ClientUserFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload>
+          args: Prisma.AppUserFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload>
         }
         findFirst: {
-          args: Prisma.ClientUserFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload> | null
+          args: Prisma.AppUserFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.ClientUserFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload>
+          args: Prisma.AppUserFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload>
         }
         findMany: {
-          args: Prisma.ClientUserFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload>[]
+          args: Prisma.AppUserFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload>[]
         }
         create: {
-          args: Prisma.ClientUserCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload>
+          args: Prisma.AppUserCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload>
         }
         createMany: {
-          args: Prisma.ClientUserCreateManyArgs<ExtArgs>
+          args: Prisma.AppUserCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.ClientUserCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload>[]
+          args: Prisma.AppUserCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload>[]
         }
         delete: {
-          args: Prisma.ClientUserDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload>
+          args: Prisma.AppUserDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload>
         }
         update: {
-          args: Prisma.ClientUserUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload>
+          args: Prisma.AppUserUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload>
         }
         deleteMany: {
-          args: Prisma.ClientUserDeleteManyArgs<ExtArgs>
+          args: Prisma.AppUserDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.ClientUserUpdateManyArgs<ExtArgs>
+          args: Prisma.AppUserUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.ClientUserUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload>[]
+          args: Prisma.AppUserUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload>[]
         }
         upsert: {
-          args: Prisma.ClientUserUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ClientUserPayload>
+          args: Prisma.AppUserUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserPayload>
         }
         aggregate: {
-          args: Prisma.ClientUserAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateClientUser>
+          args: Prisma.AppUserAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppUser>
         }
         groupBy: {
-          args: Prisma.ClientUserGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientUserGroupByOutputType>[]
+          args: Prisma.AppUserGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppUserGroupByOutputType>[]
         }
         count: {
-          args: Prisma.ClientUserCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ClientUserCountAggregateOutputType> | number
+          args: Prisma.AppUserCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppUserCountAggregateOutputType> | number
         }
       }
     }
@@ -3921,26 +3921,26 @@ export const RelationLoadStrategy = {
 export type RelationLoadStrategy = (typeof RelationLoadStrategy)[keyof typeof RelationLoadStrategy]
 
 
-export const ClientConfigScalarFieldEnum = {
+export const AppConfigScalarFieldEnum = {
   id: 'id',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type ClientConfigScalarFieldEnum = (typeof ClientConfigScalarFieldEnum)[keyof typeof ClientConfigScalarFieldEnum]
+export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
-export const ClientNoticeReadScalarFieldEnum = {
+export const AppNoticeReadScalarFieldEnum = {
   id: 'id',
   noticeId: 'noticeId',
   userId: 'userId',
   readAt: 'readAt'
 } as const
 
-export type ClientNoticeReadScalarFieldEnum = (typeof ClientNoticeReadScalarFieldEnum)[keyof typeof ClientNoticeReadScalarFieldEnum]
+export type AppNoticeReadScalarFieldEnum = (typeof AppNoticeReadScalarFieldEnum)[keyof typeof AppNoticeReadScalarFieldEnum]
 
 
-export const ClientNoticeScalarFieldEnum = {
+export const AppNoticeScalarFieldEnum = {
   id: 'id',
   title: 'title',
   content: 'content',
@@ -3958,10 +3958,10 @@ export const ClientNoticeScalarFieldEnum = {
   enablePlatform: 'enablePlatform'
 } as const
 
-export type ClientNoticeScalarFieldEnum = (typeof ClientNoticeScalarFieldEnum)[keyof typeof ClientNoticeScalarFieldEnum]
+export type AppNoticeScalarFieldEnum = (typeof AppNoticeScalarFieldEnum)[keyof typeof AppNoticeScalarFieldEnum]
 
 
-export const ClientPageScalarFieldEnum = {
+export const AppPageScalarFieldEnum = {
   id: 'id',
   code: 'code',
   path: 'path',
@@ -3975,10 +3975,10 @@ export const ClientPageScalarFieldEnum = {
   enablePlatform: 'enablePlatform'
 } as const
 
-export type ClientPageScalarFieldEnum = (typeof ClientPageScalarFieldEnum)[keyof typeof ClientPageScalarFieldEnum]
+export type AppPageScalarFieldEnum = (typeof AppPageScalarFieldEnum)[keyof typeof AppPageScalarFieldEnum]
 
 
-export const ClientUserScalarFieldEnum = {
+export const AppUserScalarFieldEnum = {
   id: 'id',
   account: 'account',
   nickname: 'nickname',
@@ -3996,7 +3996,7 @@ export const ClientUserScalarFieldEnum = {
   deletedAt: 'deletedAt'
 } as const
 
-export type ClientUserScalarFieldEnum = (typeof ClientUserScalarFieldEnum)[keyof typeof ClientUserScalarFieldEnum]
+export type AppUserScalarFieldEnum = (typeof AppUserScalarFieldEnum)[keyof typeof AppUserScalarFieldEnum]
 
 
 export const ForumBadgeScalarFieldEnum = {
@@ -4940,11 +4940,11 @@ export type PrismaClientOptions = ({
 }
 export type GlobalOmitConfig = {
   adminUser?: Prisma.AdminUserOmit
-  clientConfig?: Prisma.ClientConfigOmit
-  clientNoticeRead?: Prisma.ClientNoticeReadOmit
-  clientNotice?: Prisma.ClientNoticeOmit
-  clientPage?: Prisma.ClientPageOmit
-  clientUser?: Prisma.ClientUserOmit
+  appConfig?: Prisma.AppConfigOmit
+  appNoticeRead?: Prisma.AppNoticeReadOmit
+  appNotice?: Prisma.AppNoticeOmit
+  appPage?: Prisma.AppPageOmit
+  appUser?: Prisma.AppUserOmit
   forumBadge?: Prisma.ForumBadgeOmit
   forumConfigHistory?: Prisma.ForumConfigHistoryOmit
   forumConfig?: Prisma.ForumConfigOmit

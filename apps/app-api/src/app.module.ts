@@ -16,15 +16,14 @@ import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD } from '@nestjs/core'
 import { AppConfigRegister } from './config/app.config'
 import { appConfigValidationSchema } from './config/validation.config'
-import { ClientApiModule } from './modules/client.module'
+import { AppApiModule } from './modules/app.module'
 
 @Module({
   imports: [
-    // 配置模块 - 全局环境变量管理
     ConfigModule.forRoot({
-      isGlobal: true, // 设置为全局模块，其他模块可直接使用
-      cache: true, // 缓存配置
-      envFilePath: ['.env', `.env.${getEnv()}`], // 指定环境变量文件路径
+      isGlobal: true,
+      cache: true,
+      envFilePath: ['.env', `.env.${getEnv()}`],
       load: [
         AppConfigRegister,
         AuthConfigRegister,
@@ -41,7 +40,7 @@ import { ClientApiModule } from './modules/client.module'
     BaseModule.forRoot(),
     JwtAuthModule,
 
-    ClientApiModule,
+    AppApiModule,
   ],
   providers: [
     // 全局异常过滤器

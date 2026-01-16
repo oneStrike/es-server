@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 import { AuthModule } from './auth/auth.module'
-import { ClientNoticeModule } from './client-config/notice/notice.module'
-import { ClientPageModule } from './client-config/page/page.module'
+import { AppNoticeModule } from './app-config/notice/notice.module'
+import { AppPageModule } from './app-config/page/page.module'
 import { ContentModule } from './content-management/content.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
 import { ForumManagementModule } from './forum-management/forum-management.module'
@@ -14,9 +14,9 @@ import { UserModule } from './user/user.module'
     AuthModule,
     UserModule,
     UploadModule,
-    ClientPageModule,
+    AppPageModule,
     DictionaryModule,
-    ClientNoticeModule,
+    AppNoticeModule,
     MemberModule,
     ContentModule,
     ForumManagementModule,
