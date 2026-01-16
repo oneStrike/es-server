@@ -19,7 +19,7 @@ import {
 /**
  * 敏感词基础DTO
  */
-export class BaseSensitiveWordDto extends BaseDto {
+export class BaseForumSensitiveWordDto extends BaseDto {
   @ValidateString({
     description: '敏感词',
     maxLength: 100,
@@ -83,26 +83,26 @@ export class BaseSensitiveWordDto extends BaseDto {
 /**
  * 创建敏感词DTO
  */
-export class CreateSensitiveWordDto extends OmitType(
-  BaseSensitiveWordDto,
+export class CreateForumSensitiveWordDto extends OmitType(
+  BaseForumSensitiveWordDto,
   OMIT_BASE_FIELDS,
 ) {}
 
 /**
  * 更新敏感词DTO
  */
-export class UpdateSensitiveWordDto extends IntersectionType(
-  CreateSensitiveWordDto,
+export class UpdateForumSensitiveWordDto extends IntersectionType(
+  CreateForumSensitiveWordDto,
   IdDto,
 ) {}
 
 /**
  * 查询敏感词DTO
  */
-export class QuerySensitiveWordDto extends IntersectionType(
+export class QueryForumSensitiveWordDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(CreateSensitiveWordDto, [
+    PickType(CreateForumSensitiveWordDto, [
       'word',
       'isEnabled',
       'level',

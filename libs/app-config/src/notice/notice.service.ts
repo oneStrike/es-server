@@ -1,7 +1,7 @@
 import {
-  BaseService,
   AppNoticeCreateInput,
   AppNoticeWhereInput,
+  BaseService,
 } from '@libs/base/database'
 import { assertValidTimeRange } from '@libs/base/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'

@@ -6,8 +6,8 @@ import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import { NotificationService } from '../notification/notification.service'
-import { SensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
+import { ForumNotificationService } from '../notification/notification.service'
+import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
 
 /**
@@ -17,8 +17,8 @@ import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
 @Injectable()
 export class ForumReplyService extends BaseService {
   constructor(
-    private readonly notificationService: NotificationService,
-    private readonly sensitiveWordDetectService: SensitiveWordDetectService,
+    private readonly notificationService: ForumNotificationService,
+    private readonly sensitiveWordDetectService: ForumSensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
   ) {
     super()
@@ -41,7 +41,7 @@ export class ForumReplyService extends BaseService {
    * @param createForumReplyDto 创建回复的数据
    * @returns 创建的回复信息
    */
-  async createForumReply(createForumReplyDto: CreateForumReplyDto) {
+  async createReply(createForumReplyDto: CreateForumReplyDto) {
     const { topicId, replyToId, ...replyData } = createForumReplyDto
 
     const topic = await this.forumTopic.findUnique({
@@ -386,7 +386,7 @@ export class ForumReplyService extends BaseService {
    * @param ids 回复ID列表
    * @returns 删除结果
    */
-  async batchDeleteForumReply(ids: number[]) {
+  async batchDeleteReply(ids: number[]) {
     const replies = await this.forumReply.findMany({
       where: { id: { in: ids } },
     })

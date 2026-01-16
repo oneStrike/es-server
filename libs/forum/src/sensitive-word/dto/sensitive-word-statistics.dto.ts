@@ -8,7 +8,7 @@ import {
 /**
  * 统计查询请求DTO
  */
-export class SensitiveWordStatisticsQueryDto {
+export class ForumSensitiveWordStatisticsQueryDto {
   @ApiProperty({
     description: '统计类型',
     required: false,
@@ -51,7 +51,7 @@ export class SensitiveWordLevelStatisticsDto {
 /**
  * 类型统计结果DTO
  */
-export class SensitiveWordTypeStatisticsDto {
+export class ForumSensitiveWordTypeStatisticsDto {
   @ApiProperty({
     description: '敏感词类型',
     example: SensitiveWordTypeEnum.POLITICS,
@@ -81,7 +81,7 @@ export class SensitiveWordTypeStatisticsDto {
 /**
  * 热门敏感词统计DTO
  */
-export class SensitiveWordTopHitStatisticsDto {
+export class ForumSensitiveWordTopHitStatisticsDto {
   @ApiProperty({
     description: '敏感词内容',
     example: '测试',
@@ -118,7 +118,7 @@ export class SensitiveWordTopHitStatisticsDto {
 /**
  * 最近命中统计DTO
  */
-export class SensitiveWordRecentHitStatisticsDto {
+export class ForumSensitiveWordRecentHitStatisticsDto {
   @ApiProperty({
     description: '敏感词内容',
     example: '测试',
@@ -155,7 +155,7 @@ export class SensitiveWordRecentHitStatisticsDto {
 /**
  * 完整统计数据DTO
  */
-export class SensitiveWordStatisticsDataDto {
+export class ForumSensitiveWordStatisticsDataDto {
   @ApiProperty({
     description: '敏感词总数',
     example: 500,
@@ -200,33 +200,33 @@ export class SensitiveWordStatisticsDataDto {
 
   @ApiProperty({
     description: '按级别分组的统计信息',
-    type: [SensitiveWordLevelStatisticsDto],
+    type: [ForumSensitiveWordLevelStatisticsDto],
   })
-  levelStatistics!: SensitiveWordLevelStatisticsDto[]
+  levelStatistics!: ForumSensitiveWordLevelStatisticsDto[]
 
   @ApiProperty({
     description: '按类型分组的统计信息',
-    type: [SensitiveWordTypeStatisticsDto],
+    type: [ForumSensitiveWordTypeStatisticsDto],
   })
-  typeStatistics!: SensitiveWordTypeStatisticsDto[]
+  typeStatistics!: ForumSensitiveWordTypeStatisticsDto[]
 
   @ApiProperty({
     description: '命中次数最多的敏感词（Top 20）',
-    type: [SensitiveWordTopHitStatisticsDto],
+    type: [ForumSensitiveWordTopHitStatisticsDto],
   })
-  topHitWords!: SensitiveWordTopHitStatisticsDto[]
+  topHitWords!: ForumSensitiveWordTopHitStatisticsDto[]
 
   @ApiProperty({
     description: '最近命中的敏感词（Top 20）',
-    type: [SensitiveWordRecentHitStatisticsDto],
+    type: [ForumSensitiveWordRecentHitStatisticsDto],
   })
-  recentHitWords!: SensitiveWordRecentHitStatisticsDto[]
+  recentHitWords!: ForumSensitiveWordRecentHitStatisticsDto[]
 }
 
 /**
  * 统计查询响应DTO
  */
-export class SensitiveWordStatisticsResponseDto {
+export class ForumSensitiveWordStatisticsResponseDto {
   @ApiProperty({
     description: '统计类型',
     example: 'level',
@@ -239,25 +239,25 @@ export class SensitiveWordStatisticsResponseDto {
     oneOf: [
       {
         type: 'array',
-        items: { $ref: '#/components/schemas/LevelStatisticsDto' },
+        items: { $ref: '#/components/schemas/ForumSensitiveWordLevelStatisticsDto' },
       },
       {
         type: 'array',
-        items: { $ref: '#/components/schemas/TypeStatisticsDto' },
+        items: { $ref: '#/components/schemas/ForumSensitiveWordTypeStatisticsDto' },
       },
       {
         type: 'array',
-        items: { $ref: '#/components/schemas/TopHitStatisticsDto' },
+        items: { $ref: '#/components/schemas/ForumSensitiveWordTopHitStatisticsDto' },
       },
       {
         type: 'array',
-        items: { $ref: '#/components/schemas/RecentHitStatisticsDto' },
+        items: { $ref: '#/components/schemas/ForumSensitiveWordRecentHitStatisticsDto' },
       },
     ],
   })
   data!:
-    | SensitiveWordLevelStatisticsDto[]
-    | SensitiveWordTypeStatisticsDto[]
-    | SensitiveWordTopHitStatisticsDto[]
-    | SensitiveWordRecentHitStatisticsDto[]
+    | ForumSensitiveWordLevelStatisticsDto[]
+    | ForumSensitiveWordTypeStatisticsDto[]
+    | ForumSensitiveWordTopHitStatisticsDto[]
+    | ForumSensitiveWordRecentHitStatisticsDto[]
 }

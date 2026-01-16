@@ -2,6 +2,7 @@ model AppUser {
   id          Int       @id @default(autoincrement())
   account     String    @unique @map("account") @db.VarChar(50)
   nickname    String?   @map("nickname") @db.VarChar(100)
+  password    String    @map("password") @db.VarChar(500)
   avatar      String?   @map("avatar_url") @db.VarChar(500)
   phone       String?   @unique @map("phone_number") @db.VarChar(20)
   email       String?   @unique @map("email_address") @db.VarChar(255)

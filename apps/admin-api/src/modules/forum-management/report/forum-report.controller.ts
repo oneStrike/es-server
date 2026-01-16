@@ -20,7 +20,7 @@ export class ForumReportController {
     model: CreateForumReportDto,
   })
   async getReportList(@Query() query: QueryForumReportDto) {
-    return this.forumReportService.getForumReports(query)
+    return this.forumReportService.getReports(query)
   }
 
   @Get('detail')

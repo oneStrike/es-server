@@ -26,7 +26,7 @@ export class ForumTopicController {
     model: BaseForumTopicDto,
   })
   async getPage(@Query() query: QueryForumTopicDto) {
-    return this.forumTopicService.getForumTopics(query)
+    return this.forumTopicService.getTopics(query)
   }
 
   @Get('/detail')
@@ -35,7 +35,7 @@ export class ForumTopicController {
     model: BaseForumTopicDto,
   })
   async getDetail(@Query() query: IdDto) {
-    return this.forumTopicService.getForumTopicById(query.id)
+    return this.forumTopicService.getTopicById(query.id)
   }
 
   @Post('/create')
@@ -62,7 +62,7 @@ export class ForumTopicController {
     model: BaseForumTopicDto,
   })
   async delete(@Body() body: IdDto) {
-    return this.forumTopicService.deleteForumTopic(body.id)
+    return this.forumTopicService.deleteTopic(body.id)
   }
 
   @Post('/update-pinned')

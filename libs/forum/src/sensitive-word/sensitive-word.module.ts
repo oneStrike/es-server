@@ -1,23 +1,23 @@
 import { Module } from '@nestjs/common'
 import { SensitiveWordCacheService } from './sensitive-word-cache.service'
-import { SensitiveWordDetectService } from './sensitive-word-detect.service'
+import { ForumSensitiveWordDetectService } from './sensitive-word-detect.service'
 import { SensitiveWordStatisticsService } from './sensitive-word-statistics.service'
-import { SensitiveWordService } from './sensitive-word.service'
+import { ForumSensitiveWordService } from './sensitive-word.service'
 
 @Module({
   imports: [],
   controllers: [],
   providers: [
-    SensitiveWordService,
-    SensitiveWordDetectService,
+    ForumSensitiveWordService,
+    ForumSensitiveWordDetectService,
     SensitiveWordCacheService,
     SensitiveWordStatisticsService,
   ],
   exports: [
-    SensitiveWordService,
-    SensitiveWordDetectService,
+    ForumSensitiveWordService,
+    ForumSensitiveWordDetectService,
     SensitiveWordCacheService,
     SensitiveWordStatisticsService,
   ],
 })
-export class SensitiveWordModule {}
+export class ForumSensitiveWordModule {}

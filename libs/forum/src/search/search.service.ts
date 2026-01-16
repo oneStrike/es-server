@@ -11,7 +11,7 @@ import { SearchSortTypeEnum, SearchTypeEnum } from './search.constant'
  * 搜索服务
  */
 @Injectable()
-export class SearchService extends BaseService {
+export class ForumSearchService extends BaseService {
   constructor() {
     super()
   }

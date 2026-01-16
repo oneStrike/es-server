@@ -1,8 +1,8 @@
-import { ApiPageDoc } from '@libs/base/decorators'
 import {
   ClientPageResponseDto,
   LibAppPageService,
 } from '@libs/app-config/page'
+import { ApiPageDoc } from '@libs/base/decorators'
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

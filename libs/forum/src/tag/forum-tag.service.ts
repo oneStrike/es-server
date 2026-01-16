@@ -46,7 +46,7 @@ export class ForumTagService extends BaseService {
    * @returns 创建成功的标签
    * @throws BadRequestException 如果标签名称已存在
    */
-  async createForumTag(createForumTagDto: CreateForumTagDto) {
+  async createTag(createForumTagDto: CreateForumTagDto) {
     const { name, ...tagData } = createForumTagDto
 
     const existingTag = await this.forumTag.findFirst({
@@ -195,7 +195,7 @@ export class ForumTagService extends BaseService {
    * @throws NotFoundException 如果标签不存在
    * @throws BadRequestException 如果标签已被使用
    */
-  async deleteForumTag(id: number) {
+  async deleteTag(id: number) {
     const tag = await this.forumTag.findUnique({
       where: { id },
       include: {

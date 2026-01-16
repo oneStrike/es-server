@@ -52,9 +52,9 @@ export class BasePointRecordDto extends BaseDto {
   remark?: string
 }
 
-export class QueryPointRecordDto extends IntersectionType(
+export class QueryForumPointRecordDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BasePointRecordDto, ['ruleId'])),
+  PartialType(PickType(BaseForumPointRecordDto, ['ruleId'])),
 ) {
   @ValidateNumber({
     description: '用户论坛资料ID',
@@ -64,7 +64,7 @@ export class QueryPointRecordDto extends IntersectionType(
   profileId!: number
 }
 
-export class AddPointsDto {
+export class AddForumPointsDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,

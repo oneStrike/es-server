@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { LevelRuleService } from './level-rule.service'
+import { ForumLevelRuleService } from './level-rule.service'
 
 /**
  * 等级规则模块
@@ -7,7 +7,7 @@ import { LevelRuleService } from './level-rule.service'
  */
 @Module({
   imports: [],
-  providers: [LevelRuleService],
-  exports: [LevelRuleService],
+  providers: [ForumLevelRuleService],
+  exports: [ForumLevelRuleService],
 })
-export class LevelRuleModule {}
+export class ForumLevelRuleModule {}

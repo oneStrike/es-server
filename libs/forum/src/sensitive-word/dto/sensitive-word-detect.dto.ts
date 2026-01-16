@@ -9,7 +9,7 @@ import {
 /**
  * 敏感词检测请求DTO
  */
-export class SensitiveWordDetectDto {
+export class ForumSensitiveWordDetectDto {
   @ValidateEnum({
     description: '匹配模式',
     required: false,
@@ -29,7 +29,7 @@ export class SensitiveWordDetectDto {
 /**
  * 请求替换敏感词dto
  */
-export class SensitiveWordReplaceDto extends SensitiveWordDetectDto {
+export class ForumSensitiveWordReplaceDto extends ForumSensitiveWordDetectDto {
   @ValidateString({
     description: '替换字符',
     maxLength: 10,
@@ -42,7 +42,7 @@ export class SensitiveWordReplaceDto extends SensitiveWordDetectDto {
 /**
  * 匹配到的敏感词信息DTO
  */
-export class MatchedWordDto {
+export class ForumMatchedWordDto {
   @ApiProperty({
     description: '敏感词内容',
     example: '测试',

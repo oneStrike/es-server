@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common'
-import { NotificationService } from './notification.service'
+import { ForumNotificationService } from './notification.service'
 
 /**
  * 通知模块
@@ -7,7 +7,7 @@ import { NotificationService } from './notification.service'
  */
 @Module({
   imports: [],
-  providers: [NotificationService],
-  exports: [NotificationService],
+  providers: [ForumNotificationService],
+  exports: [ForumNotificationService],
 })
-export class NotificationModule {}
+export class ForumNotificationModule {}

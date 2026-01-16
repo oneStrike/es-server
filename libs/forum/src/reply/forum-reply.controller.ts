@@ -32,7 +32,7 @@ export class ForumReplyController {
     model: IdDto,
   })
   async create(@Body() body: CreateForumReplyDto) {
-    return this.forumReplyService.createForumReply(body)
+    return this.forumReplyService.createReply(body)
   }
 
   /**
@@ -74,7 +74,7 @@ export class ForumReplyController {
     model: IdDto,
   })
   async delete(@Body() body: IdDto) {
-    return this.forumReplyService.deleteForumReply(body.id)
+    return this.forumReplyService.deleteReply(body.id)
   }
 
   /**

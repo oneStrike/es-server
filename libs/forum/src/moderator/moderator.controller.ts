@@ -4,12 +4,12 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 import {
-  AssignModeratorSectionDto,
-  CreateModeratorDto,
-  QueryModeratorDto,
-  UpdateModeratorDto,
+  AssignForumModeratorSectionDto,
+  CreateForumModeratorDto,
+  QueryForumModeratorDto,
+  UpdateForumModeratorDto,
 } from './dto/moderator.dto'
-import { ModeratorService } from './moderator.service'
+import { ForumModeratorService } from './moderator.service'
 
 /**
  * 论坛版主管理控制器
@@ -18,7 +18,7 @@ import { ModeratorService } from './moderator.service'
 @ApiTags('论坛管理/版主管理模块')
 @Controller('forum/moderator')
 export class ModeratorController {
-  constructor(private readonly moderatorService: ModeratorService) {}
+  constructor(private readonly moderatorService: ForumModeratorService) {}
 
   /**
    * 添加版主
@@ -70,7 +70,7 @@ export class ModeratorController {
   @ApiPageDoc({
     summary: '查看版主列表',
   })
-  async getModeratorList(@Query() queryDto: QueryModeratorDto) {
+  async getModeratorList(@Query() queryDto: QueryForumModeratorDto) {
     return this.moderatorService.getModeratorPage(queryDto)
   }
 

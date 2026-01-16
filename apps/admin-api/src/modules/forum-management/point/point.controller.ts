@@ -1,14 +1,14 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  AddPointsDto,
-  BasePointRuleDto,
-  ConsumePointsDto,
-  CreatePointRuleDto,
-  PointService,
-  QueryPointRecordDto,
-  QueryPointRuleDto,
-  UpdatePointRuleDto,
+  AddForumPointsDto,
+  BaseForumPointRuleDto,
+  ConsumeForumPointsDto,
+  CreateForumPointRuleDto,
+  ForumPointService,
+  QueryForumPointRecordDto,
+  QueryForumPointRuleDto,
+  UpdateForumPointRuleDto,
 } from '@libs/forum/point'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -16,14 +16,14 @@ import { ApiTags } from '@nestjs/swagger'
 @Controller('/admin/forum/points')
 @ApiTags('论坛模块/积分管理')
 export class PointController {
-  constructor(private readonly pointService: PointService) {}
+  constructor(private readonly pointService: ForumPointService) {}
 
   @Get('rules-page')
   @ApiPageDoc({
     summary: '获取积分规则分页',
     model: BasePointRuleDto,
   })
-  async getPointRules(@Query() query: QueryPointRuleDto) {
+  async getPointRules(@Query() query: QueryForumPointRuleDto) {
     return this.pointService.getPointRulePage(query)
   }
 
@@ -77,7 +77,7 @@ export class PointController {
     summary: '获取积分记录分页',
     model: BasePointRuleDto,
   })
-  async getPointRecords(@Query() query: QueryPointRecordDto) {
+  async getPointRecords(@Query() query: QueryForumPointRecordDto) {
     return this.pointService.getPointRecordPage(query)
   }
 

@@ -205,6 +205,7 @@ export const AppUserScalarFieldEnum = {
   id: 'id',
   account: 'account',
   nickname: 'nickname',
+  password: 'password',
   avatar: 'avatar',
   phone: 'phone',
   email: 'email',

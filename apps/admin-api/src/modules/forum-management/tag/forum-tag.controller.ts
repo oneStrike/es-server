@@ -22,7 +22,7 @@ export class ForumTagController {
     model: CreateForumTagDto,
   })
   async getTagList(@Query() query: QueryForumTagDto) {
-    return this.forumTagService.getForumTags(query)
+    return this.forumTagService.getTags(query)
   }
 
   @Get('detail')
@@ -31,7 +31,7 @@ export class ForumTagController {
     model: CreateForumTagDto,
   })
   async getTagDetail(@Query() query: IdDto) {
-    return this.forumTagService.getForumTagById(query.id)
+    return this.forumTagService.getTagById(query.id)
   }
 
   @Get('popular')
@@ -93,7 +93,7 @@ export class ForumTagController {
     summary: '删除标签',
   })
   async removeTag(@Body() dto: IdDto) {
-    return this.forumTagService.deleteForumTag(dto.id)
+    return this.forumTagService.deleteTag(dto.id)
   }
 
   @Post('assign')

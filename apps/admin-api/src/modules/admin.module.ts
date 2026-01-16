@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
-import { AuthModule } from './auth/auth.module'
 import { AppNoticeModule } from './app-config/notice/notice.module'
 import { AppPageModule } from './app-config/page/page.module'
+import { AuthModule } from './auth/auth.module'
 import { ContentModule } from './content-management/content.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
 import { ForumManagementModule } from './forum-management/forum-management.module'

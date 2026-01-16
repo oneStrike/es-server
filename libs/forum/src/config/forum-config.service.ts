@@ -28,7 +28,7 @@ export class ForumConfigService extends BaseService {
     return this.cacheService.getConfig()
   }
 
-  async updateForumConfig(
+  async updateConfig(
     updateForumConfigDto: UpdateForumConfigDto,
     userId?: number,
   ) {

@@ -13,10 +13,10 @@ import { ForumConfigCacheService } from '../config/forum-config-cache.service'
 import { ReviewPolicyEnum } from '../config/forum-config.constants'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { PointRuleTypeEnum } from '../point/point.constant'
-import { PointService } from '../point/point.service'
+import { ForumPointService } from '../point/point.service'
 import { SensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
-import { SensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
-import { ProfileStatusEnum } from '../user/user.constant'
+import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
+import { ProfileStatusEnum } from '../profile/profile.constant'
 import {
   CreateForumTopicDto,
   QueryForumTopicDto,
@@ -36,9 +36,9 @@ import { ForumTopicAuditStatusEnum } from './forum-topic.constant'
 @Injectable()
 export class ForumTopicService extends BaseService {
   constructor(
-    private readonly pointService: PointService,
+    private readonly pointService: ForumPointService,
     private readonly forumConfigCacheService: ForumConfigCacheService,
-    private readonly sensitiveWordDetectService: SensitiveWordDetectService,
+    private readonly sensitiveWordDetectService: ForumSensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
   ) {
     super()
@@ -302,7 +302,7 @@ export class ForumTopicService extends BaseService {
    * @returns 删除结果
    * @throws {NotFoundException} 主题不存在
    */
-  async deleteForumTopic(id: number) {
+  async deleteTopic(id: number) {
     const topic = await this.forumTopic.findUnique({
       where: { id, deletedAt: null },
     })
