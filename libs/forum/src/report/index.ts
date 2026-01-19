@@ -1,5 +1,4 @@
 export * from './dto/forum-report.dto'
 export * from './forum-report.constant'
-export * from './forum-report.controller'
 export * from './forum-report.module'
 export * from './forum-report.service'

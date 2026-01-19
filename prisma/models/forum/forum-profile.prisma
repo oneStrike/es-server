@@ -53,6 +53,7 @@ model ForumProfile {
   handledReports          ForumReport[]               @relation("ReportHandler")
   updatedConfigs          ForumConfig[]               @relation("ForumConfigUpdater")
   operatedConfigHistories ForumConfigHistory[]        @relation("ForumConfigHistoryOperator")
+  actionLogs              ForumUserActionLog[]
 
   @@index([points])
   @@index([levelId])

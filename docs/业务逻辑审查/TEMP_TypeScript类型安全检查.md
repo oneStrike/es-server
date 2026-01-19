@@ -103,14 +103,14 @@ export interface MatchedWord {
   start: number
   end: number
   level: ForumSensitiveWordLevelEnum
-  type: SensitiveWordTypeEnum
+  type: ForumSensitiveWordTypeEnum
   replaceWord?: string | null
 }
 
 export interface DetectOptions {
   replace?: boolean
   replaceChar?: string
-  matchMode?: MatchModeEnum
+  matchMode?: ForumMatchModeEnum
 }
 ```
 

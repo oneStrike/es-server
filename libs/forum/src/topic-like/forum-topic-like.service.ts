@@ -5,6 +5,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import {
+  ForumUserActionTargetTypeEnum,
+  ForumUserActionTypeEnum,
+} from '../action-log/action-log.constant'
+import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import {
   CreateForumTopicLikeDto,
@@ -18,7 +23,10 @@ import {
  */
 @Injectable()
 export class ForumTopicLikeService extends BaseService {
-  constructor(private readonly forumCounterService: ForumCounterService) {
+  constructor(
+    private readonly forumCounterService: ForumCounterService,
+    private readonly actionLogService: ForumUserActionLogService,
+  ) {
     super()
   }
 
@@ -71,9 +79,9 @@ export class ForumTopicLikeService extends BaseService {
 
     const existingLike = await this.forumTopicLike.findUnique({
       where: {
-        topicId_userId: {
+        topicId_profileId: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       },
     })
@@ -86,7 +94,7 @@ export class ForumTopicLikeService extends BaseService {
       const like = await tx.forumTopicLike.create({
         data: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       })
 
@@ -96,6 +104,13 @@ export class ForumTopicLikeService extends BaseService {
         topic.profileId,
         1,
       )
+
+      await this.actionLogService.createActionLog({
+        profileId,
+        actionType: ForumUserActionTypeEnum.LIKE_TOPIC,
+        targetType: ForumUserActionTargetTypeEnum.TOPIC,
+        targetId: topicId,
+      })
 
       return like
     })
@@ -111,9 +126,9 @@ export class ForumTopicLikeService extends BaseService {
   async unlikeTopic(topicId: number, profileId: number) {
     const like = await this.forumTopicLike.findUnique({
       where: {
-        topicId_userId: {
+        topicId_profileId: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       },
     })
@@ -139,11 +154,18 @@ export class ForumTopicLikeService extends BaseService {
         -1,
       )
 
+      await this.actionLogService.createActionLog({
+        profileId,
+        actionType: ForumUserActionTypeEnum.UNLIKE_TOPIC,
+        targetType: ForumUserActionTargetTypeEnum.TOPIC,
+        targetId: topicId,
+      })
+
       return tx.forumTopicLike.delete({
         where: {
-          topicId_userId: {
+          topicId_profileId: {
             topicId,
-            userId: profileId,
+            profileId,
           },
         },
       })
@@ -169,9 +191,9 @@ export class ForumTopicLikeService extends BaseService {
 
     const existingLike = await this.forumTopicLike.findUnique({
       where: {
-        topicId_userId: {
+        topicId_profileId: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       },
     })
@@ -229,9 +251,9 @@ export class ForumTopicLikeService extends BaseService {
   async checkUserLiked(topicId: number, profileId: number) {
     const like = await this.forumTopicLike.findUnique({
       where: {
-        topicId_userId: {
+        topicId_profileId: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       },
     })

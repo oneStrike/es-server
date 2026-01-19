@@ -73,6 +73,7 @@ export class LibDictionaryService extends BaseService {
     if (isEnabled !== undefined) {
       where.isEnabled = isEnabled
     }
+    console.log(where)
     return this.prisma.dictionaryItem.findMany({
       where: { ...where },
     })

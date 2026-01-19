@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common'
-import { ForumReportController } from './forum-report.controller'
 import { ForumReportService } from './forum-report.service'
 
 /**
@@ -7,7 +6,6 @@ import { ForumReportService } from './forum-report.service'
  * 提供论坛举报管理的完整功能
  */
 @Module({
-  controllers: [ForumReportController],
   providers: [ForumReportService],
   exports: [ForumReportService],
 })

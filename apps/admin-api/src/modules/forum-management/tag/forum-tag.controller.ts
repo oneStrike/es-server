@@ -76,7 +76,7 @@ export class ForumTagController {
     model: CreateForumTagDto,
   })
   async addTag(@Body() dto: CreateForumTagDto) {
-    return this.forumTagService.createForumTag(dto)
+    return this.forumTagService.createTag(dto)
   }
 
   @Post('update')
@@ -85,7 +85,7 @@ export class ForumTagController {
     model: UpdateForumTagDto,
   })
   async updateTag(@Body() dto: UpdateForumTagDto) {
-    return this.forumTagService.updateForumTag(dto)
+    return this.forumTagService.updateTag(dto)
   }
 
   @Post('remove')

@@ -5,8 +5,14 @@ import type {
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  ForumUserActionTargetTypeEnum,
+  ForumUserActionTypeEnum,
+} from '../action-log/action-log.constant'
+import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumNotificationService } from '../notification/notification.service'
+import { ForumSensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
 import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
 
@@ -20,6 +26,7 @@ export class ForumReplyService extends BaseService {
     private readonly notificationService: ForumNotificationService,
     private readonly sensitiveWordDetectService: ForumSensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
+    private readonly actionLogService: ForumUserActionLogService,
   ) {
     super()
   }
@@ -99,14 +106,14 @@ export class ForumReplyService extends BaseService {
       newFloor = (maxFloorReply?.floor ?? 0) + 1
     }
 
-    const detectResult = await this.sensitiveWordDetectService.detect({
+    const detectResult = this.sensitiveWordDetectService.detect({
       content: replyData.content,
     })
 
     let auditStatus = 0
     let auditReason: string | undefined
 
-    if (detectResult.hasSevere) {
+    if (detectResult.highestLevel === ForumSensitiveWordLevelEnum.SEVERE) {
       auditStatus = 2
       auditReason = '包含严重敏感词，需要审核'
     }
@@ -177,6 +184,14 @@ export class ForumReplyService extends BaseService {
           })
         }
       }
+
+      await this.actionLogService.createActionLog({
+        profileId: profile.id,
+        actionType: ForumUserActionTypeEnum.CREATE_REPLY,
+        targetType: ForumUserActionTargetTypeEnum.REPLY,
+        targetId: reply.id,
+        afterData: JSON.stringify(reply),
+      })
 
       return reply
     })
@@ -336,6 +351,14 @@ export class ForumReplyService extends BaseService {
         -1,
       )
 
+      await this.actionLogService.createActionLog({
+        profileId: reply.profileId,
+        actionType: ForumUserActionTypeEnum.DELETE_REPLY,
+        targetType: ForumUserActionTargetTypeEnum.REPLY,
+        targetId: id,
+        beforeData: JSON.stringify(reply),
+      })
+
       return this.forumReply.softDelete({ id })
     })
   }
@@ -435,6 +458,14 @@ export class ForumReplyService extends BaseService {
           reply.profileId,
           -1,
         )
+
+        await this.actionLogService.createActionLog({
+          profileId: reply.profileId,
+          actionType: ForumUserActionTypeEnum.DELETE_REPLY,
+          targetType: ForumUserActionTargetTypeEnum.REPLY,
+          targetId: reply.id,
+          beforeData: JSON.stringify(reply),
+        })
       }
 
       const result = await tx.forumReply.deleteMany({

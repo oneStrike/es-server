@@ -81,7 +81,7 @@ model ForumSensitiveWord {
 - `GENERAL = 2` - 一般
 - `LIGHT = 3` - 轻微
 
-**敏感词类型** (SensitiveWordTypeEnum):
+**敏感词类型** (ForumSensitiveWordTypeEnum):
 - `POLITICS = 1` - 政治
 - `PORN = 2` - 色情
 - `VIOLENCE = 3` - 暴力

@@ -22,13 +22,13 @@ const APPS: Record<string, AppConfig> = {
     swaggerPath: 'api-doc-json',
     projectId: process.env.APIFOX_ADMIN_PROJECT_ID || '',
   },
-  client: {
-    name: 'client',
+  app: {
+    name: 'app',
     port: '8081',
     envPath: 'apps/app-api/.env.development',
-    startCommand: 'start:client',
+    startCommand: 'start:app',
     swaggerPath: 'api-doc-json',
-    projectId: process.env.APIFOX_CLIENT_PROJECT_ID || '',
+    projectId: process.env.APIFOX_app_PROJECT_ID || '',
   },
 }
 

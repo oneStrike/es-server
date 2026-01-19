@@ -5,7 +5,10 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/base/dto'
 import { ApiProperty, IntersectionType, OmitType } from '@nestjs/swagger'
-import { ForumReviewPolicyEnum } from '../forum-config.constants'
+import {
+  ChangeTypeEnum,
+  ForumReviewPolicyEnum,
+} from '../forum-config.constants'
 
 export class BaseForumConfigDto extends BaseDto {
   @ValidateString({
@@ -283,11 +286,19 @@ export class ForumConfigHistoryItemDto extends BaseDto {
   configId!: number
 
   @ApiProperty({
-    description: '变更时间',
-    example: '2023-10-01T12:00:00Z',
+    description: '变更类型',
+    example: ChangeTypeEnum.CREATE,
     required: true,
   })
-  changeType!: Date
+  changeType!: ChangeTypeEnum
+
+  @ApiProperty({
+    description: '变更内容',
+    example: '{"reviewPolicy": "SEVERE_SENSITIVE_WORD"}',
+    required: true,
+    type: Object,
+  })
+  changes!: Record<string, any>
 
   @ApiProperty({
     description: '变更原因',
@@ -296,4 +307,33 @@ export class ForumConfigHistoryItemDto extends BaseDto {
     maxLength: 500,
   })
   reason?: string
+
+  @ApiProperty({
+    description: '操作人ID',
+    example: 1,
+    required: false,
+  })
+  operatedById?: number
+
+  @ApiProperty({
+    description: '操作时间',
+    example: '2023-10-01T12:00:00Z',
+    required: true,
+  })
+  operatedAt!: Date
+
+  @ApiProperty({
+    description: '操作人IP地址',
+    example: '127.0.0.1',
+    required: false,
+  })
+  ipAddress?: string
+
+  @ApiProperty({
+    description: '操作人User-Agent',
+    example:
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+    required: false,
+  })
+  userAgent?: string
 }

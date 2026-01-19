@@ -105,6 +105,19 @@ export class ForumSectionGroupService extends BaseService {
       throw new NotFoundException('板块分组不存在')
     }
 
+    // 更新的时候检查名称是否重复
+    if (
+      updateData.name &&
+      await this.forumSectionGroup.exists({
+        name: updateData.name,
+        id: {
+          not: id,
+        },
+      })
+    ) {
+      throw new BadRequestException('板块分组名称已存在')
+    }
+
     return this.forumSectionGroup.update({
       where: { id },
       data: updateData,

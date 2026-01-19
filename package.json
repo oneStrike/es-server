@@ -37,7 +37,7 @@
     "prisma:deploy": "pnpm prisma:migrate:deploy && pnpm prisma:seed",
     "prisma:update": "pnpm prisma:generate && pnpm prisma:migrate:dev && pnpm prisma:deploy",
     "publish-api:admin": "tsx publish-api.ts --app admin",
-    "publish-api:client": "tsx publish-api.ts --app client"
+    "publish-api:app": "tsx publish-api.ts --app app"
   },
   "dependencies": {
     "@fastify/compress": "^8.3.0",

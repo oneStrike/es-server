@@ -1,11 +1,11 @@
 import type { FastifyRequest } from 'fastify'
-import { BaseService, Prisma } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { RsaService, ScryptService } from '@libs/base/modules'
 import { AuthService as BaseAuthService } from '@libs/base/modules/auth'
-import { ForumProfileService } from '@libs/forum/profile'
-
 import { extractIpAddress } from '@libs/base/utils'
+
+import { ForumProfileService } from '@libs/forum'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ErrorMessages } from './auth.constant'
 import {
@@ -25,7 +25,7 @@ export class AuthService extends BaseService {
     private readonly rsaService: RsaService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
-    private readonly profileService: ProfileService,
+    private readonly profileService: ForumProfileService,
   ) {
     super()
   }

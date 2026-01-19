@@ -1,5 +1,4 @@
 export * from './dto/forum-reply.dto'
 export * from './forum-reply.constant'
-export * from './forum-reply.controller'
 export * from './forum-reply.module'
 export * from './forum-reply.service'

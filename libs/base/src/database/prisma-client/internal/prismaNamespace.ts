@@ -4453,7 +4453,7 @@ export type ForumTopicScalarFieldEnum = (typeof ForumTopicScalarFieldEnum)[keyof
 
 export const ForumUserActionLogScalarFieldEnum = {
   id: 'id',
-  userId: 'userId',
+  profileId: 'profileId',
   actionType: 'actionType',
   actionDescription: 'actionDescription',
   targetType: 'targetType',

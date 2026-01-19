@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ForumCounterModule } from '../counter/forum-counter.module'
+import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumNotificationModule } from '../notification/notification.module'
 import { ForumSensitiveWordModule } from '../sensitive-word/sensitive-word.module'
 import { ForumReplyService } from './forum-reply.service'
@@ -13,6 +14,7 @@ import { ForumReplyService } from './forum-reply.service'
     ForumNotificationModule,
     ForumSensitiveWordModule,
     ForumCounterModule,
+    ForumUserActionLogModule,
   ],
   providers: [ForumReplyService],
   exports: [ForumReplyService],

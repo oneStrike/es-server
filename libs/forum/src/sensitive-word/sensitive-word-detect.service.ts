@@ -11,7 +11,6 @@ import {
   ForumSensitiveWordLevelEnum,
   ForumSensitiveWordTypeEnum,
 } from './sensitive-word-constant'
-import { ForumSensitiveWordStatisticsService } from './sensitive-word-statistics.service'
 import { ACAutomaton, MatchResult } from './utils/ac-automaton'
 import { FuzzyMatcher, FuzzyMatchResult } from './utils/fuzzy-matcher'
 
@@ -165,6 +164,20 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
     return {
       hits: matchedWords,
       highestLevel,
+    }
+  }
+
+  /**
+   * 检测内容中的敏感词
+   * @param dto - 检测请求对象
+   * @returns 检测结果，包含最高敏感词级别和匹配的敏感词列表
+   */
+  detect(dto: ForumSensitiveWordDetectDto) {
+    const result = this.getMatchedWords(dto)
+
+    return {
+      highestLevel: result.highestLevel,
+      hits: result.hits || [],
     }
   }
 

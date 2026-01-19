@@ -8,7 +8,7 @@ import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('客户端通知模块')
-@Controller('Client/notice')
+@Controller('app/notice')
 export class AppNoticeController {
   constructor(
     private readonly libAppNoticeService: LibAppNoticeService,

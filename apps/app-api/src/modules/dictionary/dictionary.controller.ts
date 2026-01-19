@@ -6,7 +6,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { QueryDictionaryItemDto } from './dto/dictionary.dto'
 
 @ApiTags('字典管理')
-@Controller('/client/dictionary')
+@Controller('app/dictionary')
 export class DictionaryController {
   constructor(private readonly libDictionaryService: LibDictionaryService) {}
 

@@ -18,7 +18,7 @@ import {
 } from './dto/auth.dto'
 
 @ApiTags('认证模块')
-@Controller('api/auth')
+@Controller('app/auth')
 export class AuthController {
   constructor(
     private readonly rsaService: RsaService,

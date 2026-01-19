@@ -2,6 +2,11 @@ import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
+  ForumUserActionTargetTypeEnum,
+  ForumUserActionTypeEnum,
+} from '../action-log/action-log.constant'
+import { ForumUserActionLogService } from '../action-log/action-log.service'
+import {
   CreateForumReplyLikeDto,
   DeleteForumReplyLikeDto,
 } from './dto/forum-reply-like.dto'
@@ -12,26 +17,18 @@ import {
  */
 @Injectable()
 export class ForumReplyLikeService extends BaseService {
-  /**
-   * 获取论坛回复点赞模型
-   * @returns 论坛回复点赞模型
-   */
+  constructor(private readonly actionLogService: ForumUserActionLogService) {
+    super()
+  }
+
   get forumReplyLike() {
     return this.prisma.forumReplyLike
   }
 
-  /**
-   * 获取论坛回复模型
-   * @returns 论坛回复模型
-   */
   get forumReply() {
     return this.prisma.forumReply
   }
 
-  /**
-   * 获取论坛用户资料模型
-   * @returns 论坛用户资料模型
-   */
   get forumProfile() {
     return this.prisma.forumProfile
   }
@@ -45,7 +42,7 @@ export class ForumReplyLikeService extends BaseService {
    * @throws {BadRequestException} 已经点赞过该回复时抛出
    */
   async likeReply(createForumReplyLikeDto: CreateForumReplyLikeDto) {
-    const { replyId, userId } = createForumReplyLikeDto
+    const { replyId, profileId } = createForumReplyLikeDto
 
     const reply = await this.forumReply.findUnique({
       where: { id: replyId },
@@ -56,7 +53,7 @@ export class ForumReplyLikeService extends BaseService {
     }
 
     const profile = await this.forumProfile.findUnique({
-      where: { id: userId },
+      where: { id: profileId },
     })
 
     if (!profile) {
@@ -65,9 +62,9 @@ export class ForumReplyLikeService extends BaseService {
 
     const existingLike = await this.forumReplyLike.findUnique({
       where: {
-        replyId_userId: {
+        replyId_profileId: {
           replyId,
-          userId,
+          profileId,
         },
       },
     })
@@ -80,7 +77,7 @@ export class ForumReplyLikeService extends BaseService {
       const like = await tx.forumReplyLike.create({
         data: {
           replyId,
-          userId,
+          profileId,
         },
       })
 
@@ -91,6 +88,13 @@ export class ForumReplyLikeService extends BaseService {
             increment: 1,
           },
         },
+      })
+
+      await this.actionLogService.createActionLog({
+        profileId,
+        actionType: ForumUserActionTypeEnum.LIKE_REPLY,
+        targetType: ForumUserActionTargetTypeEnum.REPLY,
+        targetId: replyId,
       })
 
       return like
@@ -105,7 +109,7 @@ export class ForumReplyLikeService extends BaseService {
    * @throws {BadRequestException} 无权取消他人的点赞时抛出
    */
   async unlikeReply(deleteForumReplyLikeDto: DeleteForumReplyLikeDto) {
-    const { id, userId } = deleteForumReplyLikeDto
+    const { id, profileId } = deleteForumReplyLikeDto
 
     const like = await this.forumReplyLike.findUnique({
       where: { id },
@@ -115,7 +119,7 @@ export class ForumReplyLikeService extends BaseService {
       throw new BadRequestException('点赞记录不存在')
     }
 
-    if (like.userId !== userId) {
+    if (like.profileId !== profileId) {
       throw new BadRequestException('无权取消他人的点赞')
     }
 
@@ -129,6 +133,13 @@ export class ForumReplyLikeService extends BaseService {
         },
       })
 
+      await this.actionLogService.createActionLog({
+        profileId,
+        actionType: ForumUserActionTypeEnum.UNLIKE_REPLY,
+        targetType: ForumUserActionTargetTypeEnum.REPLY,
+        targetId: like.replyId,
+      })
+
       return tx.forumReplyLike.delete({
         where: { id },
       })
@@ -138,15 +149,15 @@ export class ForumReplyLikeService extends BaseService {
   /**
    * 检查用户是否已点赞回复
    * @param replyId - 回复ID
-   * @param userId - 用户ID
+   * @param profileId - 用户资料ID
    * @returns 包含点赞状态的对象
    */
-  async checkUserLiked(replyId: number, userId: number) {
+  async checkUserLiked(replyId: number, profileId: number) {
     const like = await this.forumReplyLike.findUnique({
       where: {
-        replyId_userId: {
+        replyId_profileId: {
           replyId,
-          userId,
+          profileId,
         },
       },
     })

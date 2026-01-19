@@ -7,7 +7,7 @@ import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('客户端页面配置模块')
-@Controller('client/page-config')
+@Controller('app/page-config')
 export class AppPageController {
   constructor(private readonly libAppPageService: LibAppPageService) {}
 

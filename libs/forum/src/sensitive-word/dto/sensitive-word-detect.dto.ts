@@ -1,9 +1,9 @@
 import { ValidateEnum, ValidateString } from '@libs/base/decorators'
 import { ApiProperty } from '@nestjs/swagger'
 import {
-  MatchModeEnum,
+  ForumMatchModeEnum,
   ForumSensitiveWordLevelEnum,
-  SensitiveWordTypeEnum,
+  ForumSensitiveWordTypeEnum,
 } from '../sensitive-word-constant'
 
 /**
@@ -13,10 +13,10 @@ export class ForumSensitiveWordDetectDto {
   @ValidateEnum({
     description: '匹配模式',
     required: false,
-    example: MatchModeEnum.EXACT,
-    enum: MatchModeEnum,
+    example: ForumMatchModeEnum.EXACT,
+    enum: ForumMatchModeEnum,
   })
-  matchMode?: MatchModeEnum
+  matchMode?: ForumMatchModeEnum
 
   @ValidateString({
     description: '待检测的文本',
@@ -70,8 +70,8 @@ export class ForumMatchedWordDto {
 
   @ApiProperty({
     description: '敏感词类型',
-    example: SensitiveWordTypeEnum.POLITICS,
-    enum: SensitiveWordTypeEnum,
+    example: ForumSensitiveWordTypeEnum.POLITICS,
+    enum: ForumSensitiveWordTypeEnum,
   })
   type!: number
 
@@ -82,4 +82,56 @@ export class ForumMatchedWordDto {
     type: String,
   })
   replaceWord?: string | null
+}
+
+/**
+ * 敏感词替换响应DTO
+ */
+export class ForumSensitiveWordReplaceResponseDto {
+  @ApiProperty({
+    description: '替换后的文本',
+    example: '这是一个***文本',
+  })
+  replacedText!: string
+}
+
+/**
+ * 最高敏感等级响应DTO
+ */
+export class ForumSensitiveWordHighestLevelResponseDto {
+  @ApiProperty({
+    description: '敏感词最高等级',
+    example: ForumSensitiveWordLevelEnum.SEVERE,
+    enum: ForumSensitiveWordLevelEnum,
+    required: false,
+  })
+  highestLevel?: ForumSensitiveWordLevelEnum
+}
+
+/**
+ * 检测器状态响应DTO
+ */
+export class ForumSensitiveWordDetectStatusResponseDto {
+  @ApiProperty({
+    description: '检测器是否已初始化',
+    example: true,
+  })
+  isReady!: boolean
+
+  @ApiProperty({
+    description: '当前加载的敏感词数量',
+    example: 100,
+  })
+  wordCount!: number
+}
+
+/**
+ * 敏感词数量响应DTO
+ */
+export class ForumSensitiveWordCountResponseDto {
+  @ApiProperty({
+    description: '当前加载的敏感词数量',
+    example: 100,
+  })
+  count!: number
 }

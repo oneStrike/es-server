@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common'
 import { ForumCounterModule } from '../counter/forum-counter.module'
-import { PointModule } from '../point/point.module'
-import { SensitiveWordModule } from '../sensitive-word/sensitive-word.module'
+import { ForumPointModule } from '../point/point.module'
+import { ForumSensitiveWordModule } from '../sensitive-word/sensitive-word.module'
+import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumConfigModule } from './../config/forum-config.module'
 import { ForumTopicService } from './forum-topic.service'
 
@@ -10,7 +11,7 @@ import { ForumTopicService } from './forum-topic.service'
  * 提供论坛主题管理的完整功能
  */
 @Module({
-  imports: [PointModule, SensitiveWordModule, ForumConfigModule, ForumCounterModule],
+  imports: [ForumPointModule, ForumSensitiveWordModule, ForumConfigModule, ForumCounterModule, ForumUserActionLogModule],
   controllers: [],
   providers: [ForumTopicService],
   exports: [ForumTopicService],

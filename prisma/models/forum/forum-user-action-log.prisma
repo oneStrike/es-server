@@ -2,12 +2,10 @@
 model ForumUserActionLog {
   /// 主键ID
   id                Int      @id @default(autoincrement())
-  /// 关联的用户ID
-  userId            Int      @map("user_id")
+  /// 关联的论坛用户资料ID
+  profileId         Int      @map("user_id")
   /// 操作类型（1=创建主题, 2=创建回复, 3=点赞主题, 4=取消点赞主题, 5=点赞回复, 6=取消点赞回复, 7=收藏主题, 8=取消收藏主题, 9=更新主题, 10=更新回复, 11=删除主题, 12=删除回复）
   actionType        Int      @map("action_type") @db.SmallInt
-  /// 操作描述
-  actionDescription String   @map("action_description") @db.VarChar(200)
   /// 目标类型（1=主题, 2=回复）
   targetType        Int      @map("target_type") @db.SmallInt
   /// 目标ID
@@ -23,11 +21,13 @@ model ForumUserActionLog {
   /// 操作时间
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([userId])
+  profile           ForumProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
   @@index([actionType])
   @@index([targetType, targetId])
   @@index([ipAddress])
   @@index([createdAt])
-  @@index([userId, createdAt])
+  @@index([profileId, createdAt])
   @@map("forum_user_action_log")
 }

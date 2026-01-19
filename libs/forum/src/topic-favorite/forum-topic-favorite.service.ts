@@ -5,6 +5,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import {
+  ForumUserActionTargetTypeEnum,
+  ForumUserActionTypeEnum,
+} from '../action-log/action-log.constant'
+import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import {
   CreateForumTopicFavoriteDto,
@@ -14,7 +19,10 @@ import {
 
 @Injectable()
 export class ForumTopicFavoriteService extends BaseService {
-  constructor(private readonly forumCounterService: ForumCounterService) {
+  constructor(
+    private readonly forumCounterService: ForumCounterService,
+    private readonly actionLogService: ForumUserActionLogService,
+  ) {
     super()
   }
 
@@ -51,9 +59,9 @@ export class ForumTopicFavoriteService extends BaseService {
 
     const existingFavorite = await this.forumTopicFavorite.findUnique({
       where: {
-        topicId_userId: {
+        topicId_profileId: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       },
     })
@@ -66,7 +74,7 @@ export class ForumTopicFavoriteService extends BaseService {
       const favorite = await tx.forumTopicFavorite.create({
         data: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       })
 
@@ -77,6 +85,13 @@ export class ForumTopicFavoriteService extends BaseService {
         1,
       )
 
+      await this.actionLogService.createActionLog({
+        profileId,
+        actionType: ForumUserActionTypeEnum.FAVORITE_TOPIC,
+        targetType: ForumUserActionTargetTypeEnum.TOPIC,
+        targetId: topicId,
+      })
+
       return favorite
     })
   }
@@ -84,9 +99,9 @@ export class ForumTopicFavoriteService extends BaseService {
   async removeFavorite(topicId: number, profileId: number) {
     const favorite = await this.forumTopicFavorite.findUnique({
       where: {
-        topicId_userId: {
+        topicId_profileId: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       },
     })
@@ -112,11 +127,18 @@ export class ForumTopicFavoriteService extends BaseService {
         -1,
       )
 
+      await this.actionLogService.createActionLog({
+        profileId,
+        actionType: ForumUserActionTypeEnum.UNFAVORITE_TOPIC,
+        targetType: ForumUserActionTargetTypeEnum.TOPIC,
+        targetId: topicId,
+      })
+
       return tx.forumTopicFavorite.delete({
         where: {
-          topicId_userId: {
+          topicId_profileId: {
             topicId,
-            userId: profileId,
+            profileId,
           },
         },
       })
@@ -138,9 +160,9 @@ export class ForumTopicFavoriteService extends BaseService {
 
     const existingFavorite = await this.forumTopicFavorite.findUnique({
       where: {
-        topicId_userId: {
+        topicId_profileId: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       },
     })
@@ -164,8 +186,11 @@ export class ForumTopicFavoriteService extends BaseService {
     const where: any = {}
 
     if (profileId) {
-      where.userId = profileId
+      where.profileId = profileId
     }
+
+    where.pageIndex = pageIndex
+    where.pageSize = pageSize
 
     return this.forumTopicFavorite.findPagination({
       where,
@@ -186,10 +211,14 @@ export class ForumTopicFavoriteService extends BaseService {
                 name: true,
               },
             },
-            user: {
+            profile: {
               select: {
                 id: true,
-                nickname: true,
+                user: {
+                  select: {
+                    nickname: true,
+                  },
+                },
               },
             },
           },
@@ -198,17 +227,15 @@ export class ForumTopicFavoriteService extends BaseService {
       orderBy: {
         createdAt: 'desc',
       },
-      pageIndex,
-      pageSize,
     })
   }
 
   async checkUserFavorited(topicId: number, profileId: number) {
     const favorite = await this.forumTopicFavorite.findUnique({
       where: {
-        topicId_userId: {
+        topicId_profileId: {
           topicId,
-          userId: profileId,
+          profileId,
         },
       },
     })

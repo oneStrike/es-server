@@ -9,6 +9,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import {
+  ForumUserActionTargetTypeEnum,
+  ForumUserActionTypeEnum,
+} from '../action-log/action-log.constant'
+import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumConfigCacheService } from '../config/forum-config-cache.service'
 import { ForumReviewPolicyEnum } from '../config/forum-config.constants'
 import { ForumCounterService } from '../counter/forum-counter.service'
@@ -40,6 +45,7 @@ export class ForumTopicService extends BaseService {
     private readonly forumConfigCacheService: ForumConfigCacheService,
     private readonly sensitiveWordDetectService: ForumSensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
+    private readonly actionLogService: ForumUserActionLogService,
   ) {
     super()
   }
@@ -76,7 +82,9 @@ export class ForumTopicService extends BaseService {
 
       if (reviewPolicy === ForumReviewPolicyEnum.SEVERE_SENSITIVE_WORD) {
         needAudit = highestLevel === ForumSensitiveWordLevelEnum.SEVERE
-      } else if (reviewPolicy === ForumReviewPolicyEnum.GENERAL_SENSITIVE_WORD) {
+      } else if (
+        reviewPolicy === ForumReviewPolicyEnum.GENERAL_SENSITIVE_WORD
+      ) {
         needAudit =
           highestLevel === ForumSensitiveWordLevelEnum.SEVERE ||
           highestLevel === ForumSensitiveWordLevelEnum.GENERAL
@@ -170,6 +178,14 @@ export class ForumTopicService extends BaseService {
         remark: `创建主题 ${topic.id}`,
       })
     }
+
+    await this.actionLogService.createActionLog({
+      profileId,
+      actionType: ForumUserActionTypeEnum.CREATE_TOPIC,
+      targetType: ForumUserActionTargetTypeEnum.TOPIC,
+      targetId: topic.id,
+      afterData: JSON.stringify(topic),
+    })
 
     return topic
   }
@@ -293,6 +309,15 @@ export class ForumTopicService extends BaseService {
       data: updatePayload,
     })
 
+    await this.actionLogService.createActionLog({
+      profileId: topic.profileId,
+      actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
+      targetType: ForumUserActionTargetTypeEnum.TOPIC,
+      targetId: id,
+      beforeData: JSON.stringify(topic),
+      afterData: JSON.stringify(updatedTopic),
+    })
+
     return updatedTopic
   }
 
@@ -321,6 +346,14 @@ export class ForumTopicService extends BaseService {
         topic.profileId,
         -1,
       )
+    })
+
+    await this.actionLogService.createActionLog({
+      profileId: topic.profileId,
+      actionType: ForumUserActionTypeEnum.DELETE_TOPIC,
+      targetType: ForumUserActionTargetTypeEnum.TOPIC,
+      targetId: id,
+      beforeData: JSON.stringify(topic),
     })
 
     return topic

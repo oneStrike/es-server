@@ -1,10 +1,16 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import {
+  BaseForumSensitiveWordDto,
   CreateForumSensitiveWordDto,
   ForumMatchedWordDto,
+  ForumSensitiveWordCountResponseDto,
   ForumSensitiveWordDetectDto,
   ForumSensitiveWordDetectService,
+  ForumSensitiveWordDetectStatusResponseDto,
+  ForumSensitiveWordHighestLevelResponseDto,
+  ForumSensitiveWordReplaceDto,
+  ForumSensitiveWordReplaceResponseDto,
   ForumSensitiveWordService,
   ForumSensitiveWordStatisticsDataDto,
   ForumSensitiveWordStatisticsQueryDto,
@@ -38,7 +44,7 @@ export class SensitiveWordController {
   @Get('/page')
   @ApiPageDoc({
     summary: '获取敏感词分页列表',
-    model: CreateForumSensitiveWordDto,
+    model: BaseForumSensitiveWordDto,
   })
   async getSensitiveWordPage(@Query() query: QueryForumSensitiveWordDto) {
     return this.sensitiveWordService.getSensitiveWordPage(query)
@@ -52,7 +58,7 @@ export class SensitiveWordController {
   @Post('/create')
   @ApiDoc({
     summary: '创建敏感词',
-    model: CreateForumSensitiveWordDto,
+    model: BaseForumSensitiveWordDto,
   })
   async createSensitiveWord(@Body() body: CreateForumSensitiveWordDto) {
     return this.sensitiveWordService.createSensitiveWord(body)
@@ -66,7 +72,7 @@ export class SensitiveWordController {
   @Post('/update')
   @ApiDoc({
     summary: '更新敏感词',
-    model: UpdateForumSensitiveWordDto,
+    model: BaseForumSensitiveWordDto,
   })
   async updateSensitiveWord(@Body() body: UpdateForumSensitiveWordDto) {
     return this.sensitiveWordService.updateSensitiveWord(body)
@@ -80,7 +86,7 @@ export class SensitiveWordController {
   @Post('/delete')
   @ApiDoc({
     summary: '删除敏感词',
-    model: IdDto,
+    model: BaseForumSensitiveWordDto,
   })
   async deleteSensitiveWord(@Body() body: IdDto) {
     return this.sensitiveWordService.deleteSensitiveWord(body)
@@ -94,7 +100,7 @@ export class SensitiveWordController {
   @Post('/update-status')
   @ApiDoc({
     summary: '更新敏感词状态',
-    model: UpdateEnabledStatusDto,
+    model: BaseForumSensitiveWordDto,
   })
   async updateSensitiveWordStatus(@Body() body: UpdateEnabledStatusDto) {
     return this.sensitiveWordService.updateSensitiveWordStatus(body)
@@ -140,5 +146,64 @@ export class SensitiveWordController {
   })
   async getFullStatistics() {
     return this.statisticsService.getStatistics()
+  }
+
+  /**
+   * 替换文本中的敏感词
+   * @param body - 替换请求对象
+   * @returns 替换后的文本
+   */
+  @Post('/replace')
+  @ApiDoc({
+    summary: '替换文本中的敏感词',
+    model: ForumSensitiveWordReplaceResponseDto,
+  })
+  async replaceSensitiveWords(@Body() body: ForumSensitiveWordReplaceDto) {
+    return this.detectService.replaceSensitiveWords(body)
+  }
+
+  /**
+   * 获取文本中敏感词的最高等级
+   * @param body - 检测请求对象
+   * @returns 敏感词最高等级
+   */
+  @Post('/detect/highest-level')
+  @ApiDoc({
+    summary: '获取文本中敏感词的最高等级',
+    model: ForumSensitiveWordHighestLevelResponseDto,
+  })
+  async getHighestSensitiveWordLevel(
+    @Body() body: ForumSensitiveWordDetectDto,
+  ) {
+    return this.detectService.getHighestSensitiveWordLevel(body)
+  }
+
+  /**
+   * 检查敏感词检测器状态
+   * @returns 检测器状态
+   */
+  @Get('/detect/status')
+  @ApiDoc({
+    summary: '检查敏感词检测器状态',
+    model: ForumSensitiveWordDetectStatusResponseDto,
+  })
+  async getDetectStatus() {
+    return {
+      isReady: this.detectService.isReady(),
+      wordCount: this.detectService.getWordCount(),
+    }
+  }
+
+  /**
+   * 获取当前加载的敏感词数量
+   * @returns 敏感词数量
+   */
+  @Get('/count')
+  @ApiDoc({
+    summary: '获取当前加载的敏感词数量',
+    model: ForumSensitiveWordCountResponseDto,
+  })
+  async getWordCount() {
+    return this.detectService.getWordCount()
   }
 }

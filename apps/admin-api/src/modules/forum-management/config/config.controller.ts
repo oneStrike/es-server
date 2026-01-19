@@ -1,13 +1,15 @@
 import type { JwtUserInfoInterface } from '@libs/base/types'
+import type { FastifyRequest } from 'fastify'
 import { ApiDoc } from '@libs/base/decorators'
 import { CurrentUser } from '@libs/base/decorators/current-user.decorator'
 import { IdDto } from '@libs/base/dto'
 import {
   BaseForumConfigDto,
+  ForumConfigHistoryItemDto,
   ForumConfigService,
   UpdateForumConfigDto,
 } from '@libs/forum/config'
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @Controller('/admin/forum/config')
@@ -32,8 +34,9 @@ export class ForumConfigController {
   async updateForumConfig(
     @Body() updateDto: UpdateForumConfigDto,
     @CurrentUser() currentUser: JwtUserInfoInterface,
+    @Req() req: FastifyRequest,
   ) {
-    return this.forumConfigService.updateConfig(updateDto, currentUser.sub)
+    return this.forumConfigService.updateConfig(updateDto, currentUser.sub, req)
   }
 
   @Post('reset')
@@ -41,14 +44,14 @@ export class ForumConfigController {
     summary: '重置为默认配置',
     model: BaseForumConfigDto,
   })
-  async resetToDefault() {
-    return this.forumConfigService.resetToDefault()
+  async resetToDefault(@Req() req: FastifyRequest) {
+    return this.forumConfigService.resetToDefault(req)
   }
 
   @Get('history')
   @ApiDoc({
     summary: '获取配置变更历史',
-    model: BaseForumConfigDto,
+    model: ForumConfigHistoryItemDto,
     isArray: true,
   })
   async getConfigHistory() {
@@ -63,9 +66,26 @@ export class ForumConfigController {
   async restoreFromHistory(
     @Body() restoreDto: IdDto,
     @CurrentUser() currentUser?: JwtUserInfoInterface,
+    @Req() req?: FastifyRequest,
   ) {
     return this.forumConfigService.restoreFromHistory(
       restoreDto.id,
+      currentUser?.sub,
+      req,
+    )
+  }
+
+  @Post('delete')
+  @ApiDoc({
+    summary: '删除配置历史记录',
+    model: BaseForumConfigDto,
+  })
+  async deleteConfigHistory(
+    @Body() deleteDto: IdDto,
+    @CurrentUser() currentUser?: JwtUserInfoInterface,
+  ) {
+    return this.forumConfigService.deleteConfigHistory(
+      deleteDto.id,
       currentUser?.sub,
     )
   }

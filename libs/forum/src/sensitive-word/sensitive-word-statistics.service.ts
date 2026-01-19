@@ -1,15 +1,15 @@
 import { BaseService } from '@libs/base/database'
 import { Injectable, Logger } from '@nestjs/common'
 import {
-  ForumSensitiveWordLevelStatisticsDto,
+  ForumForumSensitiveWordLevelStatisticsDto,
+  ForumForumSensitiveWordTypeStatisticsDto,
   ForumSensitiveWordRecentHitStatisticsDto,
   ForumSensitiveWordStatisticsDataDto,
   ForumSensitiveWordTopHitStatisticsDto,
-  ForumSensitiveWordTypeStatisticsDto,
 } from './dto/sensitive-word-statistics.dto'
 import {
-  SensitiveWordLevelNames,
-  SensitiveWordTypeNames,
+  ForumSensitiveWordLevelNames,
+  ForumSensitiveWordTypeNames,
 } from './sensitive-word-constant'
 
 /**
@@ -183,7 +183,9 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
    * 按敏感词级别分组统计，包含每个级别的敏感词数量和命中次数
    * @returns 级别统计列表
    */
-  private async getLevelStatistics(): Promise<ForumSensitiveWordLevelStatisticsDto[]> {
+  private async getLevelStatistics(): Promise<
+    ForumForumSensitiveWordLevelStatisticsDto[]
+  > {
     const results = await this.sensitiveWord.groupBy({
       by: ['level'],
       _count: {
@@ -196,7 +198,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
 
     return results.map((result) => ({
       level: result.level,
-      levelName: SensitiveWordLevelNames[result.level] || '未知',
+      levelName: ForumSensitiveWordLevelNames[result.level] || '未知',
       count: result._count.id,
       hitCount: result._sum.hitCount || 0,
     }))
@@ -207,7 +209,9 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
    * 按敏感词类型分组统计，包含每个类型的敏感词数量和命中次数
    * @returns 类型统计列表
    */
-  private async getTypeStatistics(): Promise<ForumSensitiveWordTypeStatisticsDto[]> {
+  private async getTypeStatistics(): Promise<
+    ForumForumSensitiveWordTypeStatisticsDto[]
+  > {
     const results = await this.sensitiveWord.groupBy({
       by: ['type'],
       _count: {
@@ -220,7 +224,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
 
     return results.map((result) => ({
       type: result.type,
-      typeName: SensitiveWordTypeNames[result.type] || '未知',
+      typeName: ForumSensitiveWordTypeNames[result.type] || '未知',
       count: result._count.id,
       hitCount: result._sum.hitCount || 0,
     }))
@@ -231,7 +235,9 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
    * 返回命中次数最高的20个敏感词
    * @returns 热门敏感词列表
    */
-  private async getTopHitWords(): Promise<ForumSensitiveWordTopHitStatisticsDto[]> {
+  private async getTopHitWords(): Promise<
+    ForumSensitiveWordTopHitStatisticsDto[]
+  > {
     const results = await this.sensitiveWord.findMany({
       where: {
         hitCount: {
@@ -265,7 +271,9 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
    * 返回最近命中的20个敏感词，按最后命中时间倒序排列
    * @returns 最近命中的敏感词列表
    */
-  private async getRecentHitWords(): Promise<ForumSensitiveWordRecentHitStatisticsDto[]> {
+  private async getRecentHitWords(): Promise<
+    ForumSensitiveWordRecentHitStatisticsDto[]
+  > {
     const results = await this.sensitiveWord.findMany({
       where: {
         lastHitAt: {

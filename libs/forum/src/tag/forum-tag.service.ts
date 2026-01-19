@@ -74,7 +74,7 @@ export class ForumTagService extends BaseService {
    * @param queryForumTagDto 查询条件的数据传输对象
    * @returns 分页后的标签列表
    */
-  async getForumTags(queryForumTagDto: QueryForumTagDto) {
+  async getTags(queryForumTagDto: QueryForumTagDto) {
     const { name, isEnabled } = queryForumTagDto
 
     const where: any = {}
@@ -110,7 +110,7 @@ export class ForumTagService extends BaseService {
    * @returns 标签详情，包含最近使用该标签的主题
    * @throws NotFoundException 如果标签不存在
    */
-  async getForumTagById(id: number) {
+  async getTagById(id: number) {
     const tag = await this.forumTag.findUnique({
       where: { id },
       include: {
@@ -154,7 +154,7 @@ export class ForumTagService extends BaseService {
    * @throws NotFoundException 如果标签不存在
    * @throws BadRequestException 如果标签名称已存在
    */
-  async updateForumTag(updateForumTagDto: UpdateForumTagDto) {
+  async updateTag(updateForumTagDto: UpdateForumTagDto) {
     const { id, name, ...updateData } = updateForumTagDto
 
     const tag = await this.forumTag.findUnique({

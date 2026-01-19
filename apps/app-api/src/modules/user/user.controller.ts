@@ -6,7 +6,7 @@ import { BaseAppUserDto } from '../auth/dto/auth.dto'
 import { UserService } from './user.service'
 
 @ApiTags('用户模块')
-@Controller('api/user')
+@Controller('app/user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
