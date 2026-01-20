@@ -5,7 +5,7 @@ model ForumTopicFavorite {
   /// 关联的主题ID
   topicId   Int          @map("topic_id")
   /// 关联的用户ID
-  profileId    Int          @map("profile_id")
+  profileId Int          @map("profile_id")
   /// 创建时间
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   topic     ForumTopic   @relation(fields: [topicId], references: [id], onDelete: Cascade)

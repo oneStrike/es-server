@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model AppConfig
- * 
+ * 应用配置表 - 存储应用的基础配置信息
  */
 export type AppConfigModel = runtime.Types.Result.DefaultSelection<Prisma.$AppConfigPayload>
 
@@ -28,26 +28,52 @@ export type AggregateAppConfig = {
 
 export type AppConfigAvgAggregateOutputType = {
   id: number | null
+  updatedById: number | null
 }
 
 export type AppConfigSumAggregateOutputType = {
   id: number | null
+  updatedById: number | null
 }
 
 export type AppConfigMinAggregateOutputType = {
   id: number | null
+  appName: string | null
+  appDesc: string | null
+  appLogo: string | null
+  onboardingImage: string | null
+  enableMaintenanceMode: boolean | null
+  maintenanceMessage: string | null
+  version: string | null
+  updatedById: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type AppConfigMaxAggregateOutputType = {
   id: number | null
+  appName: string | null
+  appDesc: string | null
+  appLogo: string | null
+  onboardingImage: string | null
+  enableMaintenanceMode: boolean | null
+  maintenanceMessage: string | null
+  version: string | null
+  updatedById: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type AppConfigCountAggregateOutputType = {
   id: number
+  appName: number
+  appDesc: number
+  appLogo: number
+  onboardingImage: number
+  enableMaintenanceMode: number
+  maintenanceMessage: number
+  version: number
+  updatedById: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -56,26 +82,52 @@ export type AppConfigCountAggregateOutputType = {
 
 export type AppConfigAvgAggregateInputType = {
   id?: true
+  updatedById?: true
 }
 
 export type AppConfigSumAggregateInputType = {
   id?: true
+  updatedById?: true
 }
 
 export type AppConfigMinAggregateInputType = {
   id?: true
+  appName?: true
+  appDesc?: true
+  appLogo?: true
+  onboardingImage?: true
+  enableMaintenanceMode?: true
+  maintenanceMessage?: true
+  version?: true
+  updatedById?: true
   createdAt?: true
   updatedAt?: true
 }
 
 export type AppConfigMaxAggregateInputType = {
   id?: true
+  appName?: true
+  appDesc?: true
+  appLogo?: true
+  onboardingImage?: true
+  enableMaintenanceMode?: true
+  maintenanceMessage?: true
+  version?: true
+  updatedById?: true
   createdAt?: true
   updatedAt?: true
 }
 
 export type AppConfigCountAggregateInputType = {
   id?: true
+  appName?: true
+  appDesc?: true
+  appLogo?: true
+  onboardingImage?: true
+  enableMaintenanceMode?: true
+  maintenanceMessage?: true
+  version?: true
+  updatedById?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -169,6 +221,14 @@ export type AppConfigGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
 
 export type AppConfigGroupByOutputType = {
   id: number
+  appName: string
+  appDesc: string | null
+  appLogo: string | null
+  onboardingImage: string | null
+  enableMaintenanceMode: boolean
+  maintenanceMessage: string | null
+  version: string
+  updatedById: number | null
   createdAt: Date
   updatedAt: Date
   _count: AppConfigCountAggregateOutputType | null
@@ -198,12 +258,28 @@ export type AppConfigWhereInput = {
   OR?: Prisma.AppConfigWhereInput[]
   NOT?: Prisma.AppConfigWhereInput | Prisma.AppConfigWhereInput[]
   id?: Prisma.IntFilter<"AppConfig"> | number
+  appName?: Prisma.StringFilter<"AppConfig"> | string
+  appDesc?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  appLogo?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  onboardingImage?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  enableMaintenanceMode?: Prisma.BoolFilter<"AppConfig"> | boolean
+  maintenanceMessage?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  version?: Prisma.StringFilter<"AppConfig"> | string
+  updatedById?: Prisma.IntNullableFilter<"AppConfig"> | number | null
   createdAt?: Prisma.DateTimeFilter<"AppConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppConfig"> | Date | string
 }
 
 export type AppConfigOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  appName?: Prisma.SortOrder
+  appDesc?: Prisma.SortOrderInput | Prisma.SortOrder
+  appLogo?: Prisma.SortOrderInput | Prisma.SortOrder
+  onboardingImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  enableMaintenanceMode?: Prisma.SortOrder
+  maintenanceMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  version?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -213,12 +289,28 @@ export type AppConfigWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.AppConfigWhereInput | Prisma.AppConfigWhereInput[]
   OR?: Prisma.AppConfigWhereInput[]
   NOT?: Prisma.AppConfigWhereInput | Prisma.AppConfigWhereInput[]
+  appName?: Prisma.StringFilter<"AppConfig"> | string
+  appDesc?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  appLogo?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  onboardingImage?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  enableMaintenanceMode?: Prisma.BoolFilter<"AppConfig"> | boolean
+  maintenanceMessage?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  version?: Prisma.StringFilter<"AppConfig"> | string
+  updatedById?: Prisma.IntNullableFilter<"AppConfig"> | number | null
   createdAt?: Prisma.DateTimeFilter<"AppConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppConfig"> | Date | string
 }, "id">
 
 export type AppConfigOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  appName?: Prisma.SortOrder
+  appDesc?: Prisma.SortOrderInput | Prisma.SortOrder
+  appLogo?: Prisma.SortOrderInput | Prisma.SortOrder
+  onboardingImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  enableMaintenanceMode?: Prisma.SortOrder
+  maintenanceMessage?: Prisma.SortOrderInput | Prisma.SortOrder
+  version?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.AppConfigCountOrderByAggregateInput
@@ -233,109 +325,280 @@ export type AppConfigScalarWhereWithAggregatesInput = {
   OR?: Prisma.AppConfigScalarWhereWithAggregatesInput[]
   NOT?: Prisma.AppConfigScalarWhereWithAggregatesInput | Prisma.AppConfigScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"AppConfig"> | number
+  appName?: Prisma.StringWithAggregatesFilter<"AppConfig"> | string
+  appDesc?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
+  appLogo?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
+  onboardingImage?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
+  enableMaintenanceMode?: Prisma.BoolWithAggregatesFilter<"AppConfig"> | boolean
+  maintenanceMessage?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
+  version?: Prisma.StringWithAggregatesFilter<"AppConfig"> | string
+  updatedById?: Prisma.IntNullableWithAggregatesFilter<"AppConfig"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AppConfig"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"AppConfig"> | Date | string
 }
 
 export type AppConfigCreateInput = {
+  appName: string
+  appDesc?: string | null
+  appLogo?: string | null
+  onboardingImage?: string | null
+  enableMaintenanceMode?: boolean
+  maintenanceMessage?: string | null
+  version?: string
+  updatedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type AppConfigUncheckedCreateInput = {
   id?: number
+  appName: string
+  appDesc?: string | null
+  appLogo?: string | null
+  onboardingImage?: string | null
+  enableMaintenanceMode?: boolean
+  maintenanceMessage?: string | null
+  version?: string
+  updatedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type AppConfigUpdateInput = {
+  appName?: Prisma.StringFieldUpdateOperationsInput | string
+  appDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  appLogo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  version?: Prisma.StringFieldUpdateOperationsInput | string
+  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type AppConfigUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  appName?: Prisma.StringFieldUpdateOperationsInput | string
+  appDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  appLogo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  version?: Prisma.StringFieldUpdateOperationsInput | string
+  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type AppConfigCreateManyInput = {
   id?: number
+  appName: string
+  appDesc?: string | null
+  appLogo?: string | null
+  onboardingImage?: string | null
+  enableMaintenanceMode?: boolean
+  maintenanceMessage?: string | null
+  version?: string
+  updatedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type AppConfigUpdateManyMutationInput = {
+  appName?: Prisma.StringFieldUpdateOperationsInput | string
+  appDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  appLogo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  version?: Prisma.StringFieldUpdateOperationsInput | string
+  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type AppConfigUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  appName?: Prisma.StringFieldUpdateOperationsInput | string
+  appDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  appLogo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  version?: Prisma.StringFieldUpdateOperationsInput | string
+  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type AppConfigCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  appName?: Prisma.SortOrder
+  appDesc?: Prisma.SortOrder
+  appLogo?: Prisma.SortOrder
+  onboardingImage?: Prisma.SortOrder
+  enableMaintenanceMode?: Prisma.SortOrder
+  maintenanceMessage?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type AppConfigAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
 }
 
 export type AppConfigMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  appName?: Prisma.SortOrder
+  appDesc?: Prisma.SortOrder
+  appLogo?: Prisma.SortOrder
+  onboardingImage?: Prisma.SortOrder
+  enableMaintenanceMode?: Prisma.SortOrder
+  maintenanceMessage?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type AppConfigMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  appName?: Prisma.SortOrder
+  appDesc?: Prisma.SortOrder
+  appLogo?: Prisma.SortOrder
+  onboardingImage?: Prisma.SortOrder
+  enableMaintenanceMode?: Prisma.SortOrder
+  maintenanceMessage?: Prisma.SortOrder
+  version?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type AppConfigSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 
 
 export type AppConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  appName?: boolean
+  appDesc?: boolean
+  appLogo?: boolean
+  onboardingImage?: boolean
+  enableMaintenanceMode?: boolean
+  maintenanceMessage?: boolean
+  version?: boolean
+  updatedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["appConfig"]>
 
 export type AppConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  appName?: boolean
+  appDesc?: boolean
+  appLogo?: boolean
+  onboardingImage?: boolean
+  enableMaintenanceMode?: boolean
+  maintenanceMessage?: boolean
+  version?: boolean
+  updatedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["appConfig"]>
 
 export type AppConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  appName?: boolean
+  appDesc?: boolean
+  appLogo?: boolean
+  onboardingImage?: boolean
+  enableMaintenanceMode?: boolean
+  maintenanceMessage?: boolean
+  version?: boolean
+  updatedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["appConfig"]>
 
 export type AppConfigSelectScalar = {
   id?: boolean
+  appName?: boolean
+  appDesc?: boolean
+  appLogo?: boolean
+  onboardingImage?: boolean
+  enableMaintenanceMode?: boolean
+  maintenanceMessage?: boolean
+  version?: boolean
+  updatedById?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AppConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "createdAt" | "updatedAt", ExtArgs["result"]["appConfig"]>
+export type AppConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "appName" | "appDesc" | "appLogo" | "onboardingImage" | "enableMaintenanceMode" | "maintenanceMessage" | "version" | "updatedById" | "createdAt" | "updatedAt", ExtArgs["result"]["appConfig"]>
 
 export type $AppConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AppConfig"
   objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键ID
+     */
     id: number
+    /**
+     * 应用名称
+     */
+    appName: string
+    /**
+     * 应用描述
+     */
+    appDesc: string | null
+    /**
+     * 应用Logo URL
+     */
+    appLogo: string | null
+    /**
+     * 引导页图片 URL
+     */
+    onboardingImage: string | null
+    /**
+     * 是否启用维护模式
+     */
+    enableMaintenanceMode: boolean
+    /**
+     * 维护模式提示信息
+     */
+    maintenanceMessage: string | null
+    /**
+     * 配置版本号
+     */
+    version: string
+    /**
+     * 最后修改人ID
+     */
+    updatedById: number | null
+    /**
+     * 创建时间
+     */
     createdAt: Date
+    /**
+     * 更新时间
+     */
     updatedAt: Date
   }, ExtArgs["result"]["appConfig"]>
   composites: {}
@@ -761,6 +1024,14 @@ export interface Prisma__AppConfigClient<T, Null = never, ExtArgs extends runtim
  */
 export interface AppConfigFieldRefs {
   readonly id: Prisma.FieldRef<"AppConfig", 'Int'>
+  readonly appName: Prisma.FieldRef<"AppConfig", 'String'>
+  readonly appDesc: Prisma.FieldRef<"AppConfig", 'String'>
+  readonly appLogo: Prisma.FieldRef<"AppConfig", 'String'>
+  readonly onboardingImage: Prisma.FieldRef<"AppConfig", 'String'>
+  readonly enableMaintenanceMode: Prisma.FieldRef<"AppConfig", 'Boolean'>
+  readonly maintenanceMessage: Prisma.FieldRef<"AppConfig", 'String'>
+  readonly version: Prisma.FieldRef<"AppConfig", 'String'>
+  readonly updatedById: Prisma.FieldRef<"AppConfig", 'Int'>
   readonly createdAt: Prisma.FieldRef<"AppConfig", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"AppConfig", 'DateTime'>
 }

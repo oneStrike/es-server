@@ -38,7 +38,7 @@ model ForumProfile {
   applications            ForumModeratorApplication[] @relation("ModeratorApplicant")
   notifications           ForumNotification[]
   pointRecords            ForumPointRecord[]
-  experienceRecords        ForumExperienceRecord[]
+  experienceRecords       ForumExperienceRecord[]
   level                   ForumLevelRule?             @relation(fields: [levelId], references: [id])
   user                    AppUser                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   badges                  ForumProfileBadge[]

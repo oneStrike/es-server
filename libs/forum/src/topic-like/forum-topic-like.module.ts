@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
-import { ForumCounterModule } from '../counter/forum-counter.module'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
+import { ForumCounterModule } from '../counter/forum-counter.module'
 import { ForumTopicLikeService } from './forum-topic-like.service'
 
 /**

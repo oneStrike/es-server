@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { AppConfigModule } from './app-config/config/config.module'
 import { AppNoticeModule } from './app-config/notice/notice.module'
 import { AppPageModule } from './app-config/page/page.module'
 import { AuthModule } from './auth/auth.module'
@@ -12,6 +13,7 @@ import { UserModule } from './user/user.module'
     DictionaryModule,
     AppNoticeModule,
     AppPageModule,
+    AppConfigModule
   ],
 })
-export class AppApiModule {}
+export class AppApiModule { }

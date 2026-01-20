@@ -6,6 +6,7 @@ import { DbConfig } from '../../config'
 // ==================== 模块化种子数据导入 ====================
 import { createInitialAdminAccount } from './modules/admin'
 import {
+  createInitialAppConfig,
   createInitialAppNotice,
   createInitialAppPage,
   createInitialClientUser,
@@ -52,6 +53,7 @@ async function runSeeds() {
     createInitialMemberLevels(prisma),
     createInitialWorkCategory(prisma),
     createInitialWorkTag(prisma),
+    createInitialAppConfig(prisma),
     createInitialAppPage(prisma),
     createInitialForumConfig(prisma),
     createInitialForumSectionGroups(prisma),

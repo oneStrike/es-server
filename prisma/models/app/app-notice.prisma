@@ -1,20 +1,20 @@
 model AppNotice {
-  id                   Int                @id @default(autoincrement())
-  title                String             @db.VarChar(100)
+  id                   Int             @id @default(autoincrement())
+  title                String          @db.VarChar(100)
   content              String
-  noticeType           Int                @default(0) @map("notice_type") @db.SmallInt
-  priorityLevel        Int                @default(1) @map("priority_level") @db.SmallInt
-  publishStartTime     DateTime?          @map("publish_start_time") @db.Timestamptz(6)
-  publishEndTime       DateTime?          @map("publish_end_time") @db.Timestamptz(6)
-  pageId               Int?               @map("page_id")
-  popupBackgroundImage String?            @map("popup_background_image") @db.VarChar(200)
-  isPublished          Boolean            @default(false) @map("is_published")
-  isPinned             Boolean            @default(false) @map("is_pinned")
-  showAsPopup          Boolean            @default(false) @map("show_as_popup")
-  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  enablePlatform       Int[]              @map("enable_platform")
-  appPage           AppPage?        @relation("notices", fields: [pageId], references: [id])
+  noticeType           Int             @default(0) @map("notice_type") @db.SmallInt
+  priorityLevel        Int             @default(1) @map("priority_level") @db.SmallInt
+  publishStartTime     DateTime?       @map("publish_start_time") @db.Timestamptz(6)
+  publishEndTime       DateTime?       @map("publish_end_time") @db.Timestamptz(6)
+  pageId               Int?            @map("page_id")
+  popupBackgroundImage String?         @map("popup_background_image") @db.VarChar(200)
+  isPublished          Boolean         @default(false) @map("is_published")
+  isPinned             Boolean         @default(false) @map("is_pinned")
+  showAsPopup          Boolean         @default(false) @map("show_as_popup")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  enablePlatform       Int[]           @map("enable_platform")
+  appPage              AppPage?        @relation("notices", fields: [pageId], references: [id])
   noticeReads          AppNoticeRead[]
 
   @@index([isPublished, publishStartTime, publishEndTime])

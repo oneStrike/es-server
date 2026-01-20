@@ -639,14 +639,6 @@ export type AppNoticeUpdateenablePlatformInput = {
   push?: number | number[]
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type AppNoticeCreateNestedManyWithoutAppPageInput = {
   create?: Prisma.XOR<Prisma.AppNoticeCreateWithoutAppPageInput, Prisma.AppNoticeUncheckedCreateWithoutAppPageInput> | Prisma.AppNoticeCreateWithoutAppPageInput[] | Prisma.AppNoticeUncheckedCreateWithoutAppPageInput[]
   connectOrCreate?: Prisma.AppNoticeCreateOrConnectWithoutAppPageInput | Prisma.AppNoticeCreateOrConnectWithoutAppPageInput[]

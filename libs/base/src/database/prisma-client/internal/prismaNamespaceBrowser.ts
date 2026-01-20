@@ -146,6 +146,14 @@ export type RelationLoadStrategy = (typeof RelationLoadStrategy)[keyof typeof Re
 
 export const AppConfigScalarFieldEnum = {
   id: 'id',
+  appName: 'appName',
+  appDesc: 'appDesc',
+  appLogo: 'appLogo',
+  onboardingImage: 'onboardingImage',
+  enableMaintenanceMode: 'enableMaintenanceMode',
+  maintenanceMessage: 'maintenanceMessage',
+  version: 'version',
+  updatedById: 'updatedById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

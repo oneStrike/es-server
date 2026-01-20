@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "app_config" ALTER COLUMN "version" SET DEFAULT '1.0.0',
+ALTER COLUMN "version" SET DATA TYPE VARCHAR(50);

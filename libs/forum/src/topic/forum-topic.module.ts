@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common'
+import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
 import { ForumPointModule } from '../point/point.module'
 import { ForumSensitiveWordModule } from '../sensitive-word/sensitive-word.module'
-import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumConfigModule } from './../config/forum-config.module'
 import { ForumTopicService } from './forum-topic.service'
 

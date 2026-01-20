@@ -54,4 +54,4 @@ import { AppApiModule } from './modules/app.module'
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

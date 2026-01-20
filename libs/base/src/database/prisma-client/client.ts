@@ -44,7 +44,7 @@ export { Prisma }
 export type AdminUser = Prisma.AdminUserModel
 /**
  * Model AppConfig
- * 
+ * 应用配置表 - 存储应用的基础配置信息
  */
 export type AppConfig = Prisma.AppConfigModel
 /**

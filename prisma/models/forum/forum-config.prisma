@@ -27,7 +27,7 @@ model ForumConfig {
   /// 回复内容最大长度
   replyContentMaxLength Int     @default(5000) @map("reply_content_max_length")
   /// 审核策略（0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）
-  reviewPolicy     Int     @default(1) @map("review_policy")
+  reviewPolicy          Int     @default(1) @map("review_policy")
   /// 是否允许匿名浏览
   allowAnonymousView    Boolean @default(true) @map("allow_anonymous_view")
   /// 是否允许匿名发帖
@@ -53,7 +53,6 @@ model ForumConfig {
   /// 新注册用户默认发放的积分
   defaultPointsForNewUser    Int     @default(100) @map("default_points_for_new_user")
 
-
   // ========== 通知配置 ==========
   /// 是否启用邮件通知
   enableEmailNotification    Boolean @default(true) @map("enable_email_notification")
@@ -70,12 +69,11 @@ model ForumConfig {
   /// 是否启用系统通知
   enableSystemNotification   Boolean @default(true) @map("enable_system_notification")
 
-
   // ========== 其他配置 ==========
   /// 是否启用站点维护模式
-  enableMaintenanceMode   Boolean @default(false) @map("enable_maintenance_mode")
+  enableMaintenanceMode Boolean @default(false) @map("enable_maintenance_mode")
   /// 维护模式提示信息
-  maintenanceMessage      String? @map("maintenance_message") @db.VarChar(500)
+  maintenanceMessage    String? @map("maintenance_message") @db.VarChar(500)
 
   // ========== 审计字段 ==========
   /// 最后修改人ID

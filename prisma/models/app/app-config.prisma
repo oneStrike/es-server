@@ -1,7 +1,28 @@
+/// 应用配置表 - 存储应用的基础配置信息
 model AppConfig {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 主键ID
+  id                    Int      @id @default(autoincrement())
+  /// 应用名称
+  appName               String   @map("app_name") @db.VarChar(100)
+  /// 应用描述
+  appDesc               String?  @map("app_desc") @db.VarChar(500)
+  /// 应用Logo URL
+  appLogo               String?  @map("app_logo") @db.VarChar(500)
+  /// 引导页图片 URL
+  onboardingImage       String?  @map("onboarding_image") @db.VarChar(1000)
+  /// 是否启用维护模式
+  enableMaintenanceMode Boolean  @default(false) @map("enable_maintenance_mode")
+  /// 维护模式提示信息
+  maintenanceMessage    String?  @map("maintenance_message") @db.VarChar(500)
+  /// 配置版本号
+  version               String   @default("1.0.0") @map("version") @db.VarChar(50)
+  /// 最后修改人ID
+  updatedById           Int?     @map("updated_by_id")
+  /// 创建时间
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  @@index([updatedById])
   @@map("app_config")
 }

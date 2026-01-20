@@ -5,7 +5,7 @@ model ForumReplyLike {
   /// 关联的回复ID
   replyId   Int          @map("reply_id")
   /// 关联的用户ID
-  profileId    Int          @map("profile_id")
+  profileId Int          @map("profile_id")
   /// 创建时间
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   reply     ForumReply   @relation(fields: [replyId], references: [id], onDelete: Cascade)
