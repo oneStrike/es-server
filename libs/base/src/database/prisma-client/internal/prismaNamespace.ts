@@ -4455,7 +4455,6 @@ export const ForumUserActionLogScalarFieldEnum = {
   id: 'id',
   profileId: 'profileId',
   actionType: 'actionType',
-  actionDescription: 'actionDescription',
   targetType: 'targetType',
   targetId: 'targetId',
   beforeData: 'beforeData',

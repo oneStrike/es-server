@@ -46,7 +46,6 @@ export type ForumUserActionLogMinAggregateOutputType = {
   id: number | null
   profileId: number | null
   actionType: number | null
-  actionDescription: string | null
   targetType: number | null
   targetId: number | null
   beforeData: string | null
@@ -60,7 +59,6 @@ export type ForumUserActionLogMaxAggregateOutputType = {
   id: number | null
   profileId: number | null
   actionType: number | null
-  actionDescription: string | null
   targetType: number | null
   targetId: number | null
   beforeData: string | null
@@ -74,7 +72,6 @@ export type ForumUserActionLogCountAggregateOutputType = {
   id: number
   profileId: number
   actionType: number
-  actionDescription: number
   targetType: number
   targetId: number
   beforeData: number
@@ -106,7 +103,6 @@ export type ForumUserActionLogMinAggregateInputType = {
   id?: true
   profileId?: true
   actionType?: true
-  actionDescription?: true
   targetType?: true
   targetId?: true
   beforeData?: true
@@ -120,7 +116,6 @@ export type ForumUserActionLogMaxAggregateInputType = {
   id?: true
   profileId?: true
   actionType?: true
-  actionDescription?: true
   targetType?: true
   targetId?: true
   beforeData?: true
@@ -134,7 +129,6 @@ export type ForumUserActionLogCountAggregateInputType = {
   id?: true
   profileId?: true
   actionType?: true
-  actionDescription?: true
   targetType?: true
   targetId?: true
   beforeData?: true
@@ -235,7 +229,6 @@ export type ForumUserActionLogGroupByOutputType = {
   id: number
   profileId: number
   actionType: number
-  actionDescription: string
   targetType: number
   targetId: number
   beforeData: string | null
@@ -272,7 +265,6 @@ export type ForumUserActionLogWhereInput = {
   id?: Prisma.IntFilter<"ForumUserActionLog"> | number
   profileId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   actionType?: Prisma.IntFilter<"ForumUserActionLog"> | number
-  actionDescription?: Prisma.StringFilter<"ForumUserActionLog"> | string
   targetType?: Prisma.IntFilter<"ForumUserActionLog"> | number
   targetId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   beforeData?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
@@ -287,7 +279,6 @@ export type ForumUserActionLogOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   profileId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
-  actionDescription?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -305,7 +296,6 @@ export type ForumUserActionLogWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ForumUserActionLogWhereInput | Prisma.ForumUserActionLogWhereInput[]
   profileId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   actionType?: Prisma.IntFilter<"ForumUserActionLog"> | number
-  actionDescription?: Prisma.StringFilter<"ForumUserActionLog"> | string
   targetType?: Prisma.IntFilter<"ForumUserActionLog"> | number
   targetId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   beforeData?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
@@ -320,7 +310,6 @@ export type ForumUserActionLogOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   profileId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
-  actionDescription?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -342,7 +331,6 @@ export type ForumUserActionLogScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
   profileId?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
   actionType?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
-  actionDescription?: Prisma.StringWithAggregatesFilter<"ForumUserActionLog"> | string
   targetType?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
   targetId?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
   beforeData?: Prisma.StringNullableWithAggregatesFilter<"ForumUserActionLog"> | string | null
@@ -354,7 +342,6 @@ export type ForumUserActionLogScalarWhereWithAggregatesInput = {
 
 export type ForumUserActionLogCreateInput = {
   actionType: number
-  actionDescription: string
   targetType: number
   targetId: number
   beforeData?: string | null
@@ -369,7 +356,6 @@ export type ForumUserActionLogUncheckedCreateInput = {
   id?: number
   profileId: number
   actionType: number
-  actionDescription: string
   targetType: number
   targetId: number
   beforeData?: string | null
@@ -381,7 +367,6 @@ export type ForumUserActionLogUncheckedCreateInput = {
 
 export type ForumUserActionLogUpdateInput = {
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
-  actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -396,7 +381,6 @@ export type ForumUserActionLogUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   profileId?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
-  actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -410,7 +394,6 @@ export type ForumUserActionLogCreateManyInput = {
   id?: number
   profileId: number
   actionType: number
-  actionDescription: string
   targetType: number
   targetId: number
   beforeData?: string | null
@@ -422,7 +405,6 @@ export type ForumUserActionLogCreateManyInput = {
 
 export type ForumUserActionLogUpdateManyMutationInput = {
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
-  actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -436,7 +418,6 @@ export type ForumUserActionLogUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   profileId?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
-  actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -460,7 +441,6 @@ export type ForumUserActionLogCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   profileId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
-  actionDescription?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrder
@@ -482,7 +462,6 @@ export type ForumUserActionLogMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   profileId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
-  actionDescription?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrder
@@ -496,7 +475,6 @@ export type ForumUserActionLogMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   profileId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
-  actionDescription?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrder
@@ -558,7 +536,6 @@ export type ForumUserActionLogUncheckedUpdateManyWithoutProfileNestedInput = {
 
 export type ForumUserActionLogCreateWithoutProfileInput = {
   actionType: number
-  actionDescription: string
   targetType: number
   targetId: number
   beforeData?: string | null
@@ -571,7 +548,6 @@ export type ForumUserActionLogCreateWithoutProfileInput = {
 export type ForumUserActionLogUncheckedCreateWithoutProfileInput = {
   id?: number
   actionType: number
-  actionDescription: string
   targetType: number
   targetId: number
   beforeData?: string | null
@@ -614,7 +590,6 @@ export type ForumUserActionLogScalarWhereInput = {
   id?: Prisma.IntFilter<"ForumUserActionLog"> | number
   profileId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   actionType?: Prisma.IntFilter<"ForumUserActionLog"> | number
-  actionDescription?: Prisma.StringFilter<"ForumUserActionLog"> | string
   targetType?: Prisma.IntFilter<"ForumUserActionLog"> | number
   targetId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   beforeData?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
@@ -627,7 +602,6 @@ export type ForumUserActionLogScalarWhereInput = {
 export type ForumUserActionLogCreateManyProfileInput = {
   id?: number
   actionType: number
-  actionDescription: string
   targetType: number
   targetId: number
   beforeData?: string | null
@@ -639,7 +613,6 @@ export type ForumUserActionLogCreateManyProfileInput = {
 
 export type ForumUserActionLogUpdateWithoutProfileInput = {
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
-  actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -652,7 +625,6 @@ export type ForumUserActionLogUpdateWithoutProfileInput = {
 export type ForumUserActionLogUncheckedUpdateWithoutProfileInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
-  actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -665,7 +637,6 @@ export type ForumUserActionLogUncheckedUpdateWithoutProfileInput = {
 export type ForumUserActionLogUncheckedUpdateManyWithoutProfileInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
-  actionDescription?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -681,7 +652,6 @@ export type ForumUserActionLogSelect<ExtArgs extends runtime.Types.Extensions.In
   id?: boolean
   profileId?: boolean
   actionType?: boolean
-  actionDescription?: boolean
   targetType?: boolean
   targetId?: boolean
   beforeData?: boolean
@@ -696,7 +666,6 @@ export type ForumUserActionLogSelectCreateManyAndReturn<ExtArgs extends runtime.
   id?: boolean
   profileId?: boolean
   actionType?: boolean
-  actionDescription?: boolean
   targetType?: boolean
   targetId?: boolean
   beforeData?: boolean
@@ -711,7 +680,6 @@ export type ForumUserActionLogSelectUpdateManyAndReturn<ExtArgs extends runtime.
   id?: boolean
   profileId?: boolean
   actionType?: boolean
-  actionDescription?: boolean
   targetType?: boolean
   targetId?: boolean
   beforeData?: boolean
@@ -726,7 +694,6 @@ export type ForumUserActionLogSelectScalar = {
   id?: boolean
   profileId?: boolean
   actionType?: boolean
-  actionDescription?: boolean
   targetType?: boolean
   targetId?: boolean
   beforeData?: boolean
@@ -736,7 +703,7 @@ export type ForumUserActionLogSelectScalar = {
   createdAt?: boolean
 }
 
-export type ForumUserActionLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "profileId" | "actionType" | "actionDescription" | "targetType" | "targetId" | "beforeData" | "afterData" | "ipAddress" | "userAgent" | "createdAt", ExtArgs["result"]["forumUserActionLog"]>
+export type ForumUserActionLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "profileId" | "actionType" | "targetType" | "targetId" | "beforeData" | "afterData" | "ipAddress" | "userAgent" | "createdAt", ExtArgs["result"]["forumUserActionLog"]>
 export type ForumUserActionLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
 }
@@ -765,10 +732,6 @@ export type $ForumUserActionLogPayload<ExtArgs extends runtime.Types.Extensions.
      * 操作类型（1=创建主题, 2=创建回复, 3=点赞主题, 4=取消点赞主题, 5=点赞回复, 6=取消点赞回复, 7=收藏主题, 8=取消收藏主题, 9=更新主题, 10=更新回复, 11=删除主题, 12=删除回复）
      */
     actionType: number
-    /**
-     * 操作描述
-     */
-    actionDescription: string
     /**
      * 目标类型（1=主题, 2=回复）
      */
@@ -1224,7 +1187,6 @@ export interface ForumUserActionLogFieldRefs {
   readonly id: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
   readonly profileId: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
   readonly actionType: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
-  readonly actionDescription: Prisma.FieldRef<"ForumUserActionLog", 'String'>
   readonly targetType: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
   readonly targetId: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
   readonly beforeData: Prisma.FieldRef<"ForumUserActionLog", 'String'>
