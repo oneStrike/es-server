@@ -3,10 +3,8 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
-import { BaseDto, } from '@libs/base/dto'
-import {
-  OmitType,
-} from '@nestjs/swagger'
+import { BaseDto, OMIT_BASE_FIELDS } from '@libs/base/dto'
+import { OmitType } from '@nestjs/swagger'
 
 /// 应用配置基础字段DTO
 export class BaseAppConfigDto extends BaseDto {
@@ -101,7 +99,6 @@ export class BaseAppConfigDto extends BaseDto {
 
 /// 更新应用配置DTO
 export class UpdateAppConfigDto extends OmitType(BaseAppConfigDto, [
-  'createdAt',
-  'updatedAt',
+  ...OMIT_BASE_FIELDS,
   'updatedById',
-]) { }
+]) {}

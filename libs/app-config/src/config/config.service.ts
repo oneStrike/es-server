@@ -21,8 +21,8 @@ export class AppConfigService extends BaseService {
   /// 获取最新应用配置
   /// @returns 最新版本的应用配置
   async findActiveConfig() {
-    const config = await this.appConfig.findFirst({
-      orderBy: [{ version: 'desc' }],
+    const config = await this.appConfig.findUnique({
+      where: { id: 1 },
     })
     if (!config) {
       return this.appConfig.create({
@@ -36,10 +36,8 @@ export class AppConfigService extends BaseService {
   /// @param updateConfigDto 更新数据
   /// @returns 更新后的应用配置
   async updateConfig(updateConfigDto: UpdateAppConfigDto) {
-    const { id, ...updateData } = updateConfigDto
-
     const existingConfig = await this.appConfig.findUnique({
-      where: { id },
+      where: { id: 1 },
     })
 
     if (!existingConfig) {
@@ -47,10 +45,8 @@ export class AppConfigService extends BaseService {
     }
 
     return this.appConfig.update({
-      where: { id },
-      data: {
-        ...updateData,
-      },
+      where: { id: 1 },
+      data: updateConfigDto,
     })
   }
 }
