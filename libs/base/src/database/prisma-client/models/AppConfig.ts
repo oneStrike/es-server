@@ -42,6 +42,9 @@ export type AppConfigMinAggregateOutputType = {
   appDesc: string | null
   appLogo: string | null
   onboardingImage: string | null
+  themeColor: string | null
+  secondaryColor: string | null
+  optionalThemeColors: string | null
   enableMaintenanceMode: boolean | null
   maintenanceMessage: string | null
   version: string | null
@@ -56,6 +59,9 @@ export type AppConfigMaxAggregateOutputType = {
   appDesc: string | null
   appLogo: string | null
   onboardingImage: string | null
+  themeColor: string | null
+  secondaryColor: string | null
+  optionalThemeColors: string | null
   enableMaintenanceMode: boolean | null
   maintenanceMessage: string | null
   version: string | null
@@ -70,6 +76,9 @@ export type AppConfigCountAggregateOutputType = {
   appDesc: number
   appLogo: number
   onboardingImage: number
+  themeColor: number
+  secondaryColor: number
+  optionalThemeColors: number
   enableMaintenanceMode: number
   maintenanceMessage: number
   version: number
@@ -96,6 +105,9 @@ export type AppConfigMinAggregateInputType = {
   appDesc?: true
   appLogo?: true
   onboardingImage?: true
+  themeColor?: true
+  secondaryColor?: true
+  optionalThemeColors?: true
   enableMaintenanceMode?: true
   maintenanceMessage?: true
   version?: true
@@ -110,6 +122,9 @@ export type AppConfigMaxAggregateInputType = {
   appDesc?: true
   appLogo?: true
   onboardingImage?: true
+  themeColor?: true
+  secondaryColor?: true
+  optionalThemeColors?: true
   enableMaintenanceMode?: true
   maintenanceMessage?: true
   version?: true
@@ -124,6 +139,9 @@ export type AppConfigCountAggregateInputType = {
   appDesc?: true
   appLogo?: true
   onboardingImage?: true
+  themeColor?: true
+  secondaryColor?: true
+  optionalThemeColors?: true
   enableMaintenanceMode?: true
   maintenanceMessage?: true
   version?: true
@@ -225,6 +243,9 @@ export type AppConfigGroupByOutputType = {
   appDesc: string | null
   appLogo: string | null
   onboardingImage: string | null
+  themeColor: string
+  secondaryColor: string | null
+  optionalThemeColors: string | null
   enableMaintenanceMode: boolean
   maintenanceMessage: string | null
   version: string
@@ -262,6 +283,9 @@ export type AppConfigWhereInput = {
   appDesc?: Prisma.StringNullableFilter<"AppConfig"> | string | null
   appLogo?: Prisma.StringNullableFilter<"AppConfig"> | string | null
   onboardingImage?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  themeColor?: Prisma.StringFilter<"AppConfig"> | string
+  secondaryColor?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  optionalThemeColors?: Prisma.StringNullableFilter<"AppConfig"> | string | null
   enableMaintenanceMode?: Prisma.BoolFilter<"AppConfig"> | boolean
   maintenanceMessage?: Prisma.StringNullableFilter<"AppConfig"> | string | null
   version?: Prisma.StringFilter<"AppConfig"> | string
@@ -276,6 +300,9 @@ export type AppConfigOrderByWithRelationInput = {
   appDesc?: Prisma.SortOrderInput | Prisma.SortOrder
   appLogo?: Prisma.SortOrderInput | Prisma.SortOrder
   onboardingImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  themeColor?: Prisma.SortOrder
+  secondaryColor?: Prisma.SortOrderInput | Prisma.SortOrder
+  optionalThemeColors?: Prisma.SortOrderInput | Prisma.SortOrder
   enableMaintenanceMode?: Prisma.SortOrder
   maintenanceMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -293,6 +320,9 @@ export type AppConfigWhereUniqueInput = Prisma.AtLeast<{
   appDesc?: Prisma.StringNullableFilter<"AppConfig"> | string | null
   appLogo?: Prisma.StringNullableFilter<"AppConfig"> | string | null
   onboardingImage?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  themeColor?: Prisma.StringFilter<"AppConfig"> | string
+  secondaryColor?: Prisma.StringNullableFilter<"AppConfig"> | string | null
+  optionalThemeColors?: Prisma.StringNullableFilter<"AppConfig"> | string | null
   enableMaintenanceMode?: Prisma.BoolFilter<"AppConfig"> | boolean
   maintenanceMessage?: Prisma.StringNullableFilter<"AppConfig"> | string | null
   version?: Prisma.StringFilter<"AppConfig"> | string
@@ -307,6 +337,9 @@ export type AppConfigOrderByWithAggregationInput = {
   appDesc?: Prisma.SortOrderInput | Prisma.SortOrder
   appLogo?: Prisma.SortOrderInput | Prisma.SortOrder
   onboardingImage?: Prisma.SortOrderInput | Prisma.SortOrder
+  themeColor?: Prisma.SortOrder
+  secondaryColor?: Prisma.SortOrderInput | Prisma.SortOrder
+  optionalThemeColors?: Prisma.SortOrderInput | Prisma.SortOrder
   enableMaintenanceMode?: Prisma.SortOrder
   maintenanceMessage?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -329,6 +362,9 @@ export type AppConfigScalarWhereWithAggregatesInput = {
   appDesc?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
   appLogo?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
   onboardingImage?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
+  themeColor?: Prisma.StringWithAggregatesFilter<"AppConfig"> | string
+  secondaryColor?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
+  optionalThemeColors?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
   enableMaintenanceMode?: Prisma.BoolWithAggregatesFilter<"AppConfig"> | boolean
   maintenanceMessage?: Prisma.StringNullableWithAggregatesFilter<"AppConfig"> | string | null
   version?: Prisma.StringWithAggregatesFilter<"AppConfig"> | string
@@ -342,6 +378,9 @@ export type AppConfigCreateInput = {
   appDesc?: string | null
   appLogo?: string | null
   onboardingImage?: string | null
+  themeColor?: string
+  secondaryColor?: string | null
+  optionalThemeColors?: string | null
   enableMaintenanceMode?: boolean
   maintenanceMessage?: string | null
   version?: string
@@ -356,6 +395,9 @@ export type AppConfigUncheckedCreateInput = {
   appDesc?: string | null
   appLogo?: string | null
   onboardingImage?: string | null
+  themeColor?: string
+  secondaryColor?: string | null
+  optionalThemeColors?: string | null
   enableMaintenanceMode?: boolean
   maintenanceMessage?: string | null
   version?: string
@@ -369,6 +411,9 @@ export type AppConfigUpdateInput = {
   appDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   appLogo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   onboardingImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeColor?: Prisma.StringFieldUpdateOperationsInput | string
+  secondaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optionalThemeColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   version?: Prisma.StringFieldUpdateOperationsInput | string
@@ -383,6 +428,9 @@ export type AppConfigUncheckedUpdateInput = {
   appDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   appLogo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   onboardingImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeColor?: Prisma.StringFieldUpdateOperationsInput | string
+  secondaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optionalThemeColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   version?: Prisma.StringFieldUpdateOperationsInput | string
@@ -397,6 +445,9 @@ export type AppConfigCreateManyInput = {
   appDesc?: string | null
   appLogo?: string | null
   onboardingImage?: string | null
+  themeColor?: string
+  secondaryColor?: string | null
+  optionalThemeColors?: string | null
   enableMaintenanceMode?: boolean
   maintenanceMessage?: string | null
   version?: string
@@ -410,6 +461,9 @@ export type AppConfigUpdateManyMutationInput = {
   appDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   appLogo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   onboardingImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeColor?: Prisma.StringFieldUpdateOperationsInput | string
+  secondaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optionalThemeColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   version?: Prisma.StringFieldUpdateOperationsInput | string
@@ -424,6 +478,9 @@ export type AppConfigUncheckedUpdateManyInput = {
   appDesc?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   appLogo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   onboardingImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  themeColor?: Prisma.StringFieldUpdateOperationsInput | string
+  secondaryColor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optionalThemeColors?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   version?: Prisma.StringFieldUpdateOperationsInput | string
@@ -438,6 +495,9 @@ export type AppConfigCountOrderByAggregateInput = {
   appDesc?: Prisma.SortOrder
   appLogo?: Prisma.SortOrder
   onboardingImage?: Prisma.SortOrder
+  themeColor?: Prisma.SortOrder
+  secondaryColor?: Prisma.SortOrder
+  optionalThemeColors?: Prisma.SortOrder
   enableMaintenanceMode?: Prisma.SortOrder
   maintenanceMessage?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -457,6 +517,9 @@ export type AppConfigMaxOrderByAggregateInput = {
   appDesc?: Prisma.SortOrder
   appLogo?: Prisma.SortOrder
   onboardingImage?: Prisma.SortOrder
+  themeColor?: Prisma.SortOrder
+  secondaryColor?: Prisma.SortOrder
+  optionalThemeColors?: Prisma.SortOrder
   enableMaintenanceMode?: Prisma.SortOrder
   maintenanceMessage?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -471,6 +534,9 @@ export type AppConfigMinOrderByAggregateInput = {
   appDesc?: Prisma.SortOrder
   appLogo?: Prisma.SortOrder
   onboardingImage?: Prisma.SortOrder
+  themeColor?: Prisma.SortOrder
+  secondaryColor?: Prisma.SortOrder
+  optionalThemeColors?: Prisma.SortOrder
   enableMaintenanceMode?: Prisma.SortOrder
   maintenanceMessage?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -500,6 +566,9 @@ export type AppConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   appDesc?: boolean
   appLogo?: boolean
   onboardingImage?: boolean
+  themeColor?: boolean
+  secondaryColor?: boolean
+  optionalThemeColors?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: boolean
   version?: boolean
@@ -514,6 +583,9 @@ export type AppConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   appDesc?: boolean
   appLogo?: boolean
   onboardingImage?: boolean
+  themeColor?: boolean
+  secondaryColor?: boolean
+  optionalThemeColors?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: boolean
   version?: boolean
@@ -528,6 +600,9 @@ export type AppConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   appDesc?: boolean
   appLogo?: boolean
   onboardingImage?: boolean
+  themeColor?: boolean
+  secondaryColor?: boolean
+  optionalThemeColors?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: boolean
   version?: boolean
@@ -542,6 +617,9 @@ export type AppConfigSelectScalar = {
   appDesc?: boolean
   appLogo?: boolean
   onboardingImage?: boolean
+  themeColor?: boolean
+  secondaryColor?: boolean
+  optionalThemeColors?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: boolean
   version?: boolean
@@ -550,7 +628,7 @@ export type AppConfigSelectScalar = {
   updatedAt?: boolean
 }
 
-export type AppConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "appName" | "appDesc" | "appLogo" | "onboardingImage" | "enableMaintenanceMode" | "maintenanceMessage" | "version" | "updatedById" | "createdAt" | "updatedAt", ExtArgs["result"]["appConfig"]>
+export type AppConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "appName" | "appDesc" | "appLogo" | "onboardingImage" | "themeColor" | "secondaryColor" | "optionalThemeColors" | "enableMaintenanceMode" | "maintenanceMessage" | "version" | "updatedById" | "createdAt" | "updatedAt", ExtArgs["result"]["appConfig"]>
 
 export type $AppConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AppConfig"
@@ -576,6 +654,18 @@ export type $AppConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 引导页图片 URL
      */
     onboardingImage: string | null
+    /**
+     * 主题色
+     */
+    themeColor: string
+    /**
+     * 第二主题色
+     */
+    secondaryColor: string | null
+    /**
+     * 可选的主题色
+     */
+    optionalThemeColors: string | null
     /**
      * 是否启用维护模式
      */
@@ -1028,6 +1118,9 @@ export interface AppConfigFieldRefs {
   readonly appDesc: Prisma.FieldRef<"AppConfig", 'String'>
   readonly appLogo: Prisma.FieldRef<"AppConfig", 'String'>
   readonly onboardingImage: Prisma.FieldRef<"AppConfig", 'String'>
+  readonly themeColor: Prisma.FieldRef<"AppConfig", 'String'>
+  readonly secondaryColor: Prisma.FieldRef<"AppConfig", 'String'>
+  readonly optionalThemeColors: Prisma.FieldRef<"AppConfig", 'String'>
   readonly enableMaintenanceMode: Prisma.FieldRef<"AppConfig", 'Boolean'>
   readonly maintenanceMessage: Prisma.FieldRef<"AppConfig", 'String'>
   readonly version: Prisma.FieldRef<"AppConfig", 'String'>

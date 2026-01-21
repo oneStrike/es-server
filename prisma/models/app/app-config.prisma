@@ -10,6 +10,12 @@ model AppConfig {
   appLogo               String?  @map("app_logo") @db.VarChar(500)
   /// 引导页图片 URL
   onboardingImage       String?  @map("onboarding_image") @db.VarChar(1000)
+  /// 主题色
+  themeColor            String   @default("#007AFF") @map("theme_color") @db.VarChar(20)
+  /// 第二主题色
+  secondaryColor        String?  @map("secondary_color") @db.VarChar(20)
+  /// 可选的主题色
+  optionalThemeColors   String?  @map("optional_theme_colors") @db.VarChar(500)
   /// 是否启用维护模式
   enableMaintenanceMode Boolean  @default(false) @map("enable_maintenance_mode")
   /// 维护模式提示信息
