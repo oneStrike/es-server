@@ -91,12 +91,12 @@ export class AuthService extends BaseService {
       throw new BadRequestException(ErrorMessages.PHONE_REQUIRED_FOR_REGISTER)
     }
 
-    if (body.code) {
-      await this.smsService.checkVerifyCode({
-        phoneNumber: body.phone,
-        verifyCode: body.code,
-      })
-    }
+    // if (body.code) {
+    //   await this.smsService.checkVerifyCode({
+    //     phoneNumber: body.phone,
+    //     verifyCode: body.code,
+    //   })
+    // }
 
     let password: string
     if (body.password) {
