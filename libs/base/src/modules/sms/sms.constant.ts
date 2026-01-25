@@ -2,6 +2,11 @@ export const ErrorMessages = {
   CONFIG_NOT_FOUND: '阿里云短信配置未定义',
 }
 
+export const ErrorMap = {
+  'biz.FREQUENCY': '请求频率过快，请稍后再试！',
+  'isv.ValidateFail': '验证码校验失败！',
+}
+
 export enum SmsTemplateCodeEnum {
   // 登录/注册
   LOGIN_REGISTER = '100001',

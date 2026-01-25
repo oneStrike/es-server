@@ -2,7 +2,7 @@ import type { FastifyRequest } from 'fastify'
 import { BaseService } from '@libs/base/database'
 
 import { GenderEnum } from '@libs/base/enum'
-import { RsaService, ScryptService } from '@libs/base/modules'
+import { RsaService, ScryptService, SmsService } from '@libs/base/modules'
 import { AuthService as BaseAuthService } from '@libs/base/modules/auth'
 
 import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
@@ -23,6 +23,7 @@ import { AppTokenStorageService } from './token-storage.service'
 export class AuthService extends BaseService {
   constructor(
     private readonly rsaService: RsaService,
+    private readonly smsService: SmsService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
     private readonly profileService: ForumProfileService,
@@ -58,6 +59,13 @@ export class AuthService extends BaseService {
    * @throws {BadRequestException} 系统配置错误：找不到默认论坛等级
    */
   async register(body: LoginDto) {
+    if (body.phone && body.code) {
+      // 验证码注册
+      await this.smsService.checkVerifyCode({
+        phoneNumber: body.phone,
+        verifyCode: body.code,
+      })
+    }
     const password = this.rsaService.decryptWith(body.password!)
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
@@ -118,6 +126,14 @@ export class AuthService extends BaseService {
         throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
       }
       return this.register(body)
+    }
+    // 使用验证码登录
+    if (body.code) {
+      const verifyCodeService = this.smsService.checkVerifyCode({
+        phoneNumber: user.phone!,
+        VerifyCode: body.code,
+      })
+      console.log("🚀 ~ AuthService ~ login ~ verifyCodeService:", verifyCodeService)
     }
 
     if (!user.isEnabled) {

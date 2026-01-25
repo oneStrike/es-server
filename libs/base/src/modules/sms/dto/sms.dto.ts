@@ -31,5 +31,5 @@ export class VerifyCodeDto extends PickType(SendVerifyCodeDto, ['phoneNumber']) 
     example: '123456',
     required: true,
   })
-  VerifyCode!: string
+  verifyCode!: string
 }
