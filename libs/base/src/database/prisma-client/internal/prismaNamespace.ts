@@ -389,6 +389,7 @@ export const ModelName = {
   AppNoticeRead: 'AppNoticeRead',
   AppNotice: 'AppNotice',
   AppPage: 'AppPage',
+  AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
   ForumBadge: 'ForumBadge',
   ForumConfigHistory: 'ForumConfigHistory',
@@ -445,7 +446,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumExperienceRecord" | "forumExperienceRule" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUser" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumExperienceRecord" | "forumExperienceRule" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -816,6 +817,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AppPageCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AppPageCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppUserToken: {
+      payload: Prisma.$AppUserTokenPayload<ExtArgs>
+      fields: Prisma.AppUserTokenFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppUserTokenFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppUserTokenFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload>
+        }
+        findFirst: {
+          args: Prisma.AppUserTokenFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppUserTokenFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload>
+        }
+        findMany: {
+          args: Prisma.AppUserTokenFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload>[]
+        }
+        create: {
+          args: Prisma.AppUserTokenCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload>
+        }
+        createMany: {
+          args: Prisma.AppUserTokenCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppUserTokenCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload>[]
+        }
+        delete: {
+          args: Prisma.AppUserTokenDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload>
+        }
+        update: {
+          args: Prisma.AppUserTokenUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload>
+        }
+        deleteMany: {
+          args: Prisma.AppUserTokenDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppUserTokenUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppUserTokenUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload>[]
+        }
+        upsert: {
+          args: Prisma.AppUserTokenUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppUserTokenPayload>
+        }
+        aggregate: {
+          args: Prisma.AppUserTokenAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppUserToken>
+        }
+        groupBy: {
+          args: Prisma.AppUserTokenGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppUserTokenGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppUserTokenCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppUserTokenCountAggregateOutputType> | number
         }
       }
     }
@@ -3989,6 +4064,24 @@ export const AppPageScalarFieldEnum = {
 export type AppPageScalarFieldEnum = (typeof AppPageScalarFieldEnum)[keyof typeof AppPageScalarFieldEnum]
 
 
+export const AppUserTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  jti: 'jti',
+  tokenType: 'tokenType',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  revokeReason: 'revokeReason',
+  deviceInfo: 'deviceInfo',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppUserTokenScalarFieldEnum = (typeof AppUserTokenScalarFieldEnum)[keyof typeof AppUserTokenScalarFieldEnum]
+
+
 export const AppUserScalarFieldEnum = {
   id: 'id',
   account: 'account',
@@ -4732,19 +4825,19 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-export const JsonNullValueInput = {
-  JsonNull: JsonNull
-} as const
-
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
-
-
 export const NullableJsonNullValueInput = {
   DbNull: DbNull,
   JsonNull: JsonNull
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -4954,6 +5047,7 @@ export type GlobalOmitConfig = {
   appNoticeRead?: Prisma.AppNoticeReadOmit
   appNotice?: Prisma.AppNoticeOmit
   appPage?: Prisma.AppPageOmit
+  appUserToken?: Prisma.AppUserTokenOmit
   appUser?: Prisma.AppUserOmit
   forumBadge?: Prisma.ForumBadgeOmit
   forumConfigHistory?: Prisma.ForumConfigHistoryOmit

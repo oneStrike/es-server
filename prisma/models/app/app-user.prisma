@@ -1,23 +1,44 @@
+/// 应用用户表
 model AppUser {
+  /// 用户ID
   id          Int       @id @default(autoincrement())
-  account     String    @unique @map("account") @db.VarChar(50)
-  nickname    String?   @map("nickname") @db.VarChar(100)
+  /// 账号（唯一）
+  account    Int    @unique @map("account") 
+  /// 用户昵称（显示名称）
+  nickname    String   @map("nickname") @db.VarChar(100)
+  /// 密码（加密存储）
   password    String    @map("password") @db.VarChar(500)
+  /// 头像URL地址
   avatar      String?   @map("avatar_url") @db.VarChar(500)
+  /// 手机号码（唯一）
   phone       String?   @unique @map("phone_number") @db.VarChar(20)
+  /// 邮箱地址（唯一）
   email       String?   @unique @map("email_address") @db.VarChar(255)
+  /// 账户状态（true:启用, false:禁用）
   isEnabled   Boolean   @default(true) @map("is_enabled")
+  /// 性别（0:未知, 1:男, 2:女）
   gender      Int       @default(0) @map("gender_type") @db.SmallInt
+  /// 出生日期
   birthDate   DateTime? @map("birth_date") @db.Date
+  /// 是否签到
   isSignedIn  Boolean   @default(false) @map("is_signed_in")
+  /// 最后登录时间
   lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz
+  /// 最后登录IP地址
   lastLoginIp String?   @map("last_login_ip") @db.VarChar(45)
+  /// 创建时间
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  /// 删除时间（软删除）
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
 
+  /// 用户论坛资料
   forumProfile ForumProfile?
+  /// 用户通知阅读记录
   noticeReads  AppNoticeRead[]
+  /// 用户令牌
+  tokens       AppUserToken[]
 
   @@index([isEnabled])
   @@index([gender])

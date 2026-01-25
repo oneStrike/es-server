@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { constants, privateDecrypt, publicEncrypt } from 'node:crypto'
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 
 /**
@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config'
  */
 @Injectable()
 export class RsaService {
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) { }
 
   /**
    * 获取 RSA公钥
@@ -54,19 +54,22 @@ export class RsaService {
    * @returns 解密后的数据
    */
   decrypt(encryptedData: string): string {
-    const buffer = Buffer.from(encryptedData, 'base64')
-    const decrypted = privateDecrypt(
-      {
-        key: this.getPrivateKey(),
-        // 替换填充方式为RSA_PKCS1_OAEP_PADDING
-        padding: constants.RSA_PKCS1_OAEP_PADDING,
-        // 指定哈希算法
-        oaepHash: 'sha256',
-      },
-      buffer,
-    )
-
-    return decrypted.toString('utf8')
+    try {
+      const buffer = Buffer.from(encryptedData, 'base64')
+      const decrypted = privateDecrypt(
+        {
+          key: this.getPrivateKey(),
+          // 替换填充方式为RSA_PKCS1_OAEP_PADDING
+          padding: constants.RSA_PKCS1_OAEP_PADDING,
+          // 指定哈希算法
+          oaepHash: 'sha256',
+        },
+        buffer,
+      )
+      return decrypted.toString('utf8')
+    } catch {
+      throw new BadRequestException('密码解密失败')
+    }
   }
 
   /**

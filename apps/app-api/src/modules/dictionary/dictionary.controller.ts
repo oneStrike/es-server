@@ -1,4 +1,4 @@
-import { ApiPageDoc, Public } from '@libs/base/decorators'
+import { ApiDoc, Public } from '@libs/base/decorators'
 
 import { BaseDictionaryItemDto, LibDictionaryService } from '@libs/dictionary'
 import { Controller, Get, Query } from '@nestjs/common'
@@ -11,9 +11,10 @@ export class DictionaryController {
   constructor(private readonly libDictionaryService: LibDictionaryService) {}
 
   @Get('items')
-  @ApiPageDoc({
+  @ApiDoc({
     summary: '获取数据字典',
     model: BaseDictionaryItemDto,
+    isArray: true,
   })
   @Public()
   async getItems(@Query() query: QueryDictionaryItemDto) {

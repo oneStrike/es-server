@@ -1,21 +1,18 @@
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc, Public } from '@libs/base/decorators'
-import { RsaService } from '@libs/base/modules'
-import { Body, Controller, Get, Post, Req } from '@nestjs/common'
+import { RsaService, SendVerifyCodeDto, SmsService } from '@libs/base/modules'
+import { BadRequestException, Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuthService } from './auth.service'
 import {
   ForgotPasswordDto,
-  ForgotPasswordResponseDto,
   LoginDto,
   LoginResponseDto,
   RefreshTokenDto,
-  RegisterDto,
-  RegisterResponseDto,
-  ResetPasswordDto,
   RsaPublicKeyDto,
   TokenDto,
 } from './dto/auth.dto'
+import { RevokeDeviceDto, UserDeviceDto } from './dto/device.dto'
 
 @ApiTags('认证模块')
 @Controller('app/auth')
@@ -23,16 +20,19 @@ export class AuthController {
   constructor(
     private readonly rsaService: RsaService,
     private readonly authService: AuthService,
-  ) {}
+    private readonly smsService: SmsService,
+  ) { }
 
-  @Post('register')
+  @Post('send-verify-code')
   @ApiDoc({
-    summary: '用户注册',
-    model: RegisterResponseDto,
+    summary: '发送验证码',
+    model: {
+      type: 'boolean',
+    },
   })
   @Public()
-  async register(@Body() body: RegisterDto, @Req() req: FastifyRequest) {
-    return this.authService.register(body, req)
+  async sendVerifyCode(@Body() body: SendVerifyCodeDto) {
+    return this.smsService.sendSmsRequest(body)
   }
 
   @Post('login')
@@ -47,7 +47,7 @@ export class AuthController {
 
   @Post('logout')
   @ApiDoc({
-    summary: '用户登出',
+    summary: '用户退出登录',
     model: {
       type: 'boolean',
     },
@@ -69,7 +69,7 @@ export class AuthController {
   @Post('forgot-password')
   @ApiDoc({
     summary: '找回密码',
-    model: ForgotPasswordResponseDto,
+    model: LoginResponseDto,
   })
   @Public()
   async forgotPassword(@Body() body: ForgotPasswordDto) {
@@ -79,12 +79,10 @@ export class AuthController {
   @Post('reset-password')
   @ApiDoc({
     summary: '重置密码',
-    model: {
-      type: 'boolean',
-    },
+    model: LoginResponseDto,
   })
   @Public()
-  async resetPassword(@Body() body: ResetPasswordDto) {
+  async resetPassword(@Body() body: ForgotPasswordDto) {
     return this.authService.resetPassword(body)
   }
 
@@ -98,5 +96,33 @@ export class AuthController {
     return {
       publicKey: this.rsaService.getPublicKey(),
     }
+  }
+
+  @Get('devices')
+  @ApiDoc({
+    summary: '获取用户登录设备列表',
+    model: [UserDeviceDto],
+  })
+  async getDevices(@Req() req: FastifyRequest) {
+    const userId = (req as any).user?.sub
+    if (!userId) {
+      throw new BadRequestException('用户未登录')
+    }
+    return this.authService.getUserDevices(Number(userId))
+  }
+
+  @Post('revoke-device')
+  @ApiDoc({
+    summary: '撤销特定设备的登录',
+    model: {
+      type: 'boolean',
+    },
+  })
+  async revokeDevice(@Body() body: RevokeDeviceDto, @Req() req: FastifyRequest) {
+    const userId = (req as any).user?.sub
+    if (!userId) {
+      throw new BadRequestException('用户未登录')
+    }
+    return this.authService.revokeDevice(Number(userId), body.tokenId)
   }
 }

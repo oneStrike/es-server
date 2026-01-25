@@ -3,6 +3,7 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy, StrategyOptions } from 'passport-jwt'
+import { AuthErrorConstant } from './auth.constant'
 import { JwtBlacklistService } from './jwt-blacklist.service'
 
 /**
@@ -15,6 +16,28 @@ interface JwtPayload {
 }
 
 /**
+ * Token 存储服务接口
+ * 定义 Token 存储的通用方法，由应用层实现
+ * 这样设计可以让 libs/base 保持通用性，不依赖具体的业务模型
+ */
+export interface ITokenStorageService {
+  /**
+   * 根据 JTI 查询 Token
+   * @param jti JWT Token ID
+   * @returns Token 记录或 null
+   */
+  findByJti: (jti: string) => Promise<any>
+
+  /**
+   * 检查 Token 是否有效
+   * 有效条件：Token 存在、未被撤销、未过期
+   * @param jti JWT Token ID
+   * @returns true=有效, false=无效
+   */
+  isTokenValid: (jti: string) => Promise<boolean>
+}
+
+/**
  * AuthStrategy 类
  * 实现基于 JWT 的用户认证策略
  * 使用 passport-jwt 库提供的 Strategy 类
@@ -22,11 +45,15 @@ interface JwtPayload {
 @Injectable()
 export class AuthStrategy extends PassportStrategy(Strategy) {
   name: string
-  // 错误消息常量
-  private static readonly UNAUTHORIZED_MESSAGE = '登录失效，请重新登录！'
 
   constructor(
     private readonly jwtBlacklistService: JwtBlacklistService,
+    /**
+     * 使用依赖注入获取 TokenStorageService 实现
+     * 这样可以在不修改 libs/base 的情况下，由应用层提供具体实现
+     */
+    @Inject('ITokenStorageService')
+    private readonly tokenStorageService: ITokenStorageService,
     @Inject(ConfigService) private readonly configService: ConfigService,
   ) {
     // 获取并验证必要的配置
@@ -59,30 +86,36 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
     // 验证 audience
     const expectedAud = this.configService.get<string>('auth.aud')
     if (expectedAud && payload.aud !== expectedAud) {
-      throw new UnauthorizedException(AuthStrategy.UNAUTHORIZED_MESSAGE)
+      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
     }
 
     // 验证令牌类型必须为 access
     if (payload.type !== 'access') {
-      throw new UnauthorizedException(AuthStrategy.UNAUTHORIZED_MESSAGE)
+      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
     }
 
     // 验证发行者（可选）
     const expectedIss = this.configService.get<string>('auth.iss')
     if (expectedIss && payload.iss !== expectedIss) {
-      throw new UnauthorizedException(AuthStrategy.UNAUTHORIZED_MESSAGE)
+      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
     }
 
     // 验证 token ID 是否存在
     const jti = payload.jti
     if (!jti) {
-      throw new UnauthorizedException(AuthStrategy.UNAUTHORIZED_MESSAGE)
+      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
     }
 
     // 检查令牌是否在黑名单中
     const isBlacklisted = await this.jwtBlacklistService.isInBlacklist(jti)
     if (isBlacklisted) {
-      throw new UnauthorizedException(AuthStrategy.UNAUTHORIZED_MESSAGE)
+      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+    }
+
+    // 检查令牌是否在数据库中被撤销
+    const isRevoked = !(await this.tokenStorageService.isTokenValid(jti))
+    if (isRevoked) {
+      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
     }
 
     // 验证通过，返回用户信息

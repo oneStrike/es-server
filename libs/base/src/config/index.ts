@@ -1,3 +1,4 @@
+export * from './aliyun.config'
 export * from './auth.config'
 export * from './db.config'
 export * from './logger.config'

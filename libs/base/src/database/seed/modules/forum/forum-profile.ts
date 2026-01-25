@@ -1,6 +1,6 @@
 export async function createInitialForumProfile(prisma: any) {
   const user = await prisma.appUser.findFirst({
-    where: { account: 'testuser' },
+    where: { phone: '13800138000' },
   })
 
   if (!user) {

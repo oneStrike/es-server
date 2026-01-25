@@ -1,6 +1,6 @@
 export async function createInitialClientUser(prisma: any) {
   const userData = {
-    account: 'testuser',
+    account: 123456,
     nickname: '测试用户',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=testuser',
     phone: '13800138000',
@@ -12,7 +12,7 @@ export async function createInitialClientUser(prisma: any) {
   }
 
   await prisma.appUser.upsert({
-    where: { account: userData.account },
+    where: { phone: userData.phone },
     update: userData,
     create: userData,
   })

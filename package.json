@@ -40,6 +40,11 @@
     "publish-api:app": "tsx publish-api.ts --app app"
   },
   "dependencies": {
+    "@alicloud/credentials": "^2.4.4",
+    "@alicloud/dypnsapi20170525": "2.0.0",
+    "@alicloud/openapi-client": "^0.4.15",
+    "@alicloud/tea-typescript": "^1.8.0",
+    "@alicloud/tea-util": "^1.4.11",
     "@fastify/compress": "^8.3.0",
     "@fastify/csrf-protection": "^7.1.0",
     "@fastify/helmet": "^13.0.2",
@@ -54,6 +59,7 @@
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-fastify": "^11.1.9",
+    "@nestjs/schedule": "^6.1.0",
     "@nestjs/swagger": "^11.2.3",
     "@nestjs/terminus": "^11.0.0",
     "@nestjs/throttler": "^6.5.0",

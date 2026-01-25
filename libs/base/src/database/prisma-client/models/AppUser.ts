@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model AppUser
- * 
+ * 应用用户表
  */
 export type AppUserModel = runtime.Types.Result.DefaultSelection<Prisma.$AppUserPayload>
 
@@ -28,17 +28,19 @@ export type AggregateAppUser = {
 
 export type AppUserAvgAggregateOutputType = {
   id: number | null
+  account: number | null
   gender: number | null
 }
 
 export type AppUserSumAggregateOutputType = {
   id: number | null
+  account: number | null
   gender: number | null
 }
 
 export type AppUserMinAggregateOutputType = {
   id: number | null
-  account: string | null
+  account: number | null
   nickname: string | null
   password: string | null
   avatar: string | null
@@ -57,7 +59,7 @@ export type AppUserMinAggregateOutputType = {
 
 export type AppUserMaxAggregateOutputType = {
   id: number | null
-  account: string | null
+  account: number | null
   nickname: string | null
   password: string | null
   avatar: string | null
@@ -97,11 +99,13 @@ export type AppUserCountAggregateOutputType = {
 
 export type AppUserAvgAggregateInputType = {
   id?: true
+  account?: true
   gender?: true
 }
 
 export type AppUserSumAggregateInputType = {
   id?: true
+  account?: true
   gender?: true
 }
 
@@ -251,8 +255,8 @@ export type AppUserGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type AppUserGroupByOutputType = {
   id: number
-  account: string
-  nickname: string | null
+  account: number
+  nickname: string
   password: string
   avatar: string | null
   phone: string | null
@@ -293,8 +297,8 @@ export type AppUserWhereInput = {
   OR?: Prisma.AppUserWhereInput[]
   NOT?: Prisma.AppUserWhereInput | Prisma.AppUserWhereInput[]
   id?: Prisma.IntFilter<"AppUser"> | number
-  account?: Prisma.StringFilter<"AppUser"> | string
-  nickname?: Prisma.StringNullableFilter<"AppUser"> | string | null
+  account?: Prisma.IntFilter<"AppUser"> | number
+  nickname?: Prisma.StringFilter<"AppUser"> | string
   password?: Prisma.StringFilter<"AppUser"> | string
   avatar?: Prisma.StringNullableFilter<"AppUser"> | string | null
   phone?: Prisma.StringNullableFilter<"AppUser"> | string | null
@@ -310,12 +314,13 @@ export type AppUserWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"AppUser"> | Date | string | null
   forumProfile?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
   noticeReads?: Prisma.AppNoticeReadListRelationFilter
+  tokens?: Prisma.AppUserTokenListRelationFilter
 }
 
 export type AppUserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   account?: Prisma.SortOrder
-  nickname?: Prisma.SortOrderInput | Prisma.SortOrder
+  nickname?: Prisma.SortOrder
   password?: Prisma.SortOrder
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -331,17 +336,18 @@ export type AppUserOrderByWithRelationInput = {
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   forumProfile?: Prisma.ForumProfileOrderByWithRelationInput
   noticeReads?: Prisma.AppNoticeReadOrderByRelationAggregateInput
+  tokens?: Prisma.AppUserTokenOrderByRelationAggregateInput
 }
 
 export type AppUserWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  account?: string
+  account?: number
   phone?: string
   email?: string
   AND?: Prisma.AppUserWhereInput | Prisma.AppUserWhereInput[]
   OR?: Prisma.AppUserWhereInput[]
   NOT?: Prisma.AppUserWhereInput | Prisma.AppUserWhereInput[]
-  nickname?: Prisma.StringNullableFilter<"AppUser"> | string | null
+  nickname?: Prisma.StringFilter<"AppUser"> | string
   password?: Prisma.StringFilter<"AppUser"> | string
   avatar?: Prisma.StringNullableFilter<"AppUser"> | string | null
   isEnabled?: Prisma.BoolFilter<"AppUser"> | boolean
@@ -355,12 +361,13 @@ export type AppUserWhereUniqueInput = Prisma.AtLeast<{
   deletedAt?: Prisma.DateTimeNullableFilter<"AppUser"> | Date | string | null
   forumProfile?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
   noticeReads?: Prisma.AppNoticeReadListRelationFilter
+  tokens?: Prisma.AppUserTokenListRelationFilter
 }, "id" | "account" | "phone" | "email">
 
 export type AppUserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   account?: Prisma.SortOrder
-  nickname?: Prisma.SortOrderInput | Prisma.SortOrder
+  nickname?: Prisma.SortOrder
   password?: Prisma.SortOrder
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -386,8 +393,8 @@ export type AppUserScalarWhereWithAggregatesInput = {
   OR?: Prisma.AppUserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.AppUserScalarWhereWithAggregatesInput | Prisma.AppUserScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"AppUser"> | number
-  account?: Prisma.StringWithAggregatesFilter<"AppUser"> | string
-  nickname?: Prisma.StringNullableWithAggregatesFilter<"AppUser"> | string | null
+  account?: Prisma.IntWithAggregatesFilter<"AppUser"> | number
+  nickname?: Prisma.StringWithAggregatesFilter<"AppUser"> | string
   password?: Prisma.StringWithAggregatesFilter<"AppUser"> | string
   avatar?: Prisma.StringNullableWithAggregatesFilter<"AppUser"> | string | null
   phone?: Prisma.StringNullableWithAggregatesFilter<"AppUser"> | string | null
@@ -404,8 +411,8 @@ export type AppUserScalarWhereWithAggregatesInput = {
 }
 
 export type AppUserCreateInput = {
-  account: string
-  nickname?: string | null
+  account: number
+  nickname: string
   password: string
   avatar?: string | null
   phone?: string | null
@@ -421,12 +428,13 @@ export type AppUserCreateInput = {
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
+  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
 }
 
 export type AppUserUncheckedCreateInput = {
   id?: number
-  account: string
-  nickname?: string | null
+  account: number
+  nickname: string
   password: string
   avatar?: string | null
   phone?: string | null
@@ -442,11 +450,12 @@ export type AppUserUncheckedCreateInput = {
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
+  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type AppUserUpdateInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -462,12 +471,13 @@ export type AppUserUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
 }
 
 export type AppUserUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -483,12 +493,13 @@ export type AppUserUncheckedUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type AppUserCreateManyInput = {
   id?: number
-  account: string
-  nickname?: string | null
+  account: number
+  nickname: string
   password: string
   avatar?: string | null
   phone?: string | null
@@ -505,8 +516,8 @@ export type AppUserCreateManyInput = {
 }
 
 export type AppUserUpdateManyMutationInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -524,8 +535,8 @@ export type AppUserUpdateManyMutationInput = {
 
 export type AppUserUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -567,6 +578,7 @@ export type AppUserCountOrderByAggregateInput = {
 
 export type AppUserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  account?: Prisma.SortOrder
   gender?: Prisma.SortOrder
 }
 
@@ -610,6 +622,7 @@ export type AppUserMinOrderByAggregateInput = {
 
 export type AppUserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  account?: Prisma.SortOrder
   gender?: Prisma.SortOrder
 }
 
@@ -627,6 +640,20 @@ export type AppUserUpdateOneRequiredWithoutNoticeReadsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutNoticeReadsInput, Prisma.AppUserUpdateWithoutNoticeReadsInput>, Prisma.AppUserUncheckedUpdateWithoutNoticeReadsInput>
 }
 
+export type AppUserCreateNestedOneWithoutTokensInput = {
+  create?: Prisma.XOR<Prisma.AppUserCreateWithoutTokensInput, Prisma.AppUserUncheckedCreateWithoutTokensInput>
+  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutTokensInput
+  connect?: Prisma.AppUserWhereUniqueInput
+}
+
+export type AppUserUpdateOneRequiredWithoutTokensNestedInput = {
+  create?: Prisma.XOR<Prisma.AppUserCreateWithoutTokensInput, Prisma.AppUserUncheckedCreateWithoutTokensInput>
+  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutTokensInput
+  upsert?: Prisma.AppUserUpsertWithoutTokensInput
+  connect?: Prisma.AppUserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutTokensInput, Prisma.AppUserUpdateWithoutTokensInput>, Prisma.AppUserUncheckedUpdateWithoutTokensInput>
+}
+
 export type AppUserCreateNestedOneWithoutForumProfileInput = {
   create?: Prisma.XOR<Prisma.AppUserCreateWithoutForumProfileInput, Prisma.AppUserUncheckedCreateWithoutForumProfileInput>
   connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutForumProfileInput
@@ -642,8 +669,8 @@ export type AppUserUpdateOneRequiredWithoutForumProfileNestedInput = {
 }
 
 export type AppUserCreateWithoutNoticeReadsInput = {
-  account: string
-  nickname?: string | null
+  account: number
+  nickname: string
   password: string
   avatar?: string | null
   phone?: string | null
@@ -658,12 +685,13 @@ export type AppUserCreateWithoutNoticeReadsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
+  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
 }
 
 export type AppUserUncheckedCreateWithoutNoticeReadsInput = {
   id?: number
-  account: string
-  nickname?: string | null
+  account: number
+  nickname: string
   password: string
   avatar?: string | null
   phone?: string | null
@@ -678,6 +706,7 @@ export type AppUserUncheckedCreateWithoutNoticeReadsInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
+  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type AppUserCreateOrConnectWithoutNoticeReadsInput = {
@@ -697,8 +726,8 @@ export type AppUserUpdateToOneWithWhereWithoutNoticeReadsInput = {
 }
 
 export type AppUserUpdateWithoutNoticeReadsInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -713,12 +742,13 @@ export type AppUserUpdateWithoutNoticeReadsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
 }
 
 export type AppUserUncheckedUpdateWithoutNoticeReadsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -733,11 +763,110 @@ export type AppUserUncheckedUpdateWithoutNoticeReadsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type AppUserCreateWithoutTokensInput = {
+  account: number
+  nickname: string
+  password: string
+  avatar?: string | null
+  phone?: string | null
+  email?: string | null
+  isEnabled?: boolean
+  gender?: number
+  birthDate?: Date | string | null
+  isSignedIn?: boolean
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
+  noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
+}
+
+export type AppUserUncheckedCreateWithoutTokensInput = {
+  id?: number
+  account: number
+  nickname: string
+  password: string
+  avatar?: string | null
+  phone?: string | null
+  email?: string | null
+  isEnabled?: boolean
+  gender?: number
+  birthDate?: Date | string | null
+  isSignedIn?: boolean
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
+  noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type AppUserCreateOrConnectWithoutTokensInput = {
+  where: Prisma.AppUserWhereUniqueInput
+  create: Prisma.XOR<Prisma.AppUserCreateWithoutTokensInput, Prisma.AppUserUncheckedCreateWithoutTokensInput>
+}
+
+export type AppUserUpsertWithoutTokensInput = {
+  update: Prisma.XOR<Prisma.AppUserUpdateWithoutTokensInput, Prisma.AppUserUncheckedUpdateWithoutTokensInput>
+  create: Prisma.XOR<Prisma.AppUserCreateWithoutTokensInput, Prisma.AppUserUncheckedCreateWithoutTokensInput>
+  where?: Prisma.AppUserWhereInput
+}
+
+export type AppUserUpdateToOneWithWhereWithoutTokensInput = {
+  where?: Prisma.AppUserWhereInput
+  data: Prisma.XOR<Prisma.AppUserUpdateWithoutTokensInput, Prisma.AppUserUncheckedUpdateWithoutTokensInput>
+}
+
+export type AppUserUpdateWithoutTokensInput = {
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  gender?: Prisma.IntFieldUpdateOperationsInput | number
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
+  noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
+}
+
+export type AppUserUncheckedUpdateWithoutTokensInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  gender?: Prisma.IntFieldUpdateOperationsInput | number
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isSignedIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
+  noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type AppUserCreateWithoutForumProfileInput = {
-  account: string
-  nickname?: string | null
+  account: number
+  nickname: string
   password: string
   avatar?: string | null
   phone?: string | null
@@ -752,12 +881,13 @@ export type AppUserCreateWithoutForumProfileInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
+  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
 }
 
 export type AppUserUncheckedCreateWithoutForumProfileInput = {
   id?: number
-  account: string
-  nickname?: string | null
+  account: number
+  nickname: string
   password: string
   avatar?: string | null
   phone?: string | null
@@ -772,6 +902,7 @@ export type AppUserUncheckedCreateWithoutForumProfileInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
+  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type AppUserCreateOrConnectWithoutForumProfileInput = {
@@ -791,8 +922,8 @@ export type AppUserUpdateToOneWithWhereWithoutForumProfileInput = {
 }
 
 export type AppUserUpdateWithoutForumProfileInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -807,12 +938,13 @@ export type AppUserUpdateWithoutForumProfileInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
 }
 
 export type AppUserUncheckedUpdateWithoutForumProfileInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  nickname?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  account?: Prisma.IntFieldUpdateOperationsInput | number
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -827,6 +959,7 @@ export type AppUserUncheckedUpdateWithoutForumProfileInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -836,10 +969,12 @@ export type AppUserUncheckedUpdateWithoutForumProfileInput = {
 
 export type AppUserCountOutputType = {
   noticeReads: number
+  tokens: number
 }
 
 export type AppUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   noticeReads?: boolean | AppUserCountOutputTypeCountNoticeReadsArgs
+  tokens?: boolean | AppUserCountOutputTypeCountTokensArgs
 }
 
 /**
@@ -857,6 +992,13 @@ export type AppUserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exte
  */
 export type AppUserCountOutputTypeCountNoticeReadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.AppNoticeReadWhereInput
+}
+
+/**
+ * AppUserCountOutputType without action
+ */
+export type AppUserCountOutputTypeCountTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AppUserTokenWhereInput
 }
 
 
@@ -879,6 +1021,7 @@ export type AppUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   deletedAt?: boolean
   forumProfile?: boolean | Prisma.AppUser$forumProfileArgs<ExtArgs>
   noticeReads?: boolean | Prisma.AppUser$noticeReadsArgs<ExtArgs>
+  tokens?: boolean | Prisma.AppUser$tokensArgs<ExtArgs>
   _count?: boolean | Prisma.AppUserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["appUser"]>
 
@@ -943,6 +1086,7 @@ export type AppUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type AppUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   forumProfile?: boolean | Prisma.AppUser$forumProfileArgs<ExtArgs>
   noticeReads?: boolean | Prisma.AppUser$noticeReadsArgs<ExtArgs>
+  tokens?: boolean | Prisma.AppUser$tokensArgs<ExtArgs>
   _count?: boolean | Prisma.AppUserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AppUserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -951,25 +1095,83 @@ export type AppUserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AppUser"
   objects: {
+    /**
+     * 用户论坛资料
+     */
     forumProfile: Prisma.$ForumProfilePayload<ExtArgs> | null
+    /**
+     * 用户通知阅读记录
+     */
     noticeReads: Prisma.$AppNoticeReadPayload<ExtArgs>[]
+    /**
+     * 用户令牌
+     */
+    tokens: Prisma.$AppUserTokenPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 用户ID
+     */
     id: number
-    account: string
-    nickname: string | null
+    /**
+     * 账号（唯一）
+     */
+    account: number
+    /**
+     * 用户昵称（显示名称）
+     */
+    nickname: string
+    /**
+     * 密码（加密存储）
+     */
     password: string
+    /**
+     * 头像URL地址
+     */
     avatar: string | null
+    /**
+     * 手机号码（唯一）
+     */
     phone: string | null
+    /**
+     * 邮箱地址（唯一）
+     */
     email: string | null
+    /**
+     * 账户状态（true:启用, false:禁用）
+     */
     isEnabled: boolean
+    /**
+     * 性别（0:未知, 1:男, 2:女）
+     */
     gender: number
+    /**
+     * 出生日期
+     */
     birthDate: Date | null
+    /**
+     * 是否签到
+     */
     isSignedIn: boolean
+    /**
+     * 最后登录时间
+     */
     lastLoginAt: Date | null
+    /**
+     * 最后登录IP地址
+     */
     lastLoginIp: string | null
+    /**
+     * 创建时间
+     */
     createdAt: Date
+    /**
+     * 更新时间
+     */
     updatedAt: Date
+    /**
+     * 删除时间（软删除）
+     */
     deletedAt: Date | null
   }, ExtArgs["result"]["appUser"]>
   composites: {}
@@ -1367,6 +1569,7 @@ export interface Prisma__AppUserClient<T, Null = never, ExtArgs extends runtime.
   readonly [Symbol.toStringTag]: "PrismaPromise"
   forumProfile<T extends Prisma.AppUser$forumProfileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$forumProfileArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   noticeReads<T extends Prisma.AppUser$noticeReadsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$noticeReadsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppNoticeReadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  tokens<T extends Prisma.AppUser$tokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$tokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppUserTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1397,7 +1600,7 @@ export interface Prisma__AppUserClient<T, Null = never, ExtArgs extends runtime.
  */
 export interface AppUserFieldRefs {
   readonly id: Prisma.FieldRef<"AppUser", 'Int'>
-  readonly account: Prisma.FieldRef<"AppUser", 'String'>
+  readonly account: Prisma.FieldRef<"AppUser", 'Int'>
   readonly nickname: Prisma.FieldRef<"AppUser", 'String'>
   readonly password: Prisma.FieldRef<"AppUser", 'String'>
   readonly avatar: Prisma.FieldRef<"AppUser", 'String'>
@@ -1849,6 +2052,30 @@ export type AppUser$noticeReadsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.AppNoticeReadScalarFieldEnum | Prisma.AppNoticeReadScalarFieldEnum[]
+}
+
+/**
+ * AppUser.tokens
+ */
+export type AppUser$tokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AppUserToken
+   */
+  select?: Prisma.AppUserTokenSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AppUserToken
+   */
+  omit?: Prisma.AppUserTokenOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AppUserTokenInclude<ExtArgs> | null
+  where?: Prisma.AppUserTokenWhereInput
+  orderBy?: Prisma.AppUserTokenOrderByWithRelationInput | Prisma.AppUserTokenOrderByWithRelationInput[]
+  cursor?: Prisma.AppUserTokenWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AppUserTokenScalarFieldEnum | Prisma.AppUserTokenScalarFieldEnum[]
 }
 
 /**

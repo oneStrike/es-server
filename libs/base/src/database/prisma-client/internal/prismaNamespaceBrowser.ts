@@ -56,6 +56,7 @@ export const ModelName = {
   AppNoticeRead: 'AppNoticeRead',
   AppNotice: 'AppNotice',
   AppPage: 'AppPage',
+  AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
   ForumBadge: 'ForumBadge',
   ForumConfigHistory: 'ForumConfigHistory',
@@ -210,6 +211,24 @@ export const AppPageScalarFieldEnum = {
 } as const
 
 export type AppPageScalarFieldEnum = (typeof AppPageScalarFieldEnum)[keyof typeof AppPageScalarFieldEnum]
+
+
+export const AppUserTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  jti: 'jti',
+  tokenType: 'tokenType',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  revokeReason: 'revokeReason',
+  deviceInfo: 'deviceInfo',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppUserTokenScalarFieldEnum = (typeof AppUserTokenScalarFieldEnum)[keyof typeof AppUserTokenScalarFieldEnum]
 
 
 export const AppUserScalarFieldEnum = {
@@ -955,19 +974,19 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-export const JsonNullValueInput = {
-  JsonNull: 'JsonNull'
-} as const
-
-export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
-
-
 export const NullableJsonNullValueInput = {
   DbNull: 'DbNull',
   JsonNull: 'JsonNull'
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: 'JsonNull'
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

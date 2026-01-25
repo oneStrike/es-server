@@ -63,8 +63,20 @@ export type AppNotice = Prisma.AppNoticeModel
  */
 export type AppPage = Prisma.AppPageModel
 /**
- * Model AppUser
+ * Model AppUserToken
+ * 应用用户令牌表
+ * 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
  * 
+ * 优化说明：
+ * 1. 移除 token 字段：不需要存储完整 Token，只需存储 jti 即可
+ * 2. 移除 isActive 字段：使用 revokedAt 判断是否活跃，避免数据冗余
+ * 3. 移除 lastUsedAt 字段：未实际使用，用 createdAt 替代
+ * 4. 添加 Redis 缓存：提高查询性能，减少数据库压力
+ */
+export type AppUserToken = Prisma.AppUserTokenModel
+/**
+ * Model AppUser
+ * 应用用户表
  */
 export type AppUser = Prisma.AppUserModel
 /**

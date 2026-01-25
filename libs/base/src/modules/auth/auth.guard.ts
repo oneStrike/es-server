@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { AuthGuard } from '@nestjs/passport'
+import { AuthErrorConstant } from './auth.constant'
 
 /**
  * AuthGuard JWT认证守卫
@@ -15,8 +16,7 @@ import { AuthGuard } from '@nestjs/passport'
 @Injectable()
 export class JwtAuthGuard
   extends AuthGuard(AuthConfig.strategyKey)
-  implements CanActivate
-{
+  implements CanActivate {
   constructor(private reflector: Reflector) {
     super()
   }
@@ -43,7 +43,7 @@ export class JwtAuthGuard
 
   handleRequest(err: any, user: any) {
     if (err || !user) {
-      throw new UnauthorizedException('登录失效，请重新登录！')
+      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
     }
     return user
   }

@@ -1,0 +1,47 @@
+/// 应用用户令牌表
+/// 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
+/// 
+/// 优化说明：
+/// 1. 移除 token 字段：不需要存储完整 Token，只需存储 jti 即可
+/// 2. 移除 isActive 字段：使用 revokedAt 判断是否活跃，避免数据冗余
+/// 3. 移除 lastUsedAt 字段：未实际使用，用 createdAt 替代
+/// 4. 添加 Redis 缓存：提高查询性能，减少数据库压力
+model AppUserToken {
+  /// 令牌ID
+  id          Int      @id @default(autoincrement())
+  /// 用户ID
+  userId      Int      @map("user_id")
+  /// JWT Token ID（唯一标识，用于黑名单和撤销）
+  jti         String   @unique @map("jti") @db.VarChar(255)
+  /// 令牌类型（ACCESS:访问令牌, REFRESH:刷新令牌）
+  tokenType   String   @map("token_type") @db.VarChar(20)
+  /// 令牌过期时间
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz
+  /// 令牌撤销时间（null表示未撤销）
+  revokedAt   DateTime? @map("revoked_at") @db.Timestamptz
+  /// 撤销原因（PASSWORD_CHANGE:密码修改, USER_LOGOUT:用户退出, ADMIN_REVOKE:管理员撤销, SECURITY:安全原因）
+  revokeReason String?  @map("revoke_reason") @db.VarChar(50)
+  /// 设备信息（JSON格式，包含设备类型、操作系统、浏览器等）
+  deviceInfo  Json?    @map("device_info")
+  /// IP地址
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  /// 用户代理
+  userAgent   String?  @map("user_agent") @db.VarChar(500)
+  /// 创建时间
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// 关联用户
+  user        AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 单列索引
+  @@index([userId])        // 按用户查询 Token
+  @@index([jti])          // 按 JTI 查询 Token（黑名单检查）
+  @@index([tokenType])     // 按类型查询 Token
+  @@index([expiresAt])     // 按过期时间查询（清理过期 Token）
+  @@index([revokedAt])     // 按撤销状态查询
+  /// 组合索引
+  @@index([userId, tokenType])     // 查询用户特定类型的 Token
+  @@map("app_user_token")
+}

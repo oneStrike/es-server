@@ -2,7 +2,7 @@ export async function createInitialAppConfig(prisma: any) {
   const existingConfig = await prisma.appConfig.findFirst()
 
   const testUser = await prisma.appUser.findFirst({
-    where: { account: 'testuser' },
+    where: { phone: '13800138000' },
   })
 
   const configData = {

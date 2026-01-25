@@ -1,19 +1,19 @@
 import type { FastifyRequest } from 'fastify'
 import { BaseService } from '@libs/base/database'
 
+import { GenderEnum } from '@libs/base/enum'
 import { RsaService, ScryptService } from '@libs/base/modules'
 import { AuthService as BaseAuthService } from '@libs/base/modules/auth'
-import { extractIpAddress } from '@libs/base/utils'
 
+import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import { ForumProfileService } from '@libs/forum'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ErrorMessages } from './auth.constant'
 import {
   ForgotPasswordDto,
   LoginDto,
-  RegisterDto,
-  ResetPasswordDto,
 } from './dto/auth.dto'
+import { AppTokenStorageService } from './token-storage.service'
 
 /**
  * 认证服务类
@@ -26,6 +26,7 @@ export class AuthService extends BaseService {
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
     private readonly profileService: ForumProfileService,
+    private readonly tokenStorageService: AppTokenStorageService,
   ) {
     super()
   }
@@ -35,42 +36,53 @@ export class AuthService extends BaseService {
   }
 
   /**
+   * 生成唯一随机的账号
+   * @returns 唯一的账号
+   */
+  async generateUniqueAccount() {
+    const randomAccount = Math.floor(100000 + Math.random() * 900000)
+    const existingUser = await this.appUser.findUnique({
+      where: { account: randomAccount },
+    })
+    if (existingUser) {
+      return this.generateUniqueAccount()
+    }
+    return randomAccount
+  }
+
+  /**
    * 用户注册
-   * @param body - 注册数据，包含账号、密码、昵称等信息
-   * @param _req - Fastify 请求对象
+   * @param body - 注册数据，包含手机号、密码等信息
    * @returns 注册结果，包含用户信息和 JWT 令牌
-   * @throws {BadRequestException} 账号、手机号或邮箱已存在
+   * @throws {BadRequestException} 手机号已存在
    * @throws {BadRequestException} 系统配置错误：找不到默认论坛等级
    */
-  async register(body: RegisterDto, _req: FastifyRequest) {
-    await this.validateAccountUnique(body.account, body.phone, body.email)
-
-    const password = this.rsaService.decryptWith(body.password)
+  async register(body: LoginDto) {
+    const password = this.rsaService.decryptWith(body.password!)
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
     const user = await this.prisma.$transaction(async (tx) => {
+      const uid = await this.generateUniqueAccount()
       const newUser = await tx.appUser.create({
         data: {
-          account: body.account,
-          nickname: body.nickname,
+          account: uid,
+          nickname: `用户${uid}`,
           password: hashedPassword,
           phone: body.phone,
-          email: body.email,
-          gender: body.gender,
+          gender: GenderEnum.UNKNOWN,
           isEnabled: true,
         },
       })
 
-      await this.profileService.initForumProfile(tx, newUser.id)
+      await this.profileService.initForumProfile(tx as any, newUser.id)
 
       return newUser
     })
 
     const tokens = await this.baseJwtService.generateTokens({
       sub: String(user.id),
-      account: user.account,
+      phone: user.phone,
     })
-
     return {
       user: this.sanitizeUser(user),
       tokens,
@@ -86,19 +98,33 @@ export class AuthService extends BaseService {
    * @throws {BadRequestException} 账号已被禁用
    */
   async login(body: LoginDto, req: FastifyRequest) {
-    const user = await this.prisma.appUser.findUnique({
-      where: { account: body.account },
+    if (!body.phone && !body.password) {
+      throw new BadRequestException(ErrorMessages.PHONE_OR_ACCOUNT_REQUIRED)
+    }
+
+    if (!body.code && !body.password) {
+      throw new BadRequestException(ErrorMessages.PASSWORD_OR_CODE_REQUIRED)
+    }
+
+    const user = await this.appUser.findFirst({
+      where: {
+        OR: [{ phone: body.phone }, { account: body.account }],
+      },
     })
 
     if (!user) {
-      throw new BadRequestException(ErrorMessages.ACCOUNT_OR_PASSWORD_ERROR)
+      // 如果用户不存在但是使用了验证码，就注册用户
+      if (!body.code) {
+        throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
+      }
+      return this.register(body)
     }
 
     if (!user.isEnabled) {
       throw new BadRequestException(ErrorMessages.ACCOUNT_DISABLED)
     }
 
-    const password = this.rsaService.decryptWith(body.password)
+    const password = this.rsaService.decryptWith(body.password!)
     const isPasswordValid = await this.scryptService.verifyPassword(
       password,
       user.password,
@@ -117,8 +143,37 @@ export class AuthService extends BaseService {
 
     const tokens = await this.baseJwtService.generateTokens({
       sub: String(user.id),
-      account: user.account,
+      phone: user.phone,
     })
+
+    const accessPayload = await this.baseJwtService.decodeToken(tokens.accessToken)
+    const refreshPayload = await this.baseJwtService.decodeToken(tokens.refreshToken)
+
+    const accessTokenExpiresAt = new Date(accessPayload.exp * 1000)
+    const refreshTokenExpiresAt = new Date(refreshPayload.exp * 1000)
+
+    const deviceInfo = parseDeviceInfo(req.headers['user-agent'])
+
+    await this.tokenStorageService.createTokens([
+      {
+        userId: user.id,
+        jti: accessPayload.jti,
+        tokenType: 'ACCESS',
+        expiresAt: accessTokenExpiresAt,
+        deviceInfo,
+        ipAddress: extractIpAddress(req) || ErrorMessages.IP_ADDRESS_UNKNOWN,
+        userAgent: req.headers['user-agent'],
+      },
+      {
+        userId: user.id,
+        jti: refreshPayload.jti,
+        tokenType: 'REFRESH',
+        expiresAt: refreshTokenExpiresAt,
+        deviceInfo,
+        ipAddress: extractIpAddress(req) || ErrorMessages.IP_ADDRESS_UNKNOWN,
+        userAgent: req.headers['user-agent'],
+      },
+    ])
 
     return {
       user: this.sanitizeUser(user),
@@ -133,6 +188,14 @@ export class AuthService extends BaseService {
    * @returns 退出登录结果
    */
   async logout(accessToken: string, refreshToken: string) {
+    const accessPayload = await this.baseJwtService.decodeToken(accessToken)
+    const refreshPayload = await this.baseJwtService.decodeToken(refreshToken)
+
+    await this.tokenStorageService.revokeByJtis(
+      [accessPayload.jti, refreshPayload.jti],
+      'USER_LOGOUT',
+    )
+
     return this.baseJwtService.logout(accessToken, refreshToken)
   }
 
@@ -152,7 +215,7 @@ export class AuthService extends BaseService {
    * @throws {BadRequestException} 账号不存在
    */
   async forgotPassword(body: ForgotPasswordDto) {
-    const user = await this.findUserByAccount(body.account)
+    const user = await this.findUserByAccount(body.phone)
 
     if (!user) {
       throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
@@ -169,8 +232,8 @@ export class AuthService extends BaseService {
    * @returns 重置结果
    * @throws {BadRequestException} 账号不存在
    */
-  async resetPassword(body: ResetPasswordDto) {
-    const user = await this.findUserByAccount(body.account)
+  async resetPassword(body: ForgotPasswordDto) {
+    const user = await this.findUserByAccount(body.phone)
 
     if (!user) {
       throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
@@ -184,42 +247,9 @@ export class AuthService extends BaseService {
       data: { password: hashedPassword },
     })
 
+    await this.tokenStorageService.revokeAllByUserId(user.id, 'PASSWORD_CHANGE')
+
     return true
-  }
-
-  /**
-   * 验证账号唯一性
-   * @param account - 账号
-   * @param phone - 手机号（可选）
-   * @param email - 邮箱（可选）
-   * @throws {BadRequestException} 账号、手机号或邮箱已存在
-   */
-  private async validateAccountUnique(
-    account: string,
-    phone?: string,
-    email?: string,
-  ) {
-    const existingUser = await this.appUser.findFirst({
-      where: {
-        OR: [
-          { account },
-          ...(phone ? [{ phone }] : []),
-          ...(email ? [{ email }] : []),
-        ],
-      },
-    })
-
-    if (existingUser) {
-      if (existingUser.account === account) {
-        throw new BadRequestException(ErrorMessages.ACCOUNT_EXISTS)
-      }
-      if (phone && existingUser.phone === phone) {
-        throw new BadRequestException(ErrorMessages.PHONE_EXISTS)
-      }
-      if (email && existingUser.email === email) {
-        throw new BadRequestException(ErrorMessages.EMAIL_EXISTS)
-      }
-    }
   }
 
   /**
@@ -234,14 +264,46 @@ export class AuthService extends BaseService {
 
   /**
    * 根据账号查找用户
-   * @param account - 账号（可以是账号、手机号或邮箱）
+   * @param phone - 手机号
    * @returns 用户对象或 null
    */
-  private async findUserByAccount(account: string) {
+  private async findUserByAccount(phone: string) {
     return this.appUser.findFirst({
       where: {
-        OR: [{ account }, { phone: account }, { email: account }],
+        phone
       },
     })
+  }
+
+  /**
+   * 获取用户的登录设备列表
+   * @param userId - 用户ID
+   * @returns 设备列表
+   */
+  async getUserDevices(userId: number) {
+    return this.tokenStorageService.getUserDevices(userId)
+  }
+
+  /**
+   * 撤销特定设备的 Token
+   * @param userId - 用户ID
+   * @param tokenId - Token ID
+   * @returns 撤销结果
+   */
+  async revokeDevice(userId: number, tokenId: number) {
+    const token = await this.prisma.appUserToken.findUnique({
+      where: { id: tokenId },
+    })
+
+    if (!token) {
+      throw new BadRequestException('设备不存在')
+    }
+
+    if (token.userId !== userId) {
+      throw new BadRequestException('无权操作此设备')
+    }
+
+    await this.tokenStorageService.revokeByJti(token.jti, 'USER_LOGOUT')
+    return true
   }
 }
