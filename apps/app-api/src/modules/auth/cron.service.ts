@@ -83,7 +83,7 @@ export class AuthCronService {
   @Cron('0 2 * * *')
   async cleanupOldRevokedTokens() {
     try {
-      const { count } = await this.tokenStorageService.deleteOldRevokedTokens(30)
+      const count = await this.tokenStorageService.deleteOldRevokedTokens(30)
       if (count > 0) {
         this.logger.log(`清理了 ${count} 个已撤销的旧 Token（保留 30 天）`)
       }

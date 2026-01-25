@@ -8,4 +8,11 @@ export const ErrorMessages = {
   IP_ADDRESS_UNKNOWN: 'unknown',
   PHONE_OR_ACCOUNT_REQUIRED: '手机号或账号不能为空',
   PASSWORD_OR_CODE_REQUIRED: '密码或验证码不能为空',
+  VERIFY_CODE_INVALID: '验证码错误或已过期',
+  PHONE_REQUIRED_FOR_REGISTER: '注册必须提供手机号',
+  PHONE_REQUIRED_FOR_CODE_LOGIN: '验证码登录必须提供手机号',
+  ACCOUNT_NOT_BOUND_PHONE: '该账号未绑定手机号，无法使用验证码登录',
+  PHONE_MISMATCH: '验证码登录的手机号与账号绑定的手机号不一致',
+  DEVICE_NOT_FOUND: '设备不存在',
+  NO_PERMISSION_FOR_DEVICE: '无权操作此设备',
 }

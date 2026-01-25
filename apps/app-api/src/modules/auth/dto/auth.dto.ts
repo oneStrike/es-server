@@ -151,7 +151,23 @@ export class LoginDto extends PartialType(PickType(BaseAppUserDto, ['phone', 'ac
 /**
  * 忘记密码请求信息
  */
-export class ForgotPasswordDto extends LoginDto {
+export class ForgotPasswordDto {
+  @ValidateString({
+    description: '手机号',
+    example: '13800000000',
+    required: true,
+    maxLength: 11,
+  })
+  phone!: string
+
+  @ValidateString({
+    description: '密码',
+    example: 'Aa@123456',
+    required: true,
+    password: true,
+  })
+  password!: string
+
   @ValidateNumber({
     description: '手机号验证码',
     example: 330049,

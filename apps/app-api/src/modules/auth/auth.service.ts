@@ -52,6 +52,34 @@ export class AuthService extends BaseService {
   }
 
   /**
+   * 生成安全的随机密码
+   * 密码长度为16位，包含大小写字母、数字和特殊字符
+   * @returns 16位随机密码
+   */
+  private generateSecureRandomPassword(): string {
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+    const numbers = '0123456789'
+    const special = '!@#$%^&*'
+
+    let password = ''
+
+    for (let i = 0; i < 2; i++) {
+      password += uppercase[Math.floor(Math.random() * uppercase.length)]
+      password += lowercase[Math.floor(Math.random() * lowercase.length)]
+      password += numbers[Math.floor(Math.random() * numbers.length)]
+      password += special[Math.floor(Math.random() * special.length)]
+    }
+
+    const allChars = uppercase + lowercase + numbers + special
+    for (let i = 0; i < 8; i++) {
+      password += allChars[Math.floor(Math.random() * allChars.length)]
+    }
+
+    return password.split('').sort(() => Math.random() - 0.5).join('')
+  }
+
+  /**
    * 用户注册
    * @param body - 注册数据，包含手机号、密码等信息
    * @returns 注册结果，包含用户信息和 JWT 令牌
@@ -59,14 +87,24 @@ export class AuthService extends BaseService {
    * @throws {BadRequestException} 系统配置错误：找不到默认论坛等级
    */
   async register(body: LoginDto) {
-    if (body.phone && body.code) {
-      // 验证码注册
+    if (!body.phone) {
+      throw new BadRequestException(ErrorMessages.PHONE_REQUIRED_FOR_REGISTER)
+    }
+
+    if (body.code) {
       await this.smsService.checkVerifyCode({
         phoneNumber: body.phone,
         verifyCode: body.code,
       })
     }
-    const password = this.rsaService.decryptWith(body.password!)
+
+    let password: string
+    if (body.password) {
+      password = this.rsaService.decryptWith(body.password)
+    } else {
+      password = this.generateSecureRandomPassword()
+    }
+
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
     const user = await this.prisma.$transaction(async (tx) => {
@@ -106,12 +144,16 @@ export class AuthService extends BaseService {
    * @throws {BadRequestException} 账号已被禁用
    */
   async login(body: LoginDto, req: FastifyRequest) {
-    if (!body.phone && !body.password) {
+    if (!body.phone && !body.account) {
       throw new BadRequestException(ErrorMessages.PHONE_OR_ACCOUNT_REQUIRED)
     }
 
     if (!body.code && !body.password) {
       throw new BadRequestException(ErrorMessages.PASSWORD_OR_CODE_REQUIRED)
+    }
+
+    if (body.code && !body.phone) {
+      throw new BadRequestException(ErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN)
     }
 
     const user = await this.appUser.findFirst({
@@ -121,47 +163,82 @@ export class AuthService extends BaseService {
     })
 
     if (!user) {
-      // 如果用户不存在但是使用了验证码，就注册用户
-      if (!body.code) {
-        throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
+      if (body.code) {
+        return this.register(body)
       }
-      return this.register(body)
+      throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
     }
-    // 使用验证码登录
+
     if (body.code) {
-      const verifyCodeService = this.smsService.checkVerifyCode({
-        phoneNumber: user.phone!,
-        VerifyCode: body.code,
-      })
-      console.log("🚀 ~ AuthService ~ login ~ verifyCodeService:", verifyCodeService)
+      if (!user.phone) {
+        throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_BOUND_PHONE)
+      }
+
+      if (body.phone && body.phone !== user.phone) {
+        throw new BadRequestException(ErrorMessages.PHONE_MISMATCH)
+      }
+
+      try {
+        await this.smsService.checkVerifyCode({
+          phoneNumber: body.phone || user.phone,
+          verifyCode: body.code,
+        })
+      }
+      catch {
+        throw new BadRequestException(ErrorMessages.VERIFY_CODE_INVALID)
+      }
+    } else {
+      const password = this.rsaService.decryptWith(body.password!)
+      const isPasswordValid = await this.scryptService.verifyPassword(
+        password,
+        user.password,
+      )
+      if (!isPasswordValid) {
+        throw new BadRequestException(ErrorMessages.ACCOUNT_OR_PASSWORD_ERROR)
+      }
     }
 
     if (!user.isEnabled) {
       throw new BadRequestException(ErrorMessages.ACCOUNT_DISABLED)
     }
 
-    const password = this.rsaService.decryptWith(body.password!)
-    const isPasswordValid = await this.scryptService.verifyPassword(
-      password,
-      user.password,
-    )
-    if (!isPasswordValid) {
-      throw new BadRequestException(ErrorMessages.ACCOUNT_OR_PASSWORD_ERROR)
-    }
-
-    await this.prisma.appUser.update({
-      where: { id: user.id },
-      data: {
-        lastLoginAt: new Date(),
-        lastLoginIp: extractIpAddress(req) || ErrorMessages.IP_ADDRESS_UNKNOWN,
-      },
-    })
+    await this.updateUserLoginInfo(user.id, req)
 
     const tokens = await this.baseJwtService.generateTokens({
       sub: String(user.id),
       phone: user.phone,
     })
 
+    await this.storeTokens(user.id, tokens, req)
+
+    return {
+      user: this.sanitizeUser(user),
+      tokens,
+    }
+  }
+
+  /**
+   * 更新用户登录信息
+   * @param userId - 用户ID
+   * @param req - Fastify 请求对象
+   */
+  private async updateUserLoginInfo(userId: number, req: FastifyRequest) {
+    await this.prisma.appUser.update({
+      where: { id: userId },
+      data: {
+        lastLoginAt: new Date(),
+        lastLoginIp: extractIpAddress(req) || ErrorMessages.IP_ADDRESS_UNKNOWN,
+      },
+    })
+  }
+
+  /**
+   * 存储Token到数据库和Redis
+   * @param userId - 用户ID
+   * @param tokens - Token对象
+   * @param req - Fastify 请求对象
+   */
+  private async storeTokens(userId: number, tokens: any, req: FastifyRequest) {
     const accessPayload = await this.baseJwtService.decodeToken(tokens.accessToken)
     const refreshPayload = await this.baseJwtService.decodeToken(tokens.refreshToken)
 
@@ -172,7 +249,7 @@ export class AuthService extends BaseService {
 
     await this.tokenStorageService.createTokens([
       {
-        userId: user.id,
+        userId,
         jti: accessPayload.jti,
         tokenType: 'ACCESS',
         expiresAt: accessTokenExpiresAt,
@@ -181,7 +258,7 @@ export class AuthService extends BaseService {
         userAgent: req.headers['user-agent'],
       },
       {
-        userId: user.id,
+        userId,
         jti: refreshPayload.jti,
         tokenType: 'REFRESH',
         expiresAt: refreshTokenExpiresAt,
@@ -190,11 +267,6 @@ export class AuthService extends BaseService {
         userAgent: req.headers['user-agent'],
       },
     ])
-
-    return {
-      user: this.sanitizeUser(user),
-      tokens,
-    }
   }
 
   /**
@@ -312,11 +384,11 @@ export class AuthService extends BaseService {
     })
 
     if (!token) {
-      throw new BadRequestException('设备不存在')
+      throw new BadRequestException(ErrorMessages.DEVICE_NOT_FOUND)
     }
 
     if (token.userId !== userId) {
-      throw new BadRequestException('无权操作此设备')
+      throw new BadRequestException(ErrorMessages.NO_PERMISSION_FOR_DEVICE)
     }
 
     await this.tokenStorageService.revokeByJti(token.jti, 'USER_LOGOUT')

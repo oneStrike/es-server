@@ -108,32 +108,27 @@ export class AppTokenStorageService extends BaseService implements ITokenStorage
    * @returns true=有效, false=无效
    */
   async isTokenValid(jti: string): Promise<boolean> {
-    // 1. 先检查 Redis 缓存
     const cached = await this.cacheManager.get(`token:${jti}`)
     if (cached !== null) {
       return cached === 'valid'
     }
 
-    // 2. 缓存未命中，查询数据库
     const token = await this.findByJti(jti)
     if (!token) {
+      await this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
       return false
     }
 
-    // 3. 检查 Token 是否被撤销
     if (token.revokedAt) {
+      await this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
       return false
     }
 
-    // 4. 检查 Token 是否过期
     if (new Date() > token.expiresAt) {
-      // 自动标记为已过期
-      await this.revokeByJti(jti, 'TOKEN_EXPIRED')
+      await this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
       return false
     }
 
-    // 5. Token 有效，写入缓存
-    // TTL 设置为 Token 剩余有效时间（秒）
     const ttl = Math.floor((token.expiresAt.getTime() - Date.now()) / 1000)
     await this.cacheManager.set(`token:${jti}`, 'valid', ttl)
 
@@ -152,17 +147,15 @@ export class AppTokenStorageService extends BaseService implements ITokenStorage
    * @param reason 撤销原因
    */
   async revokeByJti(jti: string, reason: string) {
-    await Promise.all([
-      this.appUserToken.updateMany({
-        where: { jti },
-        data: {
-          revokedAt: new Date(),
-          revokeReason: reason,
-        },
-      }),
-      // 缓存设置 1 天过期，避免 Redis 内存占用过大
-      this.cacheManager.set(`token:${jti}`, 'invalid', 86400),
-    ])
+    await this.appUserToken.updateMany({
+      where: { jti },
+      data: {
+        revokedAt: new Date(),
+        revokeReason: reason,
+      },
+    })
+
+    await this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
   }
 
   /**
@@ -173,19 +166,19 @@ export class AppTokenStorageService extends BaseService implements ITokenStorage
    * @param reason 撤销原因
    */
   async revokeByJtis(jtis: string[], reason: string) {
-    await Promise.all([
-      this.appUserToken.updateMany({
-        where: { jti: { in: jtis } },
-        data: {
-          revokedAt: new Date(),
-          revokeReason: reason,
-        },
-      }),
-      // 批量更新 Redis 缓存
-      ...jtis.map(async jti =>
+    await this.appUserToken.updateMany({
+      where: { jti: { in: jtis } },
+      data: {
+        revokedAt: new Date(),
+        revokeReason: reason,
+      },
+    })
+
+    await Promise.all(
+      jtis.map(async jti =>
         this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
-      ),
-    ])
+      )
+    )
   }
 
   /**
@@ -204,7 +197,6 @@ export class AppTokenStorageService extends BaseService implements ITokenStorage
    * @param reason 撤销原因
    */
   async revokeAllByUserId(userId: number, reason: string) {
-    // 1. 查询用户所有未撤销的 Token
     const tokens = await this.appUserToken.findMany({
       where: {
         userId,
@@ -215,23 +207,22 @@ export class AppTokenStorageService extends BaseService implements ITokenStorage
 
     const jtis = tokens.map(t => t.jti)
 
-    // 2. 并行执行数据库更新和缓存更新
-    await Promise.all([
-      this.appUserToken.updateMany({
-        where: {
-          userId,
-          revokedAt: null,
-        },
-        data: {
-          revokedAt: new Date(),
-          revokeReason: reason,
-        },
-      }),
-      // 批量更新 Redis 缓存
-      ...jtis.map(async jti =>
+    await this.appUserToken.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+        revokeReason: reason,
+      },
+    })
+
+    await Promise.all(
+      jtis.map(async jti =>
         this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
-      ),
-    ])
+      )
+    )
   }
 
   /**
@@ -263,7 +254,15 @@ export class AppTokenStorageService extends BaseService implements ITokenStorage
    * @returns 设备列表
    */
   async getUserDevices(userId: number) {
-    const tokens = await this.findActiveTokensByUserId(userId)
+    const tokens = await this.appUserToken.findMany({
+      where: {
+        userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+        tokenType: 'REFRESH',
+      },
+      orderBy: { createdAt: 'desc' },
+    })
     return tokens.map(token => ({
       id: token.id,
       jti: token.jti,
@@ -291,6 +290,7 @@ export class AppTokenStorageService extends BaseService implements ITokenStorage
   async cleanupExpiredTokens() {
     const result = await this.appUserToken.updateMany({
       where: {
+        tokenType: 'REFRESH',
         expiresAt: { lt: new Date() },
         revokedAt: null,
       },
@@ -316,12 +316,35 @@ export class AppTokenStorageService extends BaseService implements ITokenStorage
    * @param days 保留天数，默认 30 天
    * @returns 删除的 Token 数量
    */
-  async deleteOldRevokedTokens(days: number = 30) {
+  async deleteOldRevokedTokens(days: number = 30, batchSize: number = 1000) {
     const date = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-    return this.appUserToken.deleteMany({
-      where: {
-        revokedAt: { lt: date },
-      },
-    })
+    let totalDeleted = 0
+    let hasMore = true
+
+    while (hasMore) {
+      const tokens = await this.appUserToken.findMany({
+        where: {
+          revokedAt: { lt: date },
+        },
+        select: { id: true },
+        take: batchSize,
+      })
+
+      if (tokens.length === 0) {
+        hasMore = false
+        break
+      }
+
+      const ids = tokens.map(t => t.id)
+      const result = await this.appUserToken.deleteMany({
+        where: {
+          id: { in: ids },
+        },
+      })
+      totalDeleted += result.count
+      hasMore = result.count >= batchSize
+    }
+
+    return totalDeleted
   }
 }
