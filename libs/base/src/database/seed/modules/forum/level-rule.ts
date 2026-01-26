@@ -6,12 +6,16 @@ interface IForumLevelRuleData {
   order: number
   isEnabled: boolean
   color?: string
-  levelBadge?: string
+  badge?: string
   dailyTopicLimit?: number
   dailyReplyCommentLimit?: number
   postInterval?: number
   dailyLikeLimit?: number
   dailyFavoriteLimit?: number
+  discount?: number
+  workCollectionLimit?: number
+  blacklistLimit?: number
+  loginDays?: number
 }
 
 export async function createInitialForumLevelRules(prisma: any) {
@@ -29,6 +33,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       postInterval: 30,
       dailyLikeLimit: 30,
       dailyFavoriteLimit: 10,
+      discount: 0,
+      workCollectionLimit: 100,
+      blacklistLimit: 10,
+      loginDays: 0,
     },
     {
       name: '中级会员',
@@ -43,6 +51,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       postInterval: 20,
       dailyLikeLimit: 50,
       dailyFavoriteLimit: 20,
+      discount: 0.95,
+      workCollectionLimit: 200,
+      blacklistLimit: 20,
+      loginDays: 10,
     },
     {
       name: '高级会员',
@@ -57,6 +69,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       postInterval: 10,
       dailyLikeLimit: 100,
       dailyFavoriteLimit: 50,
+      discount: 0.90,
+      workCollectionLimit: 300,
+      blacklistLimit: 30,
+      loginDays: 30,
     },
     {
       name: '资深会员',
@@ -71,6 +87,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       postInterval: 5,
       dailyLikeLimit: 200,
       dailyFavoriteLimit: 100,
+      discount: 0.85,
+      workCollectionLimit: 500,
+      blacklistLimit: 50,
+      loginDays: 60,
     },
     {
       name: '专家会员',
@@ -85,6 +105,10 @@ export async function createInitialForumLevelRules(prisma: any) {
       postInterval: 0,
       dailyLikeLimit: 500,
       dailyFavoriteLimit: 200,
+      discount: 0.80,
+      workCollectionLimit: 1000,
+      blacklistLimit: 100,
+      loginDays: 90,
     },
   ]
 
@@ -103,12 +127,16 @@ export async function createInitialForumLevelRules(prisma: any) {
           sortOrder: levelData.order,
           isEnabled: levelData.isEnabled,
           color: levelData.color,
-          levelBadge: levelData.levelBadge,
+          badge: levelData.badge,
           dailyTopicLimit: levelData.dailyTopicLimit,
           dailyReplyCommentLimit: levelData.dailyReplyCommentLimit,
           postInterval: levelData.postInterval,
           dailyLikeLimit: levelData.dailyLikeLimit,
           dailyFavoriteLimit: levelData.dailyFavoriteLimit,
+          discount: levelData.discount,
+          workCollectionLimit: levelData.workCollectionLimit,
+          blacklistLimit: levelData.blacklistLimit,
+          loginDays: levelData.loginDays,
         },
       })
     }

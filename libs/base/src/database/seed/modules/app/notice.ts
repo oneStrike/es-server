@@ -1,4 +1,12 @@
 export async function createInitialAppNotice(prisma: any) {
+  // Fetch page IDs
+  const homePage = await prisma.appPage.findFirst({ where: { code: 'home' } })
+  const vipPage = await prisma.appPage.findFirst({ where: { code: 'vip_center' } })
+
+  // Use fallback ID 1 if page not found (though it should exist due to seed order)
+  const homePageId = homePage?.id || 1
+  const vipPageId = vipPage?.id || 1
+
   const initData = [
     {
       title: '11欢迎使用漫画阅读平台',
@@ -8,7 +16,7 @@ export async function createInitialAppNotice(prisma: any) {
       priorityLevel: 1,
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2025-12-31T23:59:59Z'),
-      pageId: 1,
+      pageId: homePageId,
       isPublished: true,
       enablePlatform: [1],
       isPinned: true,
@@ -22,7 +30,7 @@ export async function createInitialAppNotice(prisma: any) {
       priorityLevel: 2,
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2024-12-31T23:59:59Z'),
-      pageId: 1,
+      pageId: homePageId,
       isPublished: true,
       enablePlatform: [1],
       isPinned: false,
@@ -36,7 +44,7 @@ export async function createInitialAppNotice(prisma: any) {
       priorityLevel: 1,
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2025-12-31T23:59:59Z'),
-      pageId: 1,
+      pageId: homePageId,
       isPublished: true,
       enablePlatform: [1],
       isPinned: false,
@@ -50,7 +58,7 @@ export async function createInitialAppNotice(prisma: any) {
       priorityLevel: 2,
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2024-12-31T23:59:59Z'),
-      pageId: 2,
+      pageId: vipPageId,
       isPublished: true,
       enablePlatform: [1],
       isPinned: false,
@@ -64,7 +72,7 @@ export async function createInitialAppNotice(prisma: any) {
       priorityLevel: 1,
       publishStartTime: new Date('2024-01-01T00:00:00Z'),
       publishEndTime: new Date('2025-12-31T23:59:59Z'),
-      pageId: 3,
+      pageId: homePageId,
       isPublished: true,
       enablePlatform: [1],
       isPinned: false,

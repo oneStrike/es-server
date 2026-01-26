@@ -23,7 +23,6 @@ import {
   createInitialForumSensitiveWords,
   createInitialForumTags,
 } from './modules/forum'
-import { createInitialMemberLevels } from './modules/operationManagement'
 import { createInitialDataDictionary } from './modules/system'
 import {
   createInitialAuthors,
@@ -50,7 +49,6 @@ async function runSeeds() {
   await Promise.all([
     createInitialAdminAccount(prisma),
     createInitialDataDictionary(prisma),
-    createInitialMemberLevels(prisma),
     createInitialWorkCategory(prisma),
     createInitialWorkTag(prisma),
     createInitialAppConfig(prisma),

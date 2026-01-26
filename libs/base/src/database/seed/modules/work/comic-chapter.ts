@@ -22,11 +22,11 @@ export async function createInitialComicChapters(prisma: any) {
           comicId: comic.id,
           isPublished: true,
           readRule: 0,
-          contents: JSON.stringify([
+          contents: [
             `https://example.com/comics/${comic.id}/chapter-${i}/page-1.jpg`,
             `https://example.com/comics/${comic.id}/chapter-${i}/page-2.jpg`,
             `https://example.com/comics/${comic.id}/chapter-${i}/page-3.jpg`,
-          ]),
+          ],
           isPreview: i <= 3,
           publishAt: new Date(),
           sortOrder: i,
