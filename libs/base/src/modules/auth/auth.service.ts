@@ -35,25 +35,32 @@ export class AuthService {
    * @returns Token 对，包含 accessToken 和 refreshToken
    */
   async generateTokens(payload) {
-    payload = {
+    const basePayload = {
       ...payload,
-      jti: uuid(),
       aud: this.config.aud,
       iss: this.config.iss,
     }
 
+    const signOptions = this.config.privateKey
+      ? { privateKey: this.config.privateKey, algorithm: 'RS256' as const }
+      : { secret: this.config.secret }
+
+    const refreshSignOptions = this.config.privateKey
+      ? { privateKey: this.config.privateKey, algorithm: 'RS256' as const }
+      : { secret: this.config.refreshSecret }
+
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
-        { ...payload, type: 'access' },
+        { ...basePayload, jti: uuid(), type: 'access' },
         {
-          secret: this.config.secret,
+          ...signOptions,
           expiresIn: this.config.expiresIn,
         },
       ),
       this.jwtService.signAsync(
-        { ...payload, type: 'refresh' },
+        { ...basePayload, jti: uuid(), type: 'refresh' },
         {
-          secret: this.config.refreshSecret,
+          ...refreshSignOptions,
           expiresIn: this.config.refreshExpiresIn,
         },
       ),
@@ -70,10 +77,12 @@ export class AuthService {
    * @throws {UnauthorizedException} Refresh Token 无效或已撤销
    */
   async refreshAccessToken(refreshToken: string) {
+    const verifyOptions = this.config.publicKey
+      ? { publicKey: this.config.publicKey, algorithms: ['RS256' as const] }
+      : { secret: this.config.refreshSecret }
+
     const { aud, jti, exp, iat, ...payload } =
-      await this.jwtService.verifyAsync(refreshToken, {
-        secret: this.config.refreshSecret,
-      })
+      await this.jwtService.verifyAsync(refreshToken, verifyOptions)
     const isBlacklist = await this.blacklistService.isInBlacklist(jti)
     if (payload.type !== 'refresh' || aud !== this.config.aud || isBlacklist) {
       throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
@@ -90,8 +99,12 @@ export class AuthService {
    * @returns 包含 ttlMs（剩余毫秒数）、jti 和其他 payload 字段的对象
    */
   protected async tokenTtlMsAndJti(token: string, secret: string) {
+    const verifyOptions = this.config.publicKey
+      ? { publicKey: this.config.publicKey, algorithms: ['RS256' as const] }
+      : { secret }
+
     const payload = await this.jwtService.verifyAsync(token, {
-      secret,
+      ...verifyOptions,
       ignoreExpiration: true,
     })
     const expTimeMs = payload.exp * 1000

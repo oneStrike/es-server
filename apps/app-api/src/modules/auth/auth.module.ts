@@ -1,4 +1,4 @@
-import { CaptchaService, RsaService, ScryptService, SmsService } from '@libs/base/modules'
+import { CaptchaService, RsaService, ScryptService, SmsModule } from '@libs/base/modules'
 import { AuthStrategy, JwtAuthModule } from '@libs/base/modules/auth'
 import { ForumModule } from '@libs/forum'
 import { Module } from '@nestjs/common'
@@ -6,11 +6,12 @@ import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import { AuthCronService } from './cron.service'
 import { PasswordService } from './password.service'
+import { SmsService } from './sms.service'
 import { AppTokenStorageService } from './token-storage.service'
 
 @Module({
   controllers: [AuthController],
-  imports: [JwtAuthModule, ForumModule],
+  imports: [JwtAuthModule, ForumModule, SmsModule],
   providers: [
     AuthService,
     PasswordService,

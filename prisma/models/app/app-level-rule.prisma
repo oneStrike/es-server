@@ -37,9 +37,9 @@ model AppLevelRule {
   dailyFavoriteLimit     Int @default(0) @map("daily_favorite_limit") @db.SmallInt
 
   /// 黑名单上限
-  blacklistLimit      Int @default(10) @map("blacklist_limit") @db.SmallInt
+  blacklistLimit      Int     @default(10) @map("blacklist_limit") @db.SmallInt
   /// 作品收藏上限
-  workCollectionLimit Int @default(100) @map("work_collection_limit") @db.SmallInt
+  workCollectionLimit Int     @default(100) @map("work_collection_limit") @db.SmallInt
   /// 积分购买折扣（0-1之间的小数，0表示不打折）
   discount            Decimal @default(0.00) @db.Decimal(3, 2)
 
@@ -49,9 +49,9 @@ model AppLevelRule {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   /// 等级配置关联 - 每个等级规则对应多个用户
-  users    AppUser[]
+  users                        AppUser[]
   /// 版块关联 - 每个等级规则对应多个版块
-  sections ForumSection[]
+  sections                     ForumSection[]
   /// 关联漫画章节下载权限
   comicChaptersAsDownloadLevel WorkComicChapter[] @relation("ChapterDownloadLevel")
   /// 关联漫画章节阅读权限
