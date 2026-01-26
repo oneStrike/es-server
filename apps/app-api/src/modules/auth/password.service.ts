@@ -26,6 +26,37 @@ export class PasswordService extends BaseService {
   }
 
   /**
+   * 生成安全的随机密码
+   * 密码长度为16位，包含大小写字母、数字和特殊字符
+   * @returns 16位随机密码
+   */
+  generateSecureRandomPassword() {
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+    const numbers = '0123456789'
+    const special = '!@#$%^&*'
+
+    let password = ''
+
+    for (let i = 0; i < 2; i++) {
+      password += uppercase[Math.floor(Math.random() * uppercase.length)]
+      password += lowercase[Math.floor(Math.random() * lowercase.length)]
+      password += numbers[Math.floor(Math.random() * numbers.length)]
+      password += special[Math.floor(Math.random() * special.length)]
+    }
+
+    const allChars = uppercase + lowercase + numbers + special
+    for (let i = 0; i < 8; i++) {
+      password += allChars[Math.floor(Math.random() * allChars.length)]
+    }
+
+    return password
+      .split('')
+      .sort(() => Math.random() - 0.5)
+      .join('')
+  }
+
+  /**
    * 找回密码
    * @param body - 找回密码数据，包含账号和新密码
    * @returns 找回结果

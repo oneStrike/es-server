@@ -4,9 +4,6 @@ import {
   IdDto,
   UpdateEnabledStatusDto,
 } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { WorkAuthorService } from './author.service'
 import {
   AuthorPageResponseDto,
   BaseAuthorDto,
@@ -14,7 +11,10 @@ import {
   QueryAuthorDto,
   UpdateAuthorDto,
   UpdateAuthorRecommendedDto,
-} from './dto/author.dto'
+  WorkAuthorService,
+} from '@libs/content/author'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 /**
  * 作者管理控制器
@@ -100,7 +100,7 @@ export class WorkAuthorController {
     summary: '更新作者推荐状态',
     model: BatchOperationResponseDto,
   })
-  async updateisRecommended(@Body() body: UpdateAuthorRecommendedDto) {
+  async updateRecommended(@Body() body: UpdateAuthorRecommendedDto) {
     return this.authorService.workAuthor.update({
       where: {
         id: body.id,

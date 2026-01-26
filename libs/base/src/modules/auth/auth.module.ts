@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt'
 import { PassportModule } from '@nestjs/passport'
 import { AuthService } from './auth.service'
 import { JwtBlacklistService } from './jwt-blacklist.service'
+import { LoginGuardService } from './login-guard.service'
 
 @Global()
 @Module({
@@ -24,7 +25,7 @@ import { JwtBlacklistService } from './jwt-blacklist.service'
       }),
     }),
   ],
-  providers: [AuthService, JwtBlacklistService],
-  exports: [AuthService, JwtBlacklistService],
+  providers: [AuthService, JwtBlacklistService, LoginGuardService],
+  exports: [AuthService, JwtBlacklistService, LoginGuardService],
 })
 export class JwtAuthModule {}

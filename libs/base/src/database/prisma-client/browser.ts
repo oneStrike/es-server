@@ -194,11 +194,6 @@ export type ForumUserActionLog = Prisma.ForumUserActionLogModel
  */
 export type ForumView = Prisma.ForumViewModel
 /**
- * Model MemberLevel
- * 会员等级
- */
-export type MemberLevel = Prisma.MemberLevelModel
-/**
  * Model RequestLog
  * 
  */

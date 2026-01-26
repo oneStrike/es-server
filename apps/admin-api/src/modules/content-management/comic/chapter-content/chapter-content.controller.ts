@@ -1,53 +1,51 @@
-import type { FastifyRequest } from 'fastify'
-import { ApiDoc } from '@libs/base/decorators'
-import { IdDto, UploadResponseDto } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { ChapterContentService } from './chapter-content.service'
+import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
+import { FileUploadDto, IdDto } from '@libs/base/dto'
 import {
   AddChapterContentDto,
+  BatchUpdateChapterContentsDto,
+  ChapterContentService,
   DeleteChapterContentDto,
   MoveChapterContentDto,
   UpdateChapterContentDto,
-} from './dto/chapter-content.dto'
+} from '@libs/content/comic/chapter-content'
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import type { FastifyRequest } from 'fastify'
 
 /**
  * 漫画章节内容管理控制器
- * 提供漫画章节内容相关的API接口
+ * 提供漫画章节内容的增删改查等接口
  */
-@ApiTags('内容管理/漫画管理模块/章节内容管理')
-@Controller('admin/work/comic-chapter')
+@ApiTags('内容管理/漫画章节内容模块')
+@Controller('admin/work/chapter-content')
 export class ChapterContentController {
   constructor(private readonly chapterContentService: ChapterContentService) {}
 
   /**
-   * 获取章节内容详情
+   * 获取章节内容
    */
-  @Get('/contents')
-  @ApiDoc({
-    summary: '获取章节内容详情',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
+  @Get('/list')
+  @ApiPageDoc({
+    summary: '获取章节内容',
+    model: String,
+    isList: true,
   })
-  async getChapterContents(@Query() query: IdDto) {
-    return this.chapterContentService.getChapterContents(query.id)
+  async getContents(@Query() idDto: IdDto) {
+    return this.chapterContentService.getChapterContents(idDto.id)
   }
 
   /**
-   * 添加章节内容
+   * 添加章节内容（上传图片）
    */
-  @Post('/add-content')
+  @Post('/add')
   @ApiDoc({
     summary: '添加章节内容',
-    model: UploadResponseDto,
+    model: FileUploadDto,
   })
-  async addChapterContent(
+  async add(
     @Req() req: FastifyRequest,
     @Query() query: AddChapterContentDto,
+    @Body() _body: FileUploadDto,
   ) {
     return this.chapterContentService.addChapterContent(req, query)
   }
@@ -55,63 +53,65 @@ export class ChapterContentController {
   /**
    * 更新章节内容
    */
-  @Post('/update-content')
+  @Post('/update')
   @ApiDoc({
     summary: '更新章节内容',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
+    model: IdDto,
   })
-  async updateChapterContent(@Body() body: UpdateChapterContentDto) {
+  async update(@Body() body: UpdateChapterContentDto) {
     return this.chapterContentService.updateChapterContent(body)
   }
 
   /**
    * 删除章节内容
    */
-  @Post('/delete-content')
+  @Post('/delete')
   @ApiDoc({
     summary: '删除章节内容',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
+    model: String,
+    isList: true,
   })
-  async deleteChapterContent(@Body() body: DeleteChapterContentDto) {
-    return this.chapterContentService.deleteChapterContent(body)
+  async delete(@Body() dto: DeleteChapterContentDto) {
+    return this.chapterContentService.deleteChapterContent(dto)
   }
 
   /**
    * 移动章节内容（排序）
    */
-  @Post('/move-content')
+  @Post('/move')
   @ApiDoc({
-    summary: '移动章节内容（排序）',
-    model: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
+    summary: '移动章节内容',
+    model: String,
+    isList: true,
   })
-  async moveChapterContent(@Body() body: MoveChapterContentDto) {
+  async move(@Body() body: MoveChapterContentDto) {
     return this.chapterContentService.moveChapterContent(body)
+  }
+
+  /**
+   * 批量更新章节内容
+   */
+  @Post('/batch-update')
+  @ApiDoc({
+    summary: '批量更新章节内容',
+    model: IdDto,
+  })
+  async batchUpdate(@Body() body: BatchUpdateChapterContentsDto) {
+    return this.chapterContentService.workComicChapter.update({
+      where: { id: body.id },
+      data: { contents: body.contents as any },
+    })
   }
 
   /**
    * 清空章节内容
    */
-  @Post('/clear-contents')
+  @Post('/clear')
   @ApiDoc({
     summary: '清空章节内容',
     model: IdDto,
   })
-  async clearChapterContents(@Body() body: IdDto) {
-    return this.chapterContentService.clearChapterContents(body.id)
+  async clear(@Body() idDto: IdDto) {
+    return this.chapterContentService.clearChapterContents(idDto.id)
   }
 }

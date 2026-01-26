@@ -1,7 +1,6 @@
 import type { WorkCategoryWhereInput } from '@libs/base/database/prisma-client/models'
 import { BaseService } from '@libs/base/database'
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
-
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateCategoryDto,

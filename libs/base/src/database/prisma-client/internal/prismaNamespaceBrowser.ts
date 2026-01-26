@@ -86,7 +86,6 @@ export const ModelName = {
   ForumTopic: 'ForumTopic',
   ForumUserActionLog: 'ForumUserActionLog',
   ForumView: 'ForumView',
-  MemberLevel: 'MemberLevel',
   RequestLog: 'RequestLog',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
@@ -124,12 +123,8 @@ export const AdminUserScalarFieldEnum = {
   avatar: 'avatar',
   role: 'role',
   isEnabled: 'isEnabled',
-  isLocked: 'isLocked',
   lastLoginAt: 'lastLoginAt',
   lastLoginIp: 'lastLoginIp',
-  loginFailAt: 'loginFailAt',
-  loginFailIp: 'loginFailIp',
-  loginFailCount: 'loginFailCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -197,6 +192,7 @@ export const AppLevelRuleScalarFieldEnum = {
   id: 'id',
   name: 'name',
   requiredExperience: 'requiredExperience',
+  loginDays: 'loginDays',
   description: 'description',
   icon: 'icon',
   badge: 'badge',
@@ -208,6 +204,9 @@ export const AppLevelRuleScalarFieldEnum = {
   postInterval: 'postInterval',
   dailyLikeLimit: 'dailyLikeLimit',
   dailyFavoriteLimit: 'dailyFavoriteLimit',
+  blacklistLimit: 'blacklistLimit',
+  workCollectionLimit: 'workCollectionLimit',
+  discount: 'discount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -732,28 +731,6 @@ export const ForumViewScalarFieldEnum = {
 } as const
 
 export type ForumViewScalarFieldEnum = (typeof ForumViewScalarFieldEnum)[keyof typeof ForumViewScalarFieldEnum]
-
-
-export const MemberLevelScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  level: 'level',
-  icon: 'icon',
-  color: 'color',
-  description: 'description',
-  points: 'points',
-  loginDays: 'loginDays',
-  discount: 'discount',
-  isEnabled: 'isEnabled',
-  blacklistLimit: 'blacklistLimit',
-  workCollectionLimit: 'workCollectionLimit',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
-} as const
-
-export type MemberLevelScalarFieldEnum = (typeof MemberLevelScalarFieldEnum)[keyof typeof MemberLevelScalarFieldEnum]
 
 
 export const RequestLogScalarFieldEnum = {

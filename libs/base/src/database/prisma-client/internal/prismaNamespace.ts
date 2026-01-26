@@ -419,7 +419,6 @@ export const ModelName = {
   ForumTopic: 'ForumTopic',
   ForumUserActionLog: 'ForumUserActionLog',
   ForumView: 'ForumView',
-  MemberLevel: 'MemberLevel',
   RequestLog: 'RequestLog',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
@@ -446,7 +445,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "appConfig" | "appExperienceRecord" | "appExperienceRule" | "appLevelRule" | "appNoticeRead" | "appNotice" | "appPage" | "appPointRecord" | "appPointRule" | "appUserToken" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUser" | "appConfig" | "appExperienceRecord" | "appExperienceRule" | "appLevelRule" | "appNoticeRead" | "appNotice" | "appPage" | "appPointRecord" | "appPointRule" | "appUserToken" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3040,80 +3039,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    MemberLevel: {
-      payload: Prisma.$MemberLevelPayload<ExtArgs>
-      fields: Prisma.MemberLevelFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.MemberLevelFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.MemberLevelFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
-        }
-        findFirst: {
-          args: Prisma.MemberLevelFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.MemberLevelFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
-        }
-        findMany: {
-          args: Prisma.MemberLevelFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>[]
-        }
-        create: {
-          args: Prisma.MemberLevelCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
-        }
-        createMany: {
-          args: Prisma.MemberLevelCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.MemberLevelCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>[]
-        }
-        delete: {
-          args: Prisma.MemberLevelDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
-        }
-        update: {
-          args: Prisma.MemberLevelUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
-        }
-        deleteMany: {
-          args: Prisma.MemberLevelDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.MemberLevelUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.MemberLevelUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>[]
-        }
-        upsert: {
-          args: Prisma.MemberLevelUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$MemberLevelPayload>
-        }
-        aggregate: {
-          args: Prisma.MemberLevelAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateMemberLevel>
-        }
-        groupBy: {
-          args: Prisma.MemberLevelGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.MemberLevelGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.MemberLevelCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.MemberLevelCountAggregateOutputType> | number
-        }
-      }
-    }
     RequestLog: {
       payload: Prisma.$RequestLogPayload<ExtArgs>
       fields: Prisma.RequestLogFieldRefs
@@ -3975,12 +3900,8 @@ export const AdminUserScalarFieldEnum = {
   avatar: 'avatar',
   role: 'role',
   isEnabled: 'isEnabled',
-  isLocked: 'isLocked',
   lastLoginAt: 'lastLoginAt',
   lastLoginIp: 'lastLoginIp',
-  loginFailAt: 'loginFailAt',
-  loginFailIp: 'loginFailIp',
-  loginFailCount: 'loginFailCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -4048,6 +3969,7 @@ export const AppLevelRuleScalarFieldEnum = {
   id: 'id',
   name: 'name',
   requiredExperience: 'requiredExperience',
+  loginDays: 'loginDays',
   description: 'description',
   icon: 'icon',
   badge: 'badge',
@@ -4059,6 +3981,9 @@ export const AppLevelRuleScalarFieldEnum = {
   postInterval: 'postInterval',
   dailyLikeLimit: 'dailyLikeLimit',
   dailyFavoriteLimit: 'dailyFavoriteLimit',
+  blacklistLimit: 'blacklistLimit',
+  workCollectionLimit: 'workCollectionLimit',
+  discount: 'discount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -4585,28 +4510,6 @@ export const ForumViewScalarFieldEnum = {
 export type ForumViewScalarFieldEnum = (typeof ForumViewScalarFieldEnum)[keyof typeof ForumViewScalarFieldEnum]
 
 
-export const MemberLevelScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  level: 'level',
-  icon: 'icon',
-  color: 'color',
-  description: 'description',
-  points: 'points',
-  loginDays: 'loginDays',
-  discount: 'discount',
-  isEnabled: 'isEnabled',
-  blacklistLimit: 'blacklistLimit',
-  workCollectionLimit: 'workCollectionLimit',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
-} as const
-
-export type MemberLevelScalarFieldEnum = (typeof MemberLevelScalarFieldEnum)[keyof typeof MemberLevelScalarFieldEnum]
-
-
 export const RequestLogScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -4920,20 +4823,6 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'Json'
- */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-/**
- * Reference to a field of type 'QueryMode'
- */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-/**
  * Reference to a field of type 'Decimal'
  */
 export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
@@ -4944,6 +4833,20 @@ export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
  * Reference to a field of type 'Decimal[]'
  */
 export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -5090,7 +4993,6 @@ export type GlobalOmitConfig = {
   forumTopic?: Prisma.ForumTopicOmit
   forumUserActionLog?: Prisma.ForumUserActionLogOmit
   forumView?: Prisma.ForumViewOmit
-  memberLevel?: Prisma.MemberLevelOmit
   requestLog?: Prisma.RequestLogOmit
   dictionary?: Prisma.DictionaryOmit
   dictionaryItem?: Prisma.DictionaryItemOmit

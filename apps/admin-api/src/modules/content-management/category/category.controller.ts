@@ -1,14 +1,14 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { DragReorderDto, IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { WorkCategoryService } from './category.service'
 import {
   BaseCategoryDto,
   CreateCategoryDto,
   QueryCategoryDto,
   UpdateCategoryDto,
-} from './dto/category.dto'
+  WorkCategoryService,
+} from '@libs/content/category'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 /**
  * 分类管理控制器

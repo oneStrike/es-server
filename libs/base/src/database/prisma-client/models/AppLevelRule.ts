@@ -29,29 +29,38 @@ export type AggregateAppLevelRule = {
 export type AppLevelRuleAvgAggregateOutputType = {
   id: number | null
   requiredExperience: number | null
+  loginDays: number | null
   sortOrder: number | null
   dailyTopicLimit: number | null
   dailyReplyCommentLimit: number | null
   postInterval: number | null
   dailyLikeLimit: number | null
   dailyFavoriteLimit: number | null
+  blacklistLimit: number | null
+  workCollectionLimit: number | null
+  discount: runtime.Decimal | null
 }
 
 export type AppLevelRuleSumAggregateOutputType = {
   id: number | null
   requiredExperience: number | null
+  loginDays: number | null
   sortOrder: number | null
   dailyTopicLimit: number | null
   dailyReplyCommentLimit: number | null
   postInterval: number | null
   dailyLikeLimit: number | null
   dailyFavoriteLimit: number | null
+  blacklistLimit: number | null
+  workCollectionLimit: number | null
+  discount: runtime.Decimal | null
 }
 
 export type AppLevelRuleMinAggregateOutputType = {
   id: number | null
   name: string | null
   requiredExperience: number | null
+  loginDays: number | null
   description: string | null
   icon: string | null
   badge: string | null
@@ -63,6 +72,9 @@ export type AppLevelRuleMinAggregateOutputType = {
   postInterval: number | null
   dailyLikeLimit: number | null
   dailyFavoriteLimit: number | null
+  blacklistLimit: number | null
+  workCollectionLimit: number | null
+  discount: runtime.Decimal | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -71,6 +83,7 @@ export type AppLevelRuleMaxAggregateOutputType = {
   id: number | null
   name: string | null
   requiredExperience: number | null
+  loginDays: number | null
   description: string | null
   icon: string | null
   badge: string | null
@@ -82,6 +95,9 @@ export type AppLevelRuleMaxAggregateOutputType = {
   postInterval: number | null
   dailyLikeLimit: number | null
   dailyFavoriteLimit: number | null
+  blacklistLimit: number | null
+  workCollectionLimit: number | null
+  discount: runtime.Decimal | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -90,6 +106,7 @@ export type AppLevelRuleCountAggregateOutputType = {
   id: number
   name: number
   requiredExperience: number
+  loginDays: number
   description: number
   icon: number
   badge: number
@@ -101,6 +118,9 @@ export type AppLevelRuleCountAggregateOutputType = {
   postInterval: number
   dailyLikeLimit: number
   dailyFavoriteLimit: number
+  blacklistLimit: number
+  workCollectionLimit: number
+  discount: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -110,29 +130,38 @@ export type AppLevelRuleCountAggregateOutputType = {
 export type AppLevelRuleAvgAggregateInputType = {
   id?: true
   requiredExperience?: true
+  loginDays?: true
   sortOrder?: true
   dailyTopicLimit?: true
   dailyReplyCommentLimit?: true
   postInterval?: true
   dailyLikeLimit?: true
   dailyFavoriteLimit?: true
+  blacklistLimit?: true
+  workCollectionLimit?: true
+  discount?: true
 }
 
 export type AppLevelRuleSumAggregateInputType = {
   id?: true
   requiredExperience?: true
+  loginDays?: true
   sortOrder?: true
   dailyTopicLimit?: true
   dailyReplyCommentLimit?: true
   postInterval?: true
   dailyLikeLimit?: true
   dailyFavoriteLimit?: true
+  blacklistLimit?: true
+  workCollectionLimit?: true
+  discount?: true
 }
 
 export type AppLevelRuleMinAggregateInputType = {
   id?: true
   name?: true
   requiredExperience?: true
+  loginDays?: true
   description?: true
   icon?: true
   badge?: true
@@ -144,6 +173,9 @@ export type AppLevelRuleMinAggregateInputType = {
   postInterval?: true
   dailyLikeLimit?: true
   dailyFavoriteLimit?: true
+  blacklistLimit?: true
+  workCollectionLimit?: true
+  discount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -152,6 +184,7 @@ export type AppLevelRuleMaxAggregateInputType = {
   id?: true
   name?: true
   requiredExperience?: true
+  loginDays?: true
   description?: true
   icon?: true
   badge?: true
@@ -163,6 +196,9 @@ export type AppLevelRuleMaxAggregateInputType = {
   postInterval?: true
   dailyLikeLimit?: true
   dailyFavoriteLimit?: true
+  blacklistLimit?: true
+  workCollectionLimit?: true
+  discount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -171,6 +207,7 @@ export type AppLevelRuleCountAggregateInputType = {
   id?: true
   name?: true
   requiredExperience?: true
+  loginDays?: true
   description?: true
   icon?: true
   badge?: true
@@ -182,6 +219,9 @@ export type AppLevelRuleCountAggregateInputType = {
   postInterval?: true
   dailyLikeLimit?: true
   dailyFavoriteLimit?: true
+  blacklistLimit?: true
+  workCollectionLimit?: true
+  discount?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -277,6 +317,7 @@ export type AppLevelRuleGroupByOutputType = {
   id: number
   name: string
   requiredExperience: number
+  loginDays: number
   description: string | null
   icon: string | null
   badge: string | null
@@ -288,6 +329,9 @@ export type AppLevelRuleGroupByOutputType = {
   postInterval: number
   dailyLikeLimit: number
   dailyFavoriteLimit: number
+  blacklistLimit: number
+  workCollectionLimit: number
+  discount: runtime.Decimal
   createdAt: Date
   updatedAt: Date
   _count: AppLevelRuleCountAggregateOutputType | null
@@ -319,6 +363,7 @@ export type AppLevelRuleWhereInput = {
   id?: Prisma.IntFilter<"AppLevelRule"> | number
   name?: Prisma.StringFilter<"AppLevelRule"> | string
   requiredExperience?: Prisma.IntFilter<"AppLevelRule"> | number
+  loginDays?: Prisma.IntFilter<"AppLevelRule"> | number
   description?: Prisma.StringNullableFilter<"AppLevelRule"> | string | null
   icon?: Prisma.StringNullableFilter<"AppLevelRule"> | string | null
   badge?: Prisma.StringNullableFilter<"AppLevelRule"> | string | null
@@ -330,16 +375,22 @@ export type AppLevelRuleWhereInput = {
   postInterval?: Prisma.IntFilter<"AppLevelRule"> | number
   dailyLikeLimit?: Prisma.IntFilter<"AppLevelRule"> | number
   dailyFavoriteLimit?: Prisma.IntFilter<"AppLevelRule"> | number
+  blacklistLimit?: Prisma.IntFilter<"AppLevelRule"> | number
+  workCollectionLimit?: Prisma.IntFilter<"AppLevelRule"> | number
+  discount?: Prisma.DecimalFilter<"AppLevelRule"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFilter<"AppLevelRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppLevelRule"> | Date | string
   users?: Prisma.AppUserListRelationFilter
   sections?: Prisma.ForumSectionListRelationFilter
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterListRelationFilter
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterListRelationFilter
 }
 
 export type AppLevelRuleOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   requiredExperience?: Prisma.SortOrder
+  loginDays?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   badge?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -351,10 +402,15 @@ export type AppLevelRuleOrderByWithRelationInput = {
   postInterval?: Prisma.SortOrder
   dailyLikeLimit?: Prisma.SortOrder
   dailyFavoriteLimit?: Prisma.SortOrder
+  blacklistLimit?: Prisma.SortOrder
+  workCollectionLimit?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   users?: Prisma.AppUserOrderByRelationAggregateInput
   sections?: Prisma.ForumSectionOrderByRelationAggregateInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterOrderByRelationAggregateInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterOrderByRelationAggregateInput
 }
 
 export type AppLevelRuleWhereUniqueInput = Prisma.AtLeast<{
@@ -364,6 +420,7 @@ export type AppLevelRuleWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.AppLevelRuleWhereInput[]
   NOT?: Prisma.AppLevelRuleWhereInput | Prisma.AppLevelRuleWhereInput[]
   requiredExperience?: Prisma.IntFilter<"AppLevelRule"> | number
+  loginDays?: Prisma.IntFilter<"AppLevelRule"> | number
   description?: Prisma.StringNullableFilter<"AppLevelRule"> | string | null
   icon?: Prisma.StringNullableFilter<"AppLevelRule"> | string | null
   badge?: Prisma.StringNullableFilter<"AppLevelRule"> | string | null
@@ -375,16 +432,22 @@ export type AppLevelRuleWhereUniqueInput = Prisma.AtLeast<{
   postInterval?: Prisma.IntFilter<"AppLevelRule"> | number
   dailyLikeLimit?: Prisma.IntFilter<"AppLevelRule"> | number
   dailyFavoriteLimit?: Prisma.IntFilter<"AppLevelRule"> | number
+  blacklistLimit?: Prisma.IntFilter<"AppLevelRule"> | number
+  workCollectionLimit?: Prisma.IntFilter<"AppLevelRule"> | number
+  discount?: Prisma.DecimalFilter<"AppLevelRule"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFilter<"AppLevelRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppLevelRule"> | Date | string
   users?: Prisma.AppUserListRelationFilter
   sections?: Prisma.ForumSectionListRelationFilter
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterListRelationFilter
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterListRelationFilter
 }, "id" | "name">
 
 export type AppLevelRuleOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   requiredExperience?: Prisma.SortOrder
+  loginDays?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   badge?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -396,6 +459,9 @@ export type AppLevelRuleOrderByWithAggregationInput = {
   postInterval?: Prisma.SortOrder
   dailyLikeLimit?: Prisma.SortOrder
   dailyFavoriteLimit?: Prisma.SortOrder
+  blacklistLimit?: Prisma.SortOrder
+  workCollectionLimit?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.AppLevelRuleCountOrderByAggregateInput
@@ -412,6 +478,7 @@ export type AppLevelRuleScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"AppLevelRule"> | number
   name?: Prisma.StringWithAggregatesFilter<"AppLevelRule"> | string
   requiredExperience?: Prisma.IntWithAggregatesFilter<"AppLevelRule"> | number
+  loginDays?: Prisma.IntWithAggregatesFilter<"AppLevelRule"> | number
   description?: Prisma.StringNullableWithAggregatesFilter<"AppLevelRule"> | string | null
   icon?: Prisma.StringNullableWithAggregatesFilter<"AppLevelRule"> | string | null
   badge?: Prisma.StringNullableWithAggregatesFilter<"AppLevelRule"> | string | null
@@ -423,6 +490,9 @@ export type AppLevelRuleScalarWhereWithAggregatesInput = {
   postInterval?: Prisma.IntWithAggregatesFilter<"AppLevelRule"> | number
   dailyLikeLimit?: Prisma.IntWithAggregatesFilter<"AppLevelRule"> | number
   dailyFavoriteLimit?: Prisma.IntWithAggregatesFilter<"AppLevelRule"> | number
+  blacklistLimit?: Prisma.IntWithAggregatesFilter<"AppLevelRule"> | number
+  workCollectionLimit?: Prisma.IntWithAggregatesFilter<"AppLevelRule"> | number
+  discount?: Prisma.DecimalWithAggregatesFilter<"AppLevelRule"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AppLevelRule"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"AppLevelRule"> | Date | string
 }
@@ -430,6 +500,7 @@ export type AppLevelRuleScalarWhereWithAggregatesInput = {
 export type AppLevelRuleCreateInput = {
   name: string
   requiredExperience: number
+  loginDays?: number
   description?: string | null
   icon?: string | null
   badge?: string | null
@@ -441,16 +512,22 @@ export type AppLevelRuleCreateInput = {
   postInterval?: number
   dailyLikeLimit?: number
   dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.AppUserCreateNestedManyWithoutLevelInput
   sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type AppLevelRuleUncheckedCreateInput = {
   id?: number
   name: string
   requiredExperience: number
+  loginDays?: number
   description?: string | null
   icon?: string | null
   badge?: string | null
@@ -462,15 +539,21 @@ export type AppLevelRuleUncheckedCreateInput = {
   postInterval?: number
   dailyLikeLimit?: number
   dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.AppUserUncheckedCreateNestedManyWithoutLevelInput
   sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type AppLevelRuleUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -482,16 +565,22 @@ export type AppLevelRuleUpdateInput = {
   postInterval?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
   dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUpdateManyWithoutLevelNestedInput
   sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type AppLevelRuleUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -503,16 +592,22 @@ export type AppLevelRuleUncheckedUpdateInput = {
   postInterval?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
   dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUncheckedUpdateManyWithoutLevelNestedInput
   sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type AppLevelRuleCreateManyInput = {
   id?: number
   name: string
   requiredExperience: number
+  loginDays?: number
   description?: string | null
   icon?: string | null
   badge?: string | null
@@ -524,6 +619,9 @@ export type AppLevelRuleCreateManyInput = {
   postInterval?: number
   dailyLikeLimit?: number
   dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -531,6 +629,7 @@ export type AppLevelRuleCreateManyInput = {
 export type AppLevelRuleUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -542,6 +641,9 @@ export type AppLevelRuleUpdateManyMutationInput = {
   postInterval?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
   dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -550,6 +652,7 @@ export type AppLevelRuleUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -561,6 +664,9 @@ export type AppLevelRuleUncheckedUpdateManyInput = {
   postInterval?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
   dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -569,6 +675,7 @@ export type AppLevelRuleCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   requiredExperience?: Prisma.SortOrder
+  loginDays?: Prisma.SortOrder
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   badge?: Prisma.SortOrder
@@ -580,6 +687,9 @@ export type AppLevelRuleCountOrderByAggregateInput = {
   postInterval?: Prisma.SortOrder
   dailyLikeLimit?: Prisma.SortOrder
   dailyFavoriteLimit?: Prisma.SortOrder
+  blacklistLimit?: Prisma.SortOrder
+  workCollectionLimit?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -587,18 +697,23 @@ export type AppLevelRuleCountOrderByAggregateInput = {
 export type AppLevelRuleAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   requiredExperience?: Prisma.SortOrder
+  loginDays?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   dailyTopicLimit?: Prisma.SortOrder
   dailyReplyCommentLimit?: Prisma.SortOrder
   postInterval?: Prisma.SortOrder
   dailyLikeLimit?: Prisma.SortOrder
   dailyFavoriteLimit?: Prisma.SortOrder
+  blacklistLimit?: Prisma.SortOrder
+  workCollectionLimit?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
 }
 
 export type AppLevelRuleMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   requiredExperience?: Prisma.SortOrder
+  loginDays?: Prisma.SortOrder
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   badge?: Prisma.SortOrder
@@ -610,6 +725,9 @@ export type AppLevelRuleMaxOrderByAggregateInput = {
   postInterval?: Prisma.SortOrder
   dailyLikeLimit?: Prisma.SortOrder
   dailyFavoriteLimit?: Prisma.SortOrder
+  blacklistLimit?: Prisma.SortOrder
+  workCollectionLimit?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -618,6 +736,7 @@ export type AppLevelRuleMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   requiredExperience?: Prisma.SortOrder
+  loginDays?: Prisma.SortOrder
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   badge?: Prisma.SortOrder
@@ -629,6 +748,9 @@ export type AppLevelRuleMinOrderByAggregateInput = {
   postInterval?: Prisma.SortOrder
   dailyLikeLimit?: Prisma.SortOrder
   dailyFavoriteLimit?: Prisma.SortOrder
+  blacklistLimit?: Prisma.SortOrder
+  workCollectionLimit?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -636,17 +758,29 @@ export type AppLevelRuleMinOrderByAggregateInput = {
 export type AppLevelRuleSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   requiredExperience?: Prisma.SortOrder
+  loginDays?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   dailyTopicLimit?: Prisma.SortOrder
   dailyReplyCommentLimit?: Prisma.SortOrder
   postInterval?: Prisma.SortOrder
   dailyLikeLimit?: Prisma.SortOrder
   dailyFavoriteLimit?: Prisma.SortOrder
+  blacklistLimit?: Prisma.SortOrder
+  workCollectionLimit?: Prisma.SortOrder
+  discount?: Prisma.SortOrder
 }
 
 export type AppLevelRuleNullableScalarRelationFilter = {
   is?: Prisma.AppLevelRuleWhereInput | null
   isNot?: Prisma.AppLevelRuleWhereInput | null
+}
+
+export type DecimalFieldUpdateOperationsInput = {
+  set?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
 }
 
 export type AppLevelRuleCreateNestedOneWithoutUsersInput = {
@@ -681,9 +815,42 @@ export type AppLevelRuleUpdateOneWithoutSectionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppLevelRuleUpdateToOneWithWhereWithoutSectionsInput, Prisma.AppLevelRuleUpdateWithoutSectionsInput>, Prisma.AppLevelRuleUncheckedUpdateWithoutSectionsInput>
 }
 
+export type AppLevelRuleCreateNestedOneWithoutComicChaptersAsDownloadLevelInput = {
+  create?: Prisma.XOR<Prisma.AppLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.AppLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+  connectOrCreate?: Prisma.AppLevelRuleCreateOrConnectWithoutComicChaptersAsDownloadLevelInput
+  connect?: Prisma.AppLevelRuleWhereUniqueInput
+}
+
+export type AppLevelRuleCreateNestedOneWithoutComicChaptersAsReadLevelInput = {
+  create?: Prisma.XOR<Prisma.AppLevelRuleCreateWithoutComicChaptersAsReadLevelInput, Prisma.AppLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+  connectOrCreate?: Prisma.AppLevelRuleCreateOrConnectWithoutComicChaptersAsReadLevelInput
+  connect?: Prisma.AppLevelRuleWhereUniqueInput
+}
+
+export type AppLevelRuleUpdateOneWithoutComicChaptersAsDownloadLevelNestedInput = {
+  create?: Prisma.XOR<Prisma.AppLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.AppLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+  connectOrCreate?: Prisma.AppLevelRuleCreateOrConnectWithoutComicChaptersAsDownloadLevelInput
+  upsert?: Prisma.AppLevelRuleUpsertWithoutComicChaptersAsDownloadLevelInput
+  disconnect?: Prisma.AppLevelRuleWhereInput | boolean
+  delete?: Prisma.AppLevelRuleWhereInput | boolean
+  connect?: Prisma.AppLevelRuleWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AppLevelRuleUpdateToOneWithWhereWithoutComicChaptersAsDownloadLevelInput, Prisma.AppLevelRuleUpdateWithoutComicChaptersAsDownloadLevelInput>, Prisma.AppLevelRuleUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput>
+}
+
+export type AppLevelRuleUpdateOneWithoutComicChaptersAsReadLevelNestedInput = {
+  create?: Prisma.XOR<Prisma.AppLevelRuleCreateWithoutComicChaptersAsReadLevelInput, Prisma.AppLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+  connectOrCreate?: Prisma.AppLevelRuleCreateOrConnectWithoutComicChaptersAsReadLevelInput
+  upsert?: Prisma.AppLevelRuleUpsertWithoutComicChaptersAsReadLevelInput
+  disconnect?: Prisma.AppLevelRuleWhereInput | boolean
+  delete?: Prisma.AppLevelRuleWhereInput | boolean
+  connect?: Prisma.AppLevelRuleWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AppLevelRuleUpdateToOneWithWhereWithoutComicChaptersAsReadLevelInput, Prisma.AppLevelRuleUpdateWithoutComicChaptersAsReadLevelInput>, Prisma.AppLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput>
+}
+
 export type AppLevelRuleCreateWithoutUsersInput = {
   name: string
   requiredExperience: number
+  loginDays?: number
   description?: string | null
   icon?: string | null
   badge?: string | null
@@ -695,15 +862,21 @@ export type AppLevelRuleCreateWithoutUsersInput = {
   postInterval?: number
   dailyLikeLimit?: number
   dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type AppLevelRuleUncheckedCreateWithoutUsersInput = {
   id?: number
   name: string
   requiredExperience: number
+  loginDays?: number
   description?: string | null
   icon?: string | null
   badge?: string | null
@@ -715,9 +888,14 @@ export type AppLevelRuleUncheckedCreateWithoutUsersInput = {
   postInterval?: number
   dailyLikeLimit?: number
   dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   updatedAt?: Date | string
   sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type AppLevelRuleCreateOrConnectWithoutUsersInput = {
@@ -739,6 +917,7 @@ export type AppLevelRuleUpdateToOneWithWhereWithoutUsersInput = {
 export type AppLevelRuleUpdateWithoutUsersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -750,15 +929,21 @@ export type AppLevelRuleUpdateWithoutUsersInput = {
   postInterval?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
   dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type AppLevelRuleUncheckedUpdateWithoutUsersInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -770,14 +955,20 @@ export type AppLevelRuleUncheckedUpdateWithoutUsersInput = {
   postInterval?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
   dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type AppLevelRuleCreateWithoutSectionsInput = {
   name: string
   requiredExperience: number
+  loginDays?: number
   description?: string | null
   icon?: string | null
   badge?: string | null
@@ -789,15 +980,21 @@ export type AppLevelRuleCreateWithoutSectionsInput = {
   postInterval?: number
   dailyLikeLimit?: number
   dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.AppUserCreateNestedManyWithoutLevelInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type AppLevelRuleUncheckedCreateWithoutSectionsInput = {
   id?: number
   name: string
   requiredExperience: number
+  loginDays?: number
   description?: string | null
   icon?: string | null
   badge?: string | null
@@ -809,9 +1006,14 @@ export type AppLevelRuleUncheckedCreateWithoutSectionsInput = {
   postInterval?: number
   dailyLikeLimit?: number
   dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.AppUserUncheckedCreateNestedManyWithoutLevelInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type AppLevelRuleCreateOrConnectWithoutSectionsInput = {
@@ -833,6 +1035,7 @@ export type AppLevelRuleUpdateToOneWithWhereWithoutSectionsInput = {
 export type AppLevelRuleUpdateWithoutSectionsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -844,15 +1047,21 @@ export type AppLevelRuleUpdateWithoutSectionsInput = {
   postInterval?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
   dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUpdateManyWithoutLevelNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type AppLevelRuleUncheckedUpdateWithoutSectionsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -864,9 +1073,250 @@ export type AppLevelRuleUncheckedUpdateWithoutSectionsInput = {
   postInterval?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
   dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUncheckedUpdateManyWithoutLevelNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
+}
+
+export type AppLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput = {
+  name: string
+  requiredExperience: number
+  loginDays?: number
+  description?: string | null
+  icon?: string | null
+  badge?: string | null
+  color?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyCommentLimit?: number
+  postInterval?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.AppUserCreateNestedManyWithoutLevelInput
+  sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
+}
+
+export type AppLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput = {
+  id?: number
+  name: string
+  requiredExperience: number
+  loginDays?: number
+  description?: string | null
+  icon?: string | null
+  badge?: string | null
+  color?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyCommentLimit?: number
+  postInterval?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.AppUserUncheckedCreateNestedManyWithoutLevelInput
+  sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
+}
+
+export type AppLevelRuleCreateOrConnectWithoutComicChaptersAsDownloadLevelInput = {
+  where: Prisma.AppLevelRuleWhereUniqueInput
+  create: Prisma.XOR<Prisma.AppLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.AppLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+}
+
+export type AppLevelRuleCreateWithoutComicChaptersAsReadLevelInput = {
+  name: string
+  requiredExperience: number
+  loginDays?: number
+  description?: string | null
+  icon?: string | null
+  badge?: string | null
+  color?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyCommentLimit?: number
+  postInterval?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.AppUserCreateNestedManyWithoutLevelInput
+  sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
+}
+
+export type AppLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput = {
+  id?: number
+  name: string
+  requiredExperience: number
+  loginDays?: number
+  description?: string | null
+  icon?: string | null
+  badge?: string | null
+  color?: string | null
+  sortOrder?: number
+  isEnabled?: boolean
+  dailyTopicLimit?: number
+  dailyReplyCommentLimit?: number
+  postInterval?: number
+  dailyLikeLimit?: number
+  dailyFavoriteLimit?: number
+  blacklistLimit?: number
+  workCollectionLimit?: number
+  discount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.AppUserUncheckedCreateNestedManyWithoutLevelInput
+  sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
+}
+
+export type AppLevelRuleCreateOrConnectWithoutComicChaptersAsReadLevelInput = {
+  where: Prisma.AppLevelRuleWhereUniqueInput
+  create: Prisma.XOR<Prisma.AppLevelRuleCreateWithoutComicChaptersAsReadLevelInput, Prisma.AppLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+}
+
+export type AppLevelRuleUpsertWithoutComicChaptersAsDownloadLevelInput = {
+  update: Prisma.XOR<Prisma.AppLevelRuleUpdateWithoutComicChaptersAsDownloadLevelInput, Prisma.AppLevelRuleUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput>
+  create: Prisma.XOR<Prisma.AppLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.AppLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+  where?: Prisma.AppLevelRuleWhereInput
+}
+
+export type AppLevelRuleUpdateToOneWithWhereWithoutComicChaptersAsDownloadLevelInput = {
+  where?: Prisma.AppLevelRuleWhereInput
+  data: Prisma.XOR<Prisma.AppLevelRuleUpdateWithoutComicChaptersAsDownloadLevelInput, Prisma.AppLevelRuleUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput>
+}
+
+export type AppLevelRuleUpdateWithoutComicChaptersAsDownloadLevelInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.AppUserUpdateManyWithoutLevelNestedInput
+  sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
+}
+
+export type AppLevelRuleUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.AppUserUncheckedUpdateManyWithoutLevelNestedInput
+  sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
+  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
+}
+
+export type AppLevelRuleUpsertWithoutComicChaptersAsReadLevelInput = {
+  update: Prisma.XOR<Prisma.AppLevelRuleUpdateWithoutComicChaptersAsReadLevelInput, Prisma.AppLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput>
+  create: Prisma.XOR<Prisma.AppLevelRuleCreateWithoutComicChaptersAsReadLevelInput, Prisma.AppLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+  where?: Prisma.AppLevelRuleWhereInput
+}
+
+export type AppLevelRuleUpdateToOneWithWhereWithoutComicChaptersAsReadLevelInput = {
+  where?: Prisma.AppLevelRuleWhereInput
+  data: Prisma.XOR<Prisma.AppLevelRuleUpdateWithoutComicChaptersAsReadLevelInput, Prisma.AppLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput>
+}
+
+export type AppLevelRuleUpdateWithoutComicChaptersAsReadLevelInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.AppUserUpdateManyWithoutLevelNestedInput
+  sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
+}
+
+export type AppLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
+  loginDays?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  badge?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  dailyTopicLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyReplyCommentLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  postInterval?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyLikeLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  dailyFavoriteLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  blacklistLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  workCollectionLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  discount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.AppUserUncheckedUpdateManyWithoutLevelNestedInput
+  sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
+  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
 }
 
 
@@ -877,11 +1327,15 @@ export type AppLevelRuleUncheckedUpdateWithoutSectionsInput = {
 export type AppLevelRuleCountOutputType = {
   users: number
   sections: number
+  comicChaptersAsDownloadLevel: number
+  comicChaptersAsReadLevel: number
 }
 
 export type AppLevelRuleCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | AppLevelRuleCountOutputTypeCountUsersArgs
   sections?: boolean | AppLevelRuleCountOutputTypeCountSectionsArgs
+  comicChaptersAsDownloadLevel?: boolean | AppLevelRuleCountOutputTypeCountComicChaptersAsDownloadLevelArgs
+  comicChaptersAsReadLevel?: boolean | AppLevelRuleCountOutputTypeCountComicChaptersAsReadLevelArgs
 }
 
 /**
@@ -908,11 +1362,26 @@ export type AppLevelRuleCountOutputTypeCountSectionsArgs<ExtArgs extends runtime
   where?: Prisma.ForumSectionWhereInput
 }
 
+/**
+ * AppLevelRuleCountOutputType without action
+ */
+export type AppLevelRuleCountOutputTypeCountComicChaptersAsDownloadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkComicChapterWhereInput
+}
+
+/**
+ * AppLevelRuleCountOutputType without action
+ */
+export type AppLevelRuleCountOutputTypeCountComicChaptersAsReadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkComicChapterWhereInput
+}
+
 
 export type AppLevelRuleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
   requiredExperience?: boolean
+  loginDays?: boolean
   description?: boolean
   icon?: boolean
   badge?: boolean
@@ -924,10 +1393,15 @@ export type AppLevelRuleSelect<ExtArgs extends runtime.Types.Extensions.Internal
   postInterval?: boolean
   dailyLikeLimit?: boolean
   dailyFavoriteLimit?: boolean
+  blacklistLimit?: boolean
+  workCollectionLimit?: boolean
+  discount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   users?: boolean | Prisma.AppLevelRule$usersArgs<ExtArgs>
   sections?: boolean | Prisma.AppLevelRule$sectionsArgs<ExtArgs>
+  comicChaptersAsDownloadLevel?: boolean | Prisma.AppLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs>
+  comicChaptersAsReadLevel?: boolean | Prisma.AppLevelRule$comicChaptersAsReadLevelArgs<ExtArgs>
   _count?: boolean | Prisma.AppLevelRuleCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["appLevelRule"]>
 
@@ -935,6 +1409,7 @@ export type AppLevelRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   name?: boolean
   requiredExperience?: boolean
+  loginDays?: boolean
   description?: boolean
   icon?: boolean
   badge?: boolean
@@ -946,6 +1421,9 @@ export type AppLevelRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   postInterval?: boolean
   dailyLikeLimit?: boolean
   dailyFavoriteLimit?: boolean
+  blacklistLimit?: boolean
+  workCollectionLimit?: boolean
+  discount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["appLevelRule"]>
@@ -954,6 +1432,7 @@ export type AppLevelRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   name?: boolean
   requiredExperience?: boolean
+  loginDays?: boolean
   description?: boolean
   icon?: boolean
   badge?: boolean
@@ -965,6 +1444,9 @@ export type AppLevelRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   postInterval?: boolean
   dailyLikeLimit?: boolean
   dailyFavoriteLimit?: boolean
+  blacklistLimit?: boolean
+  workCollectionLimit?: boolean
+  discount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["appLevelRule"]>
@@ -973,6 +1455,7 @@ export type AppLevelRuleSelectScalar = {
   id?: boolean
   name?: boolean
   requiredExperience?: boolean
+  loginDays?: boolean
   description?: boolean
   icon?: boolean
   badge?: boolean
@@ -984,14 +1467,19 @@ export type AppLevelRuleSelectScalar = {
   postInterval?: boolean
   dailyLikeLimit?: boolean
   dailyFavoriteLimit?: boolean
+  blacklistLimit?: boolean
+  workCollectionLimit?: boolean
+  discount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AppLevelRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "requiredExperience" | "description" | "icon" | "badge" | "color" | "sortOrder" | "isEnabled" | "dailyTopicLimit" | "dailyReplyCommentLimit" | "postInterval" | "dailyLikeLimit" | "dailyFavoriteLimit" | "createdAt" | "updatedAt", ExtArgs["result"]["appLevelRule"]>
+export type AppLevelRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "requiredExperience" | "loginDays" | "description" | "icon" | "badge" | "color" | "sortOrder" | "isEnabled" | "dailyTopicLimit" | "dailyReplyCommentLimit" | "postInterval" | "dailyLikeLimit" | "dailyFavoriteLimit" | "blacklistLimit" | "workCollectionLimit" | "discount" | "createdAt" | "updatedAt", ExtArgs["result"]["appLevelRule"]>
 export type AppLevelRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | Prisma.AppLevelRule$usersArgs<ExtArgs>
   sections?: boolean | Prisma.AppLevelRule$sectionsArgs<ExtArgs>
+  comicChaptersAsDownloadLevel?: boolean | Prisma.AppLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs>
+  comicChaptersAsReadLevel?: boolean | Prisma.AppLevelRule$comicChaptersAsReadLevelArgs<ExtArgs>
   _count?: boolean | Prisma.AppLevelRuleCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AppLevelRuleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1008,6 +1496,14 @@ export type $AppLevelRulePayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 版块关联 - 每个等级规则对应多个版块
      */
     sections: Prisma.$ForumSectionPayload<ExtArgs>[]
+    /**
+     * 关联漫画章节下载权限
+     */
+    comicChaptersAsDownloadLevel: Prisma.$WorkComicChapterPayload<ExtArgs>[]
+    /**
+     * 关联漫画章节阅读权限
+     */
+    comicChaptersAsReadLevel: Prisma.$WorkComicChapterPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1022,6 +1518,10 @@ export type $AppLevelRulePayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 所需经验值
      */
     requiredExperience: number
+    /**
+     * 所需登录天数
+     */
+    loginDays: number
     /**
      * 等级描述
      */
@@ -1066,6 +1566,18 @@ export type $AppLevelRulePayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 每日收藏次数上限，0表示无限制
      */
     dailyFavoriteLimit: number
+    /**
+     * 黑名单上限
+     */
+    blacklistLimit: number
+    /**
+     * 作品收藏上限
+     */
+    workCollectionLimit: number
+    /**
+     * 积分购买折扣（0-1之间的小数，0表示不打折）
+     */
+    discount: runtime.Decimal
     /**
      * 创建时间
      */
@@ -1470,6 +1982,8 @@ export interface Prisma__AppLevelRuleClient<T, Null = never, ExtArgs extends run
   readonly [Symbol.toStringTag]: "PrismaPromise"
   users<T extends Prisma.AppLevelRule$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppLevelRule$usersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sections<T extends Prisma.AppLevelRule$sectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppLevelRule$sectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumSectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  comicChaptersAsDownloadLevel<T extends Prisma.AppLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  comicChaptersAsReadLevel<T extends Prisma.AppLevelRule$comicChaptersAsReadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppLevelRule$comicChaptersAsReadLevelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1502,6 +2016,7 @@ export interface AppLevelRuleFieldRefs {
   readonly id: Prisma.FieldRef<"AppLevelRule", 'Int'>
   readonly name: Prisma.FieldRef<"AppLevelRule", 'String'>
   readonly requiredExperience: Prisma.FieldRef<"AppLevelRule", 'Int'>
+  readonly loginDays: Prisma.FieldRef<"AppLevelRule", 'Int'>
   readonly description: Prisma.FieldRef<"AppLevelRule", 'String'>
   readonly icon: Prisma.FieldRef<"AppLevelRule", 'String'>
   readonly badge: Prisma.FieldRef<"AppLevelRule", 'String'>
@@ -1513,6 +2028,9 @@ export interface AppLevelRuleFieldRefs {
   readonly postInterval: Prisma.FieldRef<"AppLevelRule", 'Int'>
   readonly dailyLikeLimit: Prisma.FieldRef<"AppLevelRule", 'Int'>
   readonly dailyFavoriteLimit: Prisma.FieldRef<"AppLevelRule", 'Int'>
+  readonly blacklistLimit: Prisma.FieldRef<"AppLevelRule", 'Int'>
+  readonly workCollectionLimit: Prisma.FieldRef<"AppLevelRule", 'Int'>
+  readonly discount: Prisma.FieldRef<"AppLevelRule", 'Decimal'>
   readonly createdAt: Prisma.FieldRef<"AppLevelRule", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"AppLevelRule", 'DateTime'>
 }
@@ -1957,6 +2475,54 @@ export type AppLevelRule$sectionsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.ForumSectionScalarFieldEnum | Prisma.ForumSectionScalarFieldEnum[]
+}
+
+/**
+ * AppLevelRule.comicChaptersAsDownloadLevel
+ */
+export type AppLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkComicChapter
+   */
+  select?: Prisma.WorkComicChapterSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkComicChapter
+   */
+  omit?: Prisma.WorkComicChapterOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkComicChapterInclude<ExtArgs> | null
+  where?: Prisma.WorkComicChapterWhereInput
+  orderBy?: Prisma.WorkComicChapterOrderByWithRelationInput | Prisma.WorkComicChapterOrderByWithRelationInput[]
+  cursor?: Prisma.WorkComicChapterWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkComicChapterScalarFieldEnum | Prisma.WorkComicChapterScalarFieldEnum[]
+}
+
+/**
+ * AppLevelRule.comicChaptersAsReadLevel
+ */
+export type AppLevelRule$comicChaptersAsReadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkComicChapter
+   */
+  select?: Prisma.WorkComicChapterSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkComicChapter
+   */
+  omit?: Prisma.WorkComicChapterOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkComicChapterInclude<ExtArgs> | null
+  where?: Prisma.WorkComicChapterWhereInput
+  orderBy?: Prisma.WorkComicChapterOrderByWithRelationInput | Prisma.WorkComicChapterOrderByWithRelationInput[]
+  cursor?: Prisma.WorkComicChapterWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkComicChapterScalarFieldEnum | Prisma.WorkComicChapterScalarFieldEnum[]
 }
 
 /**

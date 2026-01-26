@@ -7,6 +7,9 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+import { BaseAuthorDto } from '@libs/content/author'
+import { BaseCategoryDto } from '@libs/content/category'
+import { BaseTagDto } from '@libs/content/tag'
 import {
   ApiProperty,
   IntersectionType,
@@ -14,9 +17,6 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { BaseAuthorDto } from '../../../author/dto/author.dto'
-import { BaseCategoryDto } from '../../../category/dto/category.dto'
-import { BaseTagDto } from '../../../tag/dto/tag.dto'
 import { ComicSerialStatusEnum } from '../comic.constant'
 
 /**

@@ -1,11 +1,8 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
-import { Body, Controller, Get, Post, Query } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-
-import { ComicService } from './comic.service'
 import {
   BaseComicDto,
+  ComicService,
   CreateComicDto,
   QueryComicDto,
   UpdateComicDto,
@@ -13,7 +10,9 @@ import {
   UpdateComicNewDto,
   UpdateComicRecommendedDto,
   UpdateComicStatusDto,
-} from './dto/comic.dto'
+} from '@libs/content/comic/core'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 /**
  * 漫画管理控制器

@@ -29,13 +29,11 @@ export type AggregateAdminUser = {
 export type AdminUserAvgAggregateOutputType = {
   id: number | null
   role: number | null
-  loginFailCount: number | null
 }
 
 export type AdminUserSumAggregateOutputType = {
   id: number | null
   role: number | null
-  loginFailCount: number | null
 }
 
 export type AdminUserMinAggregateOutputType = {
@@ -46,12 +44,8 @@ export type AdminUserMinAggregateOutputType = {
   avatar: string | null
   role: number | null
   isEnabled: boolean | null
-  isLocked: boolean | null
   lastLoginAt: Date | null
   lastLoginIp: string | null
-  loginFailAt: Date | null
-  loginFailIp: string | null
-  loginFailCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -64,12 +58,8 @@ export type AdminUserMaxAggregateOutputType = {
   avatar: string | null
   role: number | null
   isEnabled: boolean | null
-  isLocked: boolean | null
   lastLoginAt: Date | null
   lastLoginIp: string | null
-  loginFailAt: Date | null
-  loginFailIp: string | null
-  loginFailCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -82,12 +72,8 @@ export type AdminUserCountAggregateOutputType = {
   avatar: number
   role: number
   isEnabled: number
-  isLocked: number
   lastLoginAt: number
   lastLoginIp: number
-  loginFailAt: number
-  loginFailIp: number
-  loginFailCount: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -97,13 +83,11 @@ export type AdminUserCountAggregateOutputType = {
 export type AdminUserAvgAggregateInputType = {
   id?: true
   role?: true
-  loginFailCount?: true
 }
 
 export type AdminUserSumAggregateInputType = {
   id?: true
   role?: true
-  loginFailCount?: true
 }
 
 export type AdminUserMinAggregateInputType = {
@@ -114,12 +98,8 @@ export type AdminUserMinAggregateInputType = {
   avatar?: true
   role?: true
   isEnabled?: true
-  isLocked?: true
   lastLoginAt?: true
   lastLoginIp?: true
-  loginFailAt?: true
-  loginFailIp?: true
-  loginFailCount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -132,12 +112,8 @@ export type AdminUserMaxAggregateInputType = {
   avatar?: true
   role?: true
   isEnabled?: true
-  isLocked?: true
   lastLoginAt?: true
   lastLoginIp?: true
-  loginFailAt?: true
-  loginFailIp?: true
-  loginFailCount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -150,12 +126,8 @@ export type AdminUserCountAggregateInputType = {
   avatar?: true
   role?: true
   isEnabled?: true
-  isLocked?: true
   lastLoginAt?: true
   lastLoginIp?: true
-  loginFailAt?: true
-  loginFailIp?: true
-  loginFailCount?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -255,12 +227,8 @@ export type AdminUserGroupByOutputType = {
   avatar: string | null
   role: number
   isEnabled: boolean
-  isLocked: boolean
   lastLoginAt: Date | null
   lastLoginIp: string | null
-  loginFailAt: Date | null
-  loginFailIp: string | null
-  loginFailCount: number
   createdAt: Date
   updatedAt: Date
   _count: AdminUserCountAggregateOutputType | null
@@ -296,12 +264,8 @@ export type AdminUserWhereInput = {
   avatar?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   role?: Prisma.IntFilter<"AdminUser"> | number
   isEnabled?: Prisma.BoolFilter<"AdminUser"> | boolean
-  isLocked?: Prisma.BoolFilter<"AdminUser"> | boolean
   lastLoginAt?: Prisma.DateTimeNullableFilter<"AdminUser"> | Date | string | null
   lastLoginIp?: Prisma.StringNullableFilter<"AdminUser"> | string | null
-  loginFailAt?: Prisma.DateTimeNullableFilter<"AdminUser"> | Date | string | null
-  loginFailIp?: Prisma.StringNullableFilter<"AdminUser"> | string | null
-  loginFailCount?: Prisma.IntFilter<"AdminUser"> | number
   createdAt?: Prisma.DateTimeFilter<"AdminUser"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AdminUser"> | Date | string
 }
@@ -314,12 +278,8 @@ export type AdminUserOrderByWithRelationInput = {
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  isLocked?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrderInput | Prisma.SortOrder
-  loginFailAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  loginFailIp?: Prisma.SortOrderInput | Prisma.SortOrder
-  loginFailCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -335,12 +295,8 @@ export type AdminUserWhereUniqueInput = Prisma.AtLeast<{
   avatar?: Prisma.StringNullableFilter<"AdminUser"> | string | null
   role?: Prisma.IntFilter<"AdminUser"> | number
   isEnabled?: Prisma.BoolFilter<"AdminUser"> | boolean
-  isLocked?: Prisma.BoolFilter<"AdminUser"> | boolean
   lastLoginAt?: Prisma.DateTimeNullableFilter<"AdminUser"> | Date | string | null
   lastLoginIp?: Prisma.StringNullableFilter<"AdminUser"> | string | null
-  loginFailAt?: Prisma.DateTimeNullableFilter<"AdminUser"> | Date | string | null
-  loginFailIp?: Prisma.StringNullableFilter<"AdminUser"> | string | null
-  loginFailCount?: Prisma.IntFilter<"AdminUser"> | number
   createdAt?: Prisma.DateTimeFilter<"AdminUser"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AdminUser"> | Date | string
 }, "id" | "username">
@@ -353,12 +309,8 @@ export type AdminUserOrderByWithAggregationInput = {
   avatar?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  isLocked?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrderInput | Prisma.SortOrder
-  loginFailAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  loginFailIp?: Prisma.SortOrderInput | Prisma.SortOrder
-  loginFailCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.AdminUserCountOrderByAggregateInput
@@ -379,12 +331,8 @@ export type AdminUserScalarWhereWithAggregatesInput = {
   avatar?: Prisma.StringNullableWithAggregatesFilter<"AdminUser"> | string | null
   role?: Prisma.IntWithAggregatesFilter<"AdminUser"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"AdminUser"> | boolean
-  isLocked?: Prisma.BoolWithAggregatesFilter<"AdminUser"> | boolean
   lastLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"AdminUser"> | Date | string | null
   lastLoginIp?: Prisma.StringNullableWithAggregatesFilter<"AdminUser"> | string | null
-  loginFailAt?: Prisma.DateTimeNullableWithAggregatesFilter<"AdminUser"> | Date | string | null
-  loginFailIp?: Prisma.StringNullableWithAggregatesFilter<"AdminUser"> | string | null
-  loginFailCount?: Prisma.IntWithAggregatesFilter<"AdminUser"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AdminUser"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"AdminUser"> | Date | string
 }
@@ -396,12 +344,8 @@ export type AdminUserCreateInput = {
   avatar?: string | null
   role?: number
   isEnabled?: boolean
-  isLocked?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
-  loginFailAt?: Date | string | null
-  loginFailIp?: string | null
-  loginFailCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -414,12 +358,8 @@ export type AdminUserUncheckedCreateInput = {
   avatar?: string | null
   role?: number
   isEnabled?: boolean
-  isLocked?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
-  loginFailAt?: Date | string | null
-  loginFailIp?: string | null
-  loginFailCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -431,12 +371,8 @@ export type AdminUserUpdateInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  loginFailAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  loginFailIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  loginFailCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -449,12 +385,8 @@ export type AdminUserUncheckedUpdateInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  loginFailAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  loginFailIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  loginFailCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -467,12 +399,8 @@ export type AdminUserCreateManyInput = {
   avatar?: string | null
   role?: number
   isEnabled?: boolean
-  isLocked?: boolean
   lastLoginAt?: Date | string | null
   lastLoginIp?: string | null
-  loginFailAt?: Date | string | null
-  loginFailIp?: string | null
-  loginFailCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -484,12 +412,8 @@ export type AdminUserUpdateManyMutationInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  loginFailAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  loginFailIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  loginFailCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -502,12 +426,8 @@ export type AdminUserUncheckedUpdateManyInput = {
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  loginFailAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  loginFailIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  loginFailCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -520,12 +440,8 @@ export type AdminUserCountOrderByAggregateInput = {
   avatar?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  isLocked?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrder
-  loginFailAt?: Prisma.SortOrder
-  loginFailIp?: Prisma.SortOrder
-  loginFailCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -533,7 +449,6 @@ export type AdminUserCountOrderByAggregateInput = {
 export type AdminUserAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  loginFailCount?: Prisma.SortOrder
 }
 
 export type AdminUserMaxOrderByAggregateInput = {
@@ -544,12 +459,8 @@ export type AdminUserMaxOrderByAggregateInput = {
   avatar?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  isLocked?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrder
-  loginFailAt?: Prisma.SortOrder
-  loginFailIp?: Prisma.SortOrder
-  loginFailCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -562,12 +473,8 @@ export type AdminUserMinOrderByAggregateInput = {
   avatar?: Prisma.SortOrder
   role?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  isLocked?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   lastLoginIp?: Prisma.SortOrder
-  loginFailAt?: Prisma.SortOrder
-  loginFailIp?: Prisma.SortOrder
-  loginFailCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -575,7 +482,6 @@ export type AdminUserMinOrderByAggregateInput = {
 export type AdminUserSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  loginFailCount?: Prisma.SortOrder
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -616,12 +522,8 @@ export type AdminUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   avatar?: boolean
   role?: boolean
   isEnabled?: boolean
-  isLocked?: boolean
   lastLoginAt?: boolean
   lastLoginIp?: boolean
-  loginFailAt?: boolean
-  loginFailIp?: boolean
-  loginFailCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["adminUser"]>
@@ -634,12 +536,8 @@ export type AdminUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   avatar?: boolean
   role?: boolean
   isEnabled?: boolean
-  isLocked?: boolean
   lastLoginAt?: boolean
   lastLoginIp?: boolean
-  loginFailAt?: boolean
-  loginFailIp?: boolean
-  loginFailCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["adminUser"]>
@@ -652,12 +550,8 @@ export type AdminUserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   avatar?: boolean
   role?: boolean
   isEnabled?: boolean
-  isLocked?: boolean
   lastLoginAt?: boolean
   lastLoginIp?: boolean
-  loginFailAt?: boolean
-  loginFailIp?: boolean
-  loginFailCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["adminUser"]>
@@ -670,17 +564,13 @@ export type AdminUserSelectScalar = {
   avatar?: boolean
   role?: boolean
   isEnabled?: boolean
-  isLocked?: boolean
   lastLoginAt?: boolean
   lastLoginIp?: boolean
-  loginFailAt?: boolean
-  loginFailIp?: boolean
-  loginFailCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AdminUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "password" | "mobile" | "avatar" | "role" | "isEnabled" | "isLocked" | "lastLoginAt" | "lastLoginIp" | "loginFailAt" | "loginFailIp" | "loginFailCount" | "createdAt" | "updatedAt", ExtArgs["result"]["adminUser"]>
+export type AdminUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "password" | "mobile" | "avatar" | "role" | "isEnabled" | "lastLoginAt" | "lastLoginIp" | "createdAt" | "updatedAt", ExtArgs["result"]["adminUser"]>
 
 export type $AdminUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AdminUser"
@@ -715,10 +605,6 @@ export type $AdminUserPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      */
     isEnabled: boolean
     /**
-     * 账户锁定状态
-     */
-    isLocked: boolean
-    /**
      * 最后登录时间
      */
     lastLoginAt: Date | null
@@ -726,18 +612,6 @@ export type $AdminUserPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 最后登录IP
      */
     lastLoginIp: string | null
-    /**
-     * 登录失败时间
-     */
-    loginFailAt: Date | null
-    /**
-     * 登录失败IP
-     */
-    loginFailIp: string | null
-    /**
-     * 登录失败次数
-     */
-    loginFailCount: number
     /**
      * 创建时间
      */
@@ -1176,12 +1050,8 @@ export interface AdminUserFieldRefs {
   readonly avatar: Prisma.FieldRef<"AdminUser", 'String'>
   readonly role: Prisma.FieldRef<"AdminUser", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"AdminUser", 'Boolean'>
-  readonly isLocked: Prisma.FieldRef<"AdminUser", 'Boolean'>
   readonly lastLoginAt: Prisma.FieldRef<"AdminUser", 'DateTime'>
   readonly lastLoginIp: Prisma.FieldRef<"AdminUser", 'String'>
-  readonly loginFailAt: Prisma.FieldRef<"AdminUser", 'DateTime'>
-  readonly loginFailIp: Prisma.FieldRef<"AdminUser", 'String'>
-  readonly loginFailCount: Prisma.FieldRef<"AdminUser", 'Int'>
   readonly createdAt: Prisma.FieldRef<"AdminUser", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"AdminUser", 'DateTime'>
 }

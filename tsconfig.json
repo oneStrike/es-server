@@ -39,6 +39,12 @@
       ],
       "@libs/user/*": [
         "libs/user/src/*"
+      ],
+      "@libs/content": [
+        "libs/content/src"
+      ],
+      "@libs/content/*": [
+        "libs/content/src/*"
       ]
     },
     "resolveJsonModule": true,

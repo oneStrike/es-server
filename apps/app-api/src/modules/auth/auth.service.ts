@@ -3,19 +3,27 @@ import { BaseService } from '@libs/base/database'
 
 import { GenderEnum } from '@libs/base/enum'
 import {
-  CheckVerifyCodeDto,
   RsaService,
   ScryptService,
-  SendVerifyCodeDto,
-  SmsTemplateCodeEnum,
 } from '@libs/base/modules'
-import { AuthService as BaseAuthService } from '@libs/base/modules/auth'
+import {
+  AuthService as BaseAuthService,
+  LoginGuardService,
+} from '@libs/base/modules/auth'
 
 import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import { ForumProfileService } from '@libs/forum'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { AuthDefaultValue, AuthErrorMessages } from './auth.constant'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { BadRequestException, Inject, Injectable } from '@nestjs/common'
+import { Cache } from 'cache-manager'
+import {
+  AuthConstants,
+  AuthDefaultValue,
+  AuthErrorMessages,
+  AuthRedisKeys,
+} from './auth.constant'
 import { LoginDto, TokenDto } from './dto/auth.dto'
+import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
 import { AppTokenStorageService } from './token-storage.service'
 
@@ -30,8 +38,11 @@ export class AuthService extends BaseService {
     private readonly smsService: SmsService,
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
+    private readonly passwordService: PasswordService,
     private readonly profileService: ForumProfileService,
     private readonly tokenStorageService: AppTokenStorageService,
+    private readonly loginGuardService: LoginGuardService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     super()
   }
@@ -53,37 +64,6 @@ export class AuthService extends BaseService {
       return this.generateUniqueAccount()
     }
     return randomAccount
-  }
-
-  /**
-   * 生成安全的随机密码
-   * 密码长度为16位，包含大小写字母、数字和特殊字符
-   * @returns 16位随机密码
-   */
-  private generateSecureRandomPassword(): string {
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz'
-    const numbers = '0123456789'
-    const special = '!@#$%^&*'
-
-    let password = ''
-
-    for (let i = 0; i < 2; i++) {
-      password += uppercase[Math.floor(Math.random() * uppercase.length)]
-      password += lowercase[Math.floor(Math.random() * lowercase.length)]
-      password += numbers[Math.floor(Math.random() * numbers.length)]
-      password += special[Math.floor(Math.random() * special.length)]
-    }
-
-    const allChars = uppercase + lowercase + numbers + special
-    for (let i = 0; i < 8; i++) {
-      password += allChars[Math.floor(Math.random() * allChars.length)]
-    }
-
-    return password
-      .split('')
-      .sort(() => Math.random() - 0.5)
-      .join('')
   }
 
   /**
@@ -111,7 +91,7 @@ export class AuthService extends BaseService {
     if (body.password) {
       password = this.rsaService.decryptWith(body.password)
     } else {
-      password = this.generateSecureRandomPassword()
+      password = this.passwordService.generateSecureRandomPassword()
     }
 
     const hashedPassword = await this.scryptService.encryptPassword(password)
@@ -187,16 +167,33 @@ export class AuthService extends BaseService {
         code: body.code,
       })
     } else {
+      // 检查账号是否被锁定
+      await this.loginGuardService.checkLock(
+        AuthRedisKeys.LOGIN_LOCK(user.id)
+      )
+
       const password = this.rsaService.decryptWith(body.password!)
       const isPasswordValid = await this.scryptService.verifyPassword(
         password,
         user.password,
       )
       if (!isPasswordValid) {
-        throw new BadRequestException(
-          AuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR,
+        // 记录失败次数并抛出异常
+        await this.loginGuardService.recordFail(
+          AuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
+          AuthRedisKeys.LOGIN_LOCK(user.id),
+          {
+            maxAttempts: AuthConstants.LOGIN_MAX_ATTEMPTS,
+            failTtl: AuthConstants.LOGIN_FAIL_TTL,
+            lockTtl: AuthConstants.ACCOUNT_LOCK_TTL,
+          }
         )
       }
+
+      // 登录成功，清除失败计数
+      await this.loginGuardService.clearHistory(
+        AuthRedisKeys.LOGIN_FAIL_COUNT(user.id)
+      )
     }
 
     if (!user.isEnabled) {

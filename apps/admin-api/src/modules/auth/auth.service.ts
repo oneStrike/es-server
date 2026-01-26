@@ -2,7 +2,10 @@ import type { FastifyRequest } from 'fastify'
 import { AdminUser, BaseService } from '@libs/base/database'
 
 import { CaptchaService, RsaService, ScryptService } from '@libs/base/modules'
-import { AuthService as BaseAuthService } from '@libs/base/modules/auth'
+import {
+  AuthService as BaseAuthService,
+  LoginGuardService,
+} from '@libs/base/modules/auth'
 
 import { extractIpAddress, isProduction } from '@libs/base/utils'
 import {
@@ -10,7 +13,11 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
-import { CacheKey } from './auth.constant'
+import {
+  AuthConstants,
+  AuthRedisKeys,
+  CacheKey,
+} from './auth.constant'
 import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
 
 /**
@@ -27,6 +34,7 @@ export class AuthService extends BaseService {
     private readonly scryptService: ScryptService,
     private readonly baseJwtService: BaseAuthService,
     private readonly captchaService: CaptchaService,
+    private readonly loginGuardService: LoginGuardService,
   ) {
     super()
   }
@@ -80,40 +88,22 @@ export class AuthService extends BaseService {
     const requestIp = extractIpAddress(req)
 
     // 检查账户是否被锁定
-    if (user.isLocked) {
-      const failAt = user.loginFailAt ? new Date(user.loginFailAt).getTime() : 0
-      const now = Date.now()
-      const lockExpired = !!failAt && now - failAt >= 1000 * 60 * 30
-
-      if (lockExpired) {
-        // 锁定已到期，自动解锁并重置失败信息
-        await this.adminUser.update({
-          where: { id: user.id },
-          data: {
-            isLocked: false,
-            loginFailIp: null,
-            loginFailAt: null,
-            loginFailCount: 0,
-          },
-        })
-        // 同步本地对象，继续后续登录流程
-        user.isLocked = false
-        user.loginFailIp = null
-        user.loginFailAt = null
-        user.loginFailCount = 0
-      } else {
-        // 锁定未到期，记录失败并拒绝
-        await this.updateLoginFailInfo(user, requestIp)
-        throw new UnauthorizedException('失败次数过多，请稍后再试')
-      }
-    }
+    await this.loginGuardService.checkLock(AuthRedisKeys.LOGIN_LOCK(user.id))
 
     // 解密密码
     let password = body.password
     try {
       password = this.rsaService.decryptWith(body.password)
     } catch {
-      await this.updateLoginFailInfo(user, requestIp)
+      await this.loginGuardService.recordFail(
+        AuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
+        AuthRedisKeys.LOGIN_LOCK(user.id),
+        {
+          maxAttempts: AuthConstants.LOGIN_MAX_ATTEMPTS,
+          failTtl: AuthConstants.LOGIN_FAIL_TTL,
+          lockTtl: AuthConstants.ACCOUNT_LOCK_TTL,
+        },
+      )
       throw new BadRequestException('账号或密码错误')
     }
 
@@ -123,7 +113,15 @@ export class AuthService extends BaseService {
       user.password,
     )
     if (!isPasswordValid) {
-      await this.updateLoginFailInfo(user, requestIp)
+      await this.loginGuardService.recordFail(
+        AuthRedisKeys.LOGIN_FAIL_COUNT(user.id),
+        AuthRedisKeys.LOGIN_LOCK(user.id),
+        {
+          maxAttempts: AuthConstants.LOGIN_MAX_ATTEMPTS,
+          failTtl: AuthConstants.LOGIN_FAIL_TTL,
+          lockTtl: AuthConstants.ACCOUNT_LOCK_TTL,
+        },
+      )
       throw new BadRequestException('账号或密码错误')
     }
 
@@ -133,10 +131,6 @@ export class AuthService extends BaseService {
       data: {
         lastLoginAt: new Date(),
         lastLoginIp: extractIpAddress(req) || 'unknown',
-        isLocked: false,
-        loginFailIp: null,
-        loginFailAt: null,
-        loginFailCount: 0,
       },
     })
     // 生成令牌
@@ -146,34 +140,12 @@ export class AuthService extends BaseService {
     })
 
     // 去除 user 对象的 password 属性
-    const {
-      password: _password,
-      loginFailAt,
-      loginFailCount,
-      loginFailIp,
-      isLocked,
-      ...userWithoutPassword
-    } = user
+    const { password: _password, ...userWithoutPassword } = user
 
     return {
       user: userWithoutPassword,
       tokens,
     }
-  }
-
-  /**
-   * 更新登录失败相关的信息
-   */
-  async updateLoginFailInfo(user: AdminUser, requestIp?: string) {
-    await this.adminUser.update({
-      where: { id: user.id },
-      data: {
-        loginFailIp: requestIp || 'unknown',
-        loginFailAt: new Date(),
-        loginFailCount: user.loginFailCount + 1,
-        isLocked: user.loginFailCount + 1 >= 5, // 达到阈值后锁定账户
-      },
-    })
   }
 
   /**

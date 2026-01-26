@@ -1,9 +1,12 @@
 import type { WorkComicWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
-
 import { isNotNil } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
+import {
+  CreateComicDto,
+  QueryComicDto,
+  UpdateComicDto,
+} from './dto/comic.dto'
 
 /**
  * 漫画服务类
