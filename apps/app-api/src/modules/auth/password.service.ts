@@ -1,12 +1,9 @@
 import { BaseService } from '@libs/base/database'
-import { RsaService, ScryptService, SmsService } from '@libs/base/modules'
+import { RsaService, ScryptService } from '@libs/base/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { ErrorMessages } from './auth.constant'
-import {
-  ChangePasswordDto,
-  ForgotPasswordDto,
-  ForgotPasswordRequestDto,
-} from './dto/auth.dto'
+import { AuthErrorMessages } from './auth.constant'
+import { ChangePasswordDto, ForgotPasswordDto } from './dto/auth.dto'
+import { SmsService } from './sms.service'
 import { AppTokenStorageService } from './token-storage.service'
 
 /**
@@ -29,45 +26,22 @@ export class PasswordService extends BaseService {
   }
 
   /**
-   * 发送重置密码验证码
-   * @param body - 忘记密码请求数据，仅包含手机号
-   * @returns 提示信息
+   * 找回密码
+   * @param body - 找回密码数据，包含账号和新密码
+   * @returns 找回结果
    * @throws {BadRequestException} 账号不存在
    */
-  async sendResetPasswordCode(body: ForgotPasswordRequestDto) {
-    const user = await this.findUserByPhone(body.phone)
-
-    if (!user) {
-      throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
-    }
-
-    // 发送重置密码验证码
-    await this.smsService.sendSmsRequest({
-      phoneNumber: body.phone,
-      templateCode: '100003', // SmsTemplateCodeEnum.RESET_PASSWORD
+  async forgotPassword(body: ForgotPasswordDto) {
+    const { phone, code, password } = body
+    const user = await this.appUser.findUnique({
+      where: { phone },
+      select: { id: true },
     })
 
-    return {
-      message: '如果账号存在，重置密码的验证码已发送',
-    }
-  }
-
-  /**
-   * 重置密码
-   * @param body - 重置密码数据，包含账号和新密码
-   * @returns 重置结果
-   * @throws {BadRequestException} 账号不存在
-   */
-  async resetPassword(body: ForgotPasswordDto) {
-    const user = await this.findUserByPhone(body.phone)
-
     if (!user) {
-      throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
+      throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
     }
-
-    await this.validateVerifyCode(body.phone, body.code)
-
-    const password = this.rsaService.decryptWith(body.password)
+    await this.smsService.validateVerifyCode({ phone, code })
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
     await this.prisma.appUser.update({
@@ -92,7 +66,7 @@ export class PasswordService extends BaseService {
     })
 
     if (!user) {
-      throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
+      throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
     }
 
     // 验证旧密码
@@ -127,18 +101,6 @@ export class PasswordService extends BaseService {
     await this.tokenStorageService.revokeAllByUserId(userId, 'PASSWORD_CHANGE')
 
     return true
-  }
-
-  /**
-   * 校验验证码
-   * @param phone - 手机号
-   * @param code - 验证码
-   */
-  private async validateVerifyCode(phone: string, code: string) {
-    await this.smsService.checkVerifyCode({
-      phoneNumber: phone,
-      verifyCode: code,
-    })
   }
 
   /**

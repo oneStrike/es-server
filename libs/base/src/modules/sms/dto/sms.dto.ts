@@ -11,25 +11,27 @@ export class SendVerifyCodeDto {
     example: '13800138000',
     required: true,
   })
-  phoneNumber!: string
+  phone!: string
 
   @ValidateEnum({
-    description: '短信模板代码, 可选值: 100001（登录/注册），100002（修改绑定手机号），100003（重置密码），100004（绑定新手机号），100005（验证绑定手机号）',
+    description:
+      '短信模板代码, 可选值: 100001（登录/注册），100002（修改绑定手机号），100003（重置密码），100004（绑定新手机号），100005（验证绑定手机号）',
     example: '100001',
-    required: true,
+    required: false,
+    default: SmsTemplateCodeEnum.LOGIN_REGISTER,
     enum: SmsTemplateCodeEnum,
   })
-  templateCode!: string
+  templateCode?: string
 }
 
 /**
  * 校验验证码DTO
  */
-export class VerifyCodeDto extends PickType(SendVerifyCodeDto, ['phoneNumber']) {
+export class CheckVerifyCodeDto extends PickType(SendVerifyCodeDto, ['phone']) {
   @ValidateString({
     description: '验证码',
     example: '123456',
     required: true,
   })
-  verifyCode!: string
+  code!: string
 }

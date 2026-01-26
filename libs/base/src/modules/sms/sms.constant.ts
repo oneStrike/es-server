@@ -1,8 +1,8 @@
-export const ErrorMessages = {
+export const SmsErrorMessages = {
   CONFIG_NOT_FOUND: '阿里云短信配置未定义',
 }
 
-export const ErrorMap = {
+export const SmsErrorMap = {
   'biz.FREQUENCY': '请求频率过快，请稍后再试！',
   'isv.ValidateFail': '验证码校验失败！',
 }

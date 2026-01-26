@@ -6,7 +6,14 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto } from '@libs/base/dto'
 import { GenderEnum } from '@libs/base/enum'
-import { ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger'
+import { CheckVerifyCodeDto } from '@libs/base/modules'
+import {
+  ApiProperty,
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 /**
  * RSA公钥信息
@@ -164,8 +171,9 @@ export class RefreshTokenDto extends OmitType(TokenDto, ['accessToken']) {}
 /**
  * 登录请求信息
  */
-export class LoginDto extends PartialType(
-  PickType(BaseAppUserDto, ['phone', 'account']),
+export class LoginDto extends IntersectionType(
+  PartialType(PickType(BaseAppUserDto, ['account'])),
+  PartialType(CheckVerifyCodeDto),
 ) {
   @ValidateString({
     description: '密码',
@@ -174,41 +182,12 @@ export class LoginDto extends PartialType(
     password: true,
   })
   password?: string
-
-  @ValidateString({
-    description: '验证码',
-    example: '330049',
-    required: false,
-  })
-  code?: string
-}
-
-/**
- * 忘记密码请求 DTO
- * 仅包含手机号，用于触发发送验证码
- */
-export class ForgotPasswordRequestDto {
-  @ValidateString({
-    description: '手机号',
-    example: '13800000000',
-    required: true,
-    maxLength: 11,
-  })
-  phone!: string
 }
 
 /**
  * 忘记密码请求信息
  */
-export class ForgotPasswordDto {
-  @ValidateString({
-    description: '手机号',
-    example: '13800000000',
-    required: true,
-    maxLength: 11,
-  })
-  phone!: string
-
+export class ForgotPasswordDto extends CheckVerifyCodeDto {
   @ValidateString({
     description: '密码',
     example: 'Aa@123456',
@@ -216,13 +195,6 @@ export class ForgotPasswordDto {
     password: true,
   })
   password!: string
-
-  @ValidateString({
-    description: '手机号验证码',
-    example: '330049',
-    required: true,
-  })
-  code!: string
 }
 
 /**

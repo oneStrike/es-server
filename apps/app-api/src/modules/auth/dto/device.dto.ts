@@ -71,9 +71,6 @@ export class UserDeviceDto {
  * 用于撤销特定设备的登录
  */
 export class RevokeDeviceDto {
-  /**
-   * Token ID
-   */
   @ApiProperty({
     description: 'Token ID',
     example: 1,

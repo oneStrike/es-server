@@ -1,13 +1,13 @@
-import type { SendSmsVerifyCodeResponseBody } from '@alicloud/dypnsapi20170525';
+import type { SendSmsVerifyCodeResponseBody } from '@alicloud/dypnsapi20170525'
 import type { AliyunConfigInterface } from '@libs/base/config'
-import Credential, { Config } from '@alicloud/credentials';
+import Credential, { Config } from '@alicloud/credentials'
 import Dypnsapi20170525, * as $Dypnsapi20170525 from '@alicloud/dypnsapi20170525'
 import * as $OpenApi from '@alicloud/openapi-client'
 import * as $Util from '@alicloud/tea-util'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { SendVerifyCodeDto, VerifyCodeDto } from './dto/sms.dto'
-import { ErrorMap, ErrorMessages } from './sms.constant'
+import { CheckVerifyCodeDto, SendVerifyCodeDto } from './dto/sms.dto'
+import { SmsErrorMap, SmsErrorMessages } from './sms.constant'
 
 /**
  * 阿里云短信服务
@@ -22,7 +22,7 @@ export class SmsService {
   constructor(private readonly configService: ConfigService) {
     const aliyunConfig = this.configService.get<AliyunConfigInterface>('aliyun')
     if (!aliyunConfig) {
-      throw new Error(ErrorMessages.CONFIG_NOT_FOUND)
+      throw new Error(SmsErrorMessages.CONFIG_NOT_FOUND)
     }
     this.config = aliyunConfig
     this.client = this.createClient()
@@ -38,7 +38,7 @@ export class SmsService {
         type: 'access_key',
         accessKeyId: this.config.accessKeyId,
         accessKeySecret: this.config.accessKeySecret,
-      })
+      }),
     )
     const config = new $OpenApi.Config({
       credential,
@@ -52,18 +52,23 @@ export class SmsService {
    * @param dto 短信发送请求DTO
    * @returns 发送结果
    */
-  async sendSmsRequest(dto: SendVerifyCodeDto) {
-    const { phoneNumber, templateCode } = dto
+  async sendVerifyCode(dto: SendVerifyCodeDto) {
+    const { phone, templateCode } = dto
 
     const runtime = new $Util.RuntimeOptions({})
 
-    const sendSmsVerifyCodeRequest = new $Dypnsapi20170525.SendSmsVerifyCodeRequest({
-      phoneNumber,
-      signName: this.config.sms.signName,
-      templateCode,
-      templateParam: JSON.stringify({ code: "##code##", min: "5" }),
-      codeLength: 6,
-    })
+    const sendSmsVerifyCodeRequest =
+      new $Dypnsapi20170525.SendSmsVerifyCodeRequest({
+        phoneNumber: phone,
+        signName: this.config.sms.signName,
+        templateCode,
+        templateParam: JSON.stringify({
+          code: '##code##',
+          min: '5',
+        }),
+        validTime: this.config.sms.verifyCodeExpire,
+        codeLength: this.config.sms.verifyCodeLength,
+      })
 
     try {
       const resp = await this.client.sendSmsVerifyCodeWithOptions(
@@ -74,17 +79,15 @@ export class SmsService {
       const response = resp.body as SendSmsVerifyCodeResponseBody
 
       if (!response.code || response.code !== 'OK') {
-        throw new Error(ErrorMap[response?.code || '验证码服务异常'])
+        throw new Error(SmsErrorMap[response?.code || '验证码服务异常'])
       }
 
-      this.logger.log(
-        `验证码发送成功 - 手机号: ${phoneNumber}`,
-      )
+      this.logger.log(`验证码发送成功 - 手机号: ${phone}`)
 
-      return '验证码发送成功'
+      return true
     } catch (error) {
-      this.logger.error(`验证码发送失败 - 手机号: ${phoneNumber}`, error)
-      throw error
+      this.logger.error(`验证码发送失败 - 手机号: ${phone}`, error)
+      return false
     }
   }
 
@@ -93,15 +96,16 @@ export class SmsService {
    * @param dto 核验验证码请求DTO
    * @returns 核验结果
    */
-  async checkVerifyCode(dto: VerifyCodeDto) {
-    const { phoneNumber, verifyCode } = dto
+  async checkVerifyCode(dto: CheckVerifyCodeDto) {
+    const { phone, code } = dto
 
     const runtime = new $Util.RuntimeOptions({})
 
-    const checkSmsVerifyCodeRequest = new $Dypnsapi20170525.CheckSmsVerifyCodeRequest({
-      phoneNumber,
-      verifyCode
-    })
+    const checkSmsVerifyCodeRequest =
+      new $Dypnsapi20170525.CheckSmsVerifyCodeRequest({
+        phoneNumber: phone,
+        verifyCode: code,
+      })
 
     try {
       const resp = await this.client.checkSmsVerifyCodeWithOptions(
@@ -109,16 +113,17 @@ export class SmsService {
         runtime,
       )
 
-      const response = resp.body as any
+      const response =
+        resp.body as $Dypnsapi20170525.CheckSmsVerifyCodeResponseBody
 
       this.logger.log(
-        `验证码核验${response.model?.verifyResult === 'PASS' ? '成功' : '失败'} - 手机号: ${phoneNumber}`,
+        `验证码核验${response.model?.verifyResult === 'PASS' ? '成功' : '失败'} - 手机号: ${phone}`,
       )
 
-      return response
+      return true
     } catch (error) {
-      this.logger.error(`验证码核验失败 - 手机号: ${phoneNumber}`, error)
-      throw new Error(ErrorMap[error.code] || '验证码服务异常')
+      this.logger.error(`验证码核验失败 - 手机号: ${phone}`, error)
+      return false
     }
   }
 }

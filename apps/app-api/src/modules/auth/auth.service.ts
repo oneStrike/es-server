@@ -2,14 +2,21 @@ import type { FastifyRequest } from 'fastify'
 import { BaseService } from '@libs/base/database'
 
 import { GenderEnum } from '@libs/base/enum'
-import { RsaService, ScryptService, SmsService } from '@libs/base/modules'
+import {
+  CheckVerifyCodeDto,
+  RsaService,
+  ScryptService,
+  SendVerifyCodeDto,
+  SmsTemplateCodeEnum,
+} from '@libs/base/modules'
 import { AuthService as BaseAuthService } from '@libs/base/modules/auth'
 
 import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import { ForumProfileService } from '@libs/forum'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { ErrorMessages } from './auth.constant'
-import { ForgotPasswordDto, ForgotPasswordRequestDto, LoginDto } from './dto/auth.dto'
+import { AuthDefaultValue, AuthErrorMessages } from './auth.constant'
+import { LoginDto, TokenDto } from './dto/auth.dto'
+import { SmsService } from './sms.service'
 import { AppTokenStorageService } from './token-storage.service'
 
 /**
@@ -88,11 +95,16 @@ export class AuthService extends BaseService {
    */
   async register(body: LoginDto, req: FastifyRequest) {
     if (!body.phone) {
-      throw new BadRequestException(ErrorMessages.PHONE_REQUIRED_FOR_REGISTER)
+      throw new BadRequestException(
+        AuthErrorMessages.PHONE_REQUIRED_FOR_REGISTER,
+      )
     }
 
     if (body.code) {
-      await this.validateVerifyCode(body.phone, body.code)
+      await this.smsService.validateVerifyCode({
+        phone: body.phone,
+        code: body.code,
+      })
     }
 
     let password: string
@@ -135,15 +147,17 @@ export class AuthService extends BaseService {
    */
   async login(body: LoginDto, req: FastifyRequest) {
     if (!body.phone && !body.account) {
-      throw new BadRequestException(ErrorMessages.PHONE_OR_ACCOUNT_REQUIRED)
+      throw new BadRequestException(AuthErrorMessages.PHONE_OR_ACCOUNT_REQUIRED)
     }
 
     if (!body.code && !body.password) {
-      throw new BadRequestException(ErrorMessages.PASSWORD_OR_CODE_REQUIRED)
+      throw new BadRequestException(AuthErrorMessages.PASSWORD_OR_CODE_REQUIRED)
     }
 
     if (body.code && !body.phone) {
-      throw new BadRequestException(ErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN)
+      throw new BadRequestException(
+        AuthErrorMessages.PHONE_REQUIRED_FOR_CODE_LOGIN,
+      )
     }
 
     const user = await this.appUser.findFirst({
@@ -156,19 +170,22 @@ export class AuthService extends BaseService {
       if (body.code) {
         return this.register(body, req)
       }
-      throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
+      throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
     }
 
     if (body.code) {
       if (!user.phone) {
-        throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_BOUND_PHONE)
+        throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_BOUND_PHONE)
       }
 
       if (body.phone && body.phone !== user.phone) {
-        throw new BadRequestException(ErrorMessages.PHONE_MISMATCH)
+        throw new BadRequestException(AuthErrorMessages.PHONE_MISMATCH)
       }
 
-      await this.validateVerifyCode(body.phone || user.phone, body.code)
+      await this.smsService.validateVerifyCode({
+        phone: user.phone,
+        code: body.code,
+      })
     } else {
       const password = this.rsaService.decryptWith(body.password!)
       const isPasswordValid = await this.scryptService.verifyPassword(
@@ -176,12 +193,14 @@ export class AuthService extends BaseService {
         user.password,
       )
       if (!isPasswordValid) {
-        throw new BadRequestException(ErrorMessages.ACCOUNT_OR_PASSWORD_ERROR)
+        throw new BadRequestException(
+          AuthErrorMessages.ACCOUNT_OR_PASSWORD_ERROR,
+        )
       }
     }
 
     if (!user.isEnabled) {
-      throw new BadRequestException(ErrorMessages.ACCOUNT_DISABLED)
+      throw new BadRequestException(AuthErrorMessages.ACCOUNT_DISABLED)
     }
 
     return this.handleLoginSuccess(user, req)
@@ -197,7 +216,8 @@ export class AuthService extends BaseService {
       where: { id: userId },
       data: {
         lastLoginAt: new Date(),
-        lastLoginIp: extractIpAddress(req) || ErrorMessages.IP_ADDRESS_UNKNOWN,
+        lastLoginIp:
+          extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
       },
     })
   }
@@ -228,7 +248,7 @@ export class AuthService extends BaseService {
         tokenType: 'ACCESS',
         expiresAt: accessTokenExpiresAt,
         deviceInfo,
-        ipAddress: extractIpAddress(req) || ErrorMessages.IP_ADDRESS_UNKNOWN,
+        ipAddress: extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
         userAgent: req.headers['user-agent'],
       },
       {
@@ -237,7 +257,7 @@ export class AuthService extends BaseService {
         tokenType: 'REFRESH',
         expiresAt: refreshTokenExpiresAt,
         deviceInfo,
-        ipAddress: extractIpAddress(req) || ErrorMessages.IP_ADDRESS_UNKNOWN,
+        ipAddress: extractIpAddress(req) || AuthDefaultValue.IP_ADDRESS_UNKNOWN,
         userAgent: req.headers['user-agent'],
       },
     ])
@@ -249,9 +269,13 @@ export class AuthService extends BaseService {
    * @param refreshToken - 刷新令牌
    * @returns 退出登录结果
    */
-  async logout(accessToken: string, refreshToken: string) {
-    const accessPayload = await this.baseJwtService.decodeToken(accessToken)
-    const refreshPayload = await this.baseJwtService.decodeToken(refreshToken)
+  async logout(dto: TokenDto) {
+    const { accessToken, refreshToken } = dto
+
+    const [accessPayload, refreshPayload] = await Promise.all([
+      this.baseJwtService.decodeToken(accessToken),
+      this.baseJwtService.decodeToken(refreshToken),
+    ])
 
     await this.tokenStorageService.revokeByJtis(
       [accessPayload.jti, refreshPayload.jti],
@@ -278,18 +302,6 @@ export class AuthService extends BaseService {
     await this.storeTokens(userId, tokens, req)
 
     return tokens
-  }
-
-  /**
-   * 校验验证码
-   * @param phone - 手机号
-   * @param code - 验证码
-   */
-  private async validateVerifyCode(phone: string, code: string) {
-    await this.smsService.checkVerifyCode({
-      phoneNumber: phone,
-      verifyCode: code,
-    })
   }
 
   /**
@@ -364,11 +376,11 @@ export class AuthService extends BaseService {
     })
 
     if (!token) {
-      throw new BadRequestException(ErrorMessages.DEVICE_NOT_FOUND)
+      throw new BadRequestException(AuthErrorMessages.DEVICE_NOT_FOUND)
     }
 
     if (token.userId !== userId) {
-      throw new BadRequestException(ErrorMessages.NO_PERMISSION_FOR_DEVICE)
+      throw new BadRequestException(AuthErrorMessages.NO_PERMISSION_FOR_DEVICE)
     }
 
     await this.tokenStorageService.revokeByJti(token.jti, 'USER_LOGOUT')
