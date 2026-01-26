@@ -29,20 +29,20 @@ export class ForumReplyLikeService extends BaseService {
     return this.prisma.forumReply
   }
 
-  get forumProfile() {
-    return this.prisma.forumProfile
-  }
+  // get forumProfile() {
+  //   return this.prisma.forumProfile
+  // }
 
   /**
    * 点赞回复
    * @param createForumReplyLikeDto - 创建点赞记录的数据传输对象
    * @returns 创建的点赞记录
    * @throws {BadRequestException} 回复不存在时抛出
-   * @throws {BadRequestException} 用户资料不存在时抛出
+   * @throws {BadRequestException} 用户不存在时抛出
    * @throws {BadRequestException} 已经点赞过该回复时抛出
    */
   async likeReply(createForumReplyLikeDto: CreateForumReplyLikeDto) {
-    const { replyId, profileId } = createForumReplyLikeDto
+    const { replyId, userId } = createForumReplyLikeDto
 
     const reply = await this.forumReply.findUnique({
       where: { id: replyId },
@@ -52,19 +52,19 @@ export class ForumReplyLikeService extends BaseService {
       throw new BadRequestException('回复不存在')
     }
 
-    const profile = await this.forumProfile.findUnique({
-      where: { id: profileId },
+    const user = await this.prisma.appUser.findUnique({
+      where: { id: userId },
     })
 
-    if (!profile) {
-      throw new BadRequestException('用户资料不存在')
+    if (!user) {
+      throw new BadRequestException('用户不存在')
     }
 
     const existingLike = await this.forumReplyLike.findUnique({
       where: {
-        replyId_profileId: {
+        replyId_userId: {
           replyId,
-          profileId,
+          userId,
         },
       },
     })
@@ -77,7 +77,7 @@ export class ForumReplyLikeService extends BaseService {
       const like = await tx.forumReplyLike.create({
         data: {
           replyId,
-          profileId,
+          userId,
         },
       })
 
@@ -91,7 +91,7 @@ export class ForumReplyLikeService extends BaseService {
       })
 
       await this.actionLogService.createActionLog({
-        profileId,
+        userId,
         actionType: ForumUserActionTypeEnum.LIKE_REPLY,
         targetType: ForumUserActionTargetTypeEnum.REPLY,
         targetId: replyId,
@@ -109,7 +109,7 @@ export class ForumReplyLikeService extends BaseService {
    * @throws {BadRequestException} 无权取消他人的点赞时抛出
    */
   async unlikeReply(deleteForumReplyLikeDto: DeleteForumReplyLikeDto) {
-    const { id, profileId } = deleteForumReplyLikeDto
+    const { id, userId } = deleteForumReplyLikeDto
 
     const like = await this.forumReplyLike.findUnique({
       where: { id },
@@ -119,7 +119,7 @@ export class ForumReplyLikeService extends BaseService {
       throw new BadRequestException('点赞记录不存在')
     }
 
-    if (like.profileId !== profileId) {
+    if (like.userId !== userId) {
       throw new BadRequestException('无权取消他人的点赞')
     }
 
@@ -134,7 +134,7 @@ export class ForumReplyLikeService extends BaseService {
       })
 
       await this.actionLogService.createActionLog({
-        profileId,
+        userId,
         actionType: ForumUserActionTypeEnum.UNLIKE_REPLY,
         targetType: ForumUserActionTargetTypeEnum.REPLY,
         targetId: like.replyId,
@@ -149,15 +149,15 @@ export class ForumReplyLikeService extends BaseService {
   /**
    * 检查用户是否已点赞回复
    * @param replyId - 回复ID
-   * @param profileId - 用户资料ID
+   * @param userId - 用户ID
    * @returns 包含点赞状态的对象
    */
-  async checkUserLiked(replyId: number, profileId: number) {
+  async checkUserLiked(replyId: number, userId: number) {
     const like = await this.forumReplyLike.findUnique({
       where: {
-        replyId_profileId: {
+        replyId_userId: {
           replyId,
-          profileId,
+          userId,
         },
       },
     })

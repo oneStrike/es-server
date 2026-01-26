@@ -1,16 +1,34 @@
+/// 应用页面表 - 管理应用内的页面配置和路由
 model AppPage {
-  id             Int         @id @default(autoincrement())
-  code           String      @unique @map("code") @db.VarChar(50)
-  path           String      @unique @map("path") @db.VarChar(300)
-  name           String      @map("name") @db.VarChar(100)
-  title          String      @map("title") @db.VarChar(200)
-  accessLevel    Int         @default(0) @map("access_level") @db.SmallInt
-  isEnabled      Boolean     @default(true) @map("is_enabled")
-  description    String?     @map("description") @db.VarChar(500)
-  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  enablePlatform Int[]       @map("enable_platform")
-  notices        AppNotice[] @relation("notices")
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 页面代码（唯一标识）
+  code String @unique @map("code") @db.VarChar(50)
+  /// 页面路径（唯一）
+  path String @unique @map("path") @db.VarChar(300)
+
+  /// 页面名称
+  name        String  @map("name") @db.VarChar(100)
+  /// 页面标题
+  title       String  @map("title") @db.VarChar(200)
+  /// 页面描述
+  description String? @map("description") @db.VarChar(500)
+
+  /// 访问级别（0=公开, 1=登录用户, 2=会员, 9=管理员）
+  accessLevel    Int     @default(0) @map("access_level") @db.SmallInt
+  /// 是否启用
+  isEnabled      Boolean @default(true) @map("is_enabled")
+  /// 启用的平台列表
+  enablePlatform Int[]   @map("enable_platform")
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 关联通知
+  notices AppNotice[] @relation("notices")
 
   @@index([accessLevel, isEnabled])
   @@map("app_page")

@@ -290,7 +290,6 @@ export class AppTokenStorageService extends BaseService implements ITokenStorage
   async cleanupExpiredTokens() {
     const result = await this.appUserToken.updateMany({
       where: {
-        tokenType: 'REFRESH',
         expiresAt: { lt: new Date() },
         revokedAt: null,
       },

@@ -1,0 +1,34 @@
+/// 应用积分记录表 - 记录用户积分变化历史，包括获得和消费的积分
+model AppPointRecord {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 关联的用户ID
+  userId Int  @map("user_id")
+  /// 关联的规则ID
+  ruleId Int? @map("rule_id")
+
+  /// 积分变化（正数为获得，负数为消费）
+  points       Int
+  /// 变化前积分
+  beforePoints Int @map("before_points")
+  /// 变化后积分
+  afterPoints  Int @map("after_points")
+
+  /// 备注
+  remark String? @db.VarChar(500)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 关联规则
+  rule AppPointRule? @relation(fields: [ruleId], references: [id])
+  /// 关联用户
+  user AppUser       @relation("UserPointRecords", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([ruleId])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@map("app_point_record")
+}

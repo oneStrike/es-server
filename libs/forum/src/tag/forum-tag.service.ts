@@ -94,7 +94,7 @@ export class ForumTagService extends BaseService {
       include: {
         _count: {
           select: {
-            topics: true,
+            topicTags: true,
           },
         },
       },
@@ -201,7 +201,7 @@ export class ForumTagService extends BaseService {
       include: {
         _count: {
           select: {
-            topics: true,
+            topicTags: true,
           },
         },
       },
@@ -211,7 +211,7 @@ export class ForumTagService extends BaseService {
       throw new NotFoundException('标签不存在')
     }
 
-    if (tag._count.topics > 0) {
+    if (tag._count.topicTags > 0) {
       throw new BadRequestException('该标签已被使用，无法删除')
     }
 

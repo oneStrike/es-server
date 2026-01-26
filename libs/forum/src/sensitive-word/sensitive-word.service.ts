@@ -3,7 +3,10 @@ import { IdDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 
 import {
+  ForumForumSensitiveWordLevelStatisticsDto,
+  ForumForumSensitiveWordTypeStatisticsDto,
   ForumSensitiveWordRecentHitStatisticsDto,
+  ForumSensitiveWordStatisticsDataDto,
   ForumSensitiveWordStatisticsQueryDto,
   ForumSensitiveWordStatisticsResponseDto,
   ForumSensitiveWordTopHitStatisticsDto,
@@ -113,7 +116,7 @@ export class ForumSensitiveWordService extends BaseService {
    * 获取级别统计
    */
   private async getLevelStatistics(): Promise<
-    ForumSensitiveWordRecentHitStatisticsDto[]
+    ForumForumSensitiveWordLevelStatisticsDto[]
   > {
     const results = await this.sensitiveWord.groupBy({
       by: ['level'],
@@ -137,7 +140,7 @@ export class ForumSensitiveWordService extends BaseService {
    * 获取类型统计
    */
   private async getTypeStatistics(): Promise<
-    ForumSensitiveWordTopHitStatisticsDto[]
+    ForumForumSensitiveWordTypeStatisticsDto[]
   > {
     const results = await this.sensitiveWord.groupBy({
       by: ['type'],
@@ -234,10 +237,10 @@ export class ForumSensitiveWordService extends BaseService {
     const type = dto.type || ForumStatisticsTypeEnum.LEVEL
 
     let data:
+      | ForumForumSensitiveWordLevelStatisticsDto[]
+      | ForumForumSensitiveWordTypeStatisticsDto[]
       | ForumSensitiveWordRecentHitStatisticsDto[]
       | ForumSensitiveWordTopHitStatisticsDto[]
-      | ForumSensitiveWordTopHitStatisticsDto[]
-      | ForumSensitiveWordRecentHitStatisticsDto[]
 
     switch (type) {
       case ForumStatisticsTypeEnum.LEVEL:

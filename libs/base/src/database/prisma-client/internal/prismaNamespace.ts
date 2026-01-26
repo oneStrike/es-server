@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.2.0
- * Query Engine version: 0c8ef2ce45c83248ab3df073180d5eda9e8be7a3
+ * Prisma Client JS version: 7.3.0
+ * Query Engine version: 9d6ad21cbbceab97458517b147a6a09ff43aa735
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.2.0",
-  engine: "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3"
+  client: "7.3.0",
+  engine: "9d6ad21cbbceab97458517b147a6a09ff43aa735"
 }
 
 /**
@@ -386,24 +386,24 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   AdminUser: 'AdminUser',
   AppConfig: 'AppConfig',
+  AppExperienceRecord: 'AppExperienceRecord',
+  AppExperienceRule: 'AppExperienceRule',
+  AppLevelRule: 'AppLevelRule',
   AppNoticeRead: 'AppNoticeRead',
   AppNotice: 'AppNotice',
   AppPage: 'AppPage',
+  AppPointRecord: 'AppPointRecord',
+  AppPointRule: 'AppPointRule',
   AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
   ForumBadge: 'ForumBadge',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
-  ForumExperienceRecord: 'ForumExperienceRecord',
-  ForumExperienceRule: 'ForumExperienceRule',
-  ForumLevelRule: 'ForumLevelRule',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
   ForumModeratorApplication: 'ForumModeratorApplication',
   ForumModeratorSection: 'ForumModeratorSection',
   ForumModerator: 'ForumModerator',
   ForumNotification: 'ForumNotification',
-  ForumPointRecord: 'ForumPointRecord',
-  ForumPointRule: 'ForumPointRule',
   ForumProfileBadge: 'ForumProfileBadge',
   ForumProfile: 'ForumProfile',
   ForumReplyLike: 'ForumReplyLike',
@@ -446,7 +446,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumExperienceRecord" | "forumExperienceRule" | "forumLevelRule" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumPointRecord" | "forumPointRule" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUser" | "appConfig" | "appExperienceRecord" | "appExperienceRule" | "appLevelRule" | "appNoticeRead" | "appNotice" | "appPage" | "appPointRecord" | "appPointRule" | "appUserToken" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "memberLevel" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -595,6 +595,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AppConfigCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AppConfigCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppExperienceRecord: {
+      payload: Prisma.$AppExperienceRecordPayload<ExtArgs>
+      fields: Prisma.AppExperienceRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppExperienceRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppExperienceRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.AppExperienceRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppExperienceRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
+        }
+        findMany: {
+          args: Prisma.AppExperienceRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>[]
+        }
+        create: {
+          args: Prisma.AppExperienceRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
+        }
+        createMany: {
+          args: Prisma.AppExperienceRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppExperienceRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.AppExperienceRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
+        }
+        update: {
+          args: Prisma.AppExperienceRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.AppExperienceRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppExperienceRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppExperienceRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.AppExperienceRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.AppExperienceRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppExperienceRecord>
+        }
+        groupBy: {
+          args: Prisma.AppExperienceRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppExperienceRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppExperienceRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppExperienceRecordCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppExperienceRule: {
+      payload: Prisma.$AppExperienceRulePayload<ExtArgs>
+      fields: Prisma.AppExperienceRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppExperienceRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppExperienceRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
+        }
+        findFirst: {
+          args: Prisma.AppExperienceRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppExperienceRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
+        }
+        findMany: {
+          args: Prisma.AppExperienceRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>[]
+        }
+        create: {
+          args: Prisma.AppExperienceRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
+        }
+        createMany: {
+          args: Prisma.AppExperienceRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppExperienceRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>[]
+        }
+        delete: {
+          args: Prisma.AppExperienceRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
+        }
+        update: {
+          args: Prisma.AppExperienceRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.AppExperienceRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppExperienceRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppExperienceRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.AppExperienceRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
+        }
+        aggregate: {
+          args: Prisma.AppExperienceRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppExperienceRule>
+        }
+        groupBy: {
+          args: Prisma.AppExperienceRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppExperienceRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppExperienceRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppExperienceRuleCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppLevelRule: {
+      payload: Prisma.$AppLevelRulePayload<ExtArgs>
+      fields: Prisma.AppLevelRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppLevelRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppLevelRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
+        }
+        findFirst: {
+          args: Prisma.AppLevelRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppLevelRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
+        }
+        findMany: {
+          args: Prisma.AppLevelRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>[]
+        }
+        create: {
+          args: Prisma.AppLevelRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
+        }
+        createMany: {
+          args: Prisma.AppLevelRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppLevelRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>[]
+        }
+        delete: {
+          args: Prisma.AppLevelRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
+        }
+        update: {
+          args: Prisma.AppLevelRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.AppLevelRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppLevelRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppLevelRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.AppLevelRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
+        }
+        aggregate: {
+          args: Prisma.AppLevelRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppLevelRule>
+        }
+        groupBy: {
+          args: Prisma.AppLevelRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppLevelRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppLevelRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppLevelRuleCountAggregateOutputType> | number
         }
       }
     }
@@ -817,6 +1039,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AppPageCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AppPageCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppPointRecord: {
+      payload: Prisma.$AppPointRecordPayload<ExtArgs>
+      fields: Prisma.AppPointRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppPointRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppPointRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.AppPointRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppPointRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
+        }
+        findMany: {
+          args: Prisma.AppPointRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>[]
+        }
+        create: {
+          args: Prisma.AppPointRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
+        }
+        createMany: {
+          args: Prisma.AppPointRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppPointRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.AppPointRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
+        }
+        update: {
+          args: Prisma.AppPointRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.AppPointRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppPointRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppPointRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.AppPointRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.AppPointRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppPointRecord>
+        }
+        groupBy: {
+          args: Prisma.AppPointRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppPointRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppPointRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppPointRecordCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppPointRule: {
+      payload: Prisma.$AppPointRulePayload<ExtArgs>
+      fields: Prisma.AppPointRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppPointRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppPointRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
+        }
+        findFirst: {
+          args: Prisma.AppPointRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppPointRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
+        }
+        findMany: {
+          args: Prisma.AppPointRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>[]
+        }
+        create: {
+          args: Prisma.AppPointRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
+        }
+        createMany: {
+          args: Prisma.AppPointRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppPointRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>[]
+        }
+        delete: {
+          args: Prisma.AppPointRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
+        }
+        update: {
+          args: Prisma.AppPointRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.AppPointRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppPointRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppPointRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.AppPointRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
+        }
+        aggregate: {
+          args: Prisma.AppPointRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppPointRule>
+        }
+        groupBy: {
+          args: Prisma.AppPointRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppPointRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppPointRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppPointRuleCountAggregateOutputType> | number
         }
       }
     }
@@ -1190,228 +1560,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    ForumExperienceRecord: {
-      payload: Prisma.$ForumExperienceRecordPayload<ExtArgs>
-      fields: Prisma.ForumExperienceRecordFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumExperienceRecordFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumExperienceRecordFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
-        }
-        findFirst: {
-          args: Prisma.ForumExperienceRecordFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumExperienceRecordFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
-        }
-        findMany: {
-          args: Prisma.ForumExperienceRecordFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>[]
-        }
-        create: {
-          args: Prisma.ForumExperienceRecordCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
-        }
-        createMany: {
-          args: Prisma.ForumExperienceRecordCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumExperienceRecordCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>[]
-        }
-        delete: {
-          args: Prisma.ForumExperienceRecordDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
-        }
-        update: {
-          args: Prisma.ForumExperienceRecordUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumExperienceRecordDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumExperienceRecordUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumExperienceRecordUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumExperienceRecordUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRecordPayload>
-        }
-        aggregate: {
-          args: Prisma.ForumExperienceRecordAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumExperienceRecord>
-        }
-        groupBy: {
-          args: Prisma.ForumExperienceRecordGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumExperienceRecordGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumExperienceRecordCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumExperienceRecordCountAggregateOutputType> | number
-        }
-      }
-    }
-    ForumExperienceRule: {
-      payload: Prisma.$ForumExperienceRulePayload<ExtArgs>
-      fields: Prisma.ForumExperienceRuleFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumExperienceRuleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumExperienceRuleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
-        }
-        findFirst: {
-          args: Prisma.ForumExperienceRuleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumExperienceRuleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
-        }
-        findMany: {
-          args: Prisma.ForumExperienceRuleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>[]
-        }
-        create: {
-          args: Prisma.ForumExperienceRuleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
-        }
-        createMany: {
-          args: Prisma.ForumExperienceRuleCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumExperienceRuleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>[]
-        }
-        delete: {
-          args: Prisma.ForumExperienceRuleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
-        }
-        update: {
-          args: Prisma.ForumExperienceRuleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumExperienceRuleDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumExperienceRuleUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumExperienceRuleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumExperienceRuleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumExperienceRulePayload>
-        }
-        aggregate: {
-          args: Prisma.ForumExperienceRuleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumExperienceRule>
-        }
-        groupBy: {
-          args: Prisma.ForumExperienceRuleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumExperienceRuleGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumExperienceRuleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumExperienceRuleCountAggregateOutputType> | number
-        }
-      }
-    }
-    ForumLevelRule: {
-      payload: Prisma.$ForumLevelRulePayload<ExtArgs>
-      fields: Prisma.ForumLevelRuleFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumLevelRuleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumLevelRuleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload>
-        }
-        findFirst: {
-          args: Prisma.ForumLevelRuleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumLevelRuleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload>
-        }
-        findMany: {
-          args: Prisma.ForumLevelRuleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload>[]
-        }
-        create: {
-          args: Prisma.ForumLevelRuleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload>
-        }
-        createMany: {
-          args: Prisma.ForumLevelRuleCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumLevelRuleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload>[]
-        }
-        delete: {
-          args: Prisma.ForumLevelRuleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload>
-        }
-        update: {
-          args: Prisma.ForumLevelRuleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumLevelRuleDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumLevelRuleUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumLevelRuleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumLevelRuleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumLevelRulePayload>
-        }
-        aggregate: {
-          args: Prisma.ForumLevelRuleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumLevelRule>
-        }
-        groupBy: {
-          args: Prisma.ForumLevelRuleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumLevelRuleGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumLevelRuleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumLevelRuleCountAggregateOutputType> | number
-        }
-      }
-    }
     ForumModeratorActionLog: {
       payload: Prisma.$ForumModeratorActionLogPayload<ExtArgs>
       fields: Prisma.ForumModeratorActionLogFieldRefs
@@ -1779,154 +1927,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ForumNotificationCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ForumNotificationCountAggregateOutputType> | number
-        }
-      }
-    }
-    ForumPointRecord: {
-      payload: Prisma.$ForumPointRecordPayload<ExtArgs>
-      fields: Prisma.ForumPointRecordFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumPointRecordFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumPointRecordFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload>
-        }
-        findFirst: {
-          args: Prisma.ForumPointRecordFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumPointRecordFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload>
-        }
-        findMany: {
-          args: Prisma.ForumPointRecordFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload>[]
-        }
-        create: {
-          args: Prisma.ForumPointRecordCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload>
-        }
-        createMany: {
-          args: Prisma.ForumPointRecordCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumPointRecordCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload>[]
-        }
-        delete: {
-          args: Prisma.ForumPointRecordDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload>
-        }
-        update: {
-          args: Prisma.ForumPointRecordUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumPointRecordDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumPointRecordUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumPointRecordUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumPointRecordUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRecordPayload>
-        }
-        aggregate: {
-          args: Prisma.ForumPointRecordAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumPointRecord>
-        }
-        groupBy: {
-          args: Prisma.ForumPointRecordGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumPointRecordGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumPointRecordCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumPointRecordCountAggregateOutputType> | number
-        }
-      }
-    }
-    ForumPointRule: {
-      payload: Prisma.$ForumPointRulePayload<ExtArgs>
-      fields: Prisma.ForumPointRuleFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumPointRuleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumPointRuleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload>
-        }
-        findFirst: {
-          args: Prisma.ForumPointRuleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumPointRuleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload>
-        }
-        findMany: {
-          args: Prisma.ForumPointRuleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload>[]
-        }
-        create: {
-          args: Prisma.ForumPointRuleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload>
-        }
-        createMany: {
-          args: Prisma.ForumPointRuleCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumPointRuleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload>[]
-        }
-        delete: {
-          args: Prisma.ForumPointRuleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload>
-        }
-        update: {
-          args: Prisma.ForumPointRuleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumPointRuleDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumPointRuleUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumPointRuleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumPointRuleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumPointRulePayload>
-        }
-        aggregate: {
-          args: Prisma.ForumPointRuleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumPointRule>
-        }
-        groupBy: {
-          args: Prisma.ForumPointRuleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumPointRuleGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumPointRuleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumPointRuleCountAggregateOutputType> | number
         }
       }
     }
@@ -3971,16 +3971,16 @@ export const AdminUserScalarFieldEnum = {
   id: 'id',
   username: 'username',
   password: 'password',
-  avatar: 'avatar',
   mobile: 'mobile',
-  isEnabled: 'isEnabled',
+  avatar: 'avatar',
   role: 'role',
+  isEnabled: 'isEnabled',
+  isLocked: 'isLocked',
   lastLoginAt: 'lastLoginAt',
   lastLoginIp: 'lastLoginIp',
   loginFailAt: 'loginFailAt',
   loginFailIp: 'loginFailIp',
   loginFailCount: 'loginFailCount',
-  isLocked: 'isLocked',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -4016,6 +4016,56 @@ export const AppConfigScalarFieldEnum = {
 export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
+export const AppExperienceRecordScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  ruleId: 'ruleId',
+  experience: 'experience',
+  beforeExperience: 'beforeExperience',
+  afterExperience: 'afterExperience',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type AppExperienceRecordScalarFieldEnum = (typeof AppExperienceRecordScalarFieldEnum)[keyof typeof AppExperienceRecordScalarFieldEnum]
+
+
+export const AppExperienceRuleScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  experience: 'experience',
+  dailyLimit: 'dailyLimit',
+  isEnabled: 'isEnabled',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppExperienceRuleScalarFieldEnum = (typeof AppExperienceRuleScalarFieldEnum)[keyof typeof AppExperienceRuleScalarFieldEnum]
+
+
+export const AppLevelRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  requiredExperience: 'requiredExperience',
+  description: 'description',
+  icon: 'icon',
+  badge: 'badge',
+  color: 'color',
+  sortOrder: 'sortOrder',
+  isEnabled: 'isEnabled',
+  dailyTopicLimit: 'dailyTopicLimit',
+  dailyReplyCommentLimit: 'dailyReplyCommentLimit',
+  postInterval: 'postInterval',
+  dailyLikeLimit: 'dailyLikeLimit',
+  dailyFavoriteLimit: 'dailyFavoriteLimit',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppLevelRuleScalarFieldEnum = (typeof AppLevelRuleScalarFieldEnum)[keyof typeof AppLevelRuleScalarFieldEnum]
+
+
 export const AppNoticeReadScalarFieldEnum = {
   id: 'id',
   noticeId: 'noticeId',
@@ -4028,20 +4078,20 @@ export type AppNoticeReadScalarFieldEnum = (typeof AppNoticeReadScalarFieldEnum)
 
 export const AppNoticeScalarFieldEnum = {
   id: 'id',
+  pageId: 'pageId',
   title: 'title',
   content: 'content',
   noticeType: 'noticeType',
   priorityLevel: 'priorityLevel',
   publishStartTime: 'publishStartTime',
   publishEndTime: 'publishEndTime',
-  pageId: 'pageId',
   popupBackgroundImage: 'popupBackgroundImage',
   isPublished: 'isPublished',
   isPinned: 'isPinned',
   showAsPopup: 'showAsPopup',
+  enablePlatform: 'enablePlatform',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  enablePlatform: 'enablePlatform'
+  updatedAt: 'updatedAt'
 } as const
 
 export type AppNoticeScalarFieldEnum = (typeof AppNoticeScalarFieldEnum)[keyof typeof AppNoticeScalarFieldEnum]
@@ -4053,21 +4103,50 @@ export const AppPageScalarFieldEnum = {
   path: 'path',
   name: 'name',
   title: 'title',
+  description: 'description',
   accessLevel: 'accessLevel',
   isEnabled: 'isEnabled',
-  description: 'description',
+  enablePlatform: 'enablePlatform',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  enablePlatform: 'enablePlatform'
+  updatedAt: 'updatedAt'
 } as const
 
 export type AppPageScalarFieldEnum = (typeof AppPageScalarFieldEnum)[keyof typeof AppPageScalarFieldEnum]
 
 
-export const AppUserTokenScalarFieldEnum = {
+export const AppPointRecordScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  ruleId: 'ruleId',
+  points: 'points',
+  beforePoints: 'beforePoints',
+  afterPoints: 'afterPoints',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type AppPointRecordScalarFieldEnum = (typeof AppPointRecordScalarFieldEnum)[keyof typeof AppPointRecordScalarFieldEnum]
+
+
+export const AppPointRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  points: 'points',
+  dailyLimit: 'dailyLimit',
+  isEnabled: 'isEnabled',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppPointRuleScalarFieldEnum = (typeof AppPointRuleScalarFieldEnum)[keyof typeof AppPointRuleScalarFieldEnum]
+
+
+export const AppUserTokenScalarFieldEnum = {
+  id: 'id',
   jti: 'jti',
+  userId: 'userId',
   tokenType: 'tokenType',
   expiresAt: 'expiresAt',
   revokedAt: 'revokedAt',
@@ -4085,15 +4164,20 @@ export type AppUserTokenScalarFieldEnum = (typeof AppUserTokenScalarFieldEnum)[k
 export const AppUserScalarFieldEnum = {
   id: 'id',
   account: 'account',
+  phone: 'phone',
+  email: 'email',
+  levelId: 'levelId',
   nickname: 'nickname',
   password: 'password',
   avatar: 'avatar',
-  phone: 'phone',
-  email: 'email',
   isEnabled: 'isEnabled',
   gender: 'gender',
   birthDate: 'birthDate',
-  isSignedIn: 'isSignedIn',
+  points: 'points',
+  experience: 'experience',
+  status: 'status',
+  banReason: 'banReason',
+  banUntil: 'banUntil',
   lastLoginAt: 'lastLoginAt',
   lastLoginIp: 'lastLoginIp',
   createdAt: 'createdAt',
@@ -4107,9 +4191,9 @@ export type AppUserScalarFieldEnum = (typeof AppUserScalarFieldEnum)[keyof typeo
 export const ForumBadgeScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  type: 'type',
   description: 'description',
   icon: 'icon',
-  type: 'type',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
@@ -4122,13 +4206,13 @@ export type ForumBadgeScalarFieldEnum = (typeof ForumBadgeScalarFieldEnum)[keyof
 export const ForumConfigHistoryScalarFieldEnum = {
   id: 'id',
   configId: 'configId',
+  operatedById: 'operatedById',
   changes: 'changes',
   changeType: 'changeType',
   reason: 'reason',
-  operatedById: 'operatedById',
-  operatedAt: 'operatedAt',
   ipAddress: 'ipAddress',
-  userAgent: 'userAgent'
+  userAgent: 'userAgent',
+  operatedAt: 'operatedAt'
 } as const
 
 export type ForumConfigHistoryScalarFieldEnum = (typeof ForumConfigHistoryScalarFieldEnum)[keyof typeof ForumConfigHistoryScalarFieldEnum]
@@ -4136,6 +4220,7 @@ export type ForumConfigHistoryScalarFieldEnum = (typeof ForumConfigHistoryScalar
 
 export const ForumConfigScalarFieldEnum = {
   id: 'id',
+  updatedById: 'updatedById',
   siteName: 'siteName',
   siteDescription: 'siteDescription',
   siteKeywords: 'siteKeywords',
@@ -4167,71 +4252,20 @@ export const ForumConfigScalarFieldEnum = {
   enableSystemNotification: 'enableSystemNotification',
   enableMaintenanceMode: 'enableMaintenanceMode',
   maintenanceMessage: 'maintenanceMessage',
-  updatedById: 'updatedById',
-  updatedAt: 'updatedAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type ForumConfigScalarFieldEnum = (typeof ForumConfigScalarFieldEnum)[keyof typeof ForumConfigScalarFieldEnum]
 
 
-export const ForumExperienceRecordScalarFieldEnum = {
-  id: 'id',
-  profileId: 'profileId',
-  ruleId: 'ruleId',
-  experience: 'experience',
-  beforeExperience: 'beforeExperience',
-  afterExperience: 'afterExperience',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type ForumExperienceRecordScalarFieldEnum = (typeof ForumExperienceRecordScalarFieldEnum)[keyof typeof ForumExperienceRecordScalarFieldEnum]
-
-
-export const ForumExperienceRuleScalarFieldEnum = {
-  id: 'id',
-  type: 'type',
-  experience: 'experience',
-  dailyLimit: 'dailyLimit',
-  isEnabled: 'isEnabled',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ForumExperienceRuleScalarFieldEnum = (typeof ForumExperienceRuleScalarFieldEnum)[keyof typeof ForumExperienceRuleScalarFieldEnum]
-
-
-export const ForumLevelRuleScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  description: 'description',
-  requiredExperience: 'requiredExperience',
-  sortOrder: 'sortOrder',
-  isEnabled: 'isEnabled',
-  icon: 'icon',
-  badge: 'badge',
-  color: 'color',
-  dailyTopicLimit: 'dailyTopicLimit',
-  dailyReplyCommentLimit: 'dailyReplyCommentLimit',
-  postInterval: 'postInterval',
-  dailyLikeLimit: 'dailyLikeLimit',
-  dailyFavoriteLimit: 'dailyFavoriteLimit',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ForumLevelRuleScalarFieldEnum = (typeof ForumLevelRuleScalarFieldEnum)[keyof typeof ForumLevelRuleScalarFieldEnum]
-
-
 export const ForumModeratorActionLogScalarFieldEnum = {
   id: 'id',
   moderatorId: 'moderatorId',
-  actionType: 'actionType',
-  actionDescription: 'actionDescription',
-  targetType: 'targetType',
   targetId: 'targetId',
+  actionType: 'actionType',
+  targetType: 'targetType',
+  actionDescription: 'actionDescription',
   beforeData: 'beforeData',
   afterData: 'afterData',
   createdAt: 'createdAt'
@@ -4244,13 +4278,13 @@ export const ForumModeratorApplicationScalarFieldEnum = {
   id: 'id',
   applicantId: 'applicantId',
   sectionId: 'sectionId',
+  auditById: 'auditById',
+  status: 'status',
   permissions: 'permissions',
   reason: 'reason',
-  status: 'status',
-  auditById: 'auditById',
-  auditAt: 'auditAt',
   auditReason: 'auditReason',
   remark: 'remark',
+  auditAt: 'auditAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -4273,9 +4307,9 @@ export type ForumModeratorSectionScalarFieldEnum = (typeof ForumModeratorSection
 
 export const ForumModeratorScalarFieldEnum = {
   id: 'id',
-  profileId: 'profileId',
-  roleType: 'roleType',
+  userId: 'userId',
   groupId: 'groupId',
+  roleType: 'roleType',
   permissions: 'permissions',
   isEnabled: 'isEnabled',
   remark: 'remark',
@@ -4289,54 +4323,25 @@ export type ForumModeratorScalarFieldEnum = (typeof ForumModeratorScalarFieldEnu
 
 export const ForumNotificationScalarFieldEnum = {
   id: 'id',
-  profileId: 'profileId',
+  userId: 'userId',
+  topicId: 'topicId',
+  replyId: 'replyId',
   type: 'type',
   title: 'title',
   content: 'content',
   priority: 'priority',
-  topicId: 'topicId',
-  replyId: 'replyId',
   isRead: 'isRead',
   readAt: 'readAt',
-  createdAt: 'createdAt',
-  expiredAt: 'expiredAt'
+  expiredAt: 'expiredAt',
+  createdAt: 'createdAt'
 } as const
 
 export type ForumNotificationScalarFieldEnum = (typeof ForumNotificationScalarFieldEnum)[keyof typeof ForumNotificationScalarFieldEnum]
 
 
-export const ForumPointRecordScalarFieldEnum = {
-  id: 'id',
-  profileId: 'profileId',
-  ruleId: 'ruleId',
-  points: 'points',
-  beforePoints: 'beforePoints',
-  afterPoints: 'afterPoints',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type ForumPointRecordScalarFieldEnum = (typeof ForumPointRecordScalarFieldEnum)[keyof typeof ForumPointRecordScalarFieldEnum]
-
-
-export const ForumPointRuleScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  type: 'type',
-  points: 'points',
-  dailyLimit: 'dailyLimit',
-  isEnabled: 'isEnabled',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ForumPointRuleScalarFieldEnum = (typeof ForumPointRuleScalarFieldEnum)[keyof typeof ForumPointRuleScalarFieldEnum]
-
-
 export const ForumProfileBadgeScalarFieldEnum = {
   id: 'id',
-  profileId: 'profileId',
+  userId: 'userId',
   badgeId: 'badgeId',
   createdAt: 'createdAt'
 } as const
@@ -4347,18 +4352,12 @@ export type ForumProfileBadgeScalarFieldEnum = (typeof ForumProfileBadgeScalarFi
 export const ForumProfileScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  points: 'points',
-  experience: 'experience',
-  levelId: 'levelId',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
   likeCount: 'likeCount',
   favoriteCount: 'favoriteCount',
   signature: 'signature',
   bio: 'bio',
-  status: 'status',
-  banReason: 'banReason',
-  banUntil: 'banUntil',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -4370,7 +4369,7 @@ export type ForumProfileScalarFieldEnum = (typeof ForumProfileScalarFieldEnum)[k
 export const ForumReplyLikeScalarFieldEnum = {
   id: 'id',
   replyId: 'replyId',
-  profileId: 'profileId',
+  userId: 'userId',
   createdAt: 'createdAt'
 } as const
 
@@ -4379,24 +4378,24 @@ export type ForumReplyLikeScalarFieldEnum = (typeof ForumReplyLikeScalarFieldEnu
 
 export const ForumReplyScalarFieldEnum = {
   id: 'id',
-  content: 'content',
   topicId: 'topicId',
-  profileId: 'profileId',
+  userId: 'userId',
+  content: 'content',
   floor: 'floor',
-  isHidden: 'isHidden',
   replyToId: 'replyToId',
   actualReplyToId: 'actualReplyToId',
+  isHidden: 'isHidden',
   auditStatus: 'auditStatus',
   auditReason: 'auditReason',
   auditAt: 'auditAt',
   auditById: 'auditById',
   auditRole: 'auditRole',
   likeCount: 'likeCount',
+  version: 'version',
+  sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  version: 'version',
-  sensitiveWordHits: 'sensitiveWordHits'
+  deletedAt: 'deletedAt'
 } as const
 
 export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof typeof ForumReplyScalarFieldEnum]
@@ -4405,13 +4404,13 @@ export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof
 export const ForumReportScalarFieldEnum = {
   id: 'id',
   reporterId: 'reporterId',
-  type: 'type',
+  handlerId: 'handlerId',
   targetId: 'targetId',
+  type: 'type',
   reason: 'reason',
   description: 'description',
   evidenceUrl: 'evidenceUrl',
   status: 'status',
-  handlerId: 'handlerId',
   handlingNote: 'handlingNote',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -4437,18 +4436,18 @@ export type ForumSectionGroupScalarFieldEnum = (typeof ForumSectionGroupScalarFi
 
 export const ForumSectionScalarFieldEnum = {
   id: 'id',
-  name: 'name',
   groupId: 'groupId',
+  userLevelRuleId: 'userLevelRuleId',
+  lastTopicId: 'lastTopicId',
+  name: 'name',
+  description: 'description',
   icon: 'icon',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   topicReviewPolicy: 'topicReviewPolicy',
-  userLevelRuleId: 'userLevelRuleId',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
   lastPostAt: 'lastPostAt',
-  lastTopicId: 'lastTopicId',
-  description: 'description',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -4462,18 +4461,18 @@ export const ForumSensitiveWordScalarFieldEnum = {
   id: 'id',
   word: 'word',
   replaceWord: 'replaceWord',
-  isEnabled: 'isEnabled',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
   level: 'level',
   type: 'type',
-  version: 'version',
   matchMode: 'matchMode',
+  isEnabled: 'isEnabled',
   hitCount: 'hitCount',
   lastHitAt: 'lastHitAt',
+  version: 'version',
+  remark: 'remark',
   createdBy: 'createdBy',
-  updatedBy: 'updatedBy'
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type ForumSensitiveWordScalarFieldEnum = (typeof ForumSensitiveWordScalarFieldEnum)[keyof typeof ForumSensitiveWordScalarFieldEnum]
@@ -4497,7 +4496,7 @@ export type ForumTagScalarFieldEnum = (typeof ForumTagScalarFieldEnum)[keyof typ
 export const ForumTopicFavoriteScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
-  profileId: 'profileId',
+  userId: 'userId',
   createdAt: 'createdAt'
 } as const
 
@@ -4507,7 +4506,7 @@ export type ForumTopicFavoriteScalarFieldEnum = (typeof ForumTopicFavoriteScalar
 export const ForumTopicLikeScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
-  profileId: 'profileId',
+  userId: 'userId',
   createdAt: 'createdAt'
 } as const
 
@@ -4526,10 +4525,12 @@ export type ForumTopicTagScalarFieldEnum = (typeof ForumTopicTagScalarFieldEnum)
 
 export const ForumTopicScalarFieldEnum = {
   id: 'id',
+  sectionId: 'sectionId',
+  userId: 'userId',
+  lastReplyUserId: 'lastReplyUserId',
+  auditById: 'auditById',
   title: 'title',
   content: 'content',
-  sectionId: 'sectionId',
-  profileId: 'profileId',
   isPinned: 'isPinned',
   isFeatured: 'isFeatured',
   isLocked: 'isLocked',
@@ -4537,19 +4538,17 @@ export const ForumTopicScalarFieldEnum = {
   auditStatus: 'auditStatus',
   auditReason: 'auditReason',
   auditAt: 'auditAt',
-  auditById: 'auditById',
   auditRole: 'auditRole',
   viewCount: 'viewCount',
   replyCount: 'replyCount',
   likeCount: 'likeCount',
   favoriteCount: 'favoriteCount',
   lastReplyAt: 'lastReplyAt',
-  lastReplyProfileId: 'lastReplyProfileId',
+  version: 'version',
+  sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  version: 'version',
-  sensitiveWordHits: 'sensitiveWordHits'
+  deletedAt: 'deletedAt'
 } as const
 
 export type ForumTopicScalarFieldEnum = (typeof ForumTopicScalarFieldEnum)[keyof typeof ForumTopicScalarFieldEnum]
@@ -4557,10 +4556,10 @@ export type ForumTopicScalarFieldEnum = (typeof ForumTopicScalarFieldEnum)[keyof
 
 export const ForumUserActionLogScalarFieldEnum = {
   id: 'id',
-  profileId: 'profileId',
+  userId: 'userId',
+  targetId: 'targetId',
   actionType: 'actionType',
   targetType: 'targetType',
-  targetId: 'targetId',
   beforeData: 'beforeData',
   afterData: 'afterData',
   ipAddress: 'ipAddress',
@@ -4577,10 +4576,10 @@ export const ForumViewScalarFieldEnum = {
   replyId: 'replyId',
   userId: 'userId',
   type: 'type',
-  viewedAt: 'viewedAt',
   duration: 'duration',
   device: 'device',
-  ipAddress: 'ipAddress'
+  ipAddress: 'ipAddress',
+  viewedAt: 'viewedAt'
 } as const
 
 export type ForumViewScalarFieldEnum = (typeof ForumViewScalarFieldEnum)[keyof typeof ForumViewScalarFieldEnum]
@@ -4589,20 +4588,20 @@ export type ForumViewScalarFieldEnum = (typeof ForumViewScalarFieldEnum)[keyof t
 export const MemberLevelScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  level: 'level',
+  icon: 'icon',
+  color: 'color',
+  description: 'description',
   points: 'points',
   loginDays: 'loginDays',
-  icon: 'icon',
-  description: 'description',
+  discount: 'discount',
   isEnabled: 'isEnabled',
-  color: 'color',
   blacklistLimit: 'blacklistLimit',
   workCollectionLimit: 'workCollectionLimit',
-  discount: 'discount',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  level: 'level'
+  deletedAt: 'deletedAt'
 } as const
 
 export type MemberLevelScalarFieldEnum = (typeof MemberLevelScalarFieldEnum)[keyof typeof MemberLevelScalarFieldEnum]
@@ -4613,14 +4612,14 @@ export const RequestLogScalarFieldEnum = {
   userId: 'userId',
   username: 'username',
   apiType: 'apiType',
-  ip: 'ip',
   method: 'method',
   path: 'path',
   params: 'params',
-  actionType: 'actionType',
-  isSuccess: 'isSuccess',
+  ip: 'ip',
   userAgent: 'userAgent',
   device: 'device',
+  actionType: 'actionType',
+  isSuccess: 'isSuccess',
   content: 'content',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -4666,17 +4665,17 @@ export const WorkAuthorScalarFieldEnum = {
   name: 'name',
   avatar: 'avatar',
   description: 'description',
-  isEnabled: 'isEnabled',
   nationality: 'nationality',
   gender: 'gender',
+  type: 'type',
+  isEnabled: 'isEnabled',
+  isRecommended: 'isRecommended',
   worksCount: 'worksCount',
   followersCount: 'followersCount',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  isRecommended: 'isRecommended',
-  type: 'type'
+  deletedAt: 'deletedAt'
 } as const
 
 export type WorkAuthorScalarFieldEnum = (typeof WorkAuthorScalarFieldEnum)[keyof typeof WorkAuthorScalarFieldEnum]
@@ -4686,9 +4685,9 @@ export const WorkComicAuthorScalarFieldEnum = {
   id: 'id',
   comicId: 'comicId',
   authorId: 'authorId',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  sortOrder: 'sortOrder'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkComicAuthorScalarFieldEnum = (typeof WorkComicAuthorScalarFieldEnum)[keyof typeof WorkComicAuthorScalarFieldEnum]
@@ -4697,9 +4696,9 @@ export type WorkComicAuthorScalarFieldEnum = (typeof WorkComicAuthorScalarFieldE
 export const WorkComicCategoryScalarFieldEnum = {
   comicId: 'comicId',
   categoryId: 'categoryId',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  sortOrder: 'sortOrder'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkComicCategoryScalarFieldEnum = (typeof WorkComicCategoryScalarFieldEnum)[keyof typeof WorkComicCategoryScalarFieldEnum]
@@ -4707,30 +4706,30 @@ export type WorkComicCategoryScalarFieldEnum = (typeof WorkComicCategoryScalarFi
 
 export const WorkComicChapterScalarFieldEnum = {
   id: 'id',
+  comicId: 'comicId',
+  requiredReadLevelId: 'requiredReadLevelId',
+  requiredDownloadLevelId: 'requiredDownloadLevelId',
   title: 'title',
   subtitle: 'subtitle',
-  isPublished: 'isPublished',
-  comicId: 'comicId',
-  readRule: 'readRule',
+  description: 'description',
   contents: 'contents',
+  sortOrder: 'sortOrder',
+  readRule: 'readRule',
+  downloadRule: 'downloadRule',
+  readPoints: 'readPoints',
+  downloadPoints: 'downloadPoints',
+  isPublished: 'isPublished',
   isPreview: 'isPreview',
+  canComment: 'canComment',
   publishAt: 'publishAt',
   viewCount: 'viewCount',
   likeCount: 'likeCount',
   commentCount: 'commentCount',
+  purchaseCount: 'purchaseCount',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  canComment: 'canComment',
-  downloadPoints: 'downloadPoints',
-  readPoints: 'readPoints',
-  sortOrder: 'sortOrder',
-  downloadRule: 'downloadRule',
-  requiredDownloadLevelId: 'requiredDownloadLevelId',
-  requiredReadLevelId: 'requiredReadLevelId',
-  description: 'description',
-  purchaseCount: 'purchaseCount'
+  deletedAt: 'deletedAt'
 } as const
 
 export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFieldEnum)[keyof typeof WorkComicChapterScalarFieldEnum]
@@ -4739,9 +4738,9 @@ export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFiel
 export const WorkComicTagScalarFieldEnum = {
   comicId: 'comicId',
   tagId: 'tagId',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  sortOrder: 'sortOrder'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkComicTagScalarFieldEnum = (typeof WorkComicTagScalarFieldEnum)[keyof typeof WorkComicTagScalarFieldEnum]
@@ -4752,33 +4751,33 @@ export const WorkComicScalarFieldEnum = {
   name: 'name',
   alias: 'alias',
   cover: 'cover',
-  popularity: 'popularity',
-  popularityWeight: 'popularityWeight',
-  language: 'language',
-  region: 'region',
-  ageRating: 'ageRating',
-  isPublished: 'isPublished',
-  publishAt: 'publishAt',
-  lastUpdated: 'lastUpdated',
   description: 'description',
   publisher: 'publisher',
   originalSource: 'originalSource',
+  copyright: 'copyright',
+  disclaimer: 'disclaimer',
+  language: 'language',
+  region: 'region',
+  ageRating: 'ageRating',
   serialStatus: 'serialStatus',
-  rating: 'rating',
-  recommendWeight: 'recommendWeight',
+  isPublished: 'isPublished',
   isRecommended: 'isRecommended',
   isHot: 'isHot',
   isNew: 'isNew',
-  copyright: 'copyright',
-  disclaimer: 'disclaimer',
-  remark: 'remark',
-  deletedAt: 'deletedAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
+  popularity: 'popularity',
+  popularityWeight: 'popularityWeight',
+  rating: 'rating',
+  recommendWeight: 'recommendWeight',
+  viewCount: 'viewCount',
   favoriteCount: 'favoriteCount',
   likeCount: 'likeCount',
   ratingCount: 'ratingCount',
-  viewCount: 'viewCount'
+  publishAt: 'publishAt',
+  lastUpdated: 'lastUpdated',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type WorkComicScalarFieldEnum = (typeof WorkComicScalarFieldEnum)[keyof typeof WorkComicScalarFieldEnum]
@@ -4787,15 +4786,15 @@ export type WorkComicScalarFieldEnum = (typeof WorkComicScalarFieldEnum)[keyof t
 export const WorkCategoryScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  description: 'description',
   icon: 'icon',
+  contentType: 'contentType',
   popularity: 'popularity',
   popularityWeight: 'popularityWeight',
   order: 'order',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  description: 'description',
-  contentType: 'contentType'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkCategoryScalarFieldEnum = (typeof WorkCategoryScalarFieldEnum)[keyof typeof WorkCategoryScalarFieldEnum]
@@ -4805,13 +4804,13 @@ export const WorkTagScalarFieldEnum = {
   id: 'id',
   name: 'name',
   icon: 'icon',
+  description: 'description',
   popularity: 'popularity',
   popularityWeight: 'popularityWeight',
   order: 'order',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  description: 'description'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkTagScalarFieldEnum = (typeof WorkTagScalarFieldEnum)[keyof typeof WorkTagScalarFieldEnum]
@@ -4935,6 +4934,20 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
 
 
 /**
+ * Reference to a field of type 'Decimal'
+ */
+export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
+    
+
+
+/**
+ * Reference to a field of type 'Decimal[]'
+ */
+export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -5044,24 +5057,24 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   adminUser?: Prisma.AdminUserOmit
   appConfig?: Prisma.AppConfigOmit
+  appExperienceRecord?: Prisma.AppExperienceRecordOmit
+  appExperienceRule?: Prisma.AppExperienceRuleOmit
+  appLevelRule?: Prisma.AppLevelRuleOmit
   appNoticeRead?: Prisma.AppNoticeReadOmit
   appNotice?: Prisma.AppNoticeOmit
   appPage?: Prisma.AppPageOmit
+  appPointRecord?: Prisma.AppPointRecordOmit
+  appPointRule?: Prisma.AppPointRuleOmit
   appUserToken?: Prisma.AppUserTokenOmit
   appUser?: Prisma.AppUserOmit
   forumBadge?: Prisma.ForumBadgeOmit
   forumConfigHistory?: Prisma.ForumConfigHistoryOmit
   forumConfig?: Prisma.ForumConfigOmit
-  forumExperienceRecord?: Prisma.ForumExperienceRecordOmit
-  forumExperienceRule?: Prisma.ForumExperienceRuleOmit
-  forumLevelRule?: Prisma.ForumLevelRuleOmit
   forumModeratorActionLog?: Prisma.ForumModeratorActionLogOmit
   forumModeratorApplication?: Prisma.ForumModeratorApplicationOmit
   forumModeratorSection?: Prisma.ForumModeratorSectionOmit
   forumModerator?: Prisma.ForumModeratorOmit
   forumNotification?: Prisma.ForumNotificationOmit
-  forumPointRecord?: Prisma.ForumPointRecordOmit
-  forumPointRule?: Prisma.ForumPointRuleOmit
   forumProfileBadge?: Prisma.ForumProfileBadgeOmit
   forumProfile?: Prisma.ForumProfileOmit
   forumReplyLike?: Prisma.ForumReplyLikeOmit

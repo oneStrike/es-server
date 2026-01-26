@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model AppPage
- * 
+ * 应用页面表 - 管理应用内的页面配置和路由
  */
 export type AppPageModel = runtime.Types.Result.DefaultSelection<Prisma.$AppPagePayload>
 
@@ -44,9 +44,9 @@ export type AppPageMinAggregateOutputType = {
   path: string | null
   name: string | null
   title: string | null
+  description: string | null
   accessLevel: number | null
   isEnabled: boolean | null
-  description: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -57,9 +57,9 @@ export type AppPageMaxAggregateOutputType = {
   path: string | null
   name: string | null
   title: string | null
+  description: string | null
   accessLevel: number | null
   isEnabled: boolean | null
-  description: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -70,12 +70,12 @@ export type AppPageCountAggregateOutputType = {
   path: number
   name: number
   title: number
+  description: number
   accessLevel: number
   isEnabled: number
-  description: number
+  enablePlatform: number
   createdAt: number
   updatedAt: number
-  enablePlatform: number
   _all: number
 }
 
@@ -98,9 +98,9 @@ export type AppPageMinAggregateInputType = {
   path?: true
   name?: true
   title?: true
+  description?: true
   accessLevel?: true
   isEnabled?: true
-  description?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -111,9 +111,9 @@ export type AppPageMaxAggregateInputType = {
   path?: true
   name?: true
   title?: true
+  description?: true
   accessLevel?: true
   isEnabled?: true
-  description?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -124,12 +124,12 @@ export type AppPageCountAggregateInputType = {
   path?: true
   name?: true
   title?: true
+  description?: true
   accessLevel?: true
   isEnabled?: true
-  description?: true
+  enablePlatform?: true
   createdAt?: true
   updatedAt?: true
-  enablePlatform?: true
   _all?: true
 }
 
@@ -225,12 +225,12 @@ export type AppPageGroupByOutputType = {
   path: string
   name: string
   title: string
+  description: string | null
   accessLevel: number
   isEnabled: boolean
-  description: string | null
+  enablePlatform: number[]
   createdAt: Date
   updatedAt: Date
-  enablePlatform: number[]
   _count: AppPageCountAggregateOutputType | null
   _avg: AppPageAvgAggregateOutputType | null
   _sum: AppPageSumAggregateOutputType | null
@@ -262,12 +262,12 @@ export type AppPageWhereInput = {
   path?: Prisma.StringFilter<"AppPage"> | string
   name?: Prisma.StringFilter<"AppPage"> | string
   title?: Prisma.StringFilter<"AppPage"> | string
+  description?: Prisma.StringNullableFilter<"AppPage"> | string | null
   accessLevel?: Prisma.IntFilter<"AppPage"> | number
   isEnabled?: Prisma.BoolFilter<"AppPage"> | boolean
-  description?: Prisma.StringNullableFilter<"AppPage"> | string | null
+  enablePlatform?: Prisma.IntNullableListFilter<"AppPage">
   createdAt?: Prisma.DateTimeFilter<"AppPage"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppPage"> | Date | string
-  enablePlatform?: Prisma.IntNullableListFilter<"AppPage">
   notices?: Prisma.AppNoticeListRelationFilter
 }
 
@@ -277,12 +277,12 @@ export type AppPageOrderByWithRelationInput = {
   path?: Prisma.SortOrder
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
   notices?: Prisma.AppNoticeOrderByRelationAggregateInput
 }
 
@@ -295,12 +295,12 @@ export type AppPageWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.AppPageWhereInput | Prisma.AppPageWhereInput[]
   name?: Prisma.StringFilter<"AppPage"> | string
   title?: Prisma.StringFilter<"AppPage"> | string
+  description?: Prisma.StringNullableFilter<"AppPage"> | string | null
   accessLevel?: Prisma.IntFilter<"AppPage"> | number
   isEnabled?: Prisma.BoolFilter<"AppPage"> | boolean
-  description?: Prisma.StringNullableFilter<"AppPage"> | string | null
+  enablePlatform?: Prisma.IntNullableListFilter<"AppPage">
   createdAt?: Prisma.DateTimeFilter<"AppPage"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppPage"> | Date | string
-  enablePlatform?: Prisma.IntNullableListFilter<"AppPage">
   notices?: Prisma.AppNoticeListRelationFilter
 }, "id" | "code" | "path">
 
@@ -310,12 +310,12 @@ export type AppPageOrderByWithAggregationInput = {
   path?: Prisma.SortOrder
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
   _count?: Prisma.AppPageCountOrderByAggregateInput
   _avg?: Prisma.AppPageAvgOrderByAggregateInput
   _max?: Prisma.AppPageMaxOrderByAggregateInput
@@ -332,12 +332,12 @@ export type AppPageScalarWhereWithAggregatesInput = {
   path?: Prisma.StringWithAggregatesFilter<"AppPage"> | string
   name?: Prisma.StringWithAggregatesFilter<"AppPage"> | string
   title?: Prisma.StringWithAggregatesFilter<"AppPage"> | string
+  description?: Prisma.StringNullableWithAggregatesFilter<"AppPage"> | string | null
   accessLevel?: Prisma.IntWithAggregatesFilter<"AppPage"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"AppPage"> | boolean
-  description?: Prisma.StringNullableWithAggregatesFilter<"AppPage"> | string | null
+  enablePlatform?: Prisma.IntNullableListFilter<"AppPage">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AppPage"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"AppPage"> | Date | string
-  enablePlatform?: Prisma.IntNullableListFilter<"AppPage">
 }
 
 export type AppPageCreateInput = {
@@ -345,12 +345,12 @@ export type AppPageCreateInput = {
   path: string
   name: string
   title: string
+  description?: string | null
   accessLevel?: number
   isEnabled?: boolean
-  description?: string | null
+  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
   notices?: Prisma.AppNoticeCreateNestedManyWithoutAppPageInput
 }
 
@@ -360,12 +360,12 @@ export type AppPageUncheckedCreateInput = {
   path: string
   name: string
   title: string
+  description?: string | null
   accessLevel?: number
   isEnabled?: boolean
-  description?: string | null
+  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
   notices?: Prisma.AppNoticeUncheckedCreateNestedManyWithoutAppPageInput
 }
 
@@ -374,12 +374,12 @@ export type AppPageUpdateInput = {
   path?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   notices?: Prisma.AppNoticeUpdateManyWithoutAppPageNestedInput
 }
 
@@ -389,12 +389,12 @@ export type AppPageUncheckedUpdateInput = {
   path?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   notices?: Prisma.AppNoticeUncheckedUpdateManyWithoutAppPageNestedInput
 }
 
@@ -404,12 +404,12 @@ export type AppPageCreateManyInput = {
   path: string
   name: string
   title: string
+  description?: string | null
   accessLevel?: number
   isEnabled?: boolean
-  description?: string | null
+  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
 }
 
 export type AppPageUpdateManyMutationInput = {
@@ -417,12 +417,12 @@ export type AppPageUpdateManyMutationInput = {
   path?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
 }
 
 export type AppPageUncheckedUpdateManyInput = {
@@ -431,12 +431,12 @@ export type AppPageUncheckedUpdateManyInput = {
   path?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
 }
 
 export type AppPageNullableScalarRelationFilter = {
@@ -450,12 +450,12 @@ export type AppPageCountOrderByAggregateInput = {
   path?: Prisma.SortOrder
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
 }
 
 export type AppPageAvgOrderByAggregateInput = {
@@ -470,9 +470,9 @@ export type AppPageMaxOrderByAggregateInput = {
   path?: Prisma.SortOrder
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -483,9 +483,9 @@ export type AppPageMinOrderByAggregateInput = {
   path?: Prisma.SortOrder
   name?: Prisma.SortOrder
   title?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   accessLevel?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -526,12 +526,12 @@ export type AppPageCreateWithoutNoticesInput = {
   path: string
   name: string
   title: string
+  description?: string | null
   accessLevel?: number
   isEnabled?: boolean
-  description?: string | null
+  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
 }
 
 export type AppPageUncheckedCreateWithoutNoticesInput = {
@@ -540,12 +540,12 @@ export type AppPageUncheckedCreateWithoutNoticesInput = {
   path: string
   name: string
   title: string
+  description?: string | null
   accessLevel?: number
   isEnabled?: boolean
-  description?: string | null
+  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
 }
 
 export type AppPageCreateOrConnectWithoutNoticesInput = {
@@ -569,12 +569,12 @@ export type AppPageUpdateWithoutNoticesInput = {
   path?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
 }
 
 export type AppPageUncheckedUpdateWithoutNoticesInput = {
@@ -583,12 +583,12 @@ export type AppPageUncheckedUpdateWithoutNoticesInput = {
   path?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   accessLevel?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
 }
 
 
@@ -628,12 +628,12 @@ export type AppPageSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   path?: boolean
   name?: boolean
   title?: boolean
+  description?: boolean
   accessLevel?: boolean
   isEnabled?: boolean
-  description?: boolean
+  enablePlatform?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  enablePlatform?: boolean
   notices?: boolean | Prisma.AppPage$noticesArgs<ExtArgs>
   _count?: boolean | Prisma.AppPageCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["appPage"]>
@@ -644,12 +644,12 @@ export type AppPageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   path?: boolean
   name?: boolean
   title?: boolean
+  description?: boolean
   accessLevel?: boolean
   isEnabled?: boolean
-  description?: boolean
+  enablePlatform?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  enablePlatform?: boolean
 }, ExtArgs["result"]["appPage"]>
 
 export type AppPageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -658,12 +658,12 @@ export type AppPageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   path?: boolean
   name?: boolean
   title?: boolean
+  description?: boolean
   accessLevel?: boolean
   isEnabled?: boolean
-  description?: boolean
+  enablePlatform?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  enablePlatform?: boolean
 }, ExtArgs["result"]["appPage"]>
 
 export type AppPageSelectScalar = {
@@ -672,15 +672,15 @@ export type AppPageSelectScalar = {
   path?: boolean
   name?: boolean
   title?: boolean
+  description?: boolean
   accessLevel?: boolean
   isEnabled?: boolean
-  description?: boolean
+  enablePlatform?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  enablePlatform?: boolean
 }
 
-export type AppPageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "path" | "name" | "title" | "accessLevel" | "isEnabled" | "description" | "createdAt" | "updatedAt" | "enablePlatform", ExtArgs["result"]["appPage"]>
+export type AppPageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "path" | "name" | "title" | "description" | "accessLevel" | "isEnabled" | "enablePlatform" | "createdAt" | "updatedAt", ExtArgs["result"]["appPage"]>
 export type AppPageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   notices?: boolean | Prisma.AppPage$noticesArgs<ExtArgs>
   _count?: boolean | Prisma.AppPageCountOutputTypeDefaultArgs<ExtArgs>
@@ -691,20 +691,56 @@ export type AppPageIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
 export type $AppPagePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AppPage"
   objects: {
+    /**
+     * 关联通知
+     */
     notices: Prisma.$AppNoticePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键ID
+     */
     id: number
+    /**
+     * 页面代码（唯一标识）
+     */
     code: string
+    /**
+     * 页面路径（唯一）
+     */
     path: string
+    /**
+     * 页面名称
+     */
     name: string
+    /**
+     * 页面标题
+     */
     title: string
-    accessLevel: number
-    isEnabled: boolean
+    /**
+     * 页面描述
+     */
     description: string | null
-    createdAt: Date
-    updatedAt: Date
+    /**
+     * 访问级别（0=公开, 1=登录用户, 2=会员, 9=管理员）
+     */
+    accessLevel: number
+    /**
+     * 是否启用
+     */
+    isEnabled: boolean
+    /**
+     * 启用的平台列表
+     */
     enablePlatform: number[]
+    /**
+     * 创建时间
+     */
+    createdAt: Date
+    /**
+     * 更新时间
+     */
+    updatedAt: Date
   }, ExtArgs["result"]["appPage"]>
   composites: {}
 }
@@ -1134,12 +1170,12 @@ export interface AppPageFieldRefs {
   readonly path: Prisma.FieldRef<"AppPage", 'String'>
   readonly name: Prisma.FieldRef<"AppPage", 'String'>
   readonly title: Prisma.FieldRef<"AppPage", 'String'>
+  readonly description: Prisma.FieldRef<"AppPage", 'String'>
   readonly accessLevel: Prisma.FieldRef<"AppPage", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"AppPage", 'Boolean'>
-  readonly description: Prisma.FieldRef<"AppPage", 'String'>
+  readonly enablePlatform: Prisma.FieldRef<"AppPage", 'Int[]'>
   readonly createdAt: Prisma.FieldRef<"AppPage", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"AppPage", 'DateTime'>
-  readonly enablePlatform: Prisma.FieldRef<"AppPage", 'Int[]'>
 }
     
 

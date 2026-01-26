@@ -1,4 +1,4 @@
-import { ForumExperienceModule as ExperienceModuleLib } from '@libs/forum/experience'
+import { ForumExperienceModule as ExperienceModuleLib } from '@libs/user/experience'
 import { Module } from '@nestjs/common'
 import { ExperienceController } from './experience.controller'
 

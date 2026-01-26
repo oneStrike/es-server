@@ -8,7 +8,7 @@ import {
   QueryForumExperienceRecordDto,
   QueryForumExperienceRuleDto,
   UpdateForumExperienceRuleDto,
-} from '@libs/forum/experience'
+} from '@libs/user/experience'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -94,7 +94,7 @@ export class ExperienceController {
     summary: '获取用户经验统计',
     model: BaseForumExperienceRuleDto,
   })
-  async getUserExperienceStats(@Query('profileId') profileId: number) {
-    return this.experienceService.getUserExperienceStats(profileId)
+  async getUserExperienceStats(@Query('userId') userId: number) {
+    return this.experienceService.getUserExperienceStats(userId)
   }
 }

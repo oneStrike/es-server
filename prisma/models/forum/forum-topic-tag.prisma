@@ -1,15 +1,18 @@
 /// 论坛主题标签关联表 - 管理主题与标签的多对多关系
 model ForumTopicTag {
   /// 主键ID
-  id        Int        @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   /// 关联的主题ID
-  topicId   Int        @map("topic_id")
+  topicId Int @map("topic_id")
   /// 关联的标签ID
-  tagId     Int        @map("tag_id")
+  tagId   Int @map("tag_id")
+
   /// 创建时间
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  tag       ForumTag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  topic     ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  tag   ForumTag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  topic ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@unique([topicId, tagId])
   @@index([topicId])

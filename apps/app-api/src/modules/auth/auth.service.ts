@@ -9,10 +9,7 @@ import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import { ForumProfileService } from '@libs/forum'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ErrorMessages } from './auth.constant'
-import {
-  ForgotPasswordDto,
-  LoginDto,
-} from './dto/auth.dto'
+import { ForgotPasswordDto, ForgotPasswordRequestDto, LoginDto } from './dto/auth.dto'
 import { AppTokenStorageService } from './token-storage.service'
 
 /**
@@ -76,7 +73,10 @@ export class AuthService extends BaseService {
       password += allChars[Math.floor(Math.random() * allChars.length)]
     }
 
-    return password.split('').sort(() => Math.random() - 0.5).join('')
+    return password
+      .split('')
+      .sort(() => Math.random() - 0.5)
+      .join('')
   }
 
   /**
@@ -86,17 +86,14 @@ export class AuthService extends BaseService {
    * @throws {BadRequestException} 手机号已存在
    * @throws {BadRequestException} 系统配置错误：找不到默认论坛等级
    */
-  async register(body: LoginDto) {
+  async register(body: LoginDto, req: FastifyRequest) {
     if (!body.phone) {
       throw new BadRequestException(ErrorMessages.PHONE_REQUIRED_FOR_REGISTER)
     }
 
-    // if (body.code) {
-    //   await this.smsService.checkVerifyCode({
-    //     phoneNumber: body.phone,
-    //     verifyCode: body.code,
-    //   })
-    // }
+    if (body.code) {
+      await this.validateVerifyCode(body.phone, body.code)
+    }
 
     let password: string
     if (body.password) {
@@ -125,14 +122,7 @@ export class AuthService extends BaseService {
       return newUser
     })
 
-    const tokens = await this.baseJwtService.generateTokens({
-      sub: String(user.id),
-      phone: user.phone,
-    })
-    return {
-      user: this.sanitizeUser(user),
-      tokens,
-    }
+    return this.handleLoginSuccess(user, req)
   }
 
   /**
@@ -164,7 +154,7 @@ export class AuthService extends BaseService {
 
     if (!user) {
       if (body.code) {
-        return this.register(body)
+        return this.register(body, req)
       }
       throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
     }
@@ -178,15 +168,7 @@ export class AuthService extends BaseService {
         throw new BadRequestException(ErrorMessages.PHONE_MISMATCH)
       }
 
-      try {
-        await this.smsService.checkVerifyCode({
-          phoneNumber: body.phone || user.phone,
-          verifyCode: body.code,
-        })
-      }
-      catch {
-        throw new BadRequestException(ErrorMessages.VERIFY_CODE_INVALID)
-      }
+      await this.validateVerifyCode(body.phone || user.phone, body.code)
     } else {
       const password = this.rsaService.decryptWith(body.password!)
       const isPasswordValid = await this.scryptService.verifyPassword(
@@ -202,19 +184,7 @@ export class AuthService extends BaseService {
       throw new BadRequestException(ErrorMessages.ACCOUNT_DISABLED)
     }
 
-    await this.updateUserLoginInfo(user.id, req)
-
-    const tokens = await this.baseJwtService.generateTokens({
-      sub: String(user.id),
-      phone: user.phone,
-    })
-
-    await this.storeTokens(user.id, tokens, req)
-
-    return {
-      user: this.sanitizeUser(user),
-      tokens,
-    }
+    return this.handleLoginSuccess(user, req)
   }
 
   /**
@@ -239,8 +209,12 @@ export class AuthService extends BaseService {
    * @param req - Fastify 请求对象
    */
   private async storeTokens(userId: number, tokens: any, req: FastifyRequest) {
-    const accessPayload = await this.baseJwtService.decodeToken(tokens.accessToken)
-    const refreshPayload = await this.baseJwtService.decodeToken(tokens.refreshToken)
+    const accessPayload = await this.baseJwtService.decodeToken(
+      tokens.accessToken,
+    )
+    const refreshPayload = await this.baseJwtService.decodeToken(
+      tokens.refreshToken,
+    )
 
     const accessTokenExpiresAt = new Date(accessPayload.exp * 1000)
     const refreshTokenExpiresAt = new Date(refreshPayload.exp * 1000)
@@ -290,54 +264,58 @@ export class AuthService extends BaseService {
   /**
    * 刷新访问令牌
    * @param refreshToken - 刷新令牌
+   * @param req - Fastify 请求对象
    * @returns 新的令牌对
    */
-  async refreshToken(refreshToken: string) {
-    return this.baseJwtService.refreshAccessToken(refreshToken)
+  async refreshToken(refreshToken: string, req: FastifyRequest) {
+    const tokens = await this.baseJwtService.refreshAccessToken(refreshToken)
+
+    // 解析 Token 获取用户 ID
+    const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
+    const userId = Number(payload.sub)
+
+    // 存储新生成的 Token
+    await this.storeTokens(userId, tokens, req)
+
+    return tokens
   }
 
   /**
-   * 忘记密码
-   * @param body - 忘记密码数据，包含账号
-   * @returns 提示信息
-   * @throws {BadRequestException} 账号不存在
+   * 校验验证码
+   * @param phone - 手机号
+   * @param code - 验证码
    */
-  async forgotPassword(body: ForgotPasswordDto) {
-    const user = await this.findUserByAccount(body.phone)
-
-    if (!user) {
-      throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
-    }
-
-    return {
-      message: '如果账号存在，重置密码的验证码已发送',
-    }
+  private async validateVerifyCode(phone: string, code: string) {
+    await this.smsService.checkVerifyCode({
+      phoneNumber: phone,
+      verifyCode: code,
+    })
   }
 
   /**
-   * 重置密码
-   * @param body - 重置密码数据，包含账号和新密码
-   * @returns 重置结果
-   * @throws {BadRequestException} 账号不存在
+   * 处理登录成功后的逻辑
+   * @param user - 用户对象
+   * @param req - 请求对象
+   * @returns 登录结果
    */
-  async resetPassword(body: ForgotPasswordDto) {
-    const user = await this.findUserByAccount(body.phone)
+  private async handleLoginSuccess(user: any, req: FastifyRequest) {
+    // 1. 更新登录信息
+    await this.updateUserLoginInfo(user.id, req)
 
-    if (!user) {
-      throw new BadRequestException(ErrorMessages.ACCOUNT_NOT_FOUND)
-    }
-
-    const password = this.rsaService.decryptWith(body.password)
-    const hashedPassword = await this.scryptService.encryptPassword(password)
-
-    await this.prisma.appUser.update({
-      where: { id: user.id },
-      data: { password: hashedPassword },
+    // 2. 生成 Token
+    const tokens = await this.baseJwtService.generateTokens({
+      sub: String(user.id),
+      phone: user.phone,
     })
 
-    await this.tokenStorageService.revokeAllByUserId(user.id, 'PASSWORD_CHANGE')
+    // 3. 存储 Token
+    await this.storeTokens(user.id, tokens, req)
 
-    return true
+    // 4. 返回结果
+    return {
+      user: this.sanitizeUser(user),
+      tokens,
+    }
   }
 
   /**
@@ -346,19 +324,21 @@ export class AuthService extends BaseService {
    * @returns 清理后的用户对象
    */
   private sanitizeUser(user: any) {
-    const { password, ...sanitized } = user
-    return sanitized
+    const { password, ...rest } = user
+    return {
+      ...rest,
+    }
   }
 
   /**
-   * 根据账号查找用户
+   * 根据手机号查找用户
    * @param phone - 手机号
    * @returns 用户对象或 null
    */
-  private async findUserByAccount(phone: string) {
+  private async findUserByPhone(phone: string) {
     return this.appUser.findFirst({
       where: {
-        phone
+        phone,
       },
     })
   }

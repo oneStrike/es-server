@@ -1,16 +1,22 @@
+/// 漫画分类关联表
 model WorkComicCategory {
   /// 漫画ID
-  comicId    Int          @map("comic_id")
-  /// 分类ID  
-  categoryId Int          @map("category_id")
-  /// 关联时间
-  createdAt  DateTime     @default(now()) @map("created_at")
-  /// 更新时间
-  updatedAt  DateTime     @updatedAt @map("updated_at")
+  comicId    Int @map("comic_id")
+  /// 分类ID
+  categoryId Int @map("category_id")
+
   /// 排序顺序（用于展示顺序）
-  sortOrder  Int          @default(0) @map("sort_order")
-  category   WorkCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  comic      WorkComic    @relation(fields: [comicId], references: [id], onDelete: Cascade)
+  sortOrder Int @default(0) @map("sort_order")
+
+  /// 关联时间
+  createdAt DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// 关联分类
+  category WorkCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  /// 关联漫画
+  comic    WorkComic    @relation(fields: [comicId], references: [id], onDelete: Cascade)
 
   @@id([comicId, categoryId])
   @@index([categoryId])

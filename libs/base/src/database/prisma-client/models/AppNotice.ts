@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model AppNotice
- * 
+ * 应用通知表 - 存储系统通知、公告等信息
  */
 export type AppNoticeModel = runtime.Types.Result.DefaultSelection<Prisma.$AppNoticePayload>
 
@@ -28,29 +28,29 @@ export type AggregateAppNotice = {
 
 export type AppNoticeAvgAggregateOutputType = {
   id: number | null
+  pageId: number | null
   noticeType: number | null
   priorityLevel: number | null
-  pageId: number | null
   enablePlatform: number | null
 }
 
 export type AppNoticeSumAggregateOutputType = {
   id: number | null
+  pageId: number | null
   noticeType: number | null
   priorityLevel: number | null
-  pageId: number | null
   enablePlatform: number[]
 }
 
 export type AppNoticeMinAggregateOutputType = {
   id: number | null
+  pageId: number | null
   title: string | null
   content: string | null
   noticeType: number | null
   priorityLevel: number | null
   publishStartTime: Date | null
   publishEndTime: Date | null
-  pageId: number | null
   popupBackgroundImage: string | null
   isPublished: boolean | null
   isPinned: boolean | null
@@ -61,13 +61,13 @@ export type AppNoticeMinAggregateOutputType = {
 
 export type AppNoticeMaxAggregateOutputType = {
   id: number | null
+  pageId: number | null
   title: string | null
   content: string | null
   noticeType: number | null
   priorityLevel: number | null
   publishStartTime: Date | null
   publishEndTime: Date | null
-  pageId: number | null
   popupBackgroundImage: string | null
   isPublished: boolean | null
   isPinned: boolean | null
@@ -78,49 +78,49 @@ export type AppNoticeMaxAggregateOutputType = {
 
 export type AppNoticeCountAggregateOutputType = {
   id: number
+  pageId: number
   title: number
   content: number
   noticeType: number
   priorityLevel: number
   publishStartTime: number
   publishEndTime: number
-  pageId: number
   popupBackgroundImage: number
   isPublished: number
   isPinned: number
   showAsPopup: number
+  enablePlatform: number
   createdAt: number
   updatedAt: number
-  enablePlatform: number
   _all: number
 }
 
 
 export type AppNoticeAvgAggregateInputType = {
   id?: true
+  pageId?: true
   noticeType?: true
   priorityLevel?: true
-  pageId?: true
   enablePlatform?: true
 }
 
 export type AppNoticeSumAggregateInputType = {
   id?: true
+  pageId?: true
   noticeType?: true
   priorityLevel?: true
-  pageId?: true
   enablePlatform?: true
 }
 
 export type AppNoticeMinAggregateInputType = {
   id?: true
+  pageId?: true
   title?: true
   content?: true
   noticeType?: true
   priorityLevel?: true
   publishStartTime?: true
   publishEndTime?: true
-  pageId?: true
   popupBackgroundImage?: true
   isPublished?: true
   isPinned?: true
@@ -131,13 +131,13 @@ export type AppNoticeMinAggregateInputType = {
 
 export type AppNoticeMaxAggregateInputType = {
   id?: true
+  pageId?: true
   title?: true
   content?: true
   noticeType?: true
   priorityLevel?: true
   publishStartTime?: true
   publishEndTime?: true
-  pageId?: true
   popupBackgroundImage?: true
   isPublished?: true
   isPinned?: true
@@ -148,20 +148,20 @@ export type AppNoticeMaxAggregateInputType = {
 
 export type AppNoticeCountAggregateInputType = {
   id?: true
+  pageId?: true
   title?: true
   content?: true
   noticeType?: true
   priorityLevel?: true
   publishStartTime?: true
   publishEndTime?: true
-  pageId?: true
   popupBackgroundImage?: true
   isPublished?: true
   isPinned?: true
   showAsPopup?: true
+  enablePlatform?: true
   createdAt?: true
   updatedAt?: true
-  enablePlatform?: true
   _all?: true
 }
 
@@ -253,20 +253,20 @@ export type AppNoticeGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
 
 export type AppNoticeGroupByOutputType = {
   id: number
+  pageId: number | null
   title: string
   content: string
   noticeType: number
   priorityLevel: number
   publishStartTime: Date | null
   publishEndTime: Date | null
-  pageId: number | null
   popupBackgroundImage: string | null
   isPublished: boolean
   isPinned: boolean
   showAsPopup: boolean
+  enablePlatform: number[]
   createdAt: Date
   updatedAt: Date
-  enablePlatform: number[]
   _count: AppNoticeCountAggregateOutputType | null
   _avg: AppNoticeAvgAggregateOutputType | null
   _sum: AppNoticeSumAggregateOutputType | null
@@ -294,40 +294,40 @@ export type AppNoticeWhereInput = {
   OR?: Prisma.AppNoticeWhereInput[]
   NOT?: Prisma.AppNoticeWhereInput | Prisma.AppNoticeWhereInput[]
   id?: Prisma.IntFilter<"AppNotice"> | number
+  pageId?: Prisma.IntNullableFilter<"AppNotice"> | number | null
   title?: Prisma.StringFilter<"AppNotice"> | string
   content?: Prisma.StringFilter<"AppNotice"> | string
   noticeType?: Prisma.IntFilter<"AppNotice"> | number
   priorityLevel?: Prisma.IntFilter<"AppNotice"> | number
   publishStartTime?: Prisma.DateTimeNullableFilter<"AppNotice"> | Date | string | null
   publishEndTime?: Prisma.DateTimeNullableFilter<"AppNotice"> | Date | string | null
-  pageId?: Prisma.IntNullableFilter<"AppNotice"> | number | null
   popupBackgroundImage?: Prisma.StringNullableFilter<"AppNotice"> | string | null
   isPublished?: Prisma.BoolFilter<"AppNotice"> | boolean
   isPinned?: Prisma.BoolFilter<"AppNotice"> | boolean
   showAsPopup?: Prisma.BoolFilter<"AppNotice"> | boolean
+  enablePlatform?: Prisma.IntNullableListFilter<"AppNotice">
   createdAt?: Prisma.DateTimeFilter<"AppNotice"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppNotice"> | Date | string
-  enablePlatform?: Prisma.IntNullableListFilter<"AppNotice">
   appPage?: Prisma.XOR<Prisma.AppPageNullableScalarRelationFilter, Prisma.AppPageWhereInput> | null
   noticeReads?: Prisma.AppNoticeReadListRelationFilter
 }
 
 export type AppNoticeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  pageId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
   noticeType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
   publishStartTime?: Prisma.SortOrderInput | Prisma.SortOrder
   publishEndTime?: Prisma.SortOrderInput | Prisma.SortOrder
-  pageId?: Prisma.SortOrderInput | Prisma.SortOrder
   popupBackgroundImage?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
   appPage?: Prisma.AppPageOrderByWithRelationInput
   noticeReads?: Prisma.AppNoticeReadOrderByRelationAggregateInput
 }
@@ -337,40 +337,40 @@ export type AppNoticeWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.AppNoticeWhereInput | Prisma.AppNoticeWhereInput[]
   OR?: Prisma.AppNoticeWhereInput[]
   NOT?: Prisma.AppNoticeWhereInput | Prisma.AppNoticeWhereInput[]
+  pageId?: Prisma.IntNullableFilter<"AppNotice"> | number | null
   title?: Prisma.StringFilter<"AppNotice"> | string
   content?: Prisma.StringFilter<"AppNotice"> | string
   noticeType?: Prisma.IntFilter<"AppNotice"> | number
   priorityLevel?: Prisma.IntFilter<"AppNotice"> | number
   publishStartTime?: Prisma.DateTimeNullableFilter<"AppNotice"> | Date | string | null
   publishEndTime?: Prisma.DateTimeNullableFilter<"AppNotice"> | Date | string | null
-  pageId?: Prisma.IntNullableFilter<"AppNotice"> | number | null
   popupBackgroundImage?: Prisma.StringNullableFilter<"AppNotice"> | string | null
   isPublished?: Prisma.BoolFilter<"AppNotice"> | boolean
   isPinned?: Prisma.BoolFilter<"AppNotice"> | boolean
   showAsPopup?: Prisma.BoolFilter<"AppNotice"> | boolean
+  enablePlatform?: Prisma.IntNullableListFilter<"AppNotice">
   createdAt?: Prisma.DateTimeFilter<"AppNotice"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppNotice"> | Date | string
-  enablePlatform?: Prisma.IntNullableListFilter<"AppNotice">
   appPage?: Prisma.XOR<Prisma.AppPageNullableScalarRelationFilter, Prisma.AppPageWhereInput> | null
   noticeReads?: Prisma.AppNoticeReadListRelationFilter
 }, "id">
 
 export type AppNoticeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  pageId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
   noticeType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
   publishStartTime?: Prisma.SortOrderInput | Prisma.SortOrder
   publishEndTime?: Prisma.SortOrderInput | Prisma.SortOrder
-  pageId?: Prisma.SortOrderInput | Prisma.SortOrder
   popupBackgroundImage?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
   _count?: Prisma.AppNoticeCountOrderByAggregateInput
   _avg?: Prisma.AppNoticeAvgOrderByAggregateInput
   _max?: Prisma.AppNoticeMaxOrderByAggregateInput
@@ -383,20 +383,20 @@ export type AppNoticeScalarWhereWithAggregatesInput = {
   OR?: Prisma.AppNoticeScalarWhereWithAggregatesInput[]
   NOT?: Prisma.AppNoticeScalarWhereWithAggregatesInput | Prisma.AppNoticeScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"AppNotice"> | number
+  pageId?: Prisma.IntNullableWithAggregatesFilter<"AppNotice"> | number | null
   title?: Prisma.StringWithAggregatesFilter<"AppNotice"> | string
   content?: Prisma.StringWithAggregatesFilter<"AppNotice"> | string
   noticeType?: Prisma.IntWithAggregatesFilter<"AppNotice"> | number
   priorityLevel?: Prisma.IntWithAggregatesFilter<"AppNotice"> | number
   publishStartTime?: Prisma.DateTimeNullableWithAggregatesFilter<"AppNotice"> | Date | string | null
   publishEndTime?: Prisma.DateTimeNullableWithAggregatesFilter<"AppNotice"> | Date | string | null
-  pageId?: Prisma.IntNullableWithAggregatesFilter<"AppNotice"> | number | null
   popupBackgroundImage?: Prisma.StringNullableWithAggregatesFilter<"AppNotice"> | string | null
   isPublished?: Prisma.BoolWithAggregatesFilter<"AppNotice"> | boolean
   isPinned?: Prisma.BoolWithAggregatesFilter<"AppNotice"> | boolean
   showAsPopup?: Prisma.BoolWithAggregatesFilter<"AppNotice"> | boolean
+  enablePlatform?: Prisma.IntNullableListFilter<"AppNotice">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AppNotice"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"AppNotice"> | Date | string
-  enablePlatform?: Prisma.IntNullableListFilter<"AppNotice">
 }
 
 export type AppNoticeCreateInput = {
@@ -410,29 +410,29 @@ export type AppNoticeCreateInput = {
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   appPage?: Prisma.AppPageCreateNestedOneWithoutNoticesInput
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutNoticeInput
 }
 
 export type AppNoticeUncheckedCreateInput = {
   id?: number
+  pageId?: number | null
   title: string
   content: string
   noticeType?: number
   priorityLevel?: number
   publishStartTime?: Date | string | null
   publishEndTime?: Date | string | null
-  pageId?: number | null
   popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutNoticeInput
 }
 
@@ -447,48 +447,48 @@ export type AppNoticeUpdateInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   appPage?: Prisma.AppPageUpdateOneWithoutNoticesNestedInput
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutNoticeNestedInput
 }
 
 export type AppNoticeUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  pageId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   noticeType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
   publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  pageId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutNoticeNestedInput
 }
 
 export type AppNoticeCreateManyInput = {
   id?: number
+  pageId?: number | null
   title: string
   content: string
   noticeType?: number
   priorityLevel?: number
   publishStartTime?: Date | string | null
   publishEndTime?: Date | string | null
-  pageId?: number | null
   popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
 }
 
 export type AppNoticeUpdateManyMutationInput = {
@@ -502,27 +502,27 @@ export type AppNoticeUpdateManyMutationInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
 }
 
 export type AppNoticeUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  pageId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   noticeType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
   publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  pageId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
 }
 
 export type AppNoticeScalarRelationFilter = {
@@ -540,39 +540,39 @@ export type IntNullableListFilter<$PrismaModel = never> = {
 
 export type AppNoticeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  pageId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
   noticeType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
   publishStartTime?: Prisma.SortOrder
   publishEndTime?: Prisma.SortOrder
-  pageId?: Prisma.SortOrder
   popupBackgroundImage?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
+  enablePlatform?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  enablePlatform?: Prisma.SortOrder
 }
 
 export type AppNoticeAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  pageId?: Prisma.SortOrder
   noticeType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
-  pageId?: Prisma.SortOrder
   enablePlatform?: Prisma.SortOrder
 }
 
 export type AppNoticeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  pageId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
   noticeType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
   publishStartTime?: Prisma.SortOrder
   publishEndTime?: Prisma.SortOrder
-  pageId?: Prisma.SortOrder
   popupBackgroundImage?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
@@ -583,13 +583,13 @@ export type AppNoticeMaxOrderByAggregateInput = {
 
 export type AppNoticeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  pageId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
   noticeType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
   publishStartTime?: Prisma.SortOrder
   publishEndTime?: Prisma.SortOrder
-  pageId?: Prisma.SortOrder
   popupBackgroundImage?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
@@ -600,9 +600,9 @@ export type AppNoticeMinOrderByAggregateInput = {
 
 export type AppNoticeSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  pageId?: Prisma.SortOrder
   noticeType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
-  pageId?: Prisma.SortOrder
   enablePlatform?: Prisma.SortOrder
 }
 
@@ -692,28 +692,28 @@ export type AppNoticeCreateWithoutNoticeReadsInput = {
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   appPage?: Prisma.AppPageCreateNestedOneWithoutNoticesInput
 }
 
 export type AppNoticeUncheckedCreateWithoutNoticeReadsInput = {
   id?: number
+  pageId?: number | null
   title: string
   content: string
   noticeType?: number
   priorityLevel?: number
   publishStartTime?: Date | string | null
   publishEndTime?: Date | string | null
-  pageId?: number | null
   popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
 }
 
 export type AppNoticeCreateOrConnectWithoutNoticeReadsInput = {
@@ -743,28 +743,28 @@ export type AppNoticeUpdateWithoutNoticeReadsInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   appPage?: Prisma.AppPageUpdateOneWithoutNoticesNestedInput
 }
 
 export type AppNoticeUncheckedUpdateWithoutNoticeReadsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  pageId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   noticeType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
   publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  pageId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
 }
 
 export type AppNoticeCreateWithoutAppPageInput = {
@@ -778,9 +778,9 @@ export type AppNoticeCreateWithoutAppPageInput = {
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutNoticeInput
 }
 
@@ -796,9 +796,9 @@ export type AppNoticeUncheckedCreateWithoutAppPageInput = {
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutNoticeInput
 }
 
@@ -833,20 +833,20 @@ export type AppNoticeScalarWhereInput = {
   OR?: Prisma.AppNoticeScalarWhereInput[]
   NOT?: Prisma.AppNoticeScalarWhereInput | Prisma.AppNoticeScalarWhereInput[]
   id?: Prisma.IntFilter<"AppNotice"> | number
+  pageId?: Prisma.IntNullableFilter<"AppNotice"> | number | null
   title?: Prisma.StringFilter<"AppNotice"> | string
   content?: Prisma.StringFilter<"AppNotice"> | string
   noticeType?: Prisma.IntFilter<"AppNotice"> | number
   priorityLevel?: Prisma.IntFilter<"AppNotice"> | number
   publishStartTime?: Prisma.DateTimeNullableFilter<"AppNotice"> | Date | string | null
   publishEndTime?: Prisma.DateTimeNullableFilter<"AppNotice"> | Date | string | null
-  pageId?: Prisma.IntNullableFilter<"AppNotice"> | number | null
   popupBackgroundImage?: Prisma.StringNullableFilter<"AppNotice"> | string | null
   isPublished?: Prisma.BoolFilter<"AppNotice"> | boolean
   isPinned?: Prisma.BoolFilter<"AppNotice"> | boolean
   showAsPopup?: Prisma.BoolFilter<"AppNotice"> | boolean
+  enablePlatform?: Prisma.IntNullableListFilter<"AppNotice">
   createdAt?: Prisma.DateTimeFilter<"AppNotice"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppNotice"> | Date | string
-  enablePlatform?: Prisma.IntNullableListFilter<"AppNotice">
 }
 
 export type AppNoticeCreateManyAppPageInput = {
@@ -861,9 +861,9 @@ export type AppNoticeCreateManyAppPageInput = {
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  enablePlatform?: Prisma.AppNoticeCreateenablePlatformInput | number[]
 }
 
 export type AppNoticeUpdateWithoutAppPageInput = {
@@ -877,9 +877,9 @@ export type AppNoticeUpdateWithoutAppPageInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutNoticeNestedInput
 }
 
@@ -895,9 +895,9 @@ export type AppNoticeUncheckedUpdateWithoutAppPageInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutNoticeNestedInput
 }
 
@@ -913,9 +913,9 @@ export type AppNoticeUncheckedUpdateManyWithoutAppPageInput = {
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  enablePlatform?: Prisma.AppNoticeUpdateenablePlatformInput | number[]
 }
 
 
@@ -951,20 +951,20 @@ export type AppNoticeCountOutputTypeCountNoticeReadsArgs<ExtArgs extends runtime
 
 export type AppNoticeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  pageId?: boolean
   title?: boolean
   content?: boolean
   noticeType?: boolean
   priorityLevel?: boolean
   publishStartTime?: boolean
   publishEndTime?: boolean
-  pageId?: boolean
   popupBackgroundImage?: boolean
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  enablePlatform?: boolean
   appPage?: boolean | Prisma.AppNotice$appPageArgs<ExtArgs>
   noticeReads?: boolean | Prisma.AppNotice$noticeReadsArgs<ExtArgs>
   _count?: boolean | Prisma.AppNoticeCountOutputTypeDefaultArgs<ExtArgs>
@@ -972,61 +972,61 @@ export type AppNoticeSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type AppNoticeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  pageId?: boolean
   title?: boolean
   content?: boolean
   noticeType?: boolean
   priorityLevel?: boolean
   publishStartTime?: boolean
   publishEndTime?: boolean
-  pageId?: boolean
   popupBackgroundImage?: boolean
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  enablePlatform?: boolean
   appPage?: boolean | Prisma.AppNotice$appPageArgs<ExtArgs>
 }, ExtArgs["result"]["appNotice"]>
 
 export type AppNoticeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  pageId?: boolean
   title?: boolean
   content?: boolean
   noticeType?: boolean
   priorityLevel?: boolean
   publishStartTime?: boolean
   publishEndTime?: boolean
-  pageId?: boolean
   popupBackgroundImage?: boolean
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  enablePlatform?: boolean
   appPage?: boolean | Prisma.AppNotice$appPageArgs<ExtArgs>
 }, ExtArgs["result"]["appNotice"]>
 
 export type AppNoticeSelectScalar = {
   id?: boolean
+  pageId?: boolean
   title?: boolean
   content?: boolean
   noticeType?: boolean
   priorityLevel?: boolean
   publishStartTime?: boolean
   publishEndTime?: boolean
-  pageId?: boolean
   popupBackgroundImage?: boolean
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  enablePlatform?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  enablePlatform?: boolean
 }
 
-export type AppNoticeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "noticeType" | "priorityLevel" | "publishStartTime" | "publishEndTime" | "pageId" | "popupBackgroundImage" | "isPublished" | "isPinned" | "showAsPopup" | "createdAt" | "updatedAt" | "enablePlatform", ExtArgs["result"]["appNotice"]>
+export type AppNoticeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "pageId" | "title" | "content" | "noticeType" | "priorityLevel" | "publishStartTime" | "publishEndTime" | "popupBackgroundImage" | "isPublished" | "isPinned" | "showAsPopup" | "enablePlatform" | "createdAt" | "updatedAt", ExtArgs["result"]["appNotice"]>
 export type AppNoticeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   appPage?: boolean | Prisma.AppNotice$appPageArgs<ExtArgs>
   noticeReads?: boolean | Prisma.AppNotice$noticeReadsArgs<ExtArgs>
@@ -1042,25 +1042,76 @@ export type AppNoticeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
 export type $AppNoticePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AppNotice"
   objects: {
+    /**
+     * 关联页面
+     */
     appPage: Prisma.$AppPagePayload<ExtArgs> | null
+    /**
+     * 阅读记录关联
+     */
     noticeReads: Prisma.$AppNoticeReadPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键ID
+     */
     id: number
-    title: string
-    content: string
-    noticeType: number
-    priorityLevel: number
-    publishStartTime: Date | null
-    publishEndTime: Date | null
+    /**
+     * 关联的页面ID（可选）
+     */
     pageId: number | null
+    /**
+     * 通知标题
+     */
+    title: string
+    /**
+     * 通知内容
+     */
+    content: string
+    /**
+     * 通知类型（0=系统通知, 1=活动通知, 2=维护公告）
+     */
+    noticeType: number
+    /**
+     * 优先级（数值越大越重要）
+     */
+    priorityLevel: number
+    /**
+     * 发布开始时间
+     */
+    publishStartTime: Date | null
+    /**
+     * 发布结束时间
+     */
+    publishEndTime: Date | null
+    /**
+     * 弹窗背景图片URL
+     */
     popupBackgroundImage: string | null
+    /**
+     * 是否已发布
+     */
     isPublished: boolean
+    /**
+     * 是否置顶
+     */
     isPinned: boolean
+    /**
+     * 是否以弹窗形式显示
+     */
     showAsPopup: boolean
-    createdAt: Date
-    updatedAt: Date
+    /**
+     * 启用的平台列表
+     */
     enablePlatform: number[]
+    /**
+     * 创建时间
+     */
+    createdAt: Date
+    /**
+     * 更新时间
+     */
+    updatedAt: Date
   }, ExtArgs["result"]["appNotice"]>
   composites: {}
 }
@@ -1487,20 +1538,20 @@ export interface Prisma__AppNoticeClient<T, Null = never, ExtArgs extends runtim
  */
 export interface AppNoticeFieldRefs {
   readonly id: Prisma.FieldRef<"AppNotice", 'Int'>
+  readonly pageId: Prisma.FieldRef<"AppNotice", 'Int'>
   readonly title: Prisma.FieldRef<"AppNotice", 'String'>
   readonly content: Prisma.FieldRef<"AppNotice", 'String'>
   readonly noticeType: Prisma.FieldRef<"AppNotice", 'Int'>
   readonly priorityLevel: Prisma.FieldRef<"AppNotice", 'Int'>
   readonly publishStartTime: Prisma.FieldRef<"AppNotice", 'DateTime'>
   readonly publishEndTime: Prisma.FieldRef<"AppNotice", 'DateTime'>
-  readonly pageId: Prisma.FieldRef<"AppNotice", 'Int'>
   readonly popupBackgroundImage: Prisma.FieldRef<"AppNotice", 'String'>
   readonly isPublished: Prisma.FieldRef<"AppNotice", 'Boolean'>
   readonly isPinned: Prisma.FieldRef<"AppNotice", 'Boolean'>
   readonly showAsPopup: Prisma.FieldRef<"AppNotice", 'Boolean'>
+  readonly enablePlatform: Prisma.FieldRef<"AppNotice", 'Int[]'>
   readonly createdAt: Prisma.FieldRef<"AppNotice", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"AppNotice", 'DateTime'>
-  readonly enablePlatform: Prisma.FieldRef<"AppNotice", 'Int[]'>
 }
     
 

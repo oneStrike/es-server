@@ -39,12 +39,12 @@ export class BaseForumReplyDto extends BaseDto {
   topicId!: number
 
   @ValidateNumber({
-    description: '论坛用户资料ID',
+    description: '论坛用户ID',
     example: 1,
     required: true,
     min: 1,
   })
-  profileId!: number
+  userId!: number
 
   @ValidateNumber({
     description: '回复的回复ID（楼中楼）',
@@ -106,7 +106,7 @@ export class BaseForumReplyDto extends BaseDto {
 export class CreateForumReplyDto extends PickType(BaseForumReplyDto, [
   'content',
   'topicId',
-  'profileId',
+  'userId',
   'replyToId',
 ]) {}
 

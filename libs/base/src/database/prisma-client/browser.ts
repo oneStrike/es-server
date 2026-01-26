@@ -28,35 +28,53 @@ export type AdminUser = Prisma.AdminUserModel
  */
 export type AppConfig = Prisma.AppConfigModel
 /**
+ * Model AppExperienceRecord
+ * 应用经验记录表 - 记录用户经验变化历史
+ */
+export type AppExperienceRecord = Prisma.AppExperienceRecordModel
+/**
+ * Model AppExperienceRule
+ * 应用经验规则表 - 定义经验获取规则，包括发表主题、回复、点赞、签到等
+ */
+export type AppExperienceRule = Prisma.AppExperienceRuleModel
+/**
+ * Model AppLevelRule
+ * 应用等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级权益等
+ */
+export type AppLevelRule = Prisma.AppLevelRuleModel
+/**
  * Model AppNoticeRead
- * 
+ * 应用通知阅读记录表 - 记录用户已读的通知
  */
 export type AppNoticeRead = Prisma.AppNoticeReadModel
 /**
  * Model AppNotice
- * 
+ * 应用通知表 - 存储系统通知、公告等信息
  */
 export type AppNotice = Prisma.AppNoticeModel
 /**
  * Model AppPage
- * 
+ * 应用页面表 - 管理应用内的页面配置和路由
  */
 export type AppPage = Prisma.AppPageModel
 /**
+ * Model AppPointRecord
+ * 应用积分记录表 - 记录用户积分变化历史，包括获得和消费的积分
+ */
+export type AppPointRecord = Prisma.AppPointRecordModel
+/**
+ * Model AppPointRule
+ * 应用积分规则表 - 定义积分获取和消费规则，包括发表主题、回复、点赞、签到等
+ */
+export type AppPointRule = Prisma.AppPointRuleModel
+/**
  * Model AppUserToken
- * 应用用户令牌表
- * 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
- * 
- * 优化说明：
- * 1. 移除 token 字段：不需要存储完整 Token，只需存储 jti 即可
- * 2. 移除 isActive 字段：使用 revokedAt 判断是否活跃，避免数据冗余
- * 3. 移除 lastUsedAt 字段：未实际使用，用 createdAt 替代
- * 4. 添加 Redis 缓存：提高查询性能，减少数据库压力
+ * 应用用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
  */
 export type AppUserToken = Prisma.AppUserTokenModel
 /**
  * Model AppUser
- * 应用用户表
+ * 应用用户表 - 存储应用用户的核心信息
  */
 export type AppUser = Prisma.AppUserModel
 /**
@@ -74,21 +92,6 @@ export type ForumConfigHistory = Prisma.ForumConfigHistoryModel
  * 论坛配置表 - 存储论坛系统的各项配置，采用直接字段方式定义
  */
 export type ForumConfig = Prisma.ForumConfigModel
-/**
- * Model ForumExperienceRecord
- * 论坛经验记录表 - 记录用户经验变化历史
- */
-export type ForumExperienceRecord = Prisma.ForumExperienceRecordModel
-/**
- * Model ForumExperienceRule
- * 论坛经验规则表 - 定义经验获取规则，包括发表主题、回复、点赞、签到等
- */
-export type ForumExperienceRule = Prisma.ForumExperienceRuleModel
-/**
- * Model ForumLevelRule
- * 论坛等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级权益等
- */
-export type ForumLevelRule = Prisma.ForumLevelRuleModel
 /**
  * Model ForumModeratorActionLog
  * 论坛版主操作日志表 - 记录版主的所有操作行为，包括主题管理、回复管理、审核等操作
@@ -114,16 +117,6 @@ export type ForumModerator = Prisma.ForumModeratorModel
  * 论坛通知表 - 存储用户通知信息，包括回复、点赞、收藏、系统通知等
  */
 export type ForumNotification = Prisma.ForumNotificationModel
-/**
- * Model ForumPointRecord
- * 论坛积分记录表 - 记录用户积分变化历史，包括获得和消费的积分
- */
-export type ForumPointRecord = Prisma.ForumPointRecordModel
-/**
- * Model ForumPointRule
- * 论坛积分规则表 - 定义积分获取和消费规则，包括发表主题、回复、点赞、签到等
- */
-export type ForumPointRule = Prisma.ForumPointRuleModel
 /**
  * Model ForumProfileBadge
  * 论坛用户徽章关联表 - 管理用户获得的徽章，一个用户可以有多个徽章
@@ -232,31 +225,31 @@ export type WorkAuthor = Prisma.WorkAuthorModel
 export type WorkComicAuthor = Prisma.WorkComicAuthorModel
 /**
  * Model WorkComicCategory
- * 
+ * 漫画分类关联表
  */
 export type WorkComicCategory = Prisma.WorkComicCategoryModel
 /**
  * Model WorkComicChapter
- * 
+ * 漫画章节模型
  */
 export type WorkComicChapter = Prisma.WorkComicChapterModel
 /**
  * Model WorkComicTag
- * 
+ * 漫画标签关联表
  */
 export type WorkComicTag = Prisma.WorkComicTagModel
 /**
  * Model WorkComic
- * 
+ * 漫画作品模型
  */
 export type WorkComic = Prisma.WorkComicModel
 /**
  * Model WorkCategory
- * 
+ * 作品分类模型
  */
 export type WorkCategory = Prisma.WorkCategoryModel
 /**
  * Model WorkTag
- * 
+ * 标签模型
  */
 export type WorkTag = Prisma.WorkTagModel

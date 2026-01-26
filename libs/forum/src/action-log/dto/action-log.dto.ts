@@ -21,12 +21,12 @@ import {
  */
 export class BaseForumActionLogDto extends BaseDto {
   @ValidateNumber({
-    description: '关联的用户资料ID',
+    description: '关联的用户ID',
     example: 1,
     required: true,
     min: 1,
   })
-  profileId!: number
+  userId!: number
 
   @ValidateEnum({
     description: '操作类型',
@@ -99,7 +99,7 @@ export class QueryForumActionLogDto extends IntersectionType(
   PageDto,
   PartialType(
     PickType(BaseForumActionLogDto, [
-      'profileId',
+      'userId',
       'actionType',
       'targetType',
       'targetId',

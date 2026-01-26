@@ -5,6 +5,7 @@ import { Module } from '@nestjs/common'
 import { AuthController } from './auth.controller'
 import { AuthService } from './auth.service'
 import { AuthCronService } from './cron.service'
+import { PasswordService } from './password.service'
 import { AppTokenStorageService } from './token-storage.service'
 
 @Module({
@@ -12,6 +13,7 @@ import { AppTokenStorageService } from './token-storage.service'
   imports: [JwtAuthModule, ForumModule],
   providers: [
     AuthService,
+    PasswordService,
     CaptchaService,
     RsaService,
     ScryptService,
@@ -29,6 +31,6 @@ import { AppTokenStorageService } from './token-storage.service'
       useClass: AppTokenStorageService,
     },
   ],
-  exports: [AuthService, AppTokenStorageService],
+  exports: [AuthService, PasswordService, AppTokenStorageService],
 })
 export class AuthModule { }

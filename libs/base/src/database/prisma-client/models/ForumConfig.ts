@@ -28,6 +28,7 @@ export type AggregateForumConfig = {
 
 export type ForumConfigAvgAggregateOutputType = {
   id: number | null
+  updatedById: number | null
   topicTitleMaxLength: number | null
   topicContentMaxLength: number | null
   replyContentMaxLength: number | null
@@ -37,11 +38,11 @@ export type ForumConfigAvgAggregateOutputType = {
   signatureMaxLength: number | null
   bioMaxLength: number | null
   defaultPointsForNewUser: number | null
-  updatedById: number | null
 }
 
 export type ForumConfigSumAggregateOutputType = {
   id: number | null
+  updatedById: number | null
   topicTitleMaxLength: number | null
   topicContentMaxLength: number | null
   replyContentMaxLength: number | null
@@ -51,11 +52,11 @@ export type ForumConfigSumAggregateOutputType = {
   signatureMaxLength: number | null
   bioMaxLength: number | null
   defaultPointsForNewUser: number | null
-  updatedById: number | null
 }
 
 export type ForumConfigMinAggregateOutputType = {
   id: number | null
+  updatedById: number | null
   siteName: string | null
   siteDescription: string | null
   siteKeywords: string | null
@@ -87,13 +88,13 @@ export type ForumConfigMinAggregateOutputType = {
   enableSystemNotification: boolean | null
   enableMaintenanceMode: boolean | null
   maintenanceMessage: string | null
-  updatedById: number | null
-  updatedAt: Date | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type ForumConfigMaxAggregateOutputType = {
   id: number | null
+  updatedById: number | null
   siteName: string | null
   siteDescription: string | null
   siteKeywords: string | null
@@ -125,13 +126,13 @@ export type ForumConfigMaxAggregateOutputType = {
   enableSystemNotification: boolean | null
   enableMaintenanceMode: boolean | null
   maintenanceMessage: string | null
-  updatedById: number | null
-  updatedAt: Date | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type ForumConfigCountAggregateOutputType = {
   id: number
+  updatedById: number
   siteName: number
   siteDescription: number
   siteKeywords: number
@@ -163,15 +164,15 @@ export type ForumConfigCountAggregateOutputType = {
   enableSystemNotification: number
   enableMaintenanceMode: number
   maintenanceMessage: number
-  updatedById: number
-  updatedAt: number
   createdAt: number
+  updatedAt: number
   _all: number
 }
 
 
 export type ForumConfigAvgAggregateInputType = {
   id?: true
+  updatedById?: true
   topicTitleMaxLength?: true
   topicContentMaxLength?: true
   replyContentMaxLength?: true
@@ -181,11 +182,11 @@ export type ForumConfigAvgAggregateInputType = {
   signatureMaxLength?: true
   bioMaxLength?: true
   defaultPointsForNewUser?: true
-  updatedById?: true
 }
 
 export type ForumConfigSumAggregateInputType = {
   id?: true
+  updatedById?: true
   topicTitleMaxLength?: true
   topicContentMaxLength?: true
   replyContentMaxLength?: true
@@ -195,11 +196,11 @@ export type ForumConfigSumAggregateInputType = {
   signatureMaxLength?: true
   bioMaxLength?: true
   defaultPointsForNewUser?: true
-  updatedById?: true
 }
 
 export type ForumConfigMinAggregateInputType = {
   id?: true
+  updatedById?: true
   siteName?: true
   siteDescription?: true
   siteKeywords?: true
@@ -231,13 +232,13 @@ export type ForumConfigMinAggregateInputType = {
   enableSystemNotification?: true
   enableMaintenanceMode?: true
   maintenanceMessage?: true
-  updatedById?: true
-  updatedAt?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type ForumConfigMaxAggregateInputType = {
   id?: true
+  updatedById?: true
   siteName?: true
   siteDescription?: true
   siteKeywords?: true
@@ -269,13 +270,13 @@ export type ForumConfigMaxAggregateInputType = {
   enableSystemNotification?: true
   enableMaintenanceMode?: true
   maintenanceMessage?: true
-  updatedById?: true
-  updatedAt?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type ForumConfigCountAggregateInputType = {
   id?: true
+  updatedById?: true
   siteName?: true
   siteDescription?: true
   siteKeywords?: true
@@ -307,9 +308,8 @@ export type ForumConfigCountAggregateInputType = {
   enableSystemNotification?: true
   enableMaintenanceMode?: true
   maintenanceMessage?: true
-  updatedById?: true
-  updatedAt?: true
   createdAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -401,6 +401,7 @@ export type ForumConfigGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 
 export type ForumConfigGroupByOutputType = {
   id: number
+  updatedById: number | null
   siteName: string
   siteDescription: string | null
   siteKeywords: string | null
@@ -432,9 +433,8 @@ export type ForumConfigGroupByOutputType = {
   enableSystemNotification: boolean
   enableMaintenanceMode: boolean
   maintenanceMessage: string | null
-  updatedById: number | null
-  updatedAt: Date
   createdAt: Date
+  updatedAt: Date
   _count: ForumConfigCountAggregateOutputType | null
   _avg: ForumConfigAvgAggregateOutputType | null
   _sum: ForumConfigSumAggregateOutputType | null
@@ -462,6 +462,7 @@ export type ForumConfigWhereInput = {
   OR?: Prisma.ForumConfigWhereInput[]
   NOT?: Prisma.ForumConfigWhereInput | Prisma.ForumConfigWhereInput[]
   id?: Prisma.IntFilter<"ForumConfig"> | number
+  updatedById?: Prisma.IntNullableFilter<"ForumConfig"> | number | null
   siteName?: Prisma.StringFilter<"ForumConfig"> | string
   siteDescription?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
   siteKeywords?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
@@ -493,15 +494,15 @@ export type ForumConfigWhereInput = {
   enableSystemNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
   enableMaintenanceMode?: Prisma.BoolFilter<"ForumConfig"> | boolean
   maintenanceMessage?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
-  updatedById?: Prisma.IntNullableFilter<"ForumConfig"> | number | null
-  updatedAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
   histories?: Prisma.ForumConfigHistoryListRelationFilter
-  updatedBy?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
+  updatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
 }
 
 export type ForumConfigOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   siteName?: Prisma.SortOrder
   siteDescription?: Prisma.SortOrderInput | Prisma.SortOrder
   siteKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -533,11 +534,10 @@ export type ForumConfigOrderByWithRelationInput = {
   enableSystemNotification?: Prisma.SortOrder
   enableMaintenanceMode?: Prisma.SortOrder
   maintenanceMessage?: Prisma.SortOrderInput | Prisma.SortOrder
-  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   histories?: Prisma.ForumConfigHistoryOrderByRelationAggregateInput
-  updatedBy?: Prisma.ForumProfileOrderByWithRelationInput
+  updatedBy?: Prisma.AppUserOrderByWithRelationInput
 }
 
 export type ForumConfigWhereUniqueInput = Prisma.AtLeast<{
@@ -545,6 +545,7 @@ export type ForumConfigWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.ForumConfigWhereInput | Prisma.ForumConfigWhereInput[]
   OR?: Prisma.ForumConfigWhereInput[]
   NOT?: Prisma.ForumConfigWhereInput | Prisma.ForumConfigWhereInput[]
+  updatedById?: Prisma.IntNullableFilter<"ForumConfig"> | number | null
   siteName?: Prisma.StringFilter<"ForumConfig"> | string
   siteDescription?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
   siteKeywords?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
@@ -576,15 +577,15 @@ export type ForumConfigWhereUniqueInput = Prisma.AtLeast<{
   enableSystemNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
   enableMaintenanceMode?: Prisma.BoolFilter<"ForumConfig"> | boolean
   maintenanceMessage?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
-  updatedById?: Prisma.IntNullableFilter<"ForumConfig"> | number | null
-  updatedAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
   histories?: Prisma.ForumConfigHistoryListRelationFilter
-  updatedBy?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
+  updatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
 }, "id">
 
 export type ForumConfigOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   siteName?: Prisma.SortOrder
   siteDescription?: Prisma.SortOrderInput | Prisma.SortOrder
   siteKeywords?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -616,9 +617,8 @@ export type ForumConfigOrderByWithAggregationInput = {
   enableSystemNotification?: Prisma.SortOrder
   enableMaintenanceMode?: Prisma.SortOrder
   maintenanceMessage?: Prisma.SortOrderInput | Prisma.SortOrder
-  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.ForumConfigCountOrderByAggregateInput
   _avg?: Prisma.ForumConfigAvgOrderByAggregateInput
   _max?: Prisma.ForumConfigMaxOrderByAggregateInput
@@ -631,6 +631,7 @@ export type ForumConfigScalarWhereWithAggregatesInput = {
   OR?: Prisma.ForumConfigScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ForumConfigScalarWhereWithAggregatesInput | Prisma.ForumConfigScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumConfig"> | number
+  updatedById?: Prisma.IntNullableWithAggregatesFilter<"ForumConfig"> | number | null
   siteName?: Prisma.StringWithAggregatesFilter<"ForumConfig"> | string
   siteDescription?: Prisma.StringNullableWithAggregatesFilter<"ForumConfig"> | string | null
   siteKeywords?: Prisma.StringNullableWithAggregatesFilter<"ForumConfig"> | string | null
@@ -662,9 +663,8 @@ export type ForumConfigScalarWhereWithAggregatesInput = {
   enableSystemNotification?: Prisma.BoolWithAggregatesFilter<"ForumConfig"> | boolean
   enableMaintenanceMode?: Prisma.BoolWithAggregatesFilter<"ForumConfig"> | boolean
   maintenanceMessage?: Prisma.StringNullableWithAggregatesFilter<"ForumConfig"> | string | null
-  updatedById?: Prisma.IntNullableWithAggregatesFilter<"ForumConfig"> | number | null
-  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumConfig"> | Date | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumConfig"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumConfig"> | Date | string
 }
 
 export type ForumConfigCreateInput = {
@@ -699,14 +699,15 @@ export type ForumConfigCreateInput = {
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: string | null
-  updatedAt?: Date | string
   createdAt?: Date | string
+  updatedAt?: Date | string
   histories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutConfigInput
-  updatedBy?: Prisma.ForumProfileCreateNestedOneWithoutUpdatedConfigsInput
+  updatedBy?: Prisma.AppUserCreateNestedOneWithoutUpdatedConfigsInput
 }
 
 export type ForumConfigUncheckedCreateInput = {
   id?: number
+  updatedById?: number | null
   siteName: string
   siteDescription?: string | null
   siteKeywords?: string | null
@@ -738,9 +739,8 @@ export type ForumConfigUncheckedCreateInput = {
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: string | null
-  updatedById?: number | null
-  updatedAt?: Date | string
   createdAt?: Date | string
+  updatedAt?: Date | string
   histories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutConfigInput
 }
 
@@ -776,14 +776,15 @@ export type ForumConfigUpdateInput = {
   enableSystemNotification?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   histories?: Prisma.ForumConfigHistoryUpdateManyWithoutConfigNestedInput
-  updatedBy?: Prisma.ForumProfileUpdateOneWithoutUpdatedConfigsNestedInput
+  updatedBy?: Prisma.AppUserUpdateOneWithoutUpdatedConfigsNestedInput
 }
 
 export type ForumConfigUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   siteName?: Prisma.StringFieldUpdateOperationsInput | string
   siteDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   siteKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -815,14 +816,14 @@ export type ForumConfigUncheckedUpdateInput = {
   enableSystemNotification?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   histories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutConfigNestedInput
 }
 
 export type ForumConfigCreateManyInput = {
   id?: number
+  updatedById?: number | null
   siteName: string
   siteDescription?: string | null
   siteKeywords?: string | null
@@ -854,9 +855,8 @@ export type ForumConfigCreateManyInput = {
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: string | null
-  updatedById?: number | null
-  updatedAt?: Date | string
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ForumConfigUpdateManyMutationInput = {
@@ -891,12 +891,13 @@ export type ForumConfigUpdateManyMutationInput = {
   enableSystemNotification?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumConfigUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   siteName?: Prisma.StringFieldUpdateOperationsInput | string
   siteDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   siteKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -928,156 +929,8 @@ export type ForumConfigUncheckedUpdateManyInput = {
   enableSystemNotification?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ForumConfigScalarRelationFilter = {
-  is?: Prisma.ForumConfigWhereInput
-  isNot?: Prisma.ForumConfigWhereInput
-}
-
-export type ForumConfigCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  siteName?: Prisma.SortOrder
-  siteDescription?: Prisma.SortOrder
-  siteKeywords?: Prisma.SortOrder
-  siteLogo?: Prisma.SortOrder
-  siteFavicon?: Prisma.SortOrder
-  contactEmail?: Prisma.SortOrder
-  icpNumber?: Prisma.SortOrder
-  topicTitleMaxLength?: Prisma.SortOrder
-  topicContentMaxLength?: Prisma.SortOrder
-  replyContentMaxLength?: Prisma.SortOrder
-  reviewPolicy?: Prisma.SortOrder
-  allowAnonymousView?: Prisma.SortOrder
-  allowAnonymousPost?: Prisma.SortOrder
-  allowAnonymousReply?: Prisma.SortOrder
-  allowUserRegister?: Prisma.SortOrder
-  registerRequireEmailVerify?: Prisma.SortOrder
-  registerRequirePhoneVerify?: Prisma.SortOrder
-  usernameMinLength?: Prisma.SortOrder
-  usernameMaxLength?: Prisma.SortOrder
-  signatureMaxLength?: Prisma.SortOrder
-  bioMaxLength?: Prisma.SortOrder
-  defaultPointsForNewUser?: Prisma.SortOrder
-  enableEmailNotification?: Prisma.SortOrder
-  enableInAppNotification?: Prisma.SortOrder
-  enableNewTopicNotification?: Prisma.SortOrder
-  enableNewReplyNotification?: Prisma.SortOrder
-  enableLikeNotification?: Prisma.SortOrder
-  enableFavoriteNotification?: Prisma.SortOrder
-  enableSystemNotification?: Prisma.SortOrder
-  enableMaintenanceMode?: Prisma.SortOrder
-  maintenanceMessage?: Prisma.SortOrder
-  updatedById?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-}
-
-export type ForumConfigAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  topicTitleMaxLength?: Prisma.SortOrder
-  topicContentMaxLength?: Prisma.SortOrder
-  replyContentMaxLength?: Prisma.SortOrder
-  reviewPolicy?: Prisma.SortOrder
-  usernameMinLength?: Prisma.SortOrder
-  usernameMaxLength?: Prisma.SortOrder
-  signatureMaxLength?: Prisma.SortOrder
-  bioMaxLength?: Prisma.SortOrder
-  defaultPointsForNewUser?: Prisma.SortOrder
-  updatedById?: Prisma.SortOrder
-}
-
-export type ForumConfigMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  siteName?: Prisma.SortOrder
-  siteDescription?: Prisma.SortOrder
-  siteKeywords?: Prisma.SortOrder
-  siteLogo?: Prisma.SortOrder
-  siteFavicon?: Prisma.SortOrder
-  contactEmail?: Prisma.SortOrder
-  icpNumber?: Prisma.SortOrder
-  topicTitleMaxLength?: Prisma.SortOrder
-  topicContentMaxLength?: Prisma.SortOrder
-  replyContentMaxLength?: Prisma.SortOrder
-  reviewPolicy?: Prisma.SortOrder
-  allowAnonymousView?: Prisma.SortOrder
-  allowAnonymousPost?: Prisma.SortOrder
-  allowAnonymousReply?: Prisma.SortOrder
-  allowUserRegister?: Prisma.SortOrder
-  registerRequireEmailVerify?: Prisma.SortOrder
-  registerRequirePhoneVerify?: Prisma.SortOrder
-  usernameMinLength?: Prisma.SortOrder
-  usernameMaxLength?: Prisma.SortOrder
-  signatureMaxLength?: Prisma.SortOrder
-  bioMaxLength?: Prisma.SortOrder
-  defaultPointsForNewUser?: Prisma.SortOrder
-  enableEmailNotification?: Prisma.SortOrder
-  enableInAppNotification?: Prisma.SortOrder
-  enableNewTopicNotification?: Prisma.SortOrder
-  enableNewReplyNotification?: Prisma.SortOrder
-  enableLikeNotification?: Prisma.SortOrder
-  enableFavoriteNotification?: Prisma.SortOrder
-  enableSystemNotification?: Prisma.SortOrder
-  enableMaintenanceMode?: Prisma.SortOrder
-  maintenanceMessage?: Prisma.SortOrder
-  updatedById?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-}
-
-export type ForumConfigMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  siteName?: Prisma.SortOrder
-  siteDescription?: Prisma.SortOrder
-  siteKeywords?: Prisma.SortOrder
-  siteLogo?: Prisma.SortOrder
-  siteFavicon?: Prisma.SortOrder
-  contactEmail?: Prisma.SortOrder
-  icpNumber?: Prisma.SortOrder
-  topicTitleMaxLength?: Prisma.SortOrder
-  topicContentMaxLength?: Prisma.SortOrder
-  replyContentMaxLength?: Prisma.SortOrder
-  reviewPolicy?: Prisma.SortOrder
-  allowAnonymousView?: Prisma.SortOrder
-  allowAnonymousPost?: Prisma.SortOrder
-  allowAnonymousReply?: Prisma.SortOrder
-  allowUserRegister?: Prisma.SortOrder
-  registerRequireEmailVerify?: Prisma.SortOrder
-  registerRequirePhoneVerify?: Prisma.SortOrder
-  usernameMinLength?: Prisma.SortOrder
-  usernameMaxLength?: Prisma.SortOrder
-  signatureMaxLength?: Prisma.SortOrder
-  bioMaxLength?: Prisma.SortOrder
-  defaultPointsForNewUser?: Prisma.SortOrder
-  enableEmailNotification?: Prisma.SortOrder
-  enableInAppNotification?: Prisma.SortOrder
-  enableNewTopicNotification?: Prisma.SortOrder
-  enableNewReplyNotification?: Prisma.SortOrder
-  enableLikeNotification?: Prisma.SortOrder
-  enableFavoriteNotification?: Prisma.SortOrder
-  enableSystemNotification?: Prisma.SortOrder
-  enableMaintenanceMode?: Prisma.SortOrder
-  maintenanceMessage?: Prisma.SortOrder
-  updatedById?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-}
-
-export type ForumConfigSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  topicTitleMaxLength?: Prisma.SortOrder
-  topicContentMaxLength?: Prisma.SortOrder
-  replyContentMaxLength?: Prisma.SortOrder
-  reviewPolicy?: Prisma.SortOrder
-  usernameMinLength?: Prisma.SortOrder
-  usernameMaxLength?: Prisma.SortOrder
-  signatureMaxLength?: Prisma.SortOrder
-  bioMaxLength?: Prisma.SortOrder
-  defaultPointsForNewUser?: Prisma.SortOrder
-  updatedById?: Prisma.SortOrder
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumConfigListRelationFilter = {
@@ -1090,18 +943,151 @@ export type ForumConfigOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ForumConfigCreateNestedOneWithoutHistoriesInput = {
-  create?: Prisma.XOR<Prisma.ForumConfigCreateWithoutHistoriesInput, Prisma.ForumConfigUncheckedCreateWithoutHistoriesInput>
-  connectOrCreate?: Prisma.ForumConfigCreateOrConnectWithoutHistoriesInput
-  connect?: Prisma.ForumConfigWhereUniqueInput
+export type ForumConfigScalarRelationFilter = {
+  is?: Prisma.ForumConfigWhereInput
+  isNot?: Prisma.ForumConfigWhereInput
 }
 
-export type ForumConfigUpdateOneRequiredWithoutHistoriesNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumConfigCreateWithoutHistoriesInput, Prisma.ForumConfigUncheckedCreateWithoutHistoriesInput>
-  connectOrCreate?: Prisma.ForumConfigCreateOrConnectWithoutHistoriesInput
-  upsert?: Prisma.ForumConfigUpsertWithoutHistoriesInput
-  connect?: Prisma.ForumConfigWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumConfigUpdateToOneWithWhereWithoutHistoriesInput, Prisma.ForumConfigUpdateWithoutHistoriesInput>, Prisma.ForumConfigUncheckedUpdateWithoutHistoriesInput>
+export type ForumConfigCountOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+  siteName?: Prisma.SortOrder
+  siteDescription?: Prisma.SortOrder
+  siteKeywords?: Prisma.SortOrder
+  siteLogo?: Prisma.SortOrder
+  siteFavicon?: Prisma.SortOrder
+  contactEmail?: Prisma.SortOrder
+  icpNumber?: Prisma.SortOrder
+  topicTitleMaxLength?: Prisma.SortOrder
+  topicContentMaxLength?: Prisma.SortOrder
+  replyContentMaxLength?: Prisma.SortOrder
+  reviewPolicy?: Prisma.SortOrder
+  allowAnonymousView?: Prisma.SortOrder
+  allowAnonymousPost?: Prisma.SortOrder
+  allowAnonymousReply?: Prisma.SortOrder
+  allowUserRegister?: Prisma.SortOrder
+  registerRequireEmailVerify?: Prisma.SortOrder
+  registerRequirePhoneVerify?: Prisma.SortOrder
+  usernameMinLength?: Prisma.SortOrder
+  usernameMaxLength?: Prisma.SortOrder
+  signatureMaxLength?: Prisma.SortOrder
+  bioMaxLength?: Prisma.SortOrder
+  defaultPointsForNewUser?: Prisma.SortOrder
+  enableEmailNotification?: Prisma.SortOrder
+  enableInAppNotification?: Prisma.SortOrder
+  enableNewTopicNotification?: Prisma.SortOrder
+  enableNewReplyNotification?: Prisma.SortOrder
+  enableLikeNotification?: Prisma.SortOrder
+  enableFavoriteNotification?: Prisma.SortOrder
+  enableSystemNotification?: Prisma.SortOrder
+  enableMaintenanceMode?: Prisma.SortOrder
+  maintenanceMessage?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+}
+
+export type ForumConfigAvgOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+  topicTitleMaxLength?: Prisma.SortOrder
+  topicContentMaxLength?: Prisma.SortOrder
+  replyContentMaxLength?: Prisma.SortOrder
+  reviewPolicy?: Prisma.SortOrder
+  usernameMinLength?: Prisma.SortOrder
+  usernameMaxLength?: Prisma.SortOrder
+  signatureMaxLength?: Prisma.SortOrder
+  bioMaxLength?: Prisma.SortOrder
+  defaultPointsForNewUser?: Prisma.SortOrder
+}
+
+export type ForumConfigMaxOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+  siteName?: Prisma.SortOrder
+  siteDescription?: Prisma.SortOrder
+  siteKeywords?: Prisma.SortOrder
+  siteLogo?: Prisma.SortOrder
+  siteFavicon?: Prisma.SortOrder
+  contactEmail?: Prisma.SortOrder
+  icpNumber?: Prisma.SortOrder
+  topicTitleMaxLength?: Prisma.SortOrder
+  topicContentMaxLength?: Prisma.SortOrder
+  replyContentMaxLength?: Prisma.SortOrder
+  reviewPolicy?: Prisma.SortOrder
+  allowAnonymousView?: Prisma.SortOrder
+  allowAnonymousPost?: Prisma.SortOrder
+  allowAnonymousReply?: Prisma.SortOrder
+  allowUserRegister?: Prisma.SortOrder
+  registerRequireEmailVerify?: Prisma.SortOrder
+  registerRequirePhoneVerify?: Prisma.SortOrder
+  usernameMinLength?: Prisma.SortOrder
+  usernameMaxLength?: Prisma.SortOrder
+  signatureMaxLength?: Prisma.SortOrder
+  bioMaxLength?: Prisma.SortOrder
+  defaultPointsForNewUser?: Prisma.SortOrder
+  enableEmailNotification?: Prisma.SortOrder
+  enableInAppNotification?: Prisma.SortOrder
+  enableNewTopicNotification?: Prisma.SortOrder
+  enableNewReplyNotification?: Prisma.SortOrder
+  enableLikeNotification?: Prisma.SortOrder
+  enableFavoriteNotification?: Prisma.SortOrder
+  enableSystemNotification?: Prisma.SortOrder
+  enableMaintenanceMode?: Prisma.SortOrder
+  maintenanceMessage?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+}
+
+export type ForumConfigMinOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+  siteName?: Prisma.SortOrder
+  siteDescription?: Prisma.SortOrder
+  siteKeywords?: Prisma.SortOrder
+  siteLogo?: Prisma.SortOrder
+  siteFavicon?: Prisma.SortOrder
+  contactEmail?: Prisma.SortOrder
+  icpNumber?: Prisma.SortOrder
+  topicTitleMaxLength?: Prisma.SortOrder
+  topicContentMaxLength?: Prisma.SortOrder
+  replyContentMaxLength?: Prisma.SortOrder
+  reviewPolicy?: Prisma.SortOrder
+  allowAnonymousView?: Prisma.SortOrder
+  allowAnonymousPost?: Prisma.SortOrder
+  allowAnonymousReply?: Prisma.SortOrder
+  allowUserRegister?: Prisma.SortOrder
+  registerRequireEmailVerify?: Prisma.SortOrder
+  registerRequirePhoneVerify?: Prisma.SortOrder
+  usernameMinLength?: Prisma.SortOrder
+  usernameMaxLength?: Prisma.SortOrder
+  signatureMaxLength?: Prisma.SortOrder
+  bioMaxLength?: Prisma.SortOrder
+  defaultPointsForNewUser?: Prisma.SortOrder
+  enableEmailNotification?: Prisma.SortOrder
+  enableInAppNotification?: Prisma.SortOrder
+  enableNewTopicNotification?: Prisma.SortOrder
+  enableNewReplyNotification?: Prisma.SortOrder
+  enableLikeNotification?: Prisma.SortOrder
+  enableFavoriteNotification?: Prisma.SortOrder
+  enableSystemNotification?: Prisma.SortOrder
+  enableMaintenanceMode?: Prisma.SortOrder
+  maintenanceMessage?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+}
+
+export type ForumConfigSumOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+  topicTitleMaxLength?: Prisma.SortOrder
+  topicContentMaxLength?: Prisma.SortOrder
+  replyContentMaxLength?: Prisma.SortOrder
+  reviewPolicy?: Prisma.SortOrder
+  usernameMinLength?: Prisma.SortOrder
+  usernameMaxLength?: Prisma.SortOrder
+  signatureMaxLength?: Prisma.SortOrder
+  bioMaxLength?: Prisma.SortOrder
+  defaultPointsForNewUser?: Prisma.SortOrder
 }
 
 export type ForumConfigCreateNestedManyWithoutUpdatedByInput = {
@@ -1146,7 +1132,21 @@ export type ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput = {
   deleteMany?: Prisma.ForumConfigScalarWhereInput | Prisma.ForumConfigScalarWhereInput[]
 }
 
-export type ForumConfigCreateWithoutHistoriesInput = {
+export type ForumConfigCreateNestedOneWithoutHistoriesInput = {
+  create?: Prisma.XOR<Prisma.ForumConfigCreateWithoutHistoriesInput, Prisma.ForumConfigUncheckedCreateWithoutHistoriesInput>
+  connectOrCreate?: Prisma.ForumConfigCreateOrConnectWithoutHistoriesInput
+  connect?: Prisma.ForumConfigWhereUniqueInput
+}
+
+export type ForumConfigUpdateOneRequiredWithoutHistoriesNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumConfigCreateWithoutHistoriesInput, Prisma.ForumConfigUncheckedCreateWithoutHistoriesInput>
+  connectOrCreate?: Prisma.ForumConfigCreateOrConnectWithoutHistoriesInput
+  upsert?: Prisma.ForumConfigUpsertWithoutHistoriesInput
+  connect?: Prisma.ForumConfigWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumConfigUpdateToOneWithWhereWithoutHistoriesInput, Prisma.ForumConfigUpdateWithoutHistoriesInput>, Prisma.ForumConfigUncheckedUpdateWithoutHistoriesInput>
+}
+
+export type ForumConfigCreateWithoutUpdatedByInput = {
   siteName: string
   siteDescription?: string | null
   siteKeywords?: string | null
@@ -1178,12 +1178,12 @@ export type ForumConfigCreateWithoutHistoriesInput = {
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: string | null
-  updatedAt?: Date | string
   createdAt?: Date | string
-  updatedBy?: Prisma.ForumProfileCreateNestedOneWithoutUpdatedConfigsInput
+  updatedAt?: Date | string
+  histories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutConfigInput
 }
 
-export type ForumConfigUncheckedCreateWithoutHistoriesInput = {
+export type ForumConfigUncheckedCreateWithoutUpdatedByInput = {
   id?: number
   siteName: string
   siteDescription?: string | null
@@ -1216,9 +1216,151 @@ export type ForumConfigUncheckedCreateWithoutHistoriesInput = {
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: string | null
-  updatedById?: number | null
-  updatedAt?: Date | string
   createdAt?: Date | string
+  updatedAt?: Date | string
+  histories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutConfigInput
+}
+
+export type ForumConfigCreateOrConnectWithoutUpdatedByInput = {
+  where: Prisma.ForumConfigWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumConfigCreateWithoutUpdatedByInput, Prisma.ForumConfigUncheckedCreateWithoutUpdatedByInput>
+}
+
+export type ForumConfigCreateManyUpdatedByInputEnvelope = {
+  data: Prisma.ForumConfigCreateManyUpdatedByInput | Prisma.ForumConfigCreateManyUpdatedByInput[]
+  skipDuplicates?: boolean
+}
+
+export type ForumConfigUpsertWithWhereUniqueWithoutUpdatedByInput = {
+  where: Prisma.ForumConfigWhereUniqueInput
+  update: Prisma.XOR<Prisma.ForumConfigUpdateWithoutUpdatedByInput, Prisma.ForumConfigUncheckedUpdateWithoutUpdatedByInput>
+  create: Prisma.XOR<Prisma.ForumConfigCreateWithoutUpdatedByInput, Prisma.ForumConfigUncheckedCreateWithoutUpdatedByInput>
+}
+
+export type ForumConfigUpdateWithWhereUniqueWithoutUpdatedByInput = {
+  where: Prisma.ForumConfigWhereUniqueInput
+  data: Prisma.XOR<Prisma.ForumConfigUpdateWithoutUpdatedByInput, Prisma.ForumConfigUncheckedUpdateWithoutUpdatedByInput>
+}
+
+export type ForumConfigUpdateManyWithWhereWithoutUpdatedByInput = {
+  where: Prisma.ForumConfigScalarWhereInput
+  data: Prisma.XOR<Prisma.ForumConfigUpdateManyMutationInput, Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByInput>
+}
+
+export type ForumConfigScalarWhereInput = {
+  AND?: Prisma.ForumConfigScalarWhereInput | Prisma.ForumConfigScalarWhereInput[]
+  OR?: Prisma.ForumConfigScalarWhereInput[]
+  NOT?: Prisma.ForumConfigScalarWhereInput | Prisma.ForumConfigScalarWhereInput[]
+  id?: Prisma.IntFilter<"ForumConfig"> | number
+  updatedById?: Prisma.IntNullableFilter<"ForumConfig"> | number | null
+  siteName?: Prisma.StringFilter<"ForumConfig"> | string
+  siteDescription?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
+  siteKeywords?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
+  siteLogo?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
+  siteFavicon?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
+  contactEmail?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
+  icpNumber?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
+  topicTitleMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
+  topicContentMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
+  replyContentMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
+  reviewPolicy?: Prisma.IntFilter<"ForumConfig"> | number
+  allowAnonymousView?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  allowAnonymousPost?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  allowAnonymousReply?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  allowUserRegister?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  registerRequireEmailVerify?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  registerRequirePhoneVerify?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  usernameMinLength?: Prisma.IntFilter<"ForumConfig"> | number
+  usernameMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
+  signatureMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
+  bioMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
+  defaultPointsForNewUser?: Prisma.IntFilter<"ForumConfig"> | number
+  enableEmailNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  enableInAppNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  enableNewTopicNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  enableNewReplyNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  enableLikeNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  enableFavoriteNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  enableSystemNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  enableMaintenanceMode?: Prisma.BoolFilter<"ForumConfig"> | boolean
+  maintenanceMessage?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
+}
+
+export type ForumConfigCreateWithoutHistoriesInput = {
+  siteName: string
+  siteDescription?: string | null
+  siteKeywords?: string | null
+  siteLogo?: string | null
+  siteFavicon?: string | null
+  contactEmail?: string | null
+  icpNumber?: string | null
+  topicTitleMaxLength?: number
+  topicContentMaxLength?: number
+  replyContentMaxLength?: number
+  reviewPolicy?: number
+  allowAnonymousView?: boolean
+  allowAnonymousPost?: boolean
+  allowAnonymousReply?: boolean
+  allowUserRegister?: boolean
+  registerRequireEmailVerify?: boolean
+  registerRequirePhoneVerify?: boolean
+  usernameMinLength?: number
+  usernameMaxLength?: number
+  signatureMaxLength?: number
+  bioMaxLength?: number
+  defaultPointsForNewUser?: number
+  enableEmailNotification?: boolean
+  enableInAppNotification?: boolean
+  enableNewTopicNotification?: boolean
+  enableNewReplyNotification?: boolean
+  enableLikeNotification?: boolean
+  enableFavoriteNotification?: boolean
+  enableSystemNotification?: boolean
+  enableMaintenanceMode?: boolean
+  maintenanceMessage?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  updatedBy?: Prisma.AppUserCreateNestedOneWithoutUpdatedConfigsInput
+}
+
+export type ForumConfigUncheckedCreateWithoutHistoriesInput = {
+  id?: number
+  updatedById?: number | null
+  siteName: string
+  siteDescription?: string | null
+  siteKeywords?: string | null
+  siteLogo?: string | null
+  siteFavicon?: string | null
+  contactEmail?: string | null
+  icpNumber?: string | null
+  topicTitleMaxLength?: number
+  topicContentMaxLength?: number
+  replyContentMaxLength?: number
+  reviewPolicy?: number
+  allowAnonymousView?: boolean
+  allowAnonymousPost?: boolean
+  allowAnonymousReply?: boolean
+  allowUserRegister?: boolean
+  registerRequireEmailVerify?: boolean
+  registerRequirePhoneVerify?: boolean
+  usernameMinLength?: number
+  usernameMaxLength?: number
+  signatureMaxLength?: number
+  bioMaxLength?: number
+  defaultPointsForNewUser?: number
+  enableEmailNotification?: boolean
+  enableInAppNotification?: boolean
+  enableNewTopicNotification?: boolean
+  enableNewReplyNotification?: boolean
+  enableLikeNotification?: boolean
+  enableFavoriteNotification?: boolean
+  enableSystemNotification?: boolean
+  enableMaintenanceMode?: boolean
+  maintenanceMessage?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ForumConfigCreateOrConnectWithoutHistoriesInput = {
@@ -1269,13 +1411,14 @@ export type ForumConfigUpdateWithoutHistoriesInput = {
   enableSystemNotification?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedBy?: Prisma.ForumProfileUpdateOneWithoutUpdatedConfigsNestedInput
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedBy?: Prisma.AppUserUpdateOneWithoutUpdatedConfigsNestedInput
 }
 
 export type ForumConfigUncheckedUpdateWithoutHistoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   siteName?: Prisma.StringFieldUpdateOperationsInput | string
   siteDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   siteKeywords?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1307,151 +1450,8 @@ export type ForumConfigUncheckedUpdateWithoutHistoriesInput = {
   enableSystemNotification?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ForumConfigCreateWithoutUpdatedByInput = {
-  siteName: string
-  siteDescription?: string | null
-  siteKeywords?: string | null
-  siteLogo?: string | null
-  siteFavicon?: string | null
-  contactEmail?: string | null
-  icpNumber?: string | null
-  topicTitleMaxLength?: number
-  topicContentMaxLength?: number
-  replyContentMaxLength?: number
-  reviewPolicy?: number
-  allowAnonymousView?: boolean
-  allowAnonymousPost?: boolean
-  allowAnonymousReply?: boolean
-  allowUserRegister?: boolean
-  registerRequireEmailVerify?: boolean
-  registerRequirePhoneVerify?: boolean
-  usernameMinLength?: number
-  usernameMaxLength?: number
-  signatureMaxLength?: number
-  bioMaxLength?: number
-  defaultPointsForNewUser?: number
-  enableEmailNotification?: boolean
-  enableInAppNotification?: boolean
-  enableNewTopicNotification?: boolean
-  enableNewReplyNotification?: boolean
-  enableLikeNotification?: boolean
-  enableFavoriteNotification?: boolean
-  enableSystemNotification?: boolean
-  enableMaintenanceMode?: boolean
-  maintenanceMessage?: string | null
-  updatedAt?: Date | string
-  createdAt?: Date | string
-  histories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutConfigInput
-}
-
-export type ForumConfigUncheckedCreateWithoutUpdatedByInput = {
-  id?: number
-  siteName: string
-  siteDescription?: string | null
-  siteKeywords?: string | null
-  siteLogo?: string | null
-  siteFavicon?: string | null
-  contactEmail?: string | null
-  icpNumber?: string | null
-  topicTitleMaxLength?: number
-  topicContentMaxLength?: number
-  replyContentMaxLength?: number
-  reviewPolicy?: number
-  allowAnonymousView?: boolean
-  allowAnonymousPost?: boolean
-  allowAnonymousReply?: boolean
-  allowUserRegister?: boolean
-  registerRequireEmailVerify?: boolean
-  registerRequirePhoneVerify?: boolean
-  usernameMinLength?: number
-  usernameMaxLength?: number
-  signatureMaxLength?: number
-  bioMaxLength?: number
-  defaultPointsForNewUser?: number
-  enableEmailNotification?: boolean
-  enableInAppNotification?: boolean
-  enableNewTopicNotification?: boolean
-  enableNewReplyNotification?: boolean
-  enableLikeNotification?: boolean
-  enableFavoriteNotification?: boolean
-  enableSystemNotification?: boolean
-  enableMaintenanceMode?: boolean
-  maintenanceMessage?: string | null
-  updatedAt?: Date | string
-  createdAt?: Date | string
-  histories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutConfigInput
-}
-
-export type ForumConfigCreateOrConnectWithoutUpdatedByInput = {
-  where: Prisma.ForumConfigWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumConfigCreateWithoutUpdatedByInput, Prisma.ForumConfigUncheckedCreateWithoutUpdatedByInput>
-}
-
-export type ForumConfigCreateManyUpdatedByInputEnvelope = {
-  data: Prisma.ForumConfigCreateManyUpdatedByInput | Prisma.ForumConfigCreateManyUpdatedByInput[]
-  skipDuplicates?: boolean
-}
-
-export type ForumConfigUpsertWithWhereUniqueWithoutUpdatedByInput = {
-  where: Prisma.ForumConfigWhereUniqueInput
-  update: Prisma.XOR<Prisma.ForumConfigUpdateWithoutUpdatedByInput, Prisma.ForumConfigUncheckedUpdateWithoutUpdatedByInput>
-  create: Prisma.XOR<Prisma.ForumConfigCreateWithoutUpdatedByInput, Prisma.ForumConfigUncheckedCreateWithoutUpdatedByInput>
-}
-
-export type ForumConfigUpdateWithWhereUniqueWithoutUpdatedByInput = {
-  where: Prisma.ForumConfigWhereUniqueInput
-  data: Prisma.XOR<Prisma.ForumConfigUpdateWithoutUpdatedByInput, Prisma.ForumConfigUncheckedUpdateWithoutUpdatedByInput>
-}
-
-export type ForumConfigUpdateManyWithWhereWithoutUpdatedByInput = {
-  where: Prisma.ForumConfigScalarWhereInput
-  data: Prisma.XOR<Prisma.ForumConfigUpdateManyMutationInput, Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByInput>
-}
-
-export type ForumConfigScalarWhereInput = {
-  AND?: Prisma.ForumConfigScalarWhereInput | Prisma.ForumConfigScalarWhereInput[]
-  OR?: Prisma.ForumConfigScalarWhereInput[]
-  NOT?: Prisma.ForumConfigScalarWhereInput | Prisma.ForumConfigScalarWhereInput[]
-  id?: Prisma.IntFilter<"ForumConfig"> | number
-  siteName?: Prisma.StringFilter<"ForumConfig"> | string
-  siteDescription?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
-  siteKeywords?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
-  siteLogo?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
-  siteFavicon?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
-  contactEmail?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
-  icpNumber?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
-  topicTitleMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
-  topicContentMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
-  replyContentMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
-  reviewPolicy?: Prisma.IntFilter<"ForumConfig"> | number
-  allowAnonymousView?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  allowAnonymousPost?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  allowAnonymousReply?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  allowUserRegister?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  registerRequireEmailVerify?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  registerRequirePhoneVerify?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  usernameMinLength?: Prisma.IntFilter<"ForumConfig"> | number
-  usernameMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
-  signatureMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
-  bioMaxLength?: Prisma.IntFilter<"ForumConfig"> | number
-  defaultPointsForNewUser?: Prisma.IntFilter<"ForumConfig"> | number
-  enableEmailNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  enableInAppNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  enableNewTopicNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  enableNewReplyNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  enableLikeNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  enableFavoriteNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  enableSystemNotification?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  enableMaintenanceMode?: Prisma.BoolFilter<"ForumConfig"> | boolean
-  maintenanceMessage?: Prisma.StringNullableFilter<"ForumConfig"> | string | null
-  updatedById?: Prisma.IntNullableFilter<"ForumConfig"> | number | null
-  updatedAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
-  createdAt?: Prisma.DateTimeFilter<"ForumConfig"> | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumConfigCreateManyUpdatedByInput = {
@@ -1487,8 +1487,8 @@ export type ForumConfigCreateManyUpdatedByInput = {
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: string | null
-  updatedAt?: Date | string
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ForumConfigUpdateWithoutUpdatedByInput = {
@@ -1523,8 +1523,8 @@ export type ForumConfigUpdateWithoutUpdatedByInput = {
   enableSystemNotification?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   histories?: Prisma.ForumConfigHistoryUpdateManyWithoutConfigNestedInput
 }
 
@@ -1561,8 +1561,8 @@ export type ForumConfigUncheckedUpdateWithoutUpdatedByInput = {
   enableSystemNotification?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   histories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutConfigNestedInput
 }
 
@@ -1599,8 +1599,8 @@ export type ForumConfigUncheckedUpdateManyWithoutUpdatedByInput = {
   enableSystemNotification?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableMaintenanceMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
   maintenanceMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -1636,6 +1636,7 @@ export type ForumConfigCountOutputTypeCountHistoriesArgs<ExtArgs extends runtime
 
 export type ForumConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  updatedById?: boolean
   siteName?: boolean
   siteDescription?: boolean
   siteKeywords?: boolean
@@ -1667,9 +1668,8 @@ export type ForumConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: boolean
-  updatedById?: boolean
-  updatedAt?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   histories?: boolean | Prisma.ForumConfig$historiesArgs<ExtArgs>
   updatedBy?: boolean | Prisma.ForumConfig$updatedByArgs<ExtArgs>
   _count?: boolean | Prisma.ForumConfigCountOutputTypeDefaultArgs<ExtArgs>
@@ -1677,6 +1677,7 @@ export type ForumConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalA
 
 export type ForumConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  updatedById?: boolean
   siteName?: boolean
   siteDescription?: boolean
   siteKeywords?: boolean
@@ -1708,14 +1709,14 @@ export type ForumConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: boolean
-  updatedById?: boolean
-  updatedAt?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   updatedBy?: boolean | Prisma.ForumConfig$updatedByArgs<ExtArgs>
 }, ExtArgs["result"]["forumConfig"]>
 
 export type ForumConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  updatedById?: boolean
   siteName?: boolean
   siteDescription?: boolean
   siteKeywords?: boolean
@@ -1747,14 +1748,14 @@ export type ForumConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: boolean
-  updatedById?: boolean
-  updatedAt?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   updatedBy?: boolean | Prisma.ForumConfig$updatedByArgs<ExtArgs>
 }, ExtArgs["result"]["forumConfig"]>
 
 export type ForumConfigSelectScalar = {
   id?: boolean
+  updatedById?: boolean
   siteName?: boolean
   siteDescription?: boolean
   siteKeywords?: boolean
@@ -1786,12 +1787,11 @@ export type ForumConfigSelectScalar = {
   enableSystemNotification?: boolean
   enableMaintenanceMode?: boolean
   maintenanceMessage?: boolean
-  updatedById?: boolean
-  updatedAt?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }
 
-export type ForumConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "siteName" | "siteDescription" | "siteKeywords" | "siteLogo" | "siteFavicon" | "contactEmail" | "icpNumber" | "topicTitleMaxLength" | "topicContentMaxLength" | "replyContentMaxLength" | "reviewPolicy" | "allowAnonymousView" | "allowAnonymousPost" | "allowAnonymousReply" | "allowUserRegister" | "registerRequireEmailVerify" | "registerRequirePhoneVerify" | "usernameMinLength" | "usernameMaxLength" | "signatureMaxLength" | "bioMaxLength" | "defaultPointsForNewUser" | "enableEmailNotification" | "enableInAppNotification" | "enableNewTopicNotification" | "enableNewReplyNotification" | "enableLikeNotification" | "enableFavoriteNotification" | "enableSystemNotification" | "enableMaintenanceMode" | "maintenanceMessage" | "updatedById" | "updatedAt" | "createdAt", ExtArgs["result"]["forumConfig"]>
+export type ForumConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "updatedById" | "siteName" | "siteDescription" | "siteKeywords" | "siteLogo" | "siteFavicon" | "contactEmail" | "icpNumber" | "topicTitleMaxLength" | "topicContentMaxLength" | "replyContentMaxLength" | "reviewPolicy" | "allowAnonymousView" | "allowAnonymousPost" | "allowAnonymousReply" | "allowUserRegister" | "registerRequireEmailVerify" | "registerRequirePhoneVerify" | "usernameMinLength" | "usernameMaxLength" | "signatureMaxLength" | "bioMaxLength" | "defaultPointsForNewUser" | "enableEmailNotification" | "enableInAppNotification" | "enableNewTopicNotification" | "enableNewReplyNotification" | "enableLikeNotification" | "enableFavoriteNotification" | "enableSystemNotification" | "enableMaintenanceMode" | "maintenanceMessage" | "createdAt" | "updatedAt", ExtArgs["result"]["forumConfig"]>
 export type ForumConfigInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   histories?: boolean | Prisma.ForumConfig$historiesArgs<ExtArgs>
   updatedBy?: boolean | Prisma.ForumConfig$updatedByArgs<ExtArgs>
@@ -1814,13 +1814,17 @@ export type $ForumConfigPayload<ExtArgs extends runtime.Types.Extensions.Interna
     /**
      * 最后修改人
      */
-    updatedBy: Prisma.$ForumProfilePayload<ExtArgs> | null
+    updatedBy: Prisma.$AppUserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
      * 主键ID
      */
     id: number
+    /**
+     * 最后修改人ID
+     */
+    updatedById: number | null
     /**
      * 站点名称
      */
@@ -1946,17 +1950,13 @@ export type $ForumConfigPayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     maintenanceMessage: string | null
     /**
-     * 最后修改人ID
+     * 创建时间
      */
-    updatedById: number | null
+    createdAt: Date
     /**
      * 最后修改时间
      */
     updatedAt: Date
-    /**
-     * 创建时间
-     */
-    createdAt: Date
   }, ExtArgs["result"]["forumConfig"]>
   composites: {}
 }
@@ -2352,7 +2352,7 @@ readonly fields: ForumConfigFieldRefs;
 export interface Prisma__ForumConfigClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   histories<T extends Prisma.ForumConfig$historiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumConfig$historiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumConfigHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  updatedBy<T extends Prisma.ForumConfig$updatedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumConfig$updatedByArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  updatedBy<T extends Prisma.ForumConfig$updatedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumConfig$updatedByArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2383,6 +2383,7 @@ export interface Prisma__ForumConfigClient<T, Null = never, ExtArgs extends runt
  */
 export interface ForumConfigFieldRefs {
   readonly id: Prisma.FieldRef<"ForumConfig", 'Int'>
+  readonly updatedById: Prisma.FieldRef<"ForumConfig", 'Int'>
   readonly siteName: Prisma.FieldRef<"ForumConfig", 'String'>
   readonly siteDescription: Prisma.FieldRef<"ForumConfig", 'String'>
   readonly siteKeywords: Prisma.FieldRef<"ForumConfig", 'String'>
@@ -2414,9 +2415,8 @@ export interface ForumConfigFieldRefs {
   readonly enableSystemNotification: Prisma.FieldRef<"ForumConfig", 'Boolean'>
   readonly enableMaintenanceMode: Prisma.FieldRef<"ForumConfig", 'Boolean'>
   readonly maintenanceMessage: Prisma.FieldRef<"ForumConfig", 'String'>
-  readonly updatedById: Prisma.FieldRef<"ForumConfig", 'Int'>
-  readonly updatedAt: Prisma.FieldRef<"ForumConfig", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"ForumConfig", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"ForumConfig", 'DateTime'>
 }
     
 
@@ -2850,18 +2850,18 @@ export type ForumConfig$historiesArgs<ExtArgs extends runtime.Types.Extensions.I
  */
 export type ForumConfig$updatedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the ForumProfile
+   * Select specific fields to fetch from the AppUser
    */
-  select?: Prisma.ForumProfileSelect<ExtArgs> | null
+  select?: Prisma.AppUserSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the ForumProfile
+   * Omit specific fields from the AppUser
    */
-  omit?: Prisma.ForumProfileOmit<ExtArgs> | null
+  omit?: Prisma.AppUserOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.ForumProfileInclude<ExtArgs> | null
-  where?: Prisma.ForumProfileWhereInput
+  include?: Prisma.AppUserInclude<ExtArgs> | null
+  where?: Prisma.AppUserWhereInput
 }
 
 /**

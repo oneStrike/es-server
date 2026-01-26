@@ -30,12 +30,16 @@ export class ForumViewService extends BaseService {
     return this.prisma.forumReply
   }
 
-  get forumProfile() {
-    return this.prisma.forumProfile
+  get appUser() {
+    return this.prisma.appUser
   }
 
+  // get forumProfile() {
+  //   return this.prisma.forumProfile
+  // }
+
   async createView(createForumViewDto: CreateForumViewDto) {
-    const { topicId, replyId, profileId, type, ...viewData } =
+    const { topicId, replyId, userId, type, ...viewData } =
       createForumViewDto
 
     const topic = await this.forumTopic.findUnique({
@@ -60,12 +64,12 @@ export class ForumViewService extends BaseService {
       }
     }
 
-    const profile = await this.forumProfile.findUnique({
-      where: { id: profileId },
+    const user = await this.appUser.findUnique({
+      where: { id: userId },
     })
 
-    if (!profile) {
-      throw new BadRequestException('用户资料不存在')
+    if (!user) {
+      throw new BadRequestException('用户不存在')
     }
 
     const view = await this.forumView.create({
@@ -73,7 +77,7 @@ export class ForumViewService extends BaseService {
         ...viewData,
         topicId,
         replyId,
-        userId: profileId,
+        userId,
         type,
       },
     })
@@ -93,7 +97,7 @@ export class ForumViewService extends BaseService {
   }
 
   async getForumViews(queryForumViewDto: QueryForumViewDto) {
-    const { topicId, profileId, type, ipAddress, ...otherDto } =
+    const { topicId, userId, type, ipAddress, ...otherDto } =
       queryForumViewDto
 
     const where: any = { ...otherDto }
@@ -102,8 +106,8 @@ export class ForumViewService extends BaseService {
       where.topicId = topicId
     }
 
-    if (profileId) {
-      where.userId = profileId
+    if (userId) {
+      where.userId = userId
     }
 
     if (type) {
@@ -123,10 +127,11 @@ export class ForumViewService extends BaseService {
             title: true,
           },
         },
-        profile: {
+        user: {
           select: {
             id: true,
-            userId: true,
+            nickname: true,
+            avatar: true,
           },
         },
       },
@@ -172,10 +177,11 @@ export class ForumViewService extends BaseService {
         topicId,
       },
       include: {
-        profile: {
+        user: {
           select: {
             id: true,
-            userId: true,
+            nickname: true,
+            avatar: true,
           },
         },
       },
@@ -201,10 +207,10 @@ export class ForumViewService extends BaseService {
     }
   }
 
-  async getUserViewHistory(profileId: number) {
+  async getUserViewHistory(userId: number) {
     return this.forumView.findPagination({
       where: {
-        userId: profileId,
+        userId,
       },
       include: {
         topic: {
@@ -240,7 +246,7 @@ export class ForumViewService extends BaseService {
 
     const result = await this.forumView.deleteMany({
       where: {
-        createdAt: {
+        viewedAt: {
           lt: cutoffDate,
         },
       },

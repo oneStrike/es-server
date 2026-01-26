@@ -45,21 +45,14 @@ export class ForumTopicLikeService extends BaseService {
   }
 
   /**
-   * 获取论坛用户资料模型
-   */
-  get forumProfile() {
-    return this.prisma.forumProfile
-  }
-
-  /**
    * 点赞主题
-   * @param createForumTopicLikeDto - 创建点赞的DTO，包含主题ID和用户资料ID
+   * @param createForumTopicLikeDto - 创建点赞的DTO，包含主题ID和用户ID
    * @returns 创建的点赞记录
    * @throws NotFoundException 主题不存在
-   * @throws BadRequestException 用户资料不存在、已经点赞过该主题
+   * @throws BadRequestException 用户不存在、已经点赞过该主题
    */
   async likeTopic(createForumTopicLikeDto: CreateForumTopicLikeDto) {
-    const { topicId, profileId } = createForumTopicLikeDto
+    const { topicId, userId } = createForumTopicLikeDto
 
     const topic = await this.forumTopic.findUnique({
       where: { id: topicId, deletedAt: null },
@@ -69,19 +62,19 @@ export class ForumTopicLikeService extends BaseService {
       throw new NotFoundException('主题不存在')
     }
 
-    const profile = await this.forumProfile.findUnique({
-      where: { id: profileId },
+    const user = await this.prisma.appUser.findUnique({
+      where: { id: userId },
     })
 
-    if (!profile) {
-      throw new BadRequestException('用户资料不存在')
+    if (!user) {
+      throw new BadRequestException('用户不存在')
     }
 
     const existingLike = await this.forumTopicLike.findUnique({
       where: {
-        topicId_profileId: {
+        topicId_userId: {
           topicId,
-          profileId,
+          userId,
         },
       },
     })
@@ -94,19 +87,19 @@ export class ForumTopicLikeService extends BaseService {
       const like = await tx.forumTopicLike.create({
         data: {
           topicId,
-          profileId,
+          userId,
         },
       })
 
       await this.forumCounterService.updateTopicLikeRelatedCounts(
         tx,
         topicId,
-        topic.profileId,
+        topic.userId,
         1,
       )
 
       await this.actionLogService.createActionLog({
-        profileId,
+        userId,
         actionType: ForumUserActionTypeEnum.LIKE_TOPIC,
         targetType: ForumUserActionTargetTypeEnum.TOPIC,
         targetId: topicId,
@@ -119,16 +112,16 @@ export class ForumTopicLikeService extends BaseService {
   /**
    * 取消点赞主题
    * @param topicId - 主题ID
-   * @param profileId - 用户资料ID
+   * @param userId - 用户ID
    * @returns 删除的点赞记录
    * @throws BadRequestException 点赞记录不存在
    */
-  async unlikeTopic(topicId: number, profileId: number) {
+  async unlikeTopic(topicId: number, userId: number) {
     const like = await this.forumTopicLike.findUnique({
       where: {
-        topicId_profileId: {
+        topicId_userId: {
           topicId,
-          profileId,
+          userId,
         },
       },
     })
@@ -139,7 +132,7 @@ export class ForumTopicLikeService extends BaseService {
 
     const topic = await this.forumTopic.findUnique({
       where: { id: topicId },
-      select: { profileId: true },
+      select: { userId: true },
     })
 
     if (!topic) {
@@ -150,12 +143,12 @@ export class ForumTopicLikeService extends BaseService {
       await this.forumCounterService.updateTopicLikeRelatedCounts(
         tx,
         topicId,
-        topic.profileId,
+        topic.userId,
         -1,
       )
 
       await this.actionLogService.createActionLog({
-        profileId,
+        userId,
         actionType: ForumUserActionTypeEnum.UNLIKE_TOPIC,
         targetType: ForumUserActionTargetTypeEnum.TOPIC,
         targetId: topicId,
@@ -163,9 +156,9 @@ export class ForumTopicLikeService extends BaseService {
 
       return tx.forumTopicLike.delete({
         where: {
-          topicId_profileId: {
+          topicId_userId: {
             topicId,
-            profileId,
+            userId,
           },
         },
       })
@@ -174,12 +167,12 @@ export class ForumTopicLikeService extends BaseService {
 
   /**
    * 切换主题点赞状态
-   * @param toggleTopicLikeDto - 切换点赞的DTO，包含主题ID和用户资料ID
+   * @param toggleTopicLikeDto - 切换点赞的DTO，包含主题ID和用户ID
    * @returns 点赞或取消点赞的结果
    * @throws NotFoundException 主题不存在
    */
   async toggleTopicLike(toggleTopicLikeDto: ToggleForumTopicLikeDto) {
-    const { topicId, profileId } = toggleTopicLikeDto
+    const { topicId, userId } = toggleTopicLikeDto
 
     const topic = await this.forumTopic.findUnique({
       where: { id: topicId, deletedAt: null },
@@ -191,27 +184,27 @@ export class ForumTopicLikeService extends BaseService {
 
     const existingLike = await this.forumTopicLike.findUnique({
       where: {
-        topicId_profileId: {
+        topicId_userId: {
           topicId,
-          profileId,
+          userId,
         },
       },
     })
 
     if (existingLike) {
-      return this.unlikeTopic(topicId, profileId)
+      return this.unlikeTopic(topicId, userId)
     } else {
-      return this.likeTopic({ topicId, profileId })
+      return this.likeTopic({ topicId, userId })
     }
   }
 
   /**
    * 获取主题点赞列表（分页）
-   * @param queryForumTopicLikeDto - 查询参数，包含主题ID、用户资料ID等过滤条件
+   * @param queryForumTopicLikeDto - 查询参数，包含主题ID、用户ID等过滤条件
    * @returns 分页的点赞列表
    */
   async getTopicLikes(queryForumTopicLikeDto: QueryForumTopicLikeDto) {
-    const { topicId, profileId, ...otherDto } = queryForumTopicLikeDto
+    const { topicId, userId, ...otherDto } = queryForumTopicLikeDto
 
     const where: any = { ...otherDto }
 
@@ -219,8 +212,8 @@ export class ForumTopicLikeService extends BaseService {
       where.topicId = topicId
     }
 
-    if (profileId) {
-      where.userId = profileId
+    if (userId) {
+      where.userId = userId
     }
 
     return this.forumTopicLike.findPagination({
@@ -232,10 +225,11 @@ export class ForumTopicLikeService extends BaseService {
             title: true,
           },
         },
-        profile: {
+        user: {
           select: {
             id: true,
-            userId: true,
+            nickname: true,
+            avatar: true,
           },
         },
       },
@@ -245,15 +239,15 @@ export class ForumTopicLikeService extends BaseService {
   /**
    * 检查用户是否点赞过指定主题
    * @param topicId - 主题ID
-   * @param profileId - 用户资料ID
+   * @param userId - 用户ID
    * @returns 是否点赞过该主题
    */
-  async checkUserLiked(topicId: number, profileId: number) {
+  async checkUserLiked(topicId: number, userId: number) {
     const like = await this.forumTopicLike.findUnique({
       where: {
-        topicId_profileId: {
+        topicId_userId: {
           topicId,
-          profileId,
+          userId,
         },
       },
     })

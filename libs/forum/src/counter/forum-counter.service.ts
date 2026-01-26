@@ -130,14 +130,14 @@ export class ForumCounterService extends BaseService {
   /**
    * 更新用户档案的主题数量
    * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
-   * @param profileId - 用户档案ID
+   * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
    */
-  async updateProfileTopicCount(tx: any, profileId: number, delta: number) {
+  async updateProfileTopicCount(tx: any, userId: number, delta: number) {
     const prisma = tx || this.prisma
     return prisma.forumProfile.update({
-      where: { id: profileId },
+      where: { userId },
       data: {
         topicCount: {
           increment: delta,
@@ -149,14 +149,14 @@ export class ForumCounterService extends BaseService {
   /**
    * 更新用户档案的回复数量
    * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
-   * @param profileId - 用户档案ID
+   * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
    */
-  async updateProfileReplyCount(tx: any, profileId: number, delta: number) {
+  async updateProfileReplyCount(tx: any, userId: number, delta: number) {
     const prisma = tx || this.prisma
     return prisma.forumProfile.update({
-      where: { id: profileId },
+      where: { userId },
       data: {
         replyCount: {
           increment: delta,
@@ -168,14 +168,14 @@ export class ForumCounterService extends BaseService {
   /**
    * 更新用户档案的点赞数量
    * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
-   * @param profileId - 用户档案ID
+   * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
    */
-  async updateProfileLikeCount(tx: any, profileId: number, delta: number) {
+  async updateProfileLikeCount(tx: any, userId: number, delta: number) {
     const prisma = tx || this.prisma
     return prisma.forumProfile.update({
-      where: { id: profileId },
+      where: { userId },
       data: {
         likeCount: {
           increment: delta,
@@ -187,14 +187,14 @@ export class ForumCounterService extends BaseService {
   /**
    * 更新用户档案的收藏数量
    * @param tx - Prisma 事务对象，如果在事务中调用则传入，否则使用默认 prisma 客户端
-   * @param profileId - 用户档案ID
+   * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    * @returns 更新后的用户档案信息
    */
-  async updateProfileFavoriteCount(tx: any, profileId: number, delta: number) {
+  async updateProfileFavoriteCount(tx: any, userId: number, delta: number) {
     const prisma = tx || this.prisma
     return prisma.forumProfile.update({
-      where: { id: profileId },
+      where: { userId },
       data: {
         favoriteCount: {
           increment: delta,
@@ -209,20 +209,20 @@ export class ForumCounterService extends BaseService {
    * @param tx - Prisma 事务对象
    * @param topicId - 主题ID
    * @param sectionId - 版块ID
-   * @param profileId - 用户档案ID
+   * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    */
   async updateReplyRelatedCounts(
     tx: any,
     topicId: number,
     sectionId: number,
-    profileId: number,
+    userId: number,
     delta: number,
   ) {
     await Promise.all([
       this.updateTopicReplyCount(tx, topicId, delta),
       this.updateSectionReplyCount(tx, sectionId, delta),
-      this.updateProfileReplyCount(tx, profileId, delta),
+      this.updateProfileReplyCount(tx, userId, delta),
     ])
   }
 
@@ -231,18 +231,18 @@ export class ForumCounterService extends BaseService {
    * 包括版块主题数、用户档案主题数
    * @param tx - Prisma 事务对象
    * @param sectionId - 版块ID
-   * @param profileId - 用户档案ID
+   * @param userId - 用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    */
   async updateTopicRelatedCounts(
     tx: any,
     sectionId: number,
-    profileId: number,
+    userId: number,
     delta: number,
   ) {
     await Promise.all([
       this.updateSectionTopicCount(tx, sectionId, delta),
-      this.updateProfileTopicCount(tx, profileId, delta),
+      this.updateProfileTopicCount(tx, userId, delta),
     ])
   }
 
@@ -251,18 +251,18 @@ export class ForumCounterService extends BaseService {
    * 包括主题点赞数、主题作者的用户档案点赞数
    * @param tx - Prisma 事务对象
    * @param topicId - 主题ID
-   * @param authorProfileId - 主题作者的用户档案ID
+   * @param authorUserId - 主题作者的用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    */
   async updateTopicLikeRelatedCounts(
     tx: any,
     topicId: number,
-    authorProfileId: number,
+    authorUserId: number,
     delta: number,
   ) {
     await Promise.all([
       this.updateTopicLikeCount(tx, topicId, delta),
-      this.updateProfileLikeCount(tx, authorProfileId, delta),
+      this.updateProfileLikeCount(tx, authorUserId, delta),
     ])
   }
 
@@ -271,18 +271,18 @@ export class ForumCounterService extends BaseService {
    * 包括主题收藏数、主题作者的用户档案收藏数
    * @param tx - Prisma 事务对象
    * @param topicId - 主题ID
-   * @param authorProfileId - 主题作者的用户档案ID
+   * @param authorUserId - 主题作者的用户ID
    * @param delta - 增量值，正数表示增加，负数表示减少
    */
   async updateTopicFavoriteRelatedCounts(
     tx: any,
     topicId: number,
-    authorProfileId: number,
+    authorUserId: number,
     delta: number,
   ) {
     await Promise.all([
       this.updateTopicFavoriteCount(tx, topicId, delta),
-      this.updateProfileFavoriteCount(tx, authorProfileId, delta),
+      this.updateProfileFavoriteCount(tx, authorUserId, delta),
     ])
   }
 }

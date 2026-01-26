@@ -29,27 +29,27 @@ export type AggregateForumReport = {
 export type ForumReportAvgAggregateOutputType = {
   id: number | null
   reporterId: number | null
-  targetId: number | null
   handlerId: number | null
+  targetId: number | null
 }
 
 export type ForumReportSumAggregateOutputType = {
   id: number | null
   reporterId: number | null
-  targetId: number | null
   handlerId: number | null
+  targetId: number | null
 }
 
 export type ForumReportMinAggregateOutputType = {
   id: number | null
   reporterId: number | null
-  type: string | null
+  handlerId: number | null
   targetId: number | null
+  type: string | null
   reason: string | null
   description: string | null
   evidenceUrl: string | null
   status: string | null
-  handlerId: number | null
   handlingNote: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -58,13 +58,13 @@ export type ForumReportMinAggregateOutputType = {
 export type ForumReportMaxAggregateOutputType = {
   id: number | null
   reporterId: number | null
-  type: string | null
+  handlerId: number | null
   targetId: number | null
+  type: string | null
   reason: string | null
   description: string | null
   evidenceUrl: string | null
   status: string | null
-  handlerId: number | null
   handlingNote: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -73,13 +73,13 @@ export type ForumReportMaxAggregateOutputType = {
 export type ForumReportCountAggregateOutputType = {
   id: number
   reporterId: number
-  type: number
+  handlerId: number
   targetId: number
+  type: number
   reason: number
   description: number
   evidenceUrl: number
   status: number
-  handlerId: number
   handlingNote: number
   createdAt: number
   updatedAt: number
@@ -90,27 +90,27 @@ export type ForumReportCountAggregateOutputType = {
 export type ForumReportAvgAggregateInputType = {
   id?: true
   reporterId?: true
-  targetId?: true
   handlerId?: true
+  targetId?: true
 }
 
 export type ForumReportSumAggregateInputType = {
   id?: true
   reporterId?: true
-  targetId?: true
   handlerId?: true
+  targetId?: true
 }
 
 export type ForumReportMinAggregateInputType = {
   id?: true
   reporterId?: true
-  type?: true
+  handlerId?: true
   targetId?: true
+  type?: true
   reason?: true
   description?: true
   evidenceUrl?: true
   status?: true
-  handlerId?: true
   handlingNote?: true
   createdAt?: true
   updatedAt?: true
@@ -119,13 +119,13 @@ export type ForumReportMinAggregateInputType = {
 export type ForumReportMaxAggregateInputType = {
   id?: true
   reporterId?: true
-  type?: true
+  handlerId?: true
   targetId?: true
+  type?: true
   reason?: true
   description?: true
   evidenceUrl?: true
   status?: true
-  handlerId?: true
   handlingNote?: true
   createdAt?: true
   updatedAt?: true
@@ -134,13 +134,13 @@ export type ForumReportMaxAggregateInputType = {
 export type ForumReportCountAggregateInputType = {
   id?: true
   reporterId?: true
-  type?: true
+  handlerId?: true
   targetId?: true
+  type?: true
   reason?: true
   description?: true
   evidenceUrl?: true
   status?: true
-  handlerId?: true
   handlingNote?: true
   createdAt?: true
   updatedAt?: true
@@ -236,13 +236,13 @@ export type ForumReportGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inte
 export type ForumReportGroupByOutputType = {
   id: number
   reporterId: number
-  type: string
+  handlerId: number | null
   targetId: number
+  type: string
   reason: string
   description: string | null
   evidenceUrl: string | null
   status: string
-  handlerId: number | null
   handlingNote: string | null
   createdAt: Date
   updatedAt: Date
@@ -274,35 +274,35 @@ export type ForumReportWhereInput = {
   NOT?: Prisma.ForumReportWhereInput | Prisma.ForumReportWhereInput[]
   id?: Prisma.IntFilter<"ForumReport"> | number
   reporterId?: Prisma.IntFilter<"ForumReport"> | number
-  type?: Prisma.StringFilter<"ForumReport"> | string
+  handlerId?: Prisma.IntNullableFilter<"ForumReport"> | number | null
   targetId?: Prisma.IntFilter<"ForumReport"> | number
+  type?: Prisma.StringFilter<"ForumReport"> | string
   reason?: Prisma.StringFilter<"ForumReport"> | string
   description?: Prisma.StringNullableFilter<"ForumReport"> | string | null
   evidenceUrl?: Prisma.StringNullableFilter<"ForumReport"> | string | null
   status?: Prisma.StringFilter<"ForumReport"> | string
-  handlerId?: Prisma.IntNullableFilter<"ForumReport"> | number | null
   handlingNote?: Prisma.StringNullableFilter<"ForumReport"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumReport"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumReport"> | Date | string
-  reporter?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
-  handler?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
+  reporter?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+  handler?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
 }
 
 export type ForumReportOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  handlerId?: Prisma.SortOrderInput | Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
-  handlerId?: Prisma.SortOrderInput | Prisma.SortOrder
   handlingNote?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  reporter?: Prisma.ForumProfileOrderByWithRelationInput
-  handler?: Prisma.ForumProfileOrderByWithRelationInput
+  reporter?: Prisma.AppUserOrderByWithRelationInput
+  handler?: Prisma.AppUserOrderByWithRelationInput
 }
 
 export type ForumReportWhereUniqueInput = Prisma.AtLeast<{
@@ -311,30 +311,30 @@ export type ForumReportWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ForumReportWhereInput[]
   NOT?: Prisma.ForumReportWhereInput | Prisma.ForumReportWhereInput[]
   reporterId?: Prisma.IntFilter<"ForumReport"> | number
-  type?: Prisma.StringFilter<"ForumReport"> | string
+  handlerId?: Prisma.IntNullableFilter<"ForumReport"> | number | null
   targetId?: Prisma.IntFilter<"ForumReport"> | number
+  type?: Prisma.StringFilter<"ForumReport"> | string
   reason?: Prisma.StringFilter<"ForumReport"> | string
   description?: Prisma.StringNullableFilter<"ForumReport"> | string | null
   evidenceUrl?: Prisma.StringNullableFilter<"ForumReport"> | string | null
   status?: Prisma.StringFilter<"ForumReport"> | string
-  handlerId?: Prisma.IntNullableFilter<"ForumReport"> | number | null
   handlingNote?: Prisma.StringNullableFilter<"ForumReport"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumReport"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumReport"> | Date | string
-  reporter?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
-  handler?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
+  reporter?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+  handler?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
 }, "id">
 
 export type ForumReportOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  handlerId?: Prisma.SortOrderInput | Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
-  handlerId?: Prisma.SortOrderInput | Prisma.SortOrder
   handlingNote?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -351,21 +351,21 @@ export type ForumReportScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumReportScalarWhereWithAggregatesInput | Prisma.ForumReportScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumReport"> | number
   reporterId?: Prisma.IntWithAggregatesFilter<"ForumReport"> | number
-  type?: Prisma.StringWithAggregatesFilter<"ForumReport"> | string
+  handlerId?: Prisma.IntNullableWithAggregatesFilter<"ForumReport"> | number | null
   targetId?: Prisma.IntWithAggregatesFilter<"ForumReport"> | number
+  type?: Prisma.StringWithAggregatesFilter<"ForumReport"> | string
   reason?: Prisma.StringWithAggregatesFilter<"ForumReport"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"ForumReport"> | string | null
   evidenceUrl?: Prisma.StringNullableWithAggregatesFilter<"ForumReport"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"ForumReport"> | string
-  handlerId?: Prisma.IntNullableWithAggregatesFilter<"ForumReport"> | number | null
   handlingNote?: Prisma.StringNullableWithAggregatesFilter<"ForumReport"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumReport"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumReport"> | Date | string
 }
 
 export type ForumReportCreateInput = {
-  type: string
   targetId: number
+  type: string
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -373,28 +373,28 @@ export type ForumReportCreateInput = {
   handlingNote?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  reporter: Prisma.ForumProfileCreateNestedOneWithoutReportsInput
-  handler?: Prisma.ForumProfileCreateNestedOneWithoutHandledReportsInput
+  reporter: Prisma.AppUserCreateNestedOneWithoutForumReportsInput
+  handler?: Prisma.AppUserCreateNestedOneWithoutHandledReportsInput
 }
 
 export type ForumReportUncheckedCreateInput = {
   id?: number
   reporterId: number
-  type: string
+  handlerId?: number | null
   targetId: number
+  type: string
   reason: string
   description?: string | null
   evidenceUrl?: string | null
   status?: string
-  handlerId?: number | null
   handlingNote?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type ForumReportUpdateInput = {
-  type?: Prisma.StringFieldUpdateOperationsInput | string
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -402,20 +402,20 @@ export type ForumReportUpdateInput = {
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  reporter?: Prisma.ForumProfileUpdateOneRequiredWithoutReportsNestedInput
-  handler?: Prisma.ForumProfileUpdateOneWithoutHandledReportsNestedInput
+  reporter?: Prisma.AppUserUpdateOneRequiredWithoutForumReportsNestedInput
+  handler?: Prisma.AppUserUpdateOneWithoutHandledReportsNestedInput
 }
 
 export type ForumReportUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   reporterId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -424,21 +424,21 @@ export type ForumReportUncheckedUpdateInput = {
 export type ForumReportCreateManyInput = {
   id?: number
   reporterId: number
-  type: string
+  handlerId?: number | null
   targetId: number
+  type: string
   reason: string
   description?: string | null
   evidenceUrl?: string | null
   status?: string
-  handlerId?: number | null
   handlingNote?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type ForumReportUpdateManyMutationInput = {
-  type?: Prisma.StringFieldUpdateOperationsInput | string
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -451,13 +451,13 @@ export type ForumReportUpdateManyMutationInput = {
 export type ForumReportUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   reporterId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -476,13 +476,13 @@ export type ForumReportOrderByRelationAggregateInput = {
 export type ForumReportCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  handlerId?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  handlerId?: Prisma.SortOrder
   handlingNote?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -491,20 +491,20 @@ export type ForumReportCountOrderByAggregateInput = {
 export type ForumReportAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
-  targetId?: Prisma.SortOrder
   handlerId?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
 }
 
 export type ForumReportMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  handlerId?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  handlerId?: Prisma.SortOrder
   handlingNote?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -513,13 +513,13 @@ export type ForumReportMaxOrderByAggregateInput = {
 export type ForumReportMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  handlerId?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  handlerId?: Prisma.SortOrder
   handlingNote?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -528,8 +528,8 @@ export type ForumReportMinOrderByAggregateInput = {
 export type ForumReportSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
-  targetId?: Prisma.SortOrder
   handlerId?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
 }
 
 export type ForumReportCreateNestedManyWithoutReporterInput = {
@@ -617,8 +617,8 @@ export type ForumReportUncheckedUpdateManyWithoutHandlerNestedInput = {
 }
 
 export type ForumReportCreateWithoutReporterInput = {
-  type: string
   targetId: number
+  type: string
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -626,18 +626,18 @@ export type ForumReportCreateWithoutReporterInput = {
   handlingNote?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  handler?: Prisma.ForumProfileCreateNestedOneWithoutHandledReportsInput
+  handler?: Prisma.AppUserCreateNestedOneWithoutHandledReportsInput
 }
 
 export type ForumReportUncheckedCreateWithoutReporterInput = {
   id?: number
-  type: string
+  handlerId?: number | null
   targetId: number
+  type: string
   reason: string
   description?: string | null
   evidenceUrl?: string | null
   status?: string
-  handlerId?: number | null
   handlingNote?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -654,8 +654,8 @@ export type ForumReportCreateManyReporterInputEnvelope = {
 }
 
 export type ForumReportCreateWithoutHandlerInput = {
-  type: string
   targetId: number
+  type: string
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -663,14 +663,14 @@ export type ForumReportCreateWithoutHandlerInput = {
   handlingNote?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  reporter: Prisma.ForumProfileCreateNestedOneWithoutReportsInput
+  reporter: Prisma.AppUserCreateNestedOneWithoutForumReportsInput
 }
 
 export type ForumReportUncheckedCreateWithoutHandlerInput = {
   id?: number
   reporterId: number
-  type: string
   targetId: number
+  type: string
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -712,13 +712,13 @@ export type ForumReportScalarWhereInput = {
   NOT?: Prisma.ForumReportScalarWhereInput | Prisma.ForumReportScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumReport"> | number
   reporterId?: Prisma.IntFilter<"ForumReport"> | number
-  type?: Prisma.StringFilter<"ForumReport"> | string
+  handlerId?: Prisma.IntNullableFilter<"ForumReport"> | number | null
   targetId?: Prisma.IntFilter<"ForumReport"> | number
+  type?: Prisma.StringFilter<"ForumReport"> | string
   reason?: Prisma.StringFilter<"ForumReport"> | string
   description?: Prisma.StringNullableFilter<"ForumReport"> | string | null
   evidenceUrl?: Prisma.StringNullableFilter<"ForumReport"> | string | null
   status?: Prisma.StringFilter<"ForumReport"> | string
-  handlerId?: Prisma.IntNullableFilter<"ForumReport"> | number | null
   handlingNote?: Prisma.StringNullableFilter<"ForumReport"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumReport"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumReport"> | Date | string
@@ -742,13 +742,13 @@ export type ForumReportUpdateManyWithWhereWithoutHandlerInput = {
 
 export type ForumReportCreateManyReporterInput = {
   id?: number
-  type: string
+  handlerId?: number | null
   targetId: number
+  type: string
   reason: string
   description?: string | null
   evidenceUrl?: string | null
   status?: string
-  handlerId?: number | null
   handlingNote?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -757,8 +757,8 @@ export type ForumReportCreateManyReporterInput = {
 export type ForumReportCreateManyHandlerInput = {
   id?: number
   reporterId: number
-  type: string
   targetId: number
+  type: string
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -769,8 +769,8 @@ export type ForumReportCreateManyHandlerInput = {
 }
 
 export type ForumReportUpdateWithoutReporterInput = {
-  type?: Prisma.StringFieldUpdateOperationsInput | string
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -778,18 +778,18 @@ export type ForumReportUpdateWithoutReporterInput = {
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  handler?: Prisma.ForumProfileUpdateOneWithoutHandledReportsNestedInput
+  handler?: Prisma.AppUserUpdateOneWithoutHandledReportsNestedInput
 }
 
 export type ForumReportUncheckedUpdateWithoutReporterInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -797,21 +797,21 @@ export type ForumReportUncheckedUpdateWithoutReporterInput = {
 
 export type ForumReportUncheckedUpdateManyWithoutReporterInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumReportUpdateWithoutHandlerInput = {
-  type?: Prisma.StringFieldUpdateOperationsInput | string
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -819,14 +819,14 @@ export type ForumReportUpdateWithoutHandlerInput = {
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  reporter?: Prisma.ForumProfileUpdateOneRequiredWithoutReportsNestedInput
+  reporter?: Prisma.AppUserUpdateOneRequiredWithoutForumReportsNestedInput
 }
 
 export type ForumReportUncheckedUpdateWithoutHandlerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   reporterId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -839,8 +839,8 @@ export type ForumReportUncheckedUpdateWithoutHandlerInput = {
 export type ForumReportUncheckedUpdateManyWithoutHandlerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   reporterId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -855,88 +855,94 @@ export type ForumReportUncheckedUpdateManyWithoutHandlerInput = {
 export type ForumReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   reporterId?: boolean
-  type?: boolean
+  handlerId?: boolean
   targetId?: boolean
+  type?: boolean
   reason?: boolean
   description?: boolean
   evidenceUrl?: boolean
   status?: boolean
-  handlerId?: boolean
   handlingNote?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  reporter?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.ForumReport$handlerArgs<ExtArgs>
 }, ExtArgs["result"]["forumReport"]>
 
 export type ForumReportSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   reporterId?: boolean
-  type?: boolean
+  handlerId?: boolean
   targetId?: boolean
+  type?: boolean
   reason?: boolean
   description?: boolean
   evidenceUrl?: boolean
   status?: boolean
-  handlerId?: boolean
   handlingNote?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  reporter?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.ForumReport$handlerArgs<ExtArgs>
 }, ExtArgs["result"]["forumReport"]>
 
 export type ForumReportSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   reporterId?: boolean
-  type?: boolean
+  handlerId?: boolean
   targetId?: boolean
+  type?: boolean
   reason?: boolean
   description?: boolean
   evidenceUrl?: boolean
   status?: boolean
-  handlerId?: boolean
   handlingNote?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  reporter?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.ForumReport$handlerArgs<ExtArgs>
 }, ExtArgs["result"]["forumReport"]>
 
 export type ForumReportSelectScalar = {
   id?: boolean
   reporterId?: boolean
-  type?: boolean
+  handlerId?: boolean
   targetId?: boolean
+  type?: boolean
   reason?: boolean
   description?: boolean
   evidenceUrl?: boolean
   status?: boolean
-  handlerId?: boolean
   handlingNote?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ForumReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reporterId" | "type" | "targetId" | "reason" | "description" | "evidenceUrl" | "status" | "handlerId" | "handlingNote" | "createdAt" | "updatedAt", ExtArgs["result"]["forumReport"]>
+export type ForumReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reporterId" | "handlerId" | "targetId" | "type" | "reason" | "description" | "evidenceUrl" | "status" | "handlingNote" | "createdAt" | "updatedAt", ExtArgs["result"]["forumReport"]>
 export type ForumReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  reporter?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.ForumReport$handlerArgs<ExtArgs>
 }
 export type ForumReportIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  reporter?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.ForumReport$handlerArgs<ExtArgs>
 }
 export type ForumReportIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  reporter?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.ForumReport$handlerArgs<ExtArgs>
 }
 
 export type $ForumReportPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumReport"
   objects: {
-    reporter: Prisma.$ForumProfilePayload<ExtArgs>
-    handler: Prisma.$ForumProfilePayload<ExtArgs> | null
+    /**
+     * 关联举报人
+     */
+    reporter: Prisma.$AppUserPayload<ExtArgs>
+    /**
+     * 关联处理人
+     */
+    handler: Prisma.$AppUserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -948,13 +954,17 @@ export type $ForumReportPayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     reporterId: number
     /**
-     * 举报类型（topic=主题, reply=回复, user=用户）
+     * 处理人ID
      */
-    type: string
+    handlerId: number | null
     /**
      * 被举报对象ID（主题ID/回复ID/用户ID）
      */
     targetId: number
+    /**
+     * 举报类型（topic=主题, reply=回复, user=用户）
+     */
+    type: string
     /**
      * 举报原因
      */
@@ -971,10 +981,6 @@ export type $ForumReportPayload<ExtArgs extends runtime.Types.Extensions.Interna
      * 处理状态（pending=待处理, processing=处理中, resolved=已解决, rejected=已拒绝）
      */
     status: string
-    /**
-     * 处理人ID
-     */
-    handlerId: number | null
     /**
      * 处理结果说明
      */
@@ -1381,8 +1387,8 @@ readonly fields: ForumReportFieldRefs;
  */
 export interface Prisma__ForumReportClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  reporter<T extends Prisma.ForumProfileDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfileDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  handler<T extends Prisma.ForumReport$handlerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumReport$handlerArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  reporter<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  handler<T extends Prisma.ForumReport$handlerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumReport$handlerArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1414,13 +1420,13 @@ export interface Prisma__ForumReportClient<T, Null = never, ExtArgs extends runt
 export interface ForumReportFieldRefs {
   readonly id: Prisma.FieldRef<"ForumReport", 'Int'>
   readonly reporterId: Prisma.FieldRef<"ForumReport", 'Int'>
-  readonly type: Prisma.FieldRef<"ForumReport", 'String'>
+  readonly handlerId: Prisma.FieldRef<"ForumReport", 'Int'>
   readonly targetId: Prisma.FieldRef<"ForumReport", 'Int'>
+  readonly type: Prisma.FieldRef<"ForumReport", 'String'>
   readonly reason: Prisma.FieldRef<"ForumReport", 'String'>
   readonly description: Prisma.FieldRef<"ForumReport", 'String'>
   readonly evidenceUrl: Prisma.FieldRef<"ForumReport", 'String'>
   readonly status: Prisma.FieldRef<"ForumReport", 'String'>
-  readonly handlerId: Prisma.FieldRef<"ForumReport", 'Int'>
   readonly handlingNote: Prisma.FieldRef<"ForumReport", 'String'>
   readonly createdAt: Prisma.FieldRef<"ForumReport", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumReport", 'DateTime'>
@@ -1833,18 +1839,18 @@ export type ForumReportDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
  */
 export type ForumReport$handlerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the ForumProfile
+   * Select specific fields to fetch from the AppUser
    */
-  select?: Prisma.ForumProfileSelect<ExtArgs> | null
+  select?: Prisma.AppUserSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the ForumProfile
+   * Omit specific fields from the AppUser
    */
-  omit?: Prisma.ForumProfileOmit<ExtArgs> | null
+  omit?: Prisma.AppUserOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.ForumProfileInclude<ExtArgs> | null
-  where?: Prisma.ForumProfileWhereInput
+  include?: Prisma.AppUserInclude<ExtArgs> | null
+  where?: Prisma.AppUserWhereInput
 }
 
 /**

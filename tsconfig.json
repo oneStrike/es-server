@@ -28,17 +28,17 @@
       "@libs/dictionary/*": [
         "libs/dictionary/src/*"
       ],
-      "@libs/member": [
-        "libs/member/src"
-      ],
-      "@libs/member/*": [
-        "libs/member/src/*"
-      ],
       "@libs/forum": [
         "libs/forum/src"
       ],
       "@libs/forum/*": [
         "libs/forum/src/*"
+      ],
+      "@libs/user": [
+        "libs/user/src"
+      ],
+      "@libs/user/*": [
+        "libs/user/src/*"
       ]
     },
     "resolveJsonModule": true,

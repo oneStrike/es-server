@@ -53,8 +53,6 @@ export class ForumSectionPermissionService extends BaseService {
     sectionId: number,
     customPermissions: ForumModeratorPermissionEnum[] = [],
   ): Promise<void> {
-    const finalPermissions = customPermissions
-
     await this.prisma.forumModeratorSection.upsert({
       where: {
         moderatorId_sectionId: {
@@ -63,14 +61,12 @@ export class ForumSectionPermissionService extends BaseService {
         },
       },
       update: {
-        customPermissions,
-        finalPermissions,
+        permissions: customPermissions,
       },
       create: {
         moderatorId,
         sectionId,
-        customPermissions,
-        finalPermissions,
+        permissions: customPermissions,
       },
     })
   }
@@ -110,7 +106,7 @@ export class ForumSectionPermissionService extends BaseService {
       moderatorId,
       sectionId,
     )
-    return this.permissionService.hasPermission(finalPermissions, permission)
+    return finalPermissions.includes(permission)
   }
 
   /**

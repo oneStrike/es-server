@@ -24,7 +24,7 @@ export class ForumUserActionLogService extends BaseService {
    */
   async createActionLog(options: CreateForumActionLogDto) {
     const {
-      profileId,
+      userId,
       actionType,
       targetType,
       targetId,
@@ -36,9 +36,8 @@ export class ForumUserActionLogService extends BaseService {
 
     return this.forumUserActionLog.create({
       data: {
-        profileId,
+        userId,
         actionType,
-        actionDescription: ForumUserActionTypeDescriptionMap[actionType],
         targetType,
         targetId,
         beforeData: beforeData
@@ -58,17 +57,15 @@ export class ForumUserActionLogService extends BaseService {
   }
 
   /**
-   * 根据用户资料ID查询操作日志（分页）
+   * 根据用户ID查询操作日志（分页）
    * @param options - 查询选项对象
    * @returns 操作日志分页结果，包含列表、总数、页码和每页数量
    */
-  async getActionLogsByProfileId(dto: QueryForumActionLogDto) {
-    const { profileId, ...otherDto } = dto
+  async getActionLogsByUserId(dto: QueryForumActionLogDto) {
+    const { userId, ...otherDto } = dto
     return this.forumUserActionLog.findPagination({
       where: {
-        profile: {
-          id: profileId,
-        },
+        userId,
         ...otherDto,
       },
     })

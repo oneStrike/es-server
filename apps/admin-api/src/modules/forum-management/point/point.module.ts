@@ -1,4 +1,4 @@
-import { ForumPointModule as PointModuleLib } from '@libs/forum/point'
+import { ForumPointModule as PointModuleLib } from '@libs/user/point'
 import { Module } from '@nestjs/common'
 import { PointController } from './point.controller'
 

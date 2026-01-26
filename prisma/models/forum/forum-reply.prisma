@@ -2,54 +2,75 @@
 /// 约束：数据库支持无限层级，但API返回时只展示两层（主题回复 + 一层楼中楼）
 model ForumReply {
   /// 主键ID
-  id                Int                 @id @default(autoincrement())
-  /// 回复内容
-  content           String
+  id Int @id @default(autoincrement())
+
   /// 关联的主题ID
-  topicId           Int                 @map("topic_id")
-  /// 关联的论坛用户资料ID
-  profileId         Int                 @map("profile_id")
+  topicId Int @map("topic_id")
+  /// 关联的用户ID
+  userId  Int @map("user_id")
+
+  /// 回复内容
+  content String
+
   /// 楼层号（直接回复主题的楼层号，楼中楼为null）
-  floor             Int?                @map("floor")
-  /// 是否隐藏
-  isHidden          Boolean             @default(false) @map("is_hidden")
+  floor Int? @map("floor")
+
   /// 回复的回复ID（楼中楼，API返回时用于展示层级关系）
-  replyToId         Int?                @map("reply_to_id")
+  replyToId       Int? @map("reply_to_id")
   /// 实际回复的回复ID（用于追溯完整回复链，不受层级限制）
-  actualReplyToId   Int?                @map("actual_reply_to_id")
+  actualReplyToId Int? @map("actual_reply_to_id")
+
+  /// 是否隐藏
+  isHidden Boolean @default(false) @map("is_hidden")
+
   /// 审核状态（0=待审核, 1=已通过, 2=已拒绝）
-  auditStatus       Int                 @default(0) @map("audit_status") @db.SmallInt
+  auditStatus Int       @default(0) @map("audit_status") @db.SmallInt
   /// 审核原因
-  auditReason       String?             @map("audit_reason") @db.VarChar(500)
+  auditReason String?   @map("audit_reason") @db.VarChar(500)
   /// 审核时间
-  auditAt           DateTime?           @map("audit_at") @db.Timestamptz(6)
+  auditAt     DateTime? @map("audit_at") @db.Timestamptz(6)
   /// 审核人ID
-  auditById         Int?                @map("audit_by_id")
+  auditById   Int?      @map("audit_by_id")
   /// 审核人角色（0=版主, 1=管理员）
-  auditRole         Int?                @map("audit_role") @db.SmallInt
+  auditRole   Int?      @map("audit_role") @db.SmallInt
+
   /// 点赞数
-  likeCount         Int                 @default(0) @map("like_count")
-  /// 创建时间
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  /// 更新时间
-  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  /// 软删除时间
-  deletedAt         DateTime?           @map("deleted_at") @db.Timestamptz(6)
+  likeCount Int @default(0) @map("like_count")
+
   /// 版本号（用于乐观锁）
-  version           Int                 @default(0)
+  version           Int   @default(0)
   /// 敏感词命中记录
-  sensitiveWordHits Json?               @map("sensitive_word_hits") @db.JsonB
-  replyTo           ForumReply?         @relation("ReplyTo", fields: [replyToId], references: [id])
-  replies           ForumReply[]        @relation("ReplyTo")
-  actualReplyTo     ForumReply?         @relation("ActualReplyTo", fields: [actualReplyToId], references: [id])
-  actualReplies     ForumReply[]        @relation("ActualReplyTo")
-  topic             ForumTopic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  profile           ForumProfile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  likes             ForumReplyLike[]
-  notifications     ForumNotification[] @relation("NotificationReply")
+  sensitiveWordHits Json? @map("sensitive_word_hits") @db.JsonB
+
+  /// 创建时间
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 软删除时间
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  /// 回复对象
+  replyTo       ForumReply?  @relation("ReplyTo", fields: [replyToId], references: [id])
+  /// 回复列表
+  replies       ForumReply[] @relation("ReplyTo")
+  /// 实际回复对象
+  actualReplyTo ForumReply?  @relation("ActualReplyTo", fields: [actualReplyToId], references: [id])
+  /// 实际回复列表
+  actualReplies ForumReply[] @relation("ActualReplyTo")
+
+  /// 关联主题
+  topic         ForumTopic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  /// 关联用户
+  user          AppUser             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 点赞列表
+  likes         ForumReplyLike[]
+  /// 通知列表
+  notifications ForumNotification[] @relation("NotificationReply")
+  /// 浏览记录
+  views         ForumView[]
 
   @@index([topicId])
-  @@index([profileId])
+  @@index([userId])
   @@index([replyToId])
   @@index([actualReplyToId])
   @@index([floor])

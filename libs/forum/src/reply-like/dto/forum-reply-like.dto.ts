@@ -16,20 +16,20 @@ export class BaseForumReplyLikeDto extends BaseDto {
   replyId!: number
 
   @ValidateNumber({
-    description: '关联的用户资料ID',
+    description: '关联的用户ID',
     example: 1,
     required: true,
     min: 1,
   })
-  profileId!: number
+  userId!: number
 }
 
 export class CreateForumReplyLikeDto extends PickType(BaseForumReplyLikeDto, [
   'replyId',
-  'profileId',
+  'userId',
 ]) {}
 
 export class DeleteForumReplyLikeDto extends IntersectionType(
   IdDto,
-  PickType(BaseForumReplyLikeDto, ['profileId']),
+  PickType(BaseForumReplyLikeDto, ['userId']),
 ) {}

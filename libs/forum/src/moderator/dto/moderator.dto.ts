@@ -119,7 +119,7 @@ export class AssignForumModeratorSectionDto extends PickType(
  */
 export class QueryForumModeratorDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseForumModeratorDto, ['isEnabled', 'profileId'])),
+  PartialType(PickType(BaseForumModeratorDto, ['isEnabled', 'userId'])),
 ) {
   @ValidateString({
     description: '用户名',

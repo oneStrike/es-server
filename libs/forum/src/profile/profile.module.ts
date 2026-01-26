@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common'
-import { ForumLevelRuleModule } from '../level-rule/level-rule.module'
-import { ForumPointModule } from '../point/point.module'
+import { ForumLevelRuleModule } from '@libs/user/level-rule'
+import { ForumPointModule } from '@libs/user/point'
 import { ForumProfileService } from './profile.service'
 
 /**

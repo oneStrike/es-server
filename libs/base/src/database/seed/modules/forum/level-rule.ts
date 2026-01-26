@@ -89,12 +89,12 @@ export async function createInitialForumLevelRules(prisma: any) {
   ]
 
   for (const levelData of INITIAL_FORUM_LEVEL_RULES) {
-    const existingLevel = await prisma.forumLevelRule.findFirst({
+    const existingLevel = await prisma.appLevelRule.findFirst({
       where: { name: levelData.name },
     })
 
     if (!existingLevel) {
-      await prisma.forumLevelRule.create({
+      await prisma.appLevelRule.create({
         data: {
           name: levelData.name,
           requiredExperience: levelData.requiredExperience,

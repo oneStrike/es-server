@@ -30,30 +30,30 @@ export type ForumModeratorApplicationAvgAggregateOutputType = {
   id: number | null
   applicantId: number | null
   sectionId: number | null
-  permissions: number | null
-  status: number | null
   auditById: number | null
+  status: number | null
+  permissions: number | null
 }
 
 export type ForumModeratorApplicationSumAggregateOutputType = {
   id: number | null
   applicantId: number | null
   sectionId: number | null
-  permissions: number[]
-  status: number | null
   auditById: number | null
+  status: number | null
+  permissions: number[]
 }
 
 export type ForumModeratorApplicationMinAggregateOutputType = {
   id: number | null
   applicantId: number | null
   sectionId: number | null
-  reason: string | null
-  status: number | null
   auditById: number | null
-  auditAt: Date | null
+  status: number | null
+  reason: string | null
   auditReason: string | null
   remark: string | null
+  auditAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -63,12 +63,12 @@ export type ForumModeratorApplicationMaxAggregateOutputType = {
   id: number | null
   applicantId: number | null
   sectionId: number | null
-  reason: string | null
-  status: number | null
   auditById: number | null
-  auditAt: Date | null
+  status: number | null
+  reason: string | null
   auditReason: string | null
   remark: string | null
+  auditAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -78,13 +78,13 @@ export type ForumModeratorApplicationCountAggregateOutputType = {
   id: number
   applicantId: number
   sectionId: number
+  auditById: number
+  status: number
   permissions: number
   reason: number
-  status: number
-  auditById: number
-  auditAt: number
   auditReason: number
   remark: number
+  auditAt: number
   createdAt: number
   updatedAt: number
   deletedAt: number
@@ -96,30 +96,30 @@ export type ForumModeratorApplicationAvgAggregateInputType = {
   id?: true
   applicantId?: true
   sectionId?: true
-  permissions?: true
-  status?: true
   auditById?: true
+  status?: true
+  permissions?: true
 }
 
 export type ForumModeratorApplicationSumAggregateInputType = {
   id?: true
   applicantId?: true
   sectionId?: true
-  permissions?: true
-  status?: true
   auditById?: true
+  status?: true
+  permissions?: true
 }
 
 export type ForumModeratorApplicationMinAggregateInputType = {
   id?: true
   applicantId?: true
   sectionId?: true
-  reason?: true
-  status?: true
   auditById?: true
-  auditAt?: true
+  status?: true
+  reason?: true
   auditReason?: true
   remark?: true
+  auditAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -129,12 +129,12 @@ export type ForumModeratorApplicationMaxAggregateInputType = {
   id?: true
   applicantId?: true
   sectionId?: true
-  reason?: true
-  status?: true
   auditById?: true
-  auditAt?: true
+  status?: true
+  reason?: true
   auditReason?: true
   remark?: true
+  auditAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -144,13 +144,13 @@ export type ForumModeratorApplicationCountAggregateInputType = {
   id?: true
   applicantId?: true
   sectionId?: true
+  auditById?: true
+  status?: true
   permissions?: true
   reason?: true
-  status?: true
-  auditById?: true
-  auditAt?: true
   auditReason?: true
   remark?: true
+  auditAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -247,13 +247,13 @@ export type ForumModeratorApplicationGroupByOutputType = {
   id: number
   applicantId: number
   sectionId: number
+  auditById: number | null
+  status: number
   permissions: number[]
   reason: string
-  status: number
-  auditById: number | null
-  auditAt: Date | null
   auditReason: string | null
   remark: string | null
+  auditAt: Date | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -286,17 +286,18 @@ export type ForumModeratorApplicationWhereInput = {
   id?: Prisma.IntFilter<"ForumModeratorApplication"> | number
   applicantId?: Prisma.IntFilter<"ForumModeratorApplication"> | number
   sectionId?: Prisma.IntFilter<"ForumModeratorApplication"> | number
+  auditById?: Prisma.IntNullableFilter<"ForumModeratorApplication"> | number | null
+  status?: Prisma.IntFilter<"ForumModeratorApplication"> | number
   permissions?: Prisma.IntNullableListFilter<"ForumModeratorApplication">
   reason?: Prisma.StringFilter<"ForumModeratorApplication"> | string
-  status?: Prisma.IntFilter<"ForumModeratorApplication"> | number
-  auditById?: Prisma.IntNullableFilter<"ForumModeratorApplication"> | number | null
-  auditAt?: Prisma.DateTimeNullableFilter<"ForumModeratorApplication"> | Date | string | null
   auditReason?: Prisma.StringNullableFilter<"ForumModeratorApplication"> | string | null
   remark?: Prisma.StringNullableFilter<"ForumModeratorApplication"> | string | null
+  auditAt?: Prisma.DateTimeNullableFilter<"ForumModeratorApplication"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumModeratorApplication"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumModeratorApplication"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumModeratorApplication"> | Date | string | null
-  applicant?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
+  applicant?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+  auditBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
   section?: Prisma.XOR<Prisma.ForumSectionScalarRelationFilter, Prisma.ForumSectionWhereInput>
 }
 
@@ -304,17 +305,18 @@ export type ForumModeratorApplicationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   applicantId?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  auditById?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   permissions?: Prisma.SortOrder
   reason?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  auditById?: Prisma.SortOrderInput | Prisma.SortOrder
-  auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
+  auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  applicant?: Prisma.ForumProfileOrderByWithRelationInput
+  applicant?: Prisma.AppUserOrderByWithRelationInput
+  auditBy?: Prisma.AppUserOrderByWithRelationInput
   section?: Prisma.ForumSectionOrderByWithRelationInput
 }
 
@@ -326,17 +328,18 @@ export type ForumModeratorApplicationWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ForumModeratorApplicationWhereInput | Prisma.ForumModeratorApplicationWhereInput[]
   applicantId?: Prisma.IntFilter<"ForumModeratorApplication"> | number
   sectionId?: Prisma.IntFilter<"ForumModeratorApplication"> | number
+  auditById?: Prisma.IntNullableFilter<"ForumModeratorApplication"> | number | null
+  status?: Prisma.IntFilter<"ForumModeratorApplication"> | number
   permissions?: Prisma.IntNullableListFilter<"ForumModeratorApplication">
   reason?: Prisma.StringFilter<"ForumModeratorApplication"> | string
-  status?: Prisma.IntFilter<"ForumModeratorApplication"> | number
-  auditById?: Prisma.IntNullableFilter<"ForumModeratorApplication"> | number | null
-  auditAt?: Prisma.DateTimeNullableFilter<"ForumModeratorApplication"> | Date | string | null
   auditReason?: Prisma.StringNullableFilter<"ForumModeratorApplication"> | string | null
   remark?: Prisma.StringNullableFilter<"ForumModeratorApplication"> | string | null
+  auditAt?: Prisma.DateTimeNullableFilter<"ForumModeratorApplication"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumModeratorApplication"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumModeratorApplication"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumModeratorApplication"> | Date | string | null
-  applicant?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
+  applicant?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+  auditBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
   section?: Prisma.XOR<Prisma.ForumSectionScalarRelationFilter, Prisma.ForumSectionWhereInput>
 }, "id" | "applicantId_sectionId">
 
@@ -344,13 +347,13 @@ export type ForumModeratorApplicationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   applicantId?: Prisma.SortOrder
   sectionId?: Prisma.SortOrder
+  auditById?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   permissions?: Prisma.SortOrder
   reason?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  auditById?: Prisma.SortOrderInput | Prisma.SortOrder
-  auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
+  auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -368,30 +371,30 @@ export type ForumModeratorApplicationScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"ForumModeratorApplication"> | number
   applicantId?: Prisma.IntWithAggregatesFilter<"ForumModeratorApplication"> | number
   sectionId?: Prisma.IntWithAggregatesFilter<"ForumModeratorApplication"> | number
+  auditById?: Prisma.IntNullableWithAggregatesFilter<"ForumModeratorApplication"> | number | null
+  status?: Prisma.IntWithAggregatesFilter<"ForumModeratorApplication"> | number
   permissions?: Prisma.IntNullableListFilter<"ForumModeratorApplication">
   reason?: Prisma.StringWithAggregatesFilter<"ForumModeratorApplication"> | string
-  status?: Prisma.IntWithAggregatesFilter<"ForumModeratorApplication"> | number
-  auditById?: Prisma.IntNullableWithAggregatesFilter<"ForumModeratorApplication"> | number | null
-  auditAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumModeratorApplication"> | Date | string | null
   auditReason?: Prisma.StringNullableWithAggregatesFilter<"ForumModeratorApplication"> | string | null
   remark?: Prisma.StringNullableWithAggregatesFilter<"ForumModeratorApplication"> | string | null
+  auditAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumModeratorApplication"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumModeratorApplication"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumModeratorApplication"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumModeratorApplication"> | Date | string | null
 }
 
 export type ForumModeratorApplicationCreateInput = {
+  status?: number
   permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
   reason: string
-  status?: number
-  auditById?: number | null
-  auditAt?: Date | string | null
   auditReason?: string | null
   remark?: string | null
+  auditAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  applicant: Prisma.ForumProfileCreateNestedOneWithoutApplicationsInput
+  applicant: Prisma.AppUserCreateNestedOneWithoutModeratorApplicationsInput
+  auditBy?: Prisma.AppUserCreateNestedOneWithoutAuditedApplicationsInput
   section: Prisma.ForumSectionCreateNestedOneWithoutApplicationsInput
 }
 
@@ -399,30 +402,30 @@ export type ForumModeratorApplicationUncheckedCreateInput = {
   id?: number
   applicantId: number
   sectionId: number
+  auditById?: number | null
+  status?: number
   permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
   reason: string
-  status?: number
-  auditById?: number | null
-  auditAt?: Date | string | null
   auditReason?: string | null
   remark?: string | null
+  auditAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
 export type ForumModeratorApplicationUpdateInput = {
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  applicant?: Prisma.ForumProfileUpdateOneRequiredWithoutApplicationsNestedInput
+  applicant?: Prisma.AppUserUpdateOneRequiredWithoutModeratorApplicationsNestedInput
+  auditBy?: Prisma.AppUserUpdateOneWithoutAuditedApplicationsNestedInput
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutApplicationsNestedInput
 }
 
@@ -430,13 +433,13 @@ export type ForumModeratorApplicationUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   applicantId?: Prisma.IntFieldUpdateOperationsInput | number
   sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -446,26 +449,25 @@ export type ForumModeratorApplicationCreateManyInput = {
   id?: number
   applicantId: number
   sectionId: number
+  auditById?: number | null
+  status?: number
   permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
   reason: string
-  status?: number
-  auditById?: number | null
-  auditAt?: Date | string | null
   auditReason?: string | null
   remark?: string | null
+  auditAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
 export type ForumModeratorApplicationUpdateManyMutationInput = {
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -475,85 +477,16 @@ export type ForumModeratorApplicationUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   applicantId?: Prisma.IntFieldUpdateOperationsInput | number
   sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-}
-
-export type ForumModeratorApplicationApplicantIdSectionIdCompoundUniqueInput = {
-  applicantId: number
-  sectionId: number
-}
-
-export type ForumModeratorApplicationCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  applicantId?: Prisma.SortOrder
-  sectionId?: Prisma.SortOrder
-  permissions?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  auditById?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
-  auditReason?: Prisma.SortOrder
-  remark?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
-}
-
-export type ForumModeratorApplicationAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  applicantId?: Prisma.SortOrder
-  sectionId?: Prisma.SortOrder
-  permissions?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  auditById?: Prisma.SortOrder
-}
-
-export type ForumModeratorApplicationMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  applicantId?: Prisma.SortOrder
-  sectionId?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  auditById?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
-  auditReason?: Prisma.SortOrder
-  remark?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
-}
-
-export type ForumModeratorApplicationMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  applicantId?: Prisma.SortOrder
-  sectionId?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  auditById?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
-  auditReason?: Prisma.SortOrder
-  remark?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  updatedAt?: Prisma.SortOrder
-  deletedAt?: Prisma.SortOrder
-}
-
-export type ForumModeratorApplicationSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  applicantId?: Prisma.SortOrder
-  sectionId?: Prisma.SortOrder
-  permissions?: Prisma.SortOrder
-  status?: Prisma.SortOrder
-  auditById?: Prisma.SortOrder
 }
 
 export type ForumModeratorApplicationListRelationFilter = {
@@ -566,13 +499,73 @@ export type ForumModeratorApplicationOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ForumModeratorApplicationCreatepermissionsInput = {
-  set: number[]
+export type ForumModeratorApplicationApplicantIdSectionIdCompoundUniqueInput = {
+  applicantId: number
+  sectionId: number
 }
 
-export type ForumModeratorApplicationUpdatepermissionsInput = {
-  set?: number[]
-  push?: number | number[]
+export type ForumModeratorApplicationCountOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  applicantId?: Prisma.SortOrder
+  sectionId?: Prisma.SortOrder
+  auditById?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  permissions?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
+  auditReason?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
+  auditAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+}
+
+export type ForumModeratorApplicationAvgOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  applicantId?: Prisma.SortOrder
+  sectionId?: Prisma.SortOrder
+  auditById?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  permissions?: Prisma.SortOrder
+}
+
+export type ForumModeratorApplicationMaxOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  applicantId?: Prisma.SortOrder
+  sectionId?: Prisma.SortOrder
+  auditById?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
+  auditReason?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
+  auditAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+}
+
+export type ForumModeratorApplicationMinOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  applicantId?: Prisma.SortOrder
+  sectionId?: Prisma.SortOrder
+  auditById?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
+  auditReason?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
+  auditAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
+}
+
+export type ForumModeratorApplicationSumOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  applicantId?: Prisma.SortOrder
+  sectionId?: Prisma.SortOrder
+  auditById?: Prisma.SortOrder
+  status?: Prisma.SortOrder
+  permissions?: Prisma.SortOrder
 }
 
 export type ForumModeratorApplicationCreateNestedManyWithoutApplicantInput = {
@@ -582,10 +575,24 @@ export type ForumModeratorApplicationCreateNestedManyWithoutApplicantInput = {
   connect?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
 }
 
+export type ForumModeratorApplicationCreateNestedManyWithoutAuditByInput = {
+  create?: Prisma.XOR<Prisma.ForumModeratorApplicationCreateWithoutAuditByInput, Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput> | Prisma.ForumModeratorApplicationCreateWithoutAuditByInput[] | Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput[]
+  connectOrCreate?: Prisma.ForumModeratorApplicationCreateOrConnectWithoutAuditByInput | Prisma.ForumModeratorApplicationCreateOrConnectWithoutAuditByInput[]
+  createMany?: Prisma.ForumModeratorApplicationCreateManyAuditByInputEnvelope
+  connect?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+}
+
 export type ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput = {
   create?: Prisma.XOR<Prisma.ForumModeratorApplicationCreateWithoutApplicantInput, Prisma.ForumModeratorApplicationUncheckedCreateWithoutApplicantInput> | Prisma.ForumModeratorApplicationCreateWithoutApplicantInput[] | Prisma.ForumModeratorApplicationUncheckedCreateWithoutApplicantInput[]
   connectOrCreate?: Prisma.ForumModeratorApplicationCreateOrConnectWithoutApplicantInput | Prisma.ForumModeratorApplicationCreateOrConnectWithoutApplicantInput[]
   createMany?: Prisma.ForumModeratorApplicationCreateManyApplicantInputEnvelope
+  connect?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+}
+
+export type ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput = {
+  create?: Prisma.XOR<Prisma.ForumModeratorApplicationCreateWithoutAuditByInput, Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput> | Prisma.ForumModeratorApplicationCreateWithoutAuditByInput[] | Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput[]
+  connectOrCreate?: Prisma.ForumModeratorApplicationCreateOrConnectWithoutAuditByInput | Prisma.ForumModeratorApplicationCreateOrConnectWithoutAuditByInput[]
+  createMany?: Prisma.ForumModeratorApplicationCreateManyAuditByInputEnvelope
   connect?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
 }
 
@@ -603,6 +610,20 @@ export type ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput = {
   deleteMany?: Prisma.ForumModeratorApplicationScalarWhereInput | Prisma.ForumModeratorApplicationScalarWhereInput[]
 }
 
+export type ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumModeratorApplicationCreateWithoutAuditByInput, Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput> | Prisma.ForumModeratorApplicationCreateWithoutAuditByInput[] | Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput[]
+  connectOrCreate?: Prisma.ForumModeratorApplicationCreateOrConnectWithoutAuditByInput | Prisma.ForumModeratorApplicationCreateOrConnectWithoutAuditByInput[]
+  upsert?: Prisma.ForumModeratorApplicationUpsertWithWhereUniqueWithoutAuditByInput | Prisma.ForumModeratorApplicationUpsertWithWhereUniqueWithoutAuditByInput[]
+  createMany?: Prisma.ForumModeratorApplicationCreateManyAuditByInputEnvelope
+  set?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+  disconnect?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+  delete?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+  connect?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+  update?: Prisma.ForumModeratorApplicationUpdateWithWhereUniqueWithoutAuditByInput | Prisma.ForumModeratorApplicationUpdateWithWhereUniqueWithoutAuditByInput[]
+  updateMany?: Prisma.ForumModeratorApplicationUpdateManyWithWhereWithoutAuditByInput | Prisma.ForumModeratorApplicationUpdateManyWithWhereWithoutAuditByInput[]
+  deleteMany?: Prisma.ForumModeratorApplicationScalarWhereInput | Prisma.ForumModeratorApplicationScalarWhereInput[]
+}
+
 export type ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput = {
   create?: Prisma.XOR<Prisma.ForumModeratorApplicationCreateWithoutApplicantInput, Prisma.ForumModeratorApplicationUncheckedCreateWithoutApplicantInput> | Prisma.ForumModeratorApplicationCreateWithoutApplicantInput[] | Prisma.ForumModeratorApplicationUncheckedCreateWithoutApplicantInput[]
   connectOrCreate?: Prisma.ForumModeratorApplicationCreateOrConnectWithoutApplicantInput | Prisma.ForumModeratorApplicationCreateOrConnectWithoutApplicantInput[]
@@ -615,6 +636,29 @@ export type ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedIn
   update?: Prisma.ForumModeratorApplicationUpdateWithWhereUniqueWithoutApplicantInput | Prisma.ForumModeratorApplicationUpdateWithWhereUniqueWithoutApplicantInput[]
   updateMany?: Prisma.ForumModeratorApplicationUpdateManyWithWhereWithoutApplicantInput | Prisma.ForumModeratorApplicationUpdateManyWithWhereWithoutApplicantInput[]
   deleteMany?: Prisma.ForumModeratorApplicationScalarWhereInput | Prisma.ForumModeratorApplicationScalarWhereInput[]
+}
+
+export type ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumModeratorApplicationCreateWithoutAuditByInput, Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput> | Prisma.ForumModeratorApplicationCreateWithoutAuditByInput[] | Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput[]
+  connectOrCreate?: Prisma.ForumModeratorApplicationCreateOrConnectWithoutAuditByInput | Prisma.ForumModeratorApplicationCreateOrConnectWithoutAuditByInput[]
+  upsert?: Prisma.ForumModeratorApplicationUpsertWithWhereUniqueWithoutAuditByInput | Prisma.ForumModeratorApplicationUpsertWithWhereUniqueWithoutAuditByInput[]
+  createMany?: Prisma.ForumModeratorApplicationCreateManyAuditByInputEnvelope
+  set?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+  disconnect?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+  delete?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+  connect?: Prisma.ForumModeratorApplicationWhereUniqueInput | Prisma.ForumModeratorApplicationWhereUniqueInput[]
+  update?: Prisma.ForumModeratorApplicationUpdateWithWhereUniqueWithoutAuditByInput | Prisma.ForumModeratorApplicationUpdateWithWhereUniqueWithoutAuditByInput[]
+  updateMany?: Prisma.ForumModeratorApplicationUpdateManyWithWhereWithoutAuditByInput | Prisma.ForumModeratorApplicationUpdateManyWithWhereWithoutAuditByInput[]
+  deleteMany?: Prisma.ForumModeratorApplicationScalarWhereInput | Prisma.ForumModeratorApplicationScalarWhereInput[]
+}
+
+export type ForumModeratorApplicationCreatepermissionsInput = {
+  set: number[]
+}
+
+export type ForumModeratorApplicationUpdatepermissionsInput = {
+  set?: number[]
+  push?: number | number[]
 }
 
 export type ForumModeratorApplicationCreateNestedManyWithoutSectionInput = {
@@ -660,29 +704,29 @@ export type ForumModeratorApplicationUncheckedUpdateManyWithoutSectionNestedInpu
 }
 
 export type ForumModeratorApplicationCreateWithoutApplicantInput = {
+  status?: number
   permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
   reason: string
-  status?: number
-  auditById?: number | null
-  auditAt?: Date | string | null
   auditReason?: string | null
   remark?: string | null
+  auditAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  auditBy?: Prisma.AppUserCreateNestedOneWithoutAuditedApplicationsInput
   section: Prisma.ForumSectionCreateNestedOneWithoutApplicationsInput
 }
 
 export type ForumModeratorApplicationUncheckedCreateWithoutApplicantInput = {
   id?: number
   sectionId: number
+  auditById?: number | null
+  status?: number
   permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
   reason: string
-  status?: number
-  auditById?: number | null
-  auditAt?: Date | string | null
   auditReason?: string | null
   remark?: string | null
+  auditAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -695,6 +739,45 @@ export type ForumModeratorApplicationCreateOrConnectWithoutApplicantInput = {
 
 export type ForumModeratorApplicationCreateManyApplicantInputEnvelope = {
   data: Prisma.ForumModeratorApplicationCreateManyApplicantInput | Prisma.ForumModeratorApplicationCreateManyApplicantInput[]
+  skipDuplicates?: boolean
+}
+
+export type ForumModeratorApplicationCreateWithoutAuditByInput = {
+  status?: number
+  permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
+  reason: string
+  auditReason?: string | null
+  remark?: string | null
+  auditAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  applicant: Prisma.AppUserCreateNestedOneWithoutModeratorApplicationsInput
+  section: Prisma.ForumSectionCreateNestedOneWithoutApplicationsInput
+}
+
+export type ForumModeratorApplicationUncheckedCreateWithoutAuditByInput = {
+  id?: number
+  applicantId: number
+  sectionId: number
+  status?: number
+  permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
+  reason: string
+  auditReason?: string | null
+  remark?: string | null
+  auditAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type ForumModeratorApplicationCreateOrConnectWithoutAuditByInput = {
+  where: Prisma.ForumModeratorApplicationWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumModeratorApplicationCreateWithoutAuditByInput, Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput>
+}
+
+export type ForumModeratorApplicationCreateManyAuditByInputEnvelope = {
+  data: Prisma.ForumModeratorApplicationCreateManyAuditByInput | Prisma.ForumModeratorApplicationCreateManyAuditByInput[]
   skipDuplicates?: boolean
 }
 
@@ -721,42 +804,58 @@ export type ForumModeratorApplicationScalarWhereInput = {
   id?: Prisma.IntFilter<"ForumModeratorApplication"> | number
   applicantId?: Prisma.IntFilter<"ForumModeratorApplication"> | number
   sectionId?: Prisma.IntFilter<"ForumModeratorApplication"> | number
+  auditById?: Prisma.IntNullableFilter<"ForumModeratorApplication"> | number | null
+  status?: Prisma.IntFilter<"ForumModeratorApplication"> | number
   permissions?: Prisma.IntNullableListFilter<"ForumModeratorApplication">
   reason?: Prisma.StringFilter<"ForumModeratorApplication"> | string
-  status?: Prisma.IntFilter<"ForumModeratorApplication"> | number
-  auditById?: Prisma.IntNullableFilter<"ForumModeratorApplication"> | number | null
-  auditAt?: Prisma.DateTimeNullableFilter<"ForumModeratorApplication"> | Date | string | null
   auditReason?: Prisma.StringNullableFilter<"ForumModeratorApplication"> | string | null
   remark?: Prisma.StringNullableFilter<"ForumModeratorApplication"> | string | null
+  auditAt?: Prisma.DateTimeNullableFilter<"ForumModeratorApplication"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumModeratorApplication"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumModeratorApplication"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumModeratorApplication"> | Date | string | null
 }
 
+export type ForumModeratorApplicationUpsertWithWhereUniqueWithoutAuditByInput = {
+  where: Prisma.ForumModeratorApplicationWhereUniqueInput
+  update: Prisma.XOR<Prisma.ForumModeratorApplicationUpdateWithoutAuditByInput, Prisma.ForumModeratorApplicationUncheckedUpdateWithoutAuditByInput>
+  create: Prisma.XOR<Prisma.ForumModeratorApplicationCreateWithoutAuditByInput, Prisma.ForumModeratorApplicationUncheckedCreateWithoutAuditByInput>
+}
+
+export type ForumModeratorApplicationUpdateWithWhereUniqueWithoutAuditByInput = {
+  where: Prisma.ForumModeratorApplicationWhereUniqueInput
+  data: Prisma.XOR<Prisma.ForumModeratorApplicationUpdateWithoutAuditByInput, Prisma.ForumModeratorApplicationUncheckedUpdateWithoutAuditByInput>
+}
+
+export type ForumModeratorApplicationUpdateManyWithWhereWithoutAuditByInput = {
+  where: Prisma.ForumModeratorApplicationScalarWhereInput
+  data: Prisma.XOR<Prisma.ForumModeratorApplicationUpdateManyMutationInput, Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByInput>
+}
+
 export type ForumModeratorApplicationCreateWithoutSectionInput = {
+  status?: number
   permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
   reason: string
-  status?: number
-  auditById?: number | null
-  auditAt?: Date | string | null
   auditReason?: string | null
   remark?: string | null
+  auditAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  applicant: Prisma.ForumProfileCreateNestedOneWithoutApplicationsInput
+  applicant: Prisma.AppUserCreateNestedOneWithoutModeratorApplicationsInput
+  auditBy?: Prisma.AppUserCreateNestedOneWithoutAuditedApplicationsInput
 }
 
 export type ForumModeratorApplicationUncheckedCreateWithoutSectionInput = {
   id?: number
   applicantId: number
+  auditById?: number | null
+  status?: number
   permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
   reason: string
-  status?: number
-  auditById?: number | null
-  auditAt?: Date | string | null
   auditReason?: string | null
   remark?: string | null
+  auditAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -791,42 +890,57 @@ export type ForumModeratorApplicationUpdateManyWithWhereWithoutSectionInput = {
 export type ForumModeratorApplicationCreateManyApplicantInput = {
   id?: number
   sectionId: number
+  auditById?: number | null
+  status?: number
   permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
   reason: string
-  status?: number
-  auditById?: number | null
-  auditAt?: Date | string | null
   auditReason?: string | null
   remark?: string | null
+  auditAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type ForumModeratorApplicationCreateManyAuditByInput = {
+  id?: number
+  applicantId: number
+  sectionId: number
+  status?: number
+  permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
+  reason: string
+  auditReason?: string | null
+  remark?: string | null
+  auditAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
 export type ForumModeratorApplicationUpdateWithoutApplicantInput = {
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  auditBy?: Prisma.AppUserUpdateOneWithoutAuditedApplicationsNestedInput
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutApplicationsNestedInput
 }
 
 export type ForumModeratorApplicationUncheckedUpdateWithoutApplicantInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -835,13 +949,57 @@ export type ForumModeratorApplicationUncheckedUpdateWithoutApplicantInput = {
 export type ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type ForumModeratorApplicationUpdateWithoutAuditByInput = {
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
+  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  applicant?: Prisma.AppUserUpdateOneRequiredWithoutModeratorApplicationsNestedInput
+  section?: Prisma.ForumSectionUpdateOneRequiredWithoutApplicationsNestedInput
+}
+
+export type ForumModeratorApplicationUncheckedUpdateWithoutAuditByInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  applicantId?: Prisma.IntFieldUpdateOperationsInput | number
+  sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
+  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  applicantId?: Prisma.IntFieldUpdateOperationsInput | number
+  sectionId?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
+  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -850,42 +1008,42 @@ export type ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantInput = 
 export type ForumModeratorApplicationCreateManySectionInput = {
   id?: number
   applicantId: number
+  auditById?: number | null
+  status?: number
   permissions?: Prisma.ForumModeratorApplicationCreatepermissionsInput | number[]
   reason: string
-  status?: number
-  auditById?: number | null
-  auditAt?: Date | string | null
   auditReason?: string | null
   remark?: string | null
+  auditAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
 }
 
 export type ForumModeratorApplicationUpdateWithoutSectionInput = {
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  applicant?: Prisma.ForumProfileUpdateOneRequiredWithoutApplicationsNestedInput
+  applicant?: Prisma.AppUserUpdateOneRequiredWithoutModeratorApplicationsNestedInput
+  auditBy?: Prisma.AppUserUpdateOneWithoutAuditedApplicationsNestedInput
 }
 
 export type ForumModeratorApplicationUncheckedUpdateWithoutSectionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   applicantId?: Prisma.IntFieldUpdateOperationsInput | number
+  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -894,13 +1052,13 @@ export type ForumModeratorApplicationUncheckedUpdateWithoutSectionInput = {
 export type ForumModeratorApplicationUncheckedUpdateManyWithoutSectionInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   applicantId?: Prisma.IntFieldUpdateOperationsInput | number
+  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   permissions?: Prisma.ForumModeratorApplicationUpdatepermissionsInput | number[]
   reason?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -912,17 +1070,18 @@ export type ForumModeratorApplicationSelect<ExtArgs extends runtime.Types.Extens
   id?: boolean
   applicantId?: boolean
   sectionId?: boolean
+  auditById?: boolean
+  status?: boolean
   permissions?: boolean
   reason?: boolean
-  status?: boolean
-  auditById?: boolean
-  auditAt?: boolean
   auditReason?: boolean
   remark?: boolean
+  auditAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  applicant?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  applicant?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  auditBy?: boolean | Prisma.ForumModeratorApplication$auditByArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumModeratorApplication"]>
 
@@ -930,17 +1089,18 @@ export type ForumModeratorApplicationSelectCreateManyAndReturn<ExtArgs extends r
   id?: boolean
   applicantId?: boolean
   sectionId?: boolean
+  auditById?: boolean
+  status?: boolean
   permissions?: boolean
   reason?: boolean
-  status?: boolean
-  auditById?: boolean
-  auditAt?: boolean
   auditReason?: boolean
   remark?: boolean
+  auditAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  applicant?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  applicant?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  auditBy?: boolean | Prisma.ForumModeratorApplication$auditByArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumModeratorApplication"]>
 
@@ -948,17 +1108,18 @@ export type ForumModeratorApplicationSelectUpdateManyAndReturn<ExtArgs extends r
   id?: boolean
   applicantId?: boolean
   sectionId?: boolean
+  auditById?: boolean
+  status?: boolean
   permissions?: boolean
   reason?: boolean
-  status?: boolean
-  auditById?: boolean
-  auditAt?: boolean
   auditReason?: boolean
   remark?: boolean
+  auditAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  applicant?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  applicant?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  auditBy?: boolean | Prisma.ForumModeratorApplication$auditByArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumModeratorApplication"]>
 
@@ -966,36 +1127,49 @@ export type ForumModeratorApplicationSelectScalar = {
   id?: boolean
   applicantId?: boolean
   sectionId?: boolean
+  auditById?: boolean
+  status?: boolean
   permissions?: boolean
   reason?: boolean
-  status?: boolean
-  auditById?: boolean
-  auditAt?: boolean
   auditReason?: boolean
   remark?: boolean
+  auditAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type ForumModeratorApplicationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "applicantId" | "sectionId" | "permissions" | "reason" | "status" | "auditById" | "auditAt" | "auditReason" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumModeratorApplication"]>
+export type ForumModeratorApplicationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "applicantId" | "sectionId" | "auditById" | "status" | "permissions" | "reason" | "auditReason" | "remark" | "auditAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumModeratorApplication"]>
 export type ForumModeratorApplicationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  applicant?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  applicant?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  auditBy?: boolean | Prisma.ForumModeratorApplication$auditByArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
 }
 export type ForumModeratorApplicationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  applicant?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  applicant?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  auditBy?: boolean | Prisma.ForumModeratorApplication$auditByArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
 }
 export type ForumModeratorApplicationIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  applicant?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  applicant?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  auditBy?: boolean | Prisma.ForumModeratorApplication$auditByArgs<ExtArgs>
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
 }
 
 export type $ForumModeratorApplicationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumModeratorApplication"
   objects: {
-    applicant: Prisma.$ForumProfilePayload<ExtArgs>
+    /**
+     * 申请人
+     */
+    applicant: Prisma.$AppUserPayload<ExtArgs>
+    /**
+     * 审核人
+     */
+    auditBy: Prisma.$AppUserPayload<ExtArgs> | null
+    /**
+     * 关联板块
+     */
     section: Prisma.$ForumSectionPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1012,6 +1186,14 @@ export type $ForumModeratorApplicationPayload<ExtArgs extends runtime.Types.Exte
      */
     sectionId: number
     /**
+     * 审核人ID
+     */
+    auditById: number | null
+    /**
+     * 申请状态（0=待审核, 1=已通过, 2=已拒绝）
+     */
+    status: number
+    /**
      * 申请的权限数组（1=置顶, 2=加精, 3=锁定, 4=删除, 5=审核, 6=移动）
      */
     permissions: number[]
@@ -1020,18 +1202,6 @@ export type $ForumModeratorApplicationPayload<ExtArgs extends runtime.Types.Exte
      */
     reason: string
     /**
-     * 申请状态（0=待审核, 1=已通过, 2=已拒绝）
-     */
-    status: number
-    /**
-     * 审核人ID
-     */
-    auditById: number | null
-    /**
-     * 审核时间
-     */
-    auditAt: Date | null
-    /**
      * 审核原因（通过或拒绝的原因）
      */
     auditReason: string | null
@@ -1039,6 +1209,10 @@ export type $ForumModeratorApplicationPayload<ExtArgs extends runtime.Types.Exte
      * 备注
      */
     remark: string | null
+    /**
+     * 审核时间
+     */
+    auditAt: Date | null
     /**
      * 创建时间
      */
@@ -1445,7 +1619,8 @@ readonly fields: ForumModeratorApplicationFieldRefs;
  */
 export interface Prisma__ForumModeratorApplicationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  applicant<T extends Prisma.ForumProfileDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfileDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  applicant<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  auditBy<T extends Prisma.ForumModeratorApplication$auditByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumModeratorApplication$auditByArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   section<T extends Prisma.ForumSectionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSectionDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumSectionClient<runtime.Types.Result.GetResult<Prisma.$ForumSectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1479,13 +1654,13 @@ export interface ForumModeratorApplicationFieldRefs {
   readonly id: Prisma.FieldRef<"ForumModeratorApplication", 'Int'>
   readonly applicantId: Prisma.FieldRef<"ForumModeratorApplication", 'Int'>
   readonly sectionId: Prisma.FieldRef<"ForumModeratorApplication", 'Int'>
+  readonly auditById: Prisma.FieldRef<"ForumModeratorApplication", 'Int'>
+  readonly status: Prisma.FieldRef<"ForumModeratorApplication", 'Int'>
   readonly permissions: Prisma.FieldRef<"ForumModeratorApplication", 'Int[]'>
   readonly reason: Prisma.FieldRef<"ForumModeratorApplication", 'String'>
-  readonly status: Prisma.FieldRef<"ForumModeratorApplication", 'Int'>
-  readonly auditById: Prisma.FieldRef<"ForumModeratorApplication", 'Int'>
-  readonly auditAt: Prisma.FieldRef<"ForumModeratorApplication", 'DateTime'>
   readonly auditReason: Prisma.FieldRef<"ForumModeratorApplication", 'String'>
   readonly remark: Prisma.FieldRef<"ForumModeratorApplication", 'String'>
+  readonly auditAt: Prisma.FieldRef<"ForumModeratorApplication", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"ForumModeratorApplication", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumModeratorApplication", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"ForumModeratorApplication", 'DateTime'>
@@ -1891,6 +2066,25 @@ export type ForumModeratorApplicationDeleteManyArgs<ExtArgs extends runtime.Type
    * Limit how many ForumModeratorApplications to delete.
    */
   limit?: number
+}
+
+/**
+ * ForumModeratorApplication.auditBy
+ */
+export type ForumModeratorApplication$auditByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AppUser
+   */
+  select?: Prisma.AppUserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AppUser
+   */
+  omit?: Prisma.AppUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AppUserInclude<ExtArgs> | null
+  where?: Prisma.AppUserWhereInput
 }
 
 /**

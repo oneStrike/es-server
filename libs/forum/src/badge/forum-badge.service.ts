@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common'
 import {
   CreateForumBadgeDto,
-  ProfileBadgeDto,
+  UserBadgeDto,
   QueryForumBadgeDto,
   UpdateForumBadgeDto,
 } from './dto/forum-badge.dto'
@@ -26,18 +26,15 @@ export class ForumBadgeService extends BaseService {
     return this.prisma.forumBadge
   }
 
+  get forumProfile() {
+    return this.prisma.forumProfile
+  }
+
   /**
    * 获取用户徽章关联的 Prisma 模型
    */
   get forumProfileBadge() {
     return this.prisma.forumProfileBadge
-  }
-
-  /**
-   * 获取用户资料的 Prisma 模型
-   */
-  get forumProfile() {
-    return this.prisma.forumProfile
   }
 
   /**
@@ -133,15 +130,15 @@ export class ForumBadgeService extends BaseService {
    * @throws BadRequestException 如果用户资料不存在、徽章不存在、徽章未启用或用户已拥有该徽章
    * @throws NotFoundException 如果徽章不存在
    */
-  async assignBadge(assignBadgeDto: ProfileBadgeDto) {
-    const { profileId, badgeId } = assignBadgeDto
+  async assignBadge(assignBadgeDto: UserBadgeDto) {
+    const { userId, badgeId } = assignBadgeDto
 
-    const profile = await this.forumProfile.findUnique({
-      where: { id: profileId },
+    const user = await this.prisma.appUser.findUnique({
+      where: { id: userId },
     })
 
-    if (!profile) {
-      throw new BadRequestException('用户资料不存在')
+    if (!user) {
+      throw new BadRequestException('用户不存在')
     }
 
     const badge = await this.forumBadge.findUnique({
@@ -158,8 +155,8 @@ export class ForumBadgeService extends BaseService {
 
     const existingBadge = await this.forumProfileBadge.findUnique({
       where: {
-        profileId_badgeId: {
-          profileId,
+        userId_badgeId: {
+          userId,
           badgeId,
         },
       },
@@ -171,7 +168,7 @@ export class ForumBadgeService extends BaseService {
 
     return this.forumProfileBadge.create({
       data: {
-        profileId,
+        userId,
         badgeId,
       },
     })
@@ -179,17 +176,17 @@ export class ForumBadgeService extends BaseService {
 
   /**
    * 撤销用户的徽章
-   * @param profileBadgeDto 包含用户资料 ID 和徽章 ID 的数据传输对象
+   * @param userBadgeDto 包含用户资料 ID 和徽章 ID 的数据传输对象
    * @returns 删除的用户徽章关联
    * @throws BadRequestException 如果用户徽章记录不存在
    */
-  async revokeBadge(profileBadgeDto: ProfileBadgeDto) {
-    const { profileId, badgeId } = profileBadgeDto
+  async revokeBadge(userBadgeDto: UserBadgeDto) {
+    const { userId, badgeId } = userBadgeDto
 
     const badge = await this.forumProfileBadge.findUnique({
       where: {
-        profileId_badgeId: {
-          profileId,
+        userId_badgeId: {
+          userId,
           badgeId,
         },
       },
@@ -201,8 +198,8 @@ export class ForumBadgeService extends BaseService {
 
     return this.forumProfileBadge.delete({
       where: {
-        profileId_badgeId: {
-          profileId,
+        userId_badgeId: {
+          userId,
           badgeId,
         },
       },

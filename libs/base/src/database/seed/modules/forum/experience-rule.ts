@@ -68,12 +68,12 @@ export async function createInitialForumExperienceRules(prisma: any) {
   ]
 
   for (const ruleData of INITIAL_FORUM_EXPERIENCE_RULES) {
-    const existingRule = await prisma.forumExperienceRule.findFirst({
+    const existingRule = await prisma.appExperienceRule.findFirst({
       where: { type: ruleData.type },
     })
 
     if (!existingRule) {
-      await prisma.forumExperienceRule.create({
+      await prisma.appExperienceRule.create({
         data: {
           type: ruleData.type,
           experience: ruleData.experience,

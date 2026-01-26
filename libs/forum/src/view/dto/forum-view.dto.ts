@@ -28,12 +28,12 @@ export class BaseForumViewDto extends BaseDto {
   replyId?: number
 
   @ValidateNumber({
-    description: '用户资料ID',
+    description: '用户ID',
     example: 1,
     required: true,
     min: 1,
   })
-  profileId!: number
+  userId!: number
 
   @ValidateString({
     description: '用户IP地址',
@@ -73,7 +73,7 @@ export class BaseForumViewDto extends BaseDto {
 export class CreateForumViewDto extends PickType(BaseForumViewDto, [
   'topicId',
   'replyId',
-  'profileId',
+  'userId',
   'ipAddress',
   'userAgent',
   'type',
@@ -83,7 +83,7 @@ export class CreateForumViewDto extends PickType(BaseForumViewDto, [
 export class QueryForumViewDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumViewDto, ['topicId', 'profileId', 'type', 'ipAddress']),
+    PickType(BaseForumViewDto, ['topicId', 'userId', 'type', 'ipAddress']),
   ),
 ) {}
 

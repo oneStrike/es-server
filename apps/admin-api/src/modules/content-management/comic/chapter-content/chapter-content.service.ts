@@ -41,7 +41,8 @@ export class ChapterContentService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    return chapter.contents ? JSON.parse(chapter.contents) : []
+    // contents is already a JSON object/array due to Prisma Json type
+    return (chapter.contents as unknown as string[]) || []
   }
 
   /**
@@ -72,7 +73,7 @@ export class ChapterContentService extends BaseService {
     // 更新数据库
     await this.workComicChapter.update({
       where: { id },
-      data: { contents: JSON.stringify(contents) },
+      data: { contents: contents as any },
     })
 
     return file
@@ -97,7 +98,7 @@ export class ChapterContentService extends BaseService {
     // 更新数据库
     await this.workComicChapter.update({
       where: { id },
-      data: { contents: JSON.stringify(contents) },
+      data: { contents: contents as any },
     })
 
     return { id }

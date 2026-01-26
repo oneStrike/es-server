@@ -1,21 +1,47 @@
+/// 应用通知表 - 存储系统通知、公告等信息
 model AppNotice {
-  id                   Int             @id @default(autoincrement())
-  title                String          @db.VarChar(100)
-  content              String
-  noticeType           Int             @default(0) @map("notice_type") @db.SmallInt
-  priorityLevel        Int             @default(1) @map("priority_level") @db.SmallInt
-  publishStartTime     DateTime?       @map("publish_start_time") @db.Timestamptz(6)
-  publishEndTime       DateTime?       @map("publish_end_time") @db.Timestamptz(6)
-  pageId               Int?            @map("page_id")
-  popupBackgroundImage String?         @map("popup_background_image") @db.VarChar(200)
-  isPublished          Boolean         @default(false) @map("is_published")
-  isPinned             Boolean         @default(false) @map("is_pinned")
-  showAsPopup          Boolean         @default(false) @map("show_as_popup")
-  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  enablePlatform       Int[]           @map("enable_platform")
-  appPage              AppPage?        @relation("notices", fields: [pageId], references: [id])
-  noticeReads          AppNoticeRead[]
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 关联的页面ID（可选）
+  pageId Int? @map("page_id")
+
+  /// 通知标题
+  title   String @db.VarChar(100)
+  /// 通知内容
+  content String
+
+  /// 通知类型（0=系统通知, 1=活动通知, 2=维护公告）
+  noticeType    Int @default(0) @map("notice_type") @db.SmallInt
+  /// 优先级（数值越大越重要）
+  priorityLevel Int @default(1) @map("priority_level") @db.SmallInt
+
+  /// 发布开始时间
+  publishStartTime DateTime? @map("publish_start_time") @db.Timestamptz(6)
+  /// 发布结束时间
+  publishEndTime   DateTime? @map("publish_end_time") @db.Timestamptz(6)
+
+  /// 弹窗背景图片URL
+  popupBackgroundImage String? @map("popup_background_image") @db.VarChar(200)
+
+  /// 是否已发布
+  isPublished    Boolean @default(false) @map("is_published")
+  /// 是否置顶
+  isPinned       Boolean @default(false) @map("is_pinned")
+  /// 是否以弹窗形式显示
+  showAsPopup    Boolean @default(false) @map("show_as_popup")
+  /// 启用的平台列表
+  enablePlatform Int[]   @map("enable_platform")
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 关联页面
+  appPage     AppPage?        @relation("notices", fields: [pageId], references: [id])
+  /// 阅读记录关联
+  noticeReads AppNoticeRead[]
 
   @@index([isPublished, publishStartTime, publishEndTime])
   @@index([noticeType, isPublished])

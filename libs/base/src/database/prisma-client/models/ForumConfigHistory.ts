@@ -41,35 +41,35 @@ export type ForumConfigHistorySumAggregateOutputType = {
 export type ForumConfigHistoryMinAggregateOutputType = {
   id: number | null
   configId: number | null
+  operatedById: number | null
   changeType: string | null
   reason: string | null
-  operatedById: number | null
-  operatedAt: Date | null
   ipAddress: string | null
   userAgent: string | null
+  operatedAt: Date | null
 }
 
 export type ForumConfigHistoryMaxAggregateOutputType = {
   id: number | null
   configId: number | null
+  operatedById: number | null
   changeType: string | null
   reason: string | null
-  operatedById: number | null
-  operatedAt: Date | null
   ipAddress: string | null
   userAgent: string | null
+  operatedAt: Date | null
 }
 
 export type ForumConfigHistoryCountAggregateOutputType = {
   id: number
   configId: number
+  operatedById: number
   changes: number
   changeType: number
   reason: number
-  operatedById: number
-  operatedAt: number
   ipAddress: number
   userAgent: number
+  operatedAt: number
   _all: number
 }
 
@@ -89,35 +89,35 @@ export type ForumConfigHistorySumAggregateInputType = {
 export type ForumConfigHistoryMinAggregateInputType = {
   id?: true
   configId?: true
+  operatedById?: true
   changeType?: true
   reason?: true
-  operatedById?: true
-  operatedAt?: true
   ipAddress?: true
   userAgent?: true
+  operatedAt?: true
 }
 
 export type ForumConfigHistoryMaxAggregateInputType = {
   id?: true
   configId?: true
+  operatedById?: true
   changeType?: true
   reason?: true
-  operatedById?: true
-  operatedAt?: true
   ipAddress?: true
   userAgent?: true
+  operatedAt?: true
 }
 
 export type ForumConfigHistoryCountAggregateInputType = {
   id?: true
   configId?: true
+  operatedById?: true
   changes?: true
   changeType?: true
   reason?: true
-  operatedById?: true
-  operatedAt?: true
   ipAddress?: true
   userAgent?: true
+  operatedAt?: true
   _all?: true
 }
 
@@ -210,13 +210,13 @@ export type ForumConfigHistoryGroupByArgs<ExtArgs extends runtime.Types.Extensio
 export type ForumConfigHistoryGroupByOutputType = {
   id: number
   configId: number
+  operatedById: number | null
   changes: runtime.JsonValue
   changeType: string
   reason: string | null
-  operatedById: number | null
-  operatedAt: Date
   ipAddress: string | null
   userAgent: string | null
+  operatedAt: Date
   _count: ForumConfigHistoryCountAggregateOutputType | null
   _avg: ForumConfigHistoryAvgAggregateOutputType | null
   _sum: ForumConfigHistorySumAggregateOutputType | null
@@ -245,29 +245,29 @@ export type ForumConfigHistoryWhereInput = {
   NOT?: Prisma.ForumConfigHistoryWhereInput | Prisma.ForumConfigHistoryWhereInput[]
   id?: Prisma.IntFilter<"ForumConfigHistory"> | number
   configId?: Prisma.IntFilter<"ForumConfigHistory"> | number
+  operatedById?: Prisma.IntNullableFilter<"ForumConfigHistory"> | number | null
   changes?: Prisma.JsonFilter<"ForumConfigHistory">
   changeType?: Prisma.StringFilter<"ForumConfigHistory"> | string
   reason?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
-  operatedById?: Prisma.IntNullableFilter<"ForumConfigHistory"> | number | null
-  operatedAt?: Prisma.DateTimeFilter<"ForumConfigHistory"> | Date | string
   ipAddress?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
   userAgent?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
+  operatedAt?: Prisma.DateTimeFilter<"ForumConfigHistory"> | Date | string
   config?: Prisma.XOR<Prisma.ForumConfigScalarRelationFilter, Prisma.ForumConfigWhereInput>
-  operatedBy?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
+  operatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
 }
 
 export type ForumConfigHistoryOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   configId?: Prisma.SortOrder
+  operatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   changes?: Prisma.SortOrder
   changeType?: Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
-  operatedById?: Prisma.SortOrderInput | Prisma.SortOrder
-  operatedAt?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
+  operatedAt?: Prisma.SortOrder
   config?: Prisma.ForumConfigOrderByWithRelationInput
-  operatedBy?: Prisma.ForumProfileOrderByWithRelationInput
+  operatedBy?: Prisma.AppUserOrderByWithRelationInput
 }
 
 export type ForumConfigHistoryWhereUniqueInput = Prisma.AtLeast<{
@@ -276,27 +276,27 @@ export type ForumConfigHistoryWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ForumConfigHistoryWhereInput[]
   NOT?: Prisma.ForumConfigHistoryWhereInput | Prisma.ForumConfigHistoryWhereInput[]
   configId?: Prisma.IntFilter<"ForumConfigHistory"> | number
+  operatedById?: Prisma.IntNullableFilter<"ForumConfigHistory"> | number | null
   changes?: Prisma.JsonFilter<"ForumConfigHistory">
   changeType?: Prisma.StringFilter<"ForumConfigHistory"> | string
   reason?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
-  operatedById?: Prisma.IntNullableFilter<"ForumConfigHistory"> | number | null
-  operatedAt?: Prisma.DateTimeFilter<"ForumConfigHistory"> | Date | string
   ipAddress?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
   userAgent?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
+  operatedAt?: Prisma.DateTimeFilter<"ForumConfigHistory"> | Date | string
   config?: Prisma.XOR<Prisma.ForumConfigScalarRelationFilter, Prisma.ForumConfigWhereInput>
-  operatedBy?: Prisma.XOR<Prisma.ForumProfileNullableScalarRelationFilter, Prisma.ForumProfileWhereInput> | null
+  operatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
 }, "id">
 
 export type ForumConfigHistoryOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   configId?: Prisma.SortOrder
+  operatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   changes?: Prisma.SortOrder
   changeType?: Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
-  operatedById?: Prisma.SortOrderInput | Prisma.SortOrder
-  operatedAt?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
+  operatedAt?: Prisma.SortOrder
   _count?: Prisma.ForumConfigHistoryCountOrderByAggregateInput
   _avg?: Prisma.ForumConfigHistoryAvgOrderByAggregateInput
   _max?: Prisma.ForumConfigHistoryMaxOrderByAggregateInput
@@ -310,138 +310,92 @@ export type ForumConfigHistoryScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumConfigHistoryScalarWhereWithAggregatesInput | Prisma.ForumConfigHistoryScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumConfigHistory"> | number
   configId?: Prisma.IntWithAggregatesFilter<"ForumConfigHistory"> | number
+  operatedById?: Prisma.IntNullableWithAggregatesFilter<"ForumConfigHistory"> | number | null
   changes?: Prisma.JsonWithAggregatesFilter<"ForumConfigHistory">
   changeType?: Prisma.StringWithAggregatesFilter<"ForumConfigHistory"> | string
   reason?: Prisma.StringNullableWithAggregatesFilter<"ForumConfigHistory"> | string | null
-  operatedById?: Prisma.IntNullableWithAggregatesFilter<"ForumConfigHistory"> | number | null
-  operatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumConfigHistory"> | Date | string
   ipAddress?: Prisma.StringNullableWithAggregatesFilter<"ForumConfigHistory"> | string | null
   userAgent?: Prisma.StringNullableWithAggregatesFilter<"ForumConfigHistory"> | string | null
+  operatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumConfigHistory"> | Date | string
 }
 
 export type ForumConfigHistoryCreateInput = {
   changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType: string
   reason?: string | null
-  operatedAt?: Date | string
   ipAddress?: string | null
   userAgent?: string | null
+  operatedAt?: Date | string
   config: Prisma.ForumConfigCreateNestedOneWithoutHistoriesInput
-  operatedBy?: Prisma.ForumProfileCreateNestedOneWithoutOperatedConfigHistoriesInput
+  operatedBy?: Prisma.AppUserCreateNestedOneWithoutOperatedConfigHistoriesInput
 }
 
 export type ForumConfigHistoryUncheckedCreateInput = {
   id?: number
   configId: number
+  operatedById?: number | null
   changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType: string
   reason?: string | null
-  operatedById?: number | null
-  operatedAt?: Date | string
   ipAddress?: string | null
   userAgent?: string | null
+  operatedAt?: Date | string
 }
 
 export type ForumConfigHistoryUpdateInput = {
   changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   config?: Prisma.ForumConfigUpdateOneRequiredWithoutHistoriesNestedInput
-  operatedBy?: Prisma.ForumProfileUpdateOneWithoutOperatedConfigHistoriesNestedInput
+  operatedBy?: Prisma.AppUserUpdateOneWithoutOperatedConfigHistoriesNestedInput
 }
 
 export type ForumConfigHistoryUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   configId?: Prisma.IntFieldUpdateOperationsInput | number
+  operatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumConfigHistoryCreateManyInput = {
   id?: number
   configId: number
+  operatedById?: number | null
   changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType: string
   reason?: string | null
-  operatedById?: number | null
-  operatedAt?: Date | string
   ipAddress?: string | null
   userAgent?: string | null
+  operatedAt?: Date | string
 }
 
 export type ForumConfigHistoryUpdateManyMutationInput = {
   changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumConfigHistoryUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   configId?: Prisma.IntFieldUpdateOperationsInput | number
+  operatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-}
-
-export type ForumConfigHistoryCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  configId?: Prisma.SortOrder
-  changes?: Prisma.SortOrder
-  changeType?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
-  operatedById?: Prisma.SortOrder
-  operatedAt?: Prisma.SortOrder
-  ipAddress?: Prisma.SortOrder
-  userAgent?: Prisma.SortOrder
-}
-
-export type ForumConfigHistoryAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  configId?: Prisma.SortOrder
-  operatedById?: Prisma.SortOrder
-}
-
-export type ForumConfigHistoryMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  configId?: Prisma.SortOrder
-  changeType?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
-  operatedById?: Prisma.SortOrder
-  operatedAt?: Prisma.SortOrder
-  ipAddress?: Prisma.SortOrder
-  userAgent?: Prisma.SortOrder
-}
-
-export type ForumConfigHistoryMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  configId?: Prisma.SortOrder
-  changeType?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
-  operatedById?: Prisma.SortOrder
-  operatedAt?: Prisma.SortOrder
-  ipAddress?: Prisma.SortOrder
-  userAgent?: Prisma.SortOrder
-}
-
-export type ForumConfigHistorySumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  configId?: Prisma.SortOrder
-  operatedById?: Prisma.SortOrder
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumConfigHistoryListRelationFilter = {
@@ -454,46 +408,50 @@ export type ForumConfigHistoryOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ForumConfigHistoryCreateNestedManyWithoutConfigInput = {
-  create?: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput> | Prisma.ForumConfigHistoryCreateWithoutConfigInput[] | Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput[]
-  connectOrCreate?: Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput | Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput[]
-  createMany?: Prisma.ForumConfigHistoryCreateManyConfigInputEnvelope
-  connect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+export type ForumConfigHistoryCountOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  configId?: Prisma.SortOrder
+  operatedById?: Prisma.SortOrder
+  changes?: Prisma.SortOrder
+  changeType?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
+  ipAddress?: Prisma.SortOrder
+  userAgent?: Prisma.SortOrder
+  operatedAt?: Prisma.SortOrder
 }
 
-export type ForumConfigHistoryUncheckedCreateNestedManyWithoutConfigInput = {
-  create?: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput> | Prisma.ForumConfigHistoryCreateWithoutConfigInput[] | Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput[]
-  connectOrCreate?: Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput | Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput[]
-  createMany?: Prisma.ForumConfigHistoryCreateManyConfigInputEnvelope
-  connect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+export type ForumConfigHistoryAvgOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  configId?: Prisma.SortOrder
+  operatedById?: Prisma.SortOrder
 }
 
-export type ForumConfigHistoryUpdateManyWithoutConfigNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput> | Prisma.ForumConfigHistoryCreateWithoutConfigInput[] | Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput[]
-  connectOrCreate?: Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput | Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput[]
-  upsert?: Prisma.ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput | Prisma.ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput[]
-  createMany?: Prisma.ForumConfigHistoryCreateManyConfigInputEnvelope
-  set?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
-  disconnect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
-  delete?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
-  connect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
-  update?: Prisma.ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput | Prisma.ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput[]
-  updateMany?: Prisma.ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput | Prisma.ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput[]
-  deleteMany?: Prisma.ForumConfigHistoryScalarWhereInput | Prisma.ForumConfigHistoryScalarWhereInput[]
+export type ForumConfigHistoryMaxOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  configId?: Prisma.SortOrder
+  operatedById?: Prisma.SortOrder
+  changeType?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
+  ipAddress?: Prisma.SortOrder
+  userAgent?: Prisma.SortOrder
+  operatedAt?: Prisma.SortOrder
 }
 
-export type ForumConfigHistoryUncheckedUpdateManyWithoutConfigNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput> | Prisma.ForumConfigHistoryCreateWithoutConfigInput[] | Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput[]
-  connectOrCreate?: Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput | Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput[]
-  upsert?: Prisma.ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput | Prisma.ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput[]
-  createMany?: Prisma.ForumConfigHistoryCreateManyConfigInputEnvelope
-  set?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
-  disconnect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
-  delete?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
-  connect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
-  update?: Prisma.ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput | Prisma.ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput[]
-  updateMany?: Prisma.ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput | Prisma.ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput[]
-  deleteMany?: Prisma.ForumConfigHistoryScalarWhereInput | Prisma.ForumConfigHistoryScalarWhereInput[]
+export type ForumConfigHistoryMinOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  configId?: Prisma.SortOrder
+  operatedById?: Prisma.SortOrder
+  changeType?: Prisma.SortOrder
+  reason?: Prisma.SortOrder
+  ipAddress?: Prisma.SortOrder
+  userAgent?: Prisma.SortOrder
+  operatedAt?: Prisma.SortOrder
+}
+
+export type ForumConfigHistorySumOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  configId?: Prisma.SortOrder
+  operatedById?: Prisma.SortOrder
 }
 
 export type ForumConfigHistoryCreateNestedManyWithoutOperatedByInput = {
@@ -538,75 +496,55 @@ export type ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput = 
   deleteMany?: Prisma.ForumConfigHistoryScalarWhereInput | Prisma.ForumConfigHistoryScalarWhereInput[]
 }
 
-export type ForumConfigHistoryCreateWithoutConfigInput = {
-  changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  changeType: string
-  reason?: string | null
-  operatedAt?: Date | string
-  ipAddress?: string | null
-  userAgent?: string | null
-  operatedBy?: Prisma.ForumProfileCreateNestedOneWithoutOperatedConfigHistoriesInput
+export type ForumConfigHistoryCreateNestedManyWithoutConfigInput = {
+  create?: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput> | Prisma.ForumConfigHistoryCreateWithoutConfigInput[] | Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput[]
+  connectOrCreate?: Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput | Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput[]
+  createMany?: Prisma.ForumConfigHistoryCreateManyConfigInputEnvelope
+  connect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
 }
 
-export type ForumConfigHistoryUncheckedCreateWithoutConfigInput = {
-  id?: number
-  changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  changeType: string
-  reason?: string | null
-  operatedById?: number | null
-  operatedAt?: Date | string
-  ipAddress?: string | null
-  userAgent?: string | null
+export type ForumConfigHistoryUncheckedCreateNestedManyWithoutConfigInput = {
+  create?: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput> | Prisma.ForumConfigHistoryCreateWithoutConfigInput[] | Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput[]
+  connectOrCreate?: Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput | Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput[]
+  createMany?: Prisma.ForumConfigHistoryCreateManyConfigInputEnvelope
+  connect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
 }
 
-export type ForumConfigHistoryCreateOrConnectWithoutConfigInput = {
-  where: Prisma.ForumConfigHistoryWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput>
+export type ForumConfigHistoryUpdateManyWithoutConfigNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput> | Prisma.ForumConfigHistoryCreateWithoutConfigInput[] | Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput[]
+  connectOrCreate?: Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput | Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput[]
+  upsert?: Prisma.ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput | Prisma.ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput[]
+  createMany?: Prisma.ForumConfigHistoryCreateManyConfigInputEnvelope
+  set?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+  disconnect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+  delete?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+  connect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+  update?: Prisma.ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput | Prisma.ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput[]
+  updateMany?: Prisma.ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput | Prisma.ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput[]
+  deleteMany?: Prisma.ForumConfigHistoryScalarWhereInput | Prisma.ForumConfigHistoryScalarWhereInput[]
 }
 
-export type ForumConfigHistoryCreateManyConfigInputEnvelope = {
-  data: Prisma.ForumConfigHistoryCreateManyConfigInput | Prisma.ForumConfigHistoryCreateManyConfigInput[]
-  skipDuplicates?: boolean
-}
-
-export type ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput = {
-  where: Prisma.ForumConfigHistoryWhereUniqueInput
-  update: Prisma.XOR<Prisma.ForumConfigHistoryUpdateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedUpdateWithoutConfigInput>
-  create: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput>
-}
-
-export type ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput = {
-  where: Prisma.ForumConfigHistoryWhereUniqueInput
-  data: Prisma.XOR<Prisma.ForumConfigHistoryUpdateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedUpdateWithoutConfigInput>
-}
-
-export type ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput = {
-  where: Prisma.ForumConfigHistoryScalarWhereInput
-  data: Prisma.XOR<Prisma.ForumConfigHistoryUpdateManyMutationInput, Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutConfigInput>
-}
-
-export type ForumConfigHistoryScalarWhereInput = {
-  AND?: Prisma.ForumConfigHistoryScalarWhereInput | Prisma.ForumConfigHistoryScalarWhereInput[]
-  OR?: Prisma.ForumConfigHistoryScalarWhereInput[]
-  NOT?: Prisma.ForumConfigHistoryScalarWhereInput | Prisma.ForumConfigHistoryScalarWhereInput[]
-  id?: Prisma.IntFilter<"ForumConfigHistory"> | number
-  configId?: Prisma.IntFilter<"ForumConfigHistory"> | number
-  changes?: Prisma.JsonFilter<"ForumConfigHistory">
-  changeType?: Prisma.StringFilter<"ForumConfigHistory"> | string
-  reason?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
-  operatedById?: Prisma.IntNullableFilter<"ForumConfigHistory"> | number | null
-  operatedAt?: Prisma.DateTimeFilter<"ForumConfigHistory"> | Date | string
-  ipAddress?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
-  userAgent?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
+export type ForumConfigHistoryUncheckedUpdateManyWithoutConfigNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput> | Prisma.ForumConfigHistoryCreateWithoutConfigInput[] | Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput[]
+  connectOrCreate?: Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput | Prisma.ForumConfigHistoryCreateOrConnectWithoutConfigInput[]
+  upsert?: Prisma.ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput | Prisma.ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput[]
+  createMany?: Prisma.ForumConfigHistoryCreateManyConfigInputEnvelope
+  set?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+  disconnect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+  delete?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+  connect?: Prisma.ForumConfigHistoryWhereUniqueInput | Prisma.ForumConfigHistoryWhereUniqueInput[]
+  update?: Prisma.ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput | Prisma.ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput[]
+  updateMany?: Prisma.ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput | Prisma.ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput[]
+  deleteMany?: Prisma.ForumConfigHistoryScalarWhereInput | Prisma.ForumConfigHistoryScalarWhereInput[]
 }
 
 export type ForumConfigHistoryCreateWithoutOperatedByInput = {
   changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType: string
   reason?: string | null
-  operatedAt?: Date | string
   ipAddress?: string | null
   userAgent?: string | null
+  operatedAt?: Date | string
   config: Prisma.ForumConfigCreateNestedOneWithoutHistoriesInput
 }
 
@@ -616,9 +554,9 @@ export type ForumConfigHistoryUncheckedCreateWithoutOperatedByInput = {
   changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType: string
   reason?: string | null
-  operatedAt?: Date | string
   ipAddress?: string | null
   userAgent?: string | null
+  operatedAt?: Date | string
 }
 
 export type ForumConfigHistoryCreateOrConnectWithoutOperatedByInput = {
@@ -647,47 +585,66 @@ export type ForumConfigHistoryUpdateManyWithWhereWithoutOperatedByInput = {
   data: Prisma.XOR<Prisma.ForumConfigHistoryUpdateManyMutationInput, Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByInput>
 }
 
-export type ForumConfigHistoryCreateManyConfigInput = {
-  id?: number
+export type ForumConfigHistoryScalarWhereInput = {
+  AND?: Prisma.ForumConfigHistoryScalarWhereInput | Prisma.ForumConfigHistoryScalarWhereInput[]
+  OR?: Prisma.ForumConfigHistoryScalarWhereInput[]
+  NOT?: Prisma.ForumConfigHistoryScalarWhereInput | Prisma.ForumConfigHistoryScalarWhereInput[]
+  id?: Prisma.IntFilter<"ForumConfigHistory"> | number
+  configId?: Prisma.IntFilter<"ForumConfigHistory"> | number
+  operatedById?: Prisma.IntNullableFilter<"ForumConfigHistory"> | number | null
+  changes?: Prisma.JsonFilter<"ForumConfigHistory">
+  changeType?: Prisma.StringFilter<"ForumConfigHistory"> | string
+  reason?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
+  ipAddress?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
+  userAgent?: Prisma.StringNullableFilter<"ForumConfigHistory"> | string | null
+  operatedAt?: Prisma.DateTimeFilter<"ForumConfigHistory"> | Date | string
+}
+
+export type ForumConfigHistoryCreateWithoutConfigInput = {
   changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType: string
   reason?: string | null
-  operatedById?: number | null
-  operatedAt?: Date | string
   ipAddress?: string | null
   userAgent?: string | null
+  operatedAt?: Date | string
+  operatedBy?: Prisma.AppUserCreateNestedOneWithoutOperatedConfigHistoriesInput
 }
 
-export type ForumConfigHistoryUpdateWithoutConfigInput = {
-  changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  changeType?: Prisma.StringFieldUpdateOperationsInput | string
-  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedBy?: Prisma.ForumProfileUpdateOneWithoutOperatedConfigHistoriesNestedInput
+export type ForumConfigHistoryUncheckedCreateWithoutConfigInput = {
+  id?: number
+  operatedById?: number | null
+  changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  changeType: string
+  reason?: string | null
+  ipAddress?: string | null
+  userAgent?: string | null
+  operatedAt?: Date | string
 }
 
-export type ForumConfigHistoryUncheckedUpdateWithoutConfigInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  changeType?: Prisma.StringFieldUpdateOperationsInput | string
-  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+export type ForumConfigHistoryCreateOrConnectWithoutConfigInput = {
+  where: Prisma.ForumConfigHistoryWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput>
 }
 
-export type ForumConfigHistoryUncheckedUpdateManyWithoutConfigInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  changeType?: Prisma.StringFieldUpdateOperationsInput | string
-  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+export type ForumConfigHistoryCreateManyConfigInputEnvelope = {
+  data: Prisma.ForumConfigHistoryCreateManyConfigInput | Prisma.ForumConfigHistoryCreateManyConfigInput[]
+  skipDuplicates?: boolean
+}
+
+export type ForumConfigHistoryUpsertWithWhereUniqueWithoutConfigInput = {
+  where: Prisma.ForumConfigHistoryWhereUniqueInput
+  update: Prisma.XOR<Prisma.ForumConfigHistoryUpdateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedUpdateWithoutConfigInput>
+  create: Prisma.XOR<Prisma.ForumConfigHistoryCreateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedCreateWithoutConfigInput>
+}
+
+export type ForumConfigHistoryUpdateWithWhereUniqueWithoutConfigInput = {
+  where: Prisma.ForumConfigHistoryWhereUniqueInput
+  data: Prisma.XOR<Prisma.ForumConfigHistoryUpdateWithoutConfigInput, Prisma.ForumConfigHistoryUncheckedUpdateWithoutConfigInput>
+}
+
+export type ForumConfigHistoryUpdateManyWithWhereWithoutConfigInput = {
+  where: Prisma.ForumConfigHistoryScalarWhereInput
+  data: Prisma.XOR<Prisma.ForumConfigHistoryUpdateManyMutationInput, Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutConfigInput>
 }
 
 export type ForumConfigHistoryCreateManyOperatedByInput = {
@@ -696,18 +653,18 @@ export type ForumConfigHistoryCreateManyOperatedByInput = {
   changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType: string
   reason?: string | null
-  operatedAt?: Date | string
   ipAddress?: string | null
   userAgent?: string | null
+  operatedAt?: Date | string
 }
 
 export type ForumConfigHistoryUpdateWithoutOperatedByInput = {
   changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   config?: Prisma.ForumConfigUpdateOneRequiredWithoutHistoriesNestedInput
 }
 
@@ -717,9 +674,9 @@ export type ForumConfigHistoryUncheckedUpdateWithoutOperatedByInput = {
   changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByInput = {
@@ -728,9 +685,52 @@ export type ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByInput = {
   changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   changeType?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ForumConfigHistoryCreateManyConfigInput = {
+  id?: number
+  operatedById?: number | null
+  changes: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  changeType: string
+  reason?: string | null
+  ipAddress?: string | null
+  userAgent?: string | null
+  operatedAt?: Date | string
+}
+
+export type ForumConfigHistoryUpdateWithoutConfigInput = {
+  changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  changeType?: Prisma.StringFieldUpdateOperationsInput | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  operatedBy?: Prisma.AppUserUpdateOneWithoutOperatedConfigHistoriesNestedInput
+}
+
+export type ForumConfigHistoryUncheckedUpdateWithoutConfigInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  operatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  changeType?: Prisma.StringFieldUpdateOperationsInput | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ForumConfigHistoryUncheckedUpdateManyWithoutConfigInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  operatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  changes?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  changeType?: Prisma.StringFieldUpdateOperationsInput | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  operatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -738,13 +738,13 @@ export type ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByInput = {
 export type ForumConfigHistorySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   configId?: boolean
+  operatedById?: boolean
   changes?: boolean
   changeType?: boolean
   reason?: boolean
-  operatedById?: boolean
-  operatedAt?: boolean
   ipAddress?: boolean
   userAgent?: boolean
+  operatedAt?: boolean
   config?: boolean | Prisma.ForumConfigDefaultArgs<ExtArgs>
   operatedBy?: boolean | Prisma.ForumConfigHistory$operatedByArgs<ExtArgs>
 }, ExtArgs["result"]["forumConfigHistory"]>
@@ -752,13 +752,13 @@ export type ForumConfigHistorySelect<ExtArgs extends runtime.Types.Extensions.In
 export type ForumConfigHistorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   configId?: boolean
+  operatedById?: boolean
   changes?: boolean
   changeType?: boolean
   reason?: boolean
-  operatedById?: boolean
-  operatedAt?: boolean
   ipAddress?: boolean
   userAgent?: boolean
+  operatedAt?: boolean
   config?: boolean | Prisma.ForumConfigDefaultArgs<ExtArgs>
   operatedBy?: boolean | Prisma.ForumConfigHistory$operatedByArgs<ExtArgs>
 }, ExtArgs["result"]["forumConfigHistory"]>
@@ -766,13 +766,13 @@ export type ForumConfigHistorySelectCreateManyAndReturn<ExtArgs extends runtime.
 export type ForumConfigHistorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   configId?: boolean
+  operatedById?: boolean
   changes?: boolean
   changeType?: boolean
   reason?: boolean
-  operatedById?: boolean
-  operatedAt?: boolean
   ipAddress?: boolean
   userAgent?: boolean
+  operatedAt?: boolean
   config?: boolean | Prisma.ForumConfigDefaultArgs<ExtArgs>
   operatedBy?: boolean | Prisma.ForumConfigHistory$operatedByArgs<ExtArgs>
 }, ExtArgs["result"]["forumConfigHistory"]>
@@ -780,16 +780,16 @@ export type ForumConfigHistorySelectUpdateManyAndReturn<ExtArgs extends runtime.
 export type ForumConfigHistorySelectScalar = {
   id?: boolean
   configId?: boolean
+  operatedById?: boolean
   changes?: boolean
   changeType?: boolean
   reason?: boolean
-  operatedById?: boolean
-  operatedAt?: boolean
   ipAddress?: boolean
   userAgent?: boolean
+  operatedAt?: boolean
 }
 
-export type ForumConfigHistoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "configId" | "changes" | "changeType" | "reason" | "operatedById" | "operatedAt" | "ipAddress" | "userAgent", ExtArgs["result"]["forumConfigHistory"]>
+export type ForumConfigHistoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "configId" | "operatedById" | "changes" | "changeType" | "reason" | "ipAddress" | "userAgent" | "operatedAt", ExtArgs["result"]["forumConfigHistory"]>
 export type ForumConfigHistoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   config?: boolean | Prisma.ForumConfigDefaultArgs<ExtArgs>
   operatedBy?: boolean | Prisma.ForumConfigHistory$operatedByArgs<ExtArgs>
@@ -813,7 +813,7 @@ export type $ForumConfigHistoryPayload<ExtArgs extends runtime.Types.Extensions.
     /**
      * 操作人
      */
-    operatedBy: Prisma.$ForumProfilePayload<ExtArgs> | null
+    operatedBy: Prisma.$AppUserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -824,6 +824,10 @@ export type $ForumConfigHistoryPayload<ExtArgs extends runtime.Types.Extensions.
      * 配置ID
      */
     configId: number
+    /**
+     * 操作人ID
+     */
+    operatedById: number | null
     /**
      * 变更的配置项（JSON格式，存储字段名和变更详情）
      * 示例：{"siteName": {"old": "旧站点名", "new": "新站点名"}, "topicTitleMaxLength": {"old": 200, "new": 300}}
@@ -838,14 +842,6 @@ export type $ForumConfigHistoryPayload<ExtArgs extends runtime.Types.Extensions.
      */
     reason: string | null
     /**
-     * 操作人ID
-     */
-    operatedById: number | null
-    /**
-     * 操作时间
-     */
-    operatedAt: Date
-    /**
      * IP地址
      */
     ipAddress: string | null
@@ -853,6 +849,10 @@ export type $ForumConfigHistoryPayload<ExtArgs extends runtime.Types.Extensions.
      * 用户代理
      */
     userAgent: string | null
+    /**
+     * 操作时间
+     */
+    operatedAt: Date
   }, ExtArgs["result"]["forumConfigHistory"]>
   composites: {}
 }
@@ -1248,7 +1248,7 @@ readonly fields: ForumConfigHistoryFieldRefs;
 export interface Prisma__ForumConfigHistoryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   config<T extends Prisma.ForumConfigDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumConfigDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumConfigClient<runtime.Types.Result.GetResult<Prisma.$ForumConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  operatedBy<T extends Prisma.ForumConfigHistory$operatedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumConfigHistory$operatedByArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  operatedBy<T extends Prisma.ForumConfigHistory$operatedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumConfigHistory$operatedByArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1280,13 +1280,13 @@ export interface Prisma__ForumConfigHistoryClient<T, Null = never, ExtArgs exten
 export interface ForumConfigHistoryFieldRefs {
   readonly id: Prisma.FieldRef<"ForumConfigHistory", 'Int'>
   readonly configId: Prisma.FieldRef<"ForumConfigHistory", 'Int'>
+  readonly operatedById: Prisma.FieldRef<"ForumConfigHistory", 'Int'>
   readonly changes: Prisma.FieldRef<"ForumConfigHistory", 'Json'>
   readonly changeType: Prisma.FieldRef<"ForumConfigHistory", 'String'>
   readonly reason: Prisma.FieldRef<"ForumConfigHistory", 'String'>
-  readonly operatedById: Prisma.FieldRef<"ForumConfigHistory", 'Int'>
-  readonly operatedAt: Prisma.FieldRef<"ForumConfigHistory", 'DateTime'>
   readonly ipAddress: Prisma.FieldRef<"ForumConfigHistory", 'String'>
   readonly userAgent: Prisma.FieldRef<"ForumConfigHistory", 'String'>
+  readonly operatedAt: Prisma.FieldRef<"ForumConfigHistory", 'DateTime'>
 }
     
 
@@ -1696,18 +1696,18 @@ export type ForumConfigHistoryDeleteManyArgs<ExtArgs extends runtime.Types.Exten
  */
 export type ForumConfigHistory$operatedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the ForumProfile
+   * Select specific fields to fetch from the AppUser
    */
-  select?: Prisma.ForumProfileSelect<ExtArgs> | null
+  select?: Prisma.AppUserSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the ForumProfile
+   * Omit specific fields from the AppUser
    */
-  omit?: Prisma.ForumProfileOmit<ExtArgs> | null
+  omit?: Prisma.AppUserOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.ForumProfileInclude<ExtArgs> | null
-  where?: Prisma.ForumProfileWhereInput
+  include?: Prisma.AppUserInclude<ExtArgs> | null
+  where?: Prisma.AppUserWhereInput
 }
 
 /**

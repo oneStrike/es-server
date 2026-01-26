@@ -1,7 +1,15 @@
 import { BaseService } from '@libs/base/database'
 
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
-import { CreateForumReportDto, HandleForumReportDto, QueryForumReportDto } from './dto/forum-report.dto'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import {
+  CreateForumReportDto,
+  HandleForumReportDto,
+  QueryForumReportDto,
+} from './dto/forum-report.dto'
 import {
   ForumReportStatusEnum,
   ForumReportTypeEnum,
@@ -35,13 +43,6 @@ export class ForumReportService extends BaseService {
   }
 
   /**
-   * 获取论坛用户资料模型
-   */
-  get forumProfile() {
-    return this.prisma.forumProfile
-  }
-
-  /**
    * 创建论坛举报
    * @param createForumReportDto - 创建举报的DTO
    * @returns 创建的举报记录
@@ -49,9 +50,10 @@ export class ForumReportService extends BaseService {
    * @throws NotFoundException 目标内容不存在
    */
   async createForumReport(createForumReportDto: CreateForumReportDto) {
-    const { reporterId, type, targetId, reason, ...reportData } = createForumReportDto
+    const { reporterId, type, targetId, reason, ...reportData } =
+      createForumReportDto
 
-    const reporter = await this.forumProfile.findUnique({
+    const reporter = await this.prisma.appUser.findUnique({
       where: { id: reporterId },
     })
 
@@ -80,11 +82,11 @@ export class ForumReportService extends BaseService {
         throw new NotFoundException('回复不存在')
       }
 
-      if (reply.profileId === reporterId) {
+      if (reply.userId === reporterId) {
         throw new BadRequestException('不能举报自己的回复')
       }
     } else if (type === ForumReportTypeEnum.USER) {
-      const user = await this.forumProfile.findUnique({
+      const user = await this.prisma.appUser.findUnique({
         where: { id: targetId },
       })
 
@@ -103,10 +105,7 @@ export class ForumReportService extends BaseService {
         type,
         targetId,
         status: {
-          in: [
-            ForumReportStatusEnum.PENDING,
-            ForumReportStatusEnum.PROCESSING,
-          ],
+          in: [ForumReportStatusEnum.PENDING, ForumReportStatusEnum.PROCESSING],
         },
       },
     })
@@ -135,7 +134,14 @@ export class ForumReportService extends BaseService {
    * @returns 分页的举报列表
    */
   async getForumReports(queryForumReportDto: QueryForumReportDto) {
-    const { type, reason, status, reporterId, pageIndex = 0, pageSize = 15 } = queryForumReportDto
+    const {
+      type,
+      reason,
+      status,
+      reporterId,
+      pageIndex = 0,
+      pageSize = 15,
+    } = queryForumReportDto
 
     const where: any = {}
 
@@ -156,7 +162,11 @@ export class ForumReportService extends BaseService {
     }
 
     return this.forumReport.findPagination({
-      where,
+      where: {
+        ...where,
+        pageIndex,
+        pageSize,
+      },
       include: {
         reporter: {
           select: {
@@ -174,9 +184,7 @@ export class ForumReportService extends BaseService {
       orderBy: {
         createdAt: 'desc',
       },
-      pageIndex,
-      pageSize,
-    })
+    } as any)
   }
 
   /**
@@ -228,13 +236,14 @@ export class ForumReportService extends BaseService {
         },
       })
     } else if (report.type === ForumReportTypeEnum.USER) {
-      targetDetails = await this.forumProfile.findUnique({
+      const user = await this.prisma.appUser.findUnique({
         where: { id: report.targetId },
         select: {
           id: true,
           nickname: true,
         },
       })
+      targetDetails = user
     }
 
     return {
@@ -261,7 +270,10 @@ export class ForumReportService extends BaseService {
       throw new NotFoundException('举报记录不存在')
     }
 
-    if (report.status !== ForumReportStatusEnum.PENDING && report.status !== ForumReportStatusEnum.PROCESSING) {
+    if (
+      report.status !== ForumReportStatusEnum.PENDING &&
+      report.status !== ForumReportStatusEnum.PROCESSING
+    ) {
       throw new BadRequestException('该举报已处理完成')
     }
 
@@ -286,7 +298,12 @@ export class ForumReportService extends BaseService {
    * @returns 更新后的举报记录
    * @throws NotFoundException 举报记录不存在
    */
-  async updateReportStatus(id: number, status: ForumReportStatusEnum, handlerId?: number, handlingNote?: string) {
+  async updateReportStatus(
+    id: number,
+    status: ForumReportStatusEnum,
+    handlerId?: number,
+    handlingNote?: string,
+  ) {
     const report = await this.forumReport.findUnique({
       where: { id },
     })
@@ -344,18 +361,27 @@ export class ForumReportService extends BaseService {
     return {
       totalReports,
       pendingReports,
-      reportsByStatus: reportsByStatus.reduce((acc, item) => {
-        acc[item.status] = item._count.status
-        return acc
-      }, {} as Record<string, number>),
-      reportsByType: reportsByType.reduce((acc, item) => {
-        acc[item.type] = item._count.type
-        return acc
-      }, {} as Record<string, number>),
-      reportsByReason: reportsByReason.reduce((acc, item) => {
-        acc[item.reason] = item._count.reason
-        return acc
-      }, {} as Record<string, number>),
+      reportsByStatus: reportsByStatus.reduce(
+        (acc, item) => {
+          acc[item.status] = item._count.status
+          return acc
+        },
+        {} as Record<string, number>,
+      ),
+      reportsByType: reportsByType.reduce(
+        (acc, item) => {
+          acc[item.type] = item._count.type
+          return acc
+        },
+        {} as Record<string, number>,
+      ),
+      reportsByReason: reportsByReason.reduce(
+        (acc, item) => {
+          acc[item.reason] = item._count.reason
+          return acc
+        },
+        {} as Record<string, number>,
+      ),
     }
   }
 
@@ -383,21 +409,21 @@ export class ForumReportService extends BaseService {
 
   /**
    * 获取指定用户的举报记录
-   * @param profileId - 用户资料ID
+   * @param userId - 用户ID
    * @param pageIndex - 页码，默认为0
    * @param pageSize - 每页大小，默认为15
    * @returns 分页的用户举报记录
    */
-  async getUserReports(profileId: number, pageIndex = 0, pageSize = 15) {
+  async getUserReports(userId: number, pageIndex = 0, pageSize = 15) {
     return this.forumReport.findPagination({
       where: {
-        reporterId: profileId,
+        reporterId: userId,
+        pageIndex,
+        pageSize,
       },
       orderBy: {
         createdAt: 'desc',
       },
-      pageIndex,
-      pageSize,
     })
   }
 }

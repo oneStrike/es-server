@@ -1,38 +1,43 @@
 model RequestLog {
   /// 主键id
-  id         Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   /// 用户ID（可空）
-  userId     Int?     @map("user_id")
+  userId   Int?    @map("user_id")
   /// 用户名（可空）
-  username   String?  @map("username")
+  username String? @map("username")
+
   /// 接口类型（admin/client/system等，可空）
-  apiType    String?  @map("api_type") @db.VarChar(20)
-  /// IP地址（自动获取）
-  ip         String?  @db.VarChar(45)
+  apiType String? @map("api_type") @db.VarChar(20)
   /// 请求方法（GET/POST等）
-  method     String   @db.VarChar(10)
+  method  String  @db.VarChar(10)
   /// 请求路径
-  path       String   @db.VarChar(255)
+  path    String  @db.VarChar(255)
   /// 请求参数（JSON格式）
-  params     Json?
-  /// 操作类型（如登录/注册）
-  actionType String?  @map("action_type") @db.VarChar(50)
-  /// 操作结果
-  isSuccess  Boolean  @map("is_success")
+  params  Json?
+
+  /// IP地址（自动获取）
+  ip        String? @db.VarChar(45)
   /// 设备信息（User-Agent 原始字符串）
-  userAgent  String?  @map("user_agent") @db.VarChar(255)
+  userAgent String? @map("user_agent") @db.VarChar(255)
   /// 设备信息（User-Agent 解析结果，JSON）
-  device     Json?
+  device    Json?
+
+  /// 操作类型（如登录/注册）
+  actionType String? @map("action_type") @db.VarChar(50)
+  /// 操作结果
+  isSuccess  Boolean @map("is_success")
   /// 自定义日志内容（必填）
   content    String
+
   /// 创建时间
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([createdAt])
   @@index([userId])
   @@index([username])
   @@index([isSuccess])
-  @@map("request_log")
+  @@map("sys_request_log")
 }

@@ -46,12 +46,12 @@ export class BaseForumTopicDto extends BaseDto {
   sectionId!: number
 
   @ValidateNumber({
-    description: '论坛用户资料ID',
+    description: '用户ID',
     example: 1,
     required: true,
     min: 1,
   })
-  profileId!: number
+  userId!: number
 
   @ValidateBoolean({
     description: '是否置顶',
@@ -165,7 +165,7 @@ export class BaseForumTopicDto extends BaseDto {
     example: 2,
     required: false,
   })
-  lastReplyProfileId?: number
+  lastReplyUserId?: number
 }
 
 /**
@@ -178,7 +178,7 @@ export class CreateForumTopicDto extends OmitType(BaseForumTopicDto, [
   'replyCount',
   'likeCount',
   'favoriteCount',
-  'lastReplyProfileId',
+  'lastReplyUserId',
   'lastReplyAt',
   'auditStatus',
   'auditReason',
@@ -209,7 +209,7 @@ export class QueryForumTopicDto extends IntersectionType(
   PartialType(
     PickType(BaseForumTopicDto, [
       'sectionId',
-      'profileId',
+      'userId',
       'isPinned',
       'isFeatured',
       'isLocked',

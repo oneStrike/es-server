@@ -23,11 +23,11 @@ import {
  */
 export class BaseForumNotificationDto extends BaseDto {
   @ValidateNumber({
-    description: '关联的论坛用户ID',
+    description: '关联的用户ID',
     example: 1,
     required: true,
   })
-  profileId!: number
+  userId!: number
 
   @ValidateEnum({
     description: '通知类型',
@@ -105,7 +105,7 @@ export class CreateForumNotificationShortDto extends OmitType(
 export class QueryForumNotificationListDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumNotificationDto, ['type', 'isRead', 'profileId']),
+    PickType(BaseForumNotificationDto, ['type', 'isRead', 'userId']),
   ),
 ) {}
 
@@ -137,11 +137,11 @@ export class ForumNotificationIdsDto {
 /**
  * 标记所有通知已读DTO
  */
-export class ForumProfileIdDto {
+export class ForumUserIdDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,
     required: true,
   })
-  profileId!: number
+  userId!: number
 }

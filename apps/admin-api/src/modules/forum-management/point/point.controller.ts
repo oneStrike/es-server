@@ -9,7 +9,7 @@ import {
   QueryForumPointRecordDto,
   QueryForumPointRuleDto,
   UpdateForumPointRuleDto,
-} from '@libs/forum/point'
+} from '@libs/user/point'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 

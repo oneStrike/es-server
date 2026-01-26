@@ -87,7 +87,7 @@ export class QueryForumBadgeDto extends IntersectionType(
 /**
  * 分配徽章数据传输对象
  */
-export class ProfileBadgeDto {
+export class UserBadgeDto {
   @ValidateNumber({
     description: '徽章id',
     example: 1,
@@ -100,5 +100,5 @@ export class ProfileBadgeDto {
     example: 1,
     required: true,
   })
-  profileId!: number
+  userId!: number
 }

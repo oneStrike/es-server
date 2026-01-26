@@ -34,12 +34,8 @@ export class ForumTopicFavoriteService extends BaseService {
     return this.prisma.forumTopic
   }
 
-  get forumProfile() {
-    return this.prisma.forumProfile
-  }
-
   async addFavorite(createForumTopicFavoriteDto: CreateForumTopicFavoriteDto) {
-    const { topicId, profileId } = createForumTopicFavoriteDto
+    const { topicId, userId } = createForumTopicFavoriteDto
 
     const topic = await this.forumTopic.findUnique({
       where: { id: topicId, deletedAt: null },
@@ -49,19 +45,19 @@ export class ForumTopicFavoriteService extends BaseService {
       throw new NotFoundException('主题不存在')
     }
 
-    const profile = await this.forumProfile.findUnique({
-      where: { id: profileId },
+    const user = await this.prisma.appUser.findUnique({
+      where: { id: userId },
     })
 
-    if (!profile) {
-      throw new BadRequestException('用户资料不存在')
+    if (!user) {
+      throw new BadRequestException('用户不存在')
     }
 
     const existingFavorite = await this.forumTopicFavorite.findUnique({
       where: {
-        topicId_profileId: {
+        topicId_userId: {
           topicId,
-          profileId,
+          userId,
         },
       },
     })
@@ -74,19 +70,19 @@ export class ForumTopicFavoriteService extends BaseService {
       const favorite = await tx.forumTopicFavorite.create({
         data: {
           topicId,
-          profileId,
+          userId,
         },
       })
 
       await this.forumCounterService.updateTopicFavoriteRelatedCounts(
         tx,
         topicId,
-        topic.profileId,
+        topic.userId,
         1,
       )
 
       await this.actionLogService.createActionLog({
-        profileId,
+        userId,
         actionType: ForumUserActionTypeEnum.FAVORITE_TOPIC,
         targetType: ForumUserActionTargetTypeEnum.TOPIC,
         targetId: topicId,
@@ -96,12 +92,12 @@ export class ForumTopicFavoriteService extends BaseService {
     })
   }
 
-  async removeFavorite(topicId: number, profileId: number) {
+  async removeFavorite(topicId: number, userId: number) {
     const favorite = await this.forumTopicFavorite.findUnique({
       where: {
-        topicId_profileId: {
+        topicId_userId: {
           topicId,
-          profileId,
+          userId,
         },
       },
     })
@@ -112,7 +108,7 @@ export class ForumTopicFavoriteService extends BaseService {
 
     const topic = await this.forumTopic.findUnique({
       where: { id: topicId },
-      select: { profileId: true },
+      select: { userId: true },
     })
 
     if (!topic) {
@@ -123,12 +119,12 @@ export class ForumTopicFavoriteService extends BaseService {
       await this.forumCounterService.updateTopicFavoriteRelatedCounts(
         tx,
         topicId,
-        topic.profileId,
+        topic.userId,
         -1,
       )
 
       await this.actionLogService.createActionLog({
-        profileId,
+        userId,
         actionType: ForumUserActionTypeEnum.UNFAVORITE_TOPIC,
         targetType: ForumUserActionTargetTypeEnum.TOPIC,
         targetId: topicId,
@@ -136,9 +132,9 @@ export class ForumTopicFavoriteService extends BaseService {
 
       return tx.forumTopicFavorite.delete({
         where: {
-          topicId_profileId: {
+          topicId_userId: {
             topicId,
-            profileId,
+            userId,
           },
         },
       })
@@ -148,7 +144,7 @@ export class ForumTopicFavoriteService extends BaseService {
   async toggleTopicFavorite(
     toggleTopicFavoriteDto: ToggleForumTopicFavoriteDto,
   ) {
-    const { topicId, profileId } = toggleTopicFavoriteDto
+    const { topicId, userId } = toggleTopicFavoriteDto
 
     const topic = await this.forumTopic.findUnique({
       where: { id: topicId, deletedAt: null },
@@ -160,17 +156,17 @@ export class ForumTopicFavoriteService extends BaseService {
 
     const existingFavorite = await this.forumTopicFavorite.findUnique({
       where: {
-        topicId_profileId: {
+        topicId_userId: {
           topicId,
-          profileId,
+          userId,
         },
       },
     })
 
     if (existingFavorite) {
-      return this.removeFavorite(topicId, profileId)
+      return this.removeFavorite(topicId, userId)
     } else {
-      return this.addFavorite({ topicId, profileId })
+      return this.addFavorite({ topicId, userId })
     }
   }
 
@@ -178,15 +174,15 @@ export class ForumTopicFavoriteService extends BaseService {
     queryForumTopicFavoriteDto: QueryForumTopicFavoriteDto,
   ) {
     const {
-      profileId,
+      userId,
       pageIndex = 0,
       pageSize = 15,
     } = queryForumTopicFavoriteDto
 
     const where: any = {}
 
-    if (profileId) {
-      where.profileId = profileId
+    if (userId) {
+      where.userId = userId
     }
 
     where.pageIndex = pageIndex
@@ -211,14 +207,11 @@ export class ForumTopicFavoriteService extends BaseService {
                 name: true,
               },
             },
-            profile: {
+            user: {
               select: {
                 id: true,
-                user: {
-                  select: {
-                    nickname: true,
-                  },
-                },
+                nickname: true,
+                avatar: true,
               },
             },
           },
@@ -230,12 +223,12 @@ export class ForumTopicFavoriteService extends BaseService {
     })
   }
 
-  async checkUserFavorited(topicId: number, profileId: number) {
+  async checkUserFavorited(topicId: number, userId: number) {
     const favorite = await this.forumTopicFavorite.findUnique({
       where: {
-        topicId_profileId: {
+        topicId_userId: {
           topicId,
-          profileId,
+          userId,
         },
       },
     })

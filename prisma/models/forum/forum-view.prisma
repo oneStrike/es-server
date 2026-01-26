@@ -1,25 +1,33 @@
 /// 论坛浏览记录表 - 记录用户浏览主题的历史
 model ForumView {
   /// 主键ID
-  id        Int          @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   /// 关联的主题ID
-  topicId   Int          @map("topic_id")
+  topicId Int  @map("topic_id")
   /// 关联的回复ID
-  replyId   Int?         @map("reply_id")
+  replyId Int? @map("reply_id")
   /// 关联的用户ID
-  userId    Int          @map("user_id")
+  userId  Int  @map("user_id")
+
   /// 浏览类型（topic=主题, reply=回复）
-  type      String?      @db.VarChar(20)
-  /// 浏览时间
-  viewedAt  DateTime     @default(now()) @map("viewed_at") @db.Timestamptz(6)
+  type      String? @db.VarChar(20)
   /// 浏览时长（秒）
-  duration  Int?         @default(0)
+  duration  Int?    @default(0)
   /// 浏览设备类型
-  device    String?      @db.VarChar(50)
+  device    String? @db.VarChar(50)
   /// 浏览IP地址
-  ipAddress String?      @map("ip_address") @db.VarChar(45)
-  topic     ForumTopic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  profile   ForumProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String? @map("ip_address") @db.VarChar(45)
+
+  /// 浏览时间
+  viewedAt DateTime @default(now()) @map("viewed_at") @db.Timestamptz(6)
+
+  /// 关联主题
+  topic ForumTopic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  /// 关联回复
+  reply ForumReply? @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  /// 关联用户
+  user  AppUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([topicId])
   @@index([userId])

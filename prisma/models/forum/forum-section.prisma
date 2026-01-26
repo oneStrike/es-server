@@ -1,55 +1,66 @@
 /// 论坛板块表 - 管理论坛板块信息，包括板块名称、描述、统计信息等
 model ForumSection {
   /// 主键ID
-  id                Int       @id @default(autoincrement())
-  /// 板块名称
-  name              String    @db.VarChar(50)
+  id Int @id @default(autoincrement())
+
   /// 板块分组ID（可选，用于将板块分组管理）
-  groupId           Int?      @map("group_id")
-  /// 板块图标URL
-  icon              String?   @db.VarChar(255)
-  /// 排序值（数值越小越靠前）
-  sortOrder         Int       @default(0) @map("sort_order")
-  /// 是否启用
-  isEnabled         Boolean   @default(true) @map("is_enabled")
-  /// 主题审核策略 （0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）
-  topicReviewPolicy Int       @default(1) @map("topic_review_policy")
+  groupId         Int? @map("group_id")
   /// 用户的论坛等级规则ID
-  userLevelRuleId   Int?      @map("user_level_rule_id")
-  /// 主题数
-  topicCount        Int       @default(0) @map("topic_count")
-  /// 回复数（包含所有子版块）
-  replyCount        Int       @default(0) @map("reply_count")
-  /// 最后发表时间
-  lastPostAt        DateTime? @map("last_post_at") @db.Timestamptz(6)
+  userLevelRuleId Int? @map("user_level_rule_id")
   /// 最后发表主题ID
-  lastTopicId       Int?      @map("last_topic_id")
+  lastTopicId     Int? @map("last_topic_id")
+
+  /// 板块名称
+  name        String  @db.VarChar(50)
   /// 板块描述
-  description       String?   @db.VarChar(500)
+  description String? @db.VarChar(500)
+  /// 板块图标URL
+  icon        String? @db.VarChar(255)
+
+  /// 排序值（数值越小越靠前）
+  sortOrder Int @default(0) @map("sort_order")
+
+  /// 是否启用
+  isEnabled         Boolean @default(true) @map("is_enabled")
+  /// 主题审核策略 （0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）
+  topicReviewPolicy Int     @default(1) @map("topic_review_policy")
+
+  /// 主题数
+  topicCount Int       @default(0) @map("topic_count")
+  /// 回复数（包含所有子版块）
+  replyCount Int       @default(0) @map("reply_count")
+  /// 最后发表时间
+  lastPostAt DateTime? @map("last_post_at") @db.Timestamptz(6)
+
   /// 备注信息
-  remark            String?   @db.VarChar(500)
+  remark String? @db.VarChar(500)
+
   /// 创建时间
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间
-  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   /// 板块分组（一个板块属于一个分组）
-  group ForumSectionGroup? @relation(fields: [groupId], references: [id])
-
-  moderatorSections ForumModeratorSection[]
-  applications      ForumModeratorApplication[]
+  group             ForumSectionGroup?          @relation(fields: [groupId], references: [id])
+  /// 关联等级规则
+  userLevelRule     AppLevelRule?               @relation(fields: [userLevelRuleId], references: [id])
+  /// 关联最后发表主题
   lastTopic         ForumTopic?                 @relation("LastTopic", fields: [lastTopicId], references: [id])
-  userLevelRule     ForumLevelRule?             @relation(fields: [userLevelRuleId], references: [id])
+  /// 板块下的主题
   topics            ForumTopic[]
+  /// 版主关联
+  moderatorSections ForumModeratorSection[]
+  /// 版主申请关联
+  applications      ForumModeratorApplication[]
 
+  @@index([groupId])
   @@index([sortOrder])
   @@index([isEnabled])
   @@index([topicCount])
   @@index([lastPostAt])
   @@index([createdAt])
   @@index([deletedAt])
-  @@index([groupId])
   @@map("forum_section")
 }

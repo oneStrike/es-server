@@ -14,14 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model AppUserToken
- * 应用用户令牌表
- * 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
- * 
- * 优化说明：
- * 1. 移除 token 字段：不需要存储完整 Token，只需存储 jti 即可
- * 2. 移除 isActive 字段：使用 revokedAt 判断是否活跃，避免数据冗余
- * 3. 移除 lastUsedAt 字段：未实际使用，用 createdAt 替代
- * 4. 添加 Redis 缓存：提高查询性能，减少数据库压力
+ * 应用用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
  */
 export type AppUserTokenModel = runtime.Types.Result.DefaultSelection<Prisma.$AppUserTokenPayload>
 
@@ -45,8 +38,8 @@ export type AppUserTokenSumAggregateOutputType = {
 
 export type AppUserTokenMinAggregateOutputType = {
   id: number | null
-  userId: number | null
   jti: string | null
+  userId: number | null
   tokenType: string | null
   expiresAt: Date | null
   revokedAt: Date | null
@@ -59,8 +52,8 @@ export type AppUserTokenMinAggregateOutputType = {
 
 export type AppUserTokenMaxAggregateOutputType = {
   id: number | null
-  userId: number | null
   jti: string | null
+  userId: number | null
   tokenType: string | null
   expiresAt: Date | null
   revokedAt: Date | null
@@ -73,8 +66,8 @@ export type AppUserTokenMaxAggregateOutputType = {
 
 export type AppUserTokenCountAggregateOutputType = {
   id: number
-  userId: number
   jti: number
+  userId: number
   tokenType: number
   expiresAt: number
   revokedAt: number
@@ -100,8 +93,8 @@ export type AppUserTokenSumAggregateInputType = {
 
 export type AppUserTokenMinAggregateInputType = {
   id?: true
-  userId?: true
   jti?: true
+  userId?: true
   tokenType?: true
   expiresAt?: true
   revokedAt?: true
@@ -114,8 +107,8 @@ export type AppUserTokenMinAggregateInputType = {
 
 export type AppUserTokenMaxAggregateInputType = {
   id?: true
-  userId?: true
   jti?: true
+  userId?: true
   tokenType?: true
   expiresAt?: true
   revokedAt?: true
@@ -128,8 +121,8 @@ export type AppUserTokenMaxAggregateInputType = {
 
 export type AppUserTokenCountAggregateInputType = {
   id?: true
-  userId?: true
   jti?: true
+  userId?: true
   tokenType?: true
   expiresAt?: true
   revokedAt?: true
@@ -230,8 +223,8 @@ export type AppUserTokenGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 
 export type AppUserTokenGroupByOutputType = {
   id: number
-  userId: number
   jti: string
+  userId: number
   tokenType: string
   expiresAt: Date
   revokedAt: Date | null
@@ -268,8 +261,8 @@ export type AppUserTokenWhereInput = {
   OR?: Prisma.AppUserTokenWhereInput[]
   NOT?: Prisma.AppUserTokenWhereInput | Prisma.AppUserTokenWhereInput[]
   id?: Prisma.IntFilter<"AppUserToken"> | number
-  userId?: Prisma.IntFilter<"AppUserToken"> | number
   jti?: Prisma.StringFilter<"AppUserToken"> | string
+  userId?: Prisma.IntFilter<"AppUserToken"> | number
   tokenType?: Prisma.StringFilter<"AppUserToken"> | string
   expiresAt?: Prisma.DateTimeFilter<"AppUserToken"> | Date | string
   revokedAt?: Prisma.DateTimeNullableFilter<"AppUserToken"> | Date | string | null
@@ -284,8 +277,8 @@ export type AppUserTokenWhereInput = {
 
 export type AppUserTokenOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
   jti?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   tokenType?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -319,8 +312,8 @@ export type AppUserTokenWhereUniqueInput = Prisma.AtLeast<{
 
 export type AppUserTokenOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
   jti?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   tokenType?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -342,8 +335,8 @@ export type AppUserTokenScalarWhereWithAggregatesInput = {
   OR?: Prisma.AppUserTokenScalarWhereWithAggregatesInput[]
   NOT?: Prisma.AppUserTokenScalarWhereWithAggregatesInput | Prisma.AppUserTokenScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"AppUserToken"> | number
-  userId?: Prisma.IntWithAggregatesFilter<"AppUserToken"> | number
   jti?: Prisma.StringWithAggregatesFilter<"AppUserToken"> | string
+  userId?: Prisma.IntWithAggregatesFilter<"AppUserToken"> | number
   tokenType?: Prisma.StringWithAggregatesFilter<"AppUserToken"> | string
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"AppUserToken"> | Date | string
   revokedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"AppUserToken"> | Date | string | null
@@ -371,8 +364,8 @@ export type AppUserTokenCreateInput = {
 
 export type AppUserTokenUncheckedCreateInput = {
   id?: number
-  userId: number
   jti: string
+  userId: number
   tokenType: string
   expiresAt: Date | string
   revokedAt?: Date | string | null
@@ -400,8 +393,8 @@ export type AppUserTokenUpdateInput = {
 
 export type AppUserTokenUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
   jti?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   tokenType?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -415,8 +408,8 @@ export type AppUserTokenUncheckedUpdateInput = {
 
 export type AppUserTokenCreateManyInput = {
   id?: number
-  userId: number
   jti: string
+  userId: number
   tokenType: string
   expiresAt: Date | string
   revokedAt?: Date | string | null
@@ -443,8 +436,8 @@ export type AppUserTokenUpdateManyMutationInput = {
 
 export type AppUserTokenUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
   jti?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   tokenType?: Prisma.StringFieldUpdateOperationsInput | string
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   revokedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -458,8 +451,8 @@ export type AppUserTokenUncheckedUpdateManyInput = {
 
 export type AppUserTokenCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
   jti?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   tokenType?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrder
@@ -478,8 +471,8 @@ export type AppUserTokenAvgOrderByAggregateInput = {
 
 export type AppUserTokenMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
   jti?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   tokenType?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrder
@@ -492,8 +485,8 @@ export type AppUserTokenMaxOrderByAggregateInput = {
 
 export type AppUserTokenMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  userId?: Prisma.SortOrder
   jti?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   tokenType?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   revokedAt?: Prisma.SortOrder
@@ -619,8 +612,8 @@ export type AppUserTokenScalarWhereInput = {
   OR?: Prisma.AppUserTokenScalarWhereInput[]
   NOT?: Prisma.AppUserTokenScalarWhereInput | Prisma.AppUserTokenScalarWhereInput[]
   id?: Prisma.IntFilter<"AppUserToken"> | number
-  userId?: Prisma.IntFilter<"AppUserToken"> | number
   jti?: Prisma.StringFilter<"AppUserToken"> | string
+  userId?: Prisma.IntFilter<"AppUserToken"> | number
   tokenType?: Prisma.StringFilter<"AppUserToken"> | string
   expiresAt?: Prisma.DateTimeFilter<"AppUserToken"> | Date | string
   revokedAt?: Prisma.DateTimeNullableFilter<"AppUserToken"> | Date | string | null
@@ -691,8 +684,8 @@ export type AppUserTokenUncheckedUpdateManyWithoutUserInput = {
 
 export type AppUserTokenSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  userId?: boolean
   jti?: boolean
+  userId?: boolean
   tokenType?: boolean
   expiresAt?: boolean
   revokedAt?: boolean
@@ -707,8 +700,8 @@ export type AppUserTokenSelect<ExtArgs extends runtime.Types.Extensions.Internal
 
 export type AppUserTokenSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  userId?: boolean
   jti?: boolean
+  userId?: boolean
   tokenType?: boolean
   expiresAt?: boolean
   revokedAt?: boolean
@@ -723,8 +716,8 @@ export type AppUserTokenSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
 
 export type AppUserTokenSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  userId?: boolean
   jti?: boolean
+  userId?: boolean
   tokenType?: boolean
   expiresAt?: boolean
   revokedAt?: boolean
@@ -739,8 +732,8 @@ export type AppUserTokenSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
 
 export type AppUserTokenSelectScalar = {
   id?: boolean
-  userId?: boolean
   jti?: boolean
+  userId?: boolean
   tokenType?: boolean
   expiresAt?: boolean
   revokedAt?: boolean
@@ -752,7 +745,7 @@ export type AppUserTokenSelectScalar = {
   updatedAt?: boolean
 }
 
-export type AppUserTokenOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "jti" | "tokenType" | "expiresAt" | "revokedAt" | "revokeReason" | "deviceInfo" | "ipAddress" | "userAgent" | "createdAt" | "updatedAt", ExtArgs["result"]["appUserToken"]>
+export type AppUserTokenOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "jti" | "userId" | "tokenType" | "expiresAt" | "revokedAt" | "revokeReason" | "deviceInfo" | "ipAddress" | "userAgent" | "createdAt" | "updatedAt", ExtArgs["result"]["appUserToken"]>
 export type AppUserTokenInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
@@ -777,13 +770,13 @@ export type $AppUserTokenPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     id: number
     /**
-     * 用户ID
-     */
-    userId: number
-    /**
      * JWT Token ID（唯一标识，用于黑名单和撤销）
      */
     jti: string
+    /**
+     * 用户ID
+     */
+    userId: number
     /**
      * 令牌类型（ACCESS:访问令牌, REFRESH:刷新令牌）
      */
@@ -1245,8 +1238,8 @@ export interface Prisma__AppUserTokenClient<T, Null = never, ExtArgs extends run
  */
 export interface AppUserTokenFieldRefs {
   readonly id: Prisma.FieldRef<"AppUserToken", 'Int'>
-  readonly userId: Prisma.FieldRef<"AppUserToken", 'Int'>
   readonly jti: Prisma.FieldRef<"AppUserToken", 'String'>
+  readonly userId: Prisma.FieldRef<"AppUserToken", 'Int'>
   readonly tokenType: Prisma.FieldRef<"AppUserToken", 'String'>
   readonly expiresAt: Prisma.FieldRef<"AppUserToken", 'DateTime'>
   readonly revokedAt: Prisma.FieldRef<"AppUserToken", 'DateTime'>

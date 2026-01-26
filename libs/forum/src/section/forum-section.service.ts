@@ -23,7 +23,7 @@ export class ForumSectionService extends BaseService {
   }
 
   get forumLevelRule() {
-    return this.prisma.forumLevelRule
+    return this.prisma.appLevelRule
   }
 
   /**

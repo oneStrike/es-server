@@ -4,7 +4,7 @@ import {
   BaseForumBadgeDto,
   CreateForumBadgeDto,
   ForumBadgeService,
-  ProfileBadgeDto,
+  UserBadgeDto,
   QueryForumBadgeDto,
   UpdateForumBadgeDto,
 } from '@libs/forum/badge'
@@ -75,7 +75,7 @@ export class ForumBadgeController {
     summary: '为用户分配徽章',
     model: BaseForumBadgeDto,
   })
-  async assignBadge(@Body() dto: ProfileBadgeDto) {
+  async assignBadge(@Body() dto: UserBadgeDto) {
     return this.forumBadgeService.assignBadge(dto)
   }
 
@@ -84,7 +84,7 @@ export class ForumBadgeController {
     summary: '撤销用户的徽章',
     model: BaseForumBadgeDto,
   })
-  async revokeBadge(@Body() dto: ProfileBadgeDto) {
+  async revokeBadge(@Body() dto: UserBadgeDto) {
     return this.forumBadgeService.revokeBadge(dto)
   }
 

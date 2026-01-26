@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model AppNoticeRead
- * 
+ * 应用通知阅读记录表 - 记录用户已读的通知
  */
 export type AppNoticeReadModel = runtime.Types.Result.DefaultSelection<Prisma.$AppNoticeReadPayload>
 
@@ -623,13 +623,31 @@ export type AppNoticeReadIncludeUpdateManyAndReturn<ExtArgs extends runtime.Type
 export type $AppNoticeReadPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AppNoticeRead"
   objects: {
+    /**
+     * 关联通知
+     */
     notice: Prisma.$AppNoticePayload<ExtArgs>
+    /**
+     * 关联用户
+     */
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键ID
+     */
     id: number
+    /**
+     * 关联的通知ID
+     */
     noticeId: number
+    /**
+     * 关联的用户ID
+     */
     userId: number
+    /**
+     * 阅读时间
+     */
     readAt: Date
   }, ExtArgs["result"]["appNoticeRead"]>
   composites: {}

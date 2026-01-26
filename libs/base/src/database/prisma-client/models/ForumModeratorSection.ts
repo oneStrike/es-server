@@ -710,7 +710,13 @@ export type ForumModeratorSectionIncludeUpdateManyAndReturn<ExtArgs extends runt
 export type $ForumModeratorSectionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumModeratorSection"
   objects: {
+    /**
+     * 关联版主
+     */
     moderator: Prisma.$ForumModeratorPayload<ExtArgs>
+    /**
+     * 关联板块
+     */
     section: Prisma.$ForumSectionPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{

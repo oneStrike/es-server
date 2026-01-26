@@ -28,130 +28,130 @@ export type AggregateForumNotification = {
 
 export type ForumNotificationAvgAggregateOutputType = {
   id: number | null
-  profileId: number | null
-  type: number | null
-  priority: number | null
+  userId: number | null
   topicId: number | null
   replyId: number | null
+  type: number | null
+  priority: number | null
 }
 
 export type ForumNotificationSumAggregateOutputType = {
   id: number | null
-  profileId: number | null
-  type: number | null
-  priority: number | null
+  userId: number | null
   topicId: number | null
   replyId: number | null
+  type: number | null
+  priority: number | null
 }
 
 export type ForumNotificationMinAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
+  topicId: number | null
+  replyId: number | null
   type: number | null
   title: string | null
   content: string | null
   priority: number | null
-  topicId: number | null
-  replyId: number | null
   isRead: boolean | null
   readAt: Date | null
-  createdAt: Date | null
   expiredAt: Date | null
+  createdAt: Date | null
 }
 
 export type ForumNotificationMaxAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
+  topicId: number | null
+  replyId: number | null
   type: number | null
   title: string | null
   content: string | null
   priority: number | null
-  topicId: number | null
-  replyId: number | null
   isRead: boolean | null
   readAt: Date | null
-  createdAt: Date | null
   expiredAt: Date | null
+  createdAt: Date | null
 }
 
 export type ForumNotificationCountAggregateOutputType = {
   id: number
-  profileId: number
+  userId: number
+  topicId: number
+  replyId: number
   type: number
   title: number
   content: number
   priority: number
-  topicId: number
-  replyId: number
   isRead: number
   readAt: number
-  createdAt: number
   expiredAt: number
+  createdAt: number
   _all: number
 }
 
 
 export type ForumNotificationAvgAggregateInputType = {
   id?: true
-  profileId?: true
-  type?: true
-  priority?: true
+  userId?: true
   topicId?: true
   replyId?: true
+  type?: true
+  priority?: true
 }
 
 export type ForumNotificationSumAggregateInputType = {
   id?: true
-  profileId?: true
-  type?: true
-  priority?: true
+  userId?: true
   topicId?: true
   replyId?: true
+  type?: true
+  priority?: true
 }
 
 export type ForumNotificationMinAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
+  topicId?: true
+  replyId?: true
   type?: true
   title?: true
   content?: true
   priority?: true
-  topicId?: true
-  replyId?: true
   isRead?: true
   readAt?: true
-  createdAt?: true
   expiredAt?: true
+  createdAt?: true
 }
 
 export type ForumNotificationMaxAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
+  topicId?: true
+  replyId?: true
   type?: true
   title?: true
   content?: true
   priority?: true
-  topicId?: true
-  replyId?: true
   isRead?: true
   readAt?: true
-  createdAt?: true
   expiredAt?: true
+  createdAt?: true
 }
 
 export type ForumNotificationCountAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
+  topicId?: true
+  replyId?: true
   type?: true
   title?: true
   content?: true
   priority?: true
-  topicId?: true
-  replyId?: true
   isRead?: true
   readAt?: true
-  createdAt?: true
   expiredAt?: true
+  createdAt?: true
   _all?: true
 }
 
@@ -243,17 +243,17 @@ export type ForumNotificationGroupByArgs<ExtArgs extends runtime.Types.Extension
 
 export type ForumNotificationGroupByOutputType = {
   id: number
-  profileId: number
+  userId: number
+  topicId: number | null
+  replyId: number | null
   type: number
   title: string
   content: string
   priority: number
-  topicId: number | null
-  replyId: number | null
   isRead: boolean
   readAt: Date | null
-  createdAt: Date
   expiredAt: Date | null
+  createdAt: Date
   _count: ForumNotificationCountAggregateOutputType | null
   _avg: ForumNotificationAvgAggregateOutputType | null
   _sum: ForumNotificationSumAggregateOutputType | null
@@ -281,36 +281,36 @@ export type ForumNotificationWhereInput = {
   OR?: Prisma.ForumNotificationWhereInput[]
   NOT?: Prisma.ForumNotificationWhereInput | Prisma.ForumNotificationWhereInput[]
   id?: Prisma.IntFilter<"ForumNotification"> | number
-  profileId?: Prisma.IntFilter<"ForumNotification"> | number
+  userId?: Prisma.IntFilter<"ForumNotification"> | number
+  topicId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
+  replyId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
   type?: Prisma.IntFilter<"ForumNotification"> | number
   title?: Prisma.StringFilter<"ForumNotification"> | string
   content?: Prisma.StringFilter<"ForumNotification"> | string
   priority?: Prisma.IntFilter<"ForumNotification"> | number
-  topicId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
-  replyId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
   isRead?: Prisma.BoolFilter<"ForumNotification"> | boolean
   readAt?: Prisma.DateTimeNullableFilter<"ForumNotification"> | Date | string | null
-  createdAt?: Prisma.DateTimeFilter<"ForumNotification"> | Date | string
   expiredAt?: Prisma.DateTimeNullableFilter<"ForumNotification"> | Date | string | null
-  profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
+  createdAt?: Prisma.DateTimeFilter<"ForumNotification"> | Date | string
+  user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
   topic?: Prisma.XOR<Prisma.ForumTopicNullableScalarRelationFilter, Prisma.ForumTopicWhereInput> | null
   reply?: Prisma.XOR<Prisma.ForumReplyNullableScalarRelationFilter, Prisma.ForumReplyWhereInput> | null
 }
 
 export type ForumNotificationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  replyId?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
   priority?: Prisma.SortOrder
-  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
-  replyId?: Prisma.SortOrderInput | Prisma.SortOrder
   isRead?: Prisma.SortOrder
   readAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
   expiredAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  profile?: Prisma.ForumProfileOrderByWithRelationInput
+  createdAt?: Prisma.SortOrder
+  user?: Prisma.AppUserOrderByWithRelationInput
   topic?: Prisma.ForumTopicOrderByWithRelationInput
   reply?: Prisma.ForumReplyOrderByWithRelationInput
 }
@@ -320,35 +320,35 @@ export type ForumNotificationWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.ForumNotificationWhereInput | Prisma.ForumNotificationWhereInput[]
   OR?: Prisma.ForumNotificationWhereInput[]
   NOT?: Prisma.ForumNotificationWhereInput | Prisma.ForumNotificationWhereInput[]
-  profileId?: Prisma.IntFilter<"ForumNotification"> | number
+  userId?: Prisma.IntFilter<"ForumNotification"> | number
+  topicId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
+  replyId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
   type?: Prisma.IntFilter<"ForumNotification"> | number
   title?: Prisma.StringFilter<"ForumNotification"> | string
   content?: Prisma.StringFilter<"ForumNotification"> | string
   priority?: Prisma.IntFilter<"ForumNotification"> | number
-  topicId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
-  replyId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
   isRead?: Prisma.BoolFilter<"ForumNotification"> | boolean
   readAt?: Prisma.DateTimeNullableFilter<"ForumNotification"> | Date | string | null
-  createdAt?: Prisma.DateTimeFilter<"ForumNotification"> | Date | string
   expiredAt?: Prisma.DateTimeNullableFilter<"ForumNotification"> | Date | string | null
-  profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
+  createdAt?: Prisma.DateTimeFilter<"ForumNotification"> | Date | string
+  user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
   topic?: Prisma.XOR<Prisma.ForumTopicNullableScalarRelationFilter, Prisma.ForumTopicWhereInput> | null
   reply?: Prisma.XOR<Prisma.ForumReplyNullableScalarRelationFilter, Prisma.ForumReplyWhereInput> | null
 }, "id">
 
 export type ForumNotificationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  replyId?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
   priority?: Prisma.SortOrder
-  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
-  replyId?: Prisma.SortOrderInput | Prisma.SortOrder
   isRead?: Prisma.SortOrder
   readAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
   expiredAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
   _count?: Prisma.ForumNotificationCountOrderByAggregateInput
   _avg?: Prisma.ForumNotificationAvgOrderByAggregateInput
   _max?: Prisma.ForumNotificationMaxOrderByAggregateInput
@@ -361,17 +361,17 @@ export type ForumNotificationScalarWhereWithAggregatesInput = {
   OR?: Prisma.ForumNotificationScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ForumNotificationScalarWhereWithAggregatesInput | Prisma.ForumNotificationScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumNotification"> | number
-  profileId?: Prisma.IntWithAggregatesFilter<"ForumNotification"> | number
+  userId?: Prisma.IntWithAggregatesFilter<"ForumNotification"> | number
+  topicId?: Prisma.IntNullableWithAggregatesFilter<"ForumNotification"> | number | null
+  replyId?: Prisma.IntNullableWithAggregatesFilter<"ForumNotification"> | number | null
   type?: Prisma.IntWithAggregatesFilter<"ForumNotification"> | number
   title?: Prisma.StringWithAggregatesFilter<"ForumNotification"> | string
   content?: Prisma.StringWithAggregatesFilter<"ForumNotification"> | string
   priority?: Prisma.IntWithAggregatesFilter<"ForumNotification"> | number
-  topicId?: Prisma.IntNullableWithAggregatesFilter<"ForumNotification"> | number | null
-  replyId?: Prisma.IntNullableWithAggregatesFilter<"ForumNotification"> | number | null
   isRead?: Prisma.BoolWithAggregatesFilter<"ForumNotification"> | boolean
   readAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumNotification"> | Date | string | null
-  createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumNotification"> | Date | string
   expiredAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumNotification"> | Date | string | null
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumNotification"> | Date | string
 }
 
 export type ForumNotificationCreateInput = {
@@ -381,26 +381,26 @@ export type ForumNotificationCreateInput = {
   priority?: number
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
-  profile: Prisma.ForumProfileCreateNestedOneWithoutNotificationsInput
+  createdAt?: Date | string
+  user: Prisma.AppUserCreateNestedOneWithoutForumNotificationsInput
   topic?: Prisma.ForumTopicCreateNestedOneWithoutNotificationsInput
   reply?: Prisma.ForumReplyCreateNestedOneWithoutNotificationsInput
 }
 
 export type ForumNotificationUncheckedCreateInput = {
   id?: number
-  profileId: number
+  userId: number
+  topicId?: number | null
+  replyId?: number | null
   type: number
   title: string
   content: string
   priority?: number
-  topicId?: number | null
-  replyId?: number | null
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
+  createdAt?: Date | string
 }
 
 export type ForumNotificationUpdateInput = {
@@ -410,41 +410,41 @@ export type ForumNotificationUpdateInput = {
   priority?: Prisma.IntFieldUpdateOperationsInput | number
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutNotificationsNestedInput
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.AppUserUpdateOneRequiredWithoutForumNotificationsNestedInput
   topic?: Prisma.ForumTopicUpdateOneWithoutNotificationsNestedInput
   reply?: Prisma.ForumReplyUpdateOneWithoutNotificationsNestedInput
 }
 
 export type ForumNotificationUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.IntFieldUpdateOperationsInput | number
-  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumNotificationCreateManyInput = {
   id?: number
-  profileId: number
+  userId: number
+  topicId?: number | null
+  replyId?: number | null
   type: number
   title: string
   content: string
   priority?: number
-  topicId?: number | null
-  replyId?: number | null
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
+  createdAt?: Date | string
 }
 
 export type ForumNotificationUpdateManyMutationInput = {
@@ -454,86 +454,23 @@ export type ForumNotificationUpdateManyMutationInput = {
   priority?: Prisma.IntFieldUpdateOperationsInput | number
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumNotificationUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.IntFieldUpdateOperationsInput | number
-  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-}
-
-export type ForumNotificationCountOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
-  title?: Prisma.SortOrder
-  content?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
-  isRead?: Prisma.SortOrder
-  readAt?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  expiredAt?: Prisma.SortOrder
-}
-
-export type ForumNotificationAvgOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
-}
-
-export type ForumNotificationMaxOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
-  title?: Prisma.SortOrder
-  content?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
-  isRead?: Prisma.SortOrder
-  readAt?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  expiredAt?: Prisma.SortOrder
-}
-
-export type ForumNotificationMinOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
-  title?: Prisma.SortOrder
-  content?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
-  isRead?: Prisma.SortOrder
-  readAt?: Prisma.SortOrder
-  createdAt?: Prisma.SortOrder
-  expiredAt?: Prisma.SortOrder
-}
-
-export type ForumNotificationSumOrderByAggregateInput = {
-  id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
-  topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumNotificationListRelationFilter = {
@@ -546,45 +483,108 @@ export type ForumNotificationOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ForumNotificationCreateNestedManyWithoutProfileInput = {
-  create?: Prisma.XOR<Prisma.ForumNotificationCreateWithoutProfileInput, Prisma.ForumNotificationUncheckedCreateWithoutProfileInput> | Prisma.ForumNotificationCreateWithoutProfileInput[] | Prisma.ForumNotificationUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumNotificationCreateOrConnectWithoutProfileInput | Prisma.ForumNotificationCreateOrConnectWithoutProfileInput[]
-  createMany?: Prisma.ForumNotificationCreateManyProfileInputEnvelope
+export type ForumNotificationCountOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+  replyId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  content?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  isRead?: Prisma.SortOrder
+  readAt?: Prisma.SortOrder
+  expiredAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+}
+
+export type ForumNotificationAvgOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+  replyId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+}
+
+export type ForumNotificationMaxOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+  replyId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  content?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  isRead?: Prisma.SortOrder
+  readAt?: Prisma.SortOrder
+  expiredAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+}
+
+export type ForumNotificationMinOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+  replyId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  title?: Prisma.SortOrder
+  content?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+  isRead?: Prisma.SortOrder
+  readAt?: Prisma.SortOrder
+  expiredAt?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+}
+
+export type ForumNotificationSumOrderByAggregateInput = {
+  id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+  replyId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
+}
+
+export type ForumNotificationCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ForumNotificationCreateWithoutUserInput, Prisma.ForumNotificationUncheckedCreateWithoutUserInput> | Prisma.ForumNotificationCreateWithoutUserInput[] | Prisma.ForumNotificationUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumNotificationCreateOrConnectWithoutUserInput | Prisma.ForumNotificationCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ForumNotificationCreateManyUserInputEnvelope
   connect?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
 }
 
-export type ForumNotificationUncheckedCreateNestedManyWithoutProfileInput = {
-  create?: Prisma.XOR<Prisma.ForumNotificationCreateWithoutProfileInput, Prisma.ForumNotificationUncheckedCreateWithoutProfileInput> | Prisma.ForumNotificationCreateWithoutProfileInput[] | Prisma.ForumNotificationUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumNotificationCreateOrConnectWithoutProfileInput | Prisma.ForumNotificationCreateOrConnectWithoutProfileInput[]
-  createMany?: Prisma.ForumNotificationCreateManyProfileInputEnvelope
+export type ForumNotificationUncheckedCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ForumNotificationCreateWithoutUserInput, Prisma.ForumNotificationUncheckedCreateWithoutUserInput> | Prisma.ForumNotificationCreateWithoutUserInput[] | Prisma.ForumNotificationUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumNotificationCreateOrConnectWithoutUserInput | Prisma.ForumNotificationCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ForumNotificationCreateManyUserInputEnvelope
   connect?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
 }
 
-export type ForumNotificationUpdateManyWithoutProfileNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumNotificationCreateWithoutProfileInput, Prisma.ForumNotificationUncheckedCreateWithoutProfileInput> | Prisma.ForumNotificationCreateWithoutProfileInput[] | Prisma.ForumNotificationUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumNotificationCreateOrConnectWithoutProfileInput | Prisma.ForumNotificationCreateOrConnectWithoutProfileInput[]
-  upsert?: Prisma.ForumNotificationUpsertWithWhereUniqueWithoutProfileInput | Prisma.ForumNotificationUpsertWithWhereUniqueWithoutProfileInput[]
-  createMany?: Prisma.ForumNotificationCreateManyProfileInputEnvelope
+export type ForumNotificationUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumNotificationCreateWithoutUserInput, Prisma.ForumNotificationUncheckedCreateWithoutUserInput> | Prisma.ForumNotificationCreateWithoutUserInput[] | Prisma.ForumNotificationUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumNotificationCreateOrConnectWithoutUserInput | Prisma.ForumNotificationCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ForumNotificationUpsertWithWhereUniqueWithoutUserInput | Prisma.ForumNotificationUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ForumNotificationCreateManyUserInputEnvelope
   set?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
   disconnect?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
   delete?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
   connect?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
-  update?: Prisma.ForumNotificationUpdateWithWhereUniqueWithoutProfileInput | Prisma.ForumNotificationUpdateWithWhereUniqueWithoutProfileInput[]
-  updateMany?: Prisma.ForumNotificationUpdateManyWithWhereWithoutProfileInput | Prisma.ForumNotificationUpdateManyWithWhereWithoutProfileInput[]
+  update?: Prisma.ForumNotificationUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumNotificationUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ForumNotificationUpdateManyWithWhereWithoutUserInput | Prisma.ForumNotificationUpdateManyWithWhereWithoutUserInput[]
   deleteMany?: Prisma.ForumNotificationScalarWhereInput | Prisma.ForumNotificationScalarWhereInput[]
 }
 
-export type ForumNotificationUncheckedUpdateManyWithoutProfileNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumNotificationCreateWithoutProfileInput, Prisma.ForumNotificationUncheckedCreateWithoutProfileInput> | Prisma.ForumNotificationCreateWithoutProfileInput[] | Prisma.ForumNotificationUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumNotificationCreateOrConnectWithoutProfileInput | Prisma.ForumNotificationCreateOrConnectWithoutProfileInput[]
-  upsert?: Prisma.ForumNotificationUpsertWithWhereUniqueWithoutProfileInput | Prisma.ForumNotificationUpsertWithWhereUniqueWithoutProfileInput[]
-  createMany?: Prisma.ForumNotificationCreateManyProfileInputEnvelope
+export type ForumNotificationUncheckedUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumNotificationCreateWithoutUserInput, Prisma.ForumNotificationUncheckedCreateWithoutUserInput> | Prisma.ForumNotificationCreateWithoutUserInput[] | Prisma.ForumNotificationUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumNotificationCreateOrConnectWithoutUserInput | Prisma.ForumNotificationCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ForumNotificationUpsertWithWhereUniqueWithoutUserInput | Prisma.ForumNotificationUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ForumNotificationCreateManyUserInputEnvelope
   set?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
   disconnect?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
   delete?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
   connect?: Prisma.ForumNotificationWhereUniqueInput | Prisma.ForumNotificationWhereUniqueInput[]
-  update?: Prisma.ForumNotificationUpdateWithWhereUniqueWithoutProfileInput | Prisma.ForumNotificationUpdateWithWhereUniqueWithoutProfileInput[]
-  updateMany?: Prisma.ForumNotificationUpdateManyWithWhereWithoutProfileInput | Prisma.ForumNotificationUpdateManyWithWhereWithoutProfileInput[]
+  update?: Prisma.ForumNotificationUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumNotificationUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ForumNotificationUpdateManyWithWhereWithoutUserInput | Prisma.ForumNotificationUpdateManyWithWhereWithoutUserInput[]
   deleteMany?: Prisma.ForumNotificationScalarWhereInput | Prisma.ForumNotificationScalarWhereInput[]
 }
 
@@ -672,57 +672,57 @@ export type ForumNotificationUncheckedUpdateManyWithoutTopicNestedInput = {
   deleteMany?: Prisma.ForumNotificationScalarWhereInput | Prisma.ForumNotificationScalarWhereInput[]
 }
 
-export type ForumNotificationCreateWithoutProfileInput = {
+export type ForumNotificationCreateWithoutUserInput = {
   type: number
   title: string
   content: string
   priority?: number
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
+  createdAt?: Date | string
   topic?: Prisma.ForumTopicCreateNestedOneWithoutNotificationsInput
   reply?: Prisma.ForumReplyCreateNestedOneWithoutNotificationsInput
 }
 
-export type ForumNotificationUncheckedCreateWithoutProfileInput = {
+export type ForumNotificationUncheckedCreateWithoutUserInput = {
   id?: number
+  topicId?: number | null
+  replyId?: number | null
   type: number
   title: string
   content: string
   priority?: number
-  topicId?: number | null
-  replyId?: number | null
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
+  createdAt?: Date | string
 }
 
-export type ForumNotificationCreateOrConnectWithoutProfileInput = {
+export type ForumNotificationCreateOrConnectWithoutUserInput = {
   where: Prisma.ForumNotificationWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumNotificationCreateWithoutProfileInput, Prisma.ForumNotificationUncheckedCreateWithoutProfileInput>
+  create: Prisma.XOR<Prisma.ForumNotificationCreateWithoutUserInput, Prisma.ForumNotificationUncheckedCreateWithoutUserInput>
 }
 
-export type ForumNotificationCreateManyProfileInputEnvelope = {
-  data: Prisma.ForumNotificationCreateManyProfileInput | Prisma.ForumNotificationCreateManyProfileInput[]
+export type ForumNotificationCreateManyUserInputEnvelope = {
+  data: Prisma.ForumNotificationCreateManyUserInput | Prisma.ForumNotificationCreateManyUserInput[]
   skipDuplicates?: boolean
 }
 
-export type ForumNotificationUpsertWithWhereUniqueWithoutProfileInput = {
+export type ForumNotificationUpsertWithWhereUniqueWithoutUserInput = {
   where: Prisma.ForumNotificationWhereUniqueInput
-  update: Prisma.XOR<Prisma.ForumNotificationUpdateWithoutProfileInput, Prisma.ForumNotificationUncheckedUpdateWithoutProfileInput>
-  create: Prisma.XOR<Prisma.ForumNotificationCreateWithoutProfileInput, Prisma.ForumNotificationUncheckedCreateWithoutProfileInput>
+  update: Prisma.XOR<Prisma.ForumNotificationUpdateWithoutUserInput, Prisma.ForumNotificationUncheckedUpdateWithoutUserInput>
+  create: Prisma.XOR<Prisma.ForumNotificationCreateWithoutUserInput, Prisma.ForumNotificationUncheckedCreateWithoutUserInput>
 }
 
-export type ForumNotificationUpdateWithWhereUniqueWithoutProfileInput = {
+export type ForumNotificationUpdateWithWhereUniqueWithoutUserInput = {
   where: Prisma.ForumNotificationWhereUniqueInput
-  data: Prisma.XOR<Prisma.ForumNotificationUpdateWithoutProfileInput, Prisma.ForumNotificationUncheckedUpdateWithoutProfileInput>
+  data: Prisma.XOR<Prisma.ForumNotificationUpdateWithoutUserInput, Prisma.ForumNotificationUncheckedUpdateWithoutUserInput>
 }
 
-export type ForumNotificationUpdateManyWithWhereWithoutProfileInput = {
+export type ForumNotificationUpdateManyWithWhereWithoutUserInput = {
   where: Prisma.ForumNotificationScalarWhereInput
-  data: Prisma.XOR<Prisma.ForumNotificationUpdateManyMutationInput, Prisma.ForumNotificationUncheckedUpdateManyWithoutProfileInput>
+  data: Prisma.XOR<Prisma.ForumNotificationUpdateManyMutationInput, Prisma.ForumNotificationUncheckedUpdateManyWithoutUserInput>
 }
 
 export type ForumNotificationScalarWhereInput = {
@@ -730,17 +730,17 @@ export type ForumNotificationScalarWhereInput = {
   OR?: Prisma.ForumNotificationScalarWhereInput[]
   NOT?: Prisma.ForumNotificationScalarWhereInput | Prisma.ForumNotificationScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumNotification"> | number
-  profileId?: Prisma.IntFilter<"ForumNotification"> | number
+  userId?: Prisma.IntFilter<"ForumNotification"> | number
+  topicId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
+  replyId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
   type?: Prisma.IntFilter<"ForumNotification"> | number
   title?: Prisma.StringFilter<"ForumNotification"> | string
   content?: Prisma.StringFilter<"ForumNotification"> | string
   priority?: Prisma.IntFilter<"ForumNotification"> | number
-  topicId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
-  replyId?: Prisma.IntNullableFilter<"ForumNotification"> | number | null
   isRead?: Prisma.BoolFilter<"ForumNotification"> | boolean
   readAt?: Prisma.DateTimeNullableFilter<"ForumNotification"> | Date | string | null
-  createdAt?: Prisma.DateTimeFilter<"ForumNotification"> | Date | string
   expiredAt?: Prisma.DateTimeNullableFilter<"ForumNotification"> | Date | string | null
+  createdAt?: Prisma.DateTimeFilter<"ForumNotification"> | Date | string
 }
 
 export type ForumNotificationCreateWithoutReplyInput = {
@@ -750,24 +750,24 @@ export type ForumNotificationCreateWithoutReplyInput = {
   priority?: number
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
-  profile: Prisma.ForumProfileCreateNestedOneWithoutNotificationsInput
+  createdAt?: Date | string
+  user: Prisma.AppUserCreateNestedOneWithoutForumNotificationsInput
   topic?: Prisma.ForumTopicCreateNestedOneWithoutNotificationsInput
 }
 
 export type ForumNotificationUncheckedCreateWithoutReplyInput = {
   id?: number
-  profileId: number
+  userId: number
+  topicId?: number | null
   type: number
   title: string
   content: string
   priority?: number
-  topicId?: number | null
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
+  createdAt?: Date | string
 }
 
 export type ForumNotificationCreateOrConnectWithoutReplyInput = {
@@ -803,24 +803,24 @@ export type ForumNotificationCreateWithoutTopicInput = {
   priority?: number
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
-  profile: Prisma.ForumProfileCreateNestedOneWithoutNotificationsInput
+  createdAt?: Date | string
+  user: Prisma.AppUserCreateNestedOneWithoutForumNotificationsInput
   reply?: Prisma.ForumReplyCreateNestedOneWithoutNotificationsInput
 }
 
 export type ForumNotificationUncheckedCreateWithoutTopicInput = {
   id?: number
-  profileId: number
+  userId: number
+  replyId?: number | null
   type: number
   title: string
   content: string
   priority?: number
-  replyId?: number | null
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
+  createdAt?: Date | string
 }
 
 export type ForumNotificationCreateOrConnectWithoutTopicInput = {
@@ -849,73 +849,73 @@ export type ForumNotificationUpdateManyWithWhereWithoutTopicInput = {
   data: Prisma.XOR<Prisma.ForumNotificationUpdateManyMutationInput, Prisma.ForumNotificationUncheckedUpdateManyWithoutTopicInput>
 }
 
-export type ForumNotificationCreateManyProfileInput = {
+export type ForumNotificationCreateManyUserInput = {
   id?: number
+  topicId?: number | null
+  replyId?: number | null
   type: number
   title: string
   content: string
   priority?: number
-  topicId?: number | null
-  replyId?: number | null
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
+  createdAt?: Date | string
 }
 
-export type ForumNotificationUpdateWithoutProfileInput = {
+export type ForumNotificationUpdateWithoutUserInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.IntFieldUpdateOperationsInput | number
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   topic?: Prisma.ForumTopicUpdateOneWithoutNotificationsNestedInput
   reply?: Prisma.ForumReplyUpdateOneWithoutNotificationsNestedInput
 }
 
-export type ForumNotificationUncheckedUpdateWithoutProfileInput = {
+export type ForumNotificationUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.IntFieldUpdateOperationsInput | number
-  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ForumNotificationUncheckedUpdateManyWithoutProfileInput = {
+export type ForumNotificationUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.IntFieldUpdateOperationsInput | number
-  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumNotificationCreateManyReplyInput = {
   id?: number
-  profileId: number
+  userId: number
+  topicId?: number | null
   type: number
   title: string
   content: string
   priority?: number
-  topicId?: number | null
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
+  createdAt?: Date | string
 }
 
 export type ForumNotificationUpdateWithoutReplyInput = {
@@ -925,52 +925,52 @@ export type ForumNotificationUpdateWithoutReplyInput = {
   priority?: Prisma.IntFieldUpdateOperationsInput | number
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutNotificationsNestedInput
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.AppUserUpdateOneRequiredWithoutForumNotificationsNestedInput
   topic?: Prisma.ForumTopicUpdateOneWithoutNotificationsNestedInput
 }
 
 export type ForumNotificationUncheckedUpdateWithoutReplyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.IntFieldUpdateOperationsInput | number
-  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumNotificationUncheckedUpdateManyWithoutReplyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.IntFieldUpdateOperationsInput | number
-  topicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumNotificationCreateManyTopicInput = {
   id?: number
-  profileId: number
+  userId: number
+  replyId?: number | null
   type: number
   title: string
   content: string
   priority?: number
-  replyId?: number | null
   isRead?: boolean
   readAt?: Date | string | null
-  createdAt?: Date | string
   expiredAt?: Date | string | null
+  createdAt?: Date | string
 }
 
 export type ForumNotificationUpdateWithoutTopicInput = {
@@ -980,124 +980,124 @@ export type ForumNotificationUpdateWithoutTopicInput = {
   priority?: Prisma.IntFieldUpdateOperationsInput | number
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutNotificationsNestedInput
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.AppUserUpdateOneRequiredWithoutForumNotificationsNestedInput
   reply?: Prisma.ForumReplyUpdateOneWithoutNotificationsNestedInput
 }
 
 export type ForumNotificationUncheckedUpdateWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.IntFieldUpdateOperationsInput | number
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumNotificationUncheckedUpdateManyWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.IntFieldUpdateOperationsInput | number
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isRead?: Prisma.BoolFieldUpdateOperationsInput | boolean
   readAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
 
 export type ForumNotificationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
+  topicId?: boolean
+  replyId?: boolean
   type?: boolean
   title?: boolean
   content?: boolean
   priority?: boolean
-  topicId?: boolean
-  replyId?: boolean
   isRead?: boolean
   readAt?: boolean
-  createdAt?: boolean
   expiredAt?: boolean
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  createdAt?: boolean
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   topic?: boolean | Prisma.ForumNotification$topicArgs<ExtArgs>
   reply?: boolean | Prisma.ForumNotification$replyArgs<ExtArgs>
 }, ExtArgs["result"]["forumNotification"]>
 
 export type ForumNotificationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
+  topicId?: boolean
+  replyId?: boolean
   type?: boolean
   title?: boolean
   content?: boolean
   priority?: boolean
-  topicId?: boolean
-  replyId?: boolean
   isRead?: boolean
   readAt?: boolean
-  createdAt?: boolean
   expiredAt?: boolean
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  createdAt?: boolean
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   topic?: boolean | Prisma.ForumNotification$topicArgs<ExtArgs>
   reply?: boolean | Prisma.ForumNotification$replyArgs<ExtArgs>
 }, ExtArgs["result"]["forumNotification"]>
 
 export type ForumNotificationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
+  topicId?: boolean
+  replyId?: boolean
   type?: boolean
   title?: boolean
   content?: boolean
   priority?: boolean
-  topicId?: boolean
-  replyId?: boolean
   isRead?: boolean
   readAt?: boolean
-  createdAt?: boolean
   expiredAt?: boolean
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  createdAt?: boolean
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   topic?: boolean | Prisma.ForumNotification$topicArgs<ExtArgs>
   reply?: boolean | Prisma.ForumNotification$replyArgs<ExtArgs>
 }, ExtArgs["result"]["forumNotification"]>
 
 export type ForumNotificationSelectScalar = {
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
+  topicId?: boolean
+  replyId?: boolean
   type?: boolean
   title?: boolean
   content?: boolean
   priority?: boolean
-  topicId?: boolean
-  replyId?: boolean
   isRead?: boolean
   readAt?: boolean
-  createdAt?: boolean
   expiredAt?: boolean
+  createdAt?: boolean
 }
 
-export type ForumNotificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "profileId" | "type" | "title" | "content" | "priority" | "topicId" | "replyId" | "isRead" | "readAt" | "createdAt" | "expiredAt", ExtArgs["result"]["forumNotification"]>
+export type ForumNotificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "topicId" | "replyId" | "type" | "title" | "content" | "priority" | "isRead" | "readAt" | "expiredAt" | "createdAt", ExtArgs["result"]["forumNotification"]>
 export type ForumNotificationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   topic?: boolean | Prisma.ForumNotification$topicArgs<ExtArgs>
   reply?: boolean | Prisma.ForumNotification$replyArgs<ExtArgs>
 }
 export type ForumNotificationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   topic?: boolean | Prisma.ForumNotification$topicArgs<ExtArgs>
   reply?: boolean | Prisma.ForumNotification$replyArgs<ExtArgs>
 }
 export type ForumNotificationIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   topic?: boolean | Prisma.ForumNotification$topicArgs<ExtArgs>
   reply?: boolean | Prisma.ForumNotification$replyArgs<ExtArgs>
 }
@@ -1105,8 +1105,17 @@ export type ForumNotificationIncludeUpdateManyAndReturn<ExtArgs extends runtime.
 export type $ForumNotificationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumNotification"
   objects: {
-    profile: Prisma.$ForumProfilePayload<ExtArgs>
+    /**
+     * 关联用户
+     */
+    user: Prisma.$AppUserPayload<ExtArgs>
+    /**
+     * 关联主题
+     */
     topic: Prisma.$ForumTopicPayload<ExtArgs> | null
+    /**
+     * 关联回复
+     */
     reply: Prisma.$ForumReplyPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1117,7 +1126,15 @@ export type $ForumNotificationPayload<ExtArgs extends runtime.Types.Extensions.I
     /**
      * 关联的用户ID
      */
-    profileId: number
+    userId: number
+    /**
+     * 关联的主题ID（可选）
+     */
+    topicId: number | null
+    /**
+     * 关联的回复ID（可选）
+     */
+    replyId: number | null
     /**
      * 通知类型（1=回复, 2=点赞, 3=收藏, 4=系统通知）
      */
@@ -1135,14 +1152,6 @@ export type $ForumNotificationPayload<ExtArgs extends runtime.Types.Extensions.I
      */
     priority: number
     /**
-     * 关联的主题ID（可选）
-     */
-    topicId: number | null
-    /**
-     * 关联的回复ID（可选）
-     */
-    replyId: number | null
-    /**
      * 是否已读
      */
     isRead: boolean
@@ -1151,13 +1160,13 @@ export type $ForumNotificationPayload<ExtArgs extends runtime.Types.Extensions.I
      */
     readAt: Date | null
     /**
-     * 创建时间
-     */
-    createdAt: Date
-    /**
      * 过期时间（null表示永不过期）
      */
     expiredAt: Date | null
+    /**
+     * 创建时间
+     */
+    createdAt: Date
   }, ExtArgs["result"]["forumNotification"]>
   composites: {}
 }
@@ -1552,7 +1561,7 @@ readonly fields: ForumNotificationFieldRefs;
  */
 export interface Prisma__ForumNotificationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  profile<T extends Prisma.ForumProfileDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfileDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   topic<T extends Prisma.ForumNotification$topicArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumNotification$topicArgs<ExtArgs>>): Prisma.Prisma__ForumTopicClient<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   reply<T extends Prisma.ForumNotification$replyArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumNotification$replyArgs<ExtArgs>>): Prisma.Prisma__ForumReplyClient<runtime.Types.Result.GetResult<Prisma.$ForumReplyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
@@ -1585,17 +1594,17 @@ export interface Prisma__ForumNotificationClient<T, Null = never, ExtArgs extend
  */
 export interface ForumNotificationFieldRefs {
   readonly id: Prisma.FieldRef<"ForumNotification", 'Int'>
-  readonly profileId: Prisma.FieldRef<"ForumNotification", 'Int'>
+  readonly userId: Prisma.FieldRef<"ForumNotification", 'Int'>
+  readonly topicId: Prisma.FieldRef<"ForumNotification", 'Int'>
+  readonly replyId: Prisma.FieldRef<"ForumNotification", 'Int'>
   readonly type: Prisma.FieldRef<"ForumNotification", 'Int'>
   readonly title: Prisma.FieldRef<"ForumNotification", 'String'>
   readonly content: Prisma.FieldRef<"ForumNotification", 'String'>
   readonly priority: Prisma.FieldRef<"ForumNotification", 'Int'>
-  readonly topicId: Prisma.FieldRef<"ForumNotification", 'Int'>
-  readonly replyId: Prisma.FieldRef<"ForumNotification", 'Int'>
   readonly isRead: Prisma.FieldRef<"ForumNotification", 'Boolean'>
   readonly readAt: Prisma.FieldRef<"ForumNotification", 'DateTime'>
-  readonly createdAt: Prisma.FieldRef<"ForumNotification", 'DateTime'>
   readonly expiredAt: Prisma.FieldRef<"ForumNotification", 'DateTime'>
+  readonly createdAt: Prisma.FieldRef<"ForumNotification", 'DateTime'>
 }
     
 

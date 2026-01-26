@@ -19,7 +19,6 @@ model ForumTag {
   /// 更新时间
   updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   topicTags   ForumTopicTag[]
-  topics      ForumTopic[]    @relation("TopicTags")
 
   @@index([sortOrder])
   @@index([name])

@@ -12,30 +12,30 @@ export class BaseForumTopicFavoriteDto extends BaseDto {
   topicId!: number
 
   @ValidateNumber({
-    description: '用户资料ID',
+    description: '用户ID',
     example: 1,
     required: true,
     min: 1,
   })
-  profileId!: number
+  userId!: number
 }
 
 export class CreateForumTopicFavoriteDto extends PickType(
   BaseForumTopicFavoriteDto,
-  ['topicId', 'profileId'],
+  ['topicId', 'userId'],
 ) {}
 
 export class DeleteForumTopicFavoriteDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseForumTopicFavoriteDto, ['topicId', 'profileId'])),
+  PartialType(PickType(BaseForumTopicFavoriteDto, ['topicId', 'userId'])),
 ) {}
 
 export class ToggleForumTopicFavoriteDto extends PickType(
   CreateForumTopicFavoriteDto,
-  ['topicId', 'profileId'],
+  ['topicId', 'userId'],
 ) {}
 
 export class QueryForumTopicFavoriteDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseForumTopicFavoriteDto, ['profileId'])),
+  PartialType(PickType(BaseForumTopicFavoriteDto, ['userId'])),
 ) {}

@@ -1,44 +1,100 @@
-/// 应用用户表
+/// 应用用户表 - 存储应用用户的核心信息
 model AppUser {
   /// 用户ID
-  id          Int       @id @default(autoincrement())
+  id      Int     @id @default(autoincrement())
   /// 账号（唯一）
-  account    Int    @unique @map("account") 
-  /// 用户昵称（显示名称）
-  nickname    String   @map("nickname") @db.VarChar(100)
-  /// 密码（加密存储）
-  password    String    @map("password") @db.VarChar(500)
-  /// 头像URL地址
-  avatar      String?   @map("avatar_url") @db.VarChar(500)
+  account Int     @unique @map("account")
   /// 手机号码（唯一）
-  phone       String?   @unique @map("phone_number") @db.VarChar(20)
+  phone   String? @unique @map("phone_number") @db.VarChar(20)
   /// 邮箱地址（唯一）
-  email       String?   @unique @map("email_address") @db.VarChar(255)
+  email   String? @unique @map("email_address") @db.VarChar(255)
+
+  /// 等级ID
+  levelId Int? @map("level_id")
+
+  /// 用户昵称（显示名称）
+  nickname  String    @map("nickname") @db.VarChar(100)
+  /// 密码（加密存储）
+  password  String    @map("password") @db.VarChar(500)
+  /// 头像URL地址
+  avatar    String?   @map("avatar_url") @db.VarChar(500)
   /// 账户状态（true:启用, false:禁用）
-  isEnabled   Boolean   @default(true) @map("is_enabled")
+  isEnabled Boolean   @default(true) @map("is_enabled")
   /// 性别（0:未知, 1:男, 2:女）
-  gender      Int       @default(0) @map("gender_type") @db.SmallInt
+  gender    Int       @default(0) @map("gender_type") @db.SmallInt
   /// 出生日期
-  birthDate   DateTime? @map("birth_date") @db.Date
-  /// 是否签到
-  isSignedIn  Boolean   @default(false) @map("is_signed_in")
+  birthDate DateTime? @map("birth_date") @db.Date
+
+  /// 论坛积分
+  points     Int @default(0)
+  /// 论坛经验值
+  experience Int @default(0)
+
+  /// 用户状态（1:正常, 2:被禁言, 3:永久禁言，4:被封禁，5:永久封禁）
+  status    Int       @default(1) @map("status")
+  /// 封禁原因
+  banReason String?   @map("ban_reason") @db.VarChar(500)
+  /// 封禁到期时间
+  banUntil  DateTime? @map("ban_until") @db.Timestamptz(6)
+
   /// 最后登录时间
   lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz
   /// 最后登录IP地址
   lastLoginIp String?   @map("last_login_ip") @db.VarChar(45)
-  /// 创建时间
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  /// 更新时间
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-  /// 删除时间（软删除）
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
 
+  /// 创建时间
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// 更新时间
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  /// 删除时间（软删除）
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  /// 关联等级规则
+  level                   AppLevelRule?               @relation(fields: [levelId], references: [id])
   /// 用户论坛资料
-  forumProfile ForumProfile?
+  forumProfile            ForumProfile?
   /// 用户通知阅读记录
-  noticeReads  AppNoticeRead[]
+  noticeReads             AppNoticeRead[]
   /// 用户令牌
-  tokens       AppUserToken[]
+  tokens                  AppUserToken[]
+  /// 积分记录关联
+  pointRecords            AppPointRecord[]            @relation("UserPointRecords")
+  /// 经验记录关联
+  experienceRecords       AppExperienceRecord[]       @relation("UserExperienceRecords")
+  /// 论坛主题关联
+  forumTopics             ForumTopic[]                @relation("UserTopics")
+  /// 最后回复主题关联
+  lastReplyTopics         ForumTopic[]                @relation("UserLastReplyTopics")
+  /// 主题收藏关联
+  topicFavorites          ForumTopicFavorite[]
+  /// 主题点赞关联
+  topicLikes              ForumTopicLike[]
+  /// 论坛回复关联
+  forumReplies            ForumReply[]
+  /// 回复点赞关联
+  replyLikes              ForumReplyLike[]
+  /// 论坛通知关联
+  forumNotifications      ForumNotification[]
+  /// 论坛浏览记录关联
+  forumViews              ForumView[]
+  /// 论坛举报关联（举报人）
+  forumReports            ForumReport[]               @relation("ReportReporter")
+  /// 论坛举报关联（处理人）
+  handledReports          ForumReport[]               @relation("ReportHandler")
+  /// 版主申请关联（申请人）
+  moderatorApplications   ForumModeratorApplication[] @relation("ModeratorApplicant")
+  /// 版主申请关联（审核人）
+  auditedApplications     ForumModeratorApplication[] @relation("ModeratorAuditor")
+  /// 版主信息关联
+  moderator               ForumModerator?
+  /// 论坛操作日志关联
+  forumActionLogs         ForumUserActionLog[]
+  /// 论坛徽章关联
+  forumBadges             ForumProfileBadge[]
+  /// 论坛配置更新关联
+  updatedConfigs          ForumConfig[]               @relation("ForumConfigUpdater")
+  /// 论坛配置历史操作关联
+  operatedConfigHistories ForumConfigHistory[]        @relation("ForumConfigHistoryOperator")
 
   @@index([isEnabled])
   @@index([gender])
@@ -46,5 +102,8 @@ model AppUser {
   @@index([lastLoginAt])
   @@index([phone])
   @@index([email])
+  @@index([points])
+  @@index([status])
+  @@index([levelId])
   @@map("app_user")
 }

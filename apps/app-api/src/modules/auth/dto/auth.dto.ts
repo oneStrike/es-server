@@ -1,4 +1,9 @@
-import { ValidateBoolean, ValidateEnum, ValidateNumber, ValidateString } from '@libs/base/decorators'
+import {
+  ValidateBoolean,
+  ValidateEnum,
+  ValidateNumber,
+  ValidateString,
+} from '@libs/base/decorators'
 import { BaseDto } from '@libs/base/dto'
 import { GenderEnum } from '@libs/base/enum'
 import { ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger'
@@ -102,6 +107,34 @@ export class BaseAppUserDto extends BaseDto {
     example: '192.168.1.1',
   })
   lastLoginIp?: string
+
+  @ApiProperty({
+    description: '积分',
+    default: 0,
+    example: 100,
+  })
+  points!: number
+
+  @ApiProperty({
+    description: '经验值',
+    default: 0,
+    example: 1000,
+  })
+  experience!: number
+
+  @ApiProperty({
+    description: '等级ID',
+    default: null,
+    example: 1,
+  })
+  levelId?: number
+
+  @ApiProperty({
+    description: '状态',
+    default: 1,
+    example: 1,
+  })
+  status!: number
 }
 
 /**
@@ -126,12 +159,14 @@ export class TokenDto {
 /**
  * 刷新令牌信息
  */
-export class RefreshTokenDto extends OmitType(TokenDto, ['accessToken']) { }
+export class RefreshTokenDto extends OmitType(TokenDto, ['accessToken']) {}
 
 /**
  * 登录请求信息
  */
-export class LoginDto extends PartialType(PickType(BaseAppUserDto, ['phone', 'account'])) {
+export class LoginDto extends PartialType(
+  PickType(BaseAppUserDto, ['phone', 'account']),
+) {
   @ValidateString({
     description: '密码',
     example: 'Aa@123456',
@@ -146,6 +181,20 @@ export class LoginDto extends PartialType(PickType(BaseAppUserDto, ['phone', 'ac
     required: false,
   })
   code?: string
+}
+
+/**
+ * 忘记密码请求 DTO
+ * 仅包含手机号，用于触发发送验证码
+ */
+export class ForgotPasswordRequestDto {
+  @ValidateString({
+    description: '手机号',
+    example: '13800000000',
+    required: true,
+    maxLength: 11,
+  })
+  phone!: string
 }
 
 /**
@@ -168,18 +217,18 @@ export class ForgotPasswordDto {
   })
   password!: string
 
-  @ValidateNumber({
+  @ValidateString({
     description: '手机号验证码',
-    example: 330049,
+    example: '330049',
     required: true,
   })
-  code!: number
+  code!: string
 }
 
 /**
- * 重置密码请求信息
+ * 修改密码请求信息
  */
-export class ResetPasswordDto {
+export class ChangePasswordDto {
   @ValidateString({
     description: '旧密码',
     example: 'Aa@123456',

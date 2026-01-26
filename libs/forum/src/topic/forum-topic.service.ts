@@ -17,9 +17,9 @@ import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumConfigCacheService } from '../config/forum-config-cache.service'
 import { ForumReviewPolicyEnum } from '../config/forum-config.constants'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import { ForumPointRuleTypeEnum } from '../point/point.constant'
-import { ForumPointService } from '../point/point.service'
-import { ForumProfileStatusEnum } from '../profile/profile.constant'
+import { ForumPointRuleTypeEnum } from '@libs/user/point'
+import { ForumPointService } from '@libs/user/point'
+import { UserStatusEnum } from '@libs/base/enum'
 import { ForumSensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
 import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import {
@@ -109,7 +109,27 @@ export class ForumTopicService extends BaseService {
    * @throws {BadRequestException} 用户论坛资料不存在或已被封禁
    */
   async createForumTopic(createTopicDto: CreateForumTopicDto) {
-    const { sectionId, profileId, ...topicData } = createTopicDto
+    const { sectionId, userId, ...topicData } = createTopicDto
+
+    const user = await this.prisma.appUser.findUnique({
+      where: { id: userId },
+      select: { status: true },
+    })
+
+    if (!user) {
+      throw new BadRequestException('用户不存在')
+    }
+
+    if (
+      [
+        UserStatusEnum.MUTED,
+        UserStatusEnum.PERMANENT_MUTED,
+        UserStatusEnum.BANNED,
+        UserStatusEnum.PERMANENT_BANNED,
+      ].includes(user.status)
+    ) {
+      throw new BadRequestException('用户已被禁言或封禁，无法发布主题')
+    }
 
     const { hits, highestLevel } =
       this.sensitiveWordDetectService.getMatchedWords({
@@ -121,8 +141,8 @@ export class ForumTopicService extends BaseService {
       section: {
         connect: { id: sectionId, isEnabled: true },
       },
-      profile: {
-        connect: { id: profileId, status: ForumProfileStatusEnum.NORMAL },
+      user: {
+        connect: { id: userId },
       },
     }
 
@@ -164,7 +184,7 @@ export class ForumTopicService extends BaseService {
       await this.forumCounterService.updateTopicRelatedCounts(
         tx,
         sectionId,
-        profileId,
+        userId,
         1,
       )
 
@@ -173,14 +193,14 @@ export class ForumTopicService extends BaseService {
 
     if (topic.auditStatus !== ForumTopicAuditStatusEnum.PENDING) {
       await this.pointService.addPoints({
-        profileId,
+        userId,
         ruleType: ForumPointRuleTypeEnum.CREATE_TOPIC,
         remark: `创建主题 ${topic.id}`,
       })
     }
 
     await this.actionLogService.createActionLog({
-      profileId,
+      userId,
       actionType: ForumUserActionTypeEnum.CREATE_TOPIC,
       targetType: ForumUserActionTargetTypeEnum.TOPIC,
       targetId: topic.id,
@@ -202,9 +222,10 @@ export class ForumTopicService extends BaseService {
       include: {
         topicTags: true,
         section: true,
-        profile: {
+        user: {
           include: {
-            user: true,
+            forumProfile: true,
+            level: true,
           },
         },
       },
@@ -223,7 +244,7 @@ export class ForumTopicService extends BaseService {
    * @returns 分页的论坛主题列表
    */
   async getTopics(queryForumTopicDto: QueryForumTopicDto) {
-    const { keyword, sectionId, profileId, ...otherDto } = queryForumTopicDto
+    const { keyword, sectionId, userId, ...otherDto } = queryForumTopicDto
 
     const where: ForumTopicWhereInput = {
       ...otherDto,
@@ -231,8 +252,8 @@ export class ForumTopicService extends BaseService {
       section: {
         id: sectionId,
       },
-      profile: {
-        id: profileId,
+      user: {
+        id: userId,
       },
     }
 
@@ -310,7 +331,7 @@ export class ForumTopicService extends BaseService {
     })
 
     await this.actionLogService.createActionLog({
-      profileId: topic.profileId,
+      userId: topic.userId,
       actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
       targetType: ForumUserActionTargetTypeEnum.TOPIC,
       targetId: id,
@@ -343,13 +364,13 @@ export class ForumTopicService extends BaseService {
       await this.forumCounterService.updateTopicRelatedCounts(
         tx,
         topic.sectionId,
-        topic.profileId,
+        topic.userId,
         -1,
       )
     })
 
     await this.actionLogService.createActionLog({
-      profileId: topic.profileId,
+      userId: topic.userId,
       actionType: ForumUserActionTypeEnum.DELETE_TOPIC,
       targetType: ForumUserActionTargetTypeEnum.TOPIC,
       targetId: id,
@@ -454,18 +475,18 @@ export class ForumTopicService extends BaseService {
   /**
    * 增加主题回复数并更新最后回复信息
    * @param id - 论坛主题ID
-   * @param replyProfileId - 回复者资料ID
+   * @param replyUserId - 回复者用户ID
    * @returns 更新后的论坛主题信息
    * @throws {NotFoundException} 主题不存在
    */
-  async incrementReplyCount(id: number, replyProfileId: number) {
+  async incrementReplyCount(id: number, replyUserId: number) {
     return this.forumTopic.update({
       where: { id, deletedAt: null },
       data: {
         replyCount: {
           increment: 1,
         },
-        lastReplyProfileId: replyProfileId,
+        lastReplyUserId: replyUserId,
         lastReplyAt: new Date(),
       },
     })

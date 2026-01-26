@@ -1,0 +1,32 @@
+/// 应用经验规则表 - 定义经验获取规则，包括发表主题、回复、点赞、签到等
+model AppExperienceRule {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）
+  type Int @unique @db.SmallInt
+
+  /// 经验值变化
+  experience Int
+  /// 每日上限（0=无限制）
+  dailyLimit Int @default(0) @map("daily_limit")
+
+  /// 是否启用
+  isEnabled Boolean @default(true) @map("is_enabled")
+
+  /// 备注
+  remark String? @db.VarChar(500)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 经验记录关联
+  records AppExperienceRecord[]
+
+  @@index([type])
+  @@index([isEnabled])
+  @@index([createdAt])
+  @@map("app_experience_rule")
+}

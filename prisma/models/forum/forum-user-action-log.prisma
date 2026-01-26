@@ -1,33 +1,39 @@
 /// 论坛用户操作日志表 - 记录用户的所有操作行为，包括创建主题、回复、点赞、收藏等操作
 model ForumUserActionLog {
   /// 主键ID
-  id         Int      @id @default(autoincrement())
-  /// 关联的论坛用户资料ID
-  profileId  Int      @map("user_id")
-  /// 操作类型（1=创建主题, 2=创建回复, 3=点赞主题, 4=取消点赞主题, 5=点赞回复, 6=取消点赞回复, 7=收藏主题, 8=取消收藏主题, 9=更新主题, 10=更新回复, 11=删除主题, 12=删除回复）
-  actionType Int      @map("action_type") @db.SmallInt
-  /// 目标类型（1=主题, 2=回复）
-  targetType Int      @map("target_type") @db.SmallInt
+  id Int @id @default(autoincrement())
+
+  /// 关联的用户ID
+  userId   Int @map("user_id")
   /// 目标ID
-  targetId   Int      @map("target_id")
+  targetId Int @map("target_id")
+
+  /// 操作类型（1=创建主题, 2=创建回复, 3=点赞主题, 4=取消点赞主题, 5=点赞回复, 6=取消点赞回复, 7=收藏主题, 8=取消收藏主题, 9=更新主题, 10=更新回复, 11=删除主题, 12=删除回复）
+  actionType Int @map("action_type") @db.SmallInt
+  /// 目标类型（1=主题, 2=回复）
+  targetType Int @map("target_type") @db.SmallInt
+
   /// 操作前数据（JSON格式）
-  beforeData String?  @map("before_data")
+  beforeData String? @map("before_data")
   /// 操作后数据（JSON格式）
-  afterData  String?  @map("after_data")
+  afterData  String? @map("after_data")
+
   /// IP地址
-  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  ipAddress String? @map("ip_address") @db.VarChar(45)
   /// User Agent
-  userAgent  String?  @map("user_agent") @db.VarChar(500)
+  userAgent String? @map("user_agent") @db.VarChar(500)
+
   /// 操作时间
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  profile ForumProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// 关联用户
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([profileId])
+  @@index([userId])
   @@index([actionType])
   @@index([targetType, targetId])
   @@index([ipAddress])
   @@index([createdAt])
-  @@index([profileId, createdAt])
+  @@index([userId, createdAt])
   @@map("forum_user_action_log")
 }

@@ -28,33 +28,33 @@ export type AggregateForumProfileBadge = {
 
 export type ForumProfileBadgeAvgAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
   badgeId: number | null
 }
 
 export type ForumProfileBadgeSumAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
   badgeId: number | null
 }
 
 export type ForumProfileBadgeMinAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
   badgeId: number | null
   createdAt: Date | null
 }
 
 export type ForumProfileBadgeMaxAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
   badgeId: number | null
   createdAt: Date | null
 }
 
 export type ForumProfileBadgeCountAggregateOutputType = {
   id: number
-  profileId: number
+  userId: number
   badgeId: number
   createdAt: number
   _all: number
@@ -63,33 +63,33 @@ export type ForumProfileBadgeCountAggregateOutputType = {
 
 export type ForumProfileBadgeAvgAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
   badgeId?: true
 }
 
 export type ForumProfileBadgeSumAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
   badgeId?: true
 }
 
 export type ForumProfileBadgeMinAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
   badgeId?: true
   createdAt?: true
 }
 
 export type ForumProfileBadgeMaxAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
   badgeId?: true
   createdAt?: true
 }
 
 export type ForumProfileBadgeCountAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
   badgeId?: true
   createdAt?: true
   _all?: true
@@ -183,7 +183,7 @@ export type ForumProfileBadgeGroupByArgs<ExtArgs extends runtime.Types.Extension
 
 export type ForumProfileBadgeGroupByOutputType = {
   id: number
-  profileId: number
+  userId: number
   badgeId: number
   createdAt: Date
   _count: ForumProfileBadgeCountAggregateOutputType | null
@@ -213,38 +213,38 @@ export type ForumProfileBadgeWhereInput = {
   OR?: Prisma.ForumProfileBadgeWhereInput[]
   NOT?: Prisma.ForumProfileBadgeWhereInput | Prisma.ForumProfileBadgeWhereInput[]
   id?: Prisma.IntFilter<"ForumProfileBadge"> | number
-  profileId?: Prisma.IntFilter<"ForumProfileBadge"> | number
+  userId?: Prisma.IntFilter<"ForumProfileBadge"> | number
   badgeId?: Prisma.IntFilter<"ForumProfileBadge"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumProfileBadge"> | Date | string
   badge?: Prisma.XOR<Prisma.ForumBadgeScalarRelationFilter, Prisma.ForumBadgeWhereInput>
-  profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
+  user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
 }
 
 export type ForumProfileBadgeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   badgeId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   badge?: Prisma.ForumBadgeOrderByWithRelationInput
-  profile?: Prisma.ForumProfileOrderByWithRelationInput
+  user?: Prisma.AppUserOrderByWithRelationInput
 }
 
 export type ForumProfileBadgeWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  profileId_badgeId?: Prisma.ForumProfileBadgeProfileIdBadgeIdCompoundUniqueInput
+  userId_badgeId?: Prisma.ForumProfileBadgeUserIdBadgeIdCompoundUniqueInput
   AND?: Prisma.ForumProfileBadgeWhereInput | Prisma.ForumProfileBadgeWhereInput[]
   OR?: Prisma.ForumProfileBadgeWhereInput[]
   NOT?: Prisma.ForumProfileBadgeWhereInput | Prisma.ForumProfileBadgeWhereInput[]
-  profileId?: Prisma.IntFilter<"ForumProfileBadge"> | number
+  userId?: Prisma.IntFilter<"ForumProfileBadge"> | number
   badgeId?: Prisma.IntFilter<"ForumProfileBadge"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumProfileBadge"> | Date | string
   badge?: Prisma.XOR<Prisma.ForumBadgeScalarRelationFilter, Prisma.ForumBadgeWhereInput>
-  profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
-}, "id" | "profileId_badgeId">
+  user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+}, "id" | "userId_badgeId">
 
 export type ForumProfileBadgeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   badgeId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ForumProfileBadgeCountOrderByAggregateInput
@@ -259,7 +259,7 @@ export type ForumProfileBadgeScalarWhereWithAggregatesInput = {
   OR?: Prisma.ForumProfileBadgeScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ForumProfileBadgeScalarWhereWithAggregatesInput | Prisma.ForumProfileBadgeScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumProfileBadge"> | number
-  profileId?: Prisma.IntWithAggregatesFilter<"ForumProfileBadge"> | number
+  userId?: Prisma.IntWithAggregatesFilter<"ForumProfileBadge"> | number
   badgeId?: Prisma.IntWithAggregatesFilter<"ForumProfileBadge"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumProfileBadge"> | Date | string
 }
@@ -267,12 +267,12 @@ export type ForumProfileBadgeScalarWhereWithAggregatesInput = {
 export type ForumProfileBadgeCreateInput = {
   createdAt?: Date | string
   badge: Prisma.ForumBadgeCreateNestedOneWithoutBadgesInput
-  profile: Prisma.ForumProfileCreateNestedOneWithoutBadgesInput
+  user: Prisma.AppUserCreateNestedOneWithoutForumBadgesInput
 }
 
 export type ForumProfileBadgeUncheckedCreateInput = {
   id?: number
-  profileId: number
+  userId: number
   badgeId: number
   createdAt?: Date | string
 }
@@ -280,19 +280,19 @@ export type ForumProfileBadgeUncheckedCreateInput = {
 export type ForumProfileBadgeUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   badge?: Prisma.ForumBadgeUpdateOneRequiredWithoutBadgesNestedInput
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutBadgesNestedInput
+  user?: Prisma.AppUserUpdateOneRequiredWithoutForumBadgesNestedInput
 }
 
 export type ForumProfileBadgeUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   badgeId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumProfileBadgeCreateManyInput = {
   id?: number
-  profileId: number
+  userId: number
   badgeId: number
   createdAt?: Date | string
 }
@@ -303,7 +303,7 @@ export type ForumProfileBadgeUpdateManyMutationInput = {
 
 export type ForumProfileBadgeUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   badgeId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -318,42 +318,84 @@ export type ForumProfileBadgeOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ForumProfileBadgeProfileIdBadgeIdCompoundUniqueInput = {
-  profileId: number
+export type ForumProfileBadgeUserIdBadgeIdCompoundUniqueInput = {
+  userId: number
   badgeId: number
 }
 
 export type ForumProfileBadgeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   badgeId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumProfileBadgeAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   badgeId?: Prisma.SortOrder
 }
 
 export type ForumProfileBadgeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   badgeId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumProfileBadgeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   badgeId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumProfileBadgeSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   badgeId?: Prisma.SortOrder
+}
+
+export type ForumProfileBadgeCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutUserInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput> | Prisma.ForumProfileBadgeCreateWithoutUserInput[] | Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumProfileBadgeCreateOrConnectWithoutUserInput | Prisma.ForumProfileBadgeCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ForumProfileBadgeCreateManyUserInputEnvelope
+  connect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+}
+
+export type ForumProfileBadgeUncheckedCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutUserInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput> | Prisma.ForumProfileBadgeCreateWithoutUserInput[] | Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumProfileBadgeCreateOrConnectWithoutUserInput | Prisma.ForumProfileBadgeCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ForumProfileBadgeCreateManyUserInputEnvelope
+  connect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+}
+
+export type ForumProfileBadgeUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutUserInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput> | Prisma.ForumProfileBadgeCreateWithoutUserInput[] | Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumProfileBadgeCreateOrConnectWithoutUserInput | Prisma.ForumProfileBadgeCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ForumProfileBadgeUpsertWithWhereUniqueWithoutUserInput | Prisma.ForumProfileBadgeUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ForumProfileBadgeCreateManyUserInputEnvelope
+  set?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+  disconnect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+  delete?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+  connect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+  update?: Prisma.ForumProfileBadgeUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumProfileBadgeUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ForumProfileBadgeUpdateManyWithWhereWithoutUserInput | Prisma.ForumProfileBadgeUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.ForumProfileBadgeScalarWhereInput | Prisma.ForumProfileBadgeScalarWhereInput[]
+}
+
+export type ForumProfileBadgeUncheckedUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutUserInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput> | Prisma.ForumProfileBadgeCreateWithoutUserInput[] | Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumProfileBadgeCreateOrConnectWithoutUserInput | Prisma.ForumProfileBadgeCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ForumProfileBadgeUpsertWithWhereUniqueWithoutUserInput | Prisma.ForumProfileBadgeUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ForumProfileBadgeCreateManyUserInputEnvelope
+  set?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+  disconnect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+  delete?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+  connect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+  update?: Prisma.ForumProfileBadgeUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumProfileBadgeUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ForumProfileBadgeUpdateManyWithWhereWithoutUserInput | Prisma.ForumProfileBadgeUpdateManyWithWhereWithoutUserInput[]
+  deleteMany?: Prisma.ForumProfileBadgeScalarWhereInput | Prisma.ForumProfileBadgeScalarWhereInput[]
 }
 
 export type ForumProfileBadgeCreateNestedManyWithoutBadgeInput = {
@@ -398,56 +440,61 @@ export type ForumProfileBadgeUncheckedUpdateManyWithoutBadgeNestedInput = {
   deleteMany?: Prisma.ForumProfileBadgeScalarWhereInput | Prisma.ForumProfileBadgeScalarWhereInput[]
 }
 
-export type ForumProfileBadgeCreateNestedManyWithoutProfileInput = {
-  create?: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutProfileInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput> | Prisma.ForumProfileBadgeCreateWithoutProfileInput[] | Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumProfileBadgeCreateOrConnectWithoutProfileInput | Prisma.ForumProfileBadgeCreateOrConnectWithoutProfileInput[]
-  createMany?: Prisma.ForumProfileBadgeCreateManyProfileInputEnvelope
-  connect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+export type ForumProfileBadgeCreateWithoutUserInput = {
+  createdAt?: Date | string
+  badge: Prisma.ForumBadgeCreateNestedOneWithoutBadgesInput
 }
 
-export type ForumProfileBadgeUncheckedCreateNestedManyWithoutProfileInput = {
-  create?: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutProfileInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput> | Prisma.ForumProfileBadgeCreateWithoutProfileInput[] | Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumProfileBadgeCreateOrConnectWithoutProfileInput | Prisma.ForumProfileBadgeCreateOrConnectWithoutProfileInput[]
-  createMany?: Prisma.ForumProfileBadgeCreateManyProfileInputEnvelope
-  connect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
+export type ForumProfileBadgeUncheckedCreateWithoutUserInput = {
+  id?: number
+  badgeId: number
+  createdAt?: Date | string
 }
 
-export type ForumProfileBadgeUpdateManyWithoutProfileNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutProfileInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput> | Prisma.ForumProfileBadgeCreateWithoutProfileInput[] | Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumProfileBadgeCreateOrConnectWithoutProfileInput | Prisma.ForumProfileBadgeCreateOrConnectWithoutProfileInput[]
-  upsert?: Prisma.ForumProfileBadgeUpsertWithWhereUniqueWithoutProfileInput | Prisma.ForumProfileBadgeUpsertWithWhereUniqueWithoutProfileInput[]
-  createMany?: Prisma.ForumProfileBadgeCreateManyProfileInputEnvelope
-  set?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
-  disconnect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
-  delete?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
-  connect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
-  update?: Prisma.ForumProfileBadgeUpdateWithWhereUniqueWithoutProfileInput | Prisma.ForumProfileBadgeUpdateWithWhereUniqueWithoutProfileInput[]
-  updateMany?: Prisma.ForumProfileBadgeUpdateManyWithWhereWithoutProfileInput | Prisma.ForumProfileBadgeUpdateManyWithWhereWithoutProfileInput[]
-  deleteMany?: Prisma.ForumProfileBadgeScalarWhereInput | Prisma.ForumProfileBadgeScalarWhereInput[]
+export type ForumProfileBadgeCreateOrConnectWithoutUserInput = {
+  where: Prisma.ForumProfileBadgeWhereUniqueInput
+  create: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutUserInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput>
 }
 
-export type ForumProfileBadgeUncheckedUpdateManyWithoutProfileNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutProfileInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput> | Prisma.ForumProfileBadgeCreateWithoutProfileInput[] | Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumProfileBadgeCreateOrConnectWithoutProfileInput | Prisma.ForumProfileBadgeCreateOrConnectWithoutProfileInput[]
-  upsert?: Prisma.ForumProfileBadgeUpsertWithWhereUniqueWithoutProfileInput | Prisma.ForumProfileBadgeUpsertWithWhereUniqueWithoutProfileInput[]
-  createMany?: Prisma.ForumProfileBadgeCreateManyProfileInputEnvelope
-  set?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
-  disconnect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
-  delete?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
-  connect?: Prisma.ForumProfileBadgeWhereUniqueInput | Prisma.ForumProfileBadgeWhereUniqueInput[]
-  update?: Prisma.ForumProfileBadgeUpdateWithWhereUniqueWithoutProfileInput | Prisma.ForumProfileBadgeUpdateWithWhereUniqueWithoutProfileInput[]
-  updateMany?: Prisma.ForumProfileBadgeUpdateManyWithWhereWithoutProfileInput | Prisma.ForumProfileBadgeUpdateManyWithWhereWithoutProfileInput[]
-  deleteMany?: Prisma.ForumProfileBadgeScalarWhereInput | Prisma.ForumProfileBadgeScalarWhereInput[]
+export type ForumProfileBadgeCreateManyUserInputEnvelope = {
+  data: Prisma.ForumProfileBadgeCreateManyUserInput | Prisma.ForumProfileBadgeCreateManyUserInput[]
+  skipDuplicates?: boolean
+}
+
+export type ForumProfileBadgeUpsertWithWhereUniqueWithoutUserInput = {
+  where: Prisma.ForumProfileBadgeWhereUniqueInput
+  update: Prisma.XOR<Prisma.ForumProfileBadgeUpdateWithoutUserInput, Prisma.ForumProfileBadgeUncheckedUpdateWithoutUserInput>
+  create: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutUserInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutUserInput>
+}
+
+export type ForumProfileBadgeUpdateWithWhereUniqueWithoutUserInput = {
+  where: Prisma.ForumProfileBadgeWhereUniqueInput
+  data: Prisma.XOR<Prisma.ForumProfileBadgeUpdateWithoutUserInput, Prisma.ForumProfileBadgeUncheckedUpdateWithoutUserInput>
+}
+
+export type ForumProfileBadgeUpdateManyWithWhereWithoutUserInput = {
+  where: Prisma.ForumProfileBadgeScalarWhereInput
+  data: Prisma.XOR<Prisma.ForumProfileBadgeUpdateManyMutationInput, Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutUserInput>
+}
+
+export type ForumProfileBadgeScalarWhereInput = {
+  AND?: Prisma.ForumProfileBadgeScalarWhereInput | Prisma.ForumProfileBadgeScalarWhereInput[]
+  OR?: Prisma.ForumProfileBadgeScalarWhereInput[]
+  NOT?: Prisma.ForumProfileBadgeScalarWhereInput | Prisma.ForumProfileBadgeScalarWhereInput[]
+  id?: Prisma.IntFilter<"ForumProfileBadge"> | number
+  userId?: Prisma.IntFilter<"ForumProfileBadge"> | number
+  badgeId?: Prisma.IntFilter<"ForumProfileBadge"> | number
+  createdAt?: Prisma.DateTimeFilter<"ForumProfileBadge"> | Date | string
 }
 
 export type ForumProfileBadgeCreateWithoutBadgeInput = {
   createdAt?: Date | string
-  profile: Prisma.ForumProfileCreateNestedOneWithoutBadgesInput
+  user: Prisma.AppUserCreateNestedOneWithoutForumBadgesInput
 }
 
 export type ForumProfileBadgeUncheckedCreateWithoutBadgeInput = {
   id?: number
-  profileId: number
+  userId: number
   createdAt?: Date | string
 }
 
@@ -477,96 +524,49 @@ export type ForumProfileBadgeUpdateManyWithWhereWithoutBadgeInput = {
   data: Prisma.XOR<Prisma.ForumProfileBadgeUpdateManyMutationInput, Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutBadgeInput>
 }
 
-export type ForumProfileBadgeScalarWhereInput = {
-  AND?: Prisma.ForumProfileBadgeScalarWhereInput | Prisma.ForumProfileBadgeScalarWhereInput[]
-  OR?: Prisma.ForumProfileBadgeScalarWhereInput[]
-  NOT?: Prisma.ForumProfileBadgeScalarWhereInput | Prisma.ForumProfileBadgeScalarWhereInput[]
-  id?: Prisma.IntFilter<"ForumProfileBadge"> | number
-  profileId?: Prisma.IntFilter<"ForumProfileBadge"> | number
-  badgeId?: Prisma.IntFilter<"ForumProfileBadge"> | number
-  createdAt?: Prisma.DateTimeFilter<"ForumProfileBadge"> | Date | string
-}
-
-export type ForumProfileBadgeCreateWithoutProfileInput = {
-  createdAt?: Date | string
-  badge: Prisma.ForumBadgeCreateNestedOneWithoutBadgesInput
-}
-
-export type ForumProfileBadgeUncheckedCreateWithoutProfileInput = {
+export type ForumProfileBadgeCreateManyUserInput = {
   id?: number
   badgeId: number
   createdAt?: Date | string
 }
 
-export type ForumProfileBadgeCreateOrConnectWithoutProfileInput = {
-  where: Prisma.ForumProfileBadgeWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutProfileInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput>
+export type ForumProfileBadgeUpdateWithoutUserInput = {
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  badge?: Prisma.ForumBadgeUpdateOneRequiredWithoutBadgesNestedInput
 }
 
-export type ForumProfileBadgeCreateManyProfileInputEnvelope = {
-  data: Prisma.ForumProfileBadgeCreateManyProfileInput | Prisma.ForumProfileBadgeCreateManyProfileInput[]
-  skipDuplicates?: boolean
+export type ForumProfileBadgeUncheckedUpdateWithoutUserInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  badgeId?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ForumProfileBadgeUpsertWithWhereUniqueWithoutProfileInput = {
-  where: Prisma.ForumProfileBadgeWhereUniqueInput
-  update: Prisma.XOR<Prisma.ForumProfileBadgeUpdateWithoutProfileInput, Prisma.ForumProfileBadgeUncheckedUpdateWithoutProfileInput>
-  create: Prisma.XOR<Prisma.ForumProfileBadgeCreateWithoutProfileInput, Prisma.ForumProfileBadgeUncheckedCreateWithoutProfileInput>
-}
-
-export type ForumProfileBadgeUpdateWithWhereUniqueWithoutProfileInput = {
-  where: Prisma.ForumProfileBadgeWhereUniqueInput
-  data: Prisma.XOR<Prisma.ForumProfileBadgeUpdateWithoutProfileInput, Prisma.ForumProfileBadgeUncheckedUpdateWithoutProfileInput>
-}
-
-export type ForumProfileBadgeUpdateManyWithWhereWithoutProfileInput = {
-  where: Prisma.ForumProfileBadgeScalarWhereInput
-  data: Prisma.XOR<Prisma.ForumProfileBadgeUpdateManyMutationInput, Prisma.ForumProfileBadgeUncheckedUpdateManyWithoutProfileInput>
+export type ForumProfileBadgeUncheckedUpdateManyWithoutUserInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  badgeId?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumProfileBadgeCreateManyBadgeInput = {
   id?: number
-  profileId: number
+  userId: number
   createdAt?: Date | string
 }
 
 export type ForumProfileBadgeUpdateWithoutBadgeInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutBadgesNestedInput
+  user?: Prisma.AppUserUpdateOneRequiredWithoutForumBadgesNestedInput
 }
 
 export type ForumProfileBadgeUncheckedUpdateWithoutBadgeInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumProfileBadgeUncheckedUpdateManyWithoutBadgeInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ForumProfileBadgeCreateManyProfileInput = {
-  id?: number
-  badgeId: number
-  createdAt?: Date | string
-}
-
-export type ForumProfileBadgeUpdateWithoutProfileInput = {
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  badge?: Prisma.ForumBadgeUpdateOneRequiredWithoutBadgesNestedInput
-}
-
-export type ForumProfileBadgeUncheckedUpdateWithoutProfileInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  badgeId?: Prisma.IntFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ForumProfileBadgeUncheckedUpdateManyWithoutProfileInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  badgeId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -574,57 +574,63 @@ export type ForumProfileBadgeUncheckedUpdateManyWithoutProfileInput = {
 
 export type ForumProfileBadgeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
   badgeId?: boolean
   createdAt?: boolean
   badge?: boolean | Prisma.ForumBadgeDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumProfileBadge"]>
 
 export type ForumProfileBadgeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
   badgeId?: boolean
   createdAt?: boolean
   badge?: boolean | Prisma.ForumBadgeDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumProfileBadge"]>
 
 export type ForumProfileBadgeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
   badgeId?: boolean
   createdAt?: boolean
   badge?: boolean | Prisma.ForumBadgeDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumProfileBadge"]>
 
 export type ForumProfileBadgeSelectScalar = {
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
   badgeId?: boolean
   createdAt?: boolean
 }
 
-export type ForumProfileBadgeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "profileId" | "badgeId" | "createdAt", ExtArgs["result"]["forumProfileBadge"]>
+export type ForumProfileBadgeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "badgeId" | "createdAt", ExtArgs["result"]["forumProfileBadge"]>
 export type ForumProfileBadgeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   badge?: boolean | Prisma.ForumBadgeDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type ForumProfileBadgeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   badge?: boolean | Prisma.ForumBadgeDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type ForumProfileBadgeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   badge?: boolean | Prisma.ForumBadgeDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 
 export type $ForumProfileBadgePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumProfileBadge"
   objects: {
+    /**
+     * 关联徽章
+     */
     badge: Prisma.$ForumBadgePayload<ExtArgs>
-    profile: Prisma.$ForumProfilePayload<ExtArgs>
+    /**
+     * 关联用户
+     */
+    user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -632,9 +638,9 @@ export type $ForumProfileBadgePayload<ExtArgs extends runtime.Types.Extensions.I
      */
     id: number
     /**
-     * 关联的用户资料ID
+     * 关联的用户ID
      */
-    profileId: number
+    userId: number
     /**
      * 关联的徽章ID
      */
@@ -1038,7 +1044,7 @@ readonly fields: ForumProfileBadgeFieldRefs;
 export interface Prisma__ForumProfileBadgeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   badge<T extends Prisma.ForumBadgeDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumBadgeDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumBadgeClient<runtime.Types.Result.GetResult<Prisma.$ForumBadgePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  profile<T extends Prisma.ForumProfileDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfileDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1069,7 +1075,7 @@ export interface Prisma__ForumProfileBadgeClient<T, Null = never, ExtArgs extend
  */
 export interface ForumProfileBadgeFieldRefs {
   readonly id: Prisma.FieldRef<"ForumProfileBadge", 'Int'>
-  readonly profileId: Prisma.FieldRef<"ForumProfileBadge", 'Int'>
+  readonly userId: Prisma.FieldRef<"ForumProfileBadge", 'Int'>
   readonly badgeId: Prisma.FieldRef<"ForumProfileBadge", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ForumProfileBadge", 'DateTime'>
 }

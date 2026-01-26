@@ -6,9 +6,6 @@ export class UserService extends BaseService {
   async getUserProfile(userId: number) {
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },
-      include: {
-        forumProfile: true,
-      },
     })
 
     if (!user) {

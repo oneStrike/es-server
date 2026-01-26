@@ -3,6 +3,9 @@ model ForumConfig {
   /// 主键ID
   id Int @id @default(autoincrement())
 
+  /// 最后修改人ID
+  updatedById Int? @map("updated_by_id")
+
   // ========== 基础配置 ==========
   /// 站点名称
   siteName        String  @map("site_name") @db.VarChar(100)
@@ -76,17 +79,15 @@ model ForumConfig {
   maintenanceMessage    String? @map("maintenance_message") @db.VarChar(500)
 
   // ========== 审计字段 ==========
-  /// 最后修改人ID
-  updatedById Int?     @map("updated_by_id")
-  /// 最后修改时间
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 创建时间
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 最后修改时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   /// 配置历史记录
   histories ForumConfigHistory[]
   /// 最后修改人
-  updatedBy ForumProfile?        @relation("ForumConfigUpdater", fields: [updatedById], references: [id])
+  updatedBy AppUser?             @relation("ForumConfigUpdater", fields: [updatedById], references: [id])
 
   @@index([updatedById])
   @@index([createdAt])

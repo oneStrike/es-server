@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkComicChapter
- * 
+ * 漫画章节模型
  */
 export type WorkComicChapterModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkComicChapterPayload>
 
@@ -29,117 +29,115 @@ export type AggregateWorkComicChapter = {
 export type WorkComicChapterAvgAggregateOutputType = {
   id: number | null
   comicId: number | null
+  requiredReadLevelId: number | null
+  requiredDownloadLevelId: number | null
+  sortOrder: number | null
   readRule: number | null
+  downloadRule: number | null
+  readPoints: number | null
+  downloadPoints: number | null
   viewCount: number | null
   likeCount: number | null
   commentCount: number | null
-  downloadPoints: number | null
-  readPoints: number | null
-  sortOrder: number | null
-  downloadRule: number | null
-  requiredDownloadLevelId: number | null
-  requiredReadLevelId: number | null
   purchaseCount: number | null
 }
 
 export type WorkComicChapterSumAggregateOutputType = {
   id: number | null
   comicId: number | null
+  requiredReadLevelId: number | null
+  requiredDownloadLevelId: number | null
+  sortOrder: number | null
   readRule: number | null
+  downloadRule: number | null
+  readPoints: number | null
+  downloadPoints: number | null
   viewCount: number | null
   likeCount: number | null
   commentCount: number | null
-  downloadPoints: number | null
-  readPoints: number | null
-  sortOrder: number | null
-  downloadRule: number | null
-  requiredDownloadLevelId: number | null
-  requiredReadLevelId: number | null
   purchaseCount: number | null
 }
 
 export type WorkComicChapterMinAggregateOutputType = {
   id: number | null
+  comicId: number | null
+  requiredReadLevelId: number | null
+  requiredDownloadLevelId: number | null
   title: string | null
   subtitle: string | null
-  isPublished: boolean | null
-  comicId: number | null
+  description: string | null
+  sortOrder: number | null
   readRule: number | null
-  contents: string | null
+  downloadRule: number | null
+  readPoints: number | null
+  downloadPoints: number | null
+  isPublished: boolean | null
   isPreview: boolean | null
+  canComment: boolean | null
   publishAt: Date | null
   viewCount: number | null
   likeCount: number | null
   commentCount: number | null
+  purchaseCount: number | null
   remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  canComment: boolean | null
-  downloadPoints: number | null
-  readPoints: number | null
-  sortOrder: number | null
-  downloadRule: number | null
-  requiredDownloadLevelId: number | null
-  requiredReadLevelId: number | null
-  description: string | null
-  purchaseCount: number | null
 }
 
 export type WorkComicChapterMaxAggregateOutputType = {
   id: number | null
+  comicId: number | null
+  requiredReadLevelId: number | null
+  requiredDownloadLevelId: number | null
   title: string | null
   subtitle: string | null
-  isPublished: boolean | null
-  comicId: number | null
+  description: string | null
+  sortOrder: number | null
   readRule: number | null
-  contents: string | null
+  downloadRule: number | null
+  readPoints: number | null
+  downloadPoints: number | null
+  isPublished: boolean | null
   isPreview: boolean | null
+  canComment: boolean | null
   publishAt: Date | null
   viewCount: number | null
   likeCount: number | null
   commentCount: number | null
+  purchaseCount: number | null
   remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
-  canComment: boolean | null
-  downloadPoints: number | null
-  readPoints: number | null
-  sortOrder: number | null
-  downloadRule: number | null
-  requiredDownloadLevelId: number | null
-  requiredReadLevelId: number | null
-  description: string | null
-  purchaseCount: number | null
 }
 
 export type WorkComicChapterCountAggregateOutputType = {
   id: number
+  comicId: number
+  requiredReadLevelId: number
+  requiredDownloadLevelId: number
   title: number
   subtitle: number
-  isPublished: number
-  comicId: number
-  readRule: number
+  description: number
   contents: number
+  sortOrder: number
+  readRule: number
+  downloadRule: number
+  readPoints: number
+  downloadPoints: number
+  isPublished: number
   isPreview: number
+  canComment: number
   publishAt: number
   viewCount: number
   likeCount: number
   commentCount: number
+  purchaseCount: number
   remark: number
   createdAt: number
   updatedAt: number
   deletedAt: number
-  canComment: number
-  downloadPoints: number
-  readPoints: number
-  sortOrder: number
-  downloadRule: number
-  requiredDownloadLevelId: number
-  requiredReadLevelId: number
-  description: number
-  purchaseCount: number
   _all: number
 }
 
@@ -147,117 +145,115 @@ export type WorkComicChapterCountAggregateOutputType = {
 export type WorkComicChapterAvgAggregateInputType = {
   id?: true
   comicId?: true
+  requiredReadLevelId?: true
+  requiredDownloadLevelId?: true
+  sortOrder?: true
   readRule?: true
+  downloadRule?: true
+  readPoints?: true
+  downloadPoints?: true
   viewCount?: true
   likeCount?: true
   commentCount?: true
-  downloadPoints?: true
-  readPoints?: true
-  sortOrder?: true
-  downloadRule?: true
-  requiredDownloadLevelId?: true
-  requiredReadLevelId?: true
   purchaseCount?: true
 }
 
 export type WorkComicChapterSumAggregateInputType = {
   id?: true
   comicId?: true
+  requiredReadLevelId?: true
+  requiredDownloadLevelId?: true
+  sortOrder?: true
   readRule?: true
+  downloadRule?: true
+  readPoints?: true
+  downloadPoints?: true
   viewCount?: true
   likeCount?: true
   commentCount?: true
-  downloadPoints?: true
-  readPoints?: true
-  sortOrder?: true
-  downloadRule?: true
-  requiredDownloadLevelId?: true
-  requiredReadLevelId?: true
   purchaseCount?: true
 }
 
 export type WorkComicChapterMinAggregateInputType = {
   id?: true
+  comicId?: true
+  requiredReadLevelId?: true
+  requiredDownloadLevelId?: true
   title?: true
   subtitle?: true
-  isPublished?: true
-  comicId?: true
+  description?: true
+  sortOrder?: true
   readRule?: true
-  contents?: true
+  downloadRule?: true
+  readPoints?: true
+  downloadPoints?: true
+  isPublished?: true
   isPreview?: true
+  canComment?: true
   publishAt?: true
   viewCount?: true
   likeCount?: true
   commentCount?: true
+  purchaseCount?: true
   remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  canComment?: true
-  downloadPoints?: true
-  readPoints?: true
-  sortOrder?: true
-  downloadRule?: true
-  requiredDownloadLevelId?: true
-  requiredReadLevelId?: true
-  description?: true
-  purchaseCount?: true
 }
 
 export type WorkComicChapterMaxAggregateInputType = {
   id?: true
+  comicId?: true
+  requiredReadLevelId?: true
+  requiredDownloadLevelId?: true
   title?: true
   subtitle?: true
-  isPublished?: true
-  comicId?: true
+  description?: true
+  sortOrder?: true
   readRule?: true
-  contents?: true
+  downloadRule?: true
+  readPoints?: true
+  downloadPoints?: true
+  isPublished?: true
   isPreview?: true
+  canComment?: true
   publishAt?: true
   viewCount?: true
   likeCount?: true
   commentCount?: true
+  purchaseCount?: true
   remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  canComment?: true
-  downloadPoints?: true
-  readPoints?: true
-  sortOrder?: true
-  downloadRule?: true
-  requiredDownloadLevelId?: true
-  requiredReadLevelId?: true
-  description?: true
-  purchaseCount?: true
 }
 
 export type WorkComicChapterCountAggregateInputType = {
   id?: true
+  comicId?: true
+  requiredReadLevelId?: true
+  requiredDownloadLevelId?: true
   title?: true
   subtitle?: true
-  isPublished?: true
-  comicId?: true
-  readRule?: true
+  description?: true
   contents?: true
+  sortOrder?: true
+  readRule?: true
+  downloadRule?: true
+  readPoints?: true
+  downloadPoints?: true
+  isPublished?: true
   isPreview?: true
+  canComment?: true
   publishAt?: true
   viewCount?: true
   likeCount?: true
   commentCount?: true
+  purchaseCount?: true
   remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
-  canComment?: true
-  downloadPoints?: true
-  readPoints?: true
-  sortOrder?: true
-  downloadRule?: true
-  requiredDownloadLevelId?: true
-  requiredReadLevelId?: true
-  description?: true
-  purchaseCount?: true
   _all?: true
 }
 
@@ -349,30 +345,30 @@ export type WorkComicChapterGroupByArgs<ExtArgs extends runtime.Types.Extensions
 
 export type WorkComicChapterGroupByOutputType = {
   id: number
+  comicId: number
+  requiredReadLevelId: number | null
+  requiredDownloadLevelId: number | null
   title: string
   subtitle: string | null
-  isPublished: boolean
-  comicId: number
+  description: string | null
+  contents: runtime.JsonValue
+  sortOrder: number
   readRule: number
-  contents: string
+  downloadRule: number
+  readPoints: number | null
+  downloadPoints: number | null
+  isPublished: boolean
   isPreview: boolean
+  canComment: boolean
   publishAt: Date | null
   viewCount: number
   likeCount: number
   commentCount: number
+  purchaseCount: number
   remark: string | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
-  canComment: boolean
-  downloadPoints: number | null
-  readPoints: number | null
-  sortOrder: number
-  downloadRule: number
-  requiredDownloadLevelId: number | null
-  requiredReadLevelId: number | null
-  description: string | null
-  purchaseCount: number
   _count: WorkComicChapterCountAggregateOutputType | null
   _avg: WorkComicChapterAvgAggregateOutputType | null
   _sum: WorkComicChapterSumAggregateOutputType | null
@@ -400,30 +396,30 @@ export type WorkComicChapterWhereInput = {
   OR?: Prisma.WorkComicChapterWhereInput[]
   NOT?: Prisma.WorkComicChapterWhereInput | Prisma.WorkComicChapterWhereInput[]
   id?: Prisma.IntFilter<"WorkComicChapter"> | number
+  comicId?: Prisma.IntFilter<"WorkComicChapter"> | number
+  requiredReadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
+  requiredDownloadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
   title?: Prisma.StringFilter<"WorkComicChapter"> | string
   subtitle?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
-  isPublished?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
-  comicId?: Prisma.IntFilter<"WorkComicChapter"> | number
+  description?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
+  contents?: Prisma.JsonFilter<"WorkComicChapter">
+  sortOrder?: Prisma.IntFilter<"WorkComicChapter"> | number
   readRule?: Prisma.IntFilter<"WorkComicChapter"> | number
-  contents?: Prisma.StringFilter<"WorkComicChapter"> | string
+  downloadRule?: Prisma.IntFilter<"WorkComicChapter"> | number
+  readPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
+  downloadPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
+  isPublished?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
   isPreview?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
+  canComment?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"WorkComicChapter"> | Date | string | null
   viewCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   likeCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   commentCount?: Prisma.IntFilter<"WorkComicChapter"> | number
+  purchaseCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   remark?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkComicChapter"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicChapter"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkComicChapter"> | Date | string | null
-  canComment?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
-  downloadPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  readPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  sortOrder?: Prisma.IntFilter<"WorkComicChapter"> | number
-  downloadRule?: Prisma.IntFilter<"WorkComicChapter"> | number
-  requiredDownloadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  requiredReadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  description?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
-  purchaseCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   relatedComic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
   requiredDownloadLevel?: Prisma.XOR<Prisma.MemberLevelNullableScalarRelationFilter, Prisma.MemberLevelWhereInput> | null
   requiredReadLevel?: Prisma.XOR<Prisma.MemberLevelNullableScalarRelationFilter, Prisma.MemberLevelWhereInput> | null
@@ -431,30 +427,30 @@ export type WorkComicChapterWhereInput = {
 
 export type WorkComicChapterOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  comicId?: Prisma.SortOrder
+  requiredReadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrderInput | Prisma.SortOrder
-  isPublished?: Prisma.SortOrder
-  comicId?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   contents?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
+  readRule?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  readPoints?: Prisma.SortOrderInput | Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
   isPreview?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
-  readPoints?: Prisma.SortOrderInput | Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
-  requiredReadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
-  purchaseCount?: Prisma.SortOrder
   relatedComic?: Prisma.WorkComicOrderByWithRelationInput
   requiredDownloadLevel?: Prisma.MemberLevelOrderByWithRelationInput
   requiredReadLevel?: Prisma.MemberLevelOrderByWithRelationInput
@@ -466,30 +462,30 @@ export type WorkComicChapterWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.WorkComicChapterWhereInput | Prisma.WorkComicChapterWhereInput[]
   OR?: Prisma.WorkComicChapterWhereInput[]
   NOT?: Prisma.WorkComicChapterWhereInput | Prisma.WorkComicChapterWhereInput[]
+  comicId?: Prisma.IntFilter<"WorkComicChapter"> | number
+  requiredReadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
+  requiredDownloadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
   title?: Prisma.StringFilter<"WorkComicChapter"> | string
   subtitle?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
-  isPublished?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
-  comicId?: Prisma.IntFilter<"WorkComicChapter"> | number
+  description?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
+  contents?: Prisma.JsonFilter<"WorkComicChapter">
+  sortOrder?: Prisma.IntFilter<"WorkComicChapter"> | number
   readRule?: Prisma.IntFilter<"WorkComicChapter"> | number
-  contents?: Prisma.StringFilter<"WorkComicChapter"> | string
+  downloadRule?: Prisma.IntFilter<"WorkComicChapter"> | number
+  readPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
+  downloadPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
+  isPublished?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
   isPreview?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
+  canComment?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"WorkComicChapter"> | Date | string | null
   viewCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   likeCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   commentCount?: Prisma.IntFilter<"WorkComicChapter"> | number
+  purchaseCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   remark?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkComicChapter"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicChapter"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkComicChapter"> | Date | string | null
-  canComment?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
-  downloadPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  readPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  sortOrder?: Prisma.IntFilter<"WorkComicChapter"> | number
-  downloadRule?: Prisma.IntFilter<"WorkComicChapter"> | number
-  requiredDownloadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  requiredReadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  description?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
-  purchaseCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   relatedComic?: Prisma.XOR<Prisma.WorkComicScalarRelationFilter, Prisma.WorkComicWhereInput>
   requiredDownloadLevel?: Prisma.XOR<Prisma.MemberLevelNullableScalarRelationFilter, Prisma.MemberLevelWhereInput> | null
   requiredReadLevel?: Prisma.XOR<Prisma.MemberLevelNullableScalarRelationFilter, Prisma.MemberLevelWhereInput> | null
@@ -497,30 +493,30 @@ export type WorkComicChapterWhereUniqueInput = Prisma.AtLeast<{
 
 export type WorkComicChapterOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  comicId?: Prisma.SortOrder
+  requiredReadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrderInput | Prisma.SortOrder
-  isPublished?: Prisma.SortOrder
-  comicId?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   contents?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
+  readRule?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  readPoints?: Prisma.SortOrderInput | Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
   isPreview?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
-  readPoints?: Prisma.SortOrderInput | Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
-  requiredReadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
-  purchaseCount?: Prisma.SortOrder
   _count?: Prisma.WorkComicChapterCountOrderByAggregateInput
   _avg?: Prisma.WorkComicChapterAvgOrderByAggregateInput
   _max?: Prisma.WorkComicChapterMaxOrderByAggregateInput
@@ -533,54 +529,54 @@ export type WorkComicChapterScalarWhereWithAggregatesInput = {
   OR?: Prisma.WorkComicChapterScalarWhereWithAggregatesInput[]
   NOT?: Prisma.WorkComicChapterScalarWhereWithAggregatesInput | Prisma.WorkComicChapterScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
+  comicId?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
+  requiredReadLevelId?: Prisma.IntNullableWithAggregatesFilter<"WorkComicChapter"> | number | null
+  requiredDownloadLevelId?: Prisma.IntNullableWithAggregatesFilter<"WorkComicChapter"> | number | null
   title?: Prisma.StringWithAggregatesFilter<"WorkComicChapter"> | string
   subtitle?: Prisma.StringNullableWithAggregatesFilter<"WorkComicChapter"> | string | null
-  isPublished?: Prisma.BoolWithAggregatesFilter<"WorkComicChapter"> | boolean
-  comicId?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
+  description?: Prisma.StringNullableWithAggregatesFilter<"WorkComicChapter"> | string | null
+  contents?: Prisma.JsonWithAggregatesFilter<"WorkComicChapter">
+  sortOrder?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
   readRule?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
-  contents?: Prisma.StringWithAggregatesFilter<"WorkComicChapter"> | string
+  downloadRule?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
+  readPoints?: Prisma.IntNullableWithAggregatesFilter<"WorkComicChapter"> | number | null
+  downloadPoints?: Prisma.IntNullableWithAggregatesFilter<"WorkComicChapter"> | number | null
+  isPublished?: Prisma.BoolWithAggregatesFilter<"WorkComicChapter"> | boolean
   isPreview?: Prisma.BoolWithAggregatesFilter<"WorkComicChapter"> | boolean
+  canComment?: Prisma.BoolWithAggregatesFilter<"WorkComicChapter"> | boolean
   publishAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkComicChapter"> | Date | string | null
   viewCount?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
   likeCount?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
   commentCount?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
+  purchaseCount?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
   remark?: Prisma.StringNullableWithAggregatesFilter<"WorkComicChapter"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicChapter"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComicChapter"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkComicChapter"> | Date | string | null
-  canComment?: Prisma.BoolWithAggregatesFilter<"WorkComicChapter"> | boolean
-  downloadPoints?: Prisma.IntNullableWithAggregatesFilter<"WorkComicChapter"> | number | null
-  readPoints?: Prisma.IntNullableWithAggregatesFilter<"WorkComicChapter"> | number | null
-  sortOrder?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
-  downloadRule?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
-  requiredDownloadLevelId?: Prisma.IntNullableWithAggregatesFilter<"WorkComicChapter"> | number | null
-  requiredReadLevelId?: Prisma.IntNullableWithAggregatesFilter<"WorkComicChapter"> | number | null
-  description?: Prisma.StringNullableWithAggregatesFilter<"WorkComicChapter"> | string | null
-  purchaseCount?: Prisma.IntWithAggregatesFilter<"WorkComicChapter"> | number
 }
 
 export type WorkComicChapterCreateInput = {
   title: string
   subtitle?: string | null
-  isPublished?: boolean
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  description?: string | null
-  purchaseCount?: number
   relatedComic: Prisma.WorkComicCreateNestedOneWithoutRelatedChaptersInput
   requiredDownloadLevel?: Prisma.MemberLevelCreateNestedOneWithoutComicChaptersAsDownloadLevelInput
   requiredReadLevel?: Prisma.MemberLevelCreateNestedOneWithoutComicChaptersAsReadLevelInput
@@ -588,54 +584,54 @@ export type WorkComicChapterCreateInput = {
 
 export type WorkComicChapterUncheckedCreateInput = {
   id?: number
+  comicId: number
+  requiredReadLevelId?: number | null
+  requiredDownloadLevelId?: number | null
   title: string
   subtitle?: string | null
-  isPublished?: boolean
-  comicId: number
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  requiredDownloadLevelId?: number | null
-  requiredReadLevelId?: number | null
-  description?: string | null
-  purchaseCount?: number
 }
 
 export type WorkComicChapterUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   relatedComic?: Prisma.WorkComicUpdateOneRequiredWithoutRelatedChaptersNestedInput
   requiredDownloadLevel?: Prisma.MemberLevelUpdateOneWithoutComicChaptersAsDownloadLevelNestedInput
   requiredReadLevel?: Prisma.MemberLevelUpdateOneWithoutComicChaptersAsReadLevelNestedInput
@@ -643,110 +639,110 @@ export type WorkComicChapterUpdateInput = {
 
 export type WorkComicChapterUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicChapterCreateManyInput = {
   id?: number
+  comicId: number
+  requiredReadLevelId?: number | null
+  requiredDownloadLevelId?: number | null
   title: string
   subtitle?: string | null
-  isPublished?: boolean
-  comicId: number
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  requiredDownloadLevelId?: number | null
-  requiredReadLevelId?: number | null
-  description?: string | null
-  purchaseCount?: number
 }
 
 export type WorkComicChapterUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicChapterUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicChapterListRelationFilter = {
@@ -766,117 +762,115 @@ export type WorkComicChapterComicIdSortOrderCompoundUniqueInput = {
 
 export type WorkComicChapterCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  comicId?: Prisma.SortOrder
+  requiredReadLevelId?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrder
-  isPublished?: Prisma.SortOrder
-  comicId?: Prisma.SortOrder
-  readRule?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   contents?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
+  readRule?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  readPoints?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
   isPreview?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
-  requiredReadLevelId?: Prisma.SortOrder
-  description?: Prisma.SortOrder
-  purchaseCount?: Prisma.SortOrder
 }
 
 export type WorkComicChapterAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   comicId?: Prisma.SortOrder
+  requiredReadLevelId?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  readPoints?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
-  requiredReadLevelId?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
 }
 
 export type WorkComicChapterMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  comicId?: Prisma.SortOrder
+  requiredReadLevelId?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrder
-  isPublished?: Prisma.SortOrder
-  comicId?: Prisma.SortOrder
+  description?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
-  contents?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  readPoints?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
   isPreview?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
-  requiredReadLevelId?: Prisma.SortOrder
-  description?: Prisma.SortOrder
-  purchaseCount?: Prisma.SortOrder
 }
 
 export type WorkComicChapterMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  comicId?: Prisma.SortOrder
+  requiredReadLevelId?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrder
-  isPublished?: Prisma.SortOrder
-  comicId?: Prisma.SortOrder
+  description?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
-  contents?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  readPoints?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
+  isPublished?: Prisma.SortOrder
   isPreview?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
-  requiredReadLevelId?: Prisma.SortOrder
-  description?: Prisma.SortOrder
-  purchaseCount?: Prisma.SortOrder
 }
 
 export type WorkComicChapterSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   comicId?: Prisma.SortOrder
+  requiredReadLevelId?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  readPoints?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
-  sortOrder?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
-  requiredReadLevelId?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
 }
 
@@ -1009,54 +1003,54 @@ export type WorkComicChapterUncheckedUpdateManyWithoutRelatedComicNestedInput = 
 export type WorkComicChapterCreateWithoutRequiredDownloadLevelInput = {
   title: string
   subtitle?: string | null
-  isPublished?: boolean
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  description?: string | null
-  purchaseCount?: number
   relatedComic: Prisma.WorkComicCreateNestedOneWithoutRelatedChaptersInput
   requiredReadLevel?: Prisma.MemberLevelCreateNestedOneWithoutComicChaptersAsReadLevelInput
 }
 
 export type WorkComicChapterUncheckedCreateWithoutRequiredDownloadLevelInput = {
   id?: number
+  comicId: number
+  requiredReadLevelId?: number | null
   title: string
   subtitle?: string | null
-  isPublished?: boolean
-  comicId: number
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  requiredReadLevelId?: number | null
-  description?: string | null
-  purchaseCount?: number
 }
 
 export type WorkComicChapterCreateOrConnectWithoutRequiredDownloadLevelInput = {
@@ -1072,54 +1066,54 @@ export type WorkComicChapterCreateManyRequiredDownloadLevelInputEnvelope = {
 export type WorkComicChapterCreateWithoutRequiredReadLevelInput = {
   title: string
   subtitle?: string | null
-  isPublished?: boolean
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  description?: string | null
-  purchaseCount?: number
   relatedComic: Prisma.WorkComicCreateNestedOneWithoutRelatedChaptersInput
   requiredDownloadLevel?: Prisma.MemberLevelCreateNestedOneWithoutComicChaptersAsDownloadLevelInput
 }
 
 export type WorkComicChapterUncheckedCreateWithoutRequiredReadLevelInput = {
   id?: number
+  comicId: number
+  requiredDownloadLevelId?: number | null
   title: string
   subtitle?: string | null
-  isPublished?: boolean
-  comicId: number
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  requiredDownloadLevelId?: number | null
-  description?: string | null
-  purchaseCount?: number
 }
 
 export type WorkComicChapterCreateOrConnectWithoutRequiredReadLevelInput = {
@@ -1153,30 +1147,30 @@ export type WorkComicChapterScalarWhereInput = {
   OR?: Prisma.WorkComicChapterScalarWhereInput[]
   NOT?: Prisma.WorkComicChapterScalarWhereInput | Prisma.WorkComicChapterScalarWhereInput[]
   id?: Prisma.IntFilter<"WorkComicChapter"> | number
+  comicId?: Prisma.IntFilter<"WorkComicChapter"> | number
+  requiredReadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
+  requiredDownloadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
   title?: Prisma.StringFilter<"WorkComicChapter"> | string
   subtitle?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
-  isPublished?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
-  comicId?: Prisma.IntFilter<"WorkComicChapter"> | number
+  description?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
+  contents?: Prisma.JsonFilter<"WorkComicChapter">
+  sortOrder?: Prisma.IntFilter<"WorkComicChapter"> | number
   readRule?: Prisma.IntFilter<"WorkComicChapter"> | number
-  contents?: Prisma.StringFilter<"WorkComicChapter"> | string
+  downloadRule?: Prisma.IntFilter<"WorkComicChapter"> | number
+  readPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
+  downloadPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
+  isPublished?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
   isPreview?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
+  canComment?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"WorkComicChapter"> | Date | string | null
   viewCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   likeCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   commentCount?: Prisma.IntFilter<"WorkComicChapter"> | number
+  purchaseCount?: Prisma.IntFilter<"WorkComicChapter"> | number
   remark?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkComicChapter"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkComicChapter"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkComicChapter"> | Date | string | null
-  canComment?: Prisma.BoolFilter<"WorkComicChapter"> | boolean
-  downloadPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  readPoints?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  sortOrder?: Prisma.IntFilter<"WorkComicChapter"> | number
-  downloadRule?: Prisma.IntFilter<"WorkComicChapter"> | number
-  requiredDownloadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  requiredReadLevelId?: Prisma.IntNullableFilter<"WorkComicChapter"> | number | null
-  description?: Prisma.StringNullableFilter<"WorkComicChapter"> | string | null
-  purchaseCount?: Prisma.IntFilter<"WorkComicChapter"> | number
 }
 
 export type WorkComicChapterUpsertWithWhereUniqueWithoutRequiredReadLevelInput = {
@@ -1198,54 +1192,54 @@ export type WorkComicChapterUpdateManyWithWhereWithoutRequiredReadLevelInput = {
 export type WorkComicChapterCreateWithoutRelatedComicInput = {
   title: string
   subtitle?: string | null
-  isPublished?: boolean
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  description?: string | null
-  purchaseCount?: number
   requiredDownloadLevel?: Prisma.MemberLevelCreateNestedOneWithoutComicChaptersAsDownloadLevelInput
   requiredReadLevel?: Prisma.MemberLevelCreateNestedOneWithoutComicChaptersAsReadLevelInput
 }
 
 export type WorkComicChapterUncheckedCreateWithoutRelatedComicInput = {
   id?: number
+  requiredReadLevelId?: number | null
+  requiredDownloadLevelId?: number | null
   title: string
   subtitle?: string | null
-  isPublished?: boolean
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  requiredDownloadLevelId?: number | null
-  requiredReadLevelId?: number | null
-  description?: string | null
-  purchaseCount?: number
 }
 
 export type WorkComicChapterCreateOrConnectWithoutRelatedComicInput = {
@@ -1276,353 +1270,353 @@ export type WorkComicChapterUpdateManyWithWhereWithoutRelatedComicInput = {
 
 export type WorkComicChapterCreateManyRequiredDownloadLevelInput = {
   id?: number
+  comicId: number
+  requiredReadLevelId?: number | null
   title: string
   subtitle?: string | null
-  isPublished?: boolean
-  comicId: number
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  requiredReadLevelId?: number | null
-  description?: string | null
-  purchaseCount?: number
 }
 
 export type WorkComicChapterCreateManyRequiredReadLevelInput = {
   id?: number
+  comicId: number
+  requiredDownloadLevelId?: number | null
   title: string
   subtitle?: string | null
-  isPublished?: boolean
-  comicId: number
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  requiredDownloadLevelId?: number | null
-  description?: string | null
-  purchaseCount?: number
 }
 
 export type WorkComicChapterUpdateWithoutRequiredDownloadLevelInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   relatedComic?: Prisma.WorkComicUpdateOneRequiredWithoutRelatedChaptersNestedInput
   requiredReadLevel?: Prisma.MemberLevelUpdateOneWithoutComicChaptersAsReadLevelNestedInput
 }
 
 export type WorkComicChapterUncheckedUpdateWithoutRequiredDownloadLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicChapterUpdateWithoutRequiredReadLevelInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   relatedComic?: Prisma.WorkComicUpdateOneRequiredWithoutRelatedChaptersNestedInput
   requiredDownloadLevel?: Prisma.MemberLevelUpdateOneWithoutComicChaptersAsDownloadLevelNestedInput
 }
 
 export type WorkComicChapterUncheckedUpdateWithoutRequiredReadLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  comicId?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicChapterCreateManyRelatedComicInput = {
   id?: number
+  requiredReadLevelId?: number | null
+  requiredDownloadLevelId?: number | null
   title: string
   subtitle?: string | null
-  isPublished?: boolean
+  description?: string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: number
   readRule?: number
-  contents?: string
+  downloadRule?: number
+  readPoints?: number | null
+  downloadPoints?: number | null
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: Date | string | null
   viewCount?: number
   likeCount?: number
   commentCount?: number
+  purchaseCount?: number
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  canComment?: boolean
-  downloadPoints?: number | null
-  readPoints?: number | null
-  sortOrder?: number
-  downloadRule?: number
-  requiredDownloadLevelId?: number | null
-  requiredReadLevelId?: number | null
-  description?: string | null
-  purchaseCount?: number
 }
 
 export type WorkComicChapterUpdateWithoutRelatedComicInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   requiredDownloadLevel?: Prisma.MemberLevelUpdateOneWithoutComicChaptersAsDownloadLevelNestedInput
   requiredReadLevel?: Prisma.MemberLevelUpdateOneWithoutComicChaptersAsReadLevelNestedInput
 }
 
 export type WorkComicChapterUncheckedUpdateWithoutRelatedComicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type WorkComicChapterUncheckedUpdateManyWithoutRelatedComicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contents?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  contents?: Prisma.StringFieldUpdateOperationsInput | string
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 
 
 export type WorkComicChapterSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  comicId?: boolean
+  requiredReadLevelId?: boolean
+  requiredDownloadLevelId?: boolean
   title?: boolean
   subtitle?: boolean
-  isPublished?: boolean
-  comicId?: boolean
-  readRule?: boolean
+  description?: boolean
   contents?: boolean
+  sortOrder?: boolean
+  readRule?: boolean
+  downloadRule?: boolean
+  readPoints?: boolean
+  downloadPoints?: boolean
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: boolean
   viewCount?: boolean
   likeCount?: boolean
   commentCount?: boolean
+  purchaseCount?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  canComment?: boolean
-  downloadPoints?: boolean
-  readPoints?: boolean
-  sortOrder?: boolean
-  downloadRule?: boolean
-  requiredDownloadLevelId?: boolean
-  requiredReadLevelId?: boolean
-  description?: boolean
-  purchaseCount?: boolean
   relatedComic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   requiredDownloadLevel?: boolean | Prisma.WorkComicChapter$requiredDownloadLevelArgs<ExtArgs>
   requiredReadLevel?: boolean | Prisma.WorkComicChapter$requiredReadLevelArgs<ExtArgs>
@@ -1630,30 +1624,30 @@ export type WorkComicChapterSelect<ExtArgs extends runtime.Types.Extensions.Inte
 
 export type WorkComicChapterSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  comicId?: boolean
+  requiredReadLevelId?: boolean
+  requiredDownloadLevelId?: boolean
   title?: boolean
   subtitle?: boolean
-  isPublished?: boolean
-  comicId?: boolean
-  readRule?: boolean
+  description?: boolean
   contents?: boolean
+  sortOrder?: boolean
+  readRule?: boolean
+  downloadRule?: boolean
+  readPoints?: boolean
+  downloadPoints?: boolean
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: boolean
   viewCount?: boolean
   likeCount?: boolean
   commentCount?: boolean
+  purchaseCount?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  canComment?: boolean
-  downloadPoints?: boolean
-  readPoints?: boolean
-  sortOrder?: boolean
-  downloadRule?: boolean
-  requiredDownloadLevelId?: boolean
-  requiredReadLevelId?: boolean
-  description?: boolean
-  purchaseCount?: boolean
   relatedComic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   requiredDownloadLevel?: boolean | Prisma.WorkComicChapter$requiredDownloadLevelArgs<ExtArgs>
   requiredReadLevel?: boolean | Prisma.WorkComicChapter$requiredReadLevelArgs<ExtArgs>
@@ -1661,30 +1655,30 @@ export type WorkComicChapterSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
 
 export type WorkComicChapterSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  comicId?: boolean
+  requiredReadLevelId?: boolean
+  requiredDownloadLevelId?: boolean
   title?: boolean
   subtitle?: boolean
-  isPublished?: boolean
-  comicId?: boolean
-  readRule?: boolean
+  description?: boolean
   contents?: boolean
+  sortOrder?: boolean
+  readRule?: boolean
+  downloadRule?: boolean
+  readPoints?: boolean
+  downloadPoints?: boolean
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: boolean
   viewCount?: boolean
   likeCount?: boolean
   commentCount?: boolean
+  purchaseCount?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  canComment?: boolean
-  downloadPoints?: boolean
-  readPoints?: boolean
-  sortOrder?: boolean
-  downloadRule?: boolean
-  requiredDownloadLevelId?: boolean
-  requiredReadLevelId?: boolean
-  description?: boolean
-  purchaseCount?: boolean
   relatedComic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   requiredDownloadLevel?: boolean | Prisma.WorkComicChapter$requiredDownloadLevelArgs<ExtArgs>
   requiredReadLevel?: boolean | Prisma.WorkComicChapter$requiredReadLevelArgs<ExtArgs>
@@ -1692,33 +1686,33 @@ export type WorkComicChapterSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
 
 export type WorkComicChapterSelectScalar = {
   id?: boolean
+  comicId?: boolean
+  requiredReadLevelId?: boolean
+  requiredDownloadLevelId?: boolean
   title?: boolean
   subtitle?: boolean
-  isPublished?: boolean
-  comicId?: boolean
-  readRule?: boolean
+  description?: boolean
   contents?: boolean
+  sortOrder?: boolean
+  readRule?: boolean
+  downloadRule?: boolean
+  readPoints?: boolean
+  downloadPoints?: boolean
+  isPublished?: boolean
   isPreview?: boolean
+  canComment?: boolean
   publishAt?: boolean
   viewCount?: boolean
   likeCount?: boolean
   commentCount?: boolean
+  purchaseCount?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  canComment?: boolean
-  downloadPoints?: boolean
-  readPoints?: boolean
-  sortOrder?: boolean
-  downloadRule?: boolean
-  requiredDownloadLevelId?: boolean
-  requiredReadLevelId?: boolean
-  description?: boolean
-  purchaseCount?: boolean
 }
 
-export type WorkComicChapterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "subtitle" | "isPublished" | "comicId" | "readRule" | "contents" | "isPreview" | "publishAt" | "viewCount" | "likeCount" | "commentCount" | "remark" | "createdAt" | "updatedAt" | "deletedAt" | "canComment" | "downloadPoints" | "readPoints" | "sortOrder" | "downloadRule" | "requiredDownloadLevelId" | "requiredReadLevelId" | "description" | "purchaseCount", ExtArgs["result"]["workComicChapter"]>
+export type WorkComicChapterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "comicId" | "requiredReadLevelId" | "requiredDownloadLevelId" | "title" | "subtitle" | "description" | "contents" | "sortOrder" | "readRule" | "downloadRule" | "readPoints" | "downloadPoints" | "isPublished" | "isPreview" | "canComment" | "publishAt" | "viewCount" | "likeCount" | "commentCount" | "purchaseCount" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workComicChapter"]>
 export type WorkComicChapterInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   relatedComic?: boolean | Prisma.WorkComicDefaultArgs<ExtArgs>
   requiredDownloadLevel?: boolean | Prisma.WorkComicChapter$requiredDownloadLevelArgs<ExtArgs>
@@ -1738,8 +1732,17 @@ export type WorkComicChapterIncludeUpdateManyAndReturn<ExtArgs extends runtime.T
 export type $WorkComicChapterPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "WorkComicChapter"
   objects: {
+    /**
+     * 关联漫画
+     */
     relatedComic: Prisma.$WorkComicPayload<ExtArgs>
+    /**
+     * 关联下载权限等级
+     */
     requiredDownloadLevel: Prisma.$MemberLevelPayload<ExtArgs> | null
+    /**
+     * 关联阅读权限等级
+     */
     requiredReadLevel: Prisma.$MemberLevelPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1747,6 +1750,18 @@ export type $WorkComicChapterPayload<ExtArgs extends runtime.Types.Extensions.In
      * 主键id
      */
     id: number
+    /**
+     * 漫画ID
+     */
+    comicId: number
+    /**
+     * 允许查看的会员等级ID
+     */
+    requiredReadLevelId: number | null
+    /**
+     * 允许下载的会员等级ID
+     */
+    requiredDownloadLevelId: number | null
     /**
      * 章节标题
      */
@@ -1756,22 +1771,45 @@ export type $WorkComicChapterPayload<ExtArgs extends runtime.Types.Extensions.In
      */
     subtitle: string | null
     /**
-     * 发布状态
+     * 章节描述
      */
-    isPublished: boolean
-    comicId: number
+    description: string | null
+    /**
+     * 漫画内容（JSON格式存储图片URL数组）
+     */
+    contents: runtime.JsonValue
+    /**
+     * 章节序号（用于排序）
+     */
+    sortOrder: number
     /**
      * 查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）
      */
     readRule: number
     /**
-     * 漫画内容（JSON格式存储图片URL数组）
+     * 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
      */
-    contents: string
+    downloadRule: number
+    /**
+     * 阅读所需要的积分（积分购买时必填）
+     */
+    readPoints: number | null
+    /**
+     * 下载所需要的积分（积分可下载时必填）
+     */
+    downloadPoints: number | null
+    /**
+     * 发布状态
+     */
+    isPublished: boolean
     /**
      * 是否为试读章节
      */
     isPreview: boolean
+    /**
+     * 是否允许评论
+     */
+    canComment: boolean
     /**
      * 发布时间
      */
@@ -1789,6 +1827,10 @@ export type $WorkComicChapterPayload<ExtArgs extends runtime.Types.Extensions.In
      */
     commentCount: number
     /**
+     * 购买次数
+     */
+    purchaseCount: number
+    /**
      * 备注
      */
     remark: string | null
@@ -1804,42 +1846,6 @@ export type $WorkComicChapterPayload<ExtArgs extends runtime.Types.Extensions.In
      * 软删除时间（用于数据恢复或归档）
      */
     deletedAt: Date | null
-    /**
-     * 是否允许评论
-     */
-    canComment: boolean
-    /**
-     * 下载所需要的积分（积分可下载时必填）
-     */
-    downloadPoints: number | null
-    /**
-     * 阅读所需要的积分（积分购买时必填）
-     */
-    readPoints: number | null
-    /**
-     * 章节序号（用于排序）
-     */
-    sortOrder: number
-    /**
-     * 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
-     */
-    downloadRule: number
-    /**
-     * 允许下载的会员等级ID
-     */
-    requiredDownloadLevelId: number | null
-    /**
-     * 允许查看的会员等级ID
-     */
-    requiredReadLevelId: number | null
-    /**
-     * 章节描述
-     */
-    description: string | null
-    /**
-     * 购买次数
-     */
-    purchaseCount: number
   }, ExtArgs["result"]["workComicChapter"]>
   composites: {}
 }
@@ -2267,30 +2273,30 @@ export interface Prisma__WorkComicChapterClient<T, Null = never, ExtArgs extends
  */
 export interface WorkComicChapterFieldRefs {
   readonly id: Prisma.FieldRef<"WorkComicChapter", 'Int'>
+  readonly comicId: Prisma.FieldRef<"WorkComicChapter", 'Int'>
+  readonly requiredReadLevelId: Prisma.FieldRef<"WorkComicChapter", 'Int'>
+  readonly requiredDownloadLevelId: Prisma.FieldRef<"WorkComicChapter", 'Int'>
   readonly title: Prisma.FieldRef<"WorkComicChapter", 'String'>
   readonly subtitle: Prisma.FieldRef<"WorkComicChapter", 'String'>
-  readonly isPublished: Prisma.FieldRef<"WorkComicChapter", 'Boolean'>
-  readonly comicId: Prisma.FieldRef<"WorkComicChapter", 'Int'>
+  readonly description: Prisma.FieldRef<"WorkComicChapter", 'String'>
+  readonly contents: Prisma.FieldRef<"WorkComicChapter", 'Json'>
+  readonly sortOrder: Prisma.FieldRef<"WorkComicChapter", 'Int'>
   readonly readRule: Prisma.FieldRef<"WorkComicChapter", 'Int'>
-  readonly contents: Prisma.FieldRef<"WorkComicChapter", 'String'>
+  readonly downloadRule: Prisma.FieldRef<"WorkComicChapter", 'Int'>
+  readonly readPoints: Prisma.FieldRef<"WorkComicChapter", 'Int'>
+  readonly downloadPoints: Prisma.FieldRef<"WorkComicChapter", 'Int'>
+  readonly isPublished: Prisma.FieldRef<"WorkComicChapter", 'Boolean'>
   readonly isPreview: Prisma.FieldRef<"WorkComicChapter", 'Boolean'>
+  readonly canComment: Prisma.FieldRef<"WorkComicChapter", 'Boolean'>
   readonly publishAt: Prisma.FieldRef<"WorkComicChapter", 'DateTime'>
   readonly viewCount: Prisma.FieldRef<"WorkComicChapter", 'Int'>
   readonly likeCount: Prisma.FieldRef<"WorkComicChapter", 'Int'>
   readonly commentCount: Prisma.FieldRef<"WorkComicChapter", 'Int'>
+  readonly purchaseCount: Prisma.FieldRef<"WorkComicChapter", 'Int'>
   readonly remark: Prisma.FieldRef<"WorkComicChapter", 'String'>
   readonly createdAt: Prisma.FieldRef<"WorkComicChapter", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WorkComicChapter", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"WorkComicChapter", 'DateTime'>
-  readonly canComment: Prisma.FieldRef<"WorkComicChapter", 'Boolean'>
-  readonly downloadPoints: Prisma.FieldRef<"WorkComicChapter", 'Int'>
-  readonly readPoints: Prisma.FieldRef<"WorkComicChapter", 'Int'>
-  readonly sortOrder: Prisma.FieldRef<"WorkComicChapter", 'Int'>
-  readonly downloadRule: Prisma.FieldRef<"WorkComicChapter", 'Int'>
-  readonly requiredDownloadLevelId: Prisma.FieldRef<"WorkComicChapter", 'Int'>
-  readonly requiredReadLevelId: Prisma.FieldRef<"WorkComicChapter", 'Int'>
-  readonly description: Prisma.FieldRef<"WorkComicChapter", 'String'>
-  readonly purchaseCount: Prisma.FieldRef<"WorkComicChapter", 'Int'>
 }
     
 

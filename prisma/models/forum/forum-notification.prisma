@@ -1,9 +1,15 @@
 /// 论坛通知表 - 存储用户通知信息，包括回复、点赞、收藏、系统通知等
 model ForumNotification {
   /// 主键ID
-  id        Int       @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   /// 关联的用户ID
-  profileId Int       @map("user_id")
+  userId  Int  @map("user_id")
+  /// 关联的主题ID（可选）
+  topicId Int? @map("topic_id")
+  /// 关联的回复ID（可选）
+  replyId Int? @map("reply_id")
+
   /// 通知类型（1=回复, 2=点赞, 3=收藏, 4=系统通知）
   type      Int       @db.SmallInt
   /// 通知标题
@@ -12,33 +18,34 @@ model ForumNotification {
   content   String    @db.VarChar(1000)
   /// 通知优先级（1=普通, 2=重要）
   priority  Int       @default(1) @db.SmallInt
-  /// 关联的主题ID（可选）
-  topicId   Int?      @map("topic_id")
-  /// 关联的回复ID（可选）
-  replyId   Int?      @map("reply_id")
   /// 是否已读
   isRead    Boolean   @default(false) @map("is_read")
   /// 已读时间
   readAt    DateTime? @map("read_at") @db.Timestamptz(6)
-  /// 创建时间
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 过期时间（null表示永不过期）
   expiredAt DateTime? @map("expired_at") @db.Timestamptz(6)
 
-  profile ForumProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  topic   ForumTopic?  @relation("NotificationTopic", fields: [topicId], references: [id], onDelete: Cascade)
-  reply   ForumReply?  @relation("NotificationReply", fields: [replyId], references: [id], onDelete: Cascade)
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([profileId])
-  @@index([type])
-  @@index([priority])
+  /// 关联用户
+  user  AppUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 关联主题
+  topic ForumTopic? @relation("NotificationTopic", fields: [topicId], references: [id], onDelete: Cascade)
+  /// 关联回复
+  reply ForumReply? @relation("NotificationReply", fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@index([topicId])
   @@index([replyId])
-  @@index([expiredAt])
+  @@index([type])
+  @@index([priority])
   @@index([isRead])
+  @@index([expiredAt])
   @@index([createdAt])
-  @@index([profileId, isRead])
-  @@index([profileId, priority])
-  @@index([profileId, createdAt])
+  // 复合索引优化查询
+  @@index([userId, isRead])
+  @@index([userId, priority])
+  @@index([userId, createdAt])
   @@map("forum_notification")
 }

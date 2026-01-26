@@ -34,9 +34,9 @@ export class ForumModeratorService extends BaseService {
     return this.prisma.forumModeratorActionLog
   }
 
-  get forumProfile() {
-    return this.prisma.forumProfile
-  }
+  // get forumProfile() {
+  //   return this.prisma.forumProfile
+  // }
 
   get forumSection() {
     return this.prisma.forumSection
@@ -52,12 +52,12 @@ export class ForumModeratorService extends BaseService {
    * @returns 创建结果
    */
   async createModerator(dto: CreateForumModeratorDto) {
-    if (!(await this.forumProfile.exists({ id: dto.profileId }))) {
-      throw new BadRequestException(`ID【${dto.profileId}】数据不存在`)
+    if (!(await this.appUser.exists({ id: dto.userId }))) {
+      throw new BadRequestException(`ID【${dto.userId}】数据不存在`)
     }
 
     const existing = await this.forumModerator.findUnique({
-      where: { profileId: dto.profileId },
+      where: { userId: dto.userId },
     })
 
     if (existing) {
@@ -71,8 +71,10 @@ export class ForumModeratorService extends BaseService {
       ] as ForumModeratorPermissionEnum[]
     }
 
+    const { sectionIds, ...moderatorData } = dto
+
     return this.forumModerator.create({
-      data: dto,
+      data: moderatorData as any,
       select: {
         id: true,
       },
@@ -169,12 +171,10 @@ export class ForumModeratorService extends BaseService {
     }
 
     if (nickname) {
-      where.profile = {
-        user: {
-          nickname: {
-            contains: nickname,
-            mode: 'insensitive',
-          },
+      where.user = {
+        nickname: {
+          contains: nickname,
+          mode: 'insensitive',
         },
       }
     }
@@ -190,7 +190,13 @@ export class ForumModeratorService extends BaseService {
     return this.forumModerator.findPagination({
       where,
       include: {
-        profile: true,
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            avatar: true,
+          },
+        },
       },
     })
   }

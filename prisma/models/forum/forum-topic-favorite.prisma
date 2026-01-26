@@ -1,19 +1,22 @@
 /// 论坛主题收藏表 - 记录用户收藏的主题关系
 model ForumTopicFavorite {
   /// 主键ID
-  id        Int          @id @default(autoincrement())
-  /// 关联的主题ID
-  topicId   Int          @map("topic_id")
-  /// 关联的用户ID
-  profileId Int          @map("profile_id")
-  /// 创建时间
-  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  topic     ForumTopic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  profile   ForumProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  id Int @id @default(autoincrement())
 
-  @@unique([topicId, profileId])
+  /// 关联的主题ID
+  topicId Int @map("topic_id")
+  /// 关联的用户ID
+  userId  Int @map("user_id")
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  topic ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user  AppUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([topicId, userId])
   @@index([topicId])
-  @@index([profileId])
+  @@index([userId])
   @@index([createdAt])
   @@map("forum_topic_favorite")
 }

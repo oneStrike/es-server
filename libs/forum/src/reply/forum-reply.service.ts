@@ -4,6 +4,7 @@ import type {
 } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 
+import { UserStatusEnum } from '@libs/base/enum'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,
@@ -49,7 +50,7 @@ export class ForumReplyService extends BaseService {
    * @returns 创建的回复信息
    */
   async createReply(createForumReplyDto: CreateForumReplyDto) {
-    const { topicId, replyToId, ...replyData } = createForumReplyDto
+    const { topicId, replyToId, userId, ...replyData } = createForumReplyDto
 
     const topic = await this.forumTopic.findUnique({
       where: { id: topicId },
@@ -63,15 +64,23 @@ export class ForumReplyService extends BaseService {
       throw new BadRequestException('主题已锁定，无法回复')
     }
 
-    const profile = await this.forumProfile.findFirst({
-      where: { id: replyData.profileId, status: 1 },
-      include: {
-        user: true,
-      },
+    const user = await this.prisma.appUser.findFirst({
+      where: { id: userId, isEnabled: true },
     })
 
-    if (!profile) {
-      throw new BadRequestException('用户论坛资料不存在或已被封禁')
+    if (!user) {
+      throw new BadRequestException('用户不存在或已被封禁')
+    }
+
+    if (
+      [
+        UserStatusEnum.MUTED,
+        UserStatusEnum.PERMANENT_MUTED,
+        UserStatusEnum.BANNED,
+        UserStatusEnum.PERMANENT_BANNED,
+      ].includes(user.status)
+    ) {
+      throw new BadRequestException('用户已被禁言或封禁，无法回复')
     }
 
     if (replyToId) {
@@ -124,7 +133,9 @@ export class ForumReplyService extends BaseService {
       auditStatus,
       auditReason,
       sensitiveWordHits:
-        detectResult.hits.length > 0 ? detectResult.hits : null,
+        detectResult.hits.length > 0
+          ? (detectResult.hits as any)
+          : undefined,
       actualReplyTo: replyToId
         ? {
             connect: {
@@ -137,9 +148,9 @@ export class ForumReplyService extends BaseService {
           id: topicId,
         },
       },
-      profile: {
+      user: {
         connect: {
-          id: profile.id,
+          id: userId,
         },
       },
     }
@@ -161,7 +172,7 @@ export class ForumReplyService extends BaseService {
         tx,
         topicId,
         topic.sectionId,
-        profile.id,
+        userId,
         1,
       )
 
@@ -169,15 +180,15 @@ export class ForumReplyService extends BaseService {
         const replyTo = await tx.forumReply.findUnique({
           where: { id: replyToId },
           select: {
-            profileId: true,
+            userId: true,
           },
         })
 
-        if (replyTo && replyTo.profileId !== profile.id) {
+        if (replyTo && replyTo.userId !== userId) {
           await this.notificationService.createReplyNotification({
-            profileId: replyTo.profileId,
+            userId: replyTo.userId,
             title: '收到新回复',
-            content: `${profile.user?.nickname || '用户'} 回复了你的内容`,
+            content: `${user.nickname || '用户'} 回复了你的内容`,
             topicId,
             replyId: reply.id,
             isRead: false,
@@ -186,7 +197,7 @@ export class ForumReplyService extends BaseService {
       }
 
       await this.actionLogService.createActionLog({
-        profileId: profile.id,
+        userId,
         actionType: ForumUserActionTypeEnum.CREATE_REPLY,
         targetType: ForumUserActionTargetTypeEnum.REPLY,
         targetId: reply.id,
@@ -250,20 +261,19 @@ export class ForumReplyService extends BaseService {
             section: true,
           },
         },
-        profile: {
+        user: {
           include: {
-            user: true,
             level: true,
-            badges: true,
+            forumBadges: {
+              include: {
+                badge: true,
+              },
+            },
           },
         },
         replyTo: {
           include: {
-            profile: {
-              include: {
-                user: true,
-              },
-            },
+            user: true,
           },
         },
       },
@@ -298,7 +308,7 @@ export class ForumReplyService extends BaseService {
         },
         select: {
           id: true,
-          profileId: true,
+          userId: true,
         },
       })
 
@@ -320,7 +330,7 @@ export class ForumReplyService extends BaseService {
         for (const childReply of childReplies) {
           await this.forumCounterService.updateProfileReplyCount(
             tx,
-            childReply.profileId,
+            childReply.userId,
             -1,
           )
         }
@@ -347,12 +357,12 @@ export class ForumReplyService extends BaseService {
 
       await this.forumCounterService.updateProfileReplyCount(
         tx,
-        reply.profileId,
+        reply.userId,
         -1,
       )
 
       await this.actionLogService.createActionLog({
-        profileId: reply.profileId,
+        userId: reply.userId,
         actionType: ForumUserActionTypeEnum.DELETE_REPLY,
         targetType: ForumUserActionTargetTypeEnum.REPLY,
         targetId: id,
@@ -455,12 +465,12 @@ export class ForumReplyService extends BaseService {
 
         await this.forumCounterService.updateProfileReplyCount(
           tx,
-          reply.profileId,
+          reply.userId,
           -1,
         )
 
         await this.actionLogService.createActionLog({
-          profileId: reply.profileId,
+          userId: reply.userId,
           actionType: ForumUserActionTypeEnum.DELETE_REPLY,
           targetType: ForumUserActionTargetTypeEnum.REPLY,
           targetId: reply.id,

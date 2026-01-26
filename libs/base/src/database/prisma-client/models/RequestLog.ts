@@ -41,12 +41,12 @@ export type RequestLogMinAggregateOutputType = {
   userId: number | null
   username: string | null
   apiType: string | null
-  ip: string | null
   method: string | null
   path: string | null
+  ip: string | null
+  userAgent: string | null
   actionType: string | null
   isSuccess: boolean | null
-  userAgent: string | null
   content: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -57,12 +57,12 @@ export type RequestLogMaxAggregateOutputType = {
   userId: number | null
   username: string | null
   apiType: string | null
-  ip: string | null
   method: string | null
   path: string | null
+  ip: string | null
+  userAgent: string | null
   actionType: string | null
   isSuccess: boolean | null
-  userAgent: string | null
   content: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -73,14 +73,14 @@ export type RequestLogCountAggregateOutputType = {
   userId: number
   username: number
   apiType: number
-  ip: number
   method: number
   path: number
   params: number
-  actionType: number
-  isSuccess: number
+  ip: number
   userAgent: number
   device: number
+  actionType: number
+  isSuccess: number
   content: number
   createdAt: number
   updatedAt: number
@@ -103,12 +103,12 @@ export type RequestLogMinAggregateInputType = {
   userId?: true
   username?: true
   apiType?: true
-  ip?: true
   method?: true
   path?: true
+  ip?: true
+  userAgent?: true
   actionType?: true
   isSuccess?: true
-  userAgent?: true
   content?: true
   createdAt?: true
   updatedAt?: true
@@ -119,12 +119,12 @@ export type RequestLogMaxAggregateInputType = {
   userId?: true
   username?: true
   apiType?: true
-  ip?: true
   method?: true
   path?: true
+  ip?: true
+  userAgent?: true
   actionType?: true
   isSuccess?: true
-  userAgent?: true
   content?: true
   createdAt?: true
   updatedAt?: true
@@ -135,14 +135,14 @@ export type RequestLogCountAggregateInputType = {
   userId?: true
   username?: true
   apiType?: true
-  ip?: true
   method?: true
   path?: true
   params?: true
-  actionType?: true
-  isSuccess?: true
+  ip?: true
   userAgent?: true
   device?: true
+  actionType?: true
+  isSuccess?: true
   content?: true
   createdAt?: true
   updatedAt?: true
@@ -240,14 +240,14 @@ export type RequestLogGroupByOutputType = {
   userId: number | null
   username: string | null
   apiType: string | null
-  ip: string | null
   method: string
   path: string
   params: runtime.JsonValue | null
-  actionType: string | null
-  isSuccess: boolean
+  ip: string | null
   userAgent: string | null
   device: runtime.JsonValue | null
+  actionType: string | null
+  isSuccess: boolean
   content: string
   createdAt: Date
   updatedAt: Date
@@ -281,14 +281,14 @@ export type RequestLogWhereInput = {
   userId?: Prisma.IntNullableFilter<"RequestLog"> | number | null
   username?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   apiType?: Prisma.StringNullableFilter<"RequestLog"> | string | null
-  ip?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   method?: Prisma.StringFilter<"RequestLog"> | string
   path?: Prisma.StringFilter<"RequestLog"> | string
   params?: Prisma.JsonNullableFilter<"RequestLog">
-  actionType?: Prisma.StringNullableFilter<"RequestLog"> | string | null
-  isSuccess?: Prisma.BoolFilter<"RequestLog"> | boolean
+  ip?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   userAgent?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   device?: Prisma.JsonNullableFilter<"RequestLog">
+  actionType?: Prisma.StringNullableFilter<"RequestLog"> | string | null
+  isSuccess?: Prisma.BoolFilter<"RequestLog"> | boolean
   content?: Prisma.StringFilter<"RequestLog"> | string
   createdAt?: Prisma.DateTimeFilter<"RequestLog"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequestLog"> | Date | string
@@ -299,14 +299,14 @@ export type RequestLogOrderByWithRelationInput = {
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   username?: Prisma.SortOrderInput | Prisma.SortOrder
   apiType?: Prisma.SortOrderInput | Prisma.SortOrder
-  ip?: Prisma.SortOrderInput | Prisma.SortOrder
   method?: Prisma.SortOrder
   path?: Prisma.SortOrder
   params?: Prisma.SortOrderInput | Prisma.SortOrder
-  actionType?: Prisma.SortOrderInput | Prisma.SortOrder
-  isSuccess?: Prisma.SortOrder
+  ip?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
   device?: Prisma.SortOrderInput | Prisma.SortOrder
+  actionType?: Prisma.SortOrderInput | Prisma.SortOrder
+  isSuccess?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -320,14 +320,14 @@ export type RequestLogWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.IntNullableFilter<"RequestLog"> | number | null
   username?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   apiType?: Prisma.StringNullableFilter<"RequestLog"> | string | null
-  ip?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   method?: Prisma.StringFilter<"RequestLog"> | string
   path?: Prisma.StringFilter<"RequestLog"> | string
   params?: Prisma.JsonNullableFilter<"RequestLog">
-  actionType?: Prisma.StringNullableFilter<"RequestLog"> | string | null
-  isSuccess?: Prisma.BoolFilter<"RequestLog"> | boolean
+  ip?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   userAgent?: Prisma.StringNullableFilter<"RequestLog"> | string | null
   device?: Prisma.JsonNullableFilter<"RequestLog">
+  actionType?: Prisma.StringNullableFilter<"RequestLog"> | string | null
+  isSuccess?: Prisma.BoolFilter<"RequestLog"> | boolean
   content?: Prisma.StringFilter<"RequestLog"> | string
   createdAt?: Prisma.DateTimeFilter<"RequestLog"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RequestLog"> | Date | string
@@ -338,14 +338,14 @@ export type RequestLogOrderByWithAggregationInput = {
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   username?: Prisma.SortOrderInput | Prisma.SortOrder
   apiType?: Prisma.SortOrderInput | Prisma.SortOrder
-  ip?: Prisma.SortOrderInput | Prisma.SortOrder
   method?: Prisma.SortOrder
   path?: Prisma.SortOrder
   params?: Prisma.SortOrderInput | Prisma.SortOrder
-  actionType?: Prisma.SortOrderInput | Prisma.SortOrder
-  isSuccess?: Prisma.SortOrder
+  ip?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
   device?: Prisma.SortOrderInput | Prisma.SortOrder
+  actionType?: Prisma.SortOrderInput | Prisma.SortOrder
+  isSuccess?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -364,14 +364,14 @@ export type RequestLogScalarWhereWithAggregatesInput = {
   userId?: Prisma.IntNullableWithAggregatesFilter<"RequestLog"> | number | null
   username?: Prisma.StringNullableWithAggregatesFilter<"RequestLog"> | string | null
   apiType?: Prisma.StringNullableWithAggregatesFilter<"RequestLog"> | string | null
-  ip?: Prisma.StringNullableWithAggregatesFilter<"RequestLog"> | string | null
   method?: Prisma.StringWithAggregatesFilter<"RequestLog"> | string
   path?: Prisma.StringWithAggregatesFilter<"RequestLog"> | string
   params?: Prisma.JsonNullableWithAggregatesFilter<"RequestLog">
-  actionType?: Prisma.StringNullableWithAggregatesFilter<"RequestLog"> | string | null
-  isSuccess?: Prisma.BoolWithAggregatesFilter<"RequestLog"> | boolean
+  ip?: Prisma.StringNullableWithAggregatesFilter<"RequestLog"> | string | null
   userAgent?: Prisma.StringNullableWithAggregatesFilter<"RequestLog"> | string | null
   device?: Prisma.JsonNullableWithAggregatesFilter<"RequestLog">
+  actionType?: Prisma.StringNullableWithAggregatesFilter<"RequestLog"> | string | null
+  isSuccess?: Prisma.BoolWithAggregatesFilter<"RequestLog"> | boolean
   content?: Prisma.StringWithAggregatesFilter<"RequestLog"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"RequestLog"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"RequestLog"> | Date | string
@@ -381,14 +381,14 @@ export type RequestLogCreateInput = {
   userId?: number | null
   username?: string | null
   apiType?: string | null
-  ip?: string | null
   method: string
   path: string
   params?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actionType?: string | null
-  isSuccess: boolean
+  ip?: string | null
   userAgent?: string | null
   device?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  actionType?: string | null
+  isSuccess: boolean
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -399,14 +399,14 @@ export type RequestLogUncheckedCreateInput = {
   userId?: number | null
   username?: string | null
   apiType?: string | null
-  ip?: string | null
   method: string
   path: string
   params?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actionType?: string | null
-  isSuccess: boolean
+  ip?: string | null
   userAgent?: string | null
   device?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  actionType?: string | null
+  isSuccess: boolean
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -416,14 +416,14 @@ export type RequestLogUpdateInput = {
   userId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apiType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   method?: Prisma.StringFieldUpdateOperationsInput | string
   path?: Prisma.StringFieldUpdateOperationsInput | string
   params?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actionType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isSuccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   device?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  actionType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSuccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -434,14 +434,14 @@ export type RequestLogUncheckedUpdateInput = {
   userId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apiType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   method?: Prisma.StringFieldUpdateOperationsInput | string
   path?: Prisma.StringFieldUpdateOperationsInput | string
   params?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actionType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isSuccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   device?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  actionType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSuccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -452,14 +452,14 @@ export type RequestLogCreateManyInput = {
   userId?: number | null
   username?: string | null
   apiType?: string | null
-  ip?: string | null
   method: string
   path: string
   params?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actionType?: string | null
-  isSuccess: boolean
+  ip?: string | null
   userAgent?: string | null
   device?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  actionType?: string | null
+  isSuccess: boolean
   content: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -469,14 +469,14 @@ export type RequestLogUpdateManyMutationInput = {
   userId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apiType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   method?: Prisma.StringFieldUpdateOperationsInput | string
   path?: Prisma.StringFieldUpdateOperationsInput | string
   params?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actionType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isSuccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   device?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  actionType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSuccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -487,14 +487,14 @@ export type RequestLogUncheckedUpdateManyInput = {
   userId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   username?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   apiType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   method?: Prisma.StringFieldUpdateOperationsInput | string
   path?: Prisma.StringFieldUpdateOperationsInput | string
   params?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  actionType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isSuccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   device?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  actionType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSuccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
   content?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -505,14 +505,14 @@ export type RequestLogCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   username?: Prisma.SortOrder
   apiType?: Prisma.SortOrder
-  ip?: Prisma.SortOrder
   method?: Prisma.SortOrder
   path?: Prisma.SortOrder
   params?: Prisma.SortOrder
-  actionType?: Prisma.SortOrder
-  isSuccess?: Prisma.SortOrder
+  ip?: Prisma.SortOrder
   userAgent?: Prisma.SortOrder
   device?: Prisma.SortOrder
+  actionType?: Prisma.SortOrder
+  isSuccess?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -528,12 +528,12 @@ export type RequestLogMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   username?: Prisma.SortOrder
   apiType?: Prisma.SortOrder
-  ip?: Prisma.SortOrder
   method?: Prisma.SortOrder
   path?: Prisma.SortOrder
+  ip?: Prisma.SortOrder
+  userAgent?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
   isSuccess?: Prisma.SortOrder
-  userAgent?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -544,12 +544,12 @@ export type RequestLogMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   username?: Prisma.SortOrder
   apiType?: Prisma.SortOrder
-  ip?: Prisma.SortOrder
   method?: Prisma.SortOrder
   path?: Prisma.SortOrder
+  ip?: Prisma.SortOrder
+  userAgent?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
   isSuccess?: Prisma.SortOrder
-  userAgent?: Prisma.SortOrder
   content?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -567,14 +567,14 @@ export type RequestLogSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   userId?: boolean
   username?: boolean
   apiType?: boolean
-  ip?: boolean
   method?: boolean
   path?: boolean
   params?: boolean
-  actionType?: boolean
-  isSuccess?: boolean
+  ip?: boolean
   userAgent?: boolean
   device?: boolean
+  actionType?: boolean
+  isSuccess?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -585,14 +585,14 @@ export type RequestLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   userId?: boolean
   username?: boolean
   apiType?: boolean
-  ip?: boolean
   method?: boolean
   path?: boolean
   params?: boolean
-  actionType?: boolean
-  isSuccess?: boolean
+  ip?: boolean
   userAgent?: boolean
   device?: boolean
+  actionType?: boolean
+  isSuccess?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -603,14 +603,14 @@ export type RequestLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   userId?: boolean
   username?: boolean
   apiType?: boolean
-  ip?: boolean
   method?: boolean
   path?: boolean
   params?: boolean
-  actionType?: boolean
-  isSuccess?: boolean
+  ip?: boolean
   userAgent?: boolean
   device?: boolean
+  actionType?: boolean
+  isSuccess?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -621,20 +621,20 @@ export type RequestLogSelectScalar = {
   userId?: boolean
   username?: boolean
   apiType?: boolean
-  ip?: boolean
   method?: boolean
   path?: boolean
   params?: boolean
-  actionType?: boolean
-  isSuccess?: boolean
+  ip?: boolean
   userAgent?: boolean
   device?: boolean
+  actionType?: boolean
+  isSuccess?: boolean
   content?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type RequestLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "username" | "apiType" | "ip" | "method" | "path" | "params" | "actionType" | "isSuccess" | "userAgent" | "device" | "content" | "createdAt" | "updatedAt", ExtArgs["result"]["requestLog"]>
+export type RequestLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "username" | "apiType" | "method" | "path" | "params" | "ip" | "userAgent" | "device" | "actionType" | "isSuccess" | "content" | "createdAt" | "updatedAt", ExtArgs["result"]["requestLog"]>
 
 export type $RequestLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "RequestLog"
@@ -657,10 +657,6 @@ export type $RequestLogPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     apiType: string | null
     /**
-     * IP地址（自动获取）
-     */
-    ip: string | null
-    /**
      * 请求方法（GET/POST等）
      */
     method: string
@@ -673,13 +669,9 @@ export type $RequestLogPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     params: runtime.JsonValue | null
     /**
-     * 操作类型（如登录/注册）
+     * IP地址（自动获取）
      */
-    actionType: string | null
-    /**
-     * 操作结果
-     */
-    isSuccess: boolean
+    ip: string | null
     /**
      * 设备信息（User-Agent 原始字符串）
      */
@@ -688,6 +680,14 @@ export type $RequestLogPayload<ExtArgs extends runtime.Types.Extensions.Internal
      * 设备信息（User-Agent 解析结果，JSON）
      */
     device: runtime.JsonValue | null
+    /**
+     * 操作类型（如登录/注册）
+     */
+    actionType: string | null
+    /**
+     * 操作结果
+     */
+    isSuccess: boolean
     /**
      * 自定义日志内容（必填）
      */
@@ -1127,14 +1127,14 @@ export interface RequestLogFieldRefs {
   readonly userId: Prisma.FieldRef<"RequestLog", 'Int'>
   readonly username: Prisma.FieldRef<"RequestLog", 'String'>
   readonly apiType: Prisma.FieldRef<"RequestLog", 'String'>
-  readonly ip: Prisma.FieldRef<"RequestLog", 'String'>
   readonly method: Prisma.FieldRef<"RequestLog", 'String'>
   readonly path: Prisma.FieldRef<"RequestLog", 'String'>
   readonly params: Prisma.FieldRef<"RequestLog", 'Json'>
-  readonly actionType: Prisma.FieldRef<"RequestLog", 'String'>
-  readonly isSuccess: Prisma.FieldRef<"RequestLog", 'Boolean'>
+  readonly ip: Prisma.FieldRef<"RequestLog", 'String'>
   readonly userAgent: Prisma.FieldRef<"RequestLog", 'String'>
   readonly device: Prisma.FieldRef<"RequestLog", 'Json'>
+  readonly actionType: Prisma.FieldRef<"RequestLog", 'String'>
+  readonly isSuccess: Prisma.FieldRef<"RequestLog", 'Boolean'>
   readonly content: Prisma.FieldRef<"RequestLog", 'String'>
   readonly createdAt: Prisma.FieldRef<"RequestLog", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"RequestLog", 'DateTime'>

@@ -6,14 +6,13 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
-import { GenderEnum } from '@libs/base/enum'
+import { GenderEnum, UserStatusEnum } from '@libs/base/enum'
 import {
   ApiProperty,
   IntersectionType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ForumProfileStatusEnum } from '../profile.constant'
 
 /**
  * 基础用户个人信息数据传输对象
@@ -144,11 +143,11 @@ export class BaseForumProfileDto extends BaseDto {
 
   @ValidateEnum({
     description: '用户状态',
-    example: ForumProfileStatusEnum.NORMAL,
-    enum: ForumProfileStatusEnum,
+    example: UserStatusEnum.NORMAL,
+    enum: UserStatusEnum,
     required: true,
   })
-  status!: ForumProfileStatusEnum
+  status!: UserStatusEnum
 
   @ValidateString({
     description: '封禁原因',

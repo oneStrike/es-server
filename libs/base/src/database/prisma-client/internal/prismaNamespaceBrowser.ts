@@ -53,24 +53,24 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   AdminUser: 'AdminUser',
   AppConfig: 'AppConfig',
+  AppExperienceRecord: 'AppExperienceRecord',
+  AppExperienceRule: 'AppExperienceRule',
+  AppLevelRule: 'AppLevelRule',
   AppNoticeRead: 'AppNoticeRead',
   AppNotice: 'AppNotice',
   AppPage: 'AppPage',
+  AppPointRecord: 'AppPointRecord',
+  AppPointRule: 'AppPointRule',
   AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
   ForumBadge: 'ForumBadge',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
-  ForumExperienceRecord: 'ForumExperienceRecord',
-  ForumExperienceRule: 'ForumExperienceRule',
-  ForumLevelRule: 'ForumLevelRule',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
   ForumModeratorApplication: 'ForumModeratorApplication',
   ForumModeratorSection: 'ForumModeratorSection',
   ForumModerator: 'ForumModerator',
   ForumNotification: 'ForumNotification',
-  ForumPointRecord: 'ForumPointRecord',
-  ForumPointRule: 'ForumPointRule',
   ForumProfileBadge: 'ForumProfileBadge',
   ForumProfile: 'ForumProfile',
   ForumReplyLike: 'ForumReplyLike',
@@ -106,12 +106,12 @@ export type ModelName = (typeof ModelName)[keyof typeof ModelName]
  * Enums
  */
 
-export const TransactionIsolationLevel = {
+export const TransactionIsolationLevel = runtime.makeStrictEnum({
   ReadUncommitted: 'ReadUncommitted',
   ReadCommitted: 'ReadCommitted',
   RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
-} as const
+} as const)
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
@@ -120,16 +120,16 @@ export const AdminUserScalarFieldEnum = {
   id: 'id',
   username: 'username',
   password: 'password',
-  avatar: 'avatar',
   mobile: 'mobile',
-  isEnabled: 'isEnabled',
+  avatar: 'avatar',
   role: 'role',
+  isEnabled: 'isEnabled',
+  isLocked: 'isLocked',
   lastLoginAt: 'lastLoginAt',
   lastLoginIp: 'lastLoginIp',
   loginFailAt: 'loginFailAt',
   loginFailIp: 'loginFailIp',
   loginFailCount: 'loginFailCount',
-  isLocked: 'isLocked',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -165,6 +165,56 @@ export const AppConfigScalarFieldEnum = {
 export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
+export const AppExperienceRecordScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  ruleId: 'ruleId',
+  experience: 'experience',
+  beforeExperience: 'beforeExperience',
+  afterExperience: 'afterExperience',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type AppExperienceRecordScalarFieldEnum = (typeof AppExperienceRecordScalarFieldEnum)[keyof typeof AppExperienceRecordScalarFieldEnum]
+
+
+export const AppExperienceRuleScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  experience: 'experience',
+  dailyLimit: 'dailyLimit',
+  isEnabled: 'isEnabled',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppExperienceRuleScalarFieldEnum = (typeof AppExperienceRuleScalarFieldEnum)[keyof typeof AppExperienceRuleScalarFieldEnum]
+
+
+export const AppLevelRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  requiredExperience: 'requiredExperience',
+  description: 'description',
+  icon: 'icon',
+  badge: 'badge',
+  color: 'color',
+  sortOrder: 'sortOrder',
+  isEnabled: 'isEnabled',
+  dailyTopicLimit: 'dailyTopicLimit',
+  dailyReplyCommentLimit: 'dailyReplyCommentLimit',
+  postInterval: 'postInterval',
+  dailyLikeLimit: 'dailyLikeLimit',
+  dailyFavoriteLimit: 'dailyFavoriteLimit',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppLevelRuleScalarFieldEnum = (typeof AppLevelRuleScalarFieldEnum)[keyof typeof AppLevelRuleScalarFieldEnum]
+
+
 export const AppNoticeReadScalarFieldEnum = {
   id: 'id',
   noticeId: 'noticeId',
@@ -177,20 +227,20 @@ export type AppNoticeReadScalarFieldEnum = (typeof AppNoticeReadScalarFieldEnum)
 
 export const AppNoticeScalarFieldEnum = {
   id: 'id',
+  pageId: 'pageId',
   title: 'title',
   content: 'content',
   noticeType: 'noticeType',
   priorityLevel: 'priorityLevel',
   publishStartTime: 'publishStartTime',
   publishEndTime: 'publishEndTime',
-  pageId: 'pageId',
   popupBackgroundImage: 'popupBackgroundImage',
   isPublished: 'isPublished',
   isPinned: 'isPinned',
   showAsPopup: 'showAsPopup',
+  enablePlatform: 'enablePlatform',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  enablePlatform: 'enablePlatform'
+  updatedAt: 'updatedAt'
 } as const
 
 export type AppNoticeScalarFieldEnum = (typeof AppNoticeScalarFieldEnum)[keyof typeof AppNoticeScalarFieldEnum]
@@ -202,21 +252,50 @@ export const AppPageScalarFieldEnum = {
   path: 'path',
   name: 'name',
   title: 'title',
+  description: 'description',
   accessLevel: 'accessLevel',
   isEnabled: 'isEnabled',
-  description: 'description',
+  enablePlatform: 'enablePlatform',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  enablePlatform: 'enablePlatform'
+  updatedAt: 'updatedAt'
 } as const
 
 export type AppPageScalarFieldEnum = (typeof AppPageScalarFieldEnum)[keyof typeof AppPageScalarFieldEnum]
 
 
-export const AppUserTokenScalarFieldEnum = {
+export const AppPointRecordScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  ruleId: 'ruleId',
+  points: 'points',
+  beforePoints: 'beforePoints',
+  afterPoints: 'afterPoints',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type AppPointRecordScalarFieldEnum = (typeof AppPointRecordScalarFieldEnum)[keyof typeof AppPointRecordScalarFieldEnum]
+
+
+export const AppPointRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  points: 'points',
+  dailyLimit: 'dailyLimit',
+  isEnabled: 'isEnabled',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppPointRuleScalarFieldEnum = (typeof AppPointRuleScalarFieldEnum)[keyof typeof AppPointRuleScalarFieldEnum]
+
+
+export const AppUserTokenScalarFieldEnum = {
+  id: 'id',
   jti: 'jti',
+  userId: 'userId',
   tokenType: 'tokenType',
   expiresAt: 'expiresAt',
   revokedAt: 'revokedAt',
@@ -234,15 +313,20 @@ export type AppUserTokenScalarFieldEnum = (typeof AppUserTokenScalarFieldEnum)[k
 export const AppUserScalarFieldEnum = {
   id: 'id',
   account: 'account',
+  phone: 'phone',
+  email: 'email',
+  levelId: 'levelId',
   nickname: 'nickname',
   password: 'password',
   avatar: 'avatar',
-  phone: 'phone',
-  email: 'email',
   isEnabled: 'isEnabled',
   gender: 'gender',
   birthDate: 'birthDate',
-  isSignedIn: 'isSignedIn',
+  points: 'points',
+  experience: 'experience',
+  status: 'status',
+  banReason: 'banReason',
+  banUntil: 'banUntil',
   lastLoginAt: 'lastLoginAt',
   lastLoginIp: 'lastLoginIp',
   createdAt: 'createdAt',
@@ -256,9 +340,9 @@ export type AppUserScalarFieldEnum = (typeof AppUserScalarFieldEnum)[keyof typeo
 export const ForumBadgeScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  type: 'type',
   description: 'description',
   icon: 'icon',
-  type: 'type',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
@@ -271,13 +355,13 @@ export type ForumBadgeScalarFieldEnum = (typeof ForumBadgeScalarFieldEnum)[keyof
 export const ForumConfigHistoryScalarFieldEnum = {
   id: 'id',
   configId: 'configId',
+  operatedById: 'operatedById',
   changes: 'changes',
   changeType: 'changeType',
   reason: 'reason',
-  operatedById: 'operatedById',
-  operatedAt: 'operatedAt',
   ipAddress: 'ipAddress',
-  userAgent: 'userAgent'
+  userAgent: 'userAgent',
+  operatedAt: 'operatedAt'
 } as const
 
 export type ForumConfigHistoryScalarFieldEnum = (typeof ForumConfigHistoryScalarFieldEnum)[keyof typeof ForumConfigHistoryScalarFieldEnum]
@@ -285,6 +369,7 @@ export type ForumConfigHistoryScalarFieldEnum = (typeof ForumConfigHistoryScalar
 
 export const ForumConfigScalarFieldEnum = {
   id: 'id',
+  updatedById: 'updatedById',
   siteName: 'siteName',
   siteDescription: 'siteDescription',
   siteKeywords: 'siteKeywords',
@@ -316,71 +401,20 @@ export const ForumConfigScalarFieldEnum = {
   enableSystemNotification: 'enableSystemNotification',
   enableMaintenanceMode: 'enableMaintenanceMode',
   maintenanceMessage: 'maintenanceMessage',
-  updatedById: 'updatedById',
-  updatedAt: 'updatedAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type ForumConfigScalarFieldEnum = (typeof ForumConfigScalarFieldEnum)[keyof typeof ForumConfigScalarFieldEnum]
 
 
-export const ForumExperienceRecordScalarFieldEnum = {
-  id: 'id',
-  profileId: 'profileId',
-  ruleId: 'ruleId',
-  experience: 'experience',
-  beforeExperience: 'beforeExperience',
-  afterExperience: 'afterExperience',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type ForumExperienceRecordScalarFieldEnum = (typeof ForumExperienceRecordScalarFieldEnum)[keyof typeof ForumExperienceRecordScalarFieldEnum]
-
-
-export const ForumExperienceRuleScalarFieldEnum = {
-  id: 'id',
-  type: 'type',
-  experience: 'experience',
-  dailyLimit: 'dailyLimit',
-  isEnabled: 'isEnabled',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ForumExperienceRuleScalarFieldEnum = (typeof ForumExperienceRuleScalarFieldEnum)[keyof typeof ForumExperienceRuleScalarFieldEnum]
-
-
-export const ForumLevelRuleScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  description: 'description',
-  requiredExperience: 'requiredExperience',
-  sortOrder: 'sortOrder',
-  isEnabled: 'isEnabled',
-  icon: 'icon',
-  badge: 'badge',
-  color: 'color',
-  dailyTopicLimit: 'dailyTopicLimit',
-  dailyReplyCommentLimit: 'dailyReplyCommentLimit',
-  postInterval: 'postInterval',
-  dailyLikeLimit: 'dailyLikeLimit',
-  dailyFavoriteLimit: 'dailyFavoriteLimit',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ForumLevelRuleScalarFieldEnum = (typeof ForumLevelRuleScalarFieldEnum)[keyof typeof ForumLevelRuleScalarFieldEnum]
-
-
 export const ForumModeratorActionLogScalarFieldEnum = {
   id: 'id',
   moderatorId: 'moderatorId',
-  actionType: 'actionType',
-  actionDescription: 'actionDescription',
-  targetType: 'targetType',
   targetId: 'targetId',
+  actionType: 'actionType',
+  targetType: 'targetType',
+  actionDescription: 'actionDescription',
   beforeData: 'beforeData',
   afterData: 'afterData',
   createdAt: 'createdAt'
@@ -393,13 +427,13 @@ export const ForumModeratorApplicationScalarFieldEnum = {
   id: 'id',
   applicantId: 'applicantId',
   sectionId: 'sectionId',
+  auditById: 'auditById',
+  status: 'status',
   permissions: 'permissions',
   reason: 'reason',
-  status: 'status',
-  auditById: 'auditById',
-  auditAt: 'auditAt',
   auditReason: 'auditReason',
   remark: 'remark',
+  auditAt: 'auditAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -422,9 +456,9 @@ export type ForumModeratorSectionScalarFieldEnum = (typeof ForumModeratorSection
 
 export const ForumModeratorScalarFieldEnum = {
   id: 'id',
-  profileId: 'profileId',
-  roleType: 'roleType',
+  userId: 'userId',
   groupId: 'groupId',
+  roleType: 'roleType',
   permissions: 'permissions',
   isEnabled: 'isEnabled',
   remark: 'remark',
@@ -438,54 +472,25 @@ export type ForumModeratorScalarFieldEnum = (typeof ForumModeratorScalarFieldEnu
 
 export const ForumNotificationScalarFieldEnum = {
   id: 'id',
-  profileId: 'profileId',
+  userId: 'userId',
+  topicId: 'topicId',
+  replyId: 'replyId',
   type: 'type',
   title: 'title',
   content: 'content',
   priority: 'priority',
-  topicId: 'topicId',
-  replyId: 'replyId',
   isRead: 'isRead',
   readAt: 'readAt',
-  createdAt: 'createdAt',
-  expiredAt: 'expiredAt'
+  expiredAt: 'expiredAt',
+  createdAt: 'createdAt'
 } as const
 
 export type ForumNotificationScalarFieldEnum = (typeof ForumNotificationScalarFieldEnum)[keyof typeof ForumNotificationScalarFieldEnum]
 
 
-export const ForumPointRecordScalarFieldEnum = {
-  id: 'id',
-  profileId: 'profileId',
-  ruleId: 'ruleId',
-  points: 'points',
-  beforePoints: 'beforePoints',
-  afterPoints: 'afterPoints',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type ForumPointRecordScalarFieldEnum = (typeof ForumPointRecordScalarFieldEnum)[keyof typeof ForumPointRecordScalarFieldEnum]
-
-
-export const ForumPointRuleScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  type: 'type',
-  points: 'points',
-  dailyLimit: 'dailyLimit',
-  isEnabled: 'isEnabled',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ForumPointRuleScalarFieldEnum = (typeof ForumPointRuleScalarFieldEnum)[keyof typeof ForumPointRuleScalarFieldEnum]
-
-
 export const ForumProfileBadgeScalarFieldEnum = {
   id: 'id',
-  profileId: 'profileId',
+  userId: 'userId',
   badgeId: 'badgeId',
   createdAt: 'createdAt'
 } as const
@@ -496,18 +501,12 @@ export type ForumProfileBadgeScalarFieldEnum = (typeof ForumProfileBadgeScalarFi
 export const ForumProfileScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  points: 'points',
-  experience: 'experience',
-  levelId: 'levelId',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
   likeCount: 'likeCount',
   favoriteCount: 'favoriteCount',
   signature: 'signature',
   bio: 'bio',
-  status: 'status',
-  banReason: 'banReason',
-  banUntil: 'banUntil',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -519,7 +518,7 @@ export type ForumProfileScalarFieldEnum = (typeof ForumProfileScalarFieldEnum)[k
 export const ForumReplyLikeScalarFieldEnum = {
   id: 'id',
   replyId: 'replyId',
-  profileId: 'profileId',
+  userId: 'userId',
   createdAt: 'createdAt'
 } as const
 
@@ -528,24 +527,24 @@ export type ForumReplyLikeScalarFieldEnum = (typeof ForumReplyLikeScalarFieldEnu
 
 export const ForumReplyScalarFieldEnum = {
   id: 'id',
-  content: 'content',
   topicId: 'topicId',
-  profileId: 'profileId',
+  userId: 'userId',
+  content: 'content',
   floor: 'floor',
-  isHidden: 'isHidden',
   replyToId: 'replyToId',
   actualReplyToId: 'actualReplyToId',
+  isHidden: 'isHidden',
   auditStatus: 'auditStatus',
   auditReason: 'auditReason',
   auditAt: 'auditAt',
   auditById: 'auditById',
   auditRole: 'auditRole',
   likeCount: 'likeCount',
+  version: 'version',
+  sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  version: 'version',
-  sensitiveWordHits: 'sensitiveWordHits'
+  deletedAt: 'deletedAt'
 } as const
 
 export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof typeof ForumReplyScalarFieldEnum]
@@ -554,13 +553,13 @@ export type ForumReplyScalarFieldEnum = (typeof ForumReplyScalarFieldEnum)[keyof
 export const ForumReportScalarFieldEnum = {
   id: 'id',
   reporterId: 'reporterId',
-  type: 'type',
+  handlerId: 'handlerId',
   targetId: 'targetId',
+  type: 'type',
   reason: 'reason',
   description: 'description',
   evidenceUrl: 'evidenceUrl',
   status: 'status',
-  handlerId: 'handlerId',
   handlingNote: 'handlingNote',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -586,18 +585,18 @@ export type ForumSectionGroupScalarFieldEnum = (typeof ForumSectionGroupScalarFi
 
 export const ForumSectionScalarFieldEnum = {
   id: 'id',
-  name: 'name',
   groupId: 'groupId',
+  userLevelRuleId: 'userLevelRuleId',
+  lastTopicId: 'lastTopicId',
+  name: 'name',
+  description: 'description',
   icon: 'icon',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   topicReviewPolicy: 'topicReviewPolicy',
-  userLevelRuleId: 'userLevelRuleId',
   topicCount: 'topicCount',
   replyCount: 'replyCount',
   lastPostAt: 'lastPostAt',
-  lastTopicId: 'lastTopicId',
-  description: 'description',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -611,18 +610,18 @@ export const ForumSensitiveWordScalarFieldEnum = {
   id: 'id',
   word: 'word',
   replaceWord: 'replaceWord',
-  isEnabled: 'isEnabled',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
   level: 'level',
   type: 'type',
-  version: 'version',
   matchMode: 'matchMode',
+  isEnabled: 'isEnabled',
   hitCount: 'hitCount',
   lastHitAt: 'lastHitAt',
+  version: 'version',
+  remark: 'remark',
   createdBy: 'createdBy',
-  updatedBy: 'updatedBy'
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type ForumSensitiveWordScalarFieldEnum = (typeof ForumSensitiveWordScalarFieldEnum)[keyof typeof ForumSensitiveWordScalarFieldEnum]
@@ -646,7 +645,7 @@ export type ForumTagScalarFieldEnum = (typeof ForumTagScalarFieldEnum)[keyof typ
 export const ForumTopicFavoriteScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
-  profileId: 'profileId',
+  userId: 'userId',
   createdAt: 'createdAt'
 } as const
 
@@ -656,7 +655,7 @@ export type ForumTopicFavoriteScalarFieldEnum = (typeof ForumTopicFavoriteScalar
 export const ForumTopicLikeScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
-  profileId: 'profileId',
+  userId: 'userId',
   createdAt: 'createdAt'
 } as const
 
@@ -675,10 +674,12 @@ export type ForumTopicTagScalarFieldEnum = (typeof ForumTopicTagScalarFieldEnum)
 
 export const ForumTopicScalarFieldEnum = {
   id: 'id',
+  sectionId: 'sectionId',
+  userId: 'userId',
+  lastReplyUserId: 'lastReplyUserId',
+  auditById: 'auditById',
   title: 'title',
   content: 'content',
-  sectionId: 'sectionId',
-  profileId: 'profileId',
   isPinned: 'isPinned',
   isFeatured: 'isFeatured',
   isLocked: 'isLocked',
@@ -686,19 +687,17 @@ export const ForumTopicScalarFieldEnum = {
   auditStatus: 'auditStatus',
   auditReason: 'auditReason',
   auditAt: 'auditAt',
-  auditById: 'auditById',
   auditRole: 'auditRole',
   viewCount: 'viewCount',
   replyCount: 'replyCount',
   likeCount: 'likeCount',
   favoriteCount: 'favoriteCount',
   lastReplyAt: 'lastReplyAt',
-  lastReplyProfileId: 'lastReplyProfileId',
+  version: 'version',
+  sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  version: 'version',
-  sensitiveWordHits: 'sensitiveWordHits'
+  deletedAt: 'deletedAt'
 } as const
 
 export type ForumTopicScalarFieldEnum = (typeof ForumTopicScalarFieldEnum)[keyof typeof ForumTopicScalarFieldEnum]
@@ -706,10 +705,10 @@ export type ForumTopicScalarFieldEnum = (typeof ForumTopicScalarFieldEnum)[keyof
 
 export const ForumUserActionLogScalarFieldEnum = {
   id: 'id',
-  profileId: 'profileId',
+  userId: 'userId',
+  targetId: 'targetId',
   actionType: 'actionType',
   targetType: 'targetType',
-  targetId: 'targetId',
   beforeData: 'beforeData',
   afterData: 'afterData',
   ipAddress: 'ipAddress',
@@ -726,10 +725,10 @@ export const ForumViewScalarFieldEnum = {
   replyId: 'replyId',
   userId: 'userId',
   type: 'type',
-  viewedAt: 'viewedAt',
   duration: 'duration',
   device: 'device',
-  ipAddress: 'ipAddress'
+  ipAddress: 'ipAddress',
+  viewedAt: 'viewedAt'
 } as const
 
 export type ForumViewScalarFieldEnum = (typeof ForumViewScalarFieldEnum)[keyof typeof ForumViewScalarFieldEnum]
@@ -738,20 +737,20 @@ export type ForumViewScalarFieldEnum = (typeof ForumViewScalarFieldEnum)[keyof t
 export const MemberLevelScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  level: 'level',
+  icon: 'icon',
+  color: 'color',
+  description: 'description',
   points: 'points',
   loginDays: 'loginDays',
-  icon: 'icon',
-  description: 'description',
+  discount: 'discount',
   isEnabled: 'isEnabled',
-  color: 'color',
   blacklistLimit: 'blacklistLimit',
   workCollectionLimit: 'workCollectionLimit',
-  discount: 'discount',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  level: 'level'
+  deletedAt: 'deletedAt'
 } as const
 
 export type MemberLevelScalarFieldEnum = (typeof MemberLevelScalarFieldEnum)[keyof typeof MemberLevelScalarFieldEnum]
@@ -762,14 +761,14 @@ export const RequestLogScalarFieldEnum = {
   userId: 'userId',
   username: 'username',
   apiType: 'apiType',
-  ip: 'ip',
   method: 'method',
   path: 'path',
   params: 'params',
-  actionType: 'actionType',
-  isSuccess: 'isSuccess',
+  ip: 'ip',
   userAgent: 'userAgent',
   device: 'device',
+  actionType: 'actionType',
+  isSuccess: 'isSuccess',
   content: 'content',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -815,17 +814,17 @@ export const WorkAuthorScalarFieldEnum = {
   name: 'name',
   avatar: 'avatar',
   description: 'description',
-  isEnabled: 'isEnabled',
   nationality: 'nationality',
   gender: 'gender',
+  type: 'type',
+  isEnabled: 'isEnabled',
+  isRecommended: 'isRecommended',
   worksCount: 'worksCount',
   followersCount: 'followersCount',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  isRecommended: 'isRecommended',
-  type: 'type'
+  deletedAt: 'deletedAt'
 } as const
 
 export type WorkAuthorScalarFieldEnum = (typeof WorkAuthorScalarFieldEnum)[keyof typeof WorkAuthorScalarFieldEnum]
@@ -835,9 +834,9 @@ export const WorkComicAuthorScalarFieldEnum = {
   id: 'id',
   comicId: 'comicId',
   authorId: 'authorId',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  sortOrder: 'sortOrder'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkComicAuthorScalarFieldEnum = (typeof WorkComicAuthorScalarFieldEnum)[keyof typeof WorkComicAuthorScalarFieldEnum]
@@ -846,9 +845,9 @@ export type WorkComicAuthorScalarFieldEnum = (typeof WorkComicAuthorScalarFieldE
 export const WorkComicCategoryScalarFieldEnum = {
   comicId: 'comicId',
   categoryId: 'categoryId',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  sortOrder: 'sortOrder'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkComicCategoryScalarFieldEnum = (typeof WorkComicCategoryScalarFieldEnum)[keyof typeof WorkComicCategoryScalarFieldEnum]
@@ -856,30 +855,30 @@ export type WorkComicCategoryScalarFieldEnum = (typeof WorkComicCategoryScalarFi
 
 export const WorkComicChapterScalarFieldEnum = {
   id: 'id',
+  comicId: 'comicId',
+  requiredReadLevelId: 'requiredReadLevelId',
+  requiredDownloadLevelId: 'requiredDownloadLevelId',
   title: 'title',
   subtitle: 'subtitle',
-  isPublished: 'isPublished',
-  comicId: 'comicId',
-  readRule: 'readRule',
+  description: 'description',
   contents: 'contents',
+  sortOrder: 'sortOrder',
+  readRule: 'readRule',
+  downloadRule: 'downloadRule',
+  readPoints: 'readPoints',
+  downloadPoints: 'downloadPoints',
+  isPublished: 'isPublished',
   isPreview: 'isPreview',
+  canComment: 'canComment',
   publishAt: 'publishAt',
   viewCount: 'viewCount',
   likeCount: 'likeCount',
   commentCount: 'commentCount',
+  purchaseCount: 'purchaseCount',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  canComment: 'canComment',
-  downloadPoints: 'downloadPoints',
-  readPoints: 'readPoints',
-  sortOrder: 'sortOrder',
-  downloadRule: 'downloadRule',
-  requiredDownloadLevelId: 'requiredDownloadLevelId',
-  requiredReadLevelId: 'requiredReadLevelId',
-  description: 'description',
-  purchaseCount: 'purchaseCount'
+  deletedAt: 'deletedAt'
 } as const
 
 export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFieldEnum)[keyof typeof WorkComicChapterScalarFieldEnum]
@@ -888,9 +887,9 @@ export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFiel
 export const WorkComicTagScalarFieldEnum = {
   comicId: 'comicId',
   tagId: 'tagId',
+  sortOrder: 'sortOrder',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  sortOrder: 'sortOrder'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkComicTagScalarFieldEnum = (typeof WorkComicTagScalarFieldEnum)[keyof typeof WorkComicTagScalarFieldEnum]
@@ -901,33 +900,33 @@ export const WorkComicScalarFieldEnum = {
   name: 'name',
   alias: 'alias',
   cover: 'cover',
-  popularity: 'popularity',
-  popularityWeight: 'popularityWeight',
-  language: 'language',
-  region: 'region',
-  ageRating: 'ageRating',
-  isPublished: 'isPublished',
-  publishAt: 'publishAt',
-  lastUpdated: 'lastUpdated',
   description: 'description',
   publisher: 'publisher',
   originalSource: 'originalSource',
+  copyright: 'copyright',
+  disclaimer: 'disclaimer',
+  language: 'language',
+  region: 'region',
+  ageRating: 'ageRating',
   serialStatus: 'serialStatus',
-  rating: 'rating',
-  recommendWeight: 'recommendWeight',
+  isPublished: 'isPublished',
   isRecommended: 'isRecommended',
   isHot: 'isHot',
   isNew: 'isNew',
-  copyright: 'copyright',
-  disclaimer: 'disclaimer',
-  remark: 'remark',
-  deletedAt: 'deletedAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
+  popularity: 'popularity',
+  popularityWeight: 'popularityWeight',
+  rating: 'rating',
+  recommendWeight: 'recommendWeight',
+  viewCount: 'viewCount',
   favoriteCount: 'favoriteCount',
   likeCount: 'likeCount',
   ratingCount: 'ratingCount',
-  viewCount: 'viewCount'
+  publishAt: 'publishAt',
+  lastUpdated: 'lastUpdated',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type WorkComicScalarFieldEnum = (typeof WorkComicScalarFieldEnum)[keyof typeof WorkComicScalarFieldEnum]
@@ -936,15 +935,15 @@ export type WorkComicScalarFieldEnum = (typeof WorkComicScalarFieldEnum)[keyof t
 export const WorkCategoryScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  description: 'description',
   icon: 'icon',
+  contentType: 'contentType',
   popularity: 'popularity',
   popularityWeight: 'popularityWeight',
   order: 'order',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  description: 'description',
-  contentType: 'contentType'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkCategoryScalarFieldEnum = (typeof WorkCategoryScalarFieldEnum)[keyof typeof WorkCategoryScalarFieldEnum]
@@ -954,13 +953,13 @@ export const WorkTagScalarFieldEnum = {
   id: 'id',
   name: 'name',
   icon: 'icon',
+  description: 'description',
   popularity: 'popularity',
   popularityWeight: 'popularityWeight',
   order: 'order',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  description: 'description'
+  updatedAt: 'updatedAt'
 } as const
 
 export type WorkTagScalarFieldEnum = (typeof WorkTagScalarFieldEnum)[keyof typeof WorkTagScalarFieldEnum]
@@ -975,15 +974,15 @@ export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
 export const NullableJsonNullValueInput = {
-  DbNull: 'DbNull',
-  JsonNull: 'JsonNull'
+  DbNull: DbNull,
+  JsonNull: JsonNull
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const JsonNullValueInput = {
-  JsonNull: 'JsonNull'
+  JsonNull: JsonNull
 } as const
 
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
@@ -1006,9 +1005,9 @@ export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
 export const JsonNullValueFilter = {
-  DbNull: 'DbNull',
-  JsonNull: 'JsonNull',
-  AnyNull: 'AnyNull'
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
 } as const
 
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]

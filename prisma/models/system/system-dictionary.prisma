@@ -18,7 +18,7 @@ model Dictionary {
   deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
   dictionaryItems DictionaryItem[]
 
-  @@map("dictionary")
+  @@map("sys_dictionary")
 }
 
 model DictionaryItem {
@@ -48,5 +48,5 @@ model DictionaryItem {
   @@unique([dictionaryCode, code])
   @@index([dictionaryCode])
   @@index([order])
-  @@map("dictionary_item")
+  @@map("sys_dictionary_item")
 }

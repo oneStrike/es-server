@@ -18,17 +18,17 @@ export class BaseForumTopicLikeDto extends BaseDto {
   topicId!: number
 
   @ValidateNumber({
-    description: '用户资料ID',
+    description: '用户ID',
     example: 1,
     required: true,
     min: 1,
   })
-  profileId!: number
+  userId!: number
 }
 
 export class CreateForumTopicLikeDto extends PickType(BaseForumTopicLikeDto, [
   'topicId',
-  'profileId',
+  'userId',
 ]) {}
 
 /**
@@ -38,7 +38,7 @@ export class CreateForumTopicLikeDto extends PickType(BaseForumTopicLikeDto, [
 export class DeleteForumTopicLikeDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumTopicLikeDto, ['topicId', 'profileId']),
+    PickType(BaseForumTopicLikeDto, ['topicId', 'userId']),
   ),
 ) {}
 
@@ -48,12 +48,12 @@ export class DeleteForumTopicLikeDto extends IntersectionType(
  */
 export class ToggleForumTopicLikeDto extends PickType(CreateForumTopicLikeDto, [
   'topicId',
-  'profileId',
+  'userId',
 ]) {}
 
 export class QueryForumTopicLikeDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumTopicLikeDto, ['topicId', 'profileId']),
+    PickType(BaseForumTopicLikeDto, ['topicId', 'userId']),
   ),
 ) {}

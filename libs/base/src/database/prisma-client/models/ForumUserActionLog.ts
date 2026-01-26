@@ -28,26 +28,26 @@ export type AggregateForumUserActionLog = {
 
 export type ForumUserActionLogAvgAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
+  targetId: number | null
   actionType: number | null
   targetType: number | null
-  targetId: number | null
 }
 
 export type ForumUserActionLogSumAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
+  targetId: number | null
   actionType: number | null
   targetType: number | null
-  targetId: number | null
 }
 
 export type ForumUserActionLogMinAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
+  targetId: number | null
   actionType: number | null
   targetType: number | null
-  targetId: number | null
   beforeData: string | null
   afterData: string | null
   ipAddress: string | null
@@ -57,10 +57,10 @@ export type ForumUserActionLogMinAggregateOutputType = {
 
 export type ForumUserActionLogMaxAggregateOutputType = {
   id: number | null
-  profileId: number | null
+  userId: number | null
+  targetId: number | null
   actionType: number | null
   targetType: number | null
-  targetId: number | null
   beforeData: string | null
   afterData: string | null
   ipAddress: string | null
@@ -70,10 +70,10 @@ export type ForumUserActionLogMaxAggregateOutputType = {
 
 export type ForumUserActionLogCountAggregateOutputType = {
   id: number
-  profileId: number
+  userId: number
+  targetId: number
   actionType: number
   targetType: number
-  targetId: number
   beforeData: number
   afterData: number
   ipAddress: number
@@ -85,26 +85,26 @@ export type ForumUserActionLogCountAggregateOutputType = {
 
 export type ForumUserActionLogAvgAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
+  targetId?: true
   actionType?: true
   targetType?: true
-  targetId?: true
 }
 
 export type ForumUserActionLogSumAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
+  targetId?: true
   actionType?: true
   targetType?: true
-  targetId?: true
 }
 
 export type ForumUserActionLogMinAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
+  targetId?: true
   actionType?: true
   targetType?: true
-  targetId?: true
   beforeData?: true
   afterData?: true
   ipAddress?: true
@@ -114,10 +114,10 @@ export type ForumUserActionLogMinAggregateInputType = {
 
 export type ForumUserActionLogMaxAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
+  targetId?: true
   actionType?: true
   targetType?: true
-  targetId?: true
   beforeData?: true
   afterData?: true
   ipAddress?: true
@@ -127,10 +127,10 @@ export type ForumUserActionLogMaxAggregateInputType = {
 
 export type ForumUserActionLogCountAggregateInputType = {
   id?: true
-  profileId?: true
+  userId?: true
+  targetId?: true
   actionType?: true
   targetType?: true
-  targetId?: true
   beforeData?: true
   afterData?: true
   ipAddress?: true
@@ -227,10 +227,10 @@ export type ForumUserActionLogGroupByArgs<ExtArgs extends runtime.Types.Extensio
 
 export type ForumUserActionLogGroupByOutputType = {
   id: number
-  profileId: number
+  userId: number
+  targetId: number
   actionType: number
   targetType: number
-  targetId: number
   beforeData: string | null
   afterData: string | null
   ipAddress: string | null
@@ -263,30 +263,30 @@ export type ForumUserActionLogWhereInput = {
   OR?: Prisma.ForumUserActionLogWhereInput[]
   NOT?: Prisma.ForumUserActionLogWhereInput | Prisma.ForumUserActionLogWhereInput[]
   id?: Prisma.IntFilter<"ForumUserActionLog"> | number
-  profileId?: Prisma.IntFilter<"ForumUserActionLog"> | number
+  userId?: Prisma.IntFilter<"ForumUserActionLog"> | number
+  targetId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   actionType?: Prisma.IntFilter<"ForumUserActionLog"> | number
   targetType?: Prisma.IntFilter<"ForumUserActionLog"> | number
-  targetId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   beforeData?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   afterData?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   ipAddress?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   userAgent?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumUserActionLog"> | Date | string
-  profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
+  user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
 }
 
 export type ForumUserActionLogOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
-  targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrderInput | Prisma.SortOrder
   afterData?: Prisma.SortOrderInput | Prisma.SortOrder
   ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   userAgent?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
-  profile?: Prisma.ForumProfileOrderByWithRelationInput
+  user?: Prisma.AppUserOrderByWithRelationInput
 }
 
 export type ForumUserActionLogWhereUniqueInput = Prisma.AtLeast<{
@@ -294,24 +294,24 @@ export type ForumUserActionLogWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.ForumUserActionLogWhereInput | Prisma.ForumUserActionLogWhereInput[]
   OR?: Prisma.ForumUserActionLogWhereInput[]
   NOT?: Prisma.ForumUserActionLogWhereInput | Prisma.ForumUserActionLogWhereInput[]
-  profileId?: Prisma.IntFilter<"ForumUserActionLog"> | number
+  userId?: Prisma.IntFilter<"ForumUserActionLog"> | number
+  targetId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   actionType?: Prisma.IntFilter<"ForumUserActionLog"> | number
   targetType?: Prisma.IntFilter<"ForumUserActionLog"> | number
-  targetId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   beforeData?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   afterData?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   ipAddress?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   userAgent?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumUserActionLog"> | Date | string
-  profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
+  user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
 }, "id">
 
 export type ForumUserActionLogOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
-  targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrderInput | Prisma.SortOrder
   afterData?: Prisma.SortOrderInput | Prisma.SortOrder
   ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -329,10 +329,10 @@ export type ForumUserActionLogScalarWhereWithAggregatesInput = {
   OR?: Prisma.ForumUserActionLogScalarWhereWithAggregatesInput[]
   NOT?: Prisma.ForumUserActionLogScalarWhereWithAggregatesInput | Prisma.ForumUserActionLogScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
-  profileId?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
+  userId?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
+  targetId?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
   actionType?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
   targetType?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
-  targetId?: Prisma.IntWithAggregatesFilter<"ForumUserActionLog"> | number
   beforeData?: Prisma.StringNullableWithAggregatesFilter<"ForumUserActionLog"> | string | null
   afterData?: Prisma.StringNullableWithAggregatesFilter<"ForumUserActionLog"> | string | null
   ipAddress?: Prisma.StringNullableWithAggregatesFilter<"ForumUserActionLog"> | string | null
@@ -341,23 +341,23 @@ export type ForumUserActionLogScalarWhereWithAggregatesInput = {
 }
 
 export type ForumUserActionLogCreateInput = {
+  targetId: number
   actionType: number
   targetType: number
-  targetId: number
   beforeData?: string | null
   afterData?: string | null
   ipAddress?: string | null
   userAgent?: string | null
   createdAt?: Date | string
-  profile: Prisma.ForumProfileCreateNestedOneWithoutActionLogsInput
+  user: Prisma.AppUserCreateNestedOneWithoutForumActionLogsInput
 }
 
 export type ForumUserActionLogUncheckedCreateInput = {
   id?: number
-  profileId: number
+  userId: number
+  targetId: number
   actionType: number
   targetType: number
-  targetId: number
   beforeData?: string | null
   afterData?: string | null
   ipAddress?: string | null
@@ -366,23 +366,23 @@ export type ForumUserActionLogUncheckedCreateInput = {
 }
 
 export type ForumUserActionLogUpdateInput = {
+  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userAgent?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutActionLogsNestedInput
+  user?: Prisma.AppUserUpdateOneRequiredWithoutForumActionLogsNestedInput
 }
 
 export type ForumUserActionLogUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -392,10 +392,10 @@ export type ForumUserActionLogUncheckedUpdateInput = {
 
 export type ForumUserActionLogCreateManyInput = {
   id?: number
-  profileId: number
+  userId: number
+  targetId: number
   actionType: number
   targetType: number
-  targetId: number
   beforeData?: string | null
   afterData?: string | null
   ipAddress?: string | null
@@ -404,9 +404,9 @@ export type ForumUserActionLogCreateManyInput = {
 }
 
 export type ForumUserActionLogUpdateManyMutationInput = {
+  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -416,10 +416,10 @@ export type ForumUserActionLogUpdateManyMutationInput = {
 
 export type ForumUserActionLogUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -439,10 +439,10 @@ export type ForumUserActionLogOrderByRelationAggregateInput = {
 
 export type ForumUserActionLogCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
-  targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrder
   afterData?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrder
@@ -452,18 +452,18 @@ export type ForumUserActionLogCountOrderByAggregateInput = {
 
 export type ForumUserActionLogAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
-  targetId?: Prisma.SortOrder
 }
 
 export type ForumUserActionLogMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
-  targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrder
   afterData?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrder
@@ -473,10 +473,10 @@ export type ForumUserActionLogMaxOrderByAggregateInput = {
 
 export type ForumUserActionLogMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
-  targetId?: Prisma.SortOrder
   beforeData?: Prisma.SortOrder
   afterData?: Prisma.SortOrder
   ipAddress?: Prisma.SortOrder
@@ -486,58 +486,58 @@ export type ForumUserActionLogMinOrderByAggregateInput = {
 
 export type ForumUserActionLogSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
   actionType?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
-  targetId?: Prisma.SortOrder
 }
 
-export type ForumUserActionLogCreateNestedManyWithoutProfileInput = {
-  create?: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutProfileInput, Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput> | Prisma.ForumUserActionLogCreateWithoutProfileInput[] | Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumUserActionLogCreateOrConnectWithoutProfileInput | Prisma.ForumUserActionLogCreateOrConnectWithoutProfileInput[]
-  createMany?: Prisma.ForumUserActionLogCreateManyProfileInputEnvelope
+export type ForumUserActionLogCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutUserInput, Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput> | Prisma.ForumUserActionLogCreateWithoutUserInput[] | Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumUserActionLogCreateOrConnectWithoutUserInput | Prisma.ForumUserActionLogCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ForumUserActionLogCreateManyUserInputEnvelope
   connect?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
 }
 
-export type ForumUserActionLogUncheckedCreateNestedManyWithoutProfileInput = {
-  create?: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutProfileInput, Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput> | Prisma.ForumUserActionLogCreateWithoutProfileInput[] | Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumUserActionLogCreateOrConnectWithoutProfileInput | Prisma.ForumUserActionLogCreateOrConnectWithoutProfileInput[]
-  createMany?: Prisma.ForumUserActionLogCreateManyProfileInputEnvelope
+export type ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutUserInput, Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput> | Prisma.ForumUserActionLogCreateWithoutUserInput[] | Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumUserActionLogCreateOrConnectWithoutUserInput | Prisma.ForumUserActionLogCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ForumUserActionLogCreateManyUserInputEnvelope
   connect?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
 }
 
-export type ForumUserActionLogUpdateManyWithoutProfileNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutProfileInput, Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput> | Prisma.ForumUserActionLogCreateWithoutProfileInput[] | Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumUserActionLogCreateOrConnectWithoutProfileInput | Prisma.ForumUserActionLogCreateOrConnectWithoutProfileInput[]
-  upsert?: Prisma.ForumUserActionLogUpsertWithWhereUniqueWithoutProfileInput | Prisma.ForumUserActionLogUpsertWithWhereUniqueWithoutProfileInput[]
-  createMany?: Prisma.ForumUserActionLogCreateManyProfileInputEnvelope
+export type ForumUserActionLogUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutUserInput, Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput> | Prisma.ForumUserActionLogCreateWithoutUserInput[] | Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumUserActionLogCreateOrConnectWithoutUserInput | Prisma.ForumUserActionLogCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ForumUserActionLogUpsertWithWhereUniqueWithoutUserInput | Prisma.ForumUserActionLogUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ForumUserActionLogCreateManyUserInputEnvelope
   set?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
   disconnect?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
   delete?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
   connect?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
-  update?: Prisma.ForumUserActionLogUpdateWithWhereUniqueWithoutProfileInput | Prisma.ForumUserActionLogUpdateWithWhereUniqueWithoutProfileInput[]
-  updateMany?: Prisma.ForumUserActionLogUpdateManyWithWhereWithoutProfileInput | Prisma.ForumUserActionLogUpdateManyWithWhereWithoutProfileInput[]
+  update?: Prisma.ForumUserActionLogUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumUserActionLogUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ForumUserActionLogUpdateManyWithWhereWithoutUserInput | Prisma.ForumUserActionLogUpdateManyWithWhereWithoutUserInput[]
   deleteMany?: Prisma.ForumUserActionLogScalarWhereInput | Prisma.ForumUserActionLogScalarWhereInput[]
 }
 
-export type ForumUserActionLogUncheckedUpdateManyWithoutProfileNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutProfileInput, Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput> | Prisma.ForumUserActionLogCreateWithoutProfileInput[] | Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumUserActionLogCreateOrConnectWithoutProfileInput | Prisma.ForumUserActionLogCreateOrConnectWithoutProfileInput[]
-  upsert?: Prisma.ForumUserActionLogUpsertWithWhereUniqueWithoutProfileInput | Prisma.ForumUserActionLogUpsertWithWhereUniqueWithoutProfileInput[]
-  createMany?: Prisma.ForumUserActionLogCreateManyProfileInputEnvelope
+export type ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutUserInput, Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput> | Prisma.ForumUserActionLogCreateWithoutUserInput[] | Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumUserActionLogCreateOrConnectWithoutUserInput | Prisma.ForumUserActionLogCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ForumUserActionLogUpsertWithWhereUniqueWithoutUserInput | Prisma.ForumUserActionLogUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ForumUserActionLogCreateManyUserInputEnvelope
   set?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
   disconnect?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
   delete?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
   connect?: Prisma.ForumUserActionLogWhereUniqueInput | Prisma.ForumUserActionLogWhereUniqueInput[]
-  update?: Prisma.ForumUserActionLogUpdateWithWhereUniqueWithoutProfileInput | Prisma.ForumUserActionLogUpdateWithWhereUniqueWithoutProfileInput[]
-  updateMany?: Prisma.ForumUserActionLogUpdateManyWithWhereWithoutProfileInput | Prisma.ForumUserActionLogUpdateManyWithWhereWithoutProfileInput[]
+  update?: Prisma.ForumUserActionLogUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumUserActionLogUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ForumUserActionLogUpdateManyWithWhereWithoutUserInput | Prisma.ForumUserActionLogUpdateManyWithWhereWithoutUserInput[]
   deleteMany?: Prisma.ForumUserActionLogScalarWhereInput | Prisma.ForumUserActionLogScalarWhereInput[]
 }
 
-export type ForumUserActionLogCreateWithoutProfileInput = {
+export type ForumUserActionLogCreateWithoutUserInput = {
+  targetId: number
   actionType: number
   targetType: number
-  targetId: number
   beforeData?: string | null
   afterData?: string | null
   ipAddress?: string | null
@@ -545,11 +545,11 @@ export type ForumUserActionLogCreateWithoutProfileInput = {
   createdAt?: Date | string
 }
 
-export type ForumUserActionLogUncheckedCreateWithoutProfileInput = {
+export type ForumUserActionLogUncheckedCreateWithoutUserInput = {
   id?: number
+  targetId: number
   actionType: number
   targetType: number
-  targetId: number
   beforeData?: string | null
   afterData?: string | null
   ipAddress?: string | null
@@ -557,30 +557,30 @@ export type ForumUserActionLogUncheckedCreateWithoutProfileInput = {
   createdAt?: Date | string
 }
 
-export type ForumUserActionLogCreateOrConnectWithoutProfileInput = {
+export type ForumUserActionLogCreateOrConnectWithoutUserInput = {
   where: Prisma.ForumUserActionLogWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutProfileInput, Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput>
+  create: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutUserInput, Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput>
 }
 
-export type ForumUserActionLogCreateManyProfileInputEnvelope = {
-  data: Prisma.ForumUserActionLogCreateManyProfileInput | Prisma.ForumUserActionLogCreateManyProfileInput[]
+export type ForumUserActionLogCreateManyUserInputEnvelope = {
+  data: Prisma.ForumUserActionLogCreateManyUserInput | Prisma.ForumUserActionLogCreateManyUserInput[]
   skipDuplicates?: boolean
 }
 
-export type ForumUserActionLogUpsertWithWhereUniqueWithoutProfileInput = {
+export type ForumUserActionLogUpsertWithWhereUniqueWithoutUserInput = {
   where: Prisma.ForumUserActionLogWhereUniqueInput
-  update: Prisma.XOR<Prisma.ForumUserActionLogUpdateWithoutProfileInput, Prisma.ForumUserActionLogUncheckedUpdateWithoutProfileInput>
-  create: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutProfileInput, Prisma.ForumUserActionLogUncheckedCreateWithoutProfileInput>
+  update: Prisma.XOR<Prisma.ForumUserActionLogUpdateWithoutUserInput, Prisma.ForumUserActionLogUncheckedUpdateWithoutUserInput>
+  create: Prisma.XOR<Prisma.ForumUserActionLogCreateWithoutUserInput, Prisma.ForumUserActionLogUncheckedCreateWithoutUserInput>
 }
 
-export type ForumUserActionLogUpdateWithWhereUniqueWithoutProfileInput = {
+export type ForumUserActionLogUpdateWithWhereUniqueWithoutUserInput = {
   where: Prisma.ForumUserActionLogWhereUniqueInput
-  data: Prisma.XOR<Prisma.ForumUserActionLogUpdateWithoutProfileInput, Prisma.ForumUserActionLogUncheckedUpdateWithoutProfileInput>
+  data: Prisma.XOR<Prisma.ForumUserActionLogUpdateWithoutUserInput, Prisma.ForumUserActionLogUncheckedUpdateWithoutUserInput>
 }
 
-export type ForumUserActionLogUpdateManyWithWhereWithoutProfileInput = {
+export type ForumUserActionLogUpdateManyWithWhereWithoutUserInput = {
   where: Prisma.ForumUserActionLogScalarWhereInput
-  data: Prisma.XOR<Prisma.ForumUserActionLogUpdateManyMutationInput, Prisma.ForumUserActionLogUncheckedUpdateManyWithoutProfileInput>
+  data: Prisma.XOR<Prisma.ForumUserActionLogUpdateManyMutationInput, Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserInput>
 }
 
 export type ForumUserActionLogScalarWhereInput = {
@@ -588,10 +588,10 @@ export type ForumUserActionLogScalarWhereInput = {
   OR?: Prisma.ForumUserActionLogScalarWhereInput[]
   NOT?: Prisma.ForumUserActionLogScalarWhereInput | Prisma.ForumUserActionLogScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumUserActionLog"> | number
-  profileId?: Prisma.IntFilter<"ForumUserActionLog"> | number
+  userId?: Prisma.IntFilter<"ForumUserActionLog"> | number
+  targetId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   actionType?: Prisma.IntFilter<"ForumUserActionLog"> | number
   targetType?: Prisma.IntFilter<"ForumUserActionLog"> | number
-  targetId?: Prisma.IntFilter<"ForumUserActionLog"> | number
   beforeData?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   afterData?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
   ipAddress?: Prisma.StringNullableFilter<"ForumUserActionLog"> | string | null
@@ -599,11 +599,11 @@ export type ForumUserActionLogScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"ForumUserActionLog"> | Date | string
 }
 
-export type ForumUserActionLogCreateManyProfileInput = {
+export type ForumUserActionLogCreateManyUserInput = {
   id?: number
+  targetId: number
   actionType: number
   targetType: number
-  targetId: number
   beforeData?: string | null
   afterData?: string | null
   ipAddress?: string | null
@@ -611,10 +611,10 @@ export type ForumUserActionLogCreateManyProfileInput = {
   createdAt?: Date | string
 }
 
-export type ForumUserActionLogUpdateWithoutProfileInput = {
+export type ForumUserActionLogUpdateWithoutUserInput = {
+  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -622,11 +622,11 @@ export type ForumUserActionLogUpdateWithoutProfileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ForumUserActionLogUncheckedUpdateWithoutProfileInput = {
+export type ForumUserActionLogUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -634,11 +634,11 @@ export type ForumUserActionLogUncheckedUpdateWithoutProfileInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ForumUserActionLogUncheckedUpdateManyWithoutProfileInput = {
+export type ForumUserActionLogUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   actionType?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.IntFieldUpdateOperationsInput | number
   beforeData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   afterData?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -650,52 +650,52 @@ export type ForumUserActionLogUncheckedUpdateManyWithoutProfileInput = {
 
 export type ForumUserActionLogSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
+  targetId?: boolean
   actionType?: boolean
   targetType?: boolean
-  targetId?: boolean
   beforeData?: boolean
   afterData?: boolean
   ipAddress?: boolean
   userAgent?: boolean
   createdAt?: boolean
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumUserActionLog"]>
 
 export type ForumUserActionLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
+  targetId?: boolean
   actionType?: boolean
   targetType?: boolean
-  targetId?: boolean
   beforeData?: boolean
   afterData?: boolean
   ipAddress?: boolean
   userAgent?: boolean
   createdAt?: boolean
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumUserActionLog"]>
 
 export type ForumUserActionLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
+  targetId?: boolean
   actionType?: boolean
   targetType?: boolean
-  targetId?: boolean
   beforeData?: boolean
   afterData?: boolean
   ipAddress?: boolean
   userAgent?: boolean
   createdAt?: boolean
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumUserActionLog"]>
 
 export type ForumUserActionLogSelectScalar = {
   id?: boolean
-  profileId?: boolean
+  userId?: boolean
+  targetId?: boolean
   actionType?: boolean
   targetType?: boolean
-  targetId?: boolean
   beforeData?: boolean
   afterData?: boolean
   ipAddress?: boolean
@@ -703,21 +703,24 @@ export type ForumUserActionLogSelectScalar = {
   createdAt?: boolean
 }
 
-export type ForumUserActionLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "profileId" | "actionType" | "targetType" | "targetId" | "beforeData" | "afterData" | "ipAddress" | "userAgent" | "createdAt", ExtArgs["result"]["forumUserActionLog"]>
+export type ForumUserActionLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "targetId" | "actionType" | "targetType" | "beforeData" | "afterData" | "ipAddress" | "userAgent" | "createdAt", ExtArgs["result"]["forumUserActionLog"]>
 export type ForumUserActionLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type ForumUserActionLogIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type ForumUserActionLogIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 
 export type $ForumUserActionLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumUserActionLog"
   objects: {
-    profile: Prisma.$ForumProfilePayload<ExtArgs>
+    /**
+     * 关联用户
+     */
+    user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -725,9 +728,13 @@ export type $ForumUserActionLogPayload<ExtArgs extends runtime.Types.Extensions.
      */
     id: number
     /**
-     * 关联的论坛用户资料ID
+     * 关联的用户ID
      */
-    profileId: number
+    userId: number
+    /**
+     * 目标ID
+     */
+    targetId: number
     /**
      * 操作类型（1=创建主题, 2=创建回复, 3=点赞主题, 4=取消点赞主题, 5=点赞回复, 6=取消点赞回复, 7=收藏主题, 8=取消收藏主题, 9=更新主题, 10=更新回复, 11=删除主题, 12=删除回复）
      */
@@ -736,10 +743,6 @@ export type $ForumUserActionLogPayload<ExtArgs extends runtime.Types.Extensions.
      * 目标类型（1=主题, 2=回复）
      */
     targetType: number
-    /**
-     * 目标ID
-     */
-    targetId: number
     /**
      * 操作前数据（JSON格式）
      */
@@ -1154,7 +1157,7 @@ readonly fields: ForumUserActionLogFieldRefs;
  */
 export interface Prisma__ForumUserActionLogClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  profile<T extends Prisma.ForumProfileDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfileDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1185,10 +1188,10 @@ export interface Prisma__ForumUserActionLogClient<T, Null = never, ExtArgs exten
  */
 export interface ForumUserActionLogFieldRefs {
   readonly id: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
-  readonly profileId: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
+  readonly userId: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
+  readonly targetId: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
   readonly actionType: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
   readonly targetType: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
-  readonly targetId: Prisma.FieldRef<"ForumUserActionLog", 'Int'>
   readonly beforeData: Prisma.FieldRef<"ForumUserActionLog", 'String'>
   readonly afterData: Prisma.FieldRef<"ForumUserActionLog", 'String'>
   readonly ipAddress: Prisma.FieldRef<"ForumUserActionLog", 'String'>

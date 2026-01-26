@@ -4,7 +4,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateForumNotificationDto,
   CreateForumNotificationShortDto,
-  ForumProfileIdDto,
+  ForumUserIdDto,
   QueryForumNotificationListDto,
 } from './dto/notification.dto'
 import {
@@ -20,10 +20,6 @@ import {
 export class ForumNotificationService extends BaseService {
   constructor() {
     super()
-  }
-
-  get forumProfile() {
-    return this.prisma.forumProfile
   }
 
   get notification() {
@@ -44,26 +40,22 @@ export class ForumNotificationService extends BaseService {
       throw new BadRequestException('通知的主体不存在')
     }
 
-    const profile = await this.forumProfile.findUnique({
-      where: { id: createNotificationDto.profileId },
+    const user = await this.prisma.appUser.findUnique({
+      where: { id: createNotificationDto.userId },
       select: {
-        user: {
-          select: {
-            nickname: true,
-          },
-        },
+        nickname: true,
       },
     })
 
-    if (!profile) {
-      throw new BadRequestException('用户资料不存在')
+    if (!user) {
+      throw new BadRequestException('用户不存在')
     }
     const createData: ForumNotificationCreateInput = {
       ...createNotificationDto,
       isRead: false,
-      profile: {
+      user: {
         connect: {
-          id: createNotificationDto.profileId,
+          id: createNotificationDto.userId,
         },
       },
     }
@@ -149,16 +141,12 @@ export class ForumNotificationService extends BaseService {
     return this.notification.findPagination({
       where: queryNotificationListDto,
       include: {
-        profile: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                nickname: true,
-                avatar: true,
-              },
-            },
+        user: {
+          select: {
+            id: true,
+            username: true,
+            nickname: true,
+            avatar: true,
           },
         },
       },
@@ -167,17 +155,17 @@ export class ForumNotificationService extends BaseService {
 
   /**
    * 查询用户通知列表
-   * @param profileId 用户ID
+   * @param userId 用户ID
    * @param queryNotificationListDto 查询参数
    * @returns 通知列表
    */
   async queryUserNotificationList(
-    profileId: number,
+    userId: number,
     queryNotificationListDto: QueryForumNotificationListDto,
   ) {
     return this.queryNotificationList({
       ...queryNotificationListDto,
-      profileId,
+      userId,
     })
   }
 
@@ -237,10 +225,10 @@ export class ForumNotificationService extends BaseService {
    * @param dto 标记所有已读的数据
    * @returns 标记结果
    */
-  async markAllNotificationRead(dto: ForumProfileIdDto) {
+  async markAllNotificationRead(dto: ForumUserIdDto) {
     return this.notification.updateMany({
       where: {
-        profileId: dto.profileId,
+        userId: dto.userId,
         isRead: false,
       },
       data: {
@@ -301,11 +289,11 @@ export class ForumNotificationService extends BaseService {
    * @param dto 获取未读数量的数据
    * @returns 未读通知数量
    */
-  async getUnreadCount(dto: ForumProfileIdDto) {
+  async getUnreadCount(dto: ForumUserIdDto) {
     return {
       count: await this.notification.count({
         where: {
-          profileId: dto.profileId,
+          userId: dto.userId,
           isRead: false,
         },
       }),
@@ -317,11 +305,11 @@ export class ForumNotificationService extends BaseService {
    * @param dto 获取用户未读数量的数据
    * @returns 未读通知数量
    */
-  async getUserUnreadCount(dto: ForumProfileIdDto) {
+  async getUserUnreadCount(dto: ForumUserIdDto) {
     return {
       count: await this.notification.count({
         where: {
-          profileId: dto.profileId,
+          userId: dto.userId,
           isRead: false,
         },
       }),

@@ -29,33 +29,33 @@ export type AggregateForumTopicLike = {
 export type ForumTopicLikeAvgAggregateOutputType = {
   id: number | null
   topicId: number | null
-  profileId: number | null
+  userId: number | null
 }
 
 export type ForumTopicLikeSumAggregateOutputType = {
   id: number | null
   topicId: number | null
-  profileId: number | null
+  userId: number | null
 }
 
 export type ForumTopicLikeMinAggregateOutputType = {
   id: number | null
   topicId: number | null
-  profileId: number | null
+  userId: number | null
   createdAt: Date | null
 }
 
 export type ForumTopicLikeMaxAggregateOutputType = {
   id: number | null
   topicId: number | null
-  profileId: number | null
+  userId: number | null
   createdAt: Date | null
 }
 
 export type ForumTopicLikeCountAggregateOutputType = {
   id: number
   topicId: number
-  profileId: number
+  userId: number
   createdAt: number
   _all: number
 }
@@ -64,33 +64,33 @@ export type ForumTopicLikeCountAggregateOutputType = {
 export type ForumTopicLikeAvgAggregateInputType = {
   id?: true
   topicId?: true
-  profileId?: true
+  userId?: true
 }
 
 export type ForumTopicLikeSumAggregateInputType = {
   id?: true
   topicId?: true
-  profileId?: true
+  userId?: true
 }
 
 export type ForumTopicLikeMinAggregateInputType = {
   id?: true
   topicId?: true
-  profileId?: true
+  userId?: true
   createdAt?: true
 }
 
 export type ForumTopicLikeMaxAggregateInputType = {
   id?: true
   topicId?: true
-  profileId?: true
+  userId?: true
   createdAt?: true
 }
 
 export type ForumTopicLikeCountAggregateInputType = {
   id?: true
   topicId?: true
-  profileId?: true
+  userId?: true
   createdAt?: true
   _all?: true
 }
@@ -184,7 +184,7 @@ export type ForumTopicLikeGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 export type ForumTopicLikeGroupByOutputType = {
   id: number
   topicId: number
-  profileId: number
+  userId: number
   createdAt: Date
   _count: ForumTopicLikeCountAggregateOutputType | null
   _avg: ForumTopicLikeAvgAggregateOutputType | null
@@ -214,38 +214,38 @@ export type ForumTopicLikeWhereInput = {
   NOT?: Prisma.ForumTopicLikeWhereInput | Prisma.ForumTopicLikeWhereInput[]
   id?: Prisma.IntFilter<"ForumTopicLike"> | number
   topicId?: Prisma.IntFilter<"ForumTopicLike"> | number
-  profileId?: Prisma.IntFilter<"ForumTopicLike"> | number
+  userId?: Prisma.IntFilter<"ForumTopicLike"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumTopicLike"> | Date | string
   topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
-  profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
+  user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
 }
 
 export type ForumTopicLikeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   topic?: Prisma.ForumTopicOrderByWithRelationInput
-  profile?: Prisma.ForumProfileOrderByWithRelationInput
+  user?: Prisma.AppUserOrderByWithRelationInput
 }
 
 export type ForumTopicLikeWhereUniqueInput = Prisma.AtLeast<{
   id?: number
-  topicId_profileId?: Prisma.ForumTopicLikeTopicIdProfileIdCompoundUniqueInput
+  topicId_userId?: Prisma.ForumTopicLikeTopicIdUserIdCompoundUniqueInput
   AND?: Prisma.ForumTopicLikeWhereInput | Prisma.ForumTopicLikeWhereInput[]
   OR?: Prisma.ForumTopicLikeWhereInput[]
   NOT?: Prisma.ForumTopicLikeWhereInput | Prisma.ForumTopicLikeWhereInput[]
   topicId?: Prisma.IntFilter<"ForumTopicLike"> | number
-  profileId?: Prisma.IntFilter<"ForumTopicLike"> | number
+  userId?: Prisma.IntFilter<"ForumTopicLike"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumTopicLike"> | Date | string
   topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
-  profile?: Prisma.XOR<Prisma.ForumProfileScalarRelationFilter, Prisma.ForumProfileWhereInput>
-}, "id" | "topicId_profileId">
+  user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+}, "id" | "topicId_userId">
 
 export type ForumTopicLikeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ForumTopicLikeCountOrderByAggregateInput
   _avg?: Prisma.ForumTopicLikeAvgOrderByAggregateInput
@@ -260,40 +260,40 @@ export type ForumTopicLikeScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumTopicLikeScalarWhereWithAggregatesInput | Prisma.ForumTopicLikeScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumTopicLike"> | number
   topicId?: Prisma.IntWithAggregatesFilter<"ForumTopicLike"> | number
-  profileId?: Prisma.IntWithAggregatesFilter<"ForumTopicLike"> | number
+  userId?: Prisma.IntWithAggregatesFilter<"ForumTopicLike"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumTopicLike"> | Date | string
 }
 
 export type ForumTopicLikeCreateInput = {
   createdAt?: Date | string
   topic: Prisma.ForumTopicCreateNestedOneWithoutLikesInput
-  profile: Prisma.ForumProfileCreateNestedOneWithoutTopicLikesInput
+  user: Prisma.AppUserCreateNestedOneWithoutTopicLikesInput
 }
 
 export type ForumTopicLikeUncheckedCreateInput = {
   id?: number
   topicId: number
-  profileId: number
+  userId: number
   createdAt?: Date | string
 }
 
 export type ForumTopicLikeUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   topic?: Prisma.ForumTopicUpdateOneRequiredWithoutLikesNestedInput
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutTopicLikesNestedInput
+  user?: Prisma.AppUserUpdateOneRequiredWithoutTopicLikesNestedInput
 }
 
 export type ForumTopicLikeUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumTopicLikeCreateManyInput = {
   id?: number
   topicId: number
-  profileId: number
+  userId: number
   createdAt?: Date | string
 }
 
@@ -304,7 +304,7 @@ export type ForumTopicLikeUpdateManyMutationInput = {
 export type ForumTopicLikeUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -318,83 +318,83 @@ export type ForumTopicLikeOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type ForumTopicLikeTopicIdProfileIdCompoundUniqueInput = {
+export type ForumTopicLikeTopicIdUserIdCompoundUniqueInput = {
   topicId: number
-  profileId: number
+  userId: number
 }
 
 export type ForumTopicLikeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumTopicLikeAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
 }
 
 export type ForumTopicLikeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumTopicLikeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
 export type ForumTopicLikeSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  profileId?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
 }
 
-export type ForumTopicLikeCreateNestedManyWithoutProfileInput = {
-  create?: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutProfileInput, Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput> | Prisma.ForumTopicLikeCreateWithoutProfileInput[] | Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumTopicLikeCreateOrConnectWithoutProfileInput | Prisma.ForumTopicLikeCreateOrConnectWithoutProfileInput[]
-  createMany?: Prisma.ForumTopicLikeCreateManyProfileInputEnvelope
+export type ForumTopicLikeCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutUserInput, Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput> | Prisma.ForumTopicLikeCreateWithoutUserInput[] | Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumTopicLikeCreateOrConnectWithoutUserInput | Prisma.ForumTopicLikeCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ForumTopicLikeCreateManyUserInputEnvelope
   connect?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
 }
 
-export type ForumTopicLikeUncheckedCreateNestedManyWithoutProfileInput = {
-  create?: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutProfileInput, Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput> | Prisma.ForumTopicLikeCreateWithoutProfileInput[] | Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumTopicLikeCreateOrConnectWithoutProfileInput | Prisma.ForumTopicLikeCreateOrConnectWithoutProfileInput[]
-  createMany?: Prisma.ForumTopicLikeCreateManyProfileInputEnvelope
+export type ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutUserInput, Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput> | Prisma.ForumTopicLikeCreateWithoutUserInput[] | Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumTopicLikeCreateOrConnectWithoutUserInput | Prisma.ForumTopicLikeCreateOrConnectWithoutUserInput[]
+  createMany?: Prisma.ForumTopicLikeCreateManyUserInputEnvelope
   connect?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
 }
 
-export type ForumTopicLikeUpdateManyWithoutProfileNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutProfileInput, Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput> | Prisma.ForumTopicLikeCreateWithoutProfileInput[] | Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumTopicLikeCreateOrConnectWithoutProfileInput | Prisma.ForumTopicLikeCreateOrConnectWithoutProfileInput[]
-  upsert?: Prisma.ForumTopicLikeUpsertWithWhereUniqueWithoutProfileInput | Prisma.ForumTopicLikeUpsertWithWhereUniqueWithoutProfileInput[]
-  createMany?: Prisma.ForumTopicLikeCreateManyProfileInputEnvelope
+export type ForumTopicLikeUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutUserInput, Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput> | Prisma.ForumTopicLikeCreateWithoutUserInput[] | Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumTopicLikeCreateOrConnectWithoutUserInput | Prisma.ForumTopicLikeCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ForumTopicLikeUpsertWithWhereUniqueWithoutUserInput | Prisma.ForumTopicLikeUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ForumTopicLikeCreateManyUserInputEnvelope
   set?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
   disconnect?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
   delete?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
   connect?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
-  update?: Prisma.ForumTopicLikeUpdateWithWhereUniqueWithoutProfileInput | Prisma.ForumTopicLikeUpdateWithWhereUniqueWithoutProfileInput[]
-  updateMany?: Prisma.ForumTopicLikeUpdateManyWithWhereWithoutProfileInput | Prisma.ForumTopicLikeUpdateManyWithWhereWithoutProfileInput[]
+  update?: Prisma.ForumTopicLikeUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumTopicLikeUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ForumTopicLikeUpdateManyWithWhereWithoutUserInput | Prisma.ForumTopicLikeUpdateManyWithWhereWithoutUserInput[]
   deleteMany?: Prisma.ForumTopicLikeScalarWhereInput | Prisma.ForumTopicLikeScalarWhereInput[]
 }
 
-export type ForumTopicLikeUncheckedUpdateManyWithoutProfileNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutProfileInput, Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput> | Prisma.ForumTopicLikeCreateWithoutProfileInput[] | Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput[]
-  connectOrCreate?: Prisma.ForumTopicLikeCreateOrConnectWithoutProfileInput | Prisma.ForumTopicLikeCreateOrConnectWithoutProfileInput[]
-  upsert?: Prisma.ForumTopicLikeUpsertWithWhereUniqueWithoutProfileInput | Prisma.ForumTopicLikeUpsertWithWhereUniqueWithoutProfileInput[]
-  createMany?: Prisma.ForumTopicLikeCreateManyProfileInputEnvelope
+export type ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutUserInput, Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput> | Prisma.ForumTopicLikeCreateWithoutUserInput[] | Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput[]
+  connectOrCreate?: Prisma.ForumTopicLikeCreateOrConnectWithoutUserInput | Prisma.ForumTopicLikeCreateOrConnectWithoutUserInput[]
+  upsert?: Prisma.ForumTopicLikeUpsertWithWhereUniqueWithoutUserInput | Prisma.ForumTopicLikeUpsertWithWhereUniqueWithoutUserInput[]
+  createMany?: Prisma.ForumTopicLikeCreateManyUserInputEnvelope
   set?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
   disconnect?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
   delete?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
   connect?: Prisma.ForumTopicLikeWhereUniqueInput | Prisma.ForumTopicLikeWhereUniqueInput[]
-  update?: Prisma.ForumTopicLikeUpdateWithWhereUniqueWithoutProfileInput | Prisma.ForumTopicLikeUpdateWithWhereUniqueWithoutProfileInput[]
-  updateMany?: Prisma.ForumTopicLikeUpdateManyWithWhereWithoutProfileInput | Prisma.ForumTopicLikeUpdateManyWithWhereWithoutProfileInput[]
+  update?: Prisma.ForumTopicLikeUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumTopicLikeUpdateWithWhereUniqueWithoutUserInput[]
+  updateMany?: Prisma.ForumTopicLikeUpdateManyWithWhereWithoutUserInput | Prisma.ForumTopicLikeUpdateManyWithWhereWithoutUserInput[]
   deleteMany?: Prisma.ForumTopicLikeScalarWhereInput | Prisma.ForumTopicLikeScalarWhereInput[]
 }
 
@@ -440,41 +440,41 @@ export type ForumTopicLikeUncheckedUpdateManyWithoutTopicNestedInput = {
   deleteMany?: Prisma.ForumTopicLikeScalarWhereInput | Prisma.ForumTopicLikeScalarWhereInput[]
 }
 
-export type ForumTopicLikeCreateWithoutProfileInput = {
+export type ForumTopicLikeCreateWithoutUserInput = {
   createdAt?: Date | string
   topic: Prisma.ForumTopicCreateNestedOneWithoutLikesInput
 }
 
-export type ForumTopicLikeUncheckedCreateWithoutProfileInput = {
+export type ForumTopicLikeUncheckedCreateWithoutUserInput = {
   id?: number
   topicId: number
   createdAt?: Date | string
 }
 
-export type ForumTopicLikeCreateOrConnectWithoutProfileInput = {
+export type ForumTopicLikeCreateOrConnectWithoutUserInput = {
   where: Prisma.ForumTopicLikeWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutProfileInput, Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput>
+  create: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutUserInput, Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput>
 }
 
-export type ForumTopicLikeCreateManyProfileInputEnvelope = {
-  data: Prisma.ForumTopicLikeCreateManyProfileInput | Prisma.ForumTopicLikeCreateManyProfileInput[]
+export type ForumTopicLikeCreateManyUserInputEnvelope = {
+  data: Prisma.ForumTopicLikeCreateManyUserInput | Prisma.ForumTopicLikeCreateManyUserInput[]
   skipDuplicates?: boolean
 }
 
-export type ForumTopicLikeUpsertWithWhereUniqueWithoutProfileInput = {
+export type ForumTopicLikeUpsertWithWhereUniqueWithoutUserInput = {
   where: Prisma.ForumTopicLikeWhereUniqueInput
-  update: Prisma.XOR<Prisma.ForumTopicLikeUpdateWithoutProfileInput, Prisma.ForumTopicLikeUncheckedUpdateWithoutProfileInput>
-  create: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutProfileInput, Prisma.ForumTopicLikeUncheckedCreateWithoutProfileInput>
+  update: Prisma.XOR<Prisma.ForumTopicLikeUpdateWithoutUserInput, Prisma.ForumTopicLikeUncheckedUpdateWithoutUserInput>
+  create: Prisma.XOR<Prisma.ForumTopicLikeCreateWithoutUserInput, Prisma.ForumTopicLikeUncheckedCreateWithoutUserInput>
 }
 
-export type ForumTopicLikeUpdateWithWhereUniqueWithoutProfileInput = {
+export type ForumTopicLikeUpdateWithWhereUniqueWithoutUserInput = {
   where: Prisma.ForumTopicLikeWhereUniqueInput
-  data: Prisma.XOR<Prisma.ForumTopicLikeUpdateWithoutProfileInput, Prisma.ForumTopicLikeUncheckedUpdateWithoutProfileInput>
+  data: Prisma.XOR<Prisma.ForumTopicLikeUpdateWithoutUserInput, Prisma.ForumTopicLikeUncheckedUpdateWithoutUserInput>
 }
 
-export type ForumTopicLikeUpdateManyWithWhereWithoutProfileInput = {
+export type ForumTopicLikeUpdateManyWithWhereWithoutUserInput = {
   where: Prisma.ForumTopicLikeScalarWhereInput
-  data: Prisma.XOR<Prisma.ForumTopicLikeUpdateManyMutationInput, Prisma.ForumTopicLikeUncheckedUpdateManyWithoutProfileInput>
+  data: Prisma.XOR<Prisma.ForumTopicLikeUpdateManyMutationInput, Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserInput>
 }
 
 export type ForumTopicLikeScalarWhereInput = {
@@ -483,18 +483,18 @@ export type ForumTopicLikeScalarWhereInput = {
   NOT?: Prisma.ForumTopicLikeScalarWhereInput | Prisma.ForumTopicLikeScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumTopicLike"> | number
   topicId?: Prisma.IntFilter<"ForumTopicLike"> | number
-  profileId?: Prisma.IntFilter<"ForumTopicLike"> | number
+  userId?: Prisma.IntFilter<"ForumTopicLike"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumTopicLike"> | Date | string
 }
 
 export type ForumTopicLikeCreateWithoutTopicInput = {
   createdAt?: Date | string
-  profile: Prisma.ForumProfileCreateNestedOneWithoutTopicLikesInput
+  user: Prisma.AppUserCreateNestedOneWithoutTopicLikesInput
 }
 
 export type ForumTopicLikeUncheckedCreateWithoutTopicInput = {
   id?: number
-  profileId: number
+  userId: number
   createdAt?: Date | string
 }
 
@@ -524,24 +524,24 @@ export type ForumTopicLikeUpdateManyWithWhereWithoutTopicInput = {
   data: Prisma.XOR<Prisma.ForumTopicLikeUpdateManyMutationInput, Prisma.ForumTopicLikeUncheckedUpdateManyWithoutTopicInput>
 }
 
-export type ForumTopicLikeCreateManyProfileInput = {
+export type ForumTopicLikeCreateManyUserInput = {
   id?: number
   topicId: number
   createdAt?: Date | string
 }
 
-export type ForumTopicLikeUpdateWithoutProfileInput = {
+export type ForumTopicLikeUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   topic?: Prisma.ForumTopicUpdateOneRequiredWithoutLikesNestedInput
 }
 
-export type ForumTopicLikeUncheckedUpdateWithoutProfileInput = {
+export type ForumTopicLikeUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type ForumTopicLikeUncheckedUpdateManyWithoutProfileInput = {
+export type ForumTopicLikeUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -549,24 +549,24 @@ export type ForumTopicLikeUncheckedUpdateManyWithoutProfileInput = {
 
 export type ForumTopicLikeCreateManyTopicInput = {
   id?: number
-  profileId: number
+  userId: number
   createdAt?: Date | string
 }
 
 export type ForumTopicLikeUpdateWithoutTopicInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  profile?: Prisma.ForumProfileUpdateOneRequiredWithoutTopicLikesNestedInput
+  user?: Prisma.AppUserUpdateOneRequiredWithoutTopicLikesNestedInput
 }
 
 export type ForumTopicLikeUncheckedUpdateWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumTopicLikeUncheckedUpdateManyWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  profileId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -575,56 +575,56 @@ export type ForumTopicLikeUncheckedUpdateManyWithoutTopicInput = {
 export type ForumTopicLikeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   topicId?: boolean
-  profileId?: boolean
+  userId?: boolean
   createdAt?: boolean
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumTopicLike"]>
 
 export type ForumTopicLikeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   topicId?: boolean
-  profileId?: boolean
+  userId?: boolean
   createdAt?: boolean
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumTopicLike"]>
 
 export type ForumTopicLikeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   topicId?: boolean
-  profileId?: boolean
+  userId?: boolean
   createdAt?: boolean
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumTopicLike"]>
 
 export type ForumTopicLikeSelectScalar = {
   id?: boolean
   topicId?: boolean
-  profileId?: boolean
+  userId?: boolean
   createdAt?: boolean
 }
 
-export type ForumTopicLikeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "topicId" | "profileId" | "createdAt", ExtArgs["result"]["forumTopicLike"]>
+export type ForumTopicLikeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "topicId" | "userId" | "createdAt", ExtArgs["result"]["forumTopicLike"]>
 export type ForumTopicLikeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type ForumTopicLikeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type ForumTopicLikeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  profile?: boolean | Prisma.ForumProfileDefaultArgs<ExtArgs>
+  user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 
 export type $ForumTopicLikePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumTopicLike"
   objects: {
     topic: Prisma.$ForumTopicPayload<ExtArgs>
-    profile: Prisma.$ForumProfilePayload<ExtArgs>
+    user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -638,7 +638,7 @@ export type $ForumTopicLikePayload<ExtArgs extends runtime.Types.Extensions.Inte
     /**
      * 关联的用户ID
      */
-    profileId: number
+    userId: number
     /**
      * 创建时间
      */
@@ -1038,7 +1038,7 @@ readonly fields: ForumTopicLikeFieldRefs;
 export interface Prisma__ForumTopicLikeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   topic<T extends Prisma.ForumTopicDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumTopicDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumTopicClient<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  profile<T extends Prisma.ForumProfileDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumProfileDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumProfileClient<runtime.Types.Result.GetResult<Prisma.$ForumProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1070,7 +1070,7 @@ export interface Prisma__ForumTopicLikeClient<T, Null = never, ExtArgs extends r
 export interface ForumTopicLikeFieldRefs {
   readonly id: Prisma.FieldRef<"ForumTopicLike", 'Int'>
   readonly topicId: Prisma.FieldRef<"ForumTopicLike", 'Int'>
-  readonly profileId: Prisma.FieldRef<"ForumTopicLike", 'Int'>
+  readonly userId: Prisma.FieldRef<"ForumTopicLike", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ForumTopicLike", 'DateTime'>
 }
     

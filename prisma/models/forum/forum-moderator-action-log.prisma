@@ -1,24 +1,30 @@
 /// 论坛版主操作日志表 - 记录版主的所有操作行为，包括主题管理、回复管理、审核等操作
 model ForumModeratorActionLog {
   /// 主键ID
-  id                Int            @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+
   /// 关联的版主ID
-  moderatorId       Int            @map("moderator_id")
-  /// 操作类型（1=置顶主题, 2=取消置顶, 3=加精主题, 4=取消加精, 5=锁定主题, 6=解锁主题, 7=删除主题, 8=移动主题, 9=审核主题, 10=删除回复）
-  actionType        Int            @map("action_type") @db.SmallInt
-  /// 操作描述
-  actionDescription String         @map("action_description") @db.VarChar(200)
-  /// 目标类型（1=主题, 2=回复）
-  targetType        Int            @map("target_type") @db.SmallInt
+  moderatorId Int @map("moderator_id")
   /// 目标ID
-  targetId          Int            @map("target_id")
+  targetId    Int @map("target_id")
+
+  /// 操作类型（1=置顶主题, 2=取消置顶, 3=加精主题, 4=取消加精, 5=锁定主题, 6=解锁主题, 7=删除主题, 8=移动主题, 9=审核主题, 10=删除回复）
+  actionType        Int    @map("action_type") @db.SmallInt
+  /// 目标类型（1=主题, 2=回复）
+  targetType        Int    @map("target_type") @db.SmallInt
+  /// 操作描述
+  actionDescription String @map("action_description") @db.VarChar(200)
+
   /// 操作前数据（JSON格式）
-  beforeData        String?        @map("before_data")
+  beforeData String? @map("before_data")
   /// 操作后数据（JSON格式）
-  afterData         String?        @map("after_data")
+  afterData  String? @map("after_data")
+
   /// 操作时间
-  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  moderator         ForumModerator @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 关联版主
+  moderator ForumModerator @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
 
   @@index([moderatorId])
   @@index([actionType])
