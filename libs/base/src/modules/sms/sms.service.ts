@@ -86,6 +86,7 @@ export class SmsService {
 
       return true
     } catch (error) {
+      console.log('🚀 ~ SmsService ~ sendVerifyCode ~ error:', error)
       this.logger.error(`验证码发送失败 - 手机号: ${phone}`, error)
       return false
     }

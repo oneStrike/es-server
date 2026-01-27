@@ -55,7 +55,7 @@ export class AuthService extends BaseService {
   async generateUniqueAccount() {
     const randomAccount = Math.floor(100000 + Math.random() * 900000)
     const existingUser = await this.appUser.findUnique({
-      where: { account: randomAccount },
+      where: { account: String(randomAccount) },
     })
     if (existingUser) {
       return this.generateUniqueAccount()
@@ -169,9 +169,32 @@ export class AuthService extends BaseService {
     }
 
     // 4. 查找用户：支持通过手机号或账号查找
-    const user = await this.appUser.findUnique({
-      where: body.phone ? { phone: body.phone } : { account: body.account },
-    })
+    let user
+    if (body.phone) {
+      user = await this.appUser.findUnique({
+        where: { phone: body.phone },
+        omit: {
+          deletedAt: true,
+        },
+      })
+    } else {
+      const accountInput = body.account!
+      const orConditions: any[] = [{ phone: accountInput }]
+
+      const accountNum = Number(accountInput)
+      if (!Number.isNaN(accountNum) && accountNum <= 2147483647) {
+        orConditions.push({ account: accountNum })
+      }
+
+      user = await this.appUser.findFirst({
+        where: {
+          OR: orConditions,
+        },
+        omit: {
+          deletedAt: true,
+        },
+      })
+    }
 
     // 5. 用户不存在处理
     if (!user) {
@@ -284,8 +307,6 @@ export class AuthService extends BaseService {
       this.baseJwtService.decodeToken(tokens.accessToken),
       this.baseJwtService.decodeToken(tokens.refreshToken),
     ])
-
-    console.log(accessPayload, refreshPayload)
 
     // 2. 转换过期时间为 Date 对象
     const accessTokenExpiresAt = new Date(accessPayload.exp * 1000)

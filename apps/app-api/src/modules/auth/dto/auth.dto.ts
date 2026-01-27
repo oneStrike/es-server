@@ -1,7 +1,6 @@
 import {
   ValidateBoolean,
   ValidateEnum,
-  ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto } from '@libs/base/dto'
@@ -31,14 +30,14 @@ export class RsaPublicKeyDto {
  * 基础用户信息
  */
 export class BaseAppUserDto extends BaseDto {
-  @ValidateNumber({
+  @ValidateString({
     description: '账号（唯一）',
-    example: 123456,
+    example: '123456',
     required: true,
-    max: 999999999,
-    min: 100000,
+    maxLength: 11,
+    minLength: 6,
   })
-  account!: number
+  account!: string
 
   @ValidateString({
     description: '手机号码',
@@ -95,13 +94,6 @@ export class BaseAppUserDto extends BaseDto {
   birthDate?: Date
 
   @ApiProperty({
-    description: '是否签到',
-    default: false,
-    example: true,
-  })
-  isSignedIn!: boolean
-
-  @ApiProperty({
     description: '最后登录时间',
     default: null,
     example: '2023-09-15T00:00:00.000Z',
@@ -142,6 +134,24 @@ export class BaseAppUserDto extends BaseDto {
     example: 1,
   })
   status!: number
+
+  @ApiProperty({
+    description: '账号封禁原因',
+    default: '',
+    example: '账户已被封禁',
+    required: false,
+    nullable: true,
+  })
+  banReason?: string
+
+  @ApiProperty({
+    description: '账号封禁截止时间',
+    default: null,
+    example: '2023-09-15T00:00:00.000Z',
+    required: false,
+    nullable: true,
+  })
+  banUntil?: Date
 }
 
 /**

@@ -1945,11 +1945,11 @@ export type $WorkComicPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      */
     disclaimer: string | null
     /**
-     * 语言代码（如：zh-CN, en-US, ja-JP）
+     * 语言代码（数据字典）
      */
     language: string
     /**
-     * 地区代码（如：CN, US, JP）
+     * 地区代码（数据字典）
      */
     region: string
     /**
