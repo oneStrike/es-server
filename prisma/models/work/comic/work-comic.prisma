@@ -42,8 +42,6 @@ model WorkComic {
 
   /// 热度（真实数据）
   popularity       Int    @default(0)
-  /// 虚拟热度（用于运营调整）
-  popularityWeight Int    @default(0) @map("popularity_weight")
   /// 评分（1-10分，保留一位小数）
   rating           Float?
   /// 推荐权重（影响推荐排序）

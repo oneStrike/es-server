@@ -70,4 +70,15 @@ export class LoginGuardService {
   async clearHistory(failKey: string) {
     await this.cacheManager.del(failKey)
   }
+
+  /**
+   * 解锁账号
+   * 同时清除锁定标记和失败计数
+   * @param lockKey 锁定Key
+   * @param failKey 失败计数Key
+   */
+  async unlock(lockKey: string, failKey: string) {
+    await this.cacheManager.del(lockKey)
+    await this.cacheManager.del(failKey)
+  }
 }

@@ -40,14 +40,6 @@ export class BaseTagDto extends BaseDto {
   popularity!: number
 
   @ValidateNumber({
-    description: '辅助人气值',
-    example: 500,
-    required: false,
-    min: 0,
-  })
-  popularityWeight!: number
-
-  @ValidateNumber({
     description: '排序值',
     example: 1,
     required: false,

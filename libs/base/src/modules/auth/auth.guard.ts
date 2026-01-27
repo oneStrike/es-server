@@ -16,7 +16,8 @@ import { AuthErrorConstant } from './auth.constant'
 @Injectable()
 export class JwtAuthGuard
   extends AuthGuard(AuthConfig.strategyKey)
-  implements CanActivate {
+  implements CanActivate
+{
   constructor(private reflector: Reflector) {
     super()
   }

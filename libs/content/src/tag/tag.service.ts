@@ -34,7 +34,6 @@ export class WorkTagService extends BaseService {
       data: {
         ...createTagDto,
         popularity: 0,
-        popularityWeight: 0,
       },
       select: { id: true },
     })

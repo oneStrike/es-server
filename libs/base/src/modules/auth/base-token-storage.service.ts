@@ -24,7 +24,9 @@ export interface CreateTokenDto {
 export interface ITokenDelegate<T> {
   create: (args: { data: any }) => Promise<T>
   createMany: (args: { data: any[] }) => Promise<any>
-  findUnique: (args: { where: { jti?: string, id?: number } }) => Promise<T | null>
+  findUnique: (args: {
+    where: { jti?: string, id?: number }
+  }) => Promise<T | null>
   findMany: (args: any) => Promise<T[]>
   update: (args: { where: any, data: any }) => Promise<T>
   updateMany: (args: { where: any, data: any }) => Promise<any>
@@ -40,18 +42,23 @@ export interface ITokenDelegate<T> {
  * 3. 减少重复代码
  */
 @Injectable()
-export abstract class BaseTokenStorageService<T extends {
-  id: number
-  jti: string
-  userId: number
-  tokenType: string
-  expiresAt: Date
-  revokedAt?: Date | null
-  createdAt: Date
-  deviceInfo?: any
-  ipAddress?: string | null
-  userAgent?: string | null
-}> extends BaseService implements ITokenStorageService {
+export abstract class BaseTokenStorageService<
+  T extends {
+    id: number
+    jti: string
+    userId: number
+    tokenType: string
+    expiresAt: Date
+    revokedAt?: Date | null
+    createdAt: Date
+    deviceInfo?: any
+    ipAddress?: string | null
+    userAgent?: string | null
+  },
+>
+  extends BaseService
+  implements ITokenStorageService
+{
   constructor(@Inject(CACHE_MANAGER) protected readonly cacheManager: Cache) {
     super()
   }
@@ -66,7 +73,7 @@ export abstract class BaseTokenStorageService<T extends {
    * 创建单个 Token 记录
    */
   async createToken(data: CreateTokenDto) {
-    return this.tokenDelegate.create({
+    const result = await this.tokenDelegate.create({
       data: {
         userId: data.userId,
         jti: data.jti,
@@ -77,14 +84,22 @@ export abstract class BaseTokenStorageService<T extends {
         userAgent: data.userAgent,
       },
     })
+
+    // 缓存 Token 状态
+    const ttl = Math.floor((data.expiresAt.getTime() - Date.now()) / 1000)
+    if (ttl > 0) {
+      await this.cacheManager.set(`token:${data.jti}`, 'valid', ttl)
+    }
+
+    return result
   }
 
   /**
    * 批量创建 Token 记录
    */
   async createTokens(tokens: CreateTokenDto[]) {
-    return this.tokenDelegate.createMany({
-      data: tokens.map(token => ({
+    const result = await this.tokenDelegate.createMany({
+      data: tokens.map((token) => ({
         userId: token.userId,
         jti: token.jti,
         tokenType: token.tokenType,
@@ -94,6 +109,18 @@ export abstract class BaseTokenStorageService<T extends {
         userAgent: token.userAgent,
       })),
     })
+
+    // 批量缓存 Token 状态
+    await Promise.all(
+      tokens.map(async (token) => {
+        const ttl = Math.floor((token.expiresAt.getTime() - Date.now()) / 1000)
+        if (ttl > 0) {
+          await this.cacheManager.set(`token:${token.jti}`, 'valid', ttl)
+        }
+      }),
+    )
+
+    return result
   }
 
   /**
@@ -134,10 +161,10 @@ export abstract class BaseTokenStorageService<T extends {
     // 计算剩余 TTL (秒)
     const ttl = Math.floor((token.expiresAt.getTime() - Date.now()) / 1000)
     if (ttl > 0) {
-        await this.cacheManager.set(`token:${jti}`, 'valid', ttl)
+      await this.cacheManager.set(`token:${jti}`, 'valid', ttl)
     } else {
-        await this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
-        return false
+      await this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
+      return false
     }
 
     return true
@@ -171,9 +198,9 @@ export abstract class BaseTokenStorageService<T extends {
     })
 
     await Promise.all(
-      jtis.map(async jti =>
-        this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
-      )
+      jtis.map(async (jti) =>
+        this.cacheManager.set(`token:${jti}`, 'invalid', 86400),
+      ),
     )
   }
 
@@ -204,8 +231,8 @@ export abstract class BaseTokenStorageService<T extends {
 
     await Promise.all(
       jtis.map(async (jti: string) =>
-        this.cacheManager.set(`token:${jti}`, 'invalid', 86400)
-      )
+        this.cacheManager.set(`token:${jti}`, 'invalid', 86400),
+      ),
     )
   }
 

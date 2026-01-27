@@ -185,15 +185,6 @@ export class BaseComicDto extends BaseDto {
   })
   popularity!: number
 
-  @ValidateNumber({
-    description: '虚拟热度热度权重（影响热度计算）',
-    example: 1.0,
-    required: false,
-    min: 0,
-    default: 1.0,
-  })
-  popularityWeight?: number
-
   @ValidateString({
     description: '语言代码',
     example: 'en',

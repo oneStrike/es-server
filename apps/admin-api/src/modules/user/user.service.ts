@@ -1,6 +1,7 @@
 import type { AdminUserWhereInput } from '@libs/base/database/prisma-client/models'
 import { BaseService } from '@libs/base/database'
 import { ScryptService } from '@libs/base/modules'
+import { LoginGuardService } from '@libs/base/modules/auth'
 import {
   BadRequestException,
   Injectable,
@@ -8,6 +9,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { AuthRedisKeys } from '../auth/auth.constant'
 import {
   ChangePasswordDto,
   UpdateUserDto,
@@ -25,6 +27,7 @@ export class UserService extends BaseService {
   constructor(
     private readonly scryptService: ScryptService,
     private readonly configService: ConfigService,
+    private readonly loginGuardService: LoginGuardService,
   ) {
     super()
   }
@@ -212,15 +215,13 @@ export class UserService extends BaseService {
     if (!user) {
       throw new NotFoundException('用户不存在')
     }
-    await this.adminUser.update({
-      where: { id: userId },
-      data: {
-        isLocked: false,
-        loginFailAt: null,
-        loginFailIp: null,
-        loginFailCount: 0,
-      },
-    })
+
+    // 解锁用户（清除 Redis 锁）
+    await this.loginGuardService.unlock(
+      AuthRedisKeys.LOGIN_LOCK(userId),
+      AuthRedisKeys.LOGIN_FAIL_COUNT(userId),
+    )
+
     return userId
   }
 

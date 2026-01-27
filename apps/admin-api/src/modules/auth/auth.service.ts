@@ -14,9 +14,9 @@ import {
   parseDeviceInfo,
 } from '@libs/base/utils'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { AdminTokenStorageService } from './admin-token-storage.service'
 import { AuthConstants, AuthRedisKeys, CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
+import { AdminTokenStorageService } from './token-storage.service'
 
 /**
  * 管理端认证服务

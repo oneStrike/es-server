@@ -14,7 +14,4 @@ export enum UserRoleEnum {
  */
 export const EXCLUDE_USER_FIELDS = {
   password: true,
-  loginFailCount: true,
-  loginFailAt: true,
-  loginFailIp: true,
 }

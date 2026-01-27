@@ -15,8 +15,6 @@ model WorkCategory {
 
   /// 人气值（用于展示和排序）
   popularity       Int @default(0)
-  /// 自定义人气权重
-  popularityWeight Int @default(0) @map("popularity_weight")
 
   /// 排序值（数值越小越靠前）
   order     Int     @default(0) @db.SmallInt

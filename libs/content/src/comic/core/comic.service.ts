@@ -142,7 +142,6 @@ export class ComicService extends BaseService {
         alias: true,
         cover: true,
         popularity: true,
-        popularityWeight: true,
         language: true,
         region: true,
         ageRating: true,
