@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import { AdminUser, BaseService } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 
 import { CaptchaService, RsaService, ScryptService } from '@libs/base/modules'
 import {
@@ -7,17 +7,15 @@ import {
   LoginGuardService,
 } from '@libs/base/modules/auth'
 
-import { extractIpAddress, isProduction } from '@libs/base/utils'
 import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common'
-import {
-  AuthConstants,
-  AuthRedisKeys,
-  CacheKey,
-} from './auth.constant'
+  extractIpAddress,
+  extractUserAgent,
+  isProduction,
+  parseDeviceInfo,
+} from '@libs/base/utils'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { AdminTokenStorageService } from './admin-token-storage.service'
+import { AuthConstants, AuthRedisKeys, CacheKey } from './auth.constant'
 import { RefreshTokenDto, TokenDto, UserLoginDto } from './dto/auth.dto'
 
 /**
@@ -35,6 +33,7 @@ export class AuthService extends BaseService {
     private readonly baseJwtService: BaseAuthService,
     private readonly captchaService: CaptchaService,
     private readonly loginGuardService: LoginGuardService,
+    private readonly adminTokenStorageService: AdminTokenStorageService,
   ) {
     super()
   }
@@ -84,8 +83,6 @@ export class AuthService extends BaseService {
     if (!user.isEnabled) {
       throw new BadRequestException('账号已被禁用，请联系管理员。')
     }
-
-    const requestIp = extractIpAddress(req)
 
     // 检查账户是否被锁定
     await this.loginGuardService.checkLock(AuthRedisKeys.LOGIN_LOCK(user.id))
@@ -160,7 +157,46 @@ export class AuthService extends BaseService {
   /**
    * 刷新访问令牌
    */
-  async refreshToken(body: RefreshTokenDto) {
-    return this.baseJwtService.refreshAccessToken(body.refreshToken)
+  async refreshToken(body: RefreshTokenDto, req: FastifyRequest) {
+    const tokens = await this.baseJwtService.refreshAccessToken(
+      body.refreshToken,
+    )
+
+    // 存储新令牌
+    const accessTokenPayload = await this.baseJwtService.decodeToken(
+      tokens.accessToken,
+    )
+    const refreshTokenPayload = await this.baseJwtService.decodeToken(
+      tokens.refreshToken,
+    )
+    const userId = Number(accessTokenPayload.sub)
+
+    const ipAddress = extractIpAddress(req) || 'unknown'
+    const userAgent = extractUserAgent(req)
+    const deviceInfoStr = parseDeviceInfo(userAgent)
+    const deviceInfo = deviceInfoStr ? JSON.parse(deviceInfoStr) : undefined
+
+    await this.adminTokenStorageService.createTokens([
+      {
+        userId,
+        jti: accessTokenPayload.jti,
+        tokenType: 'ACCESS',
+        expiresAt: new Date(accessTokenPayload.exp * 1000),
+        deviceInfo,
+        ipAddress,
+        userAgent,
+      },
+      {
+        userId,
+        jti: refreshTokenPayload.jti,
+        tokenType: 'REFRESH',
+        expiresAt: new Date(refreshTokenPayload.exp * 1000),
+        deviceInfo,
+        ipAddress,
+        userAgent,
+      },
+    ])
+
+    return tokens
   }
 }

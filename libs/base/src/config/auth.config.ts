@@ -8,10 +8,10 @@ import { registerAs } from '@nestjs/config'
 const {
   JWT_SECRET,
   JWT_REFRESH_SECRET,
-  EXPIRATION_IN = '4h',
-  REFRESH_EXPIRATION_IN = '7d',
-  JWT_ISSUER = 'es',
-  JWT_AUD = 'es',
+  JWT_EXPIRATION_IN = '4h',
+  JWT_REFRESH_EXPIRATION_IN = '7d',
+  JWT_JWT_ISSUER = 'es',
+  JWT_JWT_AUD = 'es',
   JWT_STRATEGY_KEY = 'jwt',
 } = process.env
 
@@ -36,11 +36,11 @@ export const AuthConfig: AuthConfigInterface = {
   publicKey,
   privateKey,
   // 使用类型安全的方式合并其他配置项
-  expiresIn: EXPIRATION_IN as AuthConfigInterface['expiresIn'],
+  expiresIn: JWT_EXPIRATION_IN as AuthConfigInterface['expiresIn'],
   refreshExpiresIn:
-    REFRESH_EXPIRATION_IN as AuthConfigInterface['refreshExpiresIn'],
-  aud: JWT_AUD,
-  iss: JWT_ISSUER,
+    JWT_REFRESH_EXPIRATION_IN as AuthConfigInterface['refreshExpiresIn'],
+  aud: JWT_JWT_AUD,
+  iss: JWT_JWT_ISSUER,
   strategyKey: JWT_STRATEGY_KEY,
 }
 

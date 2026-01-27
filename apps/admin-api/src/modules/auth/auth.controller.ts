@@ -86,8 +86,8 @@ export class AuthController {
     model: TokenDto,
   })
   @Public()
-  async refreshToken(@Body() body: RefreshTokenDto) {
-    return this.authService.refreshToken(body)
+  async refreshToken(@Body() body: RefreshTokenDto, @Req() req: FastifyRequest) {
+    return this.authService.refreshToken(body, req)
   }
 
   /**

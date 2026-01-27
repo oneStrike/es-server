@@ -27,8 +27,8 @@ export * from "./enums"
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more AdminUsers
- * const adminUsers = await prisma.adminUser.findMany()
+ * // Fetch zero or more AdminUserTokens
+ * const adminUserTokens = await prisma.adminUserToken.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -37,6 +37,11 @@ export const PrismaClient = $Class.getPrismaClientClass()
 export type PrismaClient<LogOpts extends Prisma.LogLevel = never, OmitOpts extends Prisma.PrismaClientOptions["omit"] = Prisma.PrismaClientOptions["omit"], ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = $Class.PrismaClient<LogOpts, OmitOpts, ExtArgs>
 export { Prisma }
 
+/**
+ * Model AdminUserToken
+ * 管理端用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
+ */
+export type AdminUserToken = Prisma.AdminUserTokenModel
 /**
  * Model AdminUser
  * 

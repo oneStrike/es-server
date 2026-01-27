@@ -54,7 +54,7 @@ export class LoginGuardService {
       // 锁定账号，存储解锁时间戳
       const unlockTime = Date.now() + config.lockTtl * 1000
       await this.cacheManager.set(lockKey, unlockTime, config.lockTtl * 1000)
-      
+
       const minutes = Math.ceil(config.lockTtl / 60)
       throw new BadRequestException(`账号已锁定，请在 ${minutes} 分钟后重试`)
     }

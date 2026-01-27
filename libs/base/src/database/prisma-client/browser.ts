@@ -18,6 +18,11 @@ export { Prisma }
 export * as $Enums from './enums'
 export * from './enums';
 /**
+ * Model AdminUserToken
+ * 管理端用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
+ */
+export type AdminUserToken = Prisma.AdminUserTokenModel
+/**
  * Model AdminUser
  * 
  */

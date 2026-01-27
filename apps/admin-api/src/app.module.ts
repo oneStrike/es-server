@@ -14,6 +14,7 @@ import { getEnv } from '@libs/base/utils'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
+import { ScheduleModule } from '@nestjs/schedule'
 import { AuditInterceptor } from './common/interceptors/audit.interceptor'
 import { AppConfigRegister } from './config/app.config'
 import { appConfigValidationSchema } from './config/validation.config'
@@ -42,6 +43,7 @@ import { AuditModule } from './modules/system/audit/audit.module'
     }),
     BaseModule.forRoot(),
     JwtAuthModule,
+    ScheduleModule.forRoot(),
     // 业务功能模块
     AuditModule, // 业务审计模块
     AdminModule, // 管理模块
