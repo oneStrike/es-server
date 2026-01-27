@@ -36,7 +36,6 @@ export async function createInitialWorkTag(prisma: any) {
           order: tagData.order,
           isEnabled: true,
           popularity: 0,
-          popularityWeight: 0,
         },
       })
     }

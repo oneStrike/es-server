@@ -81,7 +81,7 @@ model WorkComic {
   comicTags       WorkComicTag[]
 
   @@index([isPublished, publishAt])
-  @@index([popularity, popularityWeight])
+  @@index([popularity])
   @@index([language, region])
   @@index([serialStatus])
   @@index([lastUpdated])

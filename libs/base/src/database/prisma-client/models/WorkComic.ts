@@ -30,7 +30,6 @@ export type WorkComicAvgAggregateOutputType = {
   id: number | null
   serialStatus: number | null
   popularity: number | null
-  popularityWeight: number | null
   rating: number | null
   recommendWeight: number | null
   viewCount: number | null
@@ -43,7 +42,6 @@ export type WorkComicSumAggregateOutputType = {
   id: number | null
   serialStatus: number | null
   popularity: number | null
-  popularityWeight: number | null
   rating: number | null
   recommendWeight: number | null
   viewCount: number | null
@@ -71,7 +69,6 @@ export type WorkComicMinAggregateOutputType = {
   isHot: boolean | null
   isNew: boolean | null
   popularity: number | null
-  popularityWeight: number | null
   rating: number | null
   recommendWeight: number | null
   viewCount: number | null
@@ -105,7 +102,6 @@ export type WorkComicMaxAggregateOutputType = {
   isHot: boolean | null
   isNew: boolean | null
   popularity: number | null
-  popularityWeight: number | null
   rating: number | null
   recommendWeight: number | null
   viewCount: number | null
@@ -139,7 +135,6 @@ export type WorkComicCountAggregateOutputType = {
   isHot: number
   isNew: number
   popularity: number
-  popularityWeight: number
   rating: number
   recommendWeight: number
   viewCount: number
@@ -160,7 +155,6 @@ export type WorkComicAvgAggregateInputType = {
   id?: true
   serialStatus?: true
   popularity?: true
-  popularityWeight?: true
   rating?: true
   recommendWeight?: true
   viewCount?: true
@@ -173,7 +167,6 @@ export type WorkComicSumAggregateInputType = {
   id?: true
   serialStatus?: true
   popularity?: true
-  popularityWeight?: true
   rating?: true
   recommendWeight?: true
   viewCount?: true
@@ -201,7 +194,6 @@ export type WorkComicMinAggregateInputType = {
   isHot?: true
   isNew?: true
   popularity?: true
-  popularityWeight?: true
   rating?: true
   recommendWeight?: true
   viewCount?: true
@@ -235,7 +227,6 @@ export type WorkComicMaxAggregateInputType = {
   isHot?: true
   isNew?: true
   popularity?: true
-  popularityWeight?: true
   rating?: true
   recommendWeight?: true
   viewCount?: true
@@ -269,7 +260,6 @@ export type WorkComicCountAggregateInputType = {
   isHot?: true
   isNew?: true
   popularity?: true
-  popularityWeight?: true
   rating?: true
   recommendWeight?: true
   viewCount?: true
@@ -390,7 +380,6 @@ export type WorkComicGroupByOutputType = {
   isHot: boolean
   isNew: boolean
   popularity: number
-  popularityWeight: number
   rating: number | null
   recommendWeight: number
   viewCount: number
@@ -447,7 +436,6 @@ export type WorkComicWhereInput = {
   isHot?: Prisma.BoolFilter<"WorkComic"> | boolean
   isNew?: Prisma.BoolFilter<"WorkComic"> | boolean
   popularity?: Prisma.IntFilter<"WorkComic"> | number
-  popularityWeight?: Prisma.IntFilter<"WorkComic"> | number
   rating?: Prisma.FloatNullableFilter<"WorkComic"> | number | null
   recommendWeight?: Prisma.FloatFilter<"WorkComic"> | number
   viewCount?: Prisma.IntFilter<"WorkComic"> | number
@@ -485,7 +473,6 @@ export type WorkComicOrderByWithRelationInput = {
   isHot?: Prisma.SortOrder
   isNew?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  popularityWeight?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -526,7 +513,6 @@ export type WorkComicWhereUniqueInput = Prisma.AtLeast<{
   isHot?: Prisma.BoolFilter<"WorkComic"> | boolean
   isNew?: Prisma.BoolFilter<"WorkComic"> | boolean
   popularity?: Prisma.IntFilter<"WorkComic"> | number
-  popularityWeight?: Prisma.IntFilter<"WorkComic"> | number
   rating?: Prisma.FloatNullableFilter<"WorkComic"> | number | null
   recommendWeight?: Prisma.FloatFilter<"WorkComic"> | number
   viewCount?: Prisma.IntFilter<"WorkComic"> | number
@@ -564,7 +550,6 @@ export type WorkComicOrderByWithAggregationInput = {
   isHot?: Prisma.SortOrder
   isNew?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  popularityWeight?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -606,7 +591,6 @@ export type WorkComicScalarWhereWithAggregatesInput = {
   isHot?: Prisma.BoolWithAggregatesFilter<"WorkComic"> | boolean
   isNew?: Prisma.BoolWithAggregatesFilter<"WorkComic"> | boolean
   popularity?: Prisma.IntWithAggregatesFilter<"WorkComic"> | number
-  popularityWeight?: Prisma.IntWithAggregatesFilter<"WorkComic"> | number
   rating?: Prisma.FloatNullableWithAggregatesFilter<"WorkComic"> | number | null
   recommendWeight?: Prisma.FloatWithAggregatesFilter<"WorkComic"> | number
   viewCount?: Prisma.IntWithAggregatesFilter<"WorkComic"> | number
@@ -639,7 +623,6 @@ export type WorkComicCreateInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -677,7 +660,6 @@ export type WorkComicUncheckedCreateInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -714,7 +696,6 @@ export type WorkComicUpdateInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -752,7 +733,6 @@ export type WorkComicUncheckedUpdateInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -790,7 +770,6 @@ export type WorkComicCreateManyInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -823,7 +802,6 @@ export type WorkComicUpdateManyMutationInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -857,7 +835,6 @@ export type WorkComicUncheckedUpdateManyInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -896,7 +873,6 @@ export type WorkComicCountOrderByAggregateInput = {
   isHot?: Prisma.SortOrder
   isNew?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  popularityWeight?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -915,7 +891,6 @@ export type WorkComicAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   serialStatus?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  popularityWeight?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -943,7 +918,6 @@ export type WorkComicMaxOrderByAggregateInput = {
   isHot?: Prisma.SortOrder
   isNew?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  popularityWeight?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -977,7 +951,6 @@ export type WorkComicMinOrderByAggregateInput = {
   isHot?: Prisma.SortOrder
   isNew?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  popularityWeight?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -996,7 +969,6 @@ export type WorkComicSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   serialStatus?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  popularityWeight?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
@@ -1095,7 +1067,6 @@ export type WorkComicCreateWithoutComicAuthorsInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -1132,7 +1103,6 @@ export type WorkComicUncheckedCreateWithoutComicAuthorsInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -1184,7 +1154,6 @@ export type WorkComicUpdateWithoutComicAuthorsInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1221,7 +1190,6 @@ export type WorkComicUncheckedUpdateWithoutComicAuthorsInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1257,7 +1225,6 @@ export type WorkComicCreateWithoutComicCategoriesInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -1294,7 +1261,6 @@ export type WorkComicUncheckedCreateWithoutComicCategoriesInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -1346,7 +1312,6 @@ export type WorkComicUpdateWithoutComicCategoriesInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1383,7 +1348,6 @@ export type WorkComicUncheckedUpdateWithoutComicCategoriesInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1419,7 +1383,6 @@ export type WorkComicCreateWithoutRelatedChaptersInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -1456,7 +1419,6 @@ export type WorkComicUncheckedCreateWithoutRelatedChaptersInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -1508,7 +1470,6 @@ export type WorkComicUpdateWithoutRelatedChaptersInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1545,7 +1506,6 @@ export type WorkComicUncheckedUpdateWithoutRelatedChaptersInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1581,7 +1541,6 @@ export type WorkComicCreateWithoutComicTagsInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -1618,7 +1577,6 @@ export type WorkComicUncheckedCreateWithoutComicTagsInput = {
   isHot?: boolean
   isNew?: boolean
   popularity?: number
-  popularityWeight?: number
   rating?: number | null
   recommendWeight?: number
   viewCount?: number
@@ -1670,7 +1628,6 @@ export type WorkComicUpdateWithoutComicTagsInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1707,7 +1664,6 @@ export type WorkComicUncheckedUpdateWithoutComicTagsInput = {
   isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  popularityWeight?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1802,7 +1758,6 @@ export type WorkComicSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   isHot?: boolean
   isNew?: boolean
   popularity?: boolean
-  popularityWeight?: boolean
   rating?: boolean
   recommendWeight?: boolean
   viewCount?: boolean
@@ -1841,7 +1796,6 @@ export type WorkComicSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   isHot?: boolean
   isNew?: boolean
   popularity?: boolean
-  popularityWeight?: boolean
   rating?: boolean
   recommendWeight?: boolean
   viewCount?: boolean
@@ -1875,7 +1829,6 @@ export type WorkComicSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   isHot?: boolean
   isNew?: boolean
   popularity?: boolean
-  popularityWeight?: boolean
   rating?: boolean
   recommendWeight?: boolean
   viewCount?: boolean
@@ -1909,7 +1862,6 @@ export type WorkComicSelectScalar = {
   isHot?: boolean
   isNew?: boolean
   popularity?: boolean
-  popularityWeight?: boolean
   rating?: boolean
   recommendWeight?: boolean
   viewCount?: boolean
@@ -1924,7 +1876,7 @@ export type WorkComicSelectScalar = {
   deletedAt?: boolean
 }
 
-export type WorkComicOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "alias" | "cover" | "description" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "language" | "region" | "ageRating" | "serialStatus" | "isPublished" | "isRecommended" | "isHot" | "isNew" | "popularity" | "popularityWeight" | "rating" | "recommendWeight" | "viewCount" | "favoriteCount" | "likeCount" | "ratingCount" | "publishAt" | "lastUpdated" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workComic"]>
+export type WorkComicOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "alias" | "cover" | "description" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "language" | "region" | "ageRating" | "serialStatus" | "isPublished" | "isRecommended" | "isHot" | "isNew" | "popularity" | "rating" | "recommendWeight" | "viewCount" | "favoriteCount" | "likeCount" | "ratingCount" | "publishAt" | "lastUpdated" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workComic"]>
 export type WorkComicInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comicAuthors?: boolean | Prisma.WorkComic$comicAuthorsArgs<ExtArgs>
   comicCategories?: boolean | Prisma.WorkComic$comicCategoriesArgs<ExtArgs>
@@ -2028,10 +1980,6 @@ export type $WorkComicPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 热度（真实数据）
      */
     popularity: number
-    /**
-     * 虚拟热度（用于运营调整）
-     */
-    popularityWeight: number
     /**
      * 评分（1-10分，保留一位小数）
      */
@@ -2525,7 +2473,6 @@ export interface WorkComicFieldRefs {
   readonly isHot: Prisma.FieldRef<"WorkComic", 'Boolean'>
   readonly isNew: Prisma.FieldRef<"WorkComic", 'Boolean'>
   readonly popularity: Prisma.FieldRef<"WorkComic", 'Int'>
-  readonly popularityWeight: Prisma.FieldRef<"WorkComic", 'Int'>
   readonly rating: Prisma.FieldRef<"WorkComic", 'Float'>
   readonly recommendWeight: Prisma.FieldRef<"WorkComic", 'Float'>
   readonly viewCount: Prisma.FieldRef<"WorkComic", 'Int'>
