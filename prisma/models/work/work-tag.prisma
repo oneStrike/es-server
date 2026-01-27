@@ -11,9 +11,9 @@ model WorkTag {
   description String? @db.VarChar(200)
 
   /// 人气值（用于展示和排序）
-  popularity       Int @default(0)
+  popularity Int @default(0)
   /// 排序值（数值越小越靠前）
-  order            Int @default(0) @db.SmallInt
+  order      Int @default(0) @db.SmallInt
 
   /// 是否启用
   isEnabled Boolean @default(true) @map("is_enabled")
