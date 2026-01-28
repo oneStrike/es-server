@@ -58,9 +58,7 @@ export class LibAppPageService extends BaseService {
 
     if (enablePlatform && enablePlatform !== '[]') {
       where.enablePlatform = {
-        hasEvery: JSON.parse(enablePlatform).map((item: string) =>
-          Number(item),
-        ),
+        hasSome: JSON.parse(enablePlatform).map((item: string) => Number(item)),
       }
     }
 
