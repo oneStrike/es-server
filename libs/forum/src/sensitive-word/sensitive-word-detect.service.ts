@@ -51,7 +51,6 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
   /**
    * 构造函数
    * @param cacheService - 缓存服务
-   * @param statisticsService - 统计服务
    */
   constructor(private readonly cacheService: ForumSensitiveWordCacheService) {
     this.automaton = new ACAutomaton()
