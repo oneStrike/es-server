@@ -1,4 +1,4 @@
-import type { AdminUserWhereInput } from '@libs/base/database/prisma-client/models'
+import type { AdminUserWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 import { ScryptService } from '@libs/base/modules'
 import { LoginGuardService } from '@libs/base/modules/auth'

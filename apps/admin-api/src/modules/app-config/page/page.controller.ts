@@ -19,8 +19,8 @@ import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { ActionTypeEnum } from '../../system/audit/audit.constant'
 
-@ApiTags('客户端管理/页面管理')
-@Controller('admin/client-page')
+@ApiTags('应用管理/页面管理')
+@Controller('admin/app-page')
 export class AppPageController {
   constructor(private readonly libAppPageService: LibAppPageService) {}
 

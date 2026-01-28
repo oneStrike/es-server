@@ -13,7 +13,7 @@ export enum EnablePlatformEnum {
  */
 export enum ApiTypeEnum {
   ADMIN = 'admin',
-  CLIENT = 'client',
+  APP = 'app',
   SYSTEM = 'system',
   PUBLIC = 'public',
 }

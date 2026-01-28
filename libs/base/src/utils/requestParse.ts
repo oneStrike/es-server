@@ -263,10 +263,10 @@ export function extractApiType(path: string): ApiTypeEnum | undefined {
       return ApiTypeEnum.ADMIN
     }
     if (
-      normalizedPath.startsWith('/api/client/') ||
-      normalizedPath.includes('/client/')
+      normalizedPath.startsWith('/api/app/') ||
+      normalizedPath.includes('/app/')
     ) {
-      return ApiTypeEnum.CLIENT
+      return ApiTypeEnum.APP
     }
     if (
       normalizedPath.startsWith('/api/system/') ||

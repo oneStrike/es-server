@@ -80,9 +80,9 @@ services:
       - app-network
 
   # Web 后端端服务
-  client-server:
-    image: es/client/server:0.0.2
-    container_name: es-client-server
+  app-server:
+    image: es/app/server:0.0.2
+    container_name: es-app-server
     user: '1001:1001'
     restart: unless-stopped
     depends_on:
@@ -94,7 +94,7 @@ services:
       - '8081:8080'
     env_file:
       - ./.env
-      - ./.client-server.env
+      - ./.app-server.env
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
       - RSA_PRIVATE_KEY_PATH=/app/secrets/private.key

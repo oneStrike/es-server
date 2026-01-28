@@ -1,5 +1,6 @@
+import type {AppPageWhereInput} from '@libs/base/database';
 import { BaseService } from '@libs/base/database'
-import { AppPageWhereInput } from '@libs/base/database/prisma-client/models'
+
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   BaseClientPageDto,

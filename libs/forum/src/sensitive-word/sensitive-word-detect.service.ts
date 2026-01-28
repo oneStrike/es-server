@@ -1,4 +1,4 @@
-import type { ForumSensitiveWord } from '@libs/base/database/prisma-client/client'
+import type { ForumSensitiveWord } from '@libs/base/database'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import {
   ForumMatchedWordDto,

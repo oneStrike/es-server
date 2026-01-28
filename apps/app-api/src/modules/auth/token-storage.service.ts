@@ -1,4 +1,4 @@
-import { AppUserToken } from '@libs/base/database/prisma-client/client'
+import { AppUserToken } from '@libs/base/database'
 import { BaseTokenStorageService, CreateTokenDto, ITokenDelegate } from '@libs/base/modules/auth'
 import { Injectable } from '@nestjs/common'
 

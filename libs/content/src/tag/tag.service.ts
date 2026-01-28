@@ -1,4 +1,4 @@
-import type { WorkTagWhereInput } from '@libs/base/database/prisma-client/models'
+import type { WorkTagWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 import { DragReorderDto, IdDto } from '@libs/base/dto'
 import { BadRequestException, Injectable } from '@nestjs/common'
