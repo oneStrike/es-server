@@ -73,10 +73,6 @@ export interface JwtUserInfoInterface {
 }
 
 export interface AuthConfigInterface {
-  // JWT 配置
-  secret: string
-  // 刷新令牌 JWT 配置
-  refreshSecret: string
   // JWT 过期时间（秒）
   expiresIn: JwtSignOptions['expiresIn']
   // 刷新令牌 JWT 过期时间（秒）

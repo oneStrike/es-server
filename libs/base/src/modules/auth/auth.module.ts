@@ -17,12 +17,26 @@ import { LoginGuardService } from './login-guard.service'
     }),
     JwtModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('auth.secret')!,
-        signOptions: {
-          expiresIn: configService.get<number>('auth.expiresIn'),
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const authConfig = configService.get('auth')
+        const rsaConfig = configService.get('rsa')
+
+        return {
+          privateKey: rsaConfig.privateKey,
+          publicKey: rsaConfig.publicKey,
+          signOptions: {
+            algorithm: 'RS256', // 强制使用 RSA 签名
+            expiresIn: authConfig.expiresIn,
+            issuer: authConfig.iss,
+            audience: authConfig.aud,
+          },
+          verifyOptions: {
+            algorithms: ['RS256'],
+            issuer: authConfig.iss,
+            audience: authConfig.aud,
+          },
+        }
+      },
     }),
   ],
   providers: [AuthService, JwtBlacklistService, LoginGuardService],

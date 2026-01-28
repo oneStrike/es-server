@@ -5,14 +5,37 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 
 /**
+ * Token 类型定义
+ * 统一管理 Token 类型字面量
+ */
+export type TokenType = 'ACCESS' | 'REFRESH'
+
+/**
+ * Token 实体接口
+ * 定义 Token 数据的标准结构
+ */
+export interface ITokenEntity {
+  id: number
+  jti: string
+  userId: number
+  tokenType: string
+  expiresAt: Date
+  revokedAt?: Date | null
+  createdAt: Date
+  deviceInfo?: any
+  ipAddress?: string | null
+  userAgent?: string | null
+}
+
+/**
  * 创建 Token 数据传输对象
  */
 export interface CreateTokenDto {
   userId: number
   jti: string
-  tokenType: 'ACCESS' | 'REFRESH'
+  tokenType: TokenType
   expiresAt: Date
-  deviceInfo?: any
+  deviceInfo?: Record<string, any>
   ipAddress?: string
   userAgent?: string
 }
@@ -20,17 +43,27 @@ export interface CreateTokenDto {
 /**
  * Prisma Delegate 接口抽象
  * 适配 AdminUserToken 和 AppUserToken
+ *
+ * @template T Token 实体类型
+ * @template CreateInput 创建参数类型
+ * @template UpdateInput 更新参数类型
+ * @template WhereInput 查询条件类型
  */
-export interface ITokenDelegate<T> {
-  create: (args: { data: any }) => Promise<T>
-  createMany: (args: { data: any[] }) => Promise<any>
+export interface ITokenDelegate<
+  T,
+  CreateInput = any,
+  UpdateInput = any,
+  WhereInput = any,
+> {
+  create: (args: { data: CreateInput }) => Promise<T>
+  createMany: (args: { data: CreateInput[] }) => Promise<any>
   findUnique: (args: {
-    where: { jti?: string, id?: number }
+    where: WhereInput & { jti?: string, id?: number }
   }) => Promise<T | null>
-  findMany: (args: any) => Promise<T[]>
-  update: (args: { where: any, data: any }) => Promise<T>
-  updateMany: (args: { where: any, data: any }) => Promise<any>
-  deleteMany: (args: { where: any }) => Promise<any>
+  findMany: (args: { where?: WhereInput, [key: string]: any }) => Promise<T[]>
+  update: (args: { where: WhereInput, data: UpdateInput }) => Promise<T>
+  updateMany: (args: { where: WhereInput, data: UpdateInput }) => Promise<any>
+  deleteMany: (args: { where: WhereInput }) => Promise<any>
 }
 
 /**
@@ -42,20 +75,7 @@ export interface ITokenDelegate<T> {
  * 3. 减少重复代码
  */
 @Injectable()
-export abstract class BaseTokenStorageService<
-  T extends {
-    id: number
-    jti: string
-    userId: number
-    tokenType: string
-    expiresAt: Date
-    revokedAt?: Date | null
-    createdAt: Date
-    deviceInfo?: any
-    ipAddress?: string | null
-    userAgent?: string | null
-  },
->
+export abstract class BaseTokenStorageService<T extends ITokenEntity>
   extends BaseService
   implements ITokenStorageService
 {
@@ -205,9 +225,10 @@ export abstract class BaseTokenStorageService<
   }
 
   /**
-   * 撤销用户的所有 Token
+   * 撤销用户所有 Token
    */
   async revokeAllByUserId(userId: number, reason: string) {
+    // 先查出所有有效的 Token JTI，用于清除缓存
     const tokens = await this.tokenDelegate.findMany({
       where: {
         userId,
@@ -246,36 +267,12 @@ export abstract class BaseTokenStorageService<
         revokedAt: null,
         expiresAt: { gt: new Date() },
       },
-      orderBy: { createdAt: 'desc' },
     })
   }
 
   /**
-   * 获取用户的登录设备列表
-   */
-  async getUserDevices(userId: number) {
-    const tokens = await this.tokenDelegate.findMany({
-      where: {
-        userId,
-        revokedAt: null,
-        expiresAt: { gt: new Date() },
-        tokenType: 'REFRESH',
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-
-    return tokens.map((token: any) => ({
-      id: token.id,
-      jti: token.jti,
-      deviceInfo: token.deviceInfo,
-      ipAddress: token.ipAddress,
-      lastUsedAt: token.createdAt, // 使用 createdAt 代替 lastUsedAt
-      createdAt: token.createdAt,
-    }))
-  }
-
-  /**
-   * 清理过期的 Token
+   * 清理过期 Token
+   * 将过期但未撤销的 Token 标记为已撤销
    */
   async cleanupExpiredTokens() {
     const result = await this.tokenDelegate.updateMany({
@@ -293,36 +290,20 @@ export abstract class BaseTokenStorageService<
 
   /**
    * 删除已撤销的旧 Token
+   * @param retentionDays 保留天数
    */
-  async deleteOldRevokedTokens(days: number = 30, batchSize: number = 1000) {
-    const date = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-    let totalDeleted = 0
-    let hasMore = true
+  async deleteOldRevokedTokens(retentionDays: number = 30) {
+    const date = new Date()
+    date.setDate(date.getDate() - retentionDays)
 
-    while (hasMore) {
-      const tokens = await this.tokenDelegate.findMany({
-        where: {
-          revokedAt: { lt: date },
+    const result = await this.tokenDelegate.deleteMany({
+      where: {
+        revokedAt: {
+          not: null,
+          lt: date,
         },
-        select: { id: true },
-        take: batchSize,
-      })
-
-      if (tokens.length === 0) {
-        hasMore = false
-        break
-      }
-
-      const ids = tokens.map((t: any) => t.id)
-      const result = await this.tokenDelegate.deleteMany({
-        where: {
-          id: { in: ids },
-        },
-      })
-      totalDeleted += result.count
-      hasMore = result.count >= batchSize
-    }
-
-    return totalDeleted
+      },
+    })
+    return result.count
   }
 }

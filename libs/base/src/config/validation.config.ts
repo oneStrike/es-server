@@ -26,17 +26,11 @@ export const environmentValidationSchema = Joi.object({
   REDIS_NAMESPACE: Joi.string().required(),
 
   // JWT配置
-  JWT_SECRET: Joi.string().required(),
-  JWT_REFRESH_SECRET: Joi.string().required(),
   JWT_EXPIRATION_IN: Joi.string().required(),
   JWT_REFRESH_EXPIRATION_IN: Joi.string().required(),
   JWT_JWT_ISSUER: Joi.string().required(),
   JWT_JWT_AUD: Joi.string().optional(),
   JWT_STRATEGY_KEY: Joi.string().optional(),
-
-  // RSA密钥配置
-  RSA_PUBLIC_KEY: Joi.string().required(),
-  RSA_PRIVATE_KEY: Joi.string().required(),
 
   // 日志配置
   LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug').required(),

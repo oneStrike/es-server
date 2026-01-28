@@ -30,33 +30,22 @@ export class AuthService {
 
   /**
    * 生成 JWT Token 对
-   * 同时生成 Access Token 和 Refresh Token
-   * @param payload - Token 负载数据，通常包含用户 ID 等信息
-   * @returns Token 对，包含 accessToken 和 refreshToken
    */
   async generateTokens(payload) {
     const basePayload = {
       ...payload,
-      aud: this.config.aud,
-      iss: this.config.iss,
     }
-
-    const signOptions = { secret: this.config.secret }
-
-    const refreshSignOptions = { secret: this.config.refreshSecret }
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
         { ...basePayload, jti: uuid(), type: 'access' },
         {
-          ...signOptions,
           expiresIn: this.config.expiresIn,
         },
       ),
       this.jwtService.signAsync(
         { ...basePayload, jti: uuid(), type: 'refresh' },
         {
-          ...refreshSignOptions,
           expiresIn: this.config.refreshExpiresIn,
         },
       ),
@@ -67,36 +56,30 @@ export class AuthService {
 
   /**
    * 使用 Refresh Token 刷新 Access Token
-   * 验证 Refresh Token 的有效性，撤销旧的 Refresh Token，生成新的 Token 对
-   * @param refreshToken - Refresh Token 字符串
-   * @returns 新的 Token 对，包含 accessToken 和 refreshToken
-   * @throws {UnauthorizedException} Refresh Token 无效或已撤销
    */
   async refreshAccessToken(refreshToken: string) {
-    const verifyOptions = { secret: this.config.refreshSecret }
-
-    const { aud, jti, exp, iat, ...payload } =
-      await this.jwtService.verifyAsync(refreshToken, verifyOptions)
+    const { aud, jti, exp, iat, iss, ...payload } =
+      await this.jwtService.verifyAsync(refreshToken)
     const isBlacklist = await this.blacklistService.isInBlacklist(jti)
     if (payload.type !== 'refresh' || aud !== this.config.aud || isBlacklist) {
       throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
     }
 
-    await this.addToBlacklist(refreshToken, this.config.refreshSecret)
+    await this.addToBlacklist(refreshToken)
     return this.generateTokens(payload)
   }
 
   /**
    * 计算令牌剩余有效时间并提取 JTI
-   * @param token - JWT Token 字符串
-   * @param secret - 用于验证 Token 的密钥
-   * @returns 包含 ttlMs（剩余毫秒数）、jti 和其他 payload 字段的对象
    */
-  protected async tokenTtlMsAndJti(token: string, secret: string) {
+  protected async tokenTtlMsAndJti(token: string) {
     const publicKey = this.configService.get('rsa.publicKey')
-    const verifyOptions = publicKey
-      ? { publicKey, algorithms: ['RS256' as const] }
-      : { secret }
+
+    if (!publicKey) {
+      throw new Error('无法验证 Token: 未配置 RSA 公钥')
+    }
+
+    const verifyOptions = { publicKey, algorithms: ['RS256' as const] }
 
     const payload = await this.jwtService.verifyAsync(token, {
       ...verifyOptions,
@@ -110,26 +93,20 @@ export class AuthService {
 
   /**
    * 退出登录，将 Access Token 和 Refresh Token 添加到黑名单
-   * @param accessToken - Access Token 字符串
-   * @param refreshToken - Refresh Token 字符串
-   * @returns 退出登录成功返回 true
    */
   async logout(accessToken: string, refreshToken: string): Promise<boolean> {
     await Promise.all([
-      this.addToBlacklist(accessToken, this.config.secret),
-      this.addToBlacklist(refreshToken, this.config.refreshSecret),
+      this.addToBlacklist(accessToken),
+      this.addToBlacklist(refreshToken),
     ])
     return true
   }
 
   /**
    * 将令牌添加到黑名单
-   * @param token - JWT Token 字符串
-   * @param secret - 用于验证 Token 的密钥
-   * @returns 无返回值
    */
-  async addToBlacklist(token: string, secret: string): Promise<void> {
-    const { jti, ttlMs } = await this.tokenTtlMsAndJti(token, secret)
+  async addToBlacklist(token: string) {
+    const { jti, ttlMs } = await this.tokenTtlMsAndJti(token)
     if (!jti || typeof ttlMs !== 'number' || ttlMs <= 0) {
       return
     }
@@ -138,10 +115,6 @@ export class AuthService {
 
   /**
    * 解码 Token（不验证签名）
-   * 用于提取 Token 负载信息，不进行签名验证，性能更好
-   * @param token - JWT Token 字符串
-   * @returns Token 负载对象
-   * @throws {UnauthorizedException} Token 格式无效
    */
   async decodeToken(token: string) {
     const parts = token.split('.')
