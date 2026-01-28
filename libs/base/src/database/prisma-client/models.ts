@@ -10,6 +10,8 @@
  */
 export type * from './models/AdminUserToken'
 export type * from './models/AdminUser'
+export type * from './models/AppAgreement'
+export type * from './models/AppAgreementLog'
 export type * from './models/AppConfig'
 export type * from './models/AppExperienceRecord'
 export type * from './models/AppExperienceRule'

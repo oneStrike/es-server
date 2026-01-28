@@ -386,6 +386,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   AdminUserToken: 'AdminUserToken',
   AdminUser: 'AdminUser',
+  AppAgreement: 'AppAgreement',
+  AppAgreementLog: 'AppAgreementLog',
   AppConfig: 'AppConfig',
   AppExperienceRecord: 'AppExperienceRecord',
   AppExperienceRule: 'AppExperienceRule',
@@ -446,7 +448,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appConfig" | "appExperienceRecord" | "appExperienceRule" | "appLevelRule" | "appNoticeRead" | "appNotice" | "appPage" | "appPointRecord" | "appPointRule" | "appUserToken" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appExperienceRecord" | "appExperienceRule" | "appLevelRule" | "appNoticeRead" | "appNotice" | "appPage" | "appPointRecord" | "appPointRule" | "appUserToken" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -595,6 +597,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AdminUserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AdminUserCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppAgreement: {
+      payload: Prisma.$AppAgreementPayload<ExtArgs>
+      fields: Prisma.AppAgreementFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppAgreementFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppAgreementFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload>
+        }
+        findFirst: {
+          args: Prisma.AppAgreementFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppAgreementFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload>
+        }
+        findMany: {
+          args: Prisma.AppAgreementFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload>[]
+        }
+        create: {
+          args: Prisma.AppAgreementCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload>
+        }
+        createMany: {
+          args: Prisma.AppAgreementCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppAgreementCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload>[]
+        }
+        delete: {
+          args: Prisma.AppAgreementDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload>
+        }
+        update: {
+          args: Prisma.AppAgreementUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload>
+        }
+        deleteMany: {
+          args: Prisma.AppAgreementDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppAgreementUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppAgreementUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload>[]
+        }
+        upsert: {
+          args: Prisma.AppAgreementUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementPayload>
+        }
+        aggregate: {
+          args: Prisma.AppAgreementAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppAgreement>
+        }
+        groupBy: {
+          args: Prisma.AppAgreementGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppAgreementGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppAgreementCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppAgreementCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppAgreementLog: {
+      payload: Prisma.$AppAgreementLogPayload<ExtArgs>
+      fields: Prisma.AppAgreementLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppAgreementLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppAgreementLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload>
+        }
+        findFirst: {
+          args: Prisma.AppAgreementLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppAgreementLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload>
+        }
+        findMany: {
+          args: Prisma.AppAgreementLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload>[]
+        }
+        create: {
+          args: Prisma.AppAgreementLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload>
+        }
+        createMany: {
+          args: Prisma.AppAgreementLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppAgreementLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload>[]
+        }
+        delete: {
+          args: Prisma.AppAgreementLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload>
+        }
+        update: {
+          args: Prisma.AppAgreementLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.AppAgreementLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppAgreementLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppAgreementLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.AppAgreementLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAgreementLogPayload>
+        }
+        aggregate: {
+          args: Prisma.AppAgreementLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppAgreementLog>
+        }
+        groupBy: {
+          args: Prisma.AppAgreementLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppAgreementLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppAgreementLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppAgreementLogCountAggregateOutputType> | number
         }
       }
     }
@@ -4010,6 +4160,35 @@ export const AdminUserScalarFieldEnum = {
 export type AdminUserScalarFieldEnum = (typeof AdminUserScalarFieldEnum)[keyof typeof AdminUserScalarFieldEnum]
 
 
+export const AppAgreementScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  version: 'version',
+  isForce: 'isForce',
+  showInAuth: 'showInAuth',
+  isPublished: 'isPublished',
+  publishedAt: 'publishedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppAgreementScalarFieldEnum = (typeof AppAgreementScalarFieldEnum)[keyof typeof AppAgreementScalarFieldEnum]
+
+
+export const AppAgreementLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  agreementId: 'agreementId',
+  version: 'version',
+  agreedAt: 'agreedAt',
+  ipAddress: 'ipAddress',
+  deviceInfo: 'deviceInfo'
+} as const
+
+export type AppAgreementLogScalarFieldEnum = (typeof AppAgreementLogScalarFieldEnum)[keyof typeof AppAgreementLogScalarFieldEnum]
+
+
 export const AppConfigScalarFieldEnum = {
   id: 'id',
   appName: 'appName',
@@ -4927,6 +5106,20 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'BigInt'
+ */
+export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+/**
+ * Reference to a field of type 'BigInt[]'
+ */
+export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+/**
  * Reference to a field of type 'Decimal'
  */
 export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
@@ -5050,6 +5243,8 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   adminUserToken?: Prisma.AdminUserTokenOmit
   adminUser?: Prisma.AdminUserOmit
+  appAgreement?: Prisma.AppAgreementOmit
+  appAgreementLog?: Prisma.AppAgreementLogOmit
   appConfig?: Prisma.AppConfigOmit
   appExperienceRecord?: Prisma.AppExperienceRecordOmit
   appExperienceRule?: Prisma.AppExperienceRuleOmit
