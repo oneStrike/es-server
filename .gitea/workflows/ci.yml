@@ -14,7 +14,7 @@ jobs:
   docker-build:
     runs-on: ubuntu-latest
     env:
-      NODE_VERSION: '22'
+      NODE_VERSION: '24'
       IMAGE_NAME: es-server
     steps:
       - name: Checkout
