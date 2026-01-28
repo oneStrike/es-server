@@ -1,8 +1,8 @@
 /**
- * Client API PM2 Ecosystem configuration (CommonJS)
+ * App API PM2 Ecosystem configuration (CommonJS)
  * - Uses pm2-runtime in Docker
  * - Allows cluster via env (default fork:1 in container)
- * - Client API specific configuration
+ * - App API specific configuration
  */
 const process = require('node:process')
 

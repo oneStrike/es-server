@@ -6,7 +6,7 @@ import { ApiDoc, Public } from '@libs/base/decorators'
 import { Controller, Get, } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('客户端管理/应用配置')
+@ApiTags('APP管理/应用配置')
 @Controller('app/app-config')
 export class AppConfigController {
   constructor(

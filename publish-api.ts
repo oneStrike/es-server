@@ -28,7 +28,7 @@ const APPS: Record<string, AppConfig> = {
     envPath: 'apps/app-api/.env.development',
     startCommand: 'start:app',
     swaggerPath: 'api-doc-json',
-    projectId: process.env.APIFOX_app_PROJECT_ID || '',
+    projectId: process.env.APIFOX_APP_PROJECT_ID || '',
   },
 }
 
@@ -155,14 +155,13 @@ async function publishToApifox(
         deleteUnmatchedResources: true,
       },
     }
-
     const response = await axios.post(
       APIFOX_OPENAPI_URL.replace('PROJECT_ID', appConfig.projectId),
       postData,
       {
         headers: {
           'X-Apifox-Api-Version': '2024-03-28',
-          "Authorization": `Bearer ${process.env.APIFOX_API_KEY}`,
+          Authorization: `Bearer ${process.env.APIFOX_API_KEY}`,
         },
         timeout: 60000,
       },
@@ -170,6 +169,7 @@ async function publishToApifox(
 
     console.log('✅ 成功发布到 Apifox!')
     console.log('📊 响应数据:', JSON.stringify(response.data, null, 2))
+    console.log('🚀 ~ publishToApifox ~ response:', response.data)
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('❌ 发布失败!')

@@ -14,7 +14,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { ActionTypeEnum } from '../../system/audit/audit.constant'
 
-@ApiTags('客户端管理/协议管理')
+@ApiTags('APP管理/协议管理')
 @Controller('admin/agreement')
 export class AgreementController {
   constructor(private readonly agreementService: AgreementService) {}

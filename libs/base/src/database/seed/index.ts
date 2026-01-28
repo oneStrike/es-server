@@ -9,7 +9,7 @@ import {
   createInitialAppConfig,
   createInitialAppNotice,
   createInitialAppPage,
-  createInitialClientUser,
+  createInitialAppUser,
 } from './modules/app'
 import {
   createInitialForumBadges,
@@ -78,7 +78,7 @@ async function runSeeds() {
   await createInitialComicTags(prisma)
   await createInitialComicChapters(prisma)
   await createInitialAppNotice(prisma)
-  await createInitialClientUser(prisma)
+  await createInitialAppUser(prisma)
   await createInitialForumProfile(prisma)
 
   console.log('🎉 所有种子数据初始化完成！')

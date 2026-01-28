@@ -1,9 +1,9 @@
 import {
-  BaseClientPageDto,
-  ClientPageResponseDto,
+  AppPageResponseDto,
+  BaseAppPageDto,
   LibAppPageService,
-  QueryClientPageDto,
-  UpdateClientPageDto,
+  QueryAppPageDto,
+  UpdateAppPageDto,
 } from '@libs/app-config/page'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { BatchOperationResponseDto, IdDto, IdsDto } from '@libs/base/dto'
@@ -19,7 +19,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { ActionTypeEnum } from '../../system/audit/audit.constant'
 
-@ApiTags('应用管理/页面管理')
+@ApiTags('APP管理/页面管理')
 @Controller('admin/app-page')
 export class AppPageController {
   constructor(private readonly libAppPageService: LibAppPageService) {}
@@ -29,23 +29,23 @@ export class AppPageController {
     summary: '创建页面配置',
     model: IdDto,
   })
-  async create(@Body() body: BaseClientPageDto) {
+  async create(@Body() body: BaseAppPageDto) {
     return this.libAppPageService.createPage(body)
   }
 
   @Get('/page')
   @ApiPageDoc({
     summary: '分页查询页面配置列表',
-    model: ClientPageResponseDto,
+    model: AppPageResponseDto,
   })
-  async findPage(@Query() query: QueryClientPageDto) {
+  async findPage(@Query() query: QueryAppPageDto) {
     return this.libAppPageService.findPage(query)
   }
 
   @Get('/detail-by-id')
   @ApiDoc({
     summary: '根据ID查询页面配置详情',
-    model: BaseClientPageDto,
+    model: BaseAppPageDto,
   })
   async findDetail(@Query('id', ParseIntPipe) id: number) {
     return this.libAppPageService.appPage.findUnique({ where: { id } })
@@ -54,7 +54,7 @@ export class AppPageController {
   @Get('/detail-by-code')
   @ApiDoc({
     summary: '根据页面编码查询页面配置详情',
-    model: BaseClientPageDto,
+    model: BaseAppPageDto,
   })
   async findByCode(@Query('code') code: string) {
     return this.libAppPageService.appPage.findUnique({
@@ -71,7 +71,7 @@ export class AppPageController {
     actionType: ActionTypeEnum.UPDATE,
     content: '更新页面配置',
   })
-  async update(@Body() body: UpdateClientPageDto) {
+  async update(@Body() body: UpdateAppPageDto) {
     return this.libAppPageService.updatePage(body)
   }
 
