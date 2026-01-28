@@ -18,7 +18,7 @@ import { PageRuleEnum } from '../page.constant'
 /**
  * 页面配置基础字段DTO
  */
-export class BaseClientPageDto extends BaseDto {
+export class BaseAppPageDto extends BaseDto {
   @ValidateString({
     description: '页面编码（唯一标识）',
     example: 'home',
@@ -88,26 +88,26 @@ export class BaseClientPageDto extends BaseDto {
 /**
  * 页面配置创建DTO
  */
-export class CreateClientPageDto extends OmitType(
-  BaseClientPageDto,
+export class CreateAppPageDto extends OmitType(
+  BaseAppPageDto,
   OMIT_BASE_FIELDS,
 ) {}
 
 /**
  * 更新页面配置DTO
  */
-export class UpdateClientPageDto extends IntersectionType(
-  PartialType(CreateClientPageDto),
+export class UpdateAppPageDto extends IntersectionType(
+  PartialType(CreateAppPageDto),
   IdDto,
 ) {}
 
 /**
  * 页面配置查询DTO
  */
-export class QueryClientPageDto extends IntersectionType(
+export class QueryAppPageDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseClientPageDto, ['name', 'code', 'accessLevel', 'isEnabled']),
+    PickType(BaseAppPageDto, ['name', 'code', 'accessLevel', 'isEnabled']),
   ),
 ) {
   @ValidateJson({
@@ -121,6 +121,6 @@ export class QueryClientPageDto extends IntersectionType(
 /**
  * 页面配置分页响应DTO
  */
-export class ClientPageResponseDto extends OmitType(BaseClientPageDto, [
+export class AppPageResponseDto extends OmitType(BaseAppPageDto, [
   'description',
 ]) {}

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { AgreementModule } from './app-config/agreement/agreement.module'
 import { AppConfigModule } from './app-config/config/config.module'
 import { AppNoticeModule } from './app-config/notice/notice.module'
 import { AppPageModule } from './app-config/page/page.module'
@@ -13,7 +14,8 @@ import { UserModule } from './user/user.module'
     DictionaryModule,
     AppNoticeModule,
     AppPageModule,
-    AppConfigModule
+    AppConfigModule,
+    AgreementModule
   ],
 })
 export class AppApiModule { }

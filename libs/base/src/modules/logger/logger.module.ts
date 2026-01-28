@@ -9,7 +9,7 @@ import { LoggerService } from './logger.service'
  * - pickLogger(apiType): 根据API类型自动选择合适的日志器
  * - getSystemLogger(): 获取系统级日志器
  * - getAdminLogger(): 获取管理员操作日志器
- * - getClientLogger(): 获取客户端操作日志器
+ * - getAppLogger(): 获取应用操作日志器
  *
  * 环境变量配置说明：
  * - LOG_LEVEL: 日志级别（默认：production环境为info，开发环境为debug）

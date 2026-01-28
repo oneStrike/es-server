@@ -62,7 +62,7 @@ jobs:
           context: .
           file: ./apps/app-api/Dockerfile
           tags: |
-            es/client/server:${{ steps.pkg.outputs.version }}
+            es/app/server:${{ steps.pkg.outputs.version }}
           cache-from: type=local,src=/data/cache/server/buildx
           cache-to: type=local,dest=/data/cache/server/buildx,mode=max
           load: true

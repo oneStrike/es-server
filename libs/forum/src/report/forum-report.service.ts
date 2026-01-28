@@ -409,20 +409,16 @@ export class ForumReportService extends BaseService {
 
   /**
    * 获取指定用户的举报记录
-   * @param userId - 用户ID
-   * @param pageIndex - 页码，默认为0
-   * @param pageSize - 每页大小，默认为15
    * @returns 分页的用户举报记录
    */
-  async getUserReports(userId: number, pageIndex = 0, pageSize = 15) {
+  async getUserReports(dto: QueryForumReportDto) {
+    const { reporterId, ...otherDto } = dto
     return this.forumReport.findPagination({
       where: {
-        reporterId: userId,
-        pageIndex,
-        pageSize,
-      },
-      orderBy: {
-        createdAt: 'desc',
+        reporter: {
+          id: reporterId,
+        },
+        ...otherDto,
       },
     })
   }

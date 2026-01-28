@@ -7,7 +7,7 @@ model RequestLog {
   /// 用户名（可空）
   username String? @map("username")
 
-  /// 接口类型（admin/client/system等，可空）
+  /// 接口类型（admin/app/system等，可空）
   apiType String? @map("api_type") @db.VarChar(20)
   /// 请求方法（GET/POST等）
   method  String  @db.VarChar(10)

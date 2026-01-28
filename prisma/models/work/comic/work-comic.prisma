@@ -1,65 +1,65 @@
 /// 漫画作品模型
 model WorkComic {
   /// 主键id
-  id Int @id @default(autoincrement())
+  id              Int                 @id @default(autoincrement())
   /// 漫画名称
-  name        String  @db.VarChar(100)
+  name            String              @db.VarChar(100)
   /// 漫画别名（多个别名用逗号分隔）
-  alias       String? @db.VarChar(200)
+  alias           String?             @db.VarChar(200)
   /// 漫画封面URL
-  cover       String  @db.VarChar(500)
+  cover           String              @db.VarChar(500)
   /// 漫画简介
-  description String
+  description     String
   /// 出版社
-  publisher      String? @db.VarChar(100)
+  publisher       String?             @db.VarChar(100)
   /// 原作来源（如：小说改编、游戏改编等）
-  originalSource String? @map("original_source") @db.VarChar(100)
+  originalSource  String?             @map("original_source") @db.VarChar(100)
   /// 版权信息
-  copyright      String? @db.VarChar(500)
+  copyright       String?             @db.VarChar(500)
   /// 免责声明
-  disclaimer     String?
+  disclaimer      String?
   /// 语言代码（数据字典）
-  language  String  @db.VarChar(10)
+  language        String              @db.VarChar(10)
   /// 地区代码（数据字典）
-  region    String  @db.VarChar(10)
+  region          String              @db.VarChar(10)
   /// 内容年龄分级 数据字典
-  ageRating String? @map("age_rating") @db.VarChar(10)
+  ageRating       String?             @map("age_rating") @db.VarChar(10)
   /// 连载状态（0=未开始, 1=连载中, 2=已完结, 3=暂停, 4=停更）
-  serialStatus Int     @default(0) @map("serial_status") @db.SmallInt
+  serialStatus    Int                 @default(0) @map("serial_status") @db.SmallInt
   /// 发布状态
-  isPublished  Boolean @default(true) @map("is_published")
+  isPublished     Boolean             @default(true) @map("is_published")
   /// 是否推荐到首页
-  isRecommended Boolean @default(false) @map("is_recommended")
+  isRecommended   Boolean             @default(false) @map("is_recommended")
   /// 是否热门
-  isHot         Boolean @default(false) @map("is_hot")
+  isHot           Boolean             @default(false) @map("is_hot")
   /// 是否新作
-  isNew         Boolean @default(false) @map("is_new")
+  isNew           Boolean             @default(false) @map("is_new")
   /// 热度（真实数据）
-  popularity      Int    @default(0)
+  popularity      Int                 @default(0)
   /// 评分（1-10分，保留一位小数）
   rating          Float?
   /// 推荐权重（影响推荐排序）
-  recommendWeight Float  @default(1.0) @map("recommend_weight")
+  recommendWeight Float               @default(1.0) @map("recommend_weight")
   /// 浏览量
-  viewCount     Int @default(0) @map("view_count")
+  viewCount       Int                 @default(0) @map("view_count")
   /// 收藏数
-  favoriteCount Int @default(0) @map("favorite_count")
+  favoriteCount   Int                 @default(0) @map("favorite_count")
   /// 点赞数
-  likeCount     Int @default(0) @map("like_count")
+  likeCount       Int                 @default(0) @map("like_count")
   /// 评分人数
-  ratingCount   Int @default(0) @map("rating_count")
+  ratingCount     Int                 @default(0) @map("rating_count")
   /// 发布日期
-  publishAt   DateTime? @map("publish_at") @db.Date
+  publishAt       DateTime?           @map("publish_at") @db.Date
   /// 最后更新时间（内容更新时间）
-  lastUpdated DateTime? @map("last_updated") @db.Timestamptz(6)
+  lastUpdated     DateTime?           @map("last_updated") @db.Timestamptz(6)
   /// 备注（内部使用）
-  remark String? @db.VarChar(1000)
+  remark          String?             @db.VarChar(1000)
   /// 创建时间
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间（用于数据恢复或归档）
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedAt       DateTime?           @map("deleted_at") @db.Timestamptz(6)
   /// 关联的作者列表
   comicAuthors    WorkComicAuthor[]
   /// 关联的分类列表

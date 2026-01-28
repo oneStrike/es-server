@@ -136,6 +136,9 @@ export class AuthService extends BaseService {
       username: user.username,
     })
 
+    // 存储令牌
+    await this.storeTokens(user.id, tokens, req)
+
     // 去除 user 对象的 password 属性
     const { password: _password, ...userWithoutPassword } = user
 
@@ -166,10 +169,23 @@ export class AuthService extends BaseService {
     const accessTokenPayload = await this.baseJwtService.decodeToken(
       tokens.accessToken,
     )
+    const userId = Number(accessTokenPayload.sub)
+
+    await this.storeTokens(userId, tokens, req)
+
+    return tokens
+  }
+
+  /**
+   * 存储 Token
+   */
+  private async storeTokens(userId: number, tokens: any, req: FastifyRequest) {
+    const accessTokenPayload = await this.baseJwtService.decodeToken(
+      tokens.accessToken,
+    )
     const refreshTokenPayload = await this.baseJwtService.decodeToken(
       tokens.refreshToken,
     )
-    const userId = Number(accessTokenPayload.sub)
 
     const ipAddress = extractIpAddress(req) || 'unknown'
     const userAgent = extractUserAgent(req)
@@ -196,7 +212,5 @@ export class AuthService extends BaseService {
         userAgent,
       },
     ])
-
-    return tokens
   }
 }

@@ -9,7 +9,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { ActionTypeEnum } from '../../system/audit/audit.constant'
 
-@ApiTags('客户端管理/应用配置')
+@ApiTags('APP管理/应用配置')
 @Controller('admin/app-config')
 export class AppConfigController {
   constructor(

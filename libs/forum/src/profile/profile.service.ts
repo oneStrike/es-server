@@ -1,12 +1,12 @@
+import { UserDefaults } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { UserStatusEnum } from '@libs/base/enum'
 import { ForumPointService } from '@libs/user/point'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   QueryForumProfileListDto,
   UpdateForumProfileStatusDto,
 } from './dto/profile.dto'
-import { UserDefaults } from '@libs/base/constant'
-import { UserStatusEnum } from '@libs/base/enum'
 
 /**
  * 论坛资料服务类
@@ -56,7 +56,7 @@ export class ForumProfileService extends BaseService {
             favoriteCount: true,
             signature: true,
             bio: true,
-          }
+          },
         },
         forumBadges: {
           include: {

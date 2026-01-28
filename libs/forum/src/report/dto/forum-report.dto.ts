@@ -17,7 +17,7 @@ import {
 
 export class BaseForumReportDto extends BaseDto {
   @ValidateNumber({
-    description: '举报人用户资料ID',
+    description: '举报人用户ID',
     example: 1,
     required: true,
     min: 1,

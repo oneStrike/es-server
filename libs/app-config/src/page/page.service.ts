@@ -1,10 +1,11 @@
+import type { AppPageWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
-import { AppPageWhereInput } from '@libs/base/database/prisma-client/models'
+
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  BaseClientPageDto,
-  QueryClientPageDto,
-  UpdateClientPageDto,
+  BaseAppPageDto,
+  QueryAppPageDto,
+  UpdateAppPageDto,
 } from './dto/page.dto'
 
 @Injectable()
@@ -17,7 +18,7 @@ export class LibAppPageService extends BaseService {
     super()
   }
 
-  async createPage(createPageDto: BaseClientPageDto) {
+  async createPage(createPageDto: BaseAppPageDto) {
     const existingByCode = await this.appPage.findUnique({
       where: { code: createPageDto.code },
       select: { code: true, path: true },
@@ -36,7 +37,7 @@ export class LibAppPageService extends BaseService {
     return this.appPage.create({ data: createPageDto })
   }
 
-  async findPage(queryPageDto: QueryClientPageDto) {
+  async findPage(queryPageDto: QueryAppPageDto) {
     const { name, code, accessLevel, isEnabled, enablePlatform, ...other } =
       queryPageDto
 
@@ -57,9 +58,7 @@ export class LibAppPageService extends BaseService {
 
     if (enablePlatform && enablePlatform !== '[]') {
       where.enablePlatform = {
-        hasEvery: JSON.parse(enablePlatform).map((item: string) =>
-          Number(item),
-        ),
+        hasSome: JSON.parse(enablePlatform).map((item: string) => Number(item)),
       }
     }
 
@@ -92,7 +91,7 @@ export class LibAppPageService extends BaseService {
     })
   }
 
-  async updatePage(updatePageDto: UpdateClientPageDto) {
+  async updatePage(updatePageDto: UpdateAppPageDto) {
     const { id, ...updateData } = updatePageDto
 
     if (updateData.code) {

@@ -53,6 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   AdminUserToken: 'AdminUserToken',
   AdminUser: 'AdminUser',
+  AppAgreement: 'AppAgreement',
+  AppAgreementLog: 'AppAgreementLog',
   AppConfig: 'AppConfig',
   AppExperienceRecord: 'AppExperienceRecord',
   AppExperienceRule: 'AppExperienceRule',
@@ -157,6 +159,35 @@ export const AdminUserScalarFieldEnum = {
 } as const
 
 export type AdminUserScalarFieldEnum = (typeof AdminUserScalarFieldEnum)[keyof typeof AdminUserScalarFieldEnum]
+
+
+export const AppAgreementScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  content: 'content',
+  version: 'version',
+  isForce: 'isForce',
+  showInAuth: 'showInAuth',
+  isPublished: 'isPublished',
+  publishedAt: 'publishedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppAgreementScalarFieldEnum = (typeof AppAgreementScalarFieldEnum)[keyof typeof AppAgreementScalarFieldEnum]
+
+
+export const AppAgreementLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  agreementId: 'agreementId',
+  version: 'version',
+  agreedAt: 'agreedAt',
+  ipAddress: 'ipAddress',
+  deviceInfo: 'deviceInfo'
+} as const
+
+export type AppAgreementLogScalarFieldEnum = (typeof AppAgreementLogScalarFieldEnum)[keyof typeof AppAgreementLogScalarFieldEnum]
 
 
 export const AppConfigScalarFieldEnum = {

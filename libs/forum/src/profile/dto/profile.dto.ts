@@ -18,7 +18,7 @@ import {
  * 基础用户个人信息数据传输对象
  */
 
-export class BaseClientUserInfoDto extends BaseDto {
+export class BaseAppUserInfoDto extends BaseDto {
   @ValidateString({
     description: '用户名（登录账号）',
     example: 'user123',

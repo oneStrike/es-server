@@ -3,7 +3,7 @@ model AppUser {
   /// 用户ID
   id      Int     @id @default(autoincrement())
   /// 账号（唯一）
-  account String     @unique @map("account") @db.VarChar(20)
+  account String  @unique @map("account") @db.VarChar(20)
   /// 手机号码（唯一）
   phone   String? @unique @map("phone_number") @db.VarChar(20)
   /// 邮箱地址（唯一）
@@ -48,6 +48,9 @@ model AppUser {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   /// 删除时间（软删除）
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  /// 协议签署记录
+  agreementLogs AppAgreementLog[]
 
   /// 关联等级规则
   level                   AppLevelRule?               @relation(fields: [levelId], references: [id])

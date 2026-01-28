@@ -12,7 +12,7 @@ import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-@ApiTags('客户端管理/通知公告')
+@ApiTags('APP管理/通知公告')
 @Controller('admin/notice')
 export class AppNoticeController {
   constructor(

@@ -1,5 +1,9 @@
-import { AdminUserToken } from '@libs/base/database/prisma-client/client'
-import { BaseTokenStorageService, CreateTokenDto, ITokenDelegate } from '@libs/base/modules/auth'
+import { AdminUserToken } from '@libs/base/database'
+import {
+  BaseTokenStorageService,
+  CreateTokenDto,
+  ITokenDelegate,
+} from '@libs/base/modules/auth'
 import { Injectable } from '@nestjs/common'
 
 /**
@@ -14,7 +18,8 @@ export class AdminTokenStorageService extends BaseTokenStorageService<AdminUserT
   protected get tokenDelegate(): ITokenDelegate<AdminUserToken> {
     // 使用 unknown 转换以绕过 Prisma 生成类型的复杂性
     // 实际上 Prisma Delegate 拥有 ITokenDelegate 定义的所有方法
-    return this.prisma.adminUserToken as unknown as ITokenDelegate<AdminUserToken>
+    return this.prisma
+      .adminUserToken as unknown as ITokenDelegate<AdminUserToken>
   }
 }
 

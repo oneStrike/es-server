@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.6
 # --------------------------------
-# Client API 专用 Dockerfile
+# App API 专用 Dockerfile
 # 构建独立的 app-api 服务镜像
 # --------------------------------
 # --------------------------------

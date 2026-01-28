@@ -1,4 +1,4 @@
-export async function createInitialClientUser(prisma: any) {
+export async function createInitialAppUser(prisma: any) {
   const userData = {
     account: '123456',
     nickname: '测试用户',

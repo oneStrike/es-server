@@ -48,6 +48,16 @@ export type AdminUserToken = Prisma.AdminUserTokenModel
  */
 export type AdminUser = Prisma.AdminUserModel
 /**
+ * Model AppAgreement
+ * 应用协议表 - 存储隐私政策、用户协议等
+ */
+export type AppAgreement = Prisma.AppAgreementModel
+/**
+ * Model AppAgreementLog
+ * 应用协议签署记录表
+ */
+export type AppAgreementLog = Prisma.AppAgreementLogModel
+/**
  * Model AppConfig
  * 应用配置表 - 存储应用的基础配置信息
  */

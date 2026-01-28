@@ -28,7 +28,7 @@ export class BaseAuditDto extends BaseDto {
   username?: string
 
   @ValidateEnum({
-    description: '接口类型（admin/client/system等）',
+    description: '接口类型（admin/app/system等）',
     example: 'admin',
     required: false,
     enum: ApiTypeEnum,

@@ -21,6 +21,10 @@ export class ComicChapterService extends BaseService {
     super()
   }
 
+  get appLevelRule() {
+    return this.prisma.appLevelRule
+  }
+
   /**
    * 创建漫画章节
    * @param createComicChapterDto 创建章节的数据
@@ -47,14 +51,14 @@ export class ComicChapterService extends BaseService {
     // 验证会员等级ID是否存在
     if (
       requiredReadLevelId &&
-      !(await this.prisma.memberLevel.exists({ id: requiredReadLevelId }))
+      !(await this.appLevelRule.exists({ id: requiredReadLevelId }))
     ) {
       throw new BadRequestException('指定的阅读会员等级不存在')
     }
 
     if (
       requiredDownloadLevelId &&
-      !(await this.prisma.memberLevel.exists({ id: requiredDownloadLevelId }))
+      !(await this.appLevelRule.exists({ id: requiredDownloadLevelId }))
     ) {
       throw new BadRequestException('指定的下载会员等级不存在')
     }
@@ -142,14 +146,14 @@ export class ComicChapterService extends BaseService {
     // 验证会员等级ID是否存在
     if (
       requiredReadLevelId &&
-      !(await this.prisma.memberLevel.exists({ id: requiredReadLevelId }))
+      !(await this.appLevelRule.exists({ id: requiredReadLevelId }))
     ) {
       throw new BadRequestException('指定的阅读会员等级不存在')
     }
 
     if (
       requiredDownloadLevelId &&
-      !(await this.prisma.memberLevel.exists({ id: requiredDownloadLevelId }))
+      !(await this.appLevelRule.exists({ id: requiredDownloadLevelId }))
     ) {
       throw new BadRequestException('指定的下载会员等级不存在')
     }

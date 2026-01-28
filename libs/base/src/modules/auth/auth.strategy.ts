@@ -17,8 +17,6 @@ interface JwtPayload {
 
 /**
  * Token 存储服务接口
- * 定义 Token 存储的通用方法，由应用层实现
- * 这样设计可以让 libs/base 保持通用性，不依赖具体的业务模型
  */
 export interface ITokenStorageService {
   /**
@@ -35,6 +33,19 @@ export interface ITokenStorageService {
    * @returns true=有效, false=无效
    */
   isTokenValid: (jti: string) => Promise<boolean>
+
+  /**
+   * 清理过期 Token
+   * @returns 清理数量
+   */
+  cleanupExpiredTokens: () => Promise<number>
+
+  /**
+   * 删除已撤销的旧 Token
+   * @param retentionDays 保留天数
+   * @returns 删除数量
+   */
+  deleteOldRevokedTokens: (retentionDays: number) => Promise<number>
 }
 
 /**
@@ -58,15 +69,21 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
   ) {
     // 获取并验证必要的配置
     const authConfig = configService.get<AuthConfigInterface>('auth')
-    if (!authConfig || !authConfig.secret) {
-      throw new Error('AuthStrategy：缺少 JWT 密钥配置')
+    const rsaConfig = configService.get('rsa')
+
+    if (!authConfig) {
+      throw new Error('AuthStrategy：缺少 auth 配置')
+    }
+    if (!rsaConfig?.publicKey) {
+      throw new Error('AuthStrategy：缺少 RSA 公钥配置')
     }
 
     // 配置 JWT 策略选项
     const options: StrategyOptions = {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: authConfig.secret,
+      secretOrKey: rsaConfig.publicKey,
+      algorithms: ['RS256'],
       passReqToCallback: true,
     }
 
