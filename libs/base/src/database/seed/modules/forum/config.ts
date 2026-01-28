@@ -1,6 +1,4 @@
-import type { PrismaClient } from '@prisma/client'
-
-export async function createInitialForumConfig(prisma: PrismaClient) {
+export async function createInitialForumConfig(prisma: any) {
   const existingConfig = await prisma.forumConfig.findFirst()
   if (existingConfig) {
     console.log('论坛配置已存在，跳过填充')

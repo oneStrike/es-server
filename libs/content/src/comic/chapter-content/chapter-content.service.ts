@@ -1,7 +1,7 @@
+import type { FastifyRequest } from 'fastify'
 import { BaseService } from '@libs/base/database'
 import { UploadService } from '@libs/base/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import type { FastifyRequest } from 'fastify'
 import fsExtra from 'fs-extra'
 import {
   AddChapterContentDto,

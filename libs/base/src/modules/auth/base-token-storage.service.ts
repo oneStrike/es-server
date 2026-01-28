@@ -35,7 +35,7 @@ export interface CreateTokenDto {
   jti: string
   tokenType: TokenType
   expiresAt: Date
-  deviceInfo?: Record<string, any>
+  deviceInfo?: string
   ipAddress?: string
   userAgent?: string
 }
@@ -58,11 +58,11 @@ export interface ITokenDelegate<
   create: (args: { data: CreateInput }) => Promise<T>
   createMany: (args: { data: CreateInput[] }) => Promise<any>
   findUnique: (args: {
-    where: WhereInput & { jti?: string, id?: number }
+    where: WhereInput & { jti?: string; id?: number }
   }) => Promise<T | null>
-  findMany: (args: { where?: WhereInput, [key: string]: any }) => Promise<T[]>
-  update: (args: { where: WhereInput, data: UpdateInput }) => Promise<T>
-  updateMany: (args: { where: WhereInput, data: UpdateInput }) => Promise<any>
+  findMany: (args: { where?: WhereInput; [key: string]: any }) => Promise<T[]>
+  update: (args: { where: WhereInput; data: UpdateInput }) => Promise<T>
+  updateMany: (args: { where: WhereInput; data: UpdateInput }) => Promise<any>
   deleteMany: (args: { where: WhereInput }) => Promise<any>
 }
 

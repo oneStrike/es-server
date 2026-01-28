@@ -1,5 +1,7 @@
+import type { FastifyRequest } from 'fastify'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { FileUploadDto, IdDto } from '@libs/base/dto'
+import { IdDto } from '@libs/base/dto'
+import { FileUploadResponseDto } from '@libs/base/modules/upload'
 import {
   AddChapterContentDto,
   BatchUpdateChapterContentsDto,
@@ -10,7 +12,6 @@ import {
 } from '@libs/content/comic/chapter-content'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import type { FastifyRequest } from 'fastify'
 
 /**
  * 漫画章节内容管理控制器
@@ -28,7 +29,7 @@ export class ChapterContentController {
   @ApiPageDoc({
     summary: '获取章节内容',
     model: String,
-    isList: true,
+    isArray: true,
   })
   async getContents(@Query() idDto: IdDto) {
     return this.chapterContentService.getChapterContents(idDto.id)
@@ -40,13 +41,9 @@ export class ChapterContentController {
   @Post('/add')
   @ApiDoc({
     summary: '添加章节内容',
-    model: FileUploadDto,
+    model: FileUploadResponseDto,
   })
-  async add(
-    @Req() req: FastifyRequest,
-    @Query() query: AddChapterContentDto,
-    @Body() _body: FileUploadDto,
-  ) {
+  async add(@Req() req: FastifyRequest, @Query() query: AddChapterContentDto) {
     return this.chapterContentService.addChapterContent(req, query)
   }
 
@@ -69,7 +66,7 @@ export class ChapterContentController {
   @ApiDoc({
     summary: '删除章节内容',
     model: String,
-    isList: true,
+    isArray: true,
   })
   async delete(@Body() dto: DeleteChapterContentDto) {
     return this.chapterContentService.deleteChapterContent(dto)
@@ -82,7 +79,7 @@ export class ChapterContentController {
   @ApiDoc({
     summary: '移动章节内容',
     model: String,
-    isList: true,
+    isArray: true,
   })
   async move(@Body() body: MoveChapterContentDto) {
     return this.chapterContentService.moveChapterContent(body)

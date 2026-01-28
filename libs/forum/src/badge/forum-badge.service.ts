@@ -8,9 +8,9 @@ import {
 } from '@nestjs/common'
 import {
   CreateForumBadgeDto,
-  UserBadgeDto,
   QueryForumBadgeDto,
   UpdateForumBadgeDto,
+  UserBadgeDto,
 } from './dto/forum-badge.dto'
 
 /**
@@ -214,18 +214,18 @@ export class ForumBadgeService extends BaseService {
    * @throws NotFoundException 如果用户资料不存在
    */
   async getUserBadges(
-    profileId: number,
+    userId: number,
     queryForumBadgeDto: QueryForumBadgeDto,
   ) {
     const { name, type, isEnabled } = queryForumBadgeDto
 
-    if (!(await this.forumProfile.exists({ id: profileId }))) {
-      throw new NotFoundException('用户资料不存在')
+    if (!(await this.prisma.appUser.exists({ id: userId }))) {
+      throw new NotFoundException('用户不存在')
     }
 
     return this.forumProfileBadge.findMany({
       where: {
-        profileId,
+        userId,
         badge: {
           name: {
             contains: name,
@@ -263,7 +263,7 @@ export class ForumBadgeService extends BaseService {
         },
       },
       include: {
-        profile: {
+        user: {
           select: {
             id: true,
             nickname: true,

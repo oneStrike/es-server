@@ -10,9 +10,7 @@ import {
 
 import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import { ForumProfileService } from '@libs/forum'
-import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { BadRequestException, Inject, Injectable } from '@nestjs/common'
-import { Cache } from 'cache-manager'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   AuthConstants,
   AuthDefaultValue,
@@ -39,7 +37,6 @@ export class AuthService extends BaseService {
     private readonly profileService: ForumProfileService,
     private readonly tokenStorageService: AppTokenStorageService,
     private readonly loginGuardService: LoginGuardService,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     super()
   }
@@ -424,19 +421,6 @@ export class AuthService extends BaseService {
     return {
       ...rest,
     }
-  }
-
-  /**
-   * 根据手机号查找用户
-   * @param phone - 手机号
-   * @returns 用户对象或 null
-   */
-  private async findUserByPhone(phone: string) {
-    return this.appUser.findFirst({
-      where: {
-        phone,
-      },
-    })
   }
 
   /**
