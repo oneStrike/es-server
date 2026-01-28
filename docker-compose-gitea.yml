@@ -19,7 +19,6 @@ services:
       - USER_UID=${GITEA_USER_UID}
       - USER_GID=${GITEA_USER_GID}
       # 服务器配置
-      - GITEA__server__ROOT_URL=${GITEA_ROOT_URL}
       - GITEA__server__SSH_LISTEN_PORT=2222
       - GITEA__server__SSH_PORT=${GITEA_SSH_PORT}
     volumes:
@@ -51,5 +50,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - CONFIG_FILE=/data/config.yaml
+      - GITEA_INSTANCE_URL=http://81.69.43.198:3000
+      - GITEA_RUNNER_REGISTRATION_TOKEN=hAzQU1sgWHyAz2e0zabTvv7qJK5KldNl0SqFMkem
+      - GITEA_RUNNER_NAME=gitea-runner
     networks:
       - gitea-network
