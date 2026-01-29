@@ -25,15 +25,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: 安装项目依赖
-        run: pnpm install --frozen-lockfile
-
-      - name: 构建所有应用
-        run: pnpm build:all
-
-      - name: 仅保留生产依赖
-        run: pnpm prune --prod
-
       - name: 提取 package 版本号
         id: pkg
         run: |

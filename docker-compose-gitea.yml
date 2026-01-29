@@ -65,10 +65,6 @@ services:
       - CONFIG_FILE=/config.yaml
       - GITEA_INSTANCE_URL=http://gitea:3000
       - GITEA_RUNNER_NAME=gitea-runner
-      # 注意：如果出现 "unregistered runner" 错误，请：
-      # 1. 在 Gitea 管理后台 (站点管理 -> Actions -> Runners) 生成新 Token
-      # 2. 替换下方的 Token
-      # 3. 执行 docker volume rm es-server_gitea-runner-data 删除旧数据卷
       - GITEA_RUNNER_REGISTRATION_TOKEN=PKANRCyPTOkhHiEOcvHoZYn6wBmaNbDsVPMH5enD
     networks:
       - gitea-network
