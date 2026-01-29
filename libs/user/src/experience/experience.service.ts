@@ -1,8 +1,8 @@
 import { BaseService } from '@libs/base/database'
 
+import { UserStatusEnum } from '@libs/base/enum'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ForumLevelRuleService } from '../level-rule/level-rule.service'
-import { UserStatusEnum } from '@libs/base/enum'
 import {
   AddForumExperienceDto,
   QueryForumExperienceRecordDto,

@@ -6,7 +6,6 @@ import {
   ForumForumSensitiveWordLevelStatisticsDto,
   ForumForumSensitiveWordTypeStatisticsDto,
   ForumSensitiveWordRecentHitStatisticsDto,
-  ForumSensitiveWordStatisticsDataDto,
   ForumSensitiveWordStatisticsQueryDto,
   ForumSensitiveWordStatisticsResponseDto,
   ForumSensitiveWordTopHitStatisticsDto,

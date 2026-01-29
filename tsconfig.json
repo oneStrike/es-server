@@ -71,9 +71,7 @@
   ],
   "exclude": [
     "node_modules",
-    "test",
     "dist",
-    "**/*spec.ts",
     "libs/base/src/database/prisma-client/**/*"
   ]
 }

@@ -20,4 +20,3 @@ export const AuthRedisKeys = {
   /** 登录锁定 Key */
   LOGIN_LOCK: (id: number) => `admin:auth:login:lock:${id}`,
 }
-
