@@ -15,9 +15,9 @@ runner:
   # 建议显式声明支持的标签，避免每次都向 Gitea 询问
   # ubuntu-latest 是最常用的标签
   labels:
-    - 'ubuntu-latest:docker://node:24-bookworm'
-    - 'ubuntu-22.04:docker://node:24-bookworm'
-    - 'node-24:docker://node:24-bookworm'
+    - 'ubuntu-latest:docker://node:24-alpine'
+    - 'ubuntu-22.04:docker://node:24-alpine'
+    - 'node-24:docker://node:24-alpine'
 
 cache:
   enabled: true
