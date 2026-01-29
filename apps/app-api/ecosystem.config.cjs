@@ -14,11 +14,11 @@ module.exports = {
       // Default one process per container; allow enabling cluster by env
       instances: process.env.PM2_INSTANCES || 1,
       exec_mode: process.env.PM2_EXEC_MODE || 'fork', // set 'cluster' to enable cluster mode
-      watch: false,
-      autorestart: true,
-      max_memory_restart: process.env.PM2_MAX_MEMORY || '512M',
-      exp_backoff_restart_delay: 100,
-      kill_timeout: 2000,
+        watch: false,
+        autorestart: true,
+        max_memory_restart: process.env.PM2_MAX_MEMORY || '512M',
+        exp_backoff_restart_delay: 100,
+        kill_timeout: 2000,
     },
   ],
 }
