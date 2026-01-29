@@ -54,8 +54,16 @@ export function ApiDoc<TModel extends Type<any>>(
 
   if (model) {
     if (isClass(model)) {
-      decorators.push(ApiExtraModels(model))
-      dataSchema = { $ref: getSchemaPath(model) }
+      if (model === String) {
+        dataSchema = { type: 'string' }
+      } else if (model === Number) {
+        dataSchema = { type: 'number' }
+      } else if (model === Boolean) {
+        dataSchema = { type: 'boolean' }
+      } else {
+        decorators.push(ApiExtraModels(model))
+        dataSchema = { $ref: getSchemaPath(model) }
+      }
     } else {
       dataSchema = model
     }
@@ -97,8 +105,16 @@ export function ApiPageDoc<TModel extends Type<any>>(
 
   if (model) {
     if (isClass(model)) {
-      decorators.push(ApiExtraModels(model))
-      dataSchema = { $ref: getSchemaPath(model) }
+      if (model === String) {
+        dataSchema = { type: 'string' }
+      } else if (model === Number) {
+        dataSchema = { type: 'number' }
+      } else if (model === Boolean) {
+        dataSchema = { type: 'boolean' }
+      } else {
+        decorators.push(ApiExtraModels(model))
+        dataSchema = { $ref: getSchemaPath(model) }
+      }
     } else {
       dataSchema = model
     }

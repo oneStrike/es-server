@@ -1,90 +1,148 @@
-# 登录设备历史记录功能对齐文档
+# 登录设备历史记录功能对齐文档 (V4 - 最佳实践版)
 
-## 1. 项目上下文分析
+## 1. 社区最佳实践设计理念
 
-### 1.1 现状分析
-*   **当前存储**: 目前系统使用 `AppUserToken` 表存储用户的登录会话（JWT）。
-*   **清理机制**: 系统存在定时任务 (`AuthCronService`)，会自动清理过期且未刷新的 Token。
-*   **数据保留**: `AppUser` 表仅记录 `lastLoginAt` (最后登录时间) 和 `lastLoginIp` (最后登录IP)，不保留历史记录。
-*   **问题**: 用户希望查看“历史登录设备”，但目前的 `AppUserToken` 数据是临时的，Token 过期或用户登出后，设备信息会随之丢失或被标记为撤销（随后被物理删除），无法满足长期查看历史设备的需求。
+在设计用户设备管理和审计系统时，工业界的最佳实践通常遵循以下原则：
 
-### 1.2 目标
-*   实现一个持久化的“用户登录设备历史”记录功能。
-*   确保数据不会因 Token 过期而被自动清除。
-*   符合社区最佳实践。
+1.  **单一数据源 (Single Source of Truth)**：设备信息只应存储在“设备表”中，Token 表只存储引用（外键）。
+2.  **审计不可变性 (Audit Immutability)**：登录日志必须是只增不减的流水账，用于事后追溯。
+3.  **设备全生命周期管理**：设备不仅仅是一个“名称”，它有状态（活跃/禁用）、信任级别（受信任/临时）和最后活动时间。
+4.  **性能与扩展性**：
+    - 日志表数据量巨大，需要精简字段并建立合适索引。
+    - 设备表读取频率高（每次刷新 Token 都要校验），需要轻量高效。
 
-## 2. 需求理解与方案建议
+## 2. 推荐表结构设计 (V4)
 
-### 2.1 核心冲突
-*   **Token (会话)** vs **Device (设备)**: Token 是短暂的认证凭证，Device 是长期的物理实体。不能将设备历史强绑定在 Token 表上。
+### 2.1 用户设备表 (`AppUserDevice`)
 
-### 2.2 推荐方案：引入 `AppUserDevice` 实体
-
-建议新增一个独立的数据库模型 `AppUserDevice`，用于专门管理用户的受信任设备/历史设备。
-
-#### 方案细节
-1.  **新建表结构 (`AppUserDevice`)**:
-    *   **唯一标识**: 结合 `userId` 和 `deviceUniqueId` (设备唯一标识) 进行去重。
-    *   **设备信息**: `deviceName` (设备名称), `deviceType` (类型), `os`, `browser`。
-    *   **状态信息**: `lastLoginAt` (最后活动时间), `lastLoginIp` (最后IP)。
-    *   **管理字段**: `isTrusted` (是否信任), `status` (正常/禁用)。
-
-2.  **业务逻辑变更**:
-    *   **登录时**: 在生成 Token 之前/之后，异步更新 `AppUserDevice` 表。
-        *   如果设备ID已存在，更新 `lastLoginAt` 和 `lastLoginIp`。
-        *   如果不存在，创建新记录。
-    *   **查询时**: 提供接口 `GET /auth/devices` 查询该用户的设备列表。
-    *   **管理时**: 用户可以移除（软删除）某个设备，强制该设备下线（可选：同时撤销关联的 Token）。
-
-### 2.3 关键技术决策点 (需要您确认)
-
-#### Q1: 设备唯一标识 (Device ID) 的来源？
-*   **选项 A (推荐 - 客户端生成)**: 客户端 (App/Web) 生成一个随机 UUID 并持久化在本地 (LocalStorage/Keychain)，登录时通过 Header (如 `X-Device-Id`) 传给后端。这是最准确的方式。
-*   **选项 B (后端推断)**: 后端根据 `User-Agent` + `IP` 生成哈希。缺点是容易冲突（同一局域网下相同浏览器），或者不稳定（IP 变动视为新设备）。
-*   **建议**: 采用 **选项 A**。如果客户端未传，降级为 **选项 B** 或生成随机ID返回给客户端保存。
-
-#### Q2: 数据清理策略？
-虽然用户说“不要自动清除”，但为了数据库健康，通常建议：
-*   **策略 A**: 永久保留，直到用户手动删除。
-*   **策略 B**: 保留最近 N 条（如 20 条），超出覆盖最旧的。
-*   **策略 C**: 自动清理长期不活跃的设备（如超过 1 年未登录）。
-*   **建议**: **策略 A** 或 **策略 C**。
-
-#### Q3: 是否需要完整的登录流水日志？
-*   **设备历史**: 关注“我去过哪些地方/用过哪些手机”。(去重，强调实体)
-*   **登录日志**: 关注“我什么时候登录了一次”。(不去重，强调事件)
-*   **理解**: 根据您的描述“记录历史登录设备”，应为 **设备历史**。
-
-## 3. 拟定数据结构 (Prisma)
+**定位**：用户的“资产清单”。管理该用户所有受信任或已知的物理入口。
 
 ```prisma
 model AppUserDevice {
   id             Int       @id @default(autoincrement())
   userId         Int       @map("user_id")
-  
-  // 核心识别字段
-  deviceUniqueId String    @map("device_unique_id") @db.VarChar(100) // 客户端生成的UUID
-  
-  // 展示字段
-  deviceName     String?   @map("device_name") @db.VarChar(100)      // 如 "iPhone 13" 或 "Chrome on Windows"
-  deviceType     String?   @map("device_type") @db.VarChar(50)       // mobile, desktop, tablet
-  os             String?   @map("os") @db.VarChar(50)
-  browser        String?   @map("browser") @db.VarChar(50)
-  
-  // 状态字段
+
+  // === 核心标识 ===
+  // 最佳实践：客户端生成的唯一指纹，不随 Token 变化。
+  deviceId String    @map("device_id") @db.VarChar(100)
+
+  // === 描述信息 (元数据) ===
+  // 最佳实践：打散存储便于统计分析 (如 "80% 用户使用 Chrome")，但也保留扩展能力
+  deviceName     String?   @map("device_name") @db.VarChar(100) // 用户可自定义名称，如 "My iPhone"
+  deviceType     String?   @map("device_type") @db.VarChar(50)  // mobile, desktop, browser
+  os             String?   @map("os") @db.VarChar(50)           // iOS 15.0
+
+  // === 安全与状态管控 (新增最佳实践字段) ===
+  // 最佳实践：允许用户标记“信任此设备”（免二次验证）或“禁用此设备”（丢失后踢出）
+  isTrusted      Boolean   @default(false) @map("is_trusted")
+  status         String    @default("ACTIVE") @map("status") @db.VarChar(20) // ACTIVE, BLOCKED
+
+  // === 活跃度追踪 ===
+  // 最佳实践：不仅记录“登录”，也记录“刷新Token”的时间，反映真实活跃度
   lastLoginIp    String?   @map("last_login_ip") @db.VarChar(45)
-  lastLoginAt    DateTime  @default(now()) @map("last_login_at") @db.Timestamptz
-  
+  lastActiveAt   DateTime  @default(now()) @map("last_active_at") @db.Timestamptz
+
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  user           AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           AppUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokens         AppUserToken[]
+  loginLogs      AppUserLoginLog[]
 
-  @@unique([userId, deviceUniqueId]) // 确保同一用户下的设备ID唯一
+  @@unique([userId, deviceUniqueId]) // 复合唯一键
+  @@index([lastActiveAt])            // 便于清理长期不活跃设备（如果需要）
   @@map("app_user_device")
 }
 ```
 
-## 4. 下一步计划
-1.  确认上述方案和决策点。
-2.  进入 Architect 阶段，设计详细接口和数据流。
+### 2.2 用户登录日志表 (`AppUserLoginLog`)
+
+**定位**：安全审计流水。记录“谁、在什么时候、通过什么设备、做了什么”。
+
+```prisma
+model AppUserLoginLog {
+  id             Int       @id @default(autoincrement())
+  userId         Int       @map("user_id")
+
+  // === 关联上下文 ===
+  // 最佳实践：关联设备ID，但设置为可选（SET NULL），保证即使设备被删，日志依然存在（审计要求）
+  deviceId       Int?      @map("device_id")
+
+  // === 登录快照 ===
+  // 最佳实践：记录原始环境快照，防止设备表更新后丢失当时的上下文
+  ipAddress      String?   @map("ip_address") @db.VarChar(45)
+  location       String?   @map("location") @db.VarChar(100)
+  userAgent      String?   @map("user_agent") @db.VarChar(500)
+
+  // === 行为详情 (新增最佳实践字段) ===
+  // 最佳实践：明确登录方式（密码、验证码、三方登录），便于风控分析
+  loginType      String    @default("PASSWORD") @map("login_type") @db.VarChar(20)
+  status         String    @default("SUCCESS") @map("status") @db.VarChar(20) // SUCCESS, FAILED
+  failReason     String?   @map("fail_reason") @db.VarChar(200)               // 若失败记录原因
+
+  loginAt        DateTime  @default(now()) @map("login_at") @db.Timestamptz
+
+  user           AppUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device         AppUserDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([userId, loginAt]) // 最常用的查询模式：用户的时间轴
+  @@map("app_user_login_log")
+}
+```
+
+### 2.3 应用用户令牌表 (`AppUserToken`)
+
+**定位**：临时的会话凭证。
+
+```prisma
+model AppUserToken {
+  id           Int       @id @default(autoincrement())
+  jti          String    @unique @map("jti") @db.VarChar(255)
+  userId       Int       @map("user_id")
+
+  // === 关联设备 ===
+  // 最佳实践：Token 必须属于某个设备。如果设备被禁用(status=BLOCKED)，该设备下的所有 Token 应立即失效。
+  deviceId     Int?      @map("device_id")
+
+  // === 核心 JWT 属性 ===
+  tokenType    String    @map("token_type") @db.VarChar(20)
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz
+  revokeReason String?   @map("revoke_reason") @db.VarChar(50)
+
+  // === 安全校验 ===
+  // 最佳实践：保留 IP 用于检测“会话劫持”（Session Hijacking）。
+  // 如果当前请求 IP 与 Token 创建时 IP 跨度过大，可触发风控。
+  ipAddress    String?   @map("ip_address") @db.VarChar(45)
+
+  // 移除：deviceInfo, userAgent (已迁移至 Device 表)
+
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  user         AppUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device       AppUserDevice? @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([jti])
+  @@index([expiresAt])
+  @@map("app_user_token")
+}
+```
+
+## 3. 设计理由总结
+
+1.  **安全性增强**：
+    - `AppUserDevice.status`: 增加了禁用设备的能力。如果手机丢失，用户可以在网页端禁用该设备，后端中间件检查到 `device.status == BLOCKED` 时拒绝服务。
+    - `AppUserLoginLog.status`: 为记录登录失败（暴力破解）预留了位置。
+
+2.  **数据一致性**：
+    - `deviceInfo` 不再重复存储在 Token 中，避免了更新设备信息时需要同时更新多个 Token 的问题。
+
+3.  **审计完整性**：
+    - `AppUserLoginLog` 即使在设备被物理删除后，通过 `device_id` 置空策略，依然保留当时的 IP 和 UA 快照，确保历史可追溯。
+
+## 4. 待确认事项
+
+请确认这套基于**全生命周期管理**和**审计不可变性**的设计是否符合您的预期？
+一旦确认，我将按照此结构生成 `CONSENSUS` 文档并开始 `Architect` 阶段。

@@ -1,11 +1,14 @@
 networks:
   gitea-network:
+    name: gitea-network
     driver: bridge
 
 volumes:
   gitea-data:
+    name: gitea-data-storage # 显式指定一个固定的卷名
     driver: local
   gitea-runner-data:
+    name: gitea-runner-storage
     driver: local
 
 services:
@@ -14,20 +17,25 @@ services:
     image: docker.gitea.com/gitea:latest-rootless
     container_name: gitea-server
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     environment:
       # 用户和权限配置
-      - USER_UID=${GITEA_USER_UID}
-      - USER_GID=${GITEA_USER_GID}
+      - USER_UID=1000
+      - USER_GID=1000
       # 服务器配置
+      - GITEA__server__ROOT_URL=http://gitea:3000
       - GITEA__server__SSH_LISTEN_PORT=2222
-      - GITEA__server__SSH_PORT=${GITEA_SSH_PORT}
+      - GITEA__server__SSH_PORT=3000
     volumes:
       - gitea-data:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
-      - '${GITEA_HTTP_PORT}:3000' # HTTP
-      - '${GITEA_SSH_PORT}:2222' # SSH (rootless 镜像内部为 2222)
+      - '3000:3000' # HTTP
+      - '2222:2222' # SSH (rootless 镜像内部为 2222)
     networks:
       - gitea-network
     healthcheck:
@@ -39,19 +47,28 @@ services:
   # Gitea Actions Runner
   gitea-runner:
     image: docker.io/gitea/act_runner:latest
+
     container_name: gitea-runner
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     depends_on:
       gitea:
         condition: service_healthy
     volumes:
       - gitea-runner-data:/data
-      - ./gitea-runner-config.yaml:/data/config.yaml:ro
+      - ./gitea-runner-config.yaml:/config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - CONFIG_FILE=/data/config.yaml
-      - GITEA_INSTANCE_URL=http://81.69.43.198:3000
-      - GITEA_RUNNER_REGISTRATION_TOKEN=hAzQU1sgWHyAz2e0zabTvv7qJK5KldNl0SqFMkem
+      - CONFIG_FILE=/config.yaml
+      - GITEA_INSTANCE_URL=http://gitea:3000
       - GITEA_RUNNER_NAME=gitea-runner
+      # 注意：如果出现 "unregistered runner" 错误，请：
+      # 1. 在 Gitea 管理后台 (站点管理 -> Actions -> Runners) 生成新 Token
+      # 2. 替换下方的 Token
+      # 3. 执行 docker volume rm es-server_gitea-runner-data 删除旧数据卷
+      - GITEA_RUNNER_REGISTRATION_TOKEN=PKANRCyPTOkhHiEOcvHoZYn6wBmaNbDsVPMH5enD
     networks:
       - gitea-network
