@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
+import { ApiDoc } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import { FileUploadResponseDto } from '@libs/base/modules/upload'
 import {
@@ -26,7 +26,7 @@ export class ChapterContentController {
    * 获取章节内容
    */
   @Get('/list')
-  @ApiPageDoc({
+  @ApiDoc({
     summary: '获取章节内容',
     model: String,
     isArray: true,

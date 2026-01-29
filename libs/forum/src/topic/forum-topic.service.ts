@@ -4,6 +4,9 @@ import type {
 } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 
+import { UserStatusEnum } from '@libs/base/enum'
+import { ForumPointRuleTypeEnum, ForumPointService } from '@libs/user/point'
+
 import {
   BadRequestException,
   Injectable,
@@ -17,9 +20,6 @@ import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumConfigCacheService } from '../config/forum-config-cache.service'
 import { ForumReviewPolicyEnum } from '../config/forum-config.constants'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import { ForumPointRuleTypeEnum } from '@libs/user/point'
-import { ForumPointService } from '@libs/user/point'
-import { UserStatusEnum } from '@libs/base/enum'
 import { ForumSensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
 import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import {

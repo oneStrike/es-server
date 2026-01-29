@@ -41,7 +41,6 @@ export class ChapterContentService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    // contents is already a JSON object/array due to Prisma Json type
     return (chapter.contents as unknown as string[]) || []
   }
 

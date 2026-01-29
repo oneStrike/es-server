@@ -429,7 +429,8 @@ export class AuthService extends BaseService {
    * @returns 设备列表
    */
   async getUserDevices(userId: number) {
-    return this.tokenStorageService.getUserDevices(userId)
+    // return this.tokenStorageService.getUserDevices(userId)
+    return [{ id: userId }]
   }
 
   /**

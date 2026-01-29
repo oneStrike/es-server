@@ -34,7 +34,7 @@ export class ForumPointService extends BaseService {
 
   /**
    * 创建积分规则
-   * @param createPointRuleDto 创建规则的数据
+   * @param dto 创建规则的数据
    * @returns 创建的规则信息
    */
   async createPointRule(dto: CreateForumPointRuleDto) {

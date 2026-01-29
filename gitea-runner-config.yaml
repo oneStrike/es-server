@@ -1,0 +1,48 @@
+log:
+  level: info
+
+runner:
+  file: .runner
+  capacity: 1
+  envs: {}
+  env_file: .env
+  timeout: 3h
+  shutdown_timeout: 0s
+  insecure: false
+  fetch_timeout: 5s
+  fetch_interval: 2s
+  # 标签列表，格式为 "label[:schema]"
+  # 建议显式声明支持的标签，避免每次都向 Gitea 询问
+  # ubuntu-latest 是最常用的标签
+  labels:
+    - 'ubuntu-latest:docker://node:24-alpine'
+    - 'ubuntu-22.04:docker://node:24-alpine'
+    - 'node-24:docker://node:24-alpine'
+
+cache:
+  enabled: true
+  dir: ''
+  host: ''
+  port: 0
+  external_server: ''
+
+container:
+  # 容器网络，设置为与 docker-compose 中定义的网络一致
+  # 这样 Job 容器可以解析 'gitea' 服务名
+  network: gitea-network
+  enable_ipv6: false
+  # 如果需要在构建过程中使用 Docker in Docker (dind) 或特权操作，请开启
+  privileged: true
+  options:
+  workdir_parent:
+  # 允许挂载的卷，增加安全性配置
+  # 允许挂载 docker socket，方便构建镜像
+  valid_volumes:
+    - /var/run/docker.sock
+    - /tmp
+  # 使用宿主机的 Docker Socket
+  docker_host: 'unix:///var/run/docker.sock'
+  force_pull: false
+
+host:
+  workdir_parent:

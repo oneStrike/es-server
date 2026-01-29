@@ -4,9 +4,9 @@ import {
   BaseForumBadgeDto,
   CreateForumBadgeDto,
   ForumBadgeService,
-  UserBadgeDto,
   QueryForumBadgeDto,
   UpdateForumBadgeDto,
+  UserBadgeDto,
 } from '@libs/forum/badge'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

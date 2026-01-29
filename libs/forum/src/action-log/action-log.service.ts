@@ -1,7 +1,6 @@
 import { BaseService } from '@libs/base/database'
 
 import { Injectable } from '@nestjs/common'
-import { ForumUserActionTypeDescriptionMap } from './action-log.constant'
 import {
   CreateForumActionLogDto,
   QueryForumActionLogDto,
