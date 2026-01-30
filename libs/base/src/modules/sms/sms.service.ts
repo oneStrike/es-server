@@ -16,16 +16,28 @@ import { SmsErrorMap, SmsErrorMessages } from './sms.constant'
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name)
-  private readonly config: AliyunConfigInterface
-  private readonly client: Dypnsapi20170525
+  private readonly config?: AliyunConfigInterface
+  private client?: Dypnsapi20170525
 
   constructor(private readonly configService: ConfigService) {
-    const aliyunConfig = this.configService.get<AliyunConfigInterface>('aliyun')
-    if (!aliyunConfig) {
+    this.config = this.configService.get<AliyunConfigInterface>('aliyun')
+  }
+
+  private getClient(): Dypnsapi20170525 {
+    if (this.client) {
+      return this.client
+    }
+    if (!this.config) {
       throw new Error(SmsErrorMessages.CONFIG_NOT_FOUND)
     }
-    this.config = aliyunConfig
+    if (!this.config.accessKeyId || !this.config.accessKeySecret) {
+      throw new Error('阿里云短信 AccessKey 未配置')
+    }
+    if (!this.config.sms?.endpoint || !this.config.sms?.signName) {
+      throw new Error('阿里云短信配置不完整')
+    }
     this.client = this.createClient()
+    return this.client
   }
 
   /**
@@ -36,14 +48,14 @@ export class SmsService {
     const credential = new Credential(
       new Config({
         type: 'access_key',
-        accessKeyId: this.config.accessKeyId,
-        accessKeySecret: this.config.accessKeySecret,
+        accessKeyId: this.config!.accessKeyId,
+        accessKeySecret: this.config!.accessKeySecret,
       }),
     )
     const config = new $OpenApi.Config({
       credential,
     })
-    config.endpoint = this.config.sms.endpoint
+    config.endpoint = this.config!.sms.endpoint
     return new Dypnsapi20170525(config)
   }
 
@@ -55,23 +67,23 @@ export class SmsService {
   async sendVerifyCode(dto: SendVerifyCodeDto) {
     const { phone, templateCode } = dto
 
-    const runtime = new $Util.RuntimeOptions({})
-
-    const sendSmsVerifyCodeRequest =
-      new $Dypnsapi20170525.SendSmsVerifyCodeRequest({
-        phoneNumber: phone,
-        signName: this.config.sms.signName,
-        templateCode,
-        templateParam: JSON.stringify({
-          code: '##code##',
-          min: '5',
-        }),
-        validTime: this.config.sms.verifyCodeExpire,
-        codeLength: this.config.sms.verifyCodeLength,
-      })
-
     try {
-      const resp = await this.client.sendSmsVerifyCodeWithOptions(
+      const client = this.getClient()
+      const config = this.config!
+      const runtime = new $Util.RuntimeOptions({})
+      const sendSmsVerifyCodeRequest =
+        new $Dypnsapi20170525.SendSmsVerifyCodeRequest({
+          phoneNumber: phone,
+          signName: config.sms.signName,
+          templateCode,
+          templateParam: JSON.stringify({
+            code: '##code##',
+            min: '5',
+          }),
+          validTime: config.sms.verifyCodeExpire,
+          codeLength: config.sms.verifyCodeLength,
+        })
+      const resp = await client.sendSmsVerifyCodeWithOptions(
         sendSmsVerifyCodeRequest,
         runtime,
       )
@@ -100,16 +112,15 @@ export class SmsService {
   async checkVerifyCode(dto: CheckVerifyCodeDto) {
     const { phone, code } = dto
 
-    const runtime = new $Util.RuntimeOptions({})
-
-    const checkSmsVerifyCodeRequest =
-      new $Dypnsapi20170525.CheckSmsVerifyCodeRequest({
-        phoneNumber: phone,
-        verifyCode: code,
-      })
-
     try {
-      const resp = await this.client.checkSmsVerifyCodeWithOptions(
+      const client = this.getClient()
+      const runtime = new $Util.RuntimeOptions({})
+      const checkSmsVerifyCodeRequest =
+        new $Dypnsapi20170525.CheckSmsVerifyCodeRequest({
+          phoneNumber: phone,
+          verifyCode: code,
+        })
+      const resp = await client.checkSmsVerifyCodeWithOptions(
         checkSmsVerifyCodeRequest,
         runtime,
       )

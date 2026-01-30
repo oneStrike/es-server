@@ -60,7 +60,7 @@ ENV NODE_ENV=production \
     PORT=8080
 
 # 安装 dumb-init 和 tzdata
-RUN apk add --no-cache dumb-init tzdata
+RUN apk add --no-cache dumb-init tzdata su-exec
 ENV TZ="Asia/Shanghai"
 
 WORKDIR /app
@@ -82,12 +82,11 @@ COPY --from=builder --chown=nestjs:nodejs /app/libs/base/src/database/prisma-cli
 # 预创建日志目录
 RUN install -d -m 0755 -o nestjs -g nodejs /app/logs
 RUN install -d -m 0755 -o nestjs -g nodejs /app/secrets
-
-# 切换用户
-USER nestjs
+RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads
+RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads/app
 
 EXPOSE 8080
 
 # 使用 dumb-init 启动
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["node", "dist/apps/app-api/apps/app-api/src/main.js"]
+CMD ["sh", "-c", "for d in /app/logs /app/secrets /app/uploads /app/uploads/app; do mkdir -p \"$d\"; if [ ! -w \"$d\" ]; then chown -R nestjs:nodejs \"$d\" 2>/dev/null || true; fi; done; exec su-exec nestjs node dist/apps/app-api/main.js"]

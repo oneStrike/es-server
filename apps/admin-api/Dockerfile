@@ -57,7 +57,10 @@ RUN pnpm build:admin
 FROM node:24-alpine AS runtime
 
 ENV NODE_ENV=production \
-    PORT=8080
+    PORT=8080 \
+    TZ="Asia/Shanghai"
+
+RUN apk add --no-cache dumb-init tzdata su-exec
 
 WORKDIR /app
 
@@ -79,11 +82,10 @@ COPY --from=builder --chown=nestjs:nodejs /app/libs/base/src/database/prisma-cli
 # 预创建日志目录
 RUN install -d -m 0755 -o nestjs -g nodejs /app/logs
 RUN install -d -m 0755 -o nestjs -g nodejs /app/secrets
-
-# 切换用户
-USER nestjs
+RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads
+RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads/admin
 
 EXPOSE 8080
 
-# 直接启动，不再使用 PM2 以节省体积
-CMD ["node", "dist/apps/admin-api/apps/admin-api/src/main.js"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["sh", "-c", "for d in /app/logs /app/secrets /app/uploads /app/uploads/admin; do mkdir -p \"$d\"; if [ ! -w \"$d\" ]; then chown -R nestjs:nodejs \"$d\" 2>/dev/null || true; fi; done; exec su-exec nestjs node dist/apps/admin-api/main.js"]
