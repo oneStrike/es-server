@@ -90,9 +90,13 @@ services:
         echo "Starting migration..."
         npx prisma migrate deploy
         echo "Migration completed."
-        echo "Starting seeding..."
-        npx tsx libs/base/src/database/seed/index.ts
-        echo "Seeding completed."
+        if [ "$RUN_SEED" = "true" ]; then
+          echo "Starting seeding..."
+          npx tsx libs/base/src/database/seed/index.ts
+          echo "Seeding completed."
+        else
+          echo "Seeding skipped. To run seed manually, use: docker compose run --rm migrator npx tsx libs/base/src/database/seed/index.ts"
+        fi
 
   # Admin API 后端服务
   admin-server:

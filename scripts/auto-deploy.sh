@@ -205,13 +205,42 @@ if [ "${NEED_APP}" = "true" ]; then log "App Server 镜像构建成功。"; fi
 
 # 5. Build Complete
 log "所有镜像构建完成。"
-log "跳过 Docker Compose 部署 (如需部署请手动执行: docker compose up -d)。"
 
-# 6. Post-Deployment
+# 6. Deploy Services
+DEPLOY_TARGETS=""
+if [ "${NEED_ADMIN}" = "true" ]; then
+    DEPLOY_TARGETS="${DEPLOY_TARGETS} admin-server"
+fi
+if [ "${NEED_APP}" = "true" ]; then
+    DEPLOY_TARGETS="${DEPLOY_TARGETS} app-server"
+fi
+
+# 去除首尾空格
+DEPLOY_TARGETS=$(echo "${DEPLOY_TARGETS}" | xargs)
+
+if [ -n "${DEPLOY_TARGETS}" ]; then
+    log "正在部署变更的服务: ${DEPLOY_TARGETS} (及其依赖)..."
+    # shellcheck disable=SC2086
+    if docker compose up -d --remove-orphans ${DEPLOY_TARGETS}; then
+        log "服务部署成功！"
+    else
+        error "服务部署失败，请检查 docker compose 日志。"
+        exit 1
+    fi
+else
+    log "没有服务需要部署。"
+fi
+
+# 7. Cleanup
+log "正在清理无用镜像..."
+docker image prune -f
+
+# 8. Post-Deployment
 if [ "$STASH_NEEDED" = true ]; then
     warn "正在恢复暂存的修改..."
     git stash pop
 fi
 
 log "所有操作完成。"
+log "如需查看日志，请运行: docker compose logs -f"
 exit 0
