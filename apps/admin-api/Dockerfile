@@ -27,7 +27,8 @@ COPY prisma ./prisma
 COPY prisma.config.ts ./
 COPY apps ./apps
 COPY libs ./libs
-
+# 设置临时的 DATABASE_URL 用于构建阶段 (Prisma 需要它存在才能生成 Client)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 # 生成 Prisma Client
 RUN pnpm prisma:generate
 
