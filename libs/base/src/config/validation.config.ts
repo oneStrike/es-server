@@ -15,35 +15,35 @@ export const environmentValidationSchema = Joi.object({
   DB_USER: Joi.string().required(),
   DB_PASSWORD: Joi.string().required(),
   DB_NAME: Joi.string().required(),
-  DB_MAX_QUERY_LIST_LIMIT: Joi.number().min(1).required(),
-  DB_PAGINATION_PAGE_SIZE: Joi.number().min(1).required(),
-  DB_PAGINATION_PAGE_INDEX: Joi.number().min(0).required(),
+  DB_MAX_QUERY_LIST_LIMIT: Joi.number().min(1).default(500),
+  DB_PAGINATION_PAGE_SIZE: Joi.number().min(1).default(15),
+  DB_PAGINATION_PAGE_INDEX: Joi.number().min(0).default(0),
 
   // Redis配置
   REDIS_HOST: Joi.string().required(),
   REDIS_PORT: Joi.number().port().required(),
   REDIS_PASSWORD: Joi.string().optional(),
-  REDIS_NAMESPACE: Joi.string().required(),
+  REDIS_NAMESPACE: Joi.string().default('ES'),
 
   // JWT配置
-  JWT_EXPIRATION_IN: Joi.string().required(),
-  JWT_REFRESH_EXPIRATION_IN: Joi.string().required(),
-  JWT_JWT_ISSUER: Joi.string().required(),
+  JWT_EXPIRATION_IN: Joi.string().default('4h'),
+  JWT_REFRESH_EXPIRATION_IN: Joi.string().default('7d'),
+  JWT_JWT_ISSUER: Joi.string().default('es'),
   JWT_JWT_AUD: Joi.string().optional(),
   JWT_STRATEGY_KEY: Joi.string().optional(),
 
   // 日志配置
-  LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug').required(),
-  LOG_PATH: Joi.string().required(),
-  LOG_RETAIN_DAYS: Joi.string().required(),
-  LOG_MAX_SIZE: Joi.string().required(),
-  LOG_COMPRESS: Joi.string().required(),
-  LOG_CONSOLE_LEVEL: Joi.string().required(),
+  LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug').default('info'),
+  LOG_PATH: Joi.string().default('./logs'),
+  LOG_RETAIN_DAYS: Joi.string().default('7d'),
+  LOG_MAX_SIZE: Joi.string().default('20m'),
+  LOG_COMPRESS: Joi.string().default('true'),
+  LOG_CONSOLE_LEVEL: Joi.string().default('info'),
   LOG_FORMAT: Joi.string().optional(),
   LOG_MAX_FILES: Joi.string().optional(),
   LOG_DATE_PATTERN: Joi.string().optional(),
 
   // 文件上传配置
-  UPLOAD_DIR: Joi.string().required(),
-  UPLOAD_MAX_FILE_SIZE: Joi.string().required(),
+  UPLOAD_DIR: Joi.string().default('./uploads'),
+  UPLOAD_MAX_FILE_SIZE: Joi.string().default('100MB'),
 })
