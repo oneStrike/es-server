@@ -34,9 +34,6 @@ RUN pnpm prisma:generate
 # 6. 构建应用
 RUN pnpm build:app
 
-# 7. 清理 Source Map (减小体积)
-RUN find dist -name "*.js.map" -type f -delete
-
 # 8. 部署生产依赖 (核心优化步骤)
 # 使用 pnpm deploy 导出仅包含生产依赖的独立包
 # 这一步会自动剔除 devDependencies 和无关的 hoist 依赖
@@ -46,8 +43,7 @@ RUN pnpm --filter=@apps/app-api --prod deploy --legacy /prod/app-api
 WORKDIR /prod/app-api
 # 安装 node-prune
 RUN wget https://gobinaries.com/tj/node-prune --output-document - | /bin/sh && node-prune
-# 删除可能残留的 Prisma 引擎 (保留 musl 版本)
-RUN find node_modules -name "libquery_engine-*" -not -name "*linux-musl-openssl-3.0.x*" -delete || true
+
 
 # --------------------------------
 # Stage 2: Runtime
