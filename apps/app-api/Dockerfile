@@ -40,7 +40,7 @@ RUN find dist -name "*.js.map" -type f -delete
 # 8. 部署生产依赖 (核心优化步骤)
 # 使用 pnpm deploy 导出仅包含生产依赖的独立包
 # 这一步会自动剔除 devDependencies 和无关的 hoist 依赖
-RUN pnpm --filter=@apps/app-api --prod deploy /prod/app-api
+RUN pnpm --filter=@apps/app-api --prod deploy --legacy /prod/app-api
 
 # 9. 深度清理 node_modules (进一步优化)
 WORKDIR /prod/app-api
