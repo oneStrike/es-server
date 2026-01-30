@@ -72,6 +72,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/libs/base/src/database/prisma-cli
 
 # 预创建日志目录
 RUN install -d -m 0755 -o nestjs -g nodejs /app/logs
+RUN install -d -m 0755 -o nestjs -g nodejs /app/secrets
 
 # 切换用户
 USER nestjs

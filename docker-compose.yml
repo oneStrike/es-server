@@ -83,7 +83,7 @@ services:
         condition: service_healthy
     ports:
       # 使用环境变量控制端口映射，默认 8080
-      - '${ADMIN_API_PORT:-8080}:8080'
+      - '${ADMIN_API_PORT}:8080'
     env_file:
       - ./.env
     environment:
@@ -91,12 +91,14 @@ services:
       - APP_NAME=admin-api
       # 如果代码中没有处理 DATABASE_URL 组合逻辑，则需在此显式声明
       - DATABASE_URL=${DATABASE_URL}
-      # 密钥路径保持容器内默认值或通过 env 覆盖
-      - RSA_PRIVATE_KEY_PATH=/app/secrets/jwt_private.key
-      - RSA_PUBLIC_KEY_PATH=/app/secrets/jwt_public.key
+      # 配置隔离映射
+      - JWT_EXPIRATION_IN=${ADMIN_JWT_EXPIRATION_IN}
+      - JWT_REFRESH_EXPIRATION_IN=${ADMIN_JWT_REFRESH_EXPIRATION_IN}
+      - JWT_JWT_ISSUER=${ADMIN_JWT_ISSUER}
+      - REDIS_NAMESPACE=${ADMIN_REDIS_NAMESPACE}
+      - UPLOAD_DIR=${ADMIN_UPLOAD_DIR}
+      - UPLOAD_MAX_FILE_SIZE=${ADMIN_UPLOAD_MAX_FILE_SIZE}
     volumes:
-      # 挂载密钥目录
-      - ./secrets:/app/secrets
       # 挂载上传和日志目录
       - uploads-data:/app/uploads
       - logs-data:/app/logs
@@ -136,7 +138,7 @@ services:
         condition: service_healthy
     ports:
       # 使用环境变量控制端口映射，默认 8081
-      - '${APP_API_PORT:-8081}:8080'
+      - '${APP_API_PORT}:8080'
     env_file:
       - ./.env
     environment:
@@ -144,18 +146,15 @@ services:
       - APP_PORT=8080
       - DATABASE_URL=${DATABASE_URL}
       # 配置隔离映射
-      - JWT_EXPIRATION_IN=${APP_JWT_EXPIRATION_IN:-4h}
-      - JWT_REFRESH_EXPIRATION_IN=${APP_JWT_REFRESH_EXPIRATION_IN:-7d}
-      - JWT_JWT_ISSUER=${APP_JWT_ISSUER:-es-app}
-      - UPLOAD_DIR=${APP_UPLOAD_DIR:-./uploads}
-      - UPLOAD_MAX_FILE_SIZE=${APP_UPLOAD_MAX_FILE_SIZE:-100MB}
-      - REDIS_NAMESPACE=${APP_REDIS_NAMESPACE:-ES_APP}
-      - APP_VERSION=${APP_APP_VERSION:-1.0.0}
-      - APP_FILE_URL_PREFIX=${APP_APP_FILE_URL_PREFIX:-/files}
-      - RSA_PRIVATE_KEY_PATH=/app/secrets/jwt_private.key
-      - RSA_PUBLIC_KEY_PATH=/app/secrets/jwt_public.key
+      - JWT_EXPIRATION_IN=${APP_JWT_EXPIRATION_IN}
+      - JWT_REFRESH_EXPIRATION_IN=${APP_JWT_REFRESH_EXPIRATION_IN}
+      - JWT_JWT_ISSUER=${APP_JWT_ISSUER}
+      - UPLOAD_DIR=${APP_UPLOAD_DIR}
+      - UPLOAD_MAX_FILE_SIZE=${APP_UPLOAD_MAX_FILE_SIZE}
+      - REDIS_NAMESPACE=${APP_REDIS_NAMESPACE}
+      - APP_VERSION=${APP_APP_VERSION}
+      - APP_FILE_URL_PREFIX=${APP_APP_FILE_URL_PREFIX}
     volumes:
-      - ./secrets:/app/secrets
       - uploads-data:/app/uploads
       - logs-data:/app/logs
     networks:
@@ -190,7 +189,7 @@ services:
         condition: service_healthy
     ports:
       # 使用环境变量控制端口映射，默认 8082
-      - '${ADMIN_PORT:-8082}:8080'
+      - '${ADMIN_PORT}:8080'
     networks:
       - app-network
     logging: *default-logging
