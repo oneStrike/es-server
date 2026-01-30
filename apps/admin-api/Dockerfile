@@ -50,6 +50,13 @@ RUN pnpm prisma:generate
 # 6. 构建应用
 RUN pnpm build:admin
 
+# 7. 整理部署产物 (Assemble deployment artifacts)
+# 将所有运行时需要的文件复制到 /prod/admin-api，以便后续一次性复制
+RUN cp -r dist /prod/admin-api/dist && \
+    cp -r prisma /prod/admin-api/prisma && \
+    cp prisma.config.ts /prod/admin-api/prisma.config.ts && \
+    cp -r libs /prod/admin-api/libs
+
 
 # --------------------------------
 # Stage 2: Runtime
@@ -68,7 +75,8 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-COPY --from=builder --chown=nestjs:nodejs /app ./dist/apps/admin-api
+# 1. 复制生产环境依赖和应用代码 (从 deploy 目录一次性复制)
+COPY --from=builder --chown=nestjs:nodejs /prod/admin-api ./
 
 # 预创建日志目录
 RUN install -d -m 0755 -o nestjs -g nodejs /app/logs \
