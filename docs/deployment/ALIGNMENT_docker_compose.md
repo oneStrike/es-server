@@ -99,8 +99,8 @@
 **RSA 密钥**
 | 变量名 | 默认值 | 说明 |
 | :--- | :--- | :--- |
-| `RSA_PUBLIC_KEY_PATH` | ./jwt_public.key | 公钥路径 (不存在会自动生成) |
-| `RSA_PRIVATE_KEY_PATH` | ./jwt_private.key | 私钥路径 (不存在会自动生成) |
+| `RSA_PUBLIC_KEY_PATH` | ./jwt_public.key | 公钥路径 (Docker下建议映射到 /app/secrets) |
+| `RSA_PRIVATE_KEY_PATH` | ./jwt_private.key | 私钥路径 (Docker下建议映射到 /app/secrets) |
 | `RSA_PUBLIC_KEY` | - | 公钥内容 (覆盖文件) |
 | `RSA_PRIVATE_KEY` | - | 私钥内容 (覆盖文件) |
 
