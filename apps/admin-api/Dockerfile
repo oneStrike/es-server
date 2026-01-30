@@ -85,6 +85,9 @@ COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 # 5. 复制 Prisma 配置文件
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 
+# 6. 复制 libs 源码 (用于执行 seed 脚本)
+COPY --from=builder --chown=nestjs:nodejs /app/libs ./libs
+
 # 预创建日志目录
 RUN install -d -m 0755 -o nestjs -g nodejs /app/logs
 RUN install -d -m 0755 -o nestjs -g nodejs /app/secrets
