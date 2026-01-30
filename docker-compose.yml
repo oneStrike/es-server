@@ -83,7 +83,16 @@ services:
     networks:
       - app-network
     # 执行生产环境迁移和种子数据填充
-    command: sh -c "npx prisma migrate deploy && npx tsx libs/base/src/database/seed/index.ts"
+    # command: sh -c "npx prisma migrate deploy && npx tsx libs/base/src/database/seed/index.ts"
+    entrypoint: [/bin/sh, -c]
+    command:
+      - |
+        echo "Starting migration..."
+        npx prisma migrate deploy
+        echo "Migration completed."
+        echo "Starting seeding..."
+        npx tsx libs/base/src/database/seed/index.ts
+        echo "Seeding completed."
 
   # Admin API 后端服务
   admin-server:
@@ -101,6 +110,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # 等待数据库迁移完成
+      migrator:
+        condition: service_completed_successfully
     ports:
       # 使用环境变量控制端口映射，默认 8080
       - '${ADMIN_API_PORT}:8080'
