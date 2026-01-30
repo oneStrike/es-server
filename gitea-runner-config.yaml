@@ -17,7 +17,7 @@ runner:
   labels:
     - 'ubuntu-latest:docker://node:24-alpine'
     - 'ubuntu-22.04:docker://node:24-alpine'
-    - 'node-24:docker://node:24-alpine'
+    - 'node-24:docker://node:24-alpine'                                                       
 
 cache:
   enabled: true

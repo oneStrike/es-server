@@ -56,7 +56,12 @@ if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
         exit 1
     fi
 else
-    log "代码已是最新。"
+    log "代码已是最新，无需部署。"
+    if [ "$STASH_NEEDED" = true ]; then
+        warn "正在恢复暂存的修改..."
+        git stash pop
+    fi
+    exit 0
 fi
 
 # 3. Dependencies and Version
