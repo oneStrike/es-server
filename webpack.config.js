@@ -72,7 +72,7 @@ function createConfig(projectName) {
             return acc
           }, {}),
       },
-      modules: ['node_modules', path.resolve(projectPath, 'src')],
+      modules: ['node_modules', path.resolve(projectPath, 'node_modules'), path.resolve(projectPath, 'src')],
     },
     plugins: [
       // 只保留开发环境的插件
