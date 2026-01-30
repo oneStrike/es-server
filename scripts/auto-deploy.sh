@@ -13,6 +13,7 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# Helper Functions
 log() { echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $1${NC}"; }
 warn() { echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARN: $1${NC}"; }
 error() { echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"; }
@@ -51,6 +52,48 @@ ensure_host_ownership() {
     return 1
 }
 
+# Git Stash Helpers
+STASH_NEEDED=false
+
+stash_changes() {
+    if [[ -n $(git status -s) ]]; then
+        warn "检测到本地修改，正在暂存..."
+        git stash save "Auto-deploy stash $(date +'%Y-%m-%d %H:%M:%S')"
+        STASH_NEEDED=true
+    fi
+}
+
+pop_stash() {
+    if [ "$STASH_NEEDED" = true ]; then
+        warn "正在恢复暂存的修改..."
+        git stash pop
+    fi
+}
+
+# Docker Build Helper
+build_image() {
+    local name="$1"
+    local dockerfile="$2"
+    local image_name="$3"
+    local version="$4"
+    local cache_tag="$5"
+
+    log "构建 $name ($image_name:$version)..."
+    if docker build -f "$dockerfile" \
+        --cache-from "$image_name:$cache_tag" \
+        -t "$image_name:$version" \
+        -t "$image_name:$cache_tag" \
+        . ; then
+        log "$name 镜像构建成功。"
+        return 0
+    else
+        error "$name 构建失败。"
+        return 1
+    fi
+}
+
+# Main Execution
+
 FORCE_DEPLOY=false
 
 # Parse arguments
@@ -68,8 +111,6 @@ cd "${PROJECT_ROOT}" || { error "切换到项目根目录失败"; exit 1; }
 log "正在检查环境..."
 if [ -f .env ]; then
     log "加载 .env 环境变量..."
-    # 自动导出 .env 中的变量，以便 docker compose 可以读取
-    # 使用 set -a 自动导出随后定义的变量
     set -a
     # shellcheck disable=SC1091
     source .env
@@ -90,12 +131,7 @@ fi
 
 # 2. Git Operations
 log "开始 Git 操作..."
-STASH_NEEDED=false
-if [[ -n $(git status -s) ]]; then
-    warn "检测到本地修改，正在暂存..."
-    git stash save "Auto-deploy stash $(date +'%Y-%m-%d %H:%M:%S')"
-    STASH_NEEDED=true
-fi
+stash_changes
 
 CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
 log "当前分支: ${CURRENT_BRANCH}"
@@ -110,7 +146,7 @@ if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
     log "发现新版本，正在拉取..."
     if ! git pull origin "${CURRENT_BRANCH}"; then
         error "Git pull 失败。"
-        [ "$STASH_NEEDED" = true ] && git stash pop
+        pop_stash
         exit 1
     fi
 else
@@ -118,16 +154,12 @@ else
     if [ "$FORCE_DEPLOY" = "true" ]; then
         log "强制部署模式开启，继续执行..."
     else
-        if [ "$STASH_NEEDED" = true ]; then
-            warn "正在恢复暂存的修改..."
-            git stash pop
-        fi
+        pop_stash
         exit 0
     fi
 fi
 
 # 3. Dependencies and Version
-# Read version from package.json
 if [ -f "package.json" ]; then
     VERSION=$(grep -m1 '"version":' package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
 else
@@ -142,7 +174,7 @@ if [ "${AUTO_DEPLOY_LOCAL_PNPM:-0}" = "1" ] && command -v pnpm &> /dev/null; the
     pnpm prisma:generate
 fi
 
-# 4. Prepare host directories for bind mounts (方案1：宿主机持久化目录)
+# 4. Prepare host directories
 if [ "${AUTO_DEPLOY_PREPARE_HOST_DIRS:-0}" = "1" ]; then
     HOST_UPLOADS_DIR="${HOST_UPLOADS_DIR:-./data/uploads}"
     HOST_LOGS_DIR="${HOST_LOGS_DIR:-./data/logs}"
@@ -159,7 +191,7 @@ if [ "${AUTO_DEPLOY_PREPARE_HOST_DIRS:-0}" = "1" ]; then
     ensure_host_ownership "${HOST_LOGS_DIR}" "${HOST_UID}" "${HOST_GID}" || exit 1
 fi
 
-# 4. Build Images
+# 5. Build Images
 log "开始构建 Docker 镜像..."
 
 NEED_ADMIN=false
@@ -178,10 +210,7 @@ fi
 
 if [ "${NEED_ADMIN}" != "true" ] && [ "${NEED_APP}" != "true" ]; then
     log "代码更新不影响镜像构建，跳过构建。"
-    if [ "$STASH_NEEDED" = true ]; then
-        warn "正在恢复暂存的修改..."
-        git stash pop
-    fi
+    pop_stash
     exit 0
 fi
 
@@ -192,49 +221,31 @@ CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
 
 ADMIN_PID=""
 APP_PID=""
-ADMIN_STATUS=0
-APP_STATUS=0
+FAIL=0
 
 if [ "${NEED_ADMIN}" = "true" ]; then
-    log "构建 Admin Server (${ADMIN_IMAGE}:${VERSION})..."
-    docker build -f apps/admin-api/Dockerfile \
-        --cache-from "${ADMIN_IMAGE}:${CACHE_TAG}" \
-        -t "${ADMIN_IMAGE}:${VERSION}" \
-        -t "${ADMIN_IMAGE}:${CACHE_TAG}" \
-        . &
+    build_image "Admin Server" "apps/admin-api/Dockerfile" "${ADMIN_IMAGE}" "${VERSION}" "${CACHE_TAG}" &
     ADMIN_PID=$!
 fi
 
 if [ "${NEED_APP}" = "true" ]; then
-    log "构建 App Server (${APP_IMAGE}:${VERSION})..."
-    docker build -f apps/app-api/Dockerfile \
-        --cache-from "${APP_IMAGE}:${CACHE_TAG}" \
-        -t "${APP_IMAGE}:${VERSION}" \
-        -t "${APP_IMAGE}:${CACHE_TAG}" \
-        . &
+    build_image "App Server" "apps/app-api/Dockerfile" "${APP_IMAGE}" "${VERSION}" "${CACHE_TAG}" &
     APP_PID=$!
 fi
 
+# Wait for builds
 if [ -n "${ADMIN_PID}" ]; then
-    wait "${ADMIN_PID}" || ADMIN_STATUS=$?
+    wait "${ADMIN_PID}" || FAIL=1
 fi
 if [ -n "${APP_PID}" ]; then
-    wait "${APP_PID}" || APP_STATUS=$?
+    wait "${APP_PID}" || FAIL=1
 fi
 
-if [ "${ADMIN_STATUS}" -ne 0 ]; then
-    error "Admin Server 构建失败。"
-    exit 1
-fi
-if [ "${APP_STATUS}" -ne 0 ]; then
-    error "App Server 构建失败。"
+if [ "${FAIL}" -ne 0 ]; then
+    error "有一个或多个镜像构建失败，终止部署。"
     exit 1
 fi
 
-if [ "${NEED_ADMIN}" = "true" ]; then log "Admin Server 镜像构建成功。"; fi
-if [ "${NEED_APP}" = "true" ]; then log "App Server 镜像构建成功。"; fi
-
-# 5. Build Complete
 log "所有镜像构建完成。"
 
 # 6. Deploy Services
@@ -246,7 +257,6 @@ if [ "${NEED_APP}" = "true" ]; then
     DEPLOY_TARGETS="${DEPLOY_TARGETS} app-server"
 fi
 
-# 去除首尾空格
 DEPLOY_TARGETS=$(echo "${DEPLOY_TARGETS}" | xargs)
 
 if [ -n "${DEPLOY_TARGETS}" ]; then
@@ -262,15 +272,11 @@ else
     log "没有服务需要部署。"
 fi
 
-# 7. Cleanup
+# 7. Cleanup & Post-Deployment
 log "正在清理无用镜像..."
 docker image prune -f
 
-# 8. Post-Deployment
-if [ "$STASH_NEEDED" = true ]; then
-    warn "正在恢复暂存的修改..."
-    git stash pop
-fi
+pop_stash
 
 log "所有操作完成。"
 log "如需查看日志，请运行: docker compose logs -f"
