@@ -16,7 +16,6 @@ WORKDIR /app
 # 复制依赖定义文件
 COPY package.json pnpm-lock.yaml ./
 
-# 安装依赖 (仅当 lock 文件变更时才重跑)
 # 使用 --frozen-lockfile 确保依赖版本一致
 RUN pnpm install --frozen-lockfile
 
@@ -39,7 +38,29 @@ RUN pnpm build:admin
 RUN pnpm prune --prod
 
 # --------------------------------
-# Stage 2: Runtime
+# Stage 2: Pruner (清理依赖)
+# --------------------------------
+FROM node:24-alpine AS pruner
+
+RUN corepack enable
+WORKDIR /app
+
+COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/libs/base/src/database/prisma-client ./libs/base/src/database/prisma-client
+
+# 仅安装生产依赖
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+
+# 深度清理 node_modules
+RUN wget https://gobinaries.com/tj/node-prune --output-document - | /bin/sh && node-prune
+
+# 删除未使用的 Prisma 引擎（如果存在）
+RUN find node_modules -name "libquery_engine-*" -not -name "*linux-musl-openssl-3.0.x*" -delete || true
+
+# --------------------------------
+# Stage 3: Runtime
 # --------------------------------
 FROM node:24-alpine AS runtime
 
@@ -67,17 +88,10 @@ COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./
 
-# 复制 PM2 配置
-COPY --chown=nestjs:nodejs ./apps/admin-api/ecosystem.config.cjs ./
-
 # 预创建目录并设置权限
 RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads \
  && install -d -m 0755 -o nestjs -g nodejs /app/logs \
- && install -d -m 0755 -o nestjs -g nodejs /app/.pm2 \
  && chown -R nestjs:nodejs /app
-
-RUN apk add --no-cache tzdata
-ENV TZ="Asia/Shanghai"
 
 # 切换用户
 USER nestjs
@@ -85,4 +99,5 @@ USER nestjs
 EXPOSE 8080
 
 # 启动命令
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed && exec pm2-runtime ecosystem.config.cjs"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/main.js"]
