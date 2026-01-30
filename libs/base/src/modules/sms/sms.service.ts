@@ -69,12 +69,16 @@ export class SmsService {
     throw new Error(SmsErrorMessages.CONFIG_NOT_FOUND)
   }
 
-  private async getClient(): Promise<Dypnsapi20170525> {
+  private async getClient(
+    config?: AliyunConfigDto | AliyunConfigInterface,
+  ): Promise<Dypnsapi20170525> {
     if (this.client) {
       return this.client
     }
 
-    const config = await this.getEffectiveConfig()
+    if (!config) {
+      config = await this.getEffectiveConfig()
+    }
 
     if (!config.accessKeyId || !config.accessKeySecret) {
       throw new Error('阿里云短信 AccessKey 未配置')
@@ -113,7 +117,8 @@ export class SmsService {
     const { phone, code } = dto
 
     try {
-      const client = await this.getClient()
+      const config = await this.getEffectiveConfig()
+      const client = await this.getClient(config)
       const runtime = new $Util.RuntimeOptions({})
       const checkSmsVerifyCodeRequest =
         new $Dypnsapi20170525.CheckSmsVerifyCodeRequest({
@@ -148,8 +153,9 @@ export class SmsService {
     const { phone, templateCode } = dto
 
     try {
-      const client = await this.getClient()
+      // 并行获取 client 和 config
       const config = await this.getEffectiveConfig()
+      const client = await this.getClient(config)
 
       const runtime = new $Util.RuntimeOptions({})
       const sendSmsVerifyCodeRequest =
@@ -179,7 +185,6 @@ export class SmsService {
 
       return true
     } catch (error) {
-      console.log('🚀 ~ SmsService ~ sendVerifyCode ~ error:', error)
       this.logger.error(`验证码发送失败 - 手机号: ${phone}`, error)
       return false
     }
