@@ -99,7 +99,7 @@ services:
       - UPLOAD_MAX_FILE_SIZE=${ADMIN_UPLOAD_MAX_FILE_SIZE}
     volumes:
       # 挂载上传和日志目录
-      - ${HOST_UPLOADS_DIR:-./data/uploads}:/app/uploads
+      - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
     networks:
       - app-network
@@ -154,7 +154,7 @@ services:
       - APP_VERSION=${APP_APP_VERSION}
       - APP_FILE_URL_PREFIX=${APP_APP_FILE_URL_PREFIX}
     volumes:
-      - ${HOST_UPLOADS_DIR:-./data/uploads}:/app/uploads
+      - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
     networks:
       - app-network
@@ -211,4 +211,6 @@ volumes:
   redis-data:
     driver: local
   es-server-logs:
+    driver: local
+  es-server-uploads:
     driver: local
