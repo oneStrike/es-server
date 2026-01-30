@@ -172,6 +172,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+        # 等待数据库迁移完成
+      migrator:
+        condition: service_completed_successfully
     ports:
       # 使用环境变量控制端口映射，默认 8081
       - '${APP_API_PORT}:8080'

@@ -55,6 +55,18 @@ cd "${PROJECT_ROOT}" || { error "切换到项目根目录失败"; exit 1; }
 
 # 1. Check Environment
 log "正在检查环境..."
+if [ -f .env ]; then
+    log "加载 .env 环境变量..."
+    # 自动导出 .env 中的变量，以便 docker compose 可以读取
+    # 使用 set -a 自动导出随后定义的变量
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+else
+    warn "未找到 .env 文件，将使用默认环境变量或系统环境变量。"
+fi
+
 if ! command -v docker &> /dev/null; then
     error "未找到 Docker 命令。"
     exit 1
