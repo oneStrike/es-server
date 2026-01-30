@@ -79,6 +79,9 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/app-api ./dist/apps/app
 # 3. 复制 Prisma Client 生成文件 (包括二进制引擎)
 COPY --from=builder --chown=nestjs:nodejs /app/libs/base/src/database/prisma-client ./libs/base/src/database/prisma-client
 
+# 4. 复制 Prisma Schema 和 Migrations (用于数据库迁移)
+COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
+
 # 预创建日志目录
 RUN install -d -m 0755 -o nestjs -g nodejs /app/logs
 RUN install -d -m 0755 -o nestjs -g nodejs /app/secrets

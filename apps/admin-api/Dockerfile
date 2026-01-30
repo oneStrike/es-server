@@ -79,6 +79,9 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api ./dist/apps/a
 # 确保运行时能找到 Query Engine
 COPY --from=builder --chown=nestjs:nodejs /app/libs/base/src/database/prisma-client ./libs/base/src/database/prisma-client
 
+# 4. 复制 Prisma Schema 和 Migrations (用于数据库迁移)
+COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
+
 # 预创建日志目录
 RUN install -d -m 0755 -o nestjs -g nodejs /app/logs
 RUN install -d -m 0755 -o nestjs -g nodejs /app/secrets

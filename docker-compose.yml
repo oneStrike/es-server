@@ -64,6 +64,27 @@ services:
           cpus: '0.1'
           memory: 64M
 
+  # 数据库迁移服务
+  migrator:
+    image: es/admin/server:0.0.2
+    build:
+      context: .
+      dockerfile: apps/admin-api/Dockerfile
+    container_name: es-migrator
+    pull_policy: never
+    restart: no
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    networks:
+      - app-network
+    # 执行生产环境迁移和种子数据填充
+    command: sh -c "npx prisma migrate deploy && npx tsx libs/base/src/database/seed/index.ts"
+
   # Admin API 后端服务
   admin-server:
     image: es/admin/server:0.0.2
