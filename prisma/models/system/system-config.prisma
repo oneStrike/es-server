@@ -1,0 +1,15 @@
+model SystemConfig {
+  /// 主键id
+  id Int @id @default(autoincrement())
+
+  /// 阿里云配置（JSON格式）
+  aliyunConfig Json? @map("aliyun_config")
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+ 
+  @@map("sys_config")
+}

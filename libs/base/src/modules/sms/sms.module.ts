@@ -1,3 +1,4 @@
+import { SystemConfigModule } from '@libs/system-config'
 import { Module } from '@nestjs/common'
 import { SmsService } from './sms.service'
 
@@ -6,6 +7,7 @@ import { SmsService } from './sms.service'
  * 提供短信发送、验证码发送等功能
  */
 @Module({
+  imports: [SystemConfigModule],
   providers: [SmsService],
   exports: [SmsService],
 })

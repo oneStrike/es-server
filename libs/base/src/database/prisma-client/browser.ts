@@ -214,6 +214,11 @@ export type ForumView = Prisma.ForumViewModel
  */
 export type RequestLog = Prisma.RequestLogModel
 /**
+ * Model SystemConfig
+ * 
+ */
+export type SystemConfig = Prisma.SystemConfigModel
+/**
  * Model Dictionary
  * 
  */

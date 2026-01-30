@@ -90,6 +90,7 @@ export const ModelName = {
   ForumUserActionLog: 'ForumUserActionLog',
   ForumView: 'ForumView',
   RequestLog: 'RequestLog',
+  SystemConfig: 'SystemConfig',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
   WorkAuthor: 'WorkAuthor',
@@ -802,6 +803,16 @@ export const RequestLogScalarFieldEnum = {
 } as const
 
 export type RequestLogScalarFieldEnum = (typeof RequestLogScalarFieldEnum)[keyof typeof RequestLogScalarFieldEnum]
+
+
+export const SystemConfigScalarFieldEnum = {
+  id: 'id',
+  aliyunConfig: 'aliyunConfig',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SystemConfigScalarFieldEnum = (typeof SystemConfigScalarFieldEnum)[keyof typeof SystemConfigScalarFieldEnum]
 
 
 export const DictionaryScalarFieldEnum = {

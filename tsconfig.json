@@ -45,6 +45,12 @@
       ],
       "@libs/content/*": [
         "libs/content/src/*"
+      ],
+      "@libs/system-config": [
+        "libs/system-config/src"
+      ],
+      "@libs/system-config/*": [
+        "libs/system-config/src/*"
       ]
     },
     "resolveJsonModule": true,

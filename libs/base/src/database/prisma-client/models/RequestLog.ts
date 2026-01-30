@@ -653,7 +653,7 @@ export type $RequestLogPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     username: string | null
     /**
-     * 接口类型（admin/client/system等，可空）
+     * 接口类型（admin/app/system等，可空）
      */
     apiType: string | null
     /**
