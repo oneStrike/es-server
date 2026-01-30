@@ -68,25 +68,7 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-# 1. 复制生产环境依赖 (从 deploy 目录)
-COPY --from=builder --chown=nestjs:nodejs /prod/admin-api/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /prod/admin-api/package.json ./package.json
-
-# 2. 复制构建产物
-COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api ./dist/apps/admin-api
-
-# 3. 复制 Prisma Client 生成文件
-# 确保运行时能找到 Query Engine
-COPY --from=builder --chown=nestjs:nodejs /app/libs/base/src/database/prisma-client ./libs/base/src/database/prisma-client
-
-# 4. 复制 Prisma Schema 和 Migrations (用于数据库迁移)
-COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
-
-# 5. 复制 Prisma 配置文件
-COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
-
-# 6. 复制 libs 源码 (用于执行 seed 脚本)
-COPY --from=builder --chown=nestjs:nodejs /app/libs ./libs
+COPY --from=builder --chown=nestjs:nodejs /app ./dist/apps/admin-api
 
 # 预创建日志目录
 RUN install -d -m 0755 -o nestjs -g nodejs /app/logs \
