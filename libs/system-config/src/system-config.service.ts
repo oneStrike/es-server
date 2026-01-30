@@ -8,7 +8,7 @@ const CONFIG_METADATA: Record<string, { sensitiveFields: string[] }> = {
   aliyunConfig: {
     sensitiveFields: ['accessKeyId', 'accessKeySecret'],
   },
-  // 未来可以在这里添加其他配置，如 wechatConfig, ossConfig 等
+  // 未来可以在这里添加其他配置，如 wechatConfig 等
 }
 
 @Injectable()
