@@ -7,7 +7,6 @@ import {
 
 /// 应用配置服务
 /// 提供应用配置的创建、查询、更新、删除等功能
-/// 实现了 OnModuleInit 接口，在模块初始化时自动创建默认配置
 @Injectable()
 export class AppConfigService extends BaseService {
   get appConfig() {
