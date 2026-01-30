@@ -2,25 +2,30 @@ import { generateKeyPairSync } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import process from 'node:process'
-import { Logger } from '@nestjs/common'
 import { registerAs } from '@nestjs/config'
 
 export const RsaConfigRegister = registerAs('rsa', () => {
-  const logger = new Logger('RsaConfig')
   const cwd = process.cwd()
+
+  // 0. 智能检测 Docker secrets 目录
+  // 如果环境变量未设置，且存在 /app/secrets 目录，则优先使用该目录
+  // 这解决了 Docker 容器中默认 cwd (/app) 通常不可写的问题
+  // 注意：process.env.RSA_PRIVATE_KEY_PATH 优先级最高
+  const dockerSecretsDir = '/app/secrets'
+  const useSecretsDir =
+    !process.env.RSA_PRIVATE_KEY_PATH && existsSync(dockerSecretsDir)
+  const defaultBaseDir = useSecretsDir ? dockerSecretsDir : cwd
 
   // 1. 定义路径 (优先环境变量 -> 默认路径)
   const publicKeyPath = resolve(
-    process.env.RSA_PUBLIC_KEY_PATH || join(cwd, 'jwt_public.key'),
+    process.env.RSA_PUBLIC_KEY_PATH || join(defaultBaseDir, 'jwt_public.key'),
   )
   const privateKeyPath = resolve(
-    process.env.RSA_PRIVATE_KEY_PATH || join(cwd, 'jwt_private.key'),
+    process.env.RSA_PRIVATE_KEY_PATH || join(defaultBaseDir, 'jwt_private.key'),
   )
 
   // 2. 检查并自动生成密钥 (如果不存在)
   if (!existsSync(privateKeyPath) || !existsSync(publicKeyPath)) {
-    logger.warn('RSA keys not found. Generating new key pair...')
-    try {
       // 确保目录存在
       const privateDir = dirname(privateKeyPath)
       const publicDir = dirname(publicKeyPath)
@@ -41,11 +46,6 @@ export const RsaConfigRegister = registerAs('rsa', () => {
 
       writeFileSync(privateKeyPath, privateKey)
       writeFileSync(publicKeyPath, publicKey)
-      logger.log(`RSA keys generated successfully`)
-    } catch (error) {
-      logger.error('Failed to generate RSA keys', error)
-      throw error
-    }
   }
 
   // 3. 读取密钥内容

@@ -99,8 +99,8 @@
 **RSA 密钥**
 | 变量名 | 默认值 | 说明 |
 | :--- | :--- | :--- |
-| `RSA_PUBLIC_KEY_PATH` | ./jwt_public.key | 公钥路径 (Docker下建议映射到 /app/secrets) |
-| `RSA_PRIVATE_KEY_PATH` | ./jwt_private.key | 私钥路径 (Docker下建议映射到 /app/secrets) |
+| `RSA_PRIVATE_KEY_PATH` | `/app/secrets/jwt_private.key` (若存在) 或 `cwd/jwt_private.key` | 私钥路径。**注意**：在 Docker 环境中，推荐挂载到 `/app/secrets` 目录以避免权限问题。代码会自动优先检测该目录。 |
+| `RSA_PUBLIC_KEY_PATH` | `/app/secrets/jwt_public.key` (若存在) 或 `cwd/jwt_public.key` | 公钥路径。同上。 |
 | `RSA_PUBLIC_KEY` | - | 公钥内容 (覆盖文件) |
 | `RSA_PRIVATE_KEY` | - | 私钥内容 (覆盖文件) |
 
