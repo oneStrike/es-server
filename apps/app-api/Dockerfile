@@ -11,6 +11,9 @@ FROM node:24-alpine AS builder
 # 启用 pnpm
 RUN corepack enable
 
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
 WORKDIR /app
 
 # 1. 复制 Workspace 配置文件和 Lockfile
@@ -21,7 +24,20 @@ COPY apps/app-api/package.json apps/app-api/package.json
 
 # 3. 安装所有依赖 (包括 devDependencies，用于构建)
 # 使用 --frozen-lockfile 确保版本一致
-RUN pnpm install --frozen-lockfile
+RUN pnpm config set store-dir /pnpm/store
+RUN --mount=type=cache,id=pnpm-store-app,target=/pnpm/store pnpm install --frozen-lockfile
+
+# 8. 部署生产依赖 (核心优化步骤)
+# 使用 pnpm deploy 导出仅包含生产依赖的独立包
+# 这一步会自动剔除 devDependencies 和无关的 hoist 依赖
+RUN pnpm --filter=@apps/app-api --prod deploy --legacy /prod/app-api
+
+# 9. 深度清理 node_modules (进一步优化)
+WORKDIR /prod/app-api
+# 安装 node-prune
+RUN wget https://gobinaries.com/tj/node-prune --output-document - | /bin/sh && node-prune
+
+WORKDIR /app
 
 # 4. 复制源代码
 COPY . .
@@ -33,16 +49,6 @@ RUN pnpm prisma:generate
 
 # 6. 构建应用
 RUN pnpm build:app
-
-# 8. 部署生产依赖 (核心优化步骤)
-# 使用 pnpm deploy 导出仅包含生产依赖的独立包
-# 这一步会自动剔除 devDependencies 和无关的 hoist 依赖
-RUN pnpm --filter=@apps/app-api --prod deploy --legacy /prod/app-api
-
-# 9. 深度清理 node_modules (进一步优化)
-WORKDIR /prod/app-api
-# 安装 node-prune
-RUN wget https://gobinaries.com/tj/node-prune --output-document - | /bin/sh && node-prune
 
 
 # --------------------------------

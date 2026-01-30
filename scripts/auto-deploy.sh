@@ -47,6 +47,7 @@ log "正在检查远程更新..."
 git fetch origin "${CURRENT_BRANCH}"
 LOCAL_HASH=$(git rev-parse HEAD)
 REMOTE_HASH=$(git rev-parse "origin/${CURRENT_BRANCH}")
+CHANGED_FILES=$(git diff --name-only "${LOCAL_HASH}" "${REMOTE_HASH}" 2>/dev/null || true)
 
 if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
     log "发现新版本，正在拉取..."
@@ -73,39 +74,72 @@ else
 fi
 log "项目版本: ${VERSION}"
 
-# Check if we need to install deps locally (optional, but good for prisma generate)
-# If pnpm is available, we run it to ensure local dev env is consistent or for scripts
-if command -v pnpm &> /dev/null; then
-    # We only install if package.json changed or if node_modules is missing?
-    # To save time, we can skip if no change. But for safety, let's just install if git changed.
-    if [ "$LOCAL_HASH" != "$REMOTE_HASH" ] || [ ! -d "node_modules" ]; then
-        log "正在更新本地依赖..."
-        pnpm install
-        log "正在生成 Prisma Client..."
-        pnpm prisma:generate
-    fi
+if [ "${AUTO_DEPLOY_LOCAL_PNPM:-0}" = "1" ] && command -v pnpm &> /dev/null; then
+    log "正在更新本地依赖..."
+    pnpm install
+    log "正在生成 Prisma Client..."
+    pnpm prisma:generate
 fi
 
 # 4. Build Images
 log "开始构建 Docker 镜像..."
 
-# Build Admin Server
-log "构建 Admin Server (es/admin/server:${VERSION})..."
-if docker build -f apps/admin-api/Dockerfile -t "es/admin/server:${VERSION}" . ; then
-    log "Admin Server 镜像构建成功。"
+NEED_ADMIN=false
+NEED_APP=false
+if echo "${CHANGED_FILES}" | grep -Eq '^(libs/|prisma/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|tsconfig(\.|$)|tsconfig\.build\.json$|nest-cli\.json$|webpack\.config\.js$)'; then
+    NEED_ADMIN=true
+    NEED_APP=true
 else
+    if echo "${CHANGED_FILES}" | grep -Eq '^apps/admin-api/'; then NEED_ADMIN=true; fi
+    if echo "${CHANGED_FILES}" | grep -Eq '^apps/app-api/'; then NEED_APP=true; fi
+fi
+
+if [ "${NEED_ADMIN}" != "true" ] && [ "${NEED_APP}" != "true" ]; then
+    log "代码更新不影响镜像构建，跳过构建。"
+    if [ "$STASH_NEEDED" = true ]; then
+        warn "正在恢复暂存的修改..."
+        git stash pop
+    fi
+    exit 0
+fi
+
+export DOCKER_BUILDKIT=1
+
+ADMIN_PID=""
+APP_PID=""
+ADMIN_STATUS=0
+APP_STATUS=0
+
+if [ "${NEED_ADMIN}" = "true" ]; then
+    log "构建 Admin Server (es/admin/server:${VERSION})..."
+    docker build -f apps/admin-api/Dockerfile -t "es/admin/server:${VERSION}" . &
+    ADMIN_PID=$!
+fi
+
+if [ "${NEED_APP}" = "true" ]; then
+    log "构建 App Server (es/app/server:${VERSION})..."
+    docker build -f apps/app-api/Dockerfile -t "es/app/server:${VERSION}" . &
+    APP_PID=$!
+fi
+
+if [ -n "${ADMIN_PID}" ]; then
+    wait "${ADMIN_PID}" || ADMIN_STATUS=$?
+fi
+if [ -n "${APP_PID}" ]; then
+    wait "${APP_PID}" || APP_STATUS=$?
+fi
+
+if [ "${ADMIN_STATUS}" -ne 0 ]; then
     error "Admin Server 构建失败。"
     exit 1
 fi
-
-# Build App Server
-log "构建 App Server (es/app/server:${VERSION})..."
-if docker build -f apps/app-api/Dockerfile -t "es/app/server:${VERSION}" . ; then
-    log "App Server 镜像构建成功。"
-else
+if [ "${APP_STATUS}" -ne 0 ]; then
     error "App Server 构建失败。"
     exit 1
 fi
+
+if [ "${NEED_ADMIN}" = "true" ]; then log "Admin Server 镜像构建成功。"; fi
+if [ "${NEED_APP}" = "true" ]; then log "App Server 镜像构建成功。"; fi
 
 # 5. Build Complete
 log "所有镜像构建完成。"
