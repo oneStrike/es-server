@@ -74,9 +74,12 @@ COPY --from=builder --chown=nestjs:nodejs /prod/admin-api/package.json ./package
 
 # 2. 复制构建产物
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api ./dist/apps/admin-api
-COPY --from=builder --chown=nestjs:nodejs /app/dist/libs ./dist/libs
 
-# 3. 复制 Prisma Schema 和 Migrations (用于数据库迁移)
+# 3. 复制 Prisma Client 生成文件
+# 确保运行时能找到 Query Engine
+COPY --from=builder --chown=nestjs:nodejs /app/libs/base/src/database/prisma-client ./libs/base/src/database/prisma-client
+
+# 4. 复制 Prisma Schema 和 Migrations (用于数据库迁移)
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 
 # 5. 复制 Prisma 配置文件
