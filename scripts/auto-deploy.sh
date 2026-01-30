@@ -104,6 +104,9 @@ if [ "${NEED_ADMIN}" != "true" ] && [ "${NEED_APP}" != "true" ]; then
 fi
 
 export DOCKER_BUILDKIT=1
+ADMIN_IMAGE="es/admin/server"
+APP_IMAGE="es/app/server"
+CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
 
 ADMIN_PID=""
 APP_PID=""
@@ -111,14 +114,22 @@ ADMIN_STATUS=0
 APP_STATUS=0
 
 if [ "${NEED_ADMIN}" = "true" ]; then
-    log "构建 Admin Server (es/admin/server:${VERSION})..."
-    docker build -f apps/admin-api/Dockerfile -t "es/admin/server:${VERSION}" . &
+    log "构建 Admin Server (${ADMIN_IMAGE}:${VERSION})..."
+    docker build -f apps/admin-api/Dockerfile \
+        --cache-from "${ADMIN_IMAGE}:${CACHE_TAG}" \
+        -t "${ADMIN_IMAGE}:${VERSION}" \
+        -t "${ADMIN_IMAGE}:${CACHE_TAG}" \
+        . &
     ADMIN_PID=$!
 fi
 
 if [ "${NEED_APP}" = "true" ]; then
-    log "构建 App Server (es/app/server:${VERSION})..."
-    docker build -f apps/app-api/Dockerfile -t "es/app/server:${VERSION}" . &
+    log "构建 App Server (${APP_IMAGE}:${VERSION})..."
+    docker build -f apps/app-api/Dockerfile \
+        --cache-from "${APP_IMAGE}:${CACHE_TAG}" \
+        -t "${APP_IMAGE}:${VERSION}" \
+        -t "${APP_IMAGE}:${CACHE_TAG}" \
+        . &
     APP_PID=$!
 fi
 
