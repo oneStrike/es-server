@@ -67,6 +67,9 @@ services:
   # Admin API 后端服务
   admin-server:
     image: es/admin/server:0.0.2
+    build:
+      context: .
+      dockerfile: apps/admin-api/Dockerfile
     container_name: es-admin-server
     # 强制只使用本地镜像，不拉取
     pull_policy: never
@@ -118,6 +121,9 @@ services:
   # App API 后端服务
   app-server:
     image: es/app/server:0.0.2
+    build:
+      context: .
+      dockerfile: apps/app-api/Dockerfile
     container_name: es-app-server
     # 强制只使用本地镜像，不拉取
     pull_policy: never
@@ -172,7 +178,7 @@ services:
         condition: service_healthy
     ports:
       # 使用环境变量控制端口映射，默认 8082
-      - '${ADMIN_PORT:-8082}:80'
+      - '${ADMIN_PORT:-8082}:8080'
     networks:
       - app-network
     logging: *default-logging

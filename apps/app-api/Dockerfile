@@ -83,4 +83,4 @@ EXPOSE 8080
 
 # 使用 dumb-init 启动
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["node", "dist/apps/app-api/main.js"]
+CMD ["node", "dist/apps/app-api/apps/app-api/src/main.js"]

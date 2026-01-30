@@ -79,4 +79,4 @@ USER nestjs
 EXPOSE 8080
 
 # 直接启动，不再使用 PM2 以节省体积
-CMD ["node", "dist/apps/admin-api/main.js"]
+CMD ["node", "dist/apps/admin-api/apps/admin-api/src/main.js"]
