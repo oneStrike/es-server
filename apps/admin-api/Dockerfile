@@ -60,7 +60,7 @@ ENV NODE_ENV=production \
     PORT=8080 \
     TZ="Asia/Shanghai"
 
-RUN apk add --no-cache dumb-init tzdata su-exec
+RUN apk add --no-cache dumb-init tzdata
 
 WORKDIR /app
 
@@ -88,4 +88,5 @@ RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads/admin
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["sh", "-c", "for d in /app/logs /app/secrets /app/uploads /app/uploads/admin; do mkdir -p \"$d\"; if [ ! -w \"$d\" ]; then chown -R nestjs:nodejs \"$d\" 2>/dev/null || true; fi; done; exec su-exec nestjs node dist/apps/admin-api/main.js"]
+USER nestjs
+CMD ["node", "dist/apps/admin-api/apps/admin-api/src/main.js"]

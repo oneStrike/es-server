@@ -17,6 +17,40 @@ log() { echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $1${NC}"; }
 warn() { echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARN: $1${NC}"; }
 error() { echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"; }
 
+ensure_host_dir() {
+    local dir="$1"
+    local mode="${2:-0755}"
+    if [ -z "${dir}" ]; then
+        error "宿主机目录路径为空"
+        return 1
+    fi
+    if [ -d "${dir}" ]; then
+        return 0
+    fi
+    if command -v install &> /dev/null; then
+        install -d -m "${mode}" "${dir}"
+    else
+        mkdir -p "${dir}"
+        chmod "${mode}" "${dir}" || true
+    fi
+}
+
+ensure_host_ownership() {
+    local dir="$1"
+    local uid="${2:-1001}"
+    local gid="${3:-1001}"
+    if [ "$(id -u)" -eq 0 ]; then
+        chown -R "${uid}:${gid}" "${dir}"
+        return $?
+    fi
+    if command -v sudo &> /dev/null; then
+        sudo chown -R "${uid}:${gid}" "${dir}"
+        return $?
+    fi
+    error "需要 root 或 sudo 才能 chown 宿主机目录：${dir}"
+    return 1
+}
+
 cd "${PROJECT_ROOT}" || { error "切换到项目根目录失败"; exit 1; }
 
 # 1. Check Environment
@@ -79,6 +113,23 @@ if [ "${AUTO_DEPLOY_LOCAL_PNPM:-0}" = "1" ] && command -v pnpm &> /dev/null; the
     pnpm install
     log "正在生成 Prisma Client..."
     pnpm prisma:generate
+fi
+
+# 4. Prepare host directories for bind mounts (方案1：宿主机持久化目录)
+if [ "${AUTO_DEPLOY_PREPARE_HOST_DIRS:-0}" = "1" ]; then
+    HOST_UPLOADS_DIR="${HOST_UPLOADS_DIR:-./data/uploads}"
+    HOST_LOGS_DIR="${HOST_LOGS_DIR:-./data/logs}"
+    HOST_UID="${HOST_UID:-1001}"
+    HOST_GID="${HOST_GID:-1001}"
+
+    log "正在准备宿主机目录（用于 bind mount）..."
+    ensure_host_dir "${HOST_UPLOADS_DIR}" || exit 1
+    ensure_host_dir "${HOST_UPLOADS_DIR}/admin" || exit 1
+    ensure_host_dir "${HOST_UPLOADS_DIR}/app" || exit 1
+    ensure_host_ownership "${HOST_UPLOADS_DIR}" "${HOST_UID}" "${HOST_GID}" || exit 1
+
+    ensure_host_dir "${HOST_LOGS_DIR}" || exit 1
+    ensure_host_ownership "${HOST_LOGS_DIR}" "${HOST_UID}" "${HOST_GID}" || exit 1
 fi
 
 # 4. Build Images

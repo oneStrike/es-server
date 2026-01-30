@@ -73,8 +73,7 @@ services:
     container_name: es-admin-server
     # 强制只使用本地镜像，不拉取
     pull_policy: never
-    # 移除硬编码的用户ID，避免权限问题
-    # user: '1001:1001'
+    user: '1001:1001'
     restart: unless-stopped
     depends_on:
       postgres:
@@ -96,12 +95,12 @@ services:
       - JWT_REFRESH_EXPIRATION_IN=${ADMIN_JWT_REFRESH_EXPIRATION_IN}
       - JWT_JWT_ISSUER=${ADMIN_JWT_ISSUER}
       - REDIS_NAMESPACE=${ADMIN_REDIS_NAMESPACE}
-      - UPLOAD_DIR=${ADMIN_UPLOAD_DIR}
+      - UPLOAD_DIR=${ADMIN_UPLOAD_DIR:-/app/uploads/admin}
       - UPLOAD_MAX_FILE_SIZE=${ADMIN_UPLOAD_MAX_FILE_SIZE}
     volumes:
       # 挂载上传和日志目录
-      - uploads-data:/app/uploads
-      - logs-data:/app/logs
+      - ${HOST_UPLOADS_DIR:-./data/uploads}:/app/uploads
+      - ${HOST_LOGS_DIR:-./data/logs}:/app/logs
     networks:
       - app-network
     logging: *default-logging
@@ -129,7 +128,7 @@ services:
     container_name: es-app-server
     # 强制只使用本地镜像，不拉取
     pull_policy: never
-    # user: '1001:1001'
+    user: '1001:1001'
     restart: unless-stopped
     depends_on:
       postgres:
@@ -149,14 +148,14 @@ services:
       - JWT_EXPIRATION_IN=${APP_JWT_EXPIRATION_IN}
       - JWT_REFRESH_EXPIRATION_IN=${APP_JWT_REFRESH_EXPIRATION_IN}
       - JWT_JWT_ISSUER=${APP_JWT_ISSUER}
-      - UPLOAD_DIR=${APP_UPLOAD_DIR}
+      - UPLOAD_DIR=${APP_UPLOAD_DIR:-/app/uploads/app}
       - UPLOAD_MAX_FILE_SIZE=${APP_UPLOAD_MAX_FILE_SIZE}
       - REDIS_NAMESPACE=${APP_REDIS_NAMESPACE}
       - APP_VERSION=${APP_APP_VERSION}
       - APP_FILE_URL_PREFIX=${APP_APP_FILE_URL_PREFIX}
     volumes:
-      - uploads-data:/app/uploads
-      - logs-data:/app/logs
+      - ${HOST_UPLOADS_DIR:-./data/uploads}:/app/uploads
+      - ${HOST_LOGS_DIR:-./data/logs}:/app/logs
     networks:
       - app-network
     logging: *default-logging
@@ -210,8 +209,4 @@ volumes:
   postgres-data:
     driver: local
   redis-data:
-    driver: local
-  uploads-data:
-    driver: local
-  logs-data:
     driver: local

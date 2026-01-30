@@ -60,7 +60,7 @@ ENV NODE_ENV=production \
     PORT=8080
 
 # 安装 dumb-init 和 tzdata
-RUN apk add --no-cache dumb-init tzdata su-exec
+RUN apk add --no-cache dumb-init tzdata
 ENV TZ="Asia/Shanghai"
 
 WORKDIR /app
@@ -89,4 +89,5 @@ EXPOSE 8080
 
 # 使用 dumb-init 启动
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["sh", "-c", "for d in /app/logs /app/secrets /app/uploads /app/uploads/app; do mkdir -p \"$d\"; if [ ! -w \"$d\" ]; then chown -R nestjs:nodejs \"$d\" 2>/dev/null || true; fi; done; exec su-exec nestjs node dist/apps/app-api/main.js"]
+USER nestjs
+CMD ["node", "dist/apps/app-api/apps/app-api/src/main.js"]
