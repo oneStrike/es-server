@@ -51,6 +51,17 @@ ensure_host_ownership() {
     return 1
 }
 
+FORCE_DEPLOY=false
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -f|--force) FORCE_DEPLOY=true ;;
+        *) warn "Unknown parameter passed: $1";;
+    esac
+    shift
+done
+
 cd "${PROJECT_ROOT}" || { error "切换到项目根目录失败"; exit 1; }
 
 # 1. Check Environment
@@ -104,11 +115,15 @@ if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
     fi
 else
     log "代码已是最新，无需部署。"
-    if [ "$STASH_NEEDED" = true ]; then
-        warn "正在恢复暂存的修改..."
-        git stash pop
+    if [ "$FORCE_DEPLOY" = "true" ]; then
+        log "强制部署模式开启，继续执行..."
+    else
+        if [ "$STASH_NEEDED" = true ]; then
+            warn "正在恢复暂存的修改..."
+            git stash pop
+        fi
+        exit 0
     fi
-    exit 0
 fi
 
 # 3. Dependencies and Version
@@ -149,7 +164,11 @@ log "开始构建 Docker 镜像..."
 
 NEED_ADMIN=false
 NEED_APP=false
-if echo "${CHANGED_FILES}" | grep -Eq '^(libs/|prisma/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|tsconfig(\.|$)|tsconfig\.build\.json$|nest-cli\.json$|webpack\.config\.js$)'; then
+if [ "$FORCE_DEPLOY" = "true" ]; then
+    log "强制部署模式：构建所有镜像"
+    NEED_ADMIN=true
+    NEED_APP=true
+elif echo "${CHANGED_FILES}" | grep -Eq '^(libs/|prisma/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|tsconfig(\.|$)|tsconfig\.build\.json$|nest-cli\.json$|webpack\.config\.js$)'; then
     NEED_ADMIN=true
     NEED_APP=true
 else
