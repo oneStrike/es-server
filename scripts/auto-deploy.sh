@@ -113,7 +113,7 @@ if [ -f .env ]; then
     log "加载 .env 环境变量..."
     set -a
     # shellcheck disable=SC1091
-    source .env
+    source /home/es/.env
     set +a
 else
     warn "未找到 .env 文件，将使用默认环境变量或系统环境变量。"

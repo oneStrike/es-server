@@ -51,8 +51,9 @@ RUN pnpm prisma:generate
 RUN pnpm build:app
 
 # 7. 整理部署产物 (Assemble deployment artifacts)
-# 将所有运行时需要的文件复制到 /prod/app-api，以便后续一次性复制
-RUN cp -r dist /prod/app-api/dist && \
+# 将构建产物从深层目录移动到顶层 dist，缩短运行路径
+RUN mkdir -p /prod/app-api/dist && \
+    cp -r dist/apps/app-api/apps/app-api/src/* /prod/app-api/dist/ && \
     cp -r prisma /prod/app-api/prisma && \
     cp prisma.config.ts /prod/app-api/prisma.config.ts
 
