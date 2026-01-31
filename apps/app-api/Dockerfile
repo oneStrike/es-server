@@ -87,4 +87,4 @@ EXPOSE 8080
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
-CMD ["node", "dist/apps/app-api/apps/app-api/src/main.js"]
+CMD ["node", "dist/main.js"]
