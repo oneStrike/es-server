@@ -7,13 +7,6 @@ services:
     pull_policy: never
     user: '1001:1001'
     restart: unless-stopped
-    # 健康检查
-    healthcheck:
-      test: [CMD, wget, --spider, -q, 'http://localhost:8080/api/system/health']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
     # 日志轮转
     logging:
       driver: json-file
@@ -62,13 +55,6 @@ services:
     pull_policy: never
     user: '1001:1001'
     restart: unless-stopped
-    # 健康检查
-    healthcheck:
-      test: [CMD, wget, --spider, -q, 'http://localhost:8080/api/system/health']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
     # 日志轮转
     logging:
       driver: json-file
@@ -116,12 +102,6 @@ services:
     # 强制只使用本地镜像，不拉取
     pull_policy: never
     restart: unless-stopped
-    # 健康检查
-    healthcheck:
-      test: [CMD, wget, --spider, -q, 'http://localhost:8080/']
-      interval: 30s
-      timeout: 10s
-      retries: 3
     # 日志轮转
     logging:
       driver: json-file
