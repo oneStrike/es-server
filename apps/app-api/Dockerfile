@@ -25,7 +25,7 @@ COPY apps/app-api/package.json apps/app-api/package.json
 # 3. 安装所有依赖
 # 使用 --frozen-lockfile 确保版本一致
 RUN pnpm config set store-dir /pnpm/store
-RUN --mount=type=cache,id=pnpm-store-app,target=/pnpm/store pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store pnpm install --frozen-lockfile
 
 # 4. 复制源代码 (优化: 仅复制相关目录，减少缓存失效)
 # 仅复制 libs, prisma 和目标 app，避免其他 app 变动触发重构建
