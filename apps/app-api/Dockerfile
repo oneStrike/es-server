@@ -17,7 +17,7 @@ ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
 
 # 1. 复制 Workspace 配置文件 (利用缓存)
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json nest-cli.json tsconfig*.json ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json nest-cli.json tsconfig*.json prisma.config.ts ./
 
 # 2. 复制目标应用的 package.json (用于依赖解析)
 COPY apps/app-api/package.json apps/app-api/package.json
