@@ -383,12 +383,6 @@ importers:
       '@prisma/extension-accelerate':
         specifier: ^3.0.1
         version: 3.0.1(@prisma/client@7.3.0(prisma@7.3.0(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))
-      '@types/mime-types':
-        specifier: ^3.0.1
-        version: 3.0.1
-      '@types/uuid':
-        specifier: ^11.0.0
-        version: 11.0.0
       axios:
         specifier: ^1.13.3
         version: 1.13.4
@@ -458,12 +452,6 @@ importers:
       passport-local:
         specifier: ^1.0.0
         version: 1.0.0
-      pm2:
-        specifier: ^6.0.14
-        version: 6.0.14
-      prisma:
-        specifier: 7.3.0
-        version: 7.3.0(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -485,6 +473,19 @@ importers:
       winston-daily-rotate-file:
         specifier: 5.0.0
         version: 5.0.0(winston@3.19.0)
+    devDependencies:
+      '@types/mime-types':
+        specifier: ^3.0.1
+        version: 3.0.1
+      '@types/uuid':
+        specifier: ^11.0.0
+        version: 11.0.0
+      pm2:
+        specifier: ^6.0.14
+        version: 6.0.14
+      prisma:
+        specifier: 7.3.0
+        version: 7.3.0(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
 
   apps/app-api:
     dependencies:
@@ -566,12 +567,6 @@ importers:
       '@prisma/extension-accelerate':
         specifier: ^3.0.1
         version: 3.0.1(@prisma/client@7.3.0(prisma@7.3.0(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3))
-      '@types/mime-types':
-        specifier: ^3.0.1
-        version: 3.0.1
-      '@types/uuid':
-        specifier: ^11.0.0
-        version: 11.0.0
       axios:
         specifier: ^1.13.3
         version: 1.13.4
@@ -641,12 +636,6 @@ importers:
       passport-local:
         specifier: ^1.0.0
         version: 1.0.0
-      pm2:
-        specifier: ^6.0.14
-        version: 6.0.14
-      prisma:
-        specifier: 7.3.0
-        version: 7.3.0(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -668,6 +657,19 @@ importers:
       winston-daily-rotate-file:
         specifier: 5.0.0
         version: 5.0.0(winston@3.19.0)
+    devDependencies:
+      '@types/mime-types':
+        specifier: ^3.0.1
+        version: 3.0.1
+      '@types/uuid':
+        specifier: ^11.0.0
+        version: 11.0.0
+      pm2:
+        specifier: ^6.0.14
+        version: 6.0.14
+      prisma:
+        specifier: 7.3.0
+        version: 7.3.0(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
 
 packages:
 
