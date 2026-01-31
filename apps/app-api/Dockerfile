@@ -50,6 +50,12 @@ RUN pnpm prisma:generate
 # 6. 构建应用
 RUN pnpm build:app
 
+# 7. 整理部署产物 (Assemble deployment artifacts)
+# 将所有运行时需要的文件复制到 /prod/app-api，以便后续一次性复制
+RUN cp -r dist /prod/app-api/dist && \
+    cp -r prisma /prod/app-api/prisma && \
+    cp prisma.config.ts /prod/app-api/prisma.config.ts
+
 
 # --------------------------------
 # Stage 2: Runtime
@@ -57,11 +63,10 @@ RUN pnpm build:app
 FROM node:24-alpine AS runtime
 
 ENV NODE_ENV=production \
-    PORT=8080
+    PORT=8080 \
+    TZ="Asia/Shanghai"
 
-# 安装 dumb-init 和 tzdata
 RUN apk add --no-cache dumb-init tzdata
-ENV TZ="Asia/Shanghai"
 
 WORKDIR /app
 
@@ -69,31 +74,17 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-# 1. 复制生产环境依赖 (从 deploy 目录)
-COPY --from=builder --chown=nestjs:nodejs /prod/app-api/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /prod/app-api/package.json ./package.json
-
-# 2. 复制构建产物
-COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/app-api ./dist/apps/app-api
-
-# 3. 复制 Prisma Client 生成文件
-COPY --from=builder --chown=nestjs:nodejs /app/libs/base/src/database/prisma-client ./libs/base/src/database/prisma-client
-
-# 4. 复制 Prisma Schema 和 Migrations (用于数据库迁移)
-COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
-
-# 5. 复制 Prisma 配置文件
-COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+# 1. 复制生产环境依赖和应用代码 (从 deploy 目录一次性复制)
+COPY --from=builder --chown=nestjs:nodejs /prod/app-api ./
 
 # 预创建日志目录
-RUN install -d -m 0755 -o nestjs -g nodejs /app/logs
-RUN install -d -m 0755 -o nestjs -g nodejs /app/secrets
-RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads
-RUN install -d -m 0755 -o nestjs -g nodejs /app/uploads/app
+RUN install -d -m 0755 -o nestjs -g nodejs /app/logs \
+    /app/secrets \
+    /app/uploads \
+    /app/uploads/app
 
 EXPOSE 8080
 
-# 使用 dumb-init 启动
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 CMD ["node", "dist/apps/app-api/apps/app-api/src/main.js"]
