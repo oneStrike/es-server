@@ -1,122 +1,34 @@
-x-logging: &default-logging
-  driver: json-file
-  options:
-    max-size: 10m
-    max-file: '3'
-
 services:
-  # PostgreSQL 数据库服务
-  postgres:
-    image: postgres:16-alpine
-    container_name: es-postgres
-    restart: unless-stopped
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    env_file:
-      - ./.env
-    environment:
-      # 显式映射变量以确保 Postgres 镜像能正确读取
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_DB=${DB_NAME}
-    networks:
-      - app-network
-    healthcheck:
-      test: [CMD-SHELL, 'pg_isready -U "$DB_USER" -d "$DB_NAME"']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    logging: *default-logging
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
-          cpus: '0.2'
-          memory: 256M
-
-  # Redis 缓存服务
-  redis:
-    image: redis:7-alpine
-    container_name: es-redis
-    restart: unless-stopped
-    # 使用环境变量中的密码启动
-    command: sh -c 'redis-server --requirepass "$REDIS_PASSWORD" --appendonly yes'
-    volumes:
-      - redis-data:/data
-    networks:
-      - app-network
-    env_file:
-      - ./.env
-    healthcheck:
-      test: [CMD-SHELL, 'redis-cli -a "$REDIS_PASSWORD" ping']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    logging: *default-logging
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
-
-  # 数据库迁移服务
-  migrator:
-    image: es/admin/server:0.0.2
-    build:
-      context: .
-      dockerfile: apps/admin-api/Dockerfile
-    container_name: es-migrator
-    pull_policy: never
-    restart: no
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - ./.env
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-    networks:
-      - app-network
-    # 执行生产环境迁移和种子数据填充
-    # command: sh -c "npx prisma migrate deploy && npx tsx libs/base/src/database/seed/index.ts"
-    entrypoint: [/bin/sh, -c]
-    command:
-      - |
-        echo "Starting migration..."
-        npx prisma migrate deploy
-        echo "Migration completed."
-        if [ "$RUN_SEED" = "true" ]; then
-          echo "Starting seeding..."
-          npx tsx libs/base/src/database/seed/index.ts
-          echo "Seeding completed."
-        else
-          echo "Seeding skipped. To run seed manually, use: docker compose run --rm migrator npx tsx libs/base/src/database/seed/index.ts"
-        fi
-
   # Admin API 后端服务
   admin-server:
     image: es/admin/server:0.0.2
-    build:
-      context: .
-      dockerfile: apps/admin-api/Dockerfile
     container_name: es-admin-server
     # 强制只使用本地镜像，不拉取
     pull_policy: never
     user: '1001:1001'
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      # 等待数据库迁移完成
-      migrator:
-        condition: service_completed_successfully
+    # 健康检查
+    healthcheck:
+      test: [CMD, wget, --spider, -q, 'http://localhost:8080/api/system/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # 日志轮转
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    # 安全选项
+    security_opt:
+      - no-new-privileges:true
     ports:
       # 使用环境变量控制端口映射，默认 8080
       - '${ADMIN_API_PORT}:8080'
@@ -138,43 +50,40 @@ services:
       # 挂载上传和日志目录
       - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
+      - /tmp # 使用匿名卷挂载临时目录，避免写入容器层
     networks:
       - app-network
-    logging: *default-logging
-    healthcheck:
-      test: [CMD-SHELL, 'wget --spider -q http://localhost:8080 || exit 1']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.8'
-          memory: 800M
-        reservations:
-          cpus: '0.1'
-          memory: 256M
 
   # App API 后端服务
   app-server:
     image: es/app/server:0.0.2
-    build:
-      context: .
-      dockerfile: apps/app-api/Dockerfile
     container_name: es-app-server
     # 强制只使用本地镜像，不拉取
     pull_policy: never
     user: '1001:1001'
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-        # 等待数据库迁移完成
-      migrator:
-        condition: service_completed_successfully
+    # 健康检查
+    healthcheck:
+      test: [CMD, wget, --spider, -q, 'http://localhost:8080/api/system/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # 日志轮转
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    # 安全选项
+    security_opt:
+      - no-new-privileges:true
     ports:
       # 使用环境变量控制端口映射，默认 8081
       - '${APP_API_PORT}:8080'
@@ -196,23 +105,9 @@ services:
     volumes:
       - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
+      - /tmp
     networks:
       - app-network
-    logging: *default-logging
-    healthcheck:
-      test: [CMD-SHELL, 'wget --spider -q http://localhost:8080 || exit 1']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.8'
-          memory: 800M
-        reservations:
-          cpus: '0.1'
-          memory: 256M
 
   # Web 前端服务
   admin:
@@ -221,35 +116,35 @@ services:
     # 强制只使用本地镜像，不拉取
     pull_policy: never
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    # 健康检查
+    healthcheck:
+      test: [CMD, wget, --spider, -q, 'http://localhost:8080/']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # 日志轮转
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
     ports:
       # 使用环境变量控制端口映射，默认 8082
       - '${ADMIN_PORT}:8080'
     networks:
       - app-network
-    logging: *default-logging
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'
-          memory: 128M
-        reservations:
-          cpus: '0.05'
-          memory: 32M
 
 networks:
   app-network:
     driver: bridge
 
 volumes:
-  postgres-data:
-    driver: local
-  redis-data:
-    driver: local
   es-server-logs:
     driver: local
   es-server-uploads:
