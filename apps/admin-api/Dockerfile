@@ -54,8 +54,7 @@ RUN pnpm build:admin
 # 将所有运行时需要的文件复制到 /prod/admin-api，以便后续一次性复制
 RUN cp -r dist /prod/admin-api/dist && \
     cp -r prisma /prod/admin-api/prisma && \
-    cp prisma.config.ts /prod/admin-api/prisma.config.ts && \
-    cp -r libs /prod/admin-api/libs
+    cp prisma.config.ts /prod/admin-api/prisma.config.ts
 
 
 # --------------------------------
