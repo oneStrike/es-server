@@ -1,11 +1,3 @@
-# syntax=docker/dockerfile:1.6
-# --------------------------------
-# Admin API 专用 Dockerfile (基于 Pnpm Workspace 优化)
-# --------------------------------
-
-# --------------------------------
-# Stage 1: Builder
-# --------------------------------
 FROM node:24-alpine AS builder
 
 # 启用 pnpm
@@ -15,11 +7,14 @@ ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
 WORKDIR /app
-COPY . ./
+COPY apps/admin-api/ libs prisma pnpm-lock.yaml pnpm-workspace.yaml package.json nest-cli.json tsconfig*.json prisma.config.ts ./
 RUN apk add --no-cache dumb-init tzdata
 
 
-RUN pnpm install --frozen-lockfile --production
+RUN pnpm install --frozen-lockfile --production && \
+    pnpm install -g @nestjs/cli && \
+    nest build admin-api
+
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
