@@ -12,7 +12,7 @@ RUN apk add --no-cache dumb-init tzdata
 
 
 RUN pnpm install --frozen-lockfile --production && \
-    pnpm install -g @nestjs/cli && \
+    npm install -g @nestjs/cli && \
     nest build admin-api
 
 RUN addgroup -g 1001 -S nodejs && \
