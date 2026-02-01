@@ -9,7 +9,7 @@
 FROM node:24-alpine AS builder
 
 # 启用 pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
@@ -17,12 +17,20 @@ ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
 
 # 1. 复制 Workspace 配置文件 (利用缓存)
-COPY . .
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json nest-cli.json tsconfig*.json prisma.config.ts ./
+
+# 2. 复制目标应用的 package.json (用于依赖解析)
+COPY apps/admin-api/package.json apps/admin-api/package.json
 
 # 3. 安装所有依赖
 # 使用 --frozen-lockfile 确保版本一致
 RUN pnpm config set store-dir /pnpm/store
 RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store pnpm install --frozen-lockfile
+
+# 4. 复制源代码 (优化: 仅复制相关目录，减少缓存失效)
+COPY libs libs
+COPY prisma prisma
+COPY apps/admin-api apps/admin-api
 
 # 5. 生成 Prisma Client
 # 设置临时的 DATABASE_URL (Prisma 需要它存在才能生成 Client)
