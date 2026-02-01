@@ -8,7 +8,7 @@ import {
   softDelete,
   swapField,
 } from './extensions'
-import { PrismaClient } from './prisma-client/client'
+import { PrismaClient } from './index'
 
 export function makePrismaClient(connectionString: string) {
   const adapter = new PrismaPg({ connectionString })

@@ -1,6 +1,6 @@
 import { DbConfig } from '../../config'
 import { jsonParse } from '../../utils'
-import { Prisma } from '../prisma-client/client'
+import { Prisma } from '../index'
 
 /**
  * 分页查询扩展

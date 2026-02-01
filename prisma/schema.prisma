@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client"
-  output          = "../libs/base/src/database/prisma-client"
+  output          = "./prismaClient"
   engineType      = "client"
   previewFeatures = ["relationJoins"]
 }

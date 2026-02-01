@@ -1,4 +1,4 @@
-import { Prisma } from '../prisma-client/client'
+import { Prisma } from '../index'
 
 /**
  * 获取当前模型的最大排序值

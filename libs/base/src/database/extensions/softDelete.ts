@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common'
-import { Prisma } from '../prisma-client/client'
+import { Prisma } from '../index'
 
 /**
  * 软删除：单条

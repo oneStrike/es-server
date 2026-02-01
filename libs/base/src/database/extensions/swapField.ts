@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common'
-import { Prisma } from '../prisma-client/client'
+import { Prisma } from '../index'
 
 /**
  * 交换两条数据的指定字段值

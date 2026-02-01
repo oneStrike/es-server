@@ -1,4 +1,4 @@
-import { Prisma } from '../prisma-client/client'
+import { Prisma } from '../index'
 
 export async function exists<T>(
   this: T,
