@@ -11,7 +11,7 @@
     "build:admin": "cross-env NODE_ENV=production nest build admin-api",
     "build:app": "cross-env NODE_ENV=production nest build app-api",
     "build:all": "pnpm build:admin && pnpm build:app",
-    "start": "cross-env NODE_ENV=production nest start",
+    "start": "NODE_ENV=production nest start",
     "start:dev": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=admin-api",
     "start:admin": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=admin-api",
     "start:app": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch --env project=app-api",
