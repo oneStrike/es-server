@@ -29,5 +29,5 @@ ENV NODE_ENV=production \
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 # 注意: 根据 tsconfig 编译输出，main.js 可能位于深层目录
-CMD ["pnpm", "start"]
+CMD ["node", "dist/apps/admin-api/apps/admin-api/src/main.js"]
 
