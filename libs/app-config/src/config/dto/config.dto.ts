@@ -50,7 +50,7 @@ export class BaseAppConfigDto extends BaseDto {
   themeColor!: string
 
   @ValidateString({
-    description: '第二主题色',
+    description: '第二主题色(可选)',
     example: '#5856D6',
     required: false,
     maxLength: 20,
