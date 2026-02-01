@@ -10,3 +10,10 @@ coverage
 !.env.production.example
 *.tsbuildinfo
 logs
+.cache
+.trae
+.gitea
+docs
+.catpaw
+
+

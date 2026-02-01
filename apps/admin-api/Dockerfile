@@ -1,17 +1,17 @@
 FROM node:24-alpine AS builder
 
 # 启用 pnpm
-RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
+RUN corepack enable
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
 WORKDIR /app
-COPY apps/admin-api/ libs prisma pnpm-lock.yaml pnpm-workspace.yaml package.json nest-cli.json tsconfig*.json prisma.config.ts ./
+COPY . .
 RUN apk add --no-cache dumb-init tzdata
 
 
-RUN pnpm install --frozen-lockfile --production && \
+RUN pnpm install --frozen-lockfile && \
     npm install -g @nestjs/cli && \
     nest build admin-api
 
