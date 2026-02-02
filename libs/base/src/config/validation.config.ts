@@ -13,10 +13,7 @@ export const environmentValidationSchema = Joi.object({
   DATABASE_URL: Joi.string().required(),
 
   // Redis配置
-  REDIS_HOST: Joi.string().required(),
-  REDIS_PORT: Joi.number().port().required(),
-  REDIS_PASSWORD: Joi.string().optional(),
-  REDIS_NAMESPACE: Joi.string().default('ES'),
+  REDIS_URL: Joi.string().required(),
 
   // JWT配置
   JWT_EXPIRATION_IN: Joi.string().default('4h'),
