@@ -19,7 +19,7 @@ export class BaseAgreementDto extends BaseDto {
     description: '协议标题',
     example: '隐私政策',
     required: true,
-    maxLength: 200,
+    maxLength: 50,
   })
   title!: string
 
