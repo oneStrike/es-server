@@ -39,6 +39,10 @@ services:
       - REDIS_NAMESPACE=${ADMIN_REDIS_NAMESPACE}
       - UPLOAD_DIR=${ADMIN_UPLOAD_DIR:-/app/uploads/admin}
       - UPLOAD_MAX_FILE_SIZE=${ADMIN_UPLOAD_MAX_FILE_SIZE}
+      # 日志路径 (区分项目)
+      - LOG_PATH=/app/logs/app
+      # 控制台日志级别
+      - LOG_CONSOLE_LEVEL=${LOG_CONSOLE_LEVEL}
     volumes:
       # 挂载上传和日志目录
       - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
@@ -89,6 +93,10 @@ services:
       - REDIS_NAMESPACE=${APP_REDIS_NAMESPACE}
       - APP_VERSION=${APP_APP_VERSION}
       - APP_FILE_URL_PREFIX=${APP_APP_FILE_URL_PREFIX}
+      # 日志路径 (区分项目)
+      - LOG_PATH=/app/logs/app
+      # 控制台日志级别
+      - LOG_CONSOLE_LEVEL=${LOG_CONSOLE_LEVEL}
     volumes:
       - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
@@ -120,15 +128,16 @@ services:
       # 使用环境变量控制端口映射，默认 8082
       - '${ADMIN_PORT}:8080'
     networks:
-      - app-network
+      - app-network # 前端无需访问数据库，仅保留内部网络即可
 
 networks:
   # 原有内部网络，保持不变
   app-network:
     driver: bridge
+  # 新增：1Panel 外部网络（已替换为 1Panel 默认真实网络名称 1panel-network）
   1panel-network:
     external: true
-    name: 1panel-network
+    name: 1panel-network # 若你的 1Panel 网络名称不是这个，替换为自己查到的
 
 volumes:
   es-server-logs:
