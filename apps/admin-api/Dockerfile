@@ -48,15 +48,12 @@ COPY pnpm-lock.yaml package.json ./
 
 # 3. 合并指令：安装系统依赖、初始化环境、安装生产依赖并清理
 # 优化：合并为一个 RUN 指令，减少镜像层数，使用独立的缓存ID避免污染
+# 默认以root用户运行，简化权限管理
 RUN --mount=type=cache,id=pnpm-store-runtime-v1,target=/pnpm/store \
     apk add --no-cache tzdata openssl vim && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001 && \
-    install -d -m 0755 -o nestjs -g nodejs \
-    /app/logs \
-    /app/secrets \
-    /app/uploads \
-    /app/uploads/admin && \
+    corepack enable && \
+    # 创建必要的目录（使用root权限）
+    mkdir -p /app/logs /app/secrets /app/uploads /app/uploads/admin && \
     pnpm config set store-dir /pnpm/store && \
     pnpm install --prod --frozen-lockfile && \
     # 优化清理策略：更高效地删除无用文件
@@ -69,8 +66,8 @@ RUN --mount=type=cache,id=pnpm-store-runtime-v1,target=/pnpm/store \
     # 清理空目录
     find node_modules -type d -empty -delete 2>/dev/null || true
 
-# 4. 复制构建产物 (扁平化复制)
-COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api/ ./
+# 4. 复制构建产物 (扁平化复制，使用root用户权限)
+COPY --from=builder /app/dist/apps/admin-api/ ./
 
 EXPOSE 8080
 
