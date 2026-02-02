@@ -9,7 +9,6 @@
 FROM node:24-alpine AS builder
 
 # 启用 pnpm
-RUN corepack enable
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
@@ -51,7 +50,6 @@ COPY pnpm-lock.yaml package.json ./
 # 优化：合并为一个 RUN 指令，减少镜像层数，使用独立的缓存ID避免污染
 RUN --mount=type=cache,id=pnpm-store-runtime-v1,target=/pnpm/store \
     apk add --no-cache tzdata openssl vim && \
-    corepack enable && \
     addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001 && \
     install -d -m 0755 -o nestjs -g nodejs \
