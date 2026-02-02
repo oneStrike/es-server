@@ -30,6 +30,9 @@ services:
     environment:
       # 注入当前服务特定的配置
       - APP_NAME=admin-api
+      # 如果代码中没有处理 DATABASE_URL 组合逻辑，则需在此显式声明
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
       # 配置隔离映射
       - JWT_EXPIRATION_IN=${ADMIN_JWT_EXPIRATION_IN}
       - JWT_REFRESH_EXPIRATION_IN=${ADMIN_JWT_REFRESH_EXPIRATION_IN}
@@ -81,6 +84,8 @@ services:
     environment:
       - APP_NAME=app-api
       - APP_PORT=8080
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
       # 配置隔离映射
       - JWT_EXPIRATION_IN=${APP_JWT_EXPIRATION_IN}
       - JWT_REFRESH_EXPIRATION_IN=${APP_JWT_REFRESH_EXPIRATION_IN}
@@ -90,10 +95,13 @@ services:
       - REDIS_NAMESPACE=${APP_REDIS_NAMESPACE}
       - APP_VERSION=${APP_APP_VERSION}
       - APP_FILE_URL_PREFIX=${APP_APP_FILE_URL_PREFIX}
+      # 日志路径 (区分项目)
+      - LOG_PATH=/app/logs/app
       # 控制台日志级别
       - LOG_CONSOLE_LEVEL=${LOG_CONSOLE_LEVEL}
     volumes:
       - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
+      - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
       - /tmp
     networks:
       - app-network # 保留原有内部网络
@@ -125,7 +133,6 @@ services:
       - app-network # 前端无需访问数据库，仅保留内部网络即可
 
 networks:
-  # 原有内部网络，保持不变
   app-network:
     driver: bridge
   # 新增：1Panel 外部网络（已替换为 1Panel 默认真实网络名称 1panel-network）
@@ -134,5 +141,7 @@ networks:
     name: 1panel-network # 若你的 1Panel 网络名称不是这个，替换为自己查到的
 
 volumes:
+  es-server-logs:
+    driver: local
   es-server-uploads:
     driver: local

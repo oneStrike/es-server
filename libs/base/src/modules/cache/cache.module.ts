@@ -19,7 +19,7 @@ export class CustomCacheModule {
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => {
-          const { connection, namespace = 'ES' } = configService.get('redis')
+          const { connection, namespace = 0 } = configService.get('redis')
 
           const redisUrl = connection
 

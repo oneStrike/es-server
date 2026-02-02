@@ -18,20 +18,14 @@ export const environmentValidationSchema = Joi.object({
   // JWT配置
   JWT_EXPIRATION_IN: Joi.string().default('4h'),
   JWT_REFRESH_EXPIRATION_IN: Joi.string().default('7d'),
-  JWT_JWT_ISSUER: Joi.string().default('es'),
-  JWT_JWT_AUD: Joi.string().optional(),
+  JWT_JWT_ISSUER: Joi.string().required(),
   JWT_STRATEGY_KEY: Joi.string().optional(),
 
   // 日志配置
-  LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug').default('info'),
-  LOG_PATH: Joi.string().default('./logs'),
-  LOG_RETAIN_DAYS: Joi.string().default('7d'),
-  LOG_MAX_SIZE: Joi.string().default('20m'),
-  LOG_COMPRESS: Joi.string().default('true'),
+  LOG_LEVEL: Joi.string()
+    .valid('error', 'warn', 'info', 'debug')
+    .default('info'),
   LOG_CONSOLE_LEVEL: Joi.string().default('info'),
-  LOG_FORMAT: Joi.string().optional(),
-  LOG_MAX_FILES: Joi.string().optional(),
-  LOG_DATE_PATTERN: Joi.string().optional(),
 
   // 文件上传配置
   UPLOAD_DIR: Joi.string().default('./uploads'),
