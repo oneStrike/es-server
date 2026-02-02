@@ -17,13 +17,13 @@ WORKDIR /app
 
 # 1. 复制配置文件 (仅复制依赖相关文件，最大化缓存利用率)
 COPY pnpm-lock.yaml package.json ./
+COPY nest-cli.json tsconfig*.json prisma.config.ts ./
 
 # 2. 安装所有依赖
 RUN pnpm config set store-dir /pnpm/store
 RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store pnpm install --frozen-lockfile
 
 # 3. 复制源代码和构建配置
-COPY nest-cli.json tsconfig*.json prisma.config.ts ./
 COPY libs libs
 COPY prisma prisma
 COPY apps/admin-api apps/admin-api
@@ -48,8 +48,8 @@ WORKDIR /app
 COPY pnpm-lock.yaml package.json ./
 
 # 3. 合并指令：安装系统依赖、初始化环境、安装生产依赖并清理
-# 优化：合并为一个 RUN 指令，减少镜像层数
-RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
+# 优化：合并为一个 RUN 指令，减少镜像层数，使用独立的缓存ID避免污染
+RUN --mount=type=cache,id=pnpm-store-runtime-v1,target=/pnpm/store \
     apk add --no-cache tzdata openssl vim && \
     corepack enable && \
     addgroup -g 1001 -S nodejs && \
@@ -61,10 +61,15 @@ RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
     /app/uploads/admin && \
     pnpm config set store-dir /pnpm/store && \
     pnpm install --prod --frozen-lockfile && \
-    # 清理 Markdown、TypeScript 源码、Map 文件、测试文件
-    find node_modules -type f \( -name "*.md" -o -name "*.ts" -o -name "*.map" -o -name "*.test.js" -o -name "*.spec.js" \) -delete && \
-    # 清理测试目录和类型定义
-    find node_modules -type d \( -name "test" -o -name "tests" -o -name "@types" \) -exec rm -rf {} +
+    # 优化清理策略：更高效地删除无用文件
+    find node_modules -type f \( \
+        -name "*.md" -o -name "*.ts" -o -name "*.map" -o \
+        -name "*.test.js" -o -name "*.spec.js" -o -name "*.d.ts" \
+    \) -print0 | xargs -0 rm -f 2>/dev/null || true && \
+    # 清理测试目录和类型定义目录
+    find node_modules -type d \( -name "test" -o -name "tests" -o -name "@types" \) -exec rm -rf {} + 2>/dev/null || true && \
+    # 清理空目录
+    find node_modules -type d -empty -delete 2>/dev/null || true
 
 # 4. 复制构建产物 (扁平化复制)
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api/ ./
