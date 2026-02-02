@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common'
 import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { ClsModule } from 'nestjs-cls'
+import { v4 as uuidv4 } from 'uuid'
 import { TransformInterceptor } from './interceptors'
 import { CustomCacheModule } from './modules/cache'
 import { HealthModule } from './modules/health'
@@ -52,7 +54,16 @@ export class BaseModule {
     const mergedOptions = { ...defaultOptions, ...options }
 
     // 构建导入模块列表
-    const imports: (DynamicModule | Type<any>)[] = []
+    const imports: (DynamicModule | Type<any>)[] = [
+      ClsModule.forRoot({
+        global: true,
+        middleware: {
+          mount: true,
+          generateId: true,
+          idGenerator: (req: any) => req.headers['x-request-id'] || uuidv4(),
+        },
+      }),
+    ]
 
     // 全局验证管道 - 数据格式校验
     const providers: Provider[] = []

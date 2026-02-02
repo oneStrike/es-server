@@ -30,8 +30,6 @@ services:
     environment:
       # 注入当前服务特定的配置
       - APP_NAME=admin-api
-      # 如果代码中没有处理 DATABASE_URL 组合逻辑，则需在此显式声明
-      - DATABASE_URL=${DATABASE_URL}
       # 配置隔离映射
       - JWT_EXPIRATION_IN=${ADMIN_JWT_EXPIRATION_IN}
       - JWT_REFRESH_EXPIRATION_IN=${ADMIN_JWT_REFRESH_EXPIRATION_IN}
@@ -83,7 +81,6 @@ services:
     environment:
       - APP_NAME=app-api
       - APP_PORT=8080
-      - DATABASE_URL=${DATABASE_URL}
       # 配置隔离映射
       - JWT_EXPIRATION_IN=${APP_JWT_EXPIRATION_IN}
       - JWT_REFRESH_EXPIRATION_IN=${APP_JWT_REFRESH_EXPIRATION_IN}
@@ -93,13 +90,10 @@ services:
       - REDIS_NAMESPACE=${APP_REDIS_NAMESPACE}
       - APP_VERSION=${APP_APP_VERSION}
       - APP_FILE_URL_PREFIX=${APP_APP_FILE_URL_PREFIX}
-      # 日志路径 (区分项目)
-      - LOG_PATH=/app/logs/app
       # 控制台日志级别
       - LOG_CONSOLE_LEVEL=${LOG_CONSOLE_LEVEL}
     volumes:
       - ${HOST_UPLOADS_DIR:-es-server-uploads}:/app/uploads
-      - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
       - /tmp
     networks:
       - app-network # 保留原有内部网络
@@ -140,7 +134,5 @@ networks:
     name: 1panel-network # 若你的 1Panel 网络名称不是这个，替换为自己查到的
 
 volumes:
-  es-server-logs:
-    driver: local
   es-server-uploads:
     driver: local

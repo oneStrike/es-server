@@ -8,7 +8,6 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common'
-import { v4 as uuidv4 } from 'uuid'
 
 /**
  * HTTP异常过滤器
@@ -40,14 +39,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<FastifyRequest>()
 
     const { status, message } = this.extractErrorInfo(exception)
-    const traceId = uuidv4()
     const parsed = this.safeParse(request)
     const logger = this.loggerService.getLoggerWithContext('http-exception')
 
     logger.log({
       level: 'error',
       message: 'http_exception',
-      traceId,
       errorMessage: message,
       stack: exception instanceof Error ? exception.stack : undefined,
       status,
@@ -60,9 +57,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       code: status,
       data: null,
       message,
-      traceId,
     }
-    response.header('X-Trace-Id', traceId).code(status).send(errorResponse)
+    response.code(status).send(errorResponse)
   }
 
   /**
