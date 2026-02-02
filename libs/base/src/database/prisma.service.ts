@@ -33,8 +33,9 @@ export class PrismaService implements OnApplicationShutdown {
   constructor(
     @Inject(ConfigService) private readonly configService: ConfigService,
   ) {
-    const DATABASE_URL = this.configService.get('db.connection.url')
-    this.client = makePrismaClient(DATABASE_URL)
+    this.client = makePrismaClient(
+      this.configService.get('db.connection') as string,
+    )
   }
 
   createPrismaClient(): PrismaClientType {

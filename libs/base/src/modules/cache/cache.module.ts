@@ -19,13 +19,9 @@ export class CustomCacheModule {
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (configService: ConfigService) => {
-          const { host, port, password, namespace } = configService.get('redis')
+          const { connection, namespace = 'ES' } = configService.get('redis')
 
-          // 构建 Redis URL
-          // 对密码进行URL编码，避免包含特殊字符导致解析错误
-          const encodedPassword = password ? encodeURIComponent(password) : ''
-          const authPart = encodedPassword ? `:${encodedPassword}@` : ''
-          const redisUrl = `redis://${authPart}${host}:${port}`
+          const redisUrl = connection
 
           return {
             ttl: 0,

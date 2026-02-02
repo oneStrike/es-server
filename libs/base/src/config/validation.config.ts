@@ -10,14 +10,7 @@ export const environmentValidationSchema = Joi.object({
   PORT: Joi.number().port().optional(),
 
   // 数据库配置
-  DB_HOST: Joi.string().required(),
-  DB_PORT: Joi.number().port().required(),
-  DB_USER: Joi.string().required(),
-  DB_PASSWORD: Joi.string().required(),
-  DB_NAME: Joi.string().required(),
-  DB_MAX_QUERY_LIST_LIMIT: Joi.number().min(1).default(500),
-  DB_PAGINATION_PAGE_SIZE: Joi.number().min(1).default(15),
-  DB_PAGINATION_PAGE_INDEX: Joi.number().min(0).default(0),
+  DATABASE_URL: Joi.string().required(),
 
   // Redis配置
   REDIS_HOST: Joi.string().required(),
