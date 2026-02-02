@@ -11,7 +11,7 @@ configDotenv({
   ],
 })
 
-seedCommand = 'pnpm tsx libs/base/src/database/seed/index.ts'
+seedCommand = 'pnpm tsx prisma/seed/index.ts'
 
 export default defineConfig({
   schema: path.join('prisma'),

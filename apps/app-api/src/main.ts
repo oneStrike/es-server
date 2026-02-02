@@ -35,10 +35,7 @@ async function bootstrap() {
   logStartupInfo(appConfig.port, appConfig.swaggerConfig.path)
   if (module.hot) {
     module.hot.accept()
-    module.hot.dispose(async () => {
-      // 关闭应用
-      await app.close()
-    })
+    module.hot.dispose(async () => app.close())
   }
 }
 

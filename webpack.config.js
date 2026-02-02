@@ -1,126 +1,66 @@
-const fs = require('node:fs')
 const path = require('node:path')
+const process = require('node:process')
 const dotenv = require('dotenv')
 const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin')
-const webpack = require('webpack')
 const nodeExternals = require('webpack-node-externals')
-const workspace = require('./nest-cli.json')
 
-function createConfig(projectName) {
-  // 只保留开发环境配置
-  const projectPath = path.resolve(__dirname, 'apps', projectName)
+module.exports = function (options, webpack) {
+  const projectName = options.entry.includes('app-api')
+    ? 'app-api'
+    : 'admin-api'
 
-  // 加载环境变量
+  const isProduction = process.env.NODE_ENV === 'production'
+
+  // 如果是 monorepo 结构，通常源码在 apps/项目名
+  // 这里做一个简单的回退处理
+  const appSrcPath = path.resolve(__dirname, 'apps', projectName)
+
+  // 2. 动态加载环境变量
   dotenv.config({
     path: [
-      path.resolve(projectPath, `.env.development`),
-      path.resolve(projectPath, `.env`),
+      path.resolve(appSrcPath, `.env.${process.env.NODE_ENV || 'development'}`),
+      path.resolve(appSrcPath, '.env'),
+      path.resolve(__dirname, '.env'), // 加载根目录兜底
     ],
   })
 
-  return {
-    name: projectName,
-    // 只保留开发环境的entry
-    entry: ['webpack/hot/poll?100', path.join(projectPath, 'src', 'main.ts')],
-    // 开发环境缓存配置
+  const config = {
+    ...options,
+    // 3. 启用 Webpack 5 持久化缓存
     cache: {
       type: 'filesystem',
       cacheDirectory: path.resolve(__dirname, '.cache/webpack', projectName),
     },
-    externalsPresets: { node: true },
-    externalsType: 'commonjs',
-    target: 'node',
-    externals: [
+  }
+
+  if (isProduction) {
+    // 生产环境配置
+    config.devtool = 'source-map'
+    config.externals = [nodeExternals()]
+    config.plugins = [...options.plugins]
+  } else {
+    // 开发环境配置
+    config.devtool = 'eval-cheap-module-source-map'
+    config.entry = ['webpack/hot/poll?100', options.entry]
+    config.externals = [
       nodeExternals({
         allowlist: ['webpack/hot/poll?100'],
       }),
-    ],
-    module: {
-      rules: [
-        {
-          test: /\.tsx?$/,
-          use: {
-            loader: 'ts-loader',
-            options: {
-              transpileOnly: true, // 开发环境关闭类型检查，提高构建速度
-              configFile: path.join(projectPath, 'tsconfig.app.json'),
-            },
-          },
-          exclude: /node_modules/,
-        },
-      ],
-    },
-    mode: 'development',
-    resolve: {
-      extensions: ['.tsx', '.ts', '.js', '.json'],
-      symlinks: false,
-      alias: {
-        '@': path.resolve(projectPath, 'src'),
-        // 动态生成libs目录下的alias映射
-        ...fs
-          .readdirSync(path.resolve(__dirname, 'libs'))
-          .filter((item) =>
-            fs.statSync(path.resolve(__dirname, 'libs', item)).isDirectory(),
-          )
-          .reduce((acc, libName) => {
-            acc[`@libs/${libName}`] = path.resolve(
-              __dirname,
-              'libs',
-              libName,
-              'src',
-            )
-            return acc
-          }, {}),
-      },
-      modules: ['node_modules', path.resolve(projectPath, 'node_modules'), path.resolve(projectPath, 'src')],
-    },
-    plugins: [
-      // 只保留开发环境的插件
+    ]
+    config.plugins = [
+      ...options.plugins,
       new webpack.HotModuleReplacementPlugin(),
-      new RunScriptWebpackPlugin({ name: 'main.js', autoRestart: false }),
-      new webpack.DefinePlugin({
-        'process.env.NODE_ENV': JSON.stringify('development'),
+      new webpack.WatchIgnorePlugin({
+        paths: [/\.js$/, /\.d\.ts$/],
       }),
-      new webpack.ProgressPlugin(),
-    ],
-    output: {
-      path: path.join(__dirname, 'dist', 'apps', projectName),
-      clean: true,
-      filename: 'main.js',
-    },
-    devtool: 'eval-source-map',
-    optimization: {
-      usedExports: true,
-      splitChunks: false, // 开发环境关闭代码分割
-      minimize: false,
-    },
-    watchOptions: {
-      ignored: /node_modules/,
-      aggregateTimeout: 150,
-    },
-    performance: { hints: false },
-    snapshot: {
-      managedPaths: [/^(.+)[\\/]node_modules[\\/]/],
-      immutablePaths: [/^(.+)[\\/]node_modules[\\/]\.pnpm[\\/]/],
-    },
-    stats: 'errors-warnings',
-  }
-}
-
-module.exports = (env = {}) => {
-  const projects = Object.keys(workspace.projects).filter(
-    (n) => workspace.projects[n].type === 'application',
-  )
-  const requested = env.project
-
-  if (requested === 'all') {
-    return projects.map((p) => createConfig(p))
+      new RunScriptWebpackPlugin({
+        name: options.output.filename,
+        autoRestart: false,
+        // 5. 启用键盘控制 (输入 'rs' 回车可手动重启)
+        keyboard: true,
+      }),
+    ]
   }
 
-  if (requested && projects.includes(requested)) {
-    return createConfig(requested)
-  }
-
-  const defaultProject = path.basename(workspace.root)
-  return createConfig(defaultProject)
+  return config
 }

@@ -7,9 +7,6 @@
     "baseUrl": "./",
     "module": "commonjs",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
       "@libs/base": [
         "libs/base/src"
       ],

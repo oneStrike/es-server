@@ -41,7 +41,7 @@ import { AppApiModule } from './modules/app.module'
       ),
     }),
     /**
-     * 启用 ScheduleModule 以支持定时任务
+     * 启用 ScheduleModule 以支持定时任务。
      * 定时任务用于定期清理过期和已撤销的 Token
      */
     ScheduleModule.forRoot(),

@@ -4,7 +4,7 @@
   "sourceRoot": "apps/admin-api/src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": false,
+    "builder": "webpack",
     "tsConfigPath": "apps/admin-api/tsconfig.app.json"
   },
   "monorepo": true,
@@ -19,15 +19,6 @@
         "tsConfigPath": "apps/admin-api/tsconfig.app.json"
       }
     },
-    "base": {
-      "type": "library",
-      "root": "libs/base",
-      "entryFile": "index",
-      "sourceRoot": "libs/base/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/base/tsconfig.lib.json"
-      }
-    },
     "app-api": {
       "type": "application",
       "root": "apps/app-api",
@@ -35,6 +26,15 @@
       "sourceRoot": "apps/app-api/src",
       "compilerOptions": {
         "tsConfigPath": "apps/app-api/tsconfig.app.json"
+      }
+    },
+    "base": {
+      "type": "library",
+      "root": "libs/base",
+      "entryFile": "index",
+      "sourceRoot": "libs/base/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/base/tsconfig.lib.json"
       }
     },
     "app-config": {
@@ -46,6 +46,15 @@
         "tsConfigPath": "libs/app-config/tsconfig.lib.json"
       }
     },
+    "content": {
+      "type": "library",
+      "root": "libs/content",
+      "entryFile": "index",
+      "sourceRoot": "libs/content/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/content/tsconfig.lib.json"
+      }
+    },
     "dictionary": {
       "type": "library",
       "root": "libs/dictionary",
@@ -55,13 +64,31 @@
         "tsConfigPath": "libs/dictionary/tsconfig.lib.json"
       }
     },
-    "member": {
+    "forum": {
       "type": "library",
-      "root": "libs/member",
+      "root": "libs/forum",
       "entryFile": "index",
-      "sourceRoot": "libs/member/src",
+      "sourceRoot": "libs/forum/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/member/tsconfig.lib.json"
+        "tsConfigPath": "libs/forum/tsconfig.lib.json"
+      }
+    },
+    "system-config": {
+      "type": "library",
+      "root": "libs/system-config",
+      "entryFile": "index",
+      "sourceRoot": "libs/system-config/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/system-config/tsconfig.lib.json"
+      }
+    },
+    "user": {
+      "type": "library",
+      "root": "libs/user",
+      "entryFile": "index",
+      "sourceRoot": "libs/user/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/user/tsconfig.lib.json"
       }
     }
   }

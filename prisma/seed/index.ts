@@ -1,7 +1,7 @@
 import process from 'node:process'
-import { makePrismaClient } from '@libs/base/database'
-import { isProduction } from '@libs/base/utils'
-import { DbConfig } from '../../config'
+import { makePrismaClient } from '../../libs/base/src/database'
+import { isProduction } from '../../libs/base/src/utils'
+import { DbConfig } from '../../libs/base/src/config'
 
 // ==================== 模块化种子数据导入 ====================
 import { createInitialAdminAccount } from './modules/admin'
