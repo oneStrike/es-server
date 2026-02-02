@@ -44,10 +44,12 @@ build_image() {
     local image_name="$3"
     local version="$4"
     local cache_tag="$5"
+    local app_type="$6"
 
     log "构建 $name ($image_name:$version)..."
     if docker build -f "$dockerfile" \
         --cache-from "$image_name:$cache_tag" \
+        --build-arg APP_TYPE="$app_type" \
         -t "$image_name:$version" \
         -t "$image_name:$cache_tag" \
         . ; then
@@ -162,18 +164,19 @@ export DOCKER_BUILDKIT=1
 ADMIN_IMAGE="es/admin/server"
 APP_IMAGE="es/app/server"
 CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
+ROOT_DOCKERFILE="Dockerfile"  # 使用根目录的统一Dockerfile
 
 ADMIN_PID=""
 APP_PID=""
 FAIL=0
 
 if [ "${NEED_ADMIN}" = "true" ]; then
-    build_image "Admin Server" "apps/admin-api/Dockerfile" "${ADMIN_IMAGE}" "${VERSION}" "${CACHE_TAG}" &
+    build_image "Admin Server" "${ROOT_DOCKERFILE}" "${ADMIN_IMAGE}" "${VERSION}" "${CACHE_TAG}" "admin" &
     ADMIN_PID=$!
 fi
 
 if [ "${NEED_APP}" = "true" ]; then
-    build_image "App Server" "apps/app-api/Dockerfile" "${APP_IMAGE}" "${VERSION}" "${CACHE_TAG}" &
+    build_image "App Server" "${ROOT_DOCKERFILE}" "${APP_IMAGE}" "${VERSION}" "${CACHE_TAG}" "app" &
     APP_PID=$!
 fi
 

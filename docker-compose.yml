@@ -45,7 +45,8 @@ services:
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
       - /tmp # 使用匿名卷挂载临时目录，避免写入容器层
     networks:
-      - app-network
+      - app-network # 保留原有内部网络
+      - 1panel-network # 新增：加入 1Panel 数据库网络（已对应真实网络）
 
   # App API 后端服务
   app-server:
@@ -93,7 +94,8 @@ services:
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
       - /tmp
     networks:
-      - app-network
+      - app-network # 保留原有内部网络
+      - 1panel-network # 新增：加入 1Panel 数据库网络（已对应真实网络）
 
   # Web 前端服务
   admin:
@@ -121,8 +123,12 @@ services:
       - app-network
 
 networks:
+  # 原有内部网络，保持不变
   app-network:
     driver: bridge
+  1panel-network:
+    external: true
+    name: 1panel-network
 
 volumes:
   es-server-logs:
