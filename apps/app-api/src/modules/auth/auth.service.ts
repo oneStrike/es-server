@@ -108,7 +108,7 @@ export class AuthService extends BaseService {
       // 创建用户基础记录
       const newUser = await tx.appUser.create({
         data: {
-          account: uid,
+          account: String(uid),
           nickname: `用户${uid}`,
           password: hashedPassword,
           phone: body.phone,
@@ -179,7 +179,7 @@ export class AuthService extends BaseService {
       const orConditions: any[] = [{ phone: accountInput }]
 
       const accountNum = Number(accountInput)
-      if (!Number.isNaN(accountNum) && accountNum <= 2147483647) {
+      if (!Number.isNaN(accountNum) && Number(accountNum) <= 2147483647) {
         orConditions.push({ account: accountNum })
       }
 

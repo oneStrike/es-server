@@ -1,14 +1,14 @@
 import { ApiDoc } from '@libs/base/decorators'
 import { AliyunConfigDto, SystemConfigService } from '@libs/system-config'
-import { Body, Controller, Get, Put } from '@nestjs/common'
+import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('系统配置')
-@Controller('admin/system/config')
+@Controller('admin/system')
 export class SystemConfigController {
   constructor(private readonly systemConfigService: SystemConfigService) {}
 
-  @Get()
+  @Get('config-detail')
   @ApiDoc({
     summary: '获取系统配置',
     model: AliyunConfigDto,
@@ -18,7 +18,7 @@ export class SystemConfigController {
     return this.systemConfigService.findMaskedConfig()
   }
 
-  @Put()
+  @Post('config-update')
   @ApiDoc({
     summary: '更新系统配置',
     model: { type: 'boolean' },
