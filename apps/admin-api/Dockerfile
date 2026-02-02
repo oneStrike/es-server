@@ -74,6 +74,4 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api/ ./
 
 EXPOSE 8080
 
-USER nestjs
-
 CMD ["node", "main.js"]
