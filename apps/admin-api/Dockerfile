@@ -66,7 +66,7 @@ RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
     pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
 
 # 3. 从 Builder 阶段复制构建产物 (dist)
-COPY --from=builder --chown=nestjs:nodejs /app/main.js ./dist/apps/admin-api/main.js
+COPY --from=builder --chown=nestjs:nodejs /app ./dist/apps/admin-api/main.js
 
 # 创建日志目录
 RUN install -d -m 0755 -o nestjs -g nodejs \
