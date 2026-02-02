@@ -47,8 +47,13 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# 合并指令：安装系统依赖、启用 pnpm、创建用户、创建目录
-RUN apk add --no-cache dumb-init tzdata openssl && \
+# 1. 复制依赖配置 (提前复制，以便合并 RUN 指令)
+COPY pnpm-lock.yaml package.json ./
+
+# 2. 合并指令：安装系统依赖、初始化环境、安装生产依赖并清理
+# 优化：合并为一个 RUN 指令，减少镜像层数
+RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
+    apk add --no-cache dumb-init tzdata openssl && \
     corepack enable && \
     addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001 && \
@@ -56,13 +61,7 @@ RUN apk add --no-cache dumb-init tzdata openssl && \
     /app/logs \
     /app/secrets \
     /app/uploads \
-    /app/uploads/admin
-
-# 1. 复制依赖配置
-COPY pnpm-lock.yaml package.json ./
-
-# 2. 安装生产依赖并清理
-RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
+    /app/uploads/admin && \
     pnpm config set store-dir /pnpm/store && \
     pnpm install --prod --frozen-lockfile --config.node-linker=hoisted && \
     # 清理 Markdown、TypeScript 源码、Map 文件、测试文件
@@ -73,7 +72,7 @@ RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
 # 3. 复制 Prisma Client
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
-# 4. 复制构建产物 (扁平化复制：直接将 main.js 和 map 文件复制到 /app)
+# 4. 复制构建产物 (扁平化复制)
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/admin-api/ ./
 
 EXPOSE 8080
