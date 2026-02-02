@@ -33,6 +33,7 @@ COPY prisma prisma
 COPY apps/app-api apps/app-api
 
 # 5. 生成 Prisma Client
+ENV DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
 RUN pnpm prisma:generate
 
 # 6. 构建应用
