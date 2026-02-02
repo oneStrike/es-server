@@ -36,8 +36,9 @@ RUN pnpm build:app
 # 7. 准备生产环境产物
 # 使用 pnpm deploy 提取应用及其生产依赖到隔离目录
 # 这会自动处理 workspace 依赖并仅保留 production 依赖
+# pnpm v10+ 需要 --legacy 参数来支持非 injected workspace 的部署
 RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
-    pnpm --filter=app-api --prod deploy /prod/app-api
+    pnpm --filter=app-api --prod deploy --legacy /prod/app-api
 
 # 8. 完善生产环境产物
 WORKDIR /prod/app-api
