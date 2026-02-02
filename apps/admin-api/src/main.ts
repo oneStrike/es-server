@@ -29,7 +29,7 @@ async function bootstrap() {
   // 配置应用（中间件、插件、日志等）
   await setupApp(app, fastifyAdapter, appConfig)
 
-  await app.listen(appConfig.port, '0.0.0.0') // 监听所有网络接口（Docker 容器必需）
+  await app.listen(appConfig.port)
 
   // 打印启动信息
   logStartupInfo(appConfig.port, appConfig.swaggerConfig.path)

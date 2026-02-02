@@ -49,7 +49,7 @@ COPY pnpm-lock.yaml package.json ./
 # 2. 合并指令：安装系统依赖、初始化环境、安装生产依赖并清理
 # 优化：合并为一个 RUN 指令，减少镜像层数
 RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
-    apk add --no-cache dumb-init tzdata openssl && \
+    apk add --no-cache dumb-init tzdata openssl vim && \
     corepack enable && \
     addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001 && \
