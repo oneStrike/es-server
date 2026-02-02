@@ -41,43 +41,44 @@ FROM node:24-alpine AS runtime
 
 ENV NODE_ENV=production \
     PORT=8080 \
-    TZ="Asia/Shanghai"
-
-# 安装基础工具
-RUN apk add --no-cache dumb-init tzdata
-
-# 启用 pnpm (运行时需要安装依赖)
-RUN corepack enable
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+    TZ="Asia/Shanghai" \
+    PNPM_HOME="/pnpm" \
+    PATH="/pnpm:$PATH"
 
 WORKDIR /app
 
-# 创建非 root 用户
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
-
-# 1. 复制依赖配置
-COPY pnpm-lock.yaml package.json ./
-
-# 2. 直接在运行时安装生产依赖
-RUN pnpm config set store-dir /pnpm/store
-RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
-    pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
-
-# 3. 从 Builder 阶段复制构建产物 (dist)
-COPY --from=builder --chown=nestjs:nodejs /app ./dist/apps/admin-api/main.js
-
-# 创建日志目录
-RUN install -d -m 0755 -o nestjs -g nodejs \
+# 合并指令：安装系统依赖、启用 pnpm、创建用户、创建目录
+# 优化：合并多个 RUN 指令减少镜像层数
+# 修复：添加 openssl (Prisma 必须)
+RUN apk add --no-cache dumb-init tzdata openssl && \
+    corepack enable && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001 && \
+    install -d -m 0755 -o nestjs -g nodejs \
     /app/logs \
     /app/secrets \
     /app/uploads \
     /app/uploads/admin
+
+# 1. 复制依赖配置
+COPY pnpm-lock.yaml package.json ./
+
+# 2. 安装生产依赖并清理
+# 优化：安装后立即清理垃圾文件，显著减小 node_modules 体积
+RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --prod --frozen-lockfile --config.node-linker=hoisted && \
+    # 清理 Markdown、TypeScript 源码、Map 文件、测试文件
+    find node_modules -type f \( -name "*.md" -o -name "*.ts" -o -name "*.map" -o -name "*.test.js" -o -name "*.spec.js" \) -delete && \
+    # 清理测试目录和类型定义
+    find node_modules -type d \( -name "test" -o -name "tests" -o -name "@types" \) -exec rm -rf {} +
+
+# 4. 复制构建产物 (修复路径错误)
+COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 
-CMD ["node", "./main.js"]
+CMD ["node", "dist/apps/admin-api/main.js"]
