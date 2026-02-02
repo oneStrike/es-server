@@ -9,6 +9,7 @@
 FROM node:24-alpine AS builder
 
 # 启用 pnpm
+RUN corepack enable
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
@@ -54,6 +55,7 @@ RUN --mount=type=cache,id=pnpm-store-runtime-v1,target=/pnpm/store \
     corepack enable && \
     # 创建必要的目录（使用root权限）
     mkdir -p /app/logs /app/secrets /app/uploads /app/uploads/admin && \
+    corepack enable && \
     pnpm config set store-dir /pnpm/store && \
     pnpm install --prod --frozen-lockfile && \
     # 优化清理策略：更高效地删除无用文件
