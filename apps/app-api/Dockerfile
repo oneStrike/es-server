@@ -9,10 +9,9 @@
 FROM node:24-alpine AS builder
 
 # 启用 pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-ENV PNPM_HOME=/pnpm
-ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
 WORKDIR /app
 
@@ -22,41 +21,32 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json nest-cli.json tsconfig*.jso
 # 2. 复制目标应用的 package.json (用于依赖解析)
 COPY apps/app-api/package.json apps/app-api/package.json
 
-# 3. 安装所有依赖
-# 使用 --frozen-lockfile 确保版本一致
+# 3. 安装所有依赖 (包括 devDependencies，用于构建)
 RUN pnpm config set store-dir /pnpm/store
 RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store pnpm install --frozen-lockfile
 
-# 4. 复制源代码 (优化: 仅复制相关目录，减少缓存失效)
-# 仅复制 libs, prisma 和目标 app，避免其他 app 变动触发重构建
+# 4. 复制源代码 (仅复制构建所需的目录)
 COPY libs libs
 COPY prisma prisma
 COPY apps/app-api apps/app-api
 
-# 5. 生成 Prisma Client
-# 设置临时的 DATABASE_URL (Prisma 需要它存在才能生成 Client)
-ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN pnpm prisma:generate
-
 # 6. 构建应用
 RUN pnpm build:app
 
-# 7. 部署生产依赖 (核心优化步骤)
-# 使用 pnpm deploy 导出仅包含生产依赖的独立包
-RUN pnpm --filter=@apps/app-api --prod deploy --legacy /prod/app-api
+# 7. 准备生产环境产物
+# 使用 pnpm deploy 提取应用及其生产依赖到隔离目录
+# 这会自动处理 workspace 依赖并仅保留 production 依赖
+RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
+    pnpm --filter=app-api --prod deploy /prod/app-api
 
-# 8. 深度清理 node_modules
+# 8. 完善生产环境产物
 WORKDIR /prod/app-api
-# 安装 node-prune
-RUN wget https://gobinaries.com/tj/node-prune --output-document - | /bin/sh && node-prune
-
-# 9. 整理部署产物
-WORKDIR /app
-# 将构建产物复制到部署目录
-# 注意: 由于 monorepo 编译结构，main.js 路径可能较深，这里保留原结构
-RUN cp -r dist /prod/app-api/dist && \
-    cp -r prisma /prod/app-api/prisma && \
-    cp prisma.config.ts /prod/app-api/prisma.config.ts
+# 复制构建后的代码 (dist)
+# 注意: 根据 tsconfig 输出结构，dist/apps/app-api 包含编译后的代码
+COPY --from=builder /app/dist/apps/app-api ./dist
+# 复制 Prisma Schema 和配置 (用于运行时/生成的 Client)
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 # --------------------------------
 # Stage 2: Runtime
@@ -67,6 +57,7 @@ ENV NODE_ENV=production \
     PORT=8080 \
     TZ="Asia/Shanghai"
 
+# 安装基础工具 (dumb-init 用于信号处理, tzdata 用于时区)
 RUN apk add --no-cache dumb-init tzdata
 
 WORKDIR /app
@@ -75,10 +66,10 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-# 1. 复制生产环境依赖和应用代码
+# 从 Builder 阶段复制完整的生产应用 (包含 node_modules, dist, package.json)
 COPY --from=builder --chown=nestjs:nodejs /prod/app-api ./
 
-# 预创建日志目录
+# 创建必要的运行时目录并设置权限
 RUN install -d -m 0755 -o nestjs -g nodejs /app/logs \
     /app/secrets \
     /app/uploads \
@@ -89,5 +80,8 @@ EXPOSE 8080
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 
-# 注意: 根据 tsconfig 编译输出，main.js 可能位于深层目录
+# 启动应用
+# 路径说明: /app/dist 对应 builder 中的 dist/apps/app-api
+# 根据 tsconfig 包含 ../../libs 的行为，编译输出通常会包含目录结构
+# 这里假设结构为 dist/apps/app-api/src/main.js
 CMD ["node", "dist/apps/app-api/apps/app-api/src/main.js"]
