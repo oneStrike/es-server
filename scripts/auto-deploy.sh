@@ -18,39 +18,6 @@ log() { echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] INFO: $1${NC}"; }
 warn() { echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARN: $1${NC}"; }
 error() { echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"; }
 
-ensure_host_dir() {
-    local dir="$1"
-    local mode="${2:-0755}"
-    if [ -z "${dir}" ]; then
-        error "宿主机目录路径为空"
-        return 1
-    fi
-    if [ -d "${dir}" ]; then
-        return 0
-    fi
-    if command -v install &> /dev/null; then
-        install -d -m "${mode}" "${dir}"
-    else
-        mkdir -p "${dir}"
-        chmod "${mode}" "${dir}" || true
-    fi
-}
-
-ensure_host_ownership() {
-    local dir="$1"
-    local uid="${2:-1001}"
-    local gid="${3:-1001}"
-    if [ "$(id -u)" -eq 0 ]; then
-        chown -R "${uid}:${gid}" "${dir}"
-        return $?
-    fi
-    if command -v sudo &> /dev/null; then
-        sudo chown -R "${uid}:${gid}" "${dir}"
-        return $?
-    fi
-    error "需要 root 或 sudo 才能 chown 宿主机目录：${dir}"
-    return 1
-}
 
 # Git Stash Helpers
 STASH_NEEDED=false
@@ -159,7 +126,7 @@ else
     fi
 fi
 
-# 3. Dependencies and Version
+# 3. Version
 if [ -f "package.json" ]; then
     VERSION=$(grep -m1 '"version":' package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
 else
@@ -167,31 +134,8 @@ else
 fi
 log "项目版本: ${VERSION}"
 
-if [ "${AUTO_DEPLOY_LOCAL_PNPM:-0}" = "1" ] && command -v pnpm &> /dev/null; then
-    log "正在更新本地依赖..."
-    pnpm install
-    log "正在生成 Prisma Client..."
-    pnpm prisma:generate
-fi
 
-# 4. Prepare host directories
-if [ "${AUTO_DEPLOY_PREPARE_HOST_DIRS:-0}" = "1" ]; then
-    HOST_UPLOADS_DIR="${HOST_UPLOADS_DIR:-./data/uploads}"
-    HOST_LOGS_DIR="${HOST_LOGS_DIR:-./data/logs}"
-    HOST_UID="${HOST_UID:-1001}"
-    HOST_GID="${HOST_GID:-1001}"
-
-    log "正在准备宿主机目录（用于 bind mount）..."
-    ensure_host_dir "${HOST_UPLOADS_DIR}" || exit 1
-    ensure_host_dir "${HOST_UPLOADS_DIR}/admin" || exit 1
-    ensure_host_dir "${HOST_UPLOADS_DIR}/app" || exit 1
-    ensure_host_ownership "${HOST_UPLOADS_DIR}" "${HOST_UID}" "${HOST_GID}" || exit 1
-
-    ensure_host_dir "${HOST_LOGS_DIR}" || exit 1
-    ensure_host_ownership "${HOST_LOGS_DIR}" "${HOST_UID}" "${HOST_GID}" || exit 1
-fi
-
-# 5. Build Images
+# 4. Build Images
 log "开始构建 Docker 镜像..."
 
 NEED_ADMIN=false
@@ -248,7 +192,7 @@ fi
 
 log "所有镜像构建完成。"
 
-# 6. Deploy Services
+# 5. Deploy Services
 DEPLOY_TARGETS=""
 if [ "${NEED_ADMIN}" = "true" ]; then
     DEPLOY_TARGETS="${DEPLOY_TARGETS} admin-server"
@@ -272,9 +216,9 @@ else
     log "没有服务需要部署。"
 fi
 
-# 7. Cleanup & Post-Deployment
-log "正在清理无用镜像..."
-docker image prune -f
+# 6. Cleanup & Post-Deployment
+# log "正在清理无用镜像..."
+# docker image prune -f
 
 pop_stash
 
