@@ -70,8 +70,6 @@ RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
     # 清理测试目录和类型定义
     find node_modules -type d \( -name "test" -o -name "tests" -o -name "@types" \) -exec rm -rf {} +
 
-# 3. 复制 Prisma Client
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
 # 4. 复制构建产物 (扁平化复制)
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/app-api/ ./
