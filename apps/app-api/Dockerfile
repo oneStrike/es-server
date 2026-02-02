@@ -43,10 +43,10 @@ RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
 WORKDIR /prod/app-api
 # 复制构建后的代码 (dist)
 # 注意: 根据 tsconfig 输出结构，dist/apps/app-api 包含编译后的代码
-COPY --from=builder /app/dist/apps/app-api ./dist
-# 复制 Prisma Schema 和配置 (用于运行时/生成的 Client)
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+# 使用 cp 命令替代 COPY --from=builder (避免循环依赖)
+RUN cp -r /app/dist ./dist && \
+    cp -r /app/prisma ./prisma && \
+    cp /app/prisma.config.ts ./prisma.config.ts
 
 # --------------------------------
 # Stage 2: Runtime
