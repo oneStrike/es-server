@@ -33,7 +33,7 @@ RUN pnpm build:admin
 # --------------------------------
 # 阶段 2: 运行时 (Runtime)
 # --------------------------------
-FROM node:24-alpine AS runtime
+FROM node:24-slim AS runtime
 
 ENV NODE_ENV=production \
     PORT=8080 \
