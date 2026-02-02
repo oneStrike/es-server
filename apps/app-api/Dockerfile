@@ -35,27 +35,7 @@ RUN pnpm prisma:generate
 RUN pnpm build:app
 
 # --------------------------------
-# 阶段 2: 生产依赖 (Prod Deps)
-# --------------------------------
-FROM node:24-alpine AS prod-deps
-
-RUN corepack enable
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-
-WORKDIR /app
-
-# 1. 复制配置文件
-COPY pnpm-lock.yaml package.json ./
-
-# 2. 仅安装生产依赖
-# 使用 hoisted 模式避免符号链接问题，以便可以直接复制 node_modules
-RUN pnpm config set store-dir /pnpm/store
-RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
-    pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
-
-# --------------------------------
-# 阶段 3: 运行时 (Runtime)
+# 阶段 2: 运行时 (Runtime)
 # --------------------------------
 FROM node:24-alpine AS runtime
 
@@ -64,8 +44,12 @@ ENV NODE_ENV=production \
     TZ="Asia/Shanghai"
 
 # 安装基础工具
-# 移除 pnpm 和构建工具，保持镜像精简
-RUN apk add --no-cache dumb-init tzdata openssl
+RUN apk add --no-cache dumb-init tzdata
+
+# 启用 pnpm (运行时需要安装依赖)
+RUN corepack enable
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
 WORKDIR /app
 
@@ -73,12 +57,13 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-# 1. 从 Prod Deps 阶段复制 node_modules
-COPY --from=prod-deps --chown=nestjs:nodejs /app/node_modules ./node_modules
+# 1. 复制依赖配置
+COPY pnpm-lock.yaml package.json ./
 
-# 2. 从 Builder 阶段复制生成的 Prisma Client
-# 必须覆盖可能存在的旧 client，确保包含生成的代码
-COPY --from=builder --chown=nestjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+# 2. 直接在运行时安装生产依赖
+RUN pnpm config set store-dir /pnpm/store
+RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
+    pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
 
 # 3. 从 Builder 阶段复制构建产物 (dist)
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
