@@ -1,6 +1,7 @@
 import type { CallHandler, ExecutionContext } from '@nestjs/common'
 import type { Observable } from 'rxjs'
 import { Injectable, NestInterceptor } from '@nestjs/common'
+import { ClsService } from 'nestjs-cls'
 import { map } from 'rxjs/operators'
 
 export interface Response<T> {
@@ -14,12 +15,19 @@ export class TransformInterceptor<T> implements NestInterceptor<
   T,
   Response<T>
 > {
+  constructor(private readonly clsService: ClsService) {}
+
   intercept(
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<Response<T>> {
     const request = context.switchToHttp().getRequest()
     const response = context.switchToHttp().getResponse()
+
+    const requestId = this.clsService.getId()
+    if (requestId) {
+      response.header('x-request-id', requestId)
+    }
 
     return next.handle().pipe(
       map((data) => {
