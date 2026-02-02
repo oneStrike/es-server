@@ -99,6 +99,18 @@ export interface ValidateBooleanOptions extends BaseValidateOptions {
 }
 
 /**
+ * 嵌套对象验证选项
+ */
+export interface ValidateNestedOptions extends BaseValidateOptions {
+  /** 嵌套对象的类型（类构造函数） */
+  type: new (...args: any[]) => any
+  /** 示例值 */
+  example?: any
+  /** 默认值 */
+  default?: any
+}
+
+/**
  * JSON验证选项
  */
 export interface ValidateJsonOptions extends BaseValidateOptions {

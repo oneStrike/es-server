@@ -1,4 +1,4 @@
-import { ValidateNumber, ValidateString } from '@libs/base/decorators'
+import { ValidateNested, ValidateNumber, ValidateString } from '@libs/base/decorators'
 
 export class AliyunSmsConfigDto {
   @ValidateString({
@@ -46,8 +46,9 @@ export class AliyunConfigDto {
   })
   accessKeySecret!: string
 
-  @ValidateString({
+  @ValidateNested({
     description: '短信配置',
+    type: AliyunSmsConfigDto,
   })
   sms!: AliyunSmsConfigDto
 }
