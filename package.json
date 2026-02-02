@@ -159,25 +159,13 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
-      "^@libs/audit(|/.*)$": "<rootDir>/libs/audit/src/$1",
-      "^@libs/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
-      "^@libs/base(|/.*)$": "<rootDir>/libs/base/src/$1",
-      "^@libs/base/modules/health(|/.*)$": "<rootDir>/libs/health/src/$1",
-      "^@libs/cache(|/.*)$": "<rootDir>/libs/cache/src/$1",
-      "^@libs/captcha(|/.*)$": "<rootDir>/libs/captcha/src/$1",
       "^@libs/app-config(|/.*)$": "<rootDir>/libs/app-config/src/$1",
-      "^@libs/config(|/.*)$": "<rootDir>/libs/config/src/$1",
-      "^@libs/crypto(|/.*)$": "<rootDir>/libs/crypto/src/$1",
-      "^@libs/database(|/.*)$": "<rootDir>/libs/database/src/$1",
-      "^@libs/decorators(|/.*)$": "<rootDir>/libs/decorators/src/$1",
+      "^@libs/base(|/.*)$": "<rootDir>/libs/base/src/$1",
+      "^@libs/content(|/.*)$": "<rootDir>/libs/content/src/$1",
       "^@libs/dictionary(|/.*)$": "<rootDir>/libs/dictionary/src/$1",
-      "^@libs/dto(|/.*)$": "<rootDir>/libs/dto/src/$1",
-      "^@libs/filters(|/.*)$": "<rootDir>/libs/filters/src/$1",
-      "^@libs/logger(|/.*)$": "<rootDir>/libs/logger/src/$1",
-      "^@libs/member(|/.*)$": "<rootDir>/libs/member/src/$1",
-      "^@libs/types(|/.*)$": "<rootDir>/libs/types/src/$1",
-      "^@libs/upload(|/.*)$": "<rootDir>/libs/upload/src/$1",
-      "^@libs/utils(|/.*)$": "<rootDir>/libs/utils/src/$1"
+      "^@libs/forum(|/.*)$": "<rootDir>/libs/forum/src/$1",
+      "^@libs/system-config(|/.*)$": "<rootDir>/libs/system-config/src/$1",
+      "^@libs/user(|/.*)$": "<rootDir>/libs/user/src/$1"
     }
   },
   "simple-git-hooks": {
