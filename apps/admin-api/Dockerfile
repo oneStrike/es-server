@@ -27,10 +27,6 @@ COPY libs libs
 COPY prisma prisma
 COPY apps/admin-api apps/admin-api
 
-# 4. 生成 Prisma 客户端
-ENV DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
-RUN pnpm prisma:generate
-
 # 5. 构建应用
 RUN pnpm build:admin
 
