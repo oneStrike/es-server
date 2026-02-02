@@ -164,7 +164,16 @@ export DOCKER_BUILDKIT=1
 ADMIN_IMAGE="es/admin/server"
 APP_IMAGE="es/app/server"
 CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
-ROOT_DOCKERFILE="Dockerfile"  # 使用根目录的统一Dockerfile
+ROOT_DOCKERFILE="./Dockerfile"  # 使用根目录的统一Dockerfile
+
+log "当前工作目录: $(pwd)"
+if [ -f "${ROOT_DOCKERFILE}" ]; then
+    log "找到 Dockerfile: ${ROOT_DOCKERFILE}"
+else
+    error "未找到 Dockerfile: ${ROOT_DOCKERFILE}"
+    ls -la
+    exit 1
+fi
 
 ADMIN_PID=""
 APP_PID=""
