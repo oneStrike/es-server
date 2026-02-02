@@ -1,64 +1,61 @@
 # syntax=docker/dockerfile:1.6
 # --------------------------------
-# Admin API Dockerfile (Optimized for Pnpm Workspace)
+# Admin API Dockerfile
 # --------------------------------
 
 # --------------------------------
-# Stage 1: Builder
+# 阶段 1: 构建器 (Builder)
 # --------------------------------
 FROM node:24-alpine AS builder
 
-# Enable pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-ENV PNPM_HOME=/pnpm
-ENV PATH=$PNPM_HOME:$PATH
+# 启用 pnpm
+RUN corepack enable
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
 WORKDIR /app
 
-# 1. Copy Workspace Configs (leverage cache)
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json nest-cli.json tsconfig*.json prisma.config.ts ./
+# 1. 复制配置文件
+COPY pnpm-lock.yaml package.json nest-cli.json tsconfig*.json prisma.config.ts ./
 
-# 2. Copy target app package.json (for dependency resolution)
-COPY apps/admin-api/package.json apps/admin-api/package.json
-
-# 3. Install dependencies
-# Use --frozen-lockfile to ensure consistent versions
+# 2. 安装所有依赖
 RUN pnpm config set store-dir /pnpm/store
 RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store pnpm install --frozen-lockfile
 
-# 4. Copy source code (Optimized: only copy relevant directories)
+# 3. 复制源代码
 COPY libs libs
 COPY prisma prisma
 COPY apps/admin-api apps/admin-api
 
-# 5. Generate Prisma Client
-# Set temporary DATABASE_URL (Prisma needs it to generate Client)
-ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+# 4. 生成 Prisma 客户端
+ENV DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
 RUN pnpm prisma:generate
 
-# 6. Build application
+# 5. 构建应用
 RUN pnpm build:admin
 
-# 7. Deploy production dependencies (Core optimization)
-# Use pnpm deploy to export a standalone package with only production deps
-RUN pnpm --filter=@apps/admin-api --prod deploy --legacy /prod/admin-api
+# --------------------------------
+# 阶段 2: 生产依赖 (Prod Deps)
+# --------------------------------
+FROM node:24-alpine AS prod-deps
 
-# 8. Deep clean node_modules
-WORKDIR /prod/admin-api
-# Install node-prune
-RUN wget https://gobinaries.com/tj/node-prune --output-document - | /bin/sh && node-prune
+RUN corepack enable
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
-# 9. Organize build artifacts
 WORKDIR /app
-# Copy build artifacts to deployment directory
-# Note: Due to monorepo build structure, main.js path might be deep
-RUN cp -r dist /prod/admin-api/dist && \
-    cp -r prisma /prod/admin-api/prisma && \
-    cp prisma.config.ts /prod/admin-api/prisma.config.ts
+
+# 1. 复制配置文件
+COPY pnpm-lock.yaml package.json ./
+
+# 2. 仅安装生产依赖
+# 使用 hoisted 模式避免符号链接问题，以便可以直接复制 node_modules
+RUN pnpm config set store-dir /pnpm/store
+RUN --mount=type=cache,id=pnpm-store-v1,target=/pnpm/store \
+    pnpm install --prod --frozen-lockfile --config.node-linker=hoisted
 
 # --------------------------------
-# Stage 2: Runtime
+# 阶段 3: 运行时 (Runtime)
 # --------------------------------
 FROM node:24-alpine AS runtime
 
@@ -66,19 +63,29 @@ ENV NODE_ENV=production \
     PORT=8080 \
     TZ="Asia/Shanghai"
 
-RUN apk add --no-cache dumb-init tzdata
+# 安装基础工具
+# 移除 pnpm 和构建工具，保持镜像精简
+RUN apk add --no-cache dumb-init tzdata openssl
 
 WORKDIR /app
 
-# Create non-root user
+# 创建非 root 用户
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nestjs -u 1001
 
-# 1. Copy production dependencies and app code
-COPY --from=builder --chown=nestjs:nodejs /prod/admin-api ./
+# 1. 从 Prod Deps 阶段复制 node_modules
+COPY --from=prod-deps --chown=nestjs:nodejs /app/node_modules ./node_modules
 
-# Create log directories
-RUN install -d -m 0755 -o nestjs -g nodejs /app/logs \
+# 2. 从 Builder 阶段复制生成的 Prisma Client
+# 必须覆盖可能存在的旧 client，确保包含生成的代码
+COPY --from=builder --chown=nestjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+
+# 3. 从 Builder 阶段复制构建产物 (dist)
+COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+
+# 创建日志目录
+RUN install -d -m 0755 -o nestjs -g nodejs \
+    /app/logs \
     /app/secrets \
     /app/uploads \
     /app/uploads/admin
@@ -88,5 +95,4 @@ EXPOSE 8080
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 
-# Note: Check the path if it changes
-CMD ["node", "dist/apps/admin-api/apps/admin-api/src/main.js"]
+CMD ["node", "dist/apps/admin-api/main.js"]
