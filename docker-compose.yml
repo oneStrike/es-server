@@ -132,6 +132,31 @@ services:
     networks:
       - app-network # 前端无需访问数据库，仅保留内部网络即可
 
+  # Web App服务
+  app:
+    image: es-app-web:latest
+    container_name: es-app
+    # 强制只使用本地镜像，不拉取
+    pull_policy: never
+    restart: unless-stopped
+    # 日志轮转
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    ports:
+      # 使用环境变量控制端口映射，默认 8082
+      - '${APP_PORT}:8080'
+    networks:
+      - app-network # 前端无需访问数据库，仅保留内部网络即可
+
 networks:
   app-network:
     driver: bridge
