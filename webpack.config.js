@@ -10,6 +10,14 @@ module.exports = function (options, webpack) {
     : 'admin-api'
 
   const isProduction = process.env.NODE_ENV === 'production'
+  const allowlistedModules = [
+    /^file-type(\/.*)?$/,
+    /^@tokenizer\/inflate(\/.*)?$/,
+    /^@tokenizer\/token(\/.*)?$/,
+    /^strtok3(\/.*)?$/,
+    /^token-types(\/.*)?$/,
+    /^uint8array-extras(\/.*)?$/,
+  ]
 
   // 如果是 monorepo 结构，通常源码在 apps/项目名
   // 这里做一个简单的回退处理
@@ -32,11 +40,23 @@ module.exports = function (options, webpack) {
       cacheDirectory: path.resolve(__dirname, '.cache/webpack', projectName),
     },
   }
+  const existingConditionNames = config.resolve?.conditionNames || []
+  config.resolve = {
+    ...config.resolve,
+    conditionNames: [
+      'import',
+      ...existingConditionNames.filter(name => name !== 'import'),
+    ],
+  }
 
   if (isProduction) {
     // 生产环境配置
     config.devtool = 'source-map'
-    config.externals = [nodeExternals()]
+    config.externals = [
+      nodeExternals({
+        allowlist: allowlistedModules,
+      }),
+    ]
     config.plugins = [...options.plugins]
   } else {
     // 开发环境配置
@@ -44,7 +64,7 @@ module.exports = function (options, webpack) {
     config.entry = ['webpack/hot/poll?100', options.entry]
     config.externals = [
       nodeExternals({
-        allowlist: ['webpack/hot/poll?100'],
+        allowlist: ['webpack/hot/poll?100', ...allowlistedModules],
       }),
     ]
     config.plugins = [
