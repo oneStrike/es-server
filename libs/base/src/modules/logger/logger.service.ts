@@ -55,11 +55,35 @@ export class LoggerService {
     )
     const consoleFmt = format.combine(format.colorize(), consoleBase)
 
+    const orderJsonFields = format((info) => {
+      const {
+        timestamp,
+        level,
+        message,
+        requestId,
+        context,
+        stack,
+        metadata,
+        ...rest
+      } = info
+      return {
+        timestamp,
+        level,
+        message,
+        requestId,
+        context,
+        stack,
+        metadata,
+        ...rest,
+      }
+    })
+
     const jsonFmt = format.combine(
       addRequestId(),
       format.timestamp(),
       format.errors({ stack: true }),
       format.metadata(), // 将其他属性放入 metadata
+      orderJsonFields(),
       format.json(),
     )
     return { consoleFmt, jsonFmt }
