@@ -89,6 +89,7 @@ RUN apk add --no-cache dumb-init tzdata && \
         /app/uploads/${APP_TYPE}
 
 COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=deps --chown=nestjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/${APP_TYPE}-api/ ./
 
 EXPOSE 8080
