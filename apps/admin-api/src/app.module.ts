@@ -27,7 +27,12 @@ import { AuditModule } from './modules/system/audit/audit.module'
     ConfigModule.forRoot({
       isGlobal: true, // 设置为全局模块，其他模块可直接使用
       cache: true, // 缓存配置
-      envFilePath: ['.env', `.env.${getEnv()}`], // 指定环境变量文件路径
+      envFilePath: [
+        'apps/admin-api/.env',
+        `apps/admin-api/.env.${getEnv()}`,
+        '.env',
+        `.env.${getEnv()}`,
+      ], // 指定环境变量文件路径
       load: [
         AppConfigRegister,
         AuthConfigRegister,

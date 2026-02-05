@@ -25,7 +25,12 @@ import { AppApiModule } from './modules/app.module'
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      envFilePath: ['.env', `.env.${getEnv()}`],
+      envFilePath: [
+        'apps/app-api/.env',
+        `apps/app-api/.env.${getEnv()}`,
+        '.env',
+        `.env.${getEnv()}`,
+      ],
       load: [
         AppConfigRegister,
         AuthConfigRegister,
