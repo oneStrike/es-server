@@ -64,7 +64,7 @@ services:
     pull_policy: never
     user: '1001:1001'
     # 覆盖默认启动命令，执行迁移
-    command: [bun, run, prisma, migrate, deploy, --schema, ./prisma/schema.prisma]
+    command: [bun, run, prisma, migrate, deploy, --schema, prisma/schema.prisma]
     # 任务执行完成后退出，不重启
     restart: no
     env_file:
