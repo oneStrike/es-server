@@ -39,39 +39,24 @@ COPY apps/${APP_TYPE}-api apps/${APP_TYPE}-api
 RUN pnpm build:${APP_TYPE}
 
 # --------------------------------
-# 阶段 2: 运行时 (Runtime) - 分离缓存层
+# 阶段 2: 生产依赖 (Deps) - 分离缓存层
 # --------------------------------
-FROM node:24-alpine AS runtime
+FROM node:24-alpine AS deps
 
 ARG APP_TYPE=admin
 ENV NODE_ENV=production \
-    PORT=8080 \
-    TZ="Asia/Shanghai" \
     PNPM_HOME="/pnpm" \
     PATH="/pnpm:$PATH"
 
 WORKDIR /app
 
-# 1. 安装系统依赖 - 独立层，不随package.json变化
-RUN apk add --no-cache dumb-init tzdata vim
-
-# 2. 初始化环境和创建用户 - 静态操作，缓存优化
-RUN --mount=type=cache,target=/root/.cache/corepack \
-    corepack enable && \
-    # 创建用户和目录 - 这些操作是固定的
-    addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001 && \
-    install -d -m 0755 -o nestjs -g nodejs \
-        /app/logs \
-        /app/secrets \
-        /app/uploads \
-        /app/uploads/${APP_TYPE}
-
-# 3. 复制依赖配置
+# 1. 复制依赖配置
 COPY pnpm-lock.yaml package.json ./
 
-# 4. 安装生产依赖 - 独立缓存层
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+# 2. 安装生产依赖 - 独立缓存层
+RUN --mount=type=cache,target=/root/.cache/corepack \
+    --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    corepack enable && \
     pnpm config set store-dir /pnpm/store && \
     pnpm install --prod --frozen-lockfile --config.node-linker=hoisted && \
     # 清理优化
@@ -82,7 +67,28 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     find node_modules -type d \( -name "test" -o -name "tests" -o -name "@types" \) -exec rm -rf {} + 2>/dev/null || true && \
     find node_modules -type d -empty -delete 2>/dev/null || true
 
-# 5. 复制构建产物
+# --------------------------------
+# 阶段 3: Bun 运行时 (Runtime)
+# --------------------------------
+FROM oven/bun:alpine AS runtime
+
+ARG APP_TYPE=admin
+ENV NODE_ENV=production \
+    PORT=8080 \
+    TZ="Asia/Shanghai"
+
+WORKDIR /app
+
+RUN apk add --no-cache dumb-init tzdata && \
+    addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001 && \
+    install -d -m 0755 -o nestjs -g nodejs \
+        /app/logs \
+        /app/secrets \
+        /app/uploads \
+        /app/uploads/${APP_TYPE}
+
+COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/dist/apps/${APP_TYPE}-api/ ./
 
 EXPOSE 8080
@@ -90,4 +96,4 @@ EXPOSE 8080
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 USER nestjs
 
-CMD ["node", "main.js"]
+CMD ["bun", "main.js"]

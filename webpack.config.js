@@ -10,6 +10,12 @@ module.exports = function (options, webpack) {
     : 'admin-api'
 
   const isProduction = process.env.NODE_ENV === 'production'
+  const shouldGenerateSourceMap = process.env.SOURCE_MAP !== 'false'
+  const productionDevtool = shouldGenerateSourceMap
+    ? process.env.SOURCE_MAP === 'true'
+      ? 'source-map'
+      : 'nosources-source-map'
+    : false
   const allowlistedModules = [
     /^file-type(\/.*)?$/,
     /^@tokenizer\/inflate(\/.*)?$/,
@@ -18,6 +24,12 @@ module.exports = function (options, webpack) {
     /^token-types(\/.*)?$/,
     /^uint8array-extras(\/.*)?$/,
   ]
+  const allowlist = (request) => {
+    if (request === 'webpack/hot/poll?100') {
+      return true
+    }
+    return allowlistedModules.some((re) => re.test(request))
+  }
 
   // 如果是 monorepo 结构，通常源码在 apps/项目名
   // 这里做一个简单的回退处理
@@ -30,14 +42,23 @@ module.exports = function (options, webpack) {
       path.resolve(appSrcPath, '.env'),
       path.resolve(__dirname, '.env'), // 加载根目录兜底
     ],
+    quiet: true,
   })
 
   const config = {
     ...options,
+    mode: isProduction ? 'production' : 'development',
     // 3. 启用 Webpack 5 持久化缓存
     cache: {
       type: 'filesystem',
       cacheDirectory: path.resolve(__dirname, '.cache/webpack', projectName),
+      buildDependencies: {
+        config: [
+          __filename,
+          path.resolve(__dirname, 'nest-cli.json'),
+          path.resolve(__dirname, 'tsconfig.json'),
+        ],
+      },
     },
   }
   const existingConditionNames = config.resolve?.conditionNames || []
@@ -45,16 +66,16 @@ module.exports = function (options, webpack) {
     ...config.resolve,
     conditionNames: [
       'import',
-      ...existingConditionNames.filter(name => name !== 'import'),
+      ...existingConditionNames.filter((name) => name !== 'import'),
     ],
   }
 
   if (isProduction) {
     // 生产环境配置
-    config.devtool = 'source-map'
+    config.devtool = productionDevtool
     config.externals = [
       nodeExternals({
-        allowlist: allowlistedModules,
+        allowlist,
       }),
     ]
     config.plugins = [...options.plugins]
@@ -64,7 +85,7 @@ module.exports = function (options, webpack) {
     config.entry = ['webpack/hot/poll?100', options.entry]
     config.externals = [
       nodeExternals({
-        allowlist: ['webpack/hot/poll?100', ...allowlistedModules],
+        allowlist,
       }),
     ]
     config.plugins = [
