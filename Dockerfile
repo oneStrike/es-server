@@ -20,7 +20,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
 
 # 复制配置文件 - 保持原有优化
-COPY pnpm-lock.yaml package.json nest-cli.json tsconfig*.json prisma.config.ts ./
+COPY pnpm-lock.yaml package.json nest-cli.json tsconfig*.json prisma.config.ts webpack.config.js ./
 
 # 安装依赖 - 统一缓存ID，提高命中率
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
@@ -36,7 +36,7 @@ ARG APP_TYPE=admin
 COPY apps/${APP_TYPE}-api apps/${APP_TYPE}-api
 
 # 构建应用
-RUN pnpm build:${APP_TYPE}
+RUN pnpm exec cross-env NODE_ENV=production nest build ${APP_TYPE}-api --webpack --webpackPath webpack.config.js
 
 # --------------------------------
 # 阶段 2: 生产依赖 (Deps) - 分离缓存层
