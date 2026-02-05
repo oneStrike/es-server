@@ -19,6 +19,10 @@ services:
         limits:
           cpus: '1.0'
           memory: 1G
+    # 依赖迁移服务
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
     # 安全选项
     security_opt:
       - no-new-privileges:true
@@ -53,6 +57,23 @@ services:
       - app-network  # 保留原有内部网络
       - 1panel-network  # 新增：加入 1Panel 数据库网络（已对应真实网络）
 
+  # 数据库迁移服务
+  migrator:
+    image: es/app/server:0.0.2
+    container_name: es-migrator
+    pull_policy: never
+    user: '1001:1001'
+    # 覆盖默认启动命令，执行迁移
+    command: ["bun", "run", "prisma:migrate:deploy"]
+    # 任务执行完成后退出，不重启
+    restart: "no"
+    env_file:
+      - ./.env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    networks:
+      - 1panel-network
+
   # App API 后端服务
   app-server:
     image: es/app/server:0.0.2
@@ -73,6 +94,10 @@ services:
         limits:
           cpus: '1.0'
           memory: 1G
+    # 依赖迁移服务
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
     # 安全选项
     security_opt:
       - no-new-privileges:true

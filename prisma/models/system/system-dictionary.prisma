@@ -30,7 +30,7 @@ model DictionaryItem {
   /// 字典项编码
   code             String     @map("code") @db.VarChar(50)
   /// 显示排序（数值越小越靠前）
-  order            Int?       @default(autoincrement()) @map("order") @db.SmallInt
+  sortOrder        Int?       @default(autoincrement()) @map("sort_order") @db.SmallInt
   /// 字典项图标URL
   cover            String?    @map("cover") @db.VarChar(200)
   /// 字典项状态：true=启用，false=禁用
@@ -47,6 +47,6 @@ model DictionaryItem {
 
   @@unique([dictionaryCode, code])
   @@index([dictionaryCode])
-  @@index([order])
+  @@index([sortOrder])
   @@map("sys_dictionary_item")
 }

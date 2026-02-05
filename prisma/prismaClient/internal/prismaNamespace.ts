@@ -4908,7 +4908,7 @@ export const DictionaryItemScalarFieldEnum = {
   dictionaryCode: 'dictionaryCode',
   name: 'name',
   code: 'code',
-  order: 'order',
+  sortOrder: 'sortOrder',
   cover: 'cover',
   isEnabled: 'isEnabled',
   description: 'description',
