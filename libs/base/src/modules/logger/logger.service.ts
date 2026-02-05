@@ -82,7 +82,7 @@ export class LoggerService {
       addRequestId(),
       format.timestamp(),
       format.errors({ stack: true }),
-      format.metadata(), // 将其他属性放入 metadata
+      format.metadata({ fillExcept: ['timestamp', 'level', 'message'] }),
       orderJsonFields(),
       format.json(),
     )
