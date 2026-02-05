@@ -1,4 +1,8 @@
-import { ValidateBoolean, ValidateString } from '@libs/base/decorators'
+import {
+  ValidateBoolean,
+  ValidateJson,
+  ValidateString,
+} from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
   ApiProperty,
@@ -106,5 +110,21 @@ export class QueryDictionaryDto extends IntersectionType(
 
 export class QueryDictionaryItemDto extends IntersectionType(
   PickType(BaseDictionaryItemDto, ['dictionaryCode']),
-  PartialType(PickType(BaseDictionaryDto, ['name', 'code', 'isEnabled'])),
-) {}
+  PartialType(
+    PickType(QueryDictionaryDto, [
+      'name',
+      'code',
+      'isEnabled',
+      'orderBy',
+      'pageIndex',
+      'pageSize',
+    ]),
+  ),
+) {
+  @ValidateJson({
+    description: '排序字段，json格式',
+    example: "{id:'desc'}",
+    required: false,
+  })
+  orderBy?: string
+}

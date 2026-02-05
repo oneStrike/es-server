@@ -1,7 +1,4 @@
-import type {
-  DictionaryItemWhereInput,
-  DictionaryWhereInput,
-} from '@libs/base/database'
+import type { DictionaryWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 import { DragReorderDto } from '@libs/base/dto'
 import { Injectable } from '@nestjs/common'
@@ -56,26 +53,20 @@ export class LibDictionaryService extends BaseService {
    * @returns 分页数据
    */
   async findDictionaryItems(queryDto: QueryDictionaryItemDto) {
-    const { dictionaryCode, name, code, isEnabled } = queryDto
-
-    const where: DictionaryItemWhereInput = {
-      dictionaryCode: {
-        in: dictionaryCode.split(','),
+    const { code, name, dictionaryCode, ...otherDto } = queryDto
+    console.log(queryDto)
+    return this.prisma.dictionaryItem.findPagination({
+      where: {
+        ...otherDto,
+        code: { contains: code },
+        name: { contains: name },
+        dictionaryCode: {
+          in: dictionaryCode.split(','),
+        },
       },
-    }
-
-    if (code) {
-      where.code = { contains: code }
-    }
-    if (name) {
-      where.name = { contains: name }
-    }
-    if (isEnabled !== undefined) {
-      where.isEnabled = isEnabled
-    }
-    console.log(where)
-    return this.prisma.dictionaryItem.findMany({
-      where: { ...where },
+      orderBy: {
+        sortOrder: 'asc',
+      },
     })
   }
 
@@ -129,7 +120,7 @@ export class LibDictionaryService extends BaseService {
       await tx.dictionaryItem.swapField(
         { id: orderDto.dragId },
         { id: orderDto.targetId },
-        'order',
+        'sortOrder',
       )
     })
   }
