@@ -54,8 +54,8 @@ services:
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
       - /tmp # 使用匿名卷挂载临时目录，避免写入容器层
     networks:
-      - app-network  # 保留原有内部网络
-      - 1panel-network  # 新增：加入 1Panel 数据库网络（已对应真实网络）
+      - app-network # 保留原有内部网络
+      - 1panel-network # 新增：加入 1Panel 数据库网络（已对应真实网络）
 
   # 数据库迁移服务
   migrator:
@@ -64,9 +64,9 @@ services:
     pull_policy: never
     user: '1001:1001'
     # 覆盖默认启动命令，执行迁移
-    command: ["bun", "run", "prisma:migrate:deploy"]
+    command: [bun, run, prisma, migrate, deploy, --schema, ./prisma/schema.prisma]
     # 任务执行完成后退出，不重启
-    restart: "no"
+    restart: no
     env_file:
       - ./.env
     environment:
@@ -129,8 +129,8 @@ services:
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
       - /tmp
     networks:
-      - app-network  # 保留原有内部网络
-      - 1panel-network  # 新增：加入 1Panel 数据库网络（已对应真实网络）
+      - app-network # 保留原有内部网络
+      - 1panel-network # 新增：加入 1Panel 数据库网络（已对应真实网络）
 
   # Web 前端服务
   admin:
@@ -155,7 +155,7 @@ services:
       # 使用环境变量控制端口映射，默认 8082
       - '${ADMIN_PORT}:8080'
     networks:
-      - app-network  # 前端无需访问数据库，仅保留内部网络即可
+      - app-network # 前端无需访问数据库，仅保留内部网络即可
 
   # Web App服务
   app:
@@ -180,7 +180,7 @@ services:
       # 使用环境变量控制端口映射，默认 8082
       - '${APP_WEB_PORT}:8080'
     networks:
-      - app-network  # 前端无需访问数据库，仅保留内部网络即可
+      - app-network # 前端无需访问数据库，仅保留内部网络即可
 
 networks:
   app-network:
@@ -188,7 +188,7 @@ networks:
   # 新增：1Panel 外部网络（已替换为 1Panel 默认真实网络名称 1panel-network）
   1panel-network:
     external: true
-    name: 1panel-network  # 若你的 1Panel 网络名称不是这个，替换为自己查到的
+    name: 1panel-network # 若你的 1Panel 网络名称不是这个，替换为自己查到的
 
 volumes:
   es-server-logs:
