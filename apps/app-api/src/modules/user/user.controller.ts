@@ -1,5 +1,5 @@
+import type { JwtUserInfoInterface } from '@libs/base/types'
 import { ApiDoc, CurrentUser } from '@libs/base/decorators'
-import { JwtUserInfoInterface } from '@libs/base/types'
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { BaseAppUserDto } from '../auth/dto/auth.dto'

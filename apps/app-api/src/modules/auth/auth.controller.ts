@@ -1,7 +1,7 @@
+import type { JwtUserInfoInterface } from '@libs/base/types'
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc, CurrentUser, Public } from '@libs/base/decorators'
 import { RsaService, SendVerifyCodeDto } from '@libs/base/modules'
-import { JwtUserInfoInterface } from '@libs/base/types'
 import { Body, Controller, Get, Post, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { AuthService } from './auth.service'

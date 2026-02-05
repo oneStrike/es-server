@@ -1,6 +1,6 @@
+import type { ITokenStorageService } from './auth.strategy'
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
-import { ITokenStorageService } from './auth.strategy'
 
 /**
  * 认证模块定时任务服务
