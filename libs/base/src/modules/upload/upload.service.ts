@@ -11,7 +11,6 @@ import {
   PayloadTooLargeException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { fileTypeStream } from 'file-type'
 import fs from 'fs-extra'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -109,6 +108,7 @@ export class UploadService {
     data: FastifyRequest,
     pathSegments?: string[],
   ): Promise<UploadResponseDto> {
+    const { fileTypeStream } = await import('file-type')
     const targetFile = await data.file()
     if (!targetFile) {
       throw new BadRequestException('上传文件不能为空')
