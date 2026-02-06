@@ -189,7 +189,6 @@ export class LoginDto extends IntersectionType(
     description: '密码',
     example: 'Aa@123456',
     required: false,
-    password: true,
   })
   password?: string
 }
@@ -202,7 +201,6 @@ export class ForgotPasswordDto extends CheckVerifyCodeDto {
     description: '密码',
     example: 'Aa@123456',
     required: true,
-    password: true,
   })
   password!: string
 }
@@ -215,7 +213,6 @@ export class ChangePasswordDto {
     description: '旧密码',
     example: 'Aa@123456',
     required: true,
-    password: true,
   })
   oldPassword!: string
 
@@ -223,7 +220,6 @@ export class ChangePasswordDto {
     description: '新密码',
     example: 'Aa@123456',
     required: true,
-    password: true,
   })
   newPassword!: string
 
@@ -231,7 +227,6 @@ export class ChangePasswordDto {
     description: '确认新密码',
     example: 'Aa@123456',
     required: true,
-    password: true,
   })
   confirmNewPassword!: string
 }
