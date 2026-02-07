@@ -19,3 +19,8 @@ export enum SmsTemplateCodeEnum {
   // 验证绑定手机号
   VERIFY_BIND_PHONE = '100005',
 }
+
+export const defaultConfig = {
+  templateCode: SmsTemplateCodeEnum.LOGIN_REGISTER,
+  endpoint: 'dypnsapi.aliyuncs.com',
+}

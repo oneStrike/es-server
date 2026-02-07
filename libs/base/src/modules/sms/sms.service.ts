@@ -8,7 +8,12 @@ import { AliyunConfigDto, SystemConfigService } from '@libs/system-config'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { CheckVerifyCodeDto, SendVerifyCodeDto } from './dto/sms.dto'
-import { SmsErrorMap, SmsErrorMessages } from './sms.constant'
+import {
+  defaultConfig,
+  defaultConfig as SmsDefaultConfig,
+  SmsErrorMap,
+  SmsErrorMessages,
+} from './sms.constant'
 
 /**
  * 阿里云短信服务
@@ -46,11 +51,7 @@ export class SmsService {
       if (dbConfig?.aliyunConfig) {
         const aliyunConfig = dbConfig.aliyunConfig as unknown as AliyunConfigDto
         // 简单校验必要字段
-        if (
-          aliyunConfig.accessKeyId &&
-          aliyunConfig.accessKeySecret &&
-          aliyunConfig.sms?.endpoint
-        ) {
+        if (aliyunConfig.accessKeyId && aliyunConfig.accessKeySecret) {
           this.cachedConfig = aliyunConfig
           this.lastConfigUpdateTime = now
           // 如果配置变更，重置 client
@@ -83,7 +84,7 @@ export class SmsService {
     if (!config.accessKeyId || !config.accessKeySecret) {
       throw new Error('阿里云短信 AccessKey 未配置')
     }
-    if (!config.sms?.endpoint || !config.sms?.signName) {
+    if (!config.sms?.signName) {
       throw new Error('阿里云短信配置不完整')
     }
 
@@ -108,7 +109,7 @@ export class SmsService {
     const openApiConfig = new $OpenApi.Config({
       credential,
     })
-    openApiConfig.endpoint = config.sms.endpoint
+    openApiConfig.endpoint = SmsDefaultConfig.endpoint
     return new Dypnsapi20170525(openApiConfig)
   }
 
@@ -150,7 +151,7 @@ export class SmsService {
    * @returns 发送结果
    */
   async sendVerifyCode(dto: SendVerifyCodeDto) {
-    const { phone, templateCode } = dto
+    const { phone, templateCode = defaultConfig.templateCode } = dto
 
     try {
       // 并行获取 client 和 config
@@ -158,6 +159,7 @@ export class SmsService {
       const client = await this.getClient(config)
 
       const runtime = new $Util.RuntimeOptions({})
+
       const sendSmsVerifyCodeRequest =
         new $Dypnsapi20170525.SendSmsVerifyCodeRequest({
           phoneNumber: phone,
