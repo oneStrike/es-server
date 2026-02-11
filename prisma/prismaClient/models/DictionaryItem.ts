@@ -28,12 +28,12 @@ export type AggregateDictionaryItem = {
 
 export type DictionaryItemAvgAggregateOutputType = {
   id: number | null
-  order: number | null
+  sortOrder: number | null
 }
 
 export type DictionaryItemSumAggregateOutputType = {
   id: number | null
-  order: number | null
+  sortOrder: number | null
 }
 
 export type DictionaryItemMinAggregateOutputType = {
@@ -41,7 +41,7 @@ export type DictionaryItemMinAggregateOutputType = {
   dictionaryCode: string | null
   name: string | null
   code: string | null
-  order: number | null
+  sortOrder: number | null
   cover: string | null
   isEnabled: boolean | null
   description: string | null
@@ -55,7 +55,7 @@ export type DictionaryItemMaxAggregateOutputType = {
   dictionaryCode: string | null
   name: string | null
   code: string | null
-  order: number | null
+  sortOrder: number | null
   cover: string | null
   isEnabled: boolean | null
   description: string | null
@@ -69,7 +69,7 @@ export type DictionaryItemCountAggregateOutputType = {
   dictionaryCode: number
   name: number
   code: number
-  order: number
+  sortOrder: number
   cover: number
   isEnabled: number
   description: number
@@ -82,12 +82,12 @@ export type DictionaryItemCountAggregateOutputType = {
 
 export type DictionaryItemAvgAggregateInputType = {
   id?: true
-  order?: true
+  sortOrder?: true
 }
 
 export type DictionaryItemSumAggregateInputType = {
   id?: true
-  order?: true
+  sortOrder?: true
 }
 
 export type DictionaryItemMinAggregateInputType = {
@@ -95,7 +95,7 @@ export type DictionaryItemMinAggregateInputType = {
   dictionaryCode?: true
   name?: true
   code?: true
-  order?: true
+  sortOrder?: true
   cover?: true
   isEnabled?: true
   description?: true
@@ -109,7 +109,7 @@ export type DictionaryItemMaxAggregateInputType = {
   dictionaryCode?: true
   name?: true
   code?: true
-  order?: true
+  sortOrder?: true
   cover?: true
   isEnabled?: true
   description?: true
@@ -123,7 +123,7 @@ export type DictionaryItemCountAggregateInputType = {
   dictionaryCode?: true
   name?: true
   code?: true
-  order?: true
+  sortOrder?: true
   cover?: true
   isEnabled?: true
   description?: true
@@ -224,7 +224,7 @@ export type DictionaryItemGroupByOutputType = {
   dictionaryCode: string
   name: string
   code: string
-  order: number | null
+  sortOrder: number | null
   cover: string | null
   isEnabled: boolean
   description: string | null
@@ -261,7 +261,7 @@ export type DictionaryItemWhereInput = {
   dictionaryCode?: Prisma.StringFilter<"DictionaryItem"> | string
   name?: Prisma.StringFilter<"DictionaryItem"> | string
   code?: Prisma.StringFilter<"DictionaryItem"> | string
-  order?: Prisma.IntNullableFilter<"DictionaryItem"> | number | null
+  sortOrder?: Prisma.IntNullableFilter<"DictionaryItem"> | number | null
   cover?: Prisma.StringNullableFilter<"DictionaryItem"> | string | null
   isEnabled?: Prisma.BoolFilter<"DictionaryItem"> | boolean
   description?: Prisma.StringNullableFilter<"DictionaryItem"> | string | null
@@ -276,7 +276,7 @@ export type DictionaryItemOrderByWithRelationInput = {
   dictionaryCode?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
-  order?: Prisma.SortOrderInput | Prisma.SortOrder
+  sortOrder?: Prisma.SortOrderInput | Prisma.SortOrder
   cover?: Prisma.SortOrderInput | Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -295,7 +295,7 @@ export type DictionaryItemWhereUniqueInput = Prisma.AtLeast<{
   dictionaryCode?: Prisma.StringFilter<"DictionaryItem"> | string
   name?: Prisma.StringFilter<"DictionaryItem"> | string
   code?: Prisma.StringFilter<"DictionaryItem"> | string
-  order?: Prisma.IntNullableFilter<"DictionaryItem"> | number | null
+  sortOrder?: Prisma.IntNullableFilter<"DictionaryItem"> | number | null
   cover?: Prisma.StringNullableFilter<"DictionaryItem"> | string | null
   isEnabled?: Prisma.BoolFilter<"DictionaryItem"> | boolean
   description?: Prisma.StringNullableFilter<"DictionaryItem"> | string | null
@@ -310,7 +310,7 @@ export type DictionaryItemOrderByWithAggregationInput = {
   dictionaryCode?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
-  order?: Prisma.SortOrderInput | Prisma.SortOrder
+  sortOrder?: Prisma.SortOrderInput | Prisma.SortOrder
   cover?: Prisma.SortOrderInput | Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -332,7 +332,7 @@ export type DictionaryItemScalarWhereWithAggregatesInput = {
   dictionaryCode?: Prisma.StringWithAggregatesFilter<"DictionaryItem"> | string
   name?: Prisma.StringWithAggregatesFilter<"DictionaryItem"> | string
   code?: Prisma.StringWithAggregatesFilter<"DictionaryItem"> | string
-  order?: Prisma.IntNullableWithAggregatesFilter<"DictionaryItem"> | number | null
+  sortOrder?: Prisma.IntNullableWithAggregatesFilter<"DictionaryItem"> | number | null
   cover?: Prisma.StringNullableWithAggregatesFilter<"DictionaryItem"> | string | null
   isEnabled?: Prisma.BoolWithAggregatesFilter<"DictionaryItem"> | boolean
   description?: Prisma.StringNullableWithAggregatesFilter<"DictionaryItem"> | string | null
@@ -344,7 +344,7 @@ export type DictionaryItemScalarWhereWithAggregatesInput = {
 export type DictionaryItemCreateInput = {
   name: string
   code: string
-  order?: number | null
+  sortOrder?: number | null
   cover?: string | null
   isEnabled?: boolean
   description?: string | null
@@ -359,7 +359,7 @@ export type DictionaryItemUncheckedCreateInput = {
   dictionaryCode: string
   name: string
   code: string
-  order?: number | null
+  sortOrder?: number | null
   cover?: string | null
   isEnabled?: boolean
   description?: string | null
@@ -371,7 +371,7 @@ export type DictionaryItemUncheckedCreateInput = {
 export type DictionaryItemUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sortOrder?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -386,7 +386,7 @@ export type DictionaryItemUncheckedUpdateInput = {
   dictionaryCode?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sortOrder?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -400,7 +400,7 @@ export type DictionaryItemCreateManyInput = {
   dictionaryCode: string
   name: string
   code: string
-  order?: number | null
+  sortOrder?: number | null
   cover?: string | null
   isEnabled?: boolean
   description?: string | null
@@ -412,7 +412,7 @@ export type DictionaryItemCreateManyInput = {
 export type DictionaryItemUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sortOrder?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -426,7 +426,7 @@ export type DictionaryItemUncheckedUpdateManyInput = {
   dictionaryCode?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sortOrder?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -455,7 +455,7 @@ export type DictionaryItemCountOrderByAggregateInput = {
   dictionaryCode?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   cover?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -466,7 +466,7 @@ export type DictionaryItemCountOrderByAggregateInput = {
 
 export type DictionaryItemAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type DictionaryItemMaxOrderByAggregateInput = {
@@ -474,7 +474,7 @@ export type DictionaryItemMaxOrderByAggregateInput = {
   dictionaryCode?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   cover?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -488,7 +488,7 @@ export type DictionaryItemMinOrderByAggregateInput = {
   dictionaryCode?: Prisma.SortOrder
   name?: Prisma.SortOrder
   code?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   cover?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   description?: Prisma.SortOrder
@@ -499,7 +499,7 @@ export type DictionaryItemMinOrderByAggregateInput = {
 
 export type DictionaryItemSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type DictionaryItemCreateNestedManyWithoutParentDictionaryInput = {
@@ -547,7 +547,7 @@ export type DictionaryItemUncheckedUpdateManyWithoutParentDictionaryNestedInput 
 export type DictionaryItemCreateWithoutParentDictionaryInput = {
   name: string
   code: string
-  order?: number | null
+  sortOrder?: number | null
   cover?: string | null
   isEnabled?: boolean
   description?: string | null
@@ -560,7 +560,7 @@ export type DictionaryItemUncheckedCreateWithoutParentDictionaryInput = {
   id?: number
   name: string
   code: string
-  order?: number | null
+  sortOrder?: number | null
   cover?: string | null
   isEnabled?: boolean
   description?: string | null
@@ -603,7 +603,7 @@ export type DictionaryItemScalarWhereInput = {
   dictionaryCode?: Prisma.StringFilter<"DictionaryItem"> | string
   name?: Prisma.StringFilter<"DictionaryItem"> | string
   code?: Prisma.StringFilter<"DictionaryItem"> | string
-  order?: Prisma.IntNullableFilter<"DictionaryItem"> | number | null
+  sortOrder?: Prisma.IntNullableFilter<"DictionaryItem"> | number | null
   cover?: Prisma.StringNullableFilter<"DictionaryItem"> | string | null
   isEnabled?: Prisma.BoolFilter<"DictionaryItem"> | boolean
   description?: Prisma.StringNullableFilter<"DictionaryItem"> | string | null
@@ -616,7 +616,7 @@ export type DictionaryItemCreateManyParentDictionaryInput = {
   id?: number
   name: string
   code: string
-  order?: number | null
+  sortOrder?: number | null
   cover?: string | null
   isEnabled?: boolean
   description?: string | null
@@ -628,7 +628,7 @@ export type DictionaryItemCreateManyParentDictionaryInput = {
 export type DictionaryItemUpdateWithoutParentDictionaryInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sortOrder?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -641,7 +641,7 @@ export type DictionaryItemUncheckedUpdateWithoutParentDictionaryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sortOrder?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -654,7 +654,7 @@ export type DictionaryItemUncheckedUpdateManyWithoutParentDictionaryInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
-  order?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  sortOrder?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -670,7 +670,7 @@ export type DictionaryItemSelect<ExtArgs extends runtime.Types.Extensions.Intern
   dictionaryCode?: boolean
   name?: boolean
   code?: boolean
-  order?: boolean
+  sortOrder?: boolean
   cover?: boolean
   isEnabled?: boolean
   description?: boolean
@@ -685,7 +685,7 @@ export type DictionaryItemSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   dictionaryCode?: boolean
   name?: boolean
   code?: boolean
-  order?: boolean
+  sortOrder?: boolean
   cover?: boolean
   isEnabled?: boolean
   description?: boolean
@@ -700,7 +700,7 @@ export type DictionaryItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   dictionaryCode?: boolean
   name?: boolean
   code?: boolean
-  order?: boolean
+  sortOrder?: boolean
   cover?: boolean
   isEnabled?: boolean
   description?: boolean
@@ -715,7 +715,7 @@ export type DictionaryItemSelectScalar = {
   dictionaryCode?: boolean
   name?: boolean
   code?: boolean
-  order?: boolean
+  sortOrder?: boolean
   cover?: boolean
   isEnabled?: boolean
   description?: boolean
@@ -724,7 +724,7 @@ export type DictionaryItemSelectScalar = {
   deletedAt?: boolean
 }
 
-export type DictionaryItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "dictionaryCode" | "name" | "code" | "order" | "cover" | "isEnabled" | "description" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["dictionaryItem"]>
+export type DictionaryItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "dictionaryCode" | "name" | "code" | "sortOrder" | "cover" | "isEnabled" | "description" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["dictionaryItem"]>
 export type DictionaryItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   parentDictionary?: boolean | Prisma.DictionaryDefaultArgs<ExtArgs>
 }
@@ -757,7 +757,7 @@ export type $DictionaryItemPayload<ExtArgs extends runtime.Types.Extensions.Inte
     /**
      * 显示排序（数值越小越靠前）
      */
-    order: number | null
+    sortOrder: number | null
     /**
      * 字典项图标URL
      */
@@ -1210,7 +1210,7 @@ export interface DictionaryItemFieldRefs {
   readonly dictionaryCode: Prisma.FieldRef<"DictionaryItem", 'String'>
   readonly name: Prisma.FieldRef<"DictionaryItem", 'String'>
   readonly code: Prisma.FieldRef<"DictionaryItem", 'String'>
-  readonly order: Prisma.FieldRef<"DictionaryItem", 'Int'>
+  readonly sortOrder: Prisma.FieldRef<"DictionaryItem", 'Int'>
   readonly cover: Prisma.FieldRef<"DictionaryItem", 'String'>
   readonly isEnabled: Prisma.FieldRef<"DictionaryItem", 'Boolean'>
   readonly description: Prisma.FieldRef<"DictionaryItem", 'String'>

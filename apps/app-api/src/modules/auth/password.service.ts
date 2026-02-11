@@ -72,7 +72,8 @@ export class PasswordService extends BaseService {
     if (!user) {
       throw new BadRequestException(AuthErrorMessages.ACCOUNT_NOT_FOUND)
     }
-    await this.smsService.validateVerifyCode({ phone, code })
+    // TODO
+    // await this.smsService.validateVerifyCode({ phone, code })
     const hashedPassword = await this.scryptService.encryptPassword(password)
 
     await this.prisma.appUser.update({

@@ -1,5 +1,5 @@
 import { BaseService } from '@libs/base/database'
-import { AesService } from '@libs/base/modules'
+import { AesService, RsaService } from '@libs/base/modules'
 import { isMasked, maskString } from '@libs/base/utils'
 import { Injectable } from '@nestjs/common'
 
@@ -13,7 +13,10 @@ const CONFIG_METADATA: Record<string, { sensitiveFields: string[] }> = {
 
 @Injectable()
 export class SystemConfigService extends BaseService {
-  constructor(private readonly aesService: AesService) {
+  constructor(
+    private readonly aesService: AesService,
+    private readonly rsaService: RsaService,
+  ) {
     super()
   }
 
@@ -90,54 +93,103 @@ export class SystemConfigService extends BaseService {
     const currentConfig = await this.findActiveConfig()
     const data: any = {}
 
-    for (const key of Object.keys(dto)) {
-      // 如果 DTO 中的 key 在元数据中有定义（是配置项 JSON）
-      if (CONFIG_METADATA[key]) {
-        const inputConfigItem = { ...dto[key] }
-        const currentConfigItem = currentConfig
-          ? (currentConfig as any)[key]
-          : null
-        const sensitiveFields = CONFIG_METADATA[key].sensitiveFields
+    // 特殊处理：如果传入的是扁平的 AliyunConfig (包含 accessKeyId 或 sms)，则将其包装到 aliyunConfig 中
+    if (dto.accessKeyId || dto.sms) {
+      // 构造 aliyunConfig 对象
+      const aliyunConfigData = { ...dto }
+      const metadata = CONFIG_METADATA.aliyunConfig
+      const currentConfigItem = currentConfig
+        ? (currentConfig as any).aliyunConfig
+        : null
 
-        for (const field of sensitiveFields) {
-          const inputValue = inputConfigItem[field]
+      // 处理加密
+      for (const field of metadata.sensitiveFields) {
+        const inputValue = aliyunConfigData[field]
 
-          // 情况 A: 前端传回的是掩码值 (e.g. "LTA***s2b") -> 说明未修改 -> 使用 DB 中的旧明文
-          if (inputValue && isMasked(inputValue)) {
-            if (currentConfigItem && currentConfigItem[field]) {
-              // 回填旧明文，下一步会被加密
-              inputConfigItem[field] = currentConfigItem[field]
-            } else {
-              // 异常情况：数据库没值但前端传了掩码？置空或保持原样
-              inputConfigItem[field] = ''
+        if (inputValue && isMasked(inputValue)) {
+          if (currentConfigItem && currentConfigItem[field]) {
+            aliyunConfigData[field] = currentConfigItem[field]
+          } else {
+            aliyunConfigData[field] = ''
+          }
+        } else if (inputValue) {
+          // 尝试 RSA 解密（处理前端传输的加密值），再 AES 加密存储
+          // 适用于 accessKeyId 和 accessKeySecret 等敏感字段
+          try {
+            const decryptedValue = this.rsaService.decryptWith(inputValue)
+            aliyunConfigData[field] =
+              await this.aesService.encrypt(decryptedValue)
+          } catch {
+            // 如果 RSA 解密失败（可能是普通明文或已经处理过），则直接 AES 加密
+            aliyunConfigData[field] = await this.aesService.encrypt(inputValue)
+          }
+        }
+      }
+
+      data.aliyunConfig = aliyunConfigData
+    } else {
+      // 常规处理（支持结构化的入参，例如 { aliyunConfig: {...}, wechatConfig: {...} }）
+      for (const key of Object.keys(dto)) {
+        if (CONFIG_METADATA[key]) {
+          const inputConfigItem = { ...dto[key] }
+          const currentConfigItem = currentConfig
+            ? (currentConfig as any)[key]
+            : null
+          const sensitiveFields = CONFIG_METADATA[key].sensitiveFields
+
+          for (const field of sensitiveFields) {
+            const inputValue = inputConfigItem[field]
+
+            if (inputValue && isMasked(inputValue)) {
+              if (currentConfigItem && currentConfigItem[field]) {
+                inputConfigItem[field] = currentConfigItem[field]
+              } else {
+                inputConfigItem[field] = ''
+              }
             }
           }
-          // 情况 B: 前端传回的是新明文 (e.g. "NewSecret123") -> 加密
-          else if (inputValue) {
-            // 保持明文，稍后统一加密
-          }
-        }
 
-        // 执行加密
-        for (const field of sensitiveFields) {
-          if (inputConfigItem[field]) {
-            inputConfigItem[field] = await this.aesService.encrypt(
-              inputConfigItem[field],
-            )
+          // 执行加密
+          for (const field of sensitiveFields) {
+            if (inputConfigItem[field]) {
+              // 尝试 RSA 解密（处理前端传输的加密值），再 AES 加密存储
+              try {
+                const decryptedValue = this.rsaService.decryptWith(
+                  inputConfigItem[field],
+                )
+                inputConfigItem[field] =
+                  await this.aesService.encrypt(decryptedValue)
+              } catch {
+                inputConfigItem[field] = await this.aesService.encrypt(
+                  inputConfigItem[field],
+                )
+              }
+            }
           }
-        }
 
-        data[key] = inputConfigItem
-      } else {
-        // 普通字段，直接赋值（如果有的话）
-        data[key] = dto[key]
+          data[key] = inputConfigItem
+        } else {
+          // 仅允许 Prisma 模型中存在的字段通过
+          // 实际上应该通过 DTO 验证，但为了防止 prisma 报错，这里可以加个简单的过滤或信任 DTO
+          // 鉴于报错是因为传入了 accessKeyId 到 root，所以上面的 if (dto.accessKeyId) 已经拦截了最常见的情况
+          // 这里保留原有逻辑，或者直接赋值（如果 DTO 结构正确的话）
+          data[key] = dto[key]
+        }
+      }
+    }
+
+    // 过滤 data 中未定义的字段，避免将 undefined 传入 Prisma
+    const cleanData: any = {}
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        cleanData[key] = value
       }
     }
 
     return this.systemConfig.upsert({
       where: { id: 1 },
-      create: data,
-      update: data,
+      create: cleanData,
+      update: cleanData,
     })
   }
 }

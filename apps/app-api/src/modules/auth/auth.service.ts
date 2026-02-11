@@ -178,10 +178,8 @@ export class AuthService extends BaseService {
       const accountInput = body.account!
       const orConditions: any[] = [{ phone: accountInput }]
 
-      const accountNum = Number(accountInput)
-      if (!Number.isNaN(accountNum) && Number(accountNum) <= 2147483647) {
-        orConditions.push({ account: accountNum })
-      }
+      // 尝试将账号作为字符串处理
+      orConditions.push({ account: accountInput })
 
       user = await this.appUser.findFirst({
         where: {
