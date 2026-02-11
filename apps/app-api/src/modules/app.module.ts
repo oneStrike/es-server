@@ -4,6 +4,7 @@ import { AppConfigModule } from './app-config/config/config.module'
 import { AppNoticeModule } from './app-config/notice/notice.module'
 import { AppPageModule } from './app-config/page/page.module'
 import { AuthModule } from './auth/auth.module'
+import { ComicModule } from './comic/comic.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
 import { UserModule } from './user/user.module'
 
@@ -15,7 +16,8 @@ import { UserModule } from './user/user.module'
     AppNoticeModule,
     AppPageModule,
     AppConfigModule,
-    AgreementModule
+    AgreementModule,
+    ComicModule,
   ],
 })
 export class AppApiModule { }

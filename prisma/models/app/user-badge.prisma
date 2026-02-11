@@ -1,0 +1,34 @@
+/// 用户徽章表 - 存储通用用户徽章信息
+model UserBadge {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 徽章名称
+  name String @db.VarChar(20)
+  /// 徽章类型（1=系统徽章, 2=成就徽章, 3=活动徽章）
+  type Int @db.SmallInt
+
+  /// 徽章描述
+  description String? @db.VarChar(200)
+  /// 徽章图标URL
+  icon String? @db.VarChar(255)
+
+  /// 排序值（数值越小越靠前）
+  sortOrder Int @default(0) @db.SmallInt
+  /// 是否启用
+  isEnabled Boolean @default(true) @map("is_enabled")
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 徽章分配关联
+  assignments UserBadgeAssignment[]
+
+  @@index([type])
+  @@index([sortOrder])
+  @@index([isEnabled])
+  @@index([createdAt])
+  @@map("user_badge")
+}

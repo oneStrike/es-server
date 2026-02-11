@@ -1,0 +1,41 @@
+/// 用户经验记录表 - 记录用户经验变化历史
+model UserExperienceRecord {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 关联的用户ID
+  userId Int @map("user_id")
+  /// 关联的规则ID
+  ruleId Int? @map("rule_id")
+  /// 关联的事件ID
+  eventId Int? @map("event_id")
+
+  /// 经验值变化
+  experience Int
+  /// 变化前经验值
+  beforeExperience Int @map("before_experience")
+  /// 变化后经验值
+  afterExperience Int @map("after_experience")
+
+  /// 事件键
+  eventKey String? @map("event_key") @db.VarChar(50)
+  /// 备注
+  remark String? @db.VarChar(500)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 关联规则
+  rule UserExperienceRule? @relation(fields: [ruleId], references: [id])
+  /// 关联事件
+  event UserGrowthEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  /// 关联用户
+  user AppUser @relation("UserExperienceRecords", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([ruleId])
+  @@index([eventId])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@map("user_experience_record")
+}

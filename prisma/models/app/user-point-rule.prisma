@@ -1,0 +1,42 @@
+/// 用户积分规则表 - 定义积分获取和消费规则，包括发帖、回复、点赞、签到等
+model UserPointRule {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 规则名称
+  name String @unique @db.VarChar(50)
+  /// 规则类型（1=发帖, 2=回复, 3=被点赞, 4=回复被点赞, 5=被收藏, 6=每日签到）
+  type Int @unique @db.SmallInt
+
+  /// 积分变化（正数为获得，负数为扣除）
+  points Int
+  /// 每日上限（0=无限制）
+  dailyLimit Int @default(0) @map("daily_limit")
+  /// 业务域标识（如 forum/comic）
+  business String? @db.VarChar(20)
+  /// 事件键（如 forum.topic.create）
+  eventKey String? @map("event_key") @db.VarChar(50)
+  /// 冷却秒数（0=无限制）
+  cooldownSeconds Int @default(0) @map("cooldown_seconds")
+  /// 总上限（0=无限制）
+  totalLimit Int @default(0) @map("total_limit")
+
+  /// 是否启用
+  isEnabled Boolean @default(true) @map("is_enabled")
+
+  /// 备注
+  remark String? @db.VarChar(500)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 积分记录关联
+  records UserPointRecord[]
+
+  @@index([type])
+  @@index([isEnabled])
+  @@index([createdAt])
+  @@map("user_point_rule")
+}

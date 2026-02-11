@@ -389,17 +389,19 @@ export const ModelName = {
   AppAgreement: 'AppAgreement',
   AppAgreementLog: 'AppAgreementLog',
   AppConfig: 'AppConfig',
-  AppExperienceRecord: 'AppExperienceRecord',
-  AppExperienceRule: 'AppExperienceRule',
-  AppLevelRule: 'AppLevelRule',
   AppNoticeRead: 'AppNoticeRead',
   AppNotice: 'AppNotice',
   AppPage: 'AppPage',
-  AppPointRecord: 'AppPointRecord',
-  AppPointRule: 'AppPointRule',
   AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
-  ForumBadge: 'ForumBadge',
+  UserBadgeAssignment: 'UserBadgeAssignment',
+  UserBadge: 'UserBadge',
+  UserExperienceRecord: 'UserExperienceRecord',
+  UserExperienceRule: 'UserExperienceRule',
+  UserGrowthEvent: 'UserGrowthEvent',
+  UserLevelRule: 'UserLevelRule',
+  UserPointRecord: 'UserPointRecord',
+  UserPointRule: 'UserPointRule',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
@@ -407,7 +409,6 @@ export const ModelName = {
   ForumModeratorSection: 'ForumModeratorSection',
   ForumModerator: 'ForumModerator',
   ForumNotification: 'ForumNotification',
-  ForumProfileBadge: 'ForumProfileBadge',
   ForumProfile: 'ForumProfile',
   ForumReplyLike: 'ForumReplyLike',
   ForumReply: 'ForumReply',
@@ -429,7 +430,12 @@ export const ModelName = {
   WorkAuthor: 'WorkAuthor',
   WorkComicAuthor: 'WorkComicAuthor',
   WorkComicCategory: 'WorkComicCategory',
+  WorkComicChapterDownload: 'WorkComicChapterDownload',
+  WorkComicChapterLike: 'WorkComicChapterLike',
+  WorkComicChapterPurchase: 'WorkComicChapterPurchase',
   WorkComicChapter: 'WorkComicChapter',
+  WorkComicFavorite: 'WorkComicFavorite',
+  WorkComicLike: 'WorkComicLike',
   WorkComicTag: 'WorkComicTag',
   WorkComic: 'WorkComic',
   WorkCategory: 'WorkCategory',
@@ -449,7 +455,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appExperienceRecord" | "appExperienceRule" | "appLevelRule" | "appNoticeRead" | "appNotice" | "appPage" | "appPointRecord" | "appPointRule" | "appUserToken" | "appUser" | "forumBadge" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfileBadge" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapter" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "userBadgeAssignment" | "userBadge" | "userExperienceRecord" | "userExperienceRule" | "userGrowthEvent" | "userLevelRule" | "userPointRecord" | "userPointRule" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapterDownload" | "workComicChapterLike" | "workComicChapterPurchase" | "workComicChapter" | "workComicFavorite" | "workComicLike" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -823,228 +829,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    AppExperienceRecord: {
-      payload: Prisma.$AppExperienceRecordPayload<ExtArgs>
-      fields: Prisma.AppExperienceRecordFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.AppExperienceRecordFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.AppExperienceRecordFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
-        }
-        findFirst: {
-          args: Prisma.AppExperienceRecordFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.AppExperienceRecordFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
-        }
-        findMany: {
-          args: Prisma.AppExperienceRecordFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>[]
-        }
-        create: {
-          args: Prisma.AppExperienceRecordCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
-        }
-        createMany: {
-          args: Prisma.AppExperienceRecordCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.AppExperienceRecordCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>[]
-        }
-        delete: {
-          args: Prisma.AppExperienceRecordDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
-        }
-        update: {
-          args: Prisma.AppExperienceRecordUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
-        }
-        deleteMany: {
-          args: Prisma.AppExperienceRecordDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.AppExperienceRecordUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.AppExperienceRecordUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>[]
-        }
-        upsert: {
-          args: Prisma.AppExperienceRecordUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRecordPayload>
-        }
-        aggregate: {
-          args: Prisma.AppExperienceRecordAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateAppExperienceRecord>
-        }
-        groupBy: {
-          args: Prisma.AppExperienceRecordGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppExperienceRecordGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.AppExperienceRecordCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppExperienceRecordCountAggregateOutputType> | number
-        }
-      }
-    }
-    AppExperienceRule: {
-      payload: Prisma.$AppExperienceRulePayload<ExtArgs>
-      fields: Prisma.AppExperienceRuleFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.AppExperienceRuleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.AppExperienceRuleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
-        }
-        findFirst: {
-          args: Prisma.AppExperienceRuleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.AppExperienceRuleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
-        }
-        findMany: {
-          args: Prisma.AppExperienceRuleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>[]
-        }
-        create: {
-          args: Prisma.AppExperienceRuleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
-        }
-        createMany: {
-          args: Prisma.AppExperienceRuleCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.AppExperienceRuleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>[]
-        }
-        delete: {
-          args: Prisma.AppExperienceRuleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
-        }
-        update: {
-          args: Prisma.AppExperienceRuleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
-        }
-        deleteMany: {
-          args: Prisma.AppExperienceRuleDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.AppExperienceRuleUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.AppExperienceRuleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>[]
-        }
-        upsert: {
-          args: Prisma.AppExperienceRuleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppExperienceRulePayload>
-        }
-        aggregate: {
-          args: Prisma.AppExperienceRuleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateAppExperienceRule>
-        }
-        groupBy: {
-          args: Prisma.AppExperienceRuleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppExperienceRuleGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.AppExperienceRuleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppExperienceRuleCountAggregateOutputType> | number
-        }
-      }
-    }
-    AppLevelRule: {
-      payload: Prisma.$AppLevelRulePayload<ExtArgs>
-      fields: Prisma.AppLevelRuleFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.AppLevelRuleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.AppLevelRuleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
-        }
-        findFirst: {
-          args: Prisma.AppLevelRuleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.AppLevelRuleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
-        }
-        findMany: {
-          args: Prisma.AppLevelRuleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>[]
-        }
-        create: {
-          args: Prisma.AppLevelRuleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
-        }
-        createMany: {
-          args: Prisma.AppLevelRuleCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.AppLevelRuleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>[]
-        }
-        delete: {
-          args: Prisma.AppLevelRuleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
-        }
-        update: {
-          args: Prisma.AppLevelRuleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
-        }
-        deleteMany: {
-          args: Prisma.AppLevelRuleDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.AppLevelRuleUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.AppLevelRuleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>[]
-        }
-        upsert: {
-          args: Prisma.AppLevelRuleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppLevelRulePayload>
-        }
-        aggregate: {
-          args: Prisma.AppLevelRuleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateAppLevelRule>
-        }
-        groupBy: {
-          args: Prisma.AppLevelRuleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppLevelRuleGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.AppLevelRuleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppLevelRuleCountAggregateOutputType> | number
-        }
-      }
-    }
     AppNoticeRead: {
       payload: Prisma.$AppNoticeReadPayload<ExtArgs>
       fields: Prisma.AppNoticeReadFieldRefs
@@ -1267,154 +1051,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    AppPointRecord: {
-      payload: Prisma.$AppPointRecordPayload<ExtArgs>
-      fields: Prisma.AppPointRecordFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.AppPointRecordFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.AppPointRecordFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
-        }
-        findFirst: {
-          args: Prisma.AppPointRecordFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.AppPointRecordFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
-        }
-        findMany: {
-          args: Prisma.AppPointRecordFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>[]
-        }
-        create: {
-          args: Prisma.AppPointRecordCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
-        }
-        createMany: {
-          args: Prisma.AppPointRecordCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.AppPointRecordCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>[]
-        }
-        delete: {
-          args: Prisma.AppPointRecordDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
-        }
-        update: {
-          args: Prisma.AppPointRecordUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
-        }
-        deleteMany: {
-          args: Prisma.AppPointRecordDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.AppPointRecordUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.AppPointRecordUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>[]
-        }
-        upsert: {
-          args: Prisma.AppPointRecordUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRecordPayload>
-        }
-        aggregate: {
-          args: Prisma.AppPointRecordAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateAppPointRecord>
-        }
-        groupBy: {
-          args: Prisma.AppPointRecordGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppPointRecordGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.AppPointRecordCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppPointRecordCountAggregateOutputType> | number
-        }
-      }
-    }
-    AppPointRule: {
-      payload: Prisma.$AppPointRulePayload<ExtArgs>
-      fields: Prisma.AppPointRuleFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.AppPointRuleFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.AppPointRuleFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
-        }
-        findFirst: {
-          args: Prisma.AppPointRuleFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.AppPointRuleFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
-        }
-        findMany: {
-          args: Prisma.AppPointRuleFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>[]
-        }
-        create: {
-          args: Prisma.AppPointRuleCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
-        }
-        createMany: {
-          args: Prisma.AppPointRuleCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.AppPointRuleCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>[]
-        }
-        delete: {
-          args: Prisma.AppPointRuleDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
-        }
-        update: {
-          args: Prisma.AppPointRuleUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
-        }
-        deleteMany: {
-          args: Prisma.AppPointRuleDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.AppPointRuleUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.AppPointRuleUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>[]
-        }
-        upsert: {
-          args: Prisma.AppPointRuleUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppPointRulePayload>
-        }
-        aggregate: {
-          args: Prisma.AppPointRuleAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateAppPointRule>
-        }
-        groupBy: {
-          args: Prisma.AppPointRuleGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppPointRuleGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.AppPointRuleCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppPointRuleCountAggregateOutputType> | number
-        }
-      }
-    }
     AppUserToken: {
       payload: Prisma.$AppUserTokenPayload<ExtArgs>
       fields: Prisma.AppUserTokenFieldRefs
@@ -1563,77 +1199,595 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    ForumBadge: {
-      payload: Prisma.$ForumBadgePayload<ExtArgs>
-      fields: Prisma.ForumBadgeFieldRefs
+    UserBadgeAssignment: {
+      payload: Prisma.$UserBadgeAssignmentPayload<ExtArgs>
+      fields: Prisma.UserBadgeAssignmentFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.ForumBadgeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload> | null
+          args: Prisma.UserBadgeAssignmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.ForumBadgeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload>
+          args: Prisma.UserBadgeAssignmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload>
         }
         findFirst: {
-          args: Prisma.ForumBadgeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload> | null
+          args: Prisma.UserBadgeAssignmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.ForumBadgeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload>
+          args: Prisma.UserBadgeAssignmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload>
         }
         findMany: {
-          args: Prisma.ForumBadgeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload>[]
+          args: Prisma.UserBadgeAssignmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload>[]
         }
         create: {
-          args: Prisma.ForumBadgeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload>
+          args: Prisma.UserBadgeAssignmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload>
         }
         createMany: {
-          args: Prisma.ForumBadgeCreateManyArgs<ExtArgs>
+          args: Prisma.UserBadgeAssignmentCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.ForumBadgeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload>[]
+          args: Prisma.UserBadgeAssignmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload>[]
         }
         delete: {
-          args: Prisma.ForumBadgeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload>
+          args: Prisma.UserBadgeAssignmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload>
         }
         update: {
-          args: Prisma.ForumBadgeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload>
+          args: Prisma.UserBadgeAssignmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload>
         }
         deleteMany: {
-          args: Prisma.ForumBadgeDeleteManyArgs<ExtArgs>
+          args: Prisma.UserBadgeAssignmentDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.ForumBadgeUpdateManyArgs<ExtArgs>
+          args: Prisma.UserBadgeAssignmentUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.ForumBadgeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload>[]
+          args: Prisma.UserBadgeAssignmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload>[]
         }
         upsert: {
-          args: Prisma.ForumBadgeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumBadgePayload>
+          args: Prisma.UserBadgeAssignmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgeAssignmentPayload>
         }
         aggregate: {
-          args: Prisma.ForumBadgeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumBadge>
+          args: Prisma.UserBadgeAssignmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserBadgeAssignment>
         }
         groupBy: {
-          args: Prisma.ForumBadgeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumBadgeGroupByOutputType>[]
+          args: Prisma.UserBadgeAssignmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserBadgeAssignmentGroupByOutputType>[]
         }
         count: {
-          args: Prisma.ForumBadgeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumBadgeCountAggregateOutputType> | number
+          args: Prisma.UserBadgeAssignmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserBadgeAssignmentCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserBadge: {
+      payload: Prisma.$UserBadgePayload<ExtArgs>
+      fields: Prisma.UserBadgeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserBadgeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserBadgeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload>
+        }
+        findFirst: {
+          args: Prisma.UserBadgeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserBadgeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload>
+        }
+        findMany: {
+          args: Prisma.UserBadgeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload>[]
+        }
+        create: {
+          args: Prisma.UserBadgeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload>
+        }
+        createMany: {
+          args: Prisma.UserBadgeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserBadgeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload>[]
+        }
+        delete: {
+          args: Prisma.UserBadgeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload>
+        }
+        update: {
+          args: Prisma.UserBadgeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload>
+        }
+        deleteMany: {
+          args: Prisma.UserBadgeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserBadgeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserBadgeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload>[]
+        }
+        upsert: {
+          args: Prisma.UserBadgeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBadgePayload>
+        }
+        aggregate: {
+          args: Prisma.UserBadgeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserBadge>
+        }
+        groupBy: {
+          args: Prisma.UserBadgeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserBadgeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserBadgeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserBadgeCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserExperienceRecord: {
+      payload: Prisma.$UserExperienceRecordPayload<ExtArgs>
+      fields: Prisma.UserExperienceRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserExperienceRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserExperienceRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.UserExperienceRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserExperienceRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
+        }
+        findMany: {
+          args: Prisma.UserExperienceRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>[]
+        }
+        create: {
+          args: Prisma.UserExperienceRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
+        }
+        createMany: {
+          args: Prisma.UserExperienceRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserExperienceRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.UserExperienceRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
+        }
+        update: {
+          args: Prisma.UserExperienceRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserExperienceRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserExperienceRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserExperienceRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserExperienceRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.UserExperienceRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserExperienceRecord>
+        }
+        groupBy: {
+          args: Prisma.UserExperienceRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserExperienceRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserExperienceRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserExperienceRecordCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserExperienceRule: {
+      payload: Prisma.$UserExperienceRulePayload<ExtArgs>
+      fields: Prisma.UserExperienceRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserExperienceRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserExperienceRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload>
+        }
+        findFirst: {
+          args: Prisma.UserExperienceRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserExperienceRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload>
+        }
+        findMany: {
+          args: Prisma.UserExperienceRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload>[]
+        }
+        create: {
+          args: Prisma.UserExperienceRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload>
+        }
+        createMany: {
+          args: Prisma.UserExperienceRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserExperienceRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload>[]
+        }
+        delete: {
+          args: Prisma.UserExperienceRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload>
+        }
+        update: {
+          args: Prisma.UserExperienceRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.UserExperienceRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserExperienceRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserExperienceRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.UserExperienceRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRulePayload>
+        }
+        aggregate: {
+          args: Prisma.UserExperienceRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserExperienceRule>
+        }
+        groupBy: {
+          args: Prisma.UserExperienceRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserExperienceRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserExperienceRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserExperienceRuleCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserGrowthEvent: {
+      payload: Prisma.$UserGrowthEventPayload<ExtArgs>
+      fields: Prisma.UserGrowthEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserGrowthEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserGrowthEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
+        }
+        findFirst: {
+          args: Prisma.UserGrowthEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserGrowthEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
+        }
+        findMany: {
+          args: Prisma.UserGrowthEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>[]
+        }
+        create: {
+          args: Prisma.UserGrowthEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
+        }
+        createMany: {
+          args: Prisma.UserGrowthEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserGrowthEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>[]
+        }
+        delete: {
+          args: Prisma.UserGrowthEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
+        }
+        update: {
+          args: Prisma.UserGrowthEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserGrowthEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserGrowthEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserGrowthEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserGrowthEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
+        }
+        aggregate: {
+          args: Prisma.UserGrowthEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserGrowthEvent>
+        }
+        groupBy: {
+          args: Prisma.UserGrowthEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserGrowthEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserGrowthEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserGrowthEventCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserLevelRule: {
+      payload: Prisma.$UserLevelRulePayload<ExtArgs>
+      fields: Prisma.UserLevelRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserLevelRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserLevelRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload>
+        }
+        findFirst: {
+          args: Prisma.UserLevelRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserLevelRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload>
+        }
+        findMany: {
+          args: Prisma.UserLevelRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload>[]
+        }
+        create: {
+          args: Prisma.UserLevelRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload>
+        }
+        createMany: {
+          args: Prisma.UserLevelRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserLevelRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload>[]
+        }
+        delete: {
+          args: Prisma.UserLevelRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload>
+        }
+        update: {
+          args: Prisma.UserLevelRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.UserLevelRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserLevelRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserLevelRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.UserLevelRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserLevelRulePayload>
+        }
+        aggregate: {
+          args: Prisma.UserLevelRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserLevelRule>
+        }
+        groupBy: {
+          args: Prisma.UserLevelRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserLevelRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserLevelRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserLevelRuleCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserPointRecord: {
+      payload: Prisma.$UserPointRecordPayload<ExtArgs>
+      fields: Prisma.UserPointRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserPointRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserPointRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.UserPointRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserPointRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
+        }
+        findMany: {
+          args: Prisma.UserPointRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>[]
+        }
+        create: {
+          args: Prisma.UserPointRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
+        }
+        createMany: {
+          args: Prisma.UserPointRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserPointRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.UserPointRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
+        }
+        update: {
+          args: Prisma.UserPointRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserPointRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserPointRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserPointRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserPointRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.UserPointRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserPointRecord>
+        }
+        groupBy: {
+          args: Prisma.UserPointRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserPointRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserPointRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserPointRecordCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserPointRule: {
+      payload: Prisma.$UserPointRulePayload<ExtArgs>
+      fields: Prisma.UserPointRuleFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserPointRuleFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserPointRuleFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload>
+        }
+        findFirst: {
+          args: Prisma.UserPointRuleFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserPointRuleFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload>
+        }
+        findMany: {
+          args: Prisma.UserPointRuleFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload>[]
+        }
+        create: {
+          args: Prisma.UserPointRuleCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload>
+        }
+        createMany: {
+          args: Prisma.UserPointRuleCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserPointRuleCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload>[]
+        }
+        delete: {
+          args: Prisma.UserPointRuleDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload>
+        }
+        update: {
+          args: Prisma.UserPointRuleUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload>
+        }
+        deleteMany: {
+          args: Prisma.UserPointRuleDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserPointRuleUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserPointRuleUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload>[]
+        }
+        upsert: {
+          args: Prisma.UserPointRuleUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRulePayload>
+        }
+        aggregate: {
+          args: Prisma.UserPointRuleAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserPointRule>
+        }
+        groupBy: {
+          args: Prisma.UserPointRuleGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserPointRuleGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserPointRuleCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserPointRuleCountAggregateOutputType> | number
         }
       }
     }
@@ -2152,80 +2306,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ForumNotificationCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ForumNotificationCountAggregateOutputType> | number
-        }
-      }
-    }
-    ForumProfileBadge: {
-      payload: Prisma.$ForumProfileBadgePayload<ExtArgs>
-      fields: Prisma.ForumProfileBadgeFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumProfileBadgeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumProfileBadgeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload>
-        }
-        findFirst: {
-          args: Prisma.ForumProfileBadgeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumProfileBadgeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload>
-        }
-        findMany: {
-          args: Prisma.ForumProfileBadgeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload>[]
-        }
-        create: {
-          args: Prisma.ForumProfileBadgeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload>
-        }
-        createMany: {
-          args: Prisma.ForumProfileBadgeCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumProfileBadgeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload>[]
-        }
-        delete: {
-          args: Prisma.ForumProfileBadgeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload>
-        }
-        update: {
-          args: Prisma.ForumProfileBadgeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumProfileBadgeDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumProfileBadgeUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumProfileBadgeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumProfileBadgeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumProfileBadgePayload>
-        }
-        aggregate: {
-          args: Prisma.ForumProfileBadgeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumProfileBadge>
-        }
-        groupBy: {
-          args: Prisma.ForumProfileBadgeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumProfileBadgeGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumProfileBadgeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumProfileBadgeCountAggregateOutputType> | number
         }
       }
     }
@@ -3783,6 +3863,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    WorkComicChapterDownload: {
+      payload: Prisma.$WorkComicChapterDownloadPayload<ExtArgs>
+      fields: Prisma.WorkComicChapterDownloadFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkComicChapterDownloadFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkComicChapterDownloadFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkComicChapterDownloadFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkComicChapterDownloadFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload>
+        }
+        findMany: {
+          args: Prisma.WorkComicChapterDownloadFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload>[]
+        }
+        create: {
+          args: Prisma.WorkComicChapterDownloadCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload>
+        }
+        createMany: {
+          args: Prisma.WorkComicChapterDownloadCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkComicChapterDownloadCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkComicChapterDownloadDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload>
+        }
+        update: {
+          args: Prisma.WorkComicChapterDownloadUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkComicChapterDownloadDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkComicChapterDownloadUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkComicChapterDownloadUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkComicChapterDownloadUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterDownloadPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkComicChapterDownloadAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComicChapterDownload>
+        }
+        groupBy: {
+          args: Prisma.WorkComicChapterDownloadGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterDownloadGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkComicChapterDownloadCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterDownloadCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkComicChapterLike: {
+      payload: Prisma.$WorkComicChapterLikePayload<ExtArgs>
+      fields: Prisma.WorkComicChapterLikeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkComicChapterLikeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkComicChapterLikeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload>
+        }
+        findFirst: {
+          args: Prisma.WorkComicChapterLikeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkComicChapterLikeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload>
+        }
+        findMany: {
+          args: Prisma.WorkComicChapterLikeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload>[]
+        }
+        create: {
+          args: Prisma.WorkComicChapterLikeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload>
+        }
+        createMany: {
+          args: Prisma.WorkComicChapterLikeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkComicChapterLikeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload>[]
+        }
+        delete: {
+          args: Prisma.WorkComicChapterLikeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload>
+        }
+        update: {
+          args: Prisma.WorkComicChapterLikeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkComicChapterLikeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkComicChapterLikeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkComicChapterLikeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkComicChapterLikeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterLikePayload>
+        }
+        aggregate: {
+          args: Prisma.WorkComicChapterLikeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComicChapterLike>
+        }
+        groupBy: {
+          args: Prisma.WorkComicChapterLikeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterLikeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkComicChapterLikeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterLikeCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkComicChapterPurchase: {
+      payload: Prisma.$WorkComicChapterPurchasePayload<ExtArgs>
+      fields: Prisma.WorkComicChapterPurchaseFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkComicChapterPurchaseFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkComicChapterPurchaseFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload>
+        }
+        findFirst: {
+          args: Prisma.WorkComicChapterPurchaseFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkComicChapterPurchaseFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload>
+        }
+        findMany: {
+          args: Prisma.WorkComicChapterPurchaseFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload>[]
+        }
+        create: {
+          args: Prisma.WorkComicChapterPurchaseCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload>
+        }
+        createMany: {
+          args: Prisma.WorkComicChapterPurchaseCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkComicChapterPurchaseCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload>[]
+        }
+        delete: {
+          args: Prisma.WorkComicChapterPurchaseDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload>
+        }
+        update: {
+          args: Prisma.WorkComicChapterPurchaseUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkComicChapterPurchaseDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkComicChapterPurchaseUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkComicChapterPurchaseUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkComicChapterPurchaseUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterPurchasePayload>
+        }
+        aggregate: {
+          args: Prisma.WorkComicChapterPurchaseAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComicChapterPurchase>
+        }
+        groupBy: {
+          args: Prisma.WorkComicChapterPurchaseGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterPurchaseGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkComicChapterPurchaseCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterPurchaseCountAggregateOutputType> | number
+        }
+      }
+    }
     WorkComicChapter: {
       payload: Prisma.$WorkComicChapterPayload<ExtArgs>
       fields: Prisma.WorkComicChapterFieldRefs
@@ -3854,6 +4156,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.WorkComicChapterCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkComicFavorite: {
+      payload: Prisma.$WorkComicFavoritePayload<ExtArgs>
+      fields: Prisma.WorkComicFavoriteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkComicFavoriteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkComicFavoriteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload>
+        }
+        findFirst: {
+          args: Prisma.WorkComicFavoriteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkComicFavoriteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload>
+        }
+        findMany: {
+          args: Prisma.WorkComicFavoriteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload>[]
+        }
+        create: {
+          args: Prisma.WorkComicFavoriteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload>
+        }
+        createMany: {
+          args: Prisma.WorkComicFavoriteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkComicFavoriteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload>[]
+        }
+        delete: {
+          args: Prisma.WorkComicFavoriteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload>
+        }
+        update: {
+          args: Prisma.WorkComicFavoriteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkComicFavoriteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkComicFavoriteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkComicFavoriteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkComicFavoriteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicFavoritePayload>
+        }
+        aggregate: {
+          args: Prisma.WorkComicFavoriteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComicFavorite>
+        }
+        groupBy: {
+          args: Prisma.WorkComicFavoriteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicFavoriteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkComicFavoriteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicFavoriteCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkComicLike: {
+      payload: Prisma.$WorkComicLikePayload<ExtArgs>
+      fields: Prisma.WorkComicLikeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkComicLikeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkComicLikeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload>
+        }
+        findFirst: {
+          args: Prisma.WorkComicLikeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkComicLikeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload>
+        }
+        findMany: {
+          args: Prisma.WorkComicLikeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload>[]
+        }
+        create: {
+          args: Prisma.WorkComicLikeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload>
+        }
+        createMany: {
+          args: Prisma.WorkComicLikeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkComicLikeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload>[]
+        }
+        delete: {
+          args: Prisma.WorkComicLikeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload>
+        }
+        update: {
+          args: Prisma.WorkComicLikeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkComicLikeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkComicLikeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkComicLikeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkComicLikeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicLikePayload>
+        }
+        aggregate: {
+          args: Prisma.WorkComicLikeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComicLike>
+        }
+        groupBy: {
+          args: Prisma.WorkComicLikeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicLikeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkComicLikeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicLikeCountAggregateOutputType> | number
         }
       }
     }
@@ -4284,60 +4734,6 @@ export const AppConfigScalarFieldEnum = {
 export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
-export const AppExperienceRecordScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  ruleId: 'ruleId',
-  experience: 'experience',
-  beforeExperience: 'beforeExperience',
-  afterExperience: 'afterExperience',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type AppExperienceRecordScalarFieldEnum = (typeof AppExperienceRecordScalarFieldEnum)[keyof typeof AppExperienceRecordScalarFieldEnum]
-
-
-export const AppExperienceRuleScalarFieldEnum = {
-  id: 'id',
-  type: 'type',
-  experience: 'experience',
-  dailyLimit: 'dailyLimit',
-  isEnabled: 'isEnabled',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type AppExperienceRuleScalarFieldEnum = (typeof AppExperienceRuleScalarFieldEnum)[keyof typeof AppExperienceRuleScalarFieldEnum]
-
-
-export const AppLevelRuleScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  requiredExperience: 'requiredExperience',
-  loginDays: 'loginDays',
-  description: 'description',
-  icon: 'icon',
-  badge: 'badge',
-  color: 'color',
-  sortOrder: 'sortOrder',
-  isEnabled: 'isEnabled',
-  dailyTopicLimit: 'dailyTopicLimit',
-  dailyReplyCommentLimit: 'dailyReplyCommentLimit',
-  postInterval: 'postInterval',
-  dailyLikeLimit: 'dailyLikeLimit',
-  dailyFavoriteLimit: 'dailyFavoriteLimit',
-  blacklistLimit: 'blacklistLimit',
-  workCollectionLimit: 'workCollectionLimit',
-  discount: 'discount',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type AppLevelRuleScalarFieldEnum = (typeof AppLevelRuleScalarFieldEnum)[keyof typeof AppLevelRuleScalarFieldEnum]
-
-
 export const AppNoticeReadScalarFieldEnum = {
   id: 'id',
   noticeId: 'noticeId',
@@ -4386,35 +4782,6 @@ export const AppPageScalarFieldEnum = {
 export type AppPageScalarFieldEnum = (typeof AppPageScalarFieldEnum)[keyof typeof AppPageScalarFieldEnum]
 
 
-export const AppPointRecordScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  ruleId: 'ruleId',
-  points: 'points',
-  beforePoints: 'beforePoints',
-  afterPoints: 'afterPoints',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type AppPointRecordScalarFieldEnum = (typeof AppPointRecordScalarFieldEnum)[keyof typeof AppPointRecordScalarFieldEnum]
-
-
-export const AppPointRuleScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  type: 'type',
-  points: 'points',
-  dailyLimit: 'dailyLimit',
-  isEnabled: 'isEnabled',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type AppPointRuleScalarFieldEnum = (typeof AppPointRuleScalarFieldEnum)[keyof typeof AppPointRuleScalarFieldEnum]
-
-
 export const AppUserTokenScalarFieldEnum = {
   id: 'id',
   jti: 'jti',
@@ -4460,7 +4827,17 @@ export const AppUserScalarFieldEnum = {
 export type AppUserScalarFieldEnum = (typeof AppUserScalarFieldEnum)[keyof typeof AppUserScalarFieldEnum]
 
 
-export const ForumBadgeScalarFieldEnum = {
+export const UserBadgeAssignmentScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  badgeId: 'badgeId',
+  createdAt: 'createdAt'
+} as const
+
+export type UserBadgeAssignmentScalarFieldEnum = (typeof UserBadgeAssignmentScalarFieldEnum)[keyof typeof UserBadgeAssignmentScalarFieldEnum]
+
+
+export const UserBadgeScalarFieldEnum = {
   id: 'id',
   name: 'name',
   type: 'type',
@@ -4472,7 +4849,125 @@ export const ForumBadgeScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type ForumBadgeScalarFieldEnum = (typeof ForumBadgeScalarFieldEnum)[keyof typeof ForumBadgeScalarFieldEnum]
+export type UserBadgeScalarFieldEnum = (typeof UserBadgeScalarFieldEnum)[keyof typeof UserBadgeScalarFieldEnum]
+
+
+export const UserExperienceRecordScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  ruleId: 'ruleId',
+  eventId: 'eventId',
+  experience: 'experience',
+  beforeExperience: 'beforeExperience',
+  afterExperience: 'afterExperience',
+  eventKey: 'eventKey',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type UserExperienceRecordScalarFieldEnum = (typeof UserExperienceRecordScalarFieldEnum)[keyof typeof UserExperienceRecordScalarFieldEnum]
+
+
+export const UserExperienceRuleScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  experience: 'experience',
+  dailyLimit: 'dailyLimit',
+  business: 'business',
+  eventKey: 'eventKey',
+  cooldownSeconds: 'cooldownSeconds',
+  totalLimit: 'totalLimit',
+  isEnabled: 'isEnabled',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserExperienceRuleScalarFieldEnum = (typeof UserExperienceRuleScalarFieldEnum)[keyof typeof UserExperienceRuleScalarFieldEnum]
+
+
+export const UserGrowthEventScalarFieldEnum = {
+  id: 'id',
+  business: 'business',
+  eventKey: 'eventKey',
+  userId: 'userId',
+  targetId: 'targetId',
+  ip: 'ip',
+  deviceId: 'deviceId',
+  occurredAt: 'occurredAt',
+  status: 'status',
+  ruleRefs: 'ruleRefs',
+  pointsDeltaApplied: 'pointsDeltaApplied',
+  experienceDeltaApplied: 'experienceDeltaApplied',
+  badgeAssigned: 'badgeAssigned',
+  context: 'context',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserGrowthEventScalarFieldEnum = (typeof UserGrowthEventScalarFieldEnum)[keyof typeof UserGrowthEventScalarFieldEnum]
+
+
+export const UserLevelRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  requiredExperience: 'requiredExperience',
+  loginDays: 'loginDays',
+  description: 'description',
+  icon: 'icon',
+  badge: 'badge',
+  color: 'color',
+  sortOrder: 'sortOrder',
+  isEnabled: 'isEnabled',
+  business: 'business',
+  dailyTopicLimit: 'dailyTopicLimit',
+  dailyReplyCommentLimit: 'dailyReplyCommentLimit',
+  postInterval: 'postInterval',
+  dailyLikeLimit: 'dailyLikeLimit',
+  dailyFavoriteLimit: 'dailyFavoriteLimit',
+  blacklistLimit: 'blacklistLimit',
+  workCollectionLimit: 'workCollectionLimit',
+  discount: 'discount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserLevelRuleScalarFieldEnum = (typeof UserLevelRuleScalarFieldEnum)[keyof typeof UserLevelRuleScalarFieldEnum]
+
+
+export const UserPointRecordScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  ruleId: 'ruleId',
+  eventId: 'eventId',
+  points: 'points',
+  beforePoints: 'beforePoints',
+  afterPoints: 'afterPoints',
+  eventKey: 'eventKey',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type UserPointRecordScalarFieldEnum = (typeof UserPointRecordScalarFieldEnum)[keyof typeof UserPointRecordScalarFieldEnum]
+
+
+export const UserPointRuleScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  points: 'points',
+  dailyLimit: 'dailyLimit',
+  business: 'business',
+  eventKey: 'eventKey',
+  cooldownSeconds: 'cooldownSeconds',
+  totalLimit: 'totalLimit',
+  isEnabled: 'isEnabled',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserPointRuleScalarFieldEnum = (typeof UserPointRuleScalarFieldEnum)[keyof typeof UserPointRuleScalarFieldEnum]
 
 
 export const ForumConfigHistoryScalarFieldEnum = {
@@ -4609,16 +5104,6 @@ export const ForumNotificationScalarFieldEnum = {
 } as const
 
 export type ForumNotificationScalarFieldEnum = (typeof ForumNotificationScalarFieldEnum)[keyof typeof ForumNotificationScalarFieldEnum]
-
-
-export const ForumProfileBadgeScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  badgeId: 'badgeId',
-  createdAt: 'createdAt'
-} as const
-
-export type ForumProfileBadgeScalarFieldEnum = (typeof ForumProfileBadgeScalarFieldEnum)[keyof typeof ForumProfileBadgeScalarFieldEnum]
 
 
 export const ForumProfileScalarFieldEnum = {
@@ -4964,6 +5449,36 @@ export const WorkComicCategoryScalarFieldEnum = {
 export type WorkComicCategoryScalarFieldEnum = (typeof WorkComicCategoryScalarFieldEnum)[keyof typeof WorkComicCategoryScalarFieldEnum]
 
 
+export const WorkComicChapterDownloadScalarFieldEnum = {
+  id: 'id',
+  chapterId: 'chapterId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkComicChapterDownloadScalarFieldEnum = (typeof WorkComicChapterDownloadScalarFieldEnum)[keyof typeof WorkComicChapterDownloadScalarFieldEnum]
+
+
+export const WorkComicChapterLikeScalarFieldEnum = {
+  id: 'id',
+  chapterId: 'chapterId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkComicChapterLikeScalarFieldEnum = (typeof WorkComicChapterLikeScalarFieldEnum)[keyof typeof WorkComicChapterLikeScalarFieldEnum]
+
+
+export const WorkComicChapterPurchaseScalarFieldEnum = {
+  id: 'id',
+  chapterId: 'chapterId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkComicChapterPurchaseScalarFieldEnum = (typeof WorkComicChapterPurchaseScalarFieldEnum)[keyof typeof WorkComicChapterPurchaseScalarFieldEnum]
+
+
 export const WorkComicChapterScalarFieldEnum = {
   id: 'id',
   comicId: 'comicId',
@@ -4993,6 +5508,26 @@ export const WorkComicChapterScalarFieldEnum = {
 } as const
 
 export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFieldEnum)[keyof typeof WorkComicChapterScalarFieldEnum]
+
+
+export const WorkComicFavoriteScalarFieldEnum = {
+  id: 'id',
+  comicId: 'comicId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkComicFavoriteScalarFieldEnum = (typeof WorkComicFavoriteScalarFieldEnum)[keyof typeof WorkComicFavoriteScalarFieldEnum]
+
+
+export const WorkComicLikeScalarFieldEnum = {
+  id: 'id',
+  comicId: 'comicId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkComicLikeScalarFieldEnum = (typeof WorkComicLikeScalarFieldEnum)[keyof typeof WorkComicLikeScalarFieldEnum]
 
 
 export const WorkComicTagScalarFieldEnum = {
@@ -5331,17 +5866,19 @@ export type GlobalOmitConfig = {
   appAgreement?: Prisma.AppAgreementOmit
   appAgreementLog?: Prisma.AppAgreementLogOmit
   appConfig?: Prisma.AppConfigOmit
-  appExperienceRecord?: Prisma.AppExperienceRecordOmit
-  appExperienceRule?: Prisma.AppExperienceRuleOmit
-  appLevelRule?: Prisma.AppLevelRuleOmit
   appNoticeRead?: Prisma.AppNoticeReadOmit
   appNotice?: Prisma.AppNoticeOmit
   appPage?: Prisma.AppPageOmit
-  appPointRecord?: Prisma.AppPointRecordOmit
-  appPointRule?: Prisma.AppPointRuleOmit
   appUserToken?: Prisma.AppUserTokenOmit
   appUser?: Prisma.AppUserOmit
-  forumBadge?: Prisma.ForumBadgeOmit
+  userBadgeAssignment?: Prisma.UserBadgeAssignmentOmit
+  userBadge?: Prisma.UserBadgeOmit
+  userExperienceRecord?: Prisma.UserExperienceRecordOmit
+  userExperienceRule?: Prisma.UserExperienceRuleOmit
+  userGrowthEvent?: Prisma.UserGrowthEventOmit
+  userLevelRule?: Prisma.UserLevelRuleOmit
+  userPointRecord?: Prisma.UserPointRecordOmit
+  userPointRule?: Prisma.UserPointRuleOmit
   forumConfigHistory?: Prisma.ForumConfigHistoryOmit
   forumConfig?: Prisma.ForumConfigOmit
   forumModeratorActionLog?: Prisma.ForumModeratorActionLogOmit
@@ -5349,7 +5886,6 @@ export type GlobalOmitConfig = {
   forumModeratorSection?: Prisma.ForumModeratorSectionOmit
   forumModerator?: Prisma.ForumModeratorOmit
   forumNotification?: Prisma.ForumNotificationOmit
-  forumProfileBadge?: Prisma.ForumProfileBadgeOmit
   forumProfile?: Prisma.ForumProfileOmit
   forumReplyLike?: Prisma.ForumReplyLikeOmit
   forumReply?: Prisma.ForumReplyOmit
@@ -5371,7 +5907,12 @@ export type GlobalOmitConfig = {
   workAuthor?: Prisma.WorkAuthorOmit
   workComicAuthor?: Prisma.WorkComicAuthorOmit
   workComicCategory?: Prisma.WorkComicCategoryOmit
+  workComicChapterDownload?: Prisma.WorkComicChapterDownloadOmit
+  workComicChapterLike?: Prisma.WorkComicChapterLikeOmit
+  workComicChapterPurchase?: Prisma.WorkComicChapterPurchaseOmit
   workComicChapter?: Prisma.WorkComicChapterOmit
+  workComicFavorite?: Prisma.WorkComicFavoriteOmit
+  workComicLike?: Prisma.WorkComicLikeOmit
   workComicTag?: Prisma.WorkComicTagOmit
   workComic?: Prisma.WorkComicOmit
   workCategory?: Prisma.WorkCategoryOmit

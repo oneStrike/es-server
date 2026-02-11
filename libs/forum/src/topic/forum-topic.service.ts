@@ -5,7 +5,7 @@ import type {
 import { BaseService } from '@libs/base/database'
 
 import { UserStatusEnum } from '@libs/base/enum'
-import { ForumPointRuleTypeEnum, ForumPointService } from '@libs/user/point'
+import { UserPointRuleTypeEnum, UserPointService } from '@libs/user/point'
 
 import {
   BadRequestException,
@@ -41,7 +41,7 @@ import { ForumTopicAuditStatusEnum } from './forum-topic.constant'
 @Injectable()
 export class ForumTopicService extends BaseService {
   constructor(
-    private readonly pointService: ForumPointService,
+    private readonly pointService: UserPointService,
     private readonly forumConfigCacheService: ForumConfigCacheService,
     private readonly sensitiveWordDetectService: ForumSensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
@@ -194,7 +194,7 @@ export class ForumTopicService extends BaseService {
     if (topic.auditStatus !== ForumTopicAuditStatusEnum.PENDING) {
       await this.pointService.addPoints({
         userId,
-        ruleType: ForumPointRuleTypeEnum.CREATE_TOPIC,
+        ruleType: UserPointRuleTypeEnum.CREATE_TOPIC,
         remark: `创建主题 ${topic.id}`,
       })
     }

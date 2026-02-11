@@ -9,6 +9,7 @@ import { DictionaryModule } from './dictionary/dictionary.module'
 import { ForumManagementModule } from './forum-management/forum-management.module'
 import { SystemConfigModule } from './system/config/system-config.module'
 import { UploadModule } from './system/upload/upload.module'
+import { UserGrowthModule } from './user-growth/user-growth.module'
 import { UserModule } from './user/user.module'
 
 @Module({
@@ -24,6 +25,7 @@ import { UserModule } from './user/user.module'
     AppNoticeModule,
     ContentModule,
     ForumManagementModule,
+    UserGrowthModule,
   ],
   controllers: [],
   providers: [],

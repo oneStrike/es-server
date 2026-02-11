@@ -45,7 +45,7 @@ model ForumSection {
   /// 板块分组（一个板块属于一个分组）
   group             ForumSectionGroup?          @relation(fields: [groupId], references: [id])
   /// 关联等级规则
-  userLevelRule     AppLevelRule?               @relation(fields: [userLevelRuleId], references: [id])
+  userLevelRule     UserLevelRule?              @relation(fields: [userLevelRuleId], references: [id])
   /// 关联最后发表主题
   lastTopic         ForumTopic?                 @relation("LastTopic", fields: [lastTopicId], references: [id])
   /// 板块下的主题

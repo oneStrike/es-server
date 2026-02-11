@@ -3,7 +3,7 @@
  */
 
 /// 经验规则类型枚举
-export enum ForumExperienceRuleTypeEnum {
+export enum UserExperienceRuleTypeEnum {
   /** 发表主题 */
   CREATE_TOPIC = 1,
   /** 发表回复 */

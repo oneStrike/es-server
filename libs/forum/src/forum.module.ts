@@ -1,8 +1,7 @@
-import { ForumExperienceModule } from '@libs/user/experience'
-import { ForumLevelRuleModule } from '@libs/user/level-rule'
-import { ForumPointModule } from '@libs/user/point'
+import { UserExperienceModule } from '@libs/user/experience'
+import { UserLevelRuleModule } from '@libs/user/level-rule'
+import { UserPointModule } from '@libs/user/point'
 import { Module } from '@nestjs/common'
-import { ForumBadgeModule } from './badge'
 import { ForumConfigModule } from './config'
 import { ForumCounterModule } from './counter'
 import { ForumModeratorModule } from './moderator'
@@ -27,14 +26,13 @@ import { ForumViewModule } from './view'
  */
 @Module({
   imports: [
-    ForumBadgeModule,
     ForumConfigModule,
     ForumCounterModule,
-    ForumExperienceModule,
-    ForumLevelRuleModule,
+    UserExperienceModule,
+    UserLevelRuleModule,
     ForumModeratorModule,
     ForumNotificationModule,
-    ForumPointModule,
+    UserPointModule,
     ForumProfileModule,
     ForumReplyModule,
     ForumReplyLikeModule,
@@ -50,14 +48,13 @@ import { ForumViewModule } from './view'
     ForumViewModule,
   ],
   exports: [
-    ForumBadgeModule,
     ForumConfigModule,
     ForumCounterModule,
-    ForumExperienceModule,
-    ForumLevelRuleModule,
+    UserExperienceModule,
+    UserLevelRuleModule,
     ForumModeratorModule,
     ForumNotificationModule,
-    ForumPointModule,
+    UserPointModule,
     ForumProfileModule,
     ForumReplyModule,
     ForumReplyLikeModule,

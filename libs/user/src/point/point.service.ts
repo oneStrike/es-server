@@ -1,31 +1,31 @@
-import type { AppPointRuleWhereInput } from '@libs/base/database'
+import type { UserPointRuleWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  AddForumPointsDto,
-  ConsumeForumPointsDto,
-  QueryForumPointRecordDto,
+  AddUserPointsDto,
+  ConsumeUserPointsDto,
+  QueryUserPointRecordDto,
 } from './dto/point-record.dto'
 import {
-  CreateForumPointRuleDto,
-  QueryForumPointRuleDto,
-  UpdateForumPointRuleDto,
+  CreateUserPointRuleDto,
+  QueryUserPointRuleDto,
+  UpdateUserPointRuleDto,
 } from './dto/point-rule.dto'
-import { ForumPointRuleTypeEnum } from './point.constant'
+import { UserPointRuleTypeEnum } from './point.constant'
 
 /**
  * 积分服务类
- * 提供论坛积分的增删改查等核心业务逻辑
+ * 提供用户积分的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ForumPointService extends BaseService {
-  get forumPointRule() {
-    return this.prisma.appPointRule
+export class UserPointService extends BaseService {
+  get userPointRule() {
+    return this.prisma.userPointRule
   }
 
-  get forumPointRecord() {
-    return this.prisma.appPointRecord
+  get userPointRecord() {
+    return this.prisma.userPointRecord
   }
 
   get appUser() {
@@ -37,8 +37,8 @@ export class ForumPointService extends BaseService {
    * @param dto 创建规则的数据
    * @returns 创建的规则信息
    */
-  async createPointRule(dto: CreateForumPointRuleDto) {
-    return this.forumPointRule.create({
+  async createPointRule(dto: CreateUserPointRuleDto) {
+    return this.userPointRule.create({
       data: dto,
     })
   }
@@ -48,8 +48,8 @@ export class ForumPointService extends BaseService {
    * @param queryPointRuleDto 查询条件
    * @returns 分页的规则列表
    */
-  async getPointRulePage(queryPointRuleDto: QueryForumPointRuleDto) {
-    const where: AppPointRuleWhereInput = queryPointRuleDto
+  async getPointRulePage(queryPointRuleDto: QueryUserPointRuleDto) {
+    const where: UserPointRuleWhereInput = queryPointRuleDto
 
     if (queryPointRuleDto.name) {
       where.name = {
@@ -58,7 +58,7 @@ export class ForumPointService extends BaseService {
       }
     }
 
-    return this.forumPointRule.findPagination({
+    return this.userPointRule.findPagination({
       where,
     })
   }
@@ -69,7 +69,7 @@ export class ForumPointService extends BaseService {
    * @returns 规则详情信息
    */
   async getPointRuleDetail(id: number) {
-    const rule = await this.forumPointRule.findUnique({
+    const rule = await this.userPointRule.findUnique({
       where: { id },
     })
 
@@ -85,10 +85,10 @@ export class ForumPointService extends BaseService {
    * @param dto 更新规则的数据
    * @returns 更新后的规则信息
    */
-  async updatePointRule(dto: UpdateForumPointRuleDto) {
+  async updatePointRule(dto: UpdateUserPointRuleDto) {
     const { id, ...updateData } = dto
 
-    return this.forumPointRule.update({
+    return this.userPointRule.update({
       where: { id },
       data: updateData,
     })
@@ -99,7 +99,7 @@ export class ForumPointService extends BaseService {
    * @param addPointsDto 增加积分的数据
    * @returns 增加积分的结果
    */
-  async addPoints(addPointsDto: AddForumPointsDto) {
+  async addPoints(addPointsDto: AddUserPointsDto) {
     const { userId, ruleType, remark } = addPointsDto
 
     const user = await this.appUser.findUnique({
@@ -110,7 +110,7 @@ export class ForumPointService extends BaseService {
       throw new BadRequestException('用户不存在')
     }
 
-    const rule = await this.forumPointRule.findUnique({
+    const rule = await this.userPointRule.findUnique({
       where: {
         type: ruleType,
         isEnabled: true,
@@ -129,7 +129,7 @@ export class ForumPointService extends BaseService {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      const todayCount = await this.forumPointRecord.count({
+      const todayCount = await this.userPointRecord.count({
         where: {
           userId,
           ruleId: rule.id,
@@ -148,7 +148,7 @@ export class ForumPointService extends BaseService {
       const beforePoints = user.points
       const afterPoints = beforePoints + rule.points
 
-      const record = await tx.appPointRecord.create({
+      const record = await tx.userPointRecord.create({
         data: {
           userId,
           ruleId: rule.id,
@@ -175,7 +175,7 @@ export class ForumPointService extends BaseService {
    * @param consumePointsDto 消费积分的数据
    * @returns 消费积分的结果
    */
-  async consumePoints(consumePointsDto: ConsumeForumPointsDto) {
+  async consumePoints(consumePointsDto: ConsumeUserPointsDto) {
     const { userId, points, remark } = consumePointsDto
 
     const user = await this.appUser.findUnique({
@@ -194,7 +194,7 @@ export class ForumPointService extends BaseService {
       const beforePoints = user.points
       const afterPoints = beforePoints - points
 
-      const record = await tx.appPointRecord.create({
+      const record = await tx.userPointRecord.create({
         data: {
           userId,
           points: -points,
@@ -220,9 +220,9 @@ export class ForumPointService extends BaseService {
    * @param dto 查询条件
    * @returns 分页的记录列表
    */
-  async getPointRecordPage(dto: QueryForumPointRecordDto) {
+  async getPointRecordPage(dto: QueryUserPointRecordDto) {
     const { userId, ruleId, ...otherDto } = dto
-    return this.forumPointRecord.findPagination({
+    return this.userPointRecord.findPagination({
       where: {
         ...otherDto,
         rule: {
@@ -241,7 +241,7 @@ export class ForumPointService extends BaseService {
    * @returns 记录详情信息
    */
   async getPointRecordDetail(id: number) {
-    const record = await this.forumPointRecord.findUnique({
+    const record = await this.userPointRecord.findUnique({
       where: { id },
       include: {
         user: true,
@@ -273,7 +273,7 @@ export class ForumPointService extends BaseService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const todayEarned = await this.forumPointRecord.aggregate({
+    const todayEarned = await this.userPointRecord.aggregate({
       where: {
         userId,
         points: {
@@ -288,7 +288,7 @@ export class ForumPointService extends BaseService {
       },
     })
 
-    const todayConsumed = await this.forumPointRecord.aggregate({
+    const todayConsumed = await this.userPointRecord.aggregate({
       where: {
         userId,
         points: {
@@ -369,7 +369,7 @@ export class ForumPointService extends BaseService {
    */
   async addPointsByRuleType(
     userId: number,
-    ruleType: ForumPointRuleTypeEnum,
+    ruleType: UserPointRuleTypeEnum,
     remark?: string,
   ) {
     return this.addPoints({

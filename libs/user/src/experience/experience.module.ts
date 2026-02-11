@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common'
-import { ForumLevelRuleModule } from '../level-rule/level-rule.module'
-import { ForumExperienceService } from './experience.service'
+import { UserLevelRuleModule } from '../level-rule/level-rule.module'
+import { UserExperienceService } from './experience.service'
 
 /**
  * 经验模块
- * 提供论坛经验管理的完整功能
+ * 提供用户经验管理的完整功能
  */
 @Module({
-  imports: [ForumLevelRuleModule],
-  providers: [ForumExperienceService],
-  exports: [ForumExperienceService],
+  imports: [UserLevelRuleModule],
+  providers: [UserExperienceService],
+  exports: [UserExperienceService],
 })
-export class ForumExperienceModule {}
+export class UserExperienceModule {}

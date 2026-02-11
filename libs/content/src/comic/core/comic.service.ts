@@ -1,7 +1,9 @@
 import type { WorkComicWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 import { isNotNil } from '@libs/base/utils'
+import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { ComicGrowthEventKey } from './comic.constant'
 import {
   CreateComicDto,
   QueryComicDto,
@@ -16,6 +18,24 @@ import {
 export class ComicService extends BaseService {
   get workComic() {
     return this.prisma.workComic
+  }
+
+  get workComicLike() {
+    return this.prisma.workComicLike
+  }
+
+  get workComicFavorite() {
+    return this.prisma.workComicFavorite
+  }
+
+  get appUser() {
+    return this.prisma.appUser
+  }
+
+  constructor(
+    private readonly userGrowthEventService: UserGrowthEventService,
+  ) {
+    super()
   }
 
   /**
@@ -248,6 +268,291 @@ export class ComicService extends BaseService {
     }
 
     return comic
+  }
+
+  async getComicDetailWithUserStatus(id: number, userId: number) {
+    const [comic, like, favorite] = await Promise.all([
+      this.getComicDetail(id),
+      this.workComicLike.findUnique({
+        where: {
+          comicId_userId: {
+            comicId: id,
+            userId,
+          },
+        },
+      }),
+      this.workComicFavorite.findUnique({
+        where: {
+          comicId_userId: {
+            comicId: id,
+            userId,
+          },
+        },
+      }),
+    ])
+
+    return {
+      ...comic,
+      liked: !!like,
+      favorited: !!favorite,
+    }
+  }
+
+  async incrementViewCount(
+    id: number,
+    userId: number,
+    ip?: string,
+    deviceId?: string,
+  ) {
+    await this.workComic.update({
+      where: { id },
+      data: {
+        viewCount: {
+          increment: 1,
+        },
+      },
+    })
+
+    await this.userGrowthEventService.handleEvent({
+      business: 'comic',
+      eventKey: ComicGrowthEventKey.View,
+      userId,
+      targetId: id,
+      ip,
+      deviceId,
+      occurredAt: new Date(),
+    })
+
+    return { id }
+  }
+
+  async incrementLikeCount(
+    id: number,
+    userId: number,
+    ip?: string,
+    deviceId?: string,
+  ) {
+    const [comic, user] = await Promise.all([
+      this.workComic.findUnique({ where: { id } }),
+      this.appUser.findUnique({ where: { id: userId } }),
+    ])
+
+    if (!comic) {
+      throw new BadRequestException('漫画不存在')
+    }
+
+    if (!user) {
+      throw new BadRequestException('用户不存在')
+    }
+
+    const existingLike = await this.workComicLike.findUnique({
+      where: {
+        comicId_userId: {
+          comicId: id,
+          userId,
+        },
+      },
+    })
+
+    if (existingLike) {
+      throw new BadRequestException('已经点赞过该漫画')
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.workComicLike.create({
+        data: {
+          comicId: id,
+          userId,
+        },
+      })
+
+      await tx.workComic.update({
+        where: { id },
+        data: {
+          likeCount: {
+            increment: 1,
+          },
+        },
+      })
+    })
+
+    await this.userGrowthEventService.handleEvent({
+      business: 'comic',
+      eventKey: ComicGrowthEventKey.Like,
+      userId,
+      targetId: id,
+      ip,
+      deviceId,
+      occurredAt: new Date(),
+    })
+
+    return { id }
+  }
+
+  async incrementFavoriteCount(
+    id: number,
+    userId: number,
+    ip?: string,
+    deviceId?: string,
+  ) {
+    const [comic, user] = await Promise.all([
+      this.workComic.findUnique({ where: { id } }),
+      this.appUser.findUnique({ where: { id: userId } }),
+    ])
+
+    if (!comic) {
+      throw new BadRequestException('漫画不存在')
+    }
+
+    if (!user) {
+      throw new BadRequestException('用户不存在')
+    }
+
+    const existingFavorite = await this.workComicFavorite.findUnique({
+      where: {
+        comicId_userId: {
+          comicId: id,
+          userId,
+        },
+      },
+    })
+
+    if (existingFavorite) {
+      throw new BadRequestException('已经收藏过该漫画')
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.workComicFavorite.create({
+        data: {
+          comicId: id,
+          userId,
+        },
+      })
+
+      await tx.workComic.update({
+        where: { id },
+        data: {
+          favoriteCount: {
+            increment: 1,
+          },
+        },
+      })
+    })
+
+    await this.userGrowthEventService.handleEvent({
+      business: 'comic',
+      eventKey: ComicGrowthEventKey.Favorite,
+      userId,
+      targetId: id,
+      ip,
+      deviceId,
+      occurredAt: new Date(),
+    })
+
+    return { id }
+  }
+
+  async checkUserLiked(comicId: number, userId: number) {
+    const like = await this.workComicLike.findUnique({
+      where: {
+        comicId_userId: {
+          comicId,
+          userId,
+        },
+      },
+    })
+
+    return {
+      liked: !!like,
+    }
+  }
+
+  async checkUserFavorited(comicId: number, userId: number) {
+    const favorite = await this.workComicFavorite.findUnique({
+      where: {
+        comicId_userId: {
+          comicId,
+          userId,
+        },
+      },
+    })
+
+    return {
+      favorited: !!favorite,
+    }
+  }
+
+  async getComicUserStatus(ids: number[], userId: number) {
+    if (ids.length === 0) {
+      return []
+    }
+
+    const [likes, favorites] = await Promise.all([
+      this.workComicLike.findMany({
+        where: {
+          userId,
+          comicId: { in: ids },
+        },
+        select: { comicId: true },
+      }),
+      this.workComicFavorite.findMany({
+        where: {
+          userId,
+          comicId: { in: ids },
+        },
+        select: { comicId: true },
+      }),
+    ])
+
+    const likeSet = new Set(likes.map((item) => item.comicId))
+    const favoriteSet = new Set(favorites.map((item) => item.comicId))
+
+    return ids.map((id) => ({
+      id,
+      liked: likeSet.has(id),
+      favorited: favoriteSet.has(id),
+    }))
+  }
+
+  async getComicPageWithUserStatus(
+    queryComicDto: QueryComicDto,
+    userId: number,
+  ) {
+    const page = await this.getComicPage(queryComicDto)
+    const comicIds = page.list.map((item) => item.id)
+
+    if (comicIds.length === 0) {
+      return page
+    }
+
+    const [likes, favorites] = await Promise.all([
+      this.workComicLike.findMany({
+        where: {
+          userId,
+          comicId: { in: comicIds },
+        },
+        select: { comicId: true },
+      }),
+      this.workComicFavorite.findMany({
+        where: {
+          userId,
+          comicId: { in: comicIds },
+        },
+        select: { comicId: true },
+      }),
+    ])
+
+    const likeSet = new Set(likes.map((item) => item.comicId))
+    const favoriteSet = new Set(favorites.map((item) => item.comicId))
+
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        ...item,
+        liked: likeSet.has(item.id),
+        favorited: favoriteSet.has(item.id),
+      })),
+    }
   }
 
   /**

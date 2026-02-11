@@ -60,12 +60,12 @@ export async function createInitialForumBadges(prisma: any) {
   ]
 
   for (const badgeData of INITIAL_FORUM_BADGES) {
-    const existingBadge = await prisma.forumBadge.findFirst({
+    const existingBadge = await prisma.userBadge.findFirst({
       where: { name: badgeData.name },
     })
 
     if (!existingBadge) {
-      await prisma.forumBadge.create({
+      await prisma.userBadge.create({
         data: {
           name: badgeData.name,
           description: badgeData.description,

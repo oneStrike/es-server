@@ -63,21 +63,6 @@ export type AppAgreementLog = Prisma.AppAgreementLogModel
  */
 export type AppConfig = Prisma.AppConfigModel
 /**
- * Model AppExperienceRecord
- * 应用经验记录表 - 记录用户经验变化历史
- */
-export type AppExperienceRecord = Prisma.AppExperienceRecordModel
-/**
- * Model AppExperienceRule
- * 应用经验规则表 - 定义经验获取规则，包括发表主题、回复、点赞、签到等
- */
-export type AppExperienceRule = Prisma.AppExperienceRuleModel
-/**
- * Model AppLevelRule
- * 应用等级规则表 - 定义用户等级规则，包括等级名称、所需积分、等级权益等
- */
-export type AppLevelRule = Prisma.AppLevelRuleModel
-/**
  * Model AppNoticeRead
  * 应用通知阅读记录表 - 记录用户已读的通知
  */
@@ -93,16 +78,6 @@ export type AppNotice = Prisma.AppNoticeModel
  */
 export type AppPage = Prisma.AppPageModel
 /**
- * Model AppPointRecord
- * 应用积分记录表 - 记录用户积分变化历史，包括获得和消费的积分
- */
-export type AppPointRecord = Prisma.AppPointRecordModel
-/**
- * Model AppPointRule
- * 应用积分规则表 - 定义积分获取和消费规则，包括发表主题、回复、点赞、签到等
- */
-export type AppPointRule = Prisma.AppPointRuleModel
-/**
  * Model AppUserToken
  * 应用用户令牌表 - 用于存储用户的 JWT Token，支持多设备登录管理和 Token 撤销
  */
@@ -113,10 +88,45 @@ export type AppUserToken = Prisma.AppUserTokenModel
  */
 export type AppUser = Prisma.AppUserModel
 /**
- * Model ForumBadge
- * 论坛徽章表 - 存储论坛徽章信息，包括系统徽章、成就徽章、活动徽章等
+ * Model UserBadgeAssignment
+ * 用户徽章关联表 - 管理用户获得的徽章
  */
-export type ForumBadge = Prisma.ForumBadgeModel
+export type UserBadgeAssignment = Prisma.UserBadgeAssignmentModel
+/**
+ * Model UserBadge
+ * 用户徽章表 - 存储通用用户徽章信息
+ */
+export type UserBadge = Prisma.UserBadgeModel
+/**
+ * Model UserExperienceRecord
+ * 用户经验记录表 - 记录用户经验变化历史
+ */
+export type UserExperienceRecord = Prisma.UserExperienceRecordModel
+/**
+ * Model UserExperienceRule
+ * 用户经验规则表 - 定义经验获取规则，包括发帖、回复、点赞、签到等
+ */
+export type UserExperienceRule = Prisma.UserExperienceRuleModel
+/**
+ * Model UserGrowthEvent
+ * 用户成长事件审计表 - 记录成长事件处理过程与结果
+ */
+export type UserGrowthEvent = Prisma.UserGrowthEventModel
+/**
+ * Model UserLevelRule
+ * 用户等级规则表 - 定义用户等级规则，包括等级名称、所需经验、等级权益等
+ */
+export type UserLevelRule = Prisma.UserLevelRuleModel
+/**
+ * Model UserPointRecord
+ * 用户积分记录表 - 记录用户积分变化历史
+ */
+export type UserPointRecord = Prisma.UserPointRecordModel
+/**
+ * Model UserPointRule
+ * 用户积分规则表 - 定义积分获取和消费规则，包括发帖、回复、点赞、签到等
+ */
+export type UserPointRule = Prisma.UserPointRuleModel
 /**
  * Model ForumConfigHistory
  * 论坛配置历史表 - 记录配置项的变更历史，支持版本控制和回滚功能
@@ -152,11 +162,6 @@ export type ForumModerator = Prisma.ForumModeratorModel
  * 论坛通知表 - 存储用户通知信息，包括回复、点赞、收藏、系统通知等
  */
 export type ForumNotification = Prisma.ForumNotificationModel
-/**
- * Model ForumProfileBadge
- * 论坛用户徽章关联表 - 管理用户获得的徽章，一个用户可以有多个徽章
- */
-export type ForumProfileBadge = Prisma.ForumProfileBadgeModel
 /**
  * Model ForumProfile
  * 论坛用户资料表 - 存储用户的论坛信息，包括积分、等级、统计数据、签名等
@@ -264,10 +269,35 @@ export type WorkComicAuthor = Prisma.WorkComicAuthorModel
  */
 export type WorkComicCategory = Prisma.WorkComicCategoryModel
 /**
+ * Model WorkComicChapterDownload
+ * 
+ */
+export type WorkComicChapterDownload = Prisma.WorkComicChapterDownloadModel
+/**
+ * Model WorkComicChapterLike
+ * 
+ */
+export type WorkComicChapterLike = Prisma.WorkComicChapterLikeModel
+/**
+ * Model WorkComicChapterPurchase
+ * 
+ */
+export type WorkComicChapterPurchase = Prisma.WorkComicChapterPurchaseModel
+/**
  * Model WorkComicChapter
  * 漫画章节模型
  */
 export type WorkComicChapter = Prisma.WorkComicChapterModel
+/**
+ * Model WorkComicFavorite
+ * 
+ */
+export type WorkComicFavorite = Prisma.WorkComicFavoriteModel
+/**
+ * Model WorkComicLike
+ * 
+ */
+export type WorkComicLike = Prisma.WorkComicLikeModel
 /**
  * Model WorkComicTag
  * 漫画标签关联表

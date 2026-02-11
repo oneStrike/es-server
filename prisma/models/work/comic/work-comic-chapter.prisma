@@ -64,9 +64,12 @@ model WorkComicChapter {
   /// 关联漫画
   relatedComic          WorkComic     @relation(fields: [comicId], references: [id], onDelete: Cascade)
   /// 关联下载权限等级
-  requiredDownloadLevel AppLevelRule? @relation("ChapterDownloadLevel", fields: [requiredDownloadLevelId], references: [id])
+  requiredDownloadLevel UserLevelRule? @relation("ChapterDownloadLevel", fields: [requiredDownloadLevelId], references: [id])
   /// 关联阅读权限等级
-  requiredReadLevel     AppLevelRule? @relation("ChapterReadLevel", fields: [requiredReadLevelId], references: [id])
+  requiredReadLevel     UserLevelRule? @relation("ChapterReadLevel", fields: [requiredReadLevelId], references: [id])
+  likes                 WorkComicChapterLike[]
+  purchases             WorkComicChapterPurchase[]
+  downloads             WorkComicChapterDownload[]
 
   @@unique([comicId, sortOrder])
   @@index([comicId])

@@ -2,7 +2,7 @@ import { ValidateNumber, ValidateString } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
-export class BaseForumExperienceRecordDto extends BaseDto {
+export class BaseUserExperienceRecordDto extends BaseDto {
   @ValidateNumber({
     description: '关联的用户ID',
     example: 1,
@@ -47,9 +47,9 @@ export class BaseForumExperienceRecordDto extends BaseDto {
   remark?: string
 }
 
-export class QueryForumExperienceRecordDto extends IntersectionType(
+export class QueryUserExperienceRecordDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseForumExperienceRecordDto, ['ruleId'])),
+  PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'])),
 ) {
   @ValidateNumber({
     description: '用户ID',
@@ -59,7 +59,7 @@ export class QueryForumExperienceRecordDto extends IntersectionType(
   userId!: number
 }
 
-export class AddForumExperienceDto {
+export class AddUserExperienceDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,

@@ -53,7 +53,7 @@ model AppUser {
   agreementLogs AppAgreementLog[]
 
   /// 关联等级规则
-  level                   AppLevelRule?               @relation(fields: [levelId], references: [id])
+  level                   UserLevelRule?              @relation(fields: [levelId], references: [id])
   /// 用户论坛资料
   forumProfile            ForumProfile?
   /// 用户通知阅读记录
@@ -61,9 +61,9 @@ model AppUser {
   /// 用户令牌
   tokens                  AppUserToken[]
   /// 积分记录关联
-  pointRecords            AppPointRecord[]            @relation("UserPointRecords")
+  pointRecords            UserPointRecord[]           @relation("UserPointRecords")
   /// 经验记录关联
-  experienceRecords       AppExperienceRecord[]       @relation("UserExperienceRecords")
+  experienceRecords       UserExperienceRecord[]      @relation("UserExperienceRecords")
   /// 论坛主题关联
   forumTopics             ForumTopic[]                @relation("UserTopics")
   /// 最后回复主题关联
@@ -72,6 +72,11 @@ model AppUser {
   topicFavorites          ForumTopicFavorite[]
   /// 主题点赞关联
   topicLikes              ForumTopicLike[]
+  comicFavorites          WorkComicFavorite[]
+  comicLikes              WorkComicLike[]
+  comicChapterLikes       WorkComicChapterLike[]
+  comicChapterPurchases   WorkComicChapterPurchase[]
+  comicChapterDownloads   WorkComicChapterDownload[]
   /// 论坛回复关联
   forumReplies            ForumReply[]
   /// 回复点赞关联
@@ -92,8 +97,10 @@ model AppUser {
   moderator               ForumModerator?
   /// 论坛操作日志关联
   forumActionLogs         ForumUserActionLog[]
-  /// 论坛徽章关联
-  forumBadges             ForumProfileBadge[]
+  /// 用户徽章关联
+  userBadges              UserBadgeAssignment[]
+  /// 用户成长事件关联
+  userGrowthEvents        UserGrowthEvent[]
   /// 论坛配置更新关联
   updatedConfigs          ForumConfig[]               @relation("ForumConfigUpdater")
   /// 论坛配置历史操作关联

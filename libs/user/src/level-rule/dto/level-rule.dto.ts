@@ -12,12 +12,12 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ForumLevelRulePermissionEnum } from '../level-rule.constant'
+import { UserLevelRulePermissionEnum } from '../level-rule.constant'
 
 /**
  * 等级规则基础DTO
  */
-export class BaseForumLevelRuleDto extends BaseDto {
+export class BaseUserLevelRuleDto extends BaseDto {
   @ValidateString({
     description: '等级名称',
     example: '新手',
@@ -62,6 +62,14 @@ export class BaseForumLevelRuleDto extends BaseDto {
     required: true,
   })
   sortOrder!: number
+
+  @ValidateString({
+    description: '业务域标识',
+    example: 'forum',
+    required: false,
+    maxLength: 20,
+  })
+  business?: string
 
   @ValidateBoolean({
     description: '是否启用',
@@ -125,39 +133,41 @@ export class BaseForumLevelRuleDto extends BaseDto {
 /**
  * 创建等级规则DTO
  */
-export class CreateForumLevelRuleDto extends OmitType(
-  BaseForumLevelRuleDto,
+export class CreateUserLevelRuleDto extends OmitType(
+  BaseUserLevelRuleDto,
   OMIT_BASE_FIELDS,
 ) {}
 
 /**
  * 更新等级规则DTO
  */
-export class UpdateForumLevelRuleDto extends IntersectionType(
-  PartialType(CreateForumLevelRuleDto),
+export class UpdateUserLevelRuleDto extends IntersectionType(
+  PartialType(CreateUserLevelRuleDto),
   IdDto,
 ) {}
 
 /**
  * 查询等级规则DTO
  */
-export class QueryForumLevelRuleDto extends IntersectionType(
+export class QueryUserLevelRuleDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseForumLevelRuleDto, ['name', 'isEnabled'])),
+  PartialType(
+    PickType(BaseUserLevelRuleDto, ['name', 'business', 'isEnabled']),
+  ),
 ) {}
 
 /**
  * 等级规则详情DTO
  */
-export class ForumLevelRuleDetailDto extends IntersectionType(
-  BaseForumLevelRuleDto,
+export class UserLevelRuleDetailDto extends IntersectionType(
+  BaseUserLevelRuleDto,
   PickType(BaseDto, ['id', 'createdAt', 'updatedAt']),
 ) {}
 
 /**
  * 等级权限DTO
  */
-export class ForumLevelPermissionsDto extends PickType(BaseForumLevelRuleDto, [
+export class UserLevelPermissionsDto extends PickType(BaseUserLevelRuleDto, [
   'dailyTopicLimit',
   'dailyReplyCommentLimit',
   'postInterval',
@@ -168,7 +178,7 @@ export class ForumLevelPermissionsDto extends PickType(BaseForumLevelRuleDto, [
 /**
  * 用户等级信息DTO
  */
-export class UserForumLevelInfoDto {
+export class UserLevelInfoDto {
   @ApiProperty({ description: '等级ID', example: 1 })
   levelId!: number
 
@@ -226,15 +236,15 @@ export class UserForumLevelInfoDto {
 
   @ApiProperty({
     description: '等级权限',
-    type: ForumLevelPermissionsDto,
+    type: UserLevelPermissionsDto,
   })
-  permissions!: ForumLevelPermissionsDto
+  permissions!: UserLevelPermissionsDto
 }
 
 /**
  * 等级权限检查DTO
  */
-export class CheckForumLevelPermissionDto {
+export class CheckUserLevelPermissionDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,
@@ -245,18 +255,18 @@ export class CheckForumLevelPermissionDto {
 
   @ValidateEnum({
     description: '权限类型',
-    example: ForumLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT,
+    example: UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT,
     required: true,
-    enum: ForumLevelRulePermissionEnum,
+    enum: UserLevelRulePermissionEnum,
   })
-  permissionType!: ForumLevelRulePermissionEnum
+  permissionType!: UserLevelRulePermissionEnum
 }
 
 /**
  * 等级权限检查结果DTO
  * 返回等级权限检查的结果
  */
-export class ForumLevelPermissionResultDto {
+export class UserLevelPermissionResultDto {
   @ApiProperty({ description: '是否有权限', example: true })
   hasPermission!: boolean
 
@@ -289,7 +299,7 @@ export class ForumLevelPermissionResultDto {
  * 等级分布项DTO
  * 单个等级的用户分布情况
  */
-export class ForumLevelDistributionItemDto {
+export class UserLevelDistributionItemDto {
   @ApiProperty({ description: '等级ID', example: 1 })
   levelId!: number
 
@@ -304,7 +314,7 @@ export class ForumLevelDistributionItemDto {
  * 等级统计DTO
  * 等级系统整体统计数据
  */
-export class ForumLevelStatisticsDto {
+export class UserLevelStatisticsDto {
   @ApiProperty({ description: '总等级数量', example: 10 })
   totalLevels!: number
 
@@ -313,7 +323,7 @@ export class ForumLevelStatisticsDto {
 
   @ApiProperty({
     description: '等级分布',
-    type: [ForumLevelDistributionItemDto],
+    type: [UserLevelDistributionItemDto],
   })
-  levelDistribution!: ForumLevelDistributionItemDto[]
+  levelDistribution!: UserLevelDistributionItemDto[]
 }

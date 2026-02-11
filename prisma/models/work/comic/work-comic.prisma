@@ -68,6 +68,8 @@ model WorkComic {
   relatedChapters WorkComicChapter[]
   /// 关联的标签列表
   comicTags       WorkComicTag[]
+  favorites       WorkComicFavorite[]
+  likes           WorkComicLike[]
 
   @@index([isPublished, publishAt])
   @@index([popularity])

@@ -467,3 +467,51 @@ export class UpdateComicNewDto extends IntersectionType(
   IdDto,
   PickType(BaseComicDto, ['isNew']),
 ) {}
+
+export class ComicPageWithUserStatusDto extends BaseComicDto {
+  @ApiProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+  })
+  liked!: boolean
+
+  @ApiProperty({
+    description: '是否已收藏',
+    example: false,
+    required: true,
+  })
+  favorited!: boolean
+}
+
+export class ComicDetailWithUserStatusDto extends BaseComicDto {
+  @ApiProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+  })
+  liked!: boolean
+
+  @ApiProperty({
+    description: '是否已收藏',
+    example: false,
+    required: true,
+  })
+  favorited!: boolean
+}
+
+export class ComicUserStatusDto extends IdDto {
+  @ApiProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+  })
+  liked!: boolean
+
+  @ApiProperty({
+    description: '是否已收藏',
+    example: false,
+    required: true,
+  })
+  favorited!: boolean
+}

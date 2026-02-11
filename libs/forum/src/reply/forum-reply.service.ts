@@ -264,7 +264,7 @@ export class ForumReplyService extends BaseService {
         user: {
           include: {
             level: true,
-            forumBadges: {
+            userBadges: {
               include: {
                 badge: true,
               },

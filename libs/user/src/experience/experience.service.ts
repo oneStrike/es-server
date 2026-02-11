@@ -2,39 +2,39 @@ import { BaseService } from '@libs/base/database'
 
 import { UserStatusEnum } from '@libs/base/enum'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { ForumLevelRuleService } from '../level-rule/level-rule.service'
+import { UserLevelRuleService } from '../level-rule/level-rule.service'
 import {
-  AddForumExperienceDto,
-  QueryForumExperienceRecordDto,
+  AddUserExperienceDto,
+  QueryUserExperienceRecordDto,
 } from './dto/experience-record.dto'
 import {
-  CreateForumExperienceRuleDto,
-  QueryForumExperienceRuleDto,
-  UpdateForumExperienceRuleDto,
+  CreateUserExperienceRuleDto,
+  QueryUserExperienceRuleDto,
+  UpdateUserExperienceRuleDto,
 } from './dto/experience-rule.dto'
 
 /**
  * 经验服务类
- * 提供论坛经验的增删改查等核心业务逻辑
+ * 提供用户经验的增删改查等核心业务逻辑
  */
 @Injectable()
-export class ForumExperienceService extends BaseService {
-  constructor(private readonly levelRuleService: ForumLevelRuleService) {
+export class UserExperienceService extends BaseService {
+  constructor(private readonly levelRuleService: UserLevelRuleService) {
     super()
   }
 
   /**
    * 获取经验规则数据库访问器
    */
-  get forumExperienceRule() {
-    return this.prisma.appExperienceRule
+  get userExperienceRule() {
+    return this.prisma.userExperienceRule
   }
 
   /**
    * 获取经验记录数据库访问器
    */
-  get forumExperienceRecord() {
-    return this.prisma.appExperienceRecord
+  get userExperienceRecord() {
+    return this.prisma.userExperienceRecord
   }
 
   /**
@@ -49,13 +49,13 @@ export class ForumExperienceService extends BaseService {
    * @param dto 创建规则的数据
    * @returns 创建的规则信息
    */
-  async createExperienceRule(dto: CreateForumExperienceRuleDto) {
+  async createExperienceRule(dto: CreateUserExperienceRuleDto) {
     if (
-      await this.forumExperienceRule.exists({ type: dto.type, isEnabled: true })
+      await this.userExperienceRule.exists({ type: dto.type, isEnabled: true })
     ) {
       throw new BadRequestException('经验规则类型已存在')
     }
-    return this.forumExperienceRule.create({
+    return this.userExperienceRule.create({
       data: dto,
     })
   }
@@ -65,8 +65,8 @@ export class ForumExperienceService extends BaseService {
    * @param dto 查询条件
    * @returns 分页的规则列表
    */
-  async getExperienceRulePage(dto: QueryForumExperienceRuleDto) {
-    return this.forumExperienceRule.findPagination({
+  async getExperienceRulePage(dto: QueryUserExperienceRuleDto) {
+    return this.userExperienceRule.findPagination({
       where: {
         ...dto,
         isEnabled: dto.isEnabled,
@@ -81,7 +81,7 @@ export class ForumExperienceService extends BaseService {
    * @returns 规则详情信息
    */
   async getExperienceRuleDetail(id: number) {
-    const rule = await this.forumExperienceRule.findUnique({
+    const rule = await this.userExperienceRule.findUnique({
       where: { id },
     })
 
@@ -97,15 +97,15 @@ export class ForumExperienceService extends BaseService {
    * @param dto 更新规则的数据
    * @returns 更新后的规则信息
    */
-  async updateExperienceRule(dto: UpdateForumExperienceRuleDto) {
+  async updateExperienceRule(dto: UpdateUserExperienceRuleDto) {
     const { id, ...updateData } = dto
 
     if (
-      await this.forumExperienceRule.exists({ type: dto.type, id: { not: id } })
+      await this.userExperienceRule.exists({ type: dto.type, id: { not: id } })
     ) {
       throw new BadRequestException('经验规则类型已存在')
     }
-    return this.forumExperienceRule.update({
+    return this.userExperienceRule.update({
       where: { id },
       data: updateData,
     })
@@ -117,7 +117,7 @@ export class ForumExperienceService extends BaseService {
    * @returns 删除结果
    */
   async deleteExperienceRule(id: number) {
-    const rule = await this.forumExperienceRule.findUnique({
+    const rule = await this.userExperienceRule.findUnique({
       where: { id },
       include: {
         _count: {
@@ -136,7 +136,7 @@ export class ForumExperienceService extends BaseService {
       throw new BadRequestException('该经验规则下已有记录，无法删除')
     }
 
-    return this.forumExperienceRule.delete({
+    return this.userExperienceRule.delete({
       where: { id },
     })
   }
@@ -146,7 +146,7 @@ export class ForumExperienceService extends BaseService {
    * @param addExperienceDto 增加经验的数据
    * @returns 增加经验的结果
    */
-  async addExperience(addExperienceDto: AddForumExperienceDto) {
+  async addExperience(addExperienceDto: AddUserExperienceDto) {
     const { userId, ruleType, remark } = addExperienceDto
 
     const user = await this.appUser.findUnique({
@@ -162,7 +162,7 @@ export class ForumExperienceService extends BaseService {
       throw new BadRequestException('用户不存在或已被永久封禁')
     }
 
-    const rule = await this.forumExperienceRule.findUnique({
+    const rule = await this.userExperienceRule.findUnique({
       where: {
         type: ruleType,
         isEnabled: true,
@@ -181,7 +181,7 @@ export class ForumExperienceService extends BaseService {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      const todayCount = await this.forumExperienceRecord.count({
+      const todayCount = await this.userExperienceRecord.count({
         where: {
           userId,
           ruleId: rule.id,
@@ -200,7 +200,7 @@ export class ForumExperienceService extends BaseService {
       const beforeExperience = user.experience
       const afterExperience = beforeExperience + rule.experience
 
-      const record = await tx.appExperienceRecord.create({
+      const record = await tx.userExperienceRecord.create({
         data: {
           userId,
           ruleId: rule.id,
@@ -218,7 +218,7 @@ export class ForumExperienceService extends BaseService {
         },
       })
 
-      const newLevelRule = await tx.appLevelRule.findFirst({
+      const newLevelRule = await tx.userLevelRule.findFirst({
         where: {
           isEnabled: true,
           requiredExperience: {
@@ -248,8 +248,8 @@ export class ForumExperienceService extends BaseService {
    * @param dto 查询条件
    * @returns 分页的记录列表
    */
-  async getExperienceRecordPage(dto: QueryForumExperienceRecordDto) {
-    return this.forumExperienceRecord.findPagination({
+  async getExperienceRecordPage(dto: QueryUserExperienceRecordDto) {
+    return this.userExperienceRecord.findPagination({
       where: {
         ...dto,
         rule: {
@@ -268,7 +268,7 @@ export class ForumExperienceService extends BaseService {
    * @returns 记录详情信息
    */
   async getExperienceRecordDetail(id: number) {
-    const record = await this.forumExperienceRecord.findUnique({
+    const record = await this.userExperienceRecord.findUnique({
       where: { id },
       include: {
         user: true,
@@ -303,7 +303,7 @@ export class ForumExperienceService extends BaseService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const todayEarned = await this.forumExperienceRecord.aggregate({
+    const todayEarned = await this.userExperienceRecord.aggregate({
       where: {
         userId,
         createdAt: {

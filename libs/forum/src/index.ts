@@ -1,4 +1,3 @@
-export * from './badge'
 export * from './config'
 export * from './counter'
 export * from './forum.module'

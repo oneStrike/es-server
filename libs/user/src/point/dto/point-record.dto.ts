@@ -5,9 +5,9 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { ForumPointRuleTypeEnum } from '../point.constant'
+import { UserPointRuleTypeEnum } from '../point.constant'
 
-export class BaseForumPointRecordDto extends BaseDto {
+export class BaseUserPointRecordDto extends BaseDto {
   @ValidateNumber({
     description: '关联的用户ID',
     example: 1,
@@ -52,9 +52,9 @@ export class BaseForumPointRecordDto extends BaseDto {
   remark?: string
 }
 
-export class QueryForumPointRecordDto extends IntersectionType(
+export class QueryUserPointRecordDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseForumPointRecordDto, ['ruleId'])),
+  PartialType(PickType(BaseUserPointRecordDto, ['ruleId'])),
 ) {
   @ValidateNumber({
     description: '用户ID',
@@ -64,7 +64,7 @@ export class QueryForumPointRecordDto extends IntersectionType(
   userId!: number
 }
 
-export class AddForumPointsDto {
+export class AddUserPointsDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,
@@ -74,11 +74,11 @@ export class AddForumPointsDto {
 
   @ValidateEnum({
     description: '规则类型',
-    example: ForumPointRuleTypeEnum.CREATE_TOPIC,
+    example: UserPointRuleTypeEnum.CREATE_TOPIC,
     required: true,
-    enum: ForumPointRuleTypeEnum,
+    enum: UserPointRuleTypeEnum,
   })
-  ruleType!: ForumPointRuleTypeEnum
+  ruleType!: UserPointRuleTypeEnum
 
   @ValidateString({
     description: '备注',
@@ -89,7 +89,7 @@ export class AddForumPointsDto {
   remark?: string
 }
 
-export class ConsumeForumPointsDto {
+export class ConsumeUserPointsDto {
   @ValidateNumber({
     description: '用户ID',
     example: 1,

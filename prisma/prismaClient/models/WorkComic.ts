@@ -452,6 +452,8 @@ export type WorkComicWhereInput = {
   comicCategories?: Prisma.WorkComicCategoryListRelationFilter
   relatedChapters?: Prisma.WorkComicChapterListRelationFilter
   comicTags?: Prisma.WorkComicTagListRelationFilter
+  favorites?: Prisma.WorkComicFavoriteListRelationFilter
+  likes?: Prisma.WorkComicLikeListRelationFilter
 }
 
 export type WorkComicOrderByWithRelationInput = {
@@ -489,6 +491,8 @@ export type WorkComicOrderByWithRelationInput = {
   comicCategories?: Prisma.WorkComicCategoryOrderByRelationAggregateInput
   relatedChapters?: Prisma.WorkComicChapterOrderByRelationAggregateInput
   comicTags?: Prisma.WorkComicTagOrderByRelationAggregateInput
+  favorites?: Prisma.WorkComicFavoriteOrderByRelationAggregateInput
+  likes?: Prisma.WorkComicLikeOrderByRelationAggregateInput
 }
 
 export type WorkComicWhereUniqueInput = Prisma.AtLeast<{
@@ -529,6 +533,8 @@ export type WorkComicWhereUniqueInput = Prisma.AtLeast<{
   comicCategories?: Prisma.WorkComicCategoryListRelationFilter
   relatedChapters?: Prisma.WorkComicChapterListRelationFilter
   comicTags?: Prisma.WorkComicTagListRelationFilter
+  favorites?: Prisma.WorkComicFavoriteListRelationFilter
+  likes?: Prisma.WorkComicLikeListRelationFilter
 }, "id">
 
 export type WorkComicOrderByWithAggregationInput = {
@@ -639,6 +645,8 @@ export type WorkComicCreateInput = {
   comicCategories?: Prisma.WorkComicCategoryCreateNestedManyWithoutComicInput
   relatedChapters?: Prisma.WorkComicChapterCreateNestedManyWithoutRelatedComicInput
   comicTags?: Prisma.WorkComicTagCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicUncheckedCreateInput = {
@@ -676,6 +684,8 @@ export type WorkComicUncheckedCreateInput = {
   comicCategories?: Prisma.WorkComicCategoryUncheckedCreateNestedManyWithoutComicInput
   relatedChapters?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRelatedComicInput
   comicTags?: Prisma.WorkComicTagUncheckedCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeUncheckedCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicUpdateInput = {
@@ -712,6 +722,8 @@ export type WorkComicUpdateInput = {
   comicCategories?: Prisma.WorkComicCategoryUpdateManyWithoutComicNestedInput
   relatedChapters?: Prisma.WorkComicChapterUpdateManyWithoutRelatedComicNestedInput
   comicTags?: Prisma.WorkComicTagUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUpdateManyWithoutComicNestedInput
 }
 
 export type WorkComicUncheckedUpdateInput = {
@@ -749,6 +761,8 @@ export type WorkComicUncheckedUpdateInput = {
   comicCategories?: Prisma.WorkComicCategoryUncheckedUpdateManyWithoutComicNestedInput
   relatedChapters?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRelatedComicNestedInput
   comicTags?: Prisma.WorkComicTagUncheckedUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUncheckedUpdateManyWithoutComicNestedInput
 }
 
 export type WorkComicCreateManyInput = {
@@ -1019,6 +1033,34 @@ export type WorkComicUpdateOneRequiredWithoutRelatedChaptersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkComicUpdateToOneWithWhereWithoutRelatedChaptersInput, Prisma.WorkComicUpdateWithoutRelatedChaptersInput>, Prisma.WorkComicUncheckedUpdateWithoutRelatedChaptersInput>
 }
 
+export type WorkComicCreateNestedOneWithoutFavoritesInput = {
+  create?: Prisma.XOR<Prisma.WorkComicCreateWithoutFavoritesInput, Prisma.WorkComicUncheckedCreateWithoutFavoritesInput>
+  connectOrCreate?: Prisma.WorkComicCreateOrConnectWithoutFavoritesInput
+  connect?: Prisma.WorkComicWhereUniqueInput
+}
+
+export type WorkComicUpdateOneRequiredWithoutFavoritesNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkComicCreateWithoutFavoritesInput, Prisma.WorkComicUncheckedCreateWithoutFavoritesInput>
+  connectOrCreate?: Prisma.WorkComicCreateOrConnectWithoutFavoritesInput
+  upsert?: Prisma.WorkComicUpsertWithoutFavoritesInput
+  connect?: Prisma.WorkComicWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkComicUpdateToOneWithWhereWithoutFavoritesInput, Prisma.WorkComicUpdateWithoutFavoritesInput>, Prisma.WorkComicUncheckedUpdateWithoutFavoritesInput>
+}
+
+export type WorkComicCreateNestedOneWithoutLikesInput = {
+  create?: Prisma.XOR<Prisma.WorkComicCreateWithoutLikesInput, Prisma.WorkComicUncheckedCreateWithoutLikesInput>
+  connectOrCreate?: Prisma.WorkComicCreateOrConnectWithoutLikesInput
+  connect?: Prisma.WorkComicWhereUniqueInput
+}
+
+export type WorkComicUpdateOneRequiredWithoutLikesNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkComicCreateWithoutLikesInput, Prisma.WorkComicUncheckedCreateWithoutLikesInput>
+  connectOrCreate?: Prisma.WorkComicCreateOrConnectWithoutLikesInput
+  upsert?: Prisma.WorkComicUpsertWithoutLikesInput
+  connect?: Prisma.WorkComicWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkComicUpdateToOneWithWhereWithoutLikesInput, Prisma.WorkComicUpdateWithoutLikesInput>, Prisma.WorkComicUncheckedUpdateWithoutLikesInput>
+}
+
 export type WorkComicCreateNestedOneWithoutComicTagsInput = {
   create?: Prisma.XOR<Prisma.WorkComicCreateWithoutComicTagsInput, Prisma.WorkComicUncheckedCreateWithoutComicTagsInput>
   connectOrCreate?: Prisma.WorkComicCreateOrConnectWithoutComicTagsInput
@@ -1082,6 +1124,8 @@ export type WorkComicCreateWithoutComicAuthorsInput = {
   comicCategories?: Prisma.WorkComicCategoryCreateNestedManyWithoutComicInput
   relatedChapters?: Prisma.WorkComicChapterCreateNestedManyWithoutRelatedComicInput
   comicTags?: Prisma.WorkComicTagCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicUncheckedCreateWithoutComicAuthorsInput = {
@@ -1118,6 +1162,8 @@ export type WorkComicUncheckedCreateWithoutComicAuthorsInput = {
   comicCategories?: Prisma.WorkComicCategoryUncheckedCreateNestedManyWithoutComicInput
   relatedChapters?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRelatedComicInput
   comicTags?: Prisma.WorkComicTagUncheckedCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeUncheckedCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicCreateOrConnectWithoutComicAuthorsInput = {
@@ -1169,6 +1215,8 @@ export type WorkComicUpdateWithoutComicAuthorsInput = {
   comicCategories?: Prisma.WorkComicCategoryUpdateManyWithoutComicNestedInput
   relatedChapters?: Prisma.WorkComicChapterUpdateManyWithoutRelatedComicNestedInput
   comicTags?: Prisma.WorkComicTagUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUpdateManyWithoutComicNestedInput
 }
 
 export type WorkComicUncheckedUpdateWithoutComicAuthorsInput = {
@@ -1205,6 +1253,8 @@ export type WorkComicUncheckedUpdateWithoutComicAuthorsInput = {
   comicCategories?: Prisma.WorkComicCategoryUncheckedUpdateManyWithoutComicNestedInput
   relatedChapters?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRelatedComicNestedInput
   comicTags?: Prisma.WorkComicTagUncheckedUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUncheckedUpdateManyWithoutComicNestedInput
 }
 
 export type WorkComicCreateWithoutComicCategoriesInput = {
@@ -1240,6 +1290,8 @@ export type WorkComicCreateWithoutComicCategoriesInput = {
   comicAuthors?: Prisma.WorkComicAuthorCreateNestedManyWithoutComicInput
   relatedChapters?: Prisma.WorkComicChapterCreateNestedManyWithoutRelatedComicInput
   comicTags?: Prisma.WorkComicTagCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicUncheckedCreateWithoutComicCategoriesInput = {
@@ -1276,6 +1328,8 @@ export type WorkComicUncheckedCreateWithoutComicCategoriesInput = {
   comicAuthors?: Prisma.WorkComicAuthorUncheckedCreateNestedManyWithoutComicInput
   relatedChapters?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRelatedComicInput
   comicTags?: Prisma.WorkComicTagUncheckedCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeUncheckedCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicCreateOrConnectWithoutComicCategoriesInput = {
@@ -1327,6 +1381,8 @@ export type WorkComicUpdateWithoutComicCategoriesInput = {
   comicAuthors?: Prisma.WorkComicAuthorUpdateManyWithoutComicNestedInput
   relatedChapters?: Prisma.WorkComicChapterUpdateManyWithoutRelatedComicNestedInput
   comicTags?: Prisma.WorkComicTagUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUpdateManyWithoutComicNestedInput
 }
 
 export type WorkComicUncheckedUpdateWithoutComicCategoriesInput = {
@@ -1363,6 +1419,8 @@ export type WorkComicUncheckedUpdateWithoutComicCategoriesInput = {
   comicAuthors?: Prisma.WorkComicAuthorUncheckedUpdateManyWithoutComicNestedInput
   relatedChapters?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRelatedComicNestedInput
   comicTags?: Prisma.WorkComicTagUncheckedUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUncheckedUpdateManyWithoutComicNestedInput
 }
 
 export type WorkComicCreateWithoutRelatedChaptersInput = {
@@ -1398,6 +1456,8 @@ export type WorkComicCreateWithoutRelatedChaptersInput = {
   comicAuthors?: Prisma.WorkComicAuthorCreateNestedManyWithoutComicInput
   comicCategories?: Prisma.WorkComicCategoryCreateNestedManyWithoutComicInput
   comicTags?: Prisma.WorkComicTagCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicUncheckedCreateWithoutRelatedChaptersInput = {
@@ -1434,6 +1494,8 @@ export type WorkComicUncheckedCreateWithoutRelatedChaptersInput = {
   comicAuthors?: Prisma.WorkComicAuthorUncheckedCreateNestedManyWithoutComicInput
   comicCategories?: Prisma.WorkComicCategoryUncheckedCreateNestedManyWithoutComicInput
   comicTags?: Prisma.WorkComicTagUncheckedCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeUncheckedCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicCreateOrConnectWithoutRelatedChaptersInput = {
@@ -1485,6 +1547,8 @@ export type WorkComicUpdateWithoutRelatedChaptersInput = {
   comicAuthors?: Prisma.WorkComicAuthorUpdateManyWithoutComicNestedInput
   comicCategories?: Prisma.WorkComicCategoryUpdateManyWithoutComicNestedInput
   comicTags?: Prisma.WorkComicTagUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUpdateManyWithoutComicNestedInput
 }
 
 export type WorkComicUncheckedUpdateWithoutRelatedChaptersInput = {
@@ -1521,6 +1585,340 @@ export type WorkComicUncheckedUpdateWithoutRelatedChaptersInput = {
   comicAuthors?: Prisma.WorkComicAuthorUncheckedUpdateManyWithoutComicNestedInput
   comicCategories?: Prisma.WorkComicCategoryUncheckedUpdateManyWithoutComicNestedInput
   comicTags?: Prisma.WorkComicTagUncheckedUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUncheckedUpdateManyWithoutComicNestedInput
+}
+
+export type WorkComicCreateWithoutFavoritesInput = {
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  popularity?: number
+  rating?: number | null
+  recommendWeight?: number
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  ratingCount?: number
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comicAuthors?: Prisma.WorkComicAuthorCreateNestedManyWithoutComicInput
+  comicCategories?: Prisma.WorkComicCategoryCreateNestedManyWithoutComicInput
+  relatedChapters?: Prisma.WorkComicChapterCreateNestedManyWithoutRelatedComicInput
+  comicTags?: Prisma.WorkComicTagCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeCreateNestedManyWithoutComicInput
+}
+
+export type WorkComicUncheckedCreateWithoutFavoritesInput = {
+  id?: number
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  popularity?: number
+  rating?: number | null
+  recommendWeight?: number
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  ratingCount?: number
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comicAuthors?: Prisma.WorkComicAuthorUncheckedCreateNestedManyWithoutComicInput
+  comicCategories?: Prisma.WorkComicCategoryUncheckedCreateNestedManyWithoutComicInput
+  relatedChapters?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRelatedComicInput
+  comicTags?: Prisma.WorkComicTagUncheckedCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeUncheckedCreateNestedManyWithoutComicInput
+}
+
+export type WorkComicCreateOrConnectWithoutFavoritesInput = {
+  where: Prisma.WorkComicWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkComicCreateWithoutFavoritesInput, Prisma.WorkComicUncheckedCreateWithoutFavoritesInput>
+}
+
+export type WorkComicUpsertWithoutFavoritesInput = {
+  update: Prisma.XOR<Prisma.WorkComicUpdateWithoutFavoritesInput, Prisma.WorkComicUncheckedUpdateWithoutFavoritesInput>
+  create: Prisma.XOR<Prisma.WorkComicCreateWithoutFavoritesInput, Prisma.WorkComicUncheckedCreateWithoutFavoritesInput>
+  where?: Prisma.WorkComicWhereInput
+}
+
+export type WorkComicUpdateToOneWithWhereWithoutFavoritesInput = {
+  where?: Prisma.WorkComicWhereInput
+  data: Prisma.XOR<Prisma.WorkComicUpdateWithoutFavoritesInput, Prisma.WorkComicUncheckedUpdateWithoutFavoritesInput>
+}
+
+export type WorkComicUpdateWithoutFavoritesInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicAuthors?: Prisma.WorkComicAuthorUpdateManyWithoutComicNestedInput
+  comicCategories?: Prisma.WorkComicCategoryUpdateManyWithoutComicNestedInput
+  relatedChapters?: Prisma.WorkComicChapterUpdateManyWithoutRelatedComicNestedInput
+  comicTags?: Prisma.WorkComicTagUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUpdateManyWithoutComicNestedInput
+}
+
+export type WorkComicUncheckedUpdateWithoutFavoritesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicAuthors?: Prisma.WorkComicAuthorUncheckedUpdateManyWithoutComicNestedInput
+  comicCategories?: Prisma.WorkComicCategoryUncheckedUpdateManyWithoutComicNestedInput
+  relatedChapters?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRelatedComicNestedInput
+  comicTags?: Prisma.WorkComicTagUncheckedUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUncheckedUpdateManyWithoutComicNestedInput
+}
+
+export type WorkComicCreateWithoutLikesInput = {
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  popularity?: number
+  rating?: number | null
+  recommendWeight?: number
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  ratingCount?: number
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comicAuthors?: Prisma.WorkComicAuthorCreateNestedManyWithoutComicInput
+  comicCategories?: Prisma.WorkComicCategoryCreateNestedManyWithoutComicInput
+  relatedChapters?: Prisma.WorkComicChapterCreateNestedManyWithoutRelatedComicInput
+  comicTags?: Prisma.WorkComicTagCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteCreateNestedManyWithoutComicInput
+}
+
+export type WorkComicUncheckedCreateWithoutLikesInput = {
+  id?: number
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  popularity?: number
+  rating?: number | null
+  recommendWeight?: number
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  ratingCount?: number
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  remark?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comicAuthors?: Prisma.WorkComicAuthorUncheckedCreateNestedManyWithoutComicInput
+  comicCategories?: Prisma.WorkComicCategoryUncheckedCreateNestedManyWithoutComicInput
+  relatedChapters?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRelatedComicInput
+  comicTags?: Prisma.WorkComicTagUncheckedCreateNestedManyWithoutComicInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedCreateNestedManyWithoutComicInput
+}
+
+export type WorkComicCreateOrConnectWithoutLikesInput = {
+  where: Prisma.WorkComicWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkComicCreateWithoutLikesInput, Prisma.WorkComicUncheckedCreateWithoutLikesInput>
+}
+
+export type WorkComicUpsertWithoutLikesInput = {
+  update: Prisma.XOR<Prisma.WorkComicUpdateWithoutLikesInput, Prisma.WorkComicUncheckedUpdateWithoutLikesInput>
+  create: Prisma.XOR<Prisma.WorkComicCreateWithoutLikesInput, Prisma.WorkComicUncheckedCreateWithoutLikesInput>
+  where?: Prisma.WorkComicWhereInput
+}
+
+export type WorkComicUpdateToOneWithWhereWithoutLikesInput = {
+  where?: Prisma.WorkComicWhereInput
+  data: Prisma.XOR<Prisma.WorkComicUpdateWithoutLikesInput, Prisma.WorkComicUncheckedUpdateWithoutLikesInput>
+}
+
+export type WorkComicUpdateWithoutLikesInput = {
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicAuthors?: Prisma.WorkComicAuthorUpdateManyWithoutComicNestedInput
+  comicCategories?: Prisma.WorkComicCategoryUpdateManyWithoutComicNestedInput
+  relatedChapters?: Prisma.WorkComicChapterUpdateManyWithoutRelatedComicNestedInput
+  comicTags?: Prisma.WorkComicTagUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUpdateManyWithoutComicNestedInput
+}
+
+export type WorkComicUncheckedUpdateWithoutLikesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comicAuthors?: Prisma.WorkComicAuthorUncheckedUpdateManyWithoutComicNestedInput
+  comicCategories?: Prisma.WorkComicCategoryUncheckedUpdateManyWithoutComicNestedInput
+  relatedChapters?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRelatedComicNestedInput
+  comicTags?: Prisma.WorkComicTagUncheckedUpdateManyWithoutComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedUpdateManyWithoutComicNestedInput
 }
 
 export type WorkComicCreateWithoutComicTagsInput = {
@@ -1556,6 +1954,8 @@ export type WorkComicCreateWithoutComicTagsInput = {
   comicAuthors?: Prisma.WorkComicAuthorCreateNestedManyWithoutComicInput
   comicCategories?: Prisma.WorkComicCategoryCreateNestedManyWithoutComicInput
   relatedChapters?: Prisma.WorkComicChapterCreateNestedManyWithoutRelatedComicInput
+  favorites?: Prisma.WorkComicFavoriteCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicUncheckedCreateWithoutComicTagsInput = {
@@ -1592,6 +1992,8 @@ export type WorkComicUncheckedCreateWithoutComicTagsInput = {
   comicAuthors?: Prisma.WorkComicAuthorUncheckedCreateNestedManyWithoutComicInput
   comicCategories?: Prisma.WorkComicCategoryUncheckedCreateNestedManyWithoutComicInput
   relatedChapters?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRelatedComicInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedCreateNestedManyWithoutComicInput
+  likes?: Prisma.WorkComicLikeUncheckedCreateNestedManyWithoutComicInput
 }
 
 export type WorkComicCreateOrConnectWithoutComicTagsInput = {
@@ -1643,6 +2045,8 @@ export type WorkComicUpdateWithoutComicTagsInput = {
   comicAuthors?: Prisma.WorkComicAuthorUpdateManyWithoutComicNestedInput
   comicCategories?: Prisma.WorkComicCategoryUpdateManyWithoutComicNestedInput
   relatedChapters?: Prisma.WorkComicChapterUpdateManyWithoutRelatedComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUpdateManyWithoutComicNestedInput
 }
 
 export type WorkComicUncheckedUpdateWithoutComicTagsInput = {
@@ -1679,6 +2083,8 @@ export type WorkComicUncheckedUpdateWithoutComicTagsInput = {
   comicAuthors?: Prisma.WorkComicAuthorUncheckedUpdateManyWithoutComicNestedInput
   comicCategories?: Prisma.WorkComicCategoryUncheckedUpdateManyWithoutComicNestedInput
   relatedChapters?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRelatedComicNestedInput
+  favorites?: Prisma.WorkComicFavoriteUncheckedUpdateManyWithoutComicNestedInput
+  likes?: Prisma.WorkComicLikeUncheckedUpdateManyWithoutComicNestedInput
 }
 
 
@@ -1691,6 +2097,8 @@ export type WorkComicCountOutputType = {
   comicCategories: number
   relatedChapters: number
   comicTags: number
+  favorites: number
+  likes: number
 }
 
 export type WorkComicCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1698,6 +2106,8 @@ export type WorkComicCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensi
   comicCategories?: boolean | WorkComicCountOutputTypeCountComicCategoriesArgs
   relatedChapters?: boolean | WorkComicCountOutputTypeCountRelatedChaptersArgs
   comicTags?: boolean | WorkComicCountOutputTypeCountComicTagsArgs
+  favorites?: boolean | WorkComicCountOutputTypeCountFavoritesArgs
+  likes?: boolean | WorkComicCountOutputTypeCountLikesArgs
 }
 
 /**
@@ -1738,6 +2148,20 @@ export type WorkComicCountOutputTypeCountComicTagsArgs<ExtArgs extends runtime.T
   where?: Prisma.WorkComicTagWhereInput
 }
 
+/**
+ * WorkComicCountOutputType without action
+ */
+export type WorkComicCountOutputTypeCountFavoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkComicFavoriteWhereInput
+}
+
+/**
+ * WorkComicCountOutputType without action
+ */
+export type WorkComicCountOutputTypeCountLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkComicLikeWhereInput
+}
+
 
 export type WorkComicSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1774,6 +2198,8 @@ export type WorkComicSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   comicCategories?: boolean | Prisma.WorkComic$comicCategoriesArgs<ExtArgs>
   relatedChapters?: boolean | Prisma.WorkComic$relatedChaptersArgs<ExtArgs>
   comicTags?: boolean | Prisma.WorkComic$comicTagsArgs<ExtArgs>
+  favorites?: boolean | Prisma.WorkComic$favoritesArgs<ExtArgs>
+  likes?: boolean | Prisma.WorkComic$likesArgs<ExtArgs>
   _count?: boolean | Prisma.WorkComicCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workComic"]>
 
@@ -1882,6 +2308,8 @@ export type WorkComicInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   comicCategories?: boolean | Prisma.WorkComic$comicCategoriesArgs<ExtArgs>
   relatedChapters?: boolean | Prisma.WorkComic$relatedChaptersArgs<ExtArgs>
   comicTags?: boolean | Prisma.WorkComic$comicTagsArgs<ExtArgs>
+  favorites?: boolean | Prisma.WorkComic$favoritesArgs<ExtArgs>
+  likes?: boolean | Prisma.WorkComic$likesArgs<ExtArgs>
   _count?: boolean | Prisma.WorkComicCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkComicIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1906,6 +2334,8 @@ export type $WorkComicPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 关联的标签列表
      */
     comicTags: Prisma.$WorkComicTagPayload<ExtArgs>[]
+    favorites: Prisma.$WorkComicFavoritePayload<ExtArgs>[]
+    likes: Prisma.$WorkComicLikePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -2426,6 +2856,8 @@ export interface Prisma__WorkComicClient<T, Null = never, ExtArgs extends runtim
   comicCategories<T extends Prisma.WorkComic$comicCategoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkComic$comicCategoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicCategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   relatedChapters<T extends Prisma.WorkComic$relatedChaptersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkComic$relatedChaptersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   comicTags<T extends Prisma.WorkComic$comicTagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkComic$comicTagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  favorites<T extends Prisma.WorkComic$favoritesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkComic$favoritesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicFavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  likes<T extends Prisma.WorkComic$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkComic$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2975,6 +3407,54 @@ export type WorkComic$comicTagsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.WorkComicTagScalarFieldEnum | Prisma.WorkComicTagScalarFieldEnum[]
+}
+
+/**
+ * WorkComic.favorites
+ */
+export type WorkComic$favoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkComicFavorite
+   */
+  select?: Prisma.WorkComicFavoriteSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkComicFavorite
+   */
+  omit?: Prisma.WorkComicFavoriteOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkComicFavoriteInclude<ExtArgs> | null
+  where?: Prisma.WorkComicFavoriteWhereInput
+  orderBy?: Prisma.WorkComicFavoriteOrderByWithRelationInput | Prisma.WorkComicFavoriteOrderByWithRelationInput[]
+  cursor?: Prisma.WorkComicFavoriteWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkComicFavoriteScalarFieldEnum | Prisma.WorkComicFavoriteScalarFieldEnum[]
+}
+
+/**
+ * WorkComic.likes
+ */
+export type WorkComic$likesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkComicLike
+   */
+  select?: Prisma.WorkComicLikeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkComicLike
+   */
+  omit?: Prisma.WorkComicLikeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkComicLikeInclude<ExtArgs> | null
+  where?: Prisma.WorkComicLikeWhereInput
+  orderBy?: Prisma.WorkComicLikeOrderByWithRelationInput | Prisma.WorkComicLikeOrderByWithRelationInput[]
+  cursor?: Prisma.WorkComicLikeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkComicLikeScalarFieldEnum | Prisma.WorkComicLikeScalarFieldEnum[]
 }
 
 /**

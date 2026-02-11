@@ -2,24 +2,24 @@ import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  CheckForumLevelPermissionDto,
-  CreateForumLevelRuleDto,
-  ForumLevelStatisticsDto,
-  QueryForumLevelRuleDto,
-  UpdateForumLevelRuleDto,
-  UserForumLevelInfoDto,
+  CheckUserLevelPermissionDto,
+  CreateUserLevelRuleDto,
+  QueryUserLevelRuleDto,
+  UpdateUserLevelRuleDto,
+  UserLevelInfoDto,
+  UserLevelStatisticsDto,
 } from './dto/level-rule.dto'
-import { ForumLevelRulePermissionEnum } from './level-rule.constant'
+import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
 /**
  * 等级规则服务
- * 负责管理论坛用户等级规则、权限检查、等级升级等功能
+ * 负责管理用户等级规则、权限检查、等级升级等功能
  */
 @Injectable()
-export class ForumLevelRuleService extends BaseService {
+export class UserLevelRuleService extends BaseService {
   // 获取等级规则模型
-  get forumLevelRule() {
-    return this.prisma.appLevelRule
+  get userLevelRule() {
+    return this.prisma.userLevelRule
   }
 
   // 获取用户资料模型
@@ -57,12 +57,12 @@ export class ForumLevelRuleService extends BaseService {
    * @param dto 等级规则数据
    * @returns 创建的等级规则
    */
-  async createLevelRule(dto: CreateForumLevelRuleDto) {
-    if (await this.forumLevelRule.exists({ name: dto.name })) {
+  async createLevelRule(dto: CreateUserLevelRuleDto) {
+    if (await this.userLevelRule.exists({ name: dto.name })) {
       throw new BadRequestException('已存在相同等级规则')
     }
 
-    return this.forumLevelRule.create({
+    return this.userLevelRule.create({
       data: dto,
     })
   }
@@ -72,8 +72,8 @@ export class ForumLevelRuleService extends BaseService {
    * @param dto 查询参数
    * @returns 分页的等级规则列表
    */
-  async getLevelRulePage(dto: QueryForumLevelRuleDto) {
-    return this.forumLevelRule.findPagination({
+  async getLevelRulePage(dto: QueryUserLevelRuleDto) {
+    return this.userLevelRule.findPagination({
       where: {
         ...dto,
         isEnabled: dto.isEnabled,
@@ -91,7 +91,7 @@ export class ForumLevelRuleService extends BaseService {
    * @returns 等级规则详情
    */
   async getLevelRuleDetail(id: number) {
-    return this.forumLevelRule.findUnique({
+    return this.userLevelRule.findUnique({
       where: { id },
     })
   }
@@ -101,11 +101,11 @@ export class ForumLevelRuleService extends BaseService {
    * @param updateLevelRuleDto 更新数据
    * @returns 更新后的等级规则
    */
-  async updateLevelRule(updateLevelRuleDto: UpdateForumLevelRuleDto) {
+  async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleDto) {
     const { id, ...updateData } = updateLevelRuleDto
 
     if (
-      await this.forumLevelRule.exists({
+      await this.userLevelRule.exists({
         name: updateData.name,
         id: { not: id },
       })
@@ -113,7 +113,7 @@ export class ForumLevelRuleService extends BaseService {
       throw new BadRequestException('已存在相同等级规则')
     }
 
-    return this.forumLevelRule.update({
+    return this.userLevelRule.update({
       where: { id },
       data: updateData,
     })
@@ -125,7 +125,7 @@ export class ForumLevelRuleService extends BaseService {
    * @returns 删除结果
    */
   async deleteLevelRule(id: number) {
-    const rule = await this.forumLevelRule.findUnique({
+    const rule = await this.userLevelRule.findUnique({
       where: { id },
       include: {
         _count: {
@@ -144,7 +144,7 @@ export class ForumLevelRuleService extends BaseService {
       throw new BadRequestException('该等级规则下还有用户，无法删除')
     }
 
-    return this.forumLevelRule.delete({
+    return this.userLevelRule.delete({
       where: { id },
     })
   }
@@ -154,7 +154,7 @@ export class ForumLevelRuleService extends BaseService {
    * @param userId 用户ID
    * @returns 用户等级信息，包括当前等级、进度、权限等
    */
-  async getUserLevelInfo(userId: number): Promise<UserForumLevelInfoDto> {
+  async getUserLevelInfo(userId: number): Promise<UserLevelInfoDto> {
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },
       include: {
@@ -170,7 +170,7 @@ export class ForumLevelRuleService extends BaseService {
       throw new BadRequestException('用户等级规则不存在')
     }
 
-    const nextLevelRule = await this.forumLevelRule.findFirst({
+    const nextLevelRule = await this.userLevelRule.findFirst({
       where: {
         isEnabled: true,
         requiredExperience: {
@@ -221,7 +221,7 @@ export class ForumLevelRuleService extends BaseService {
    * @param dto 等级权限检查DTO
    * @returns 权限检查结果
    */
-  async checkLevelPermission(dto: CheckForumLevelPermissionDto) {
+  async checkLevelPermission(dto: CheckUserLevelPermissionDto) {
     const { userId, permissionType } = dto
 
     const user = await this.prisma.appUser.findUnique({
@@ -248,7 +248,7 @@ export class ForumLevelRuleService extends BaseService {
     let hasPermission = true
 
     switch (permissionType) {
-      case ForumLevelRulePermissionEnum.DAILY_TOPIC_LIMIT:
+      case UserLevelRulePermissionEnum.DAILY_TOPIC_LIMIT:
         limit = level.dailyTopicLimit
         if (limit > 0) {
           used = await this.forumTopic.count({
@@ -261,7 +261,7 @@ export class ForumLevelRuleService extends BaseService {
         }
         break
 
-      case ForumLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT:
+      case UserLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT:
         limit = level.dailyReplyCommentLimit
         if (limit > 0) {
           used = await this.forumReply.count({
@@ -274,7 +274,7 @@ export class ForumLevelRuleService extends BaseService {
         }
         break
 
-      case ForumLevelRulePermissionEnum.POST_INTERVAL:
+      case UserLevelRulePermissionEnum.POST_INTERVAL:
         limit = level.postInterval
         if (limit > 0) {
           const lastTopic = await this.forumTopic.findFirst({
@@ -312,7 +312,7 @@ export class ForumLevelRuleService extends BaseService {
         }
         break
 
-      case ForumLevelRulePermissionEnum.DAILY_LIKE_LIMIT:
+      case UserLevelRulePermissionEnum.DAILY_LIKE_LIMIT:
         limit = level.dailyLikeLimit
         if (limit > 0) {
           const topicLikes = await this.forumTopicLike.count({
@@ -332,7 +332,7 @@ export class ForumLevelRuleService extends BaseService {
         }
         break
 
-      case ForumLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT:
+      case UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT:
         limit = level.dailyFavoriteLimit
         if (limit > 0) {
           used = await this.forumTopicFavorite.count({
@@ -362,8 +362,8 @@ export class ForumLevelRuleService extends BaseService {
    * 获取等级统计信息
    * @returns 等级统计数据
    */
-  async getLevelStatistics(): Promise<ForumLevelStatisticsDto> {
-    const levels = await this.forumLevelRule.findMany({
+  async getLevelStatistics(): Promise<UserLevelStatisticsDto> {
+    const levels = await this.userLevelRule.findMany({
       where: {
         isEnabled: true,
       },
@@ -382,7 +382,7 @@ export class ForumLevelRuleService extends BaseService {
       },
     })
 
-    const allLevelsCount = await this.forumLevelRule.count()
+    const allLevelsCount = await this.userLevelRule.count()
 
     return {
       totalLevels: allLevelsCount,

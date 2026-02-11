@@ -7,7 +7,7 @@ export async function createInitialForumProfile(prisma: any) {
     return
   }
 
-  const level = await prisma.appLevelRule.findFirst({
+  const level = await prisma.userLevelRule.findFirst({
     where: { name: '初级会员' },
   })
 

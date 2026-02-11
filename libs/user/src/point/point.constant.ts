@@ -3,7 +3,7 @@
  */
 
 /// 积分规则类型枚举
-export enum ForumPointRuleTypeEnum {
+export enum UserPointRuleTypeEnum {
   /** 发表主题 */
   CREATE_TOPIC = 1,
   /** 发表回复 */

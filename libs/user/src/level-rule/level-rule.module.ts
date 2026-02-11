@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common'
-import { ForumLevelRuleService } from './level-rule.service'
+import { UserLevelRuleService } from './level-rule.service'
 
 /**
  * 等级规则模块
- * 提供论坛等级规则管理的完整功能
+ * 提供用户等级规则管理的完整功能
  */
 @Module({
   imports: [],
-  providers: [ForumLevelRuleService],
-  exports: [ForumLevelRuleService],
+  providers: [UserLevelRuleService],
+  exports: [UserLevelRuleService],
 })
-export class ForumLevelRuleModule {}
+export class UserLevelRuleModule {}

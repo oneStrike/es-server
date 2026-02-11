@@ -1,7 +1,7 @@
 import { UserDefaults } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { UserStatusEnum } from '@libs/base/enum'
-import { ForumPointService } from '@libs/user/point'
+import { UserPointService } from '@libs/user/point'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   QueryForumProfileListDto,
@@ -14,7 +14,7 @@ import {
  */
 @Injectable()
 export class ForumProfileService extends BaseService {
-  constructor(protected readonly pointService: ForumPointService) {
+  constructor(protected readonly pointService: UserPointService) {
     super()
   }
 
@@ -58,7 +58,7 @@ export class ForumProfileService extends BaseService {
             bio: true,
           },
         },
-        forumBadges: {
+        userBadges: {
           include: {
             badge: true,
           },
@@ -78,7 +78,7 @@ export class ForumProfileService extends BaseService {
       where: { id: userId },
       include: {
         forumProfile: true,
-        forumBadges: {
+        userBadges: {
           include: {
             badge: true,
           },
@@ -187,7 +187,7 @@ export class ForumProfileService extends BaseService {
    * @returns 分页的积分记录列表
    */
   async getPointRecords(userId: number) {
-    return this.prisma.appPointRecord.findPagination({
+    return this.prisma.userPointRecord.findPagination({
       where: {
         userId,
       },
@@ -201,7 +201,7 @@ export class ForumProfileService extends BaseService {
    * @throws {BadRequestException} 系统配置错误：找不到默认论坛等级
    */
   async initForumProfile(tx: Prisma.TransactionClient, userId: number) {
-    const defaultLevel = await tx.appLevelRule.findFirst({
+    const defaultLevel = await tx.userLevelRule.findFirst({
       where: { isEnabled: true },
       orderBy: { sortOrder: 'asc' },
     })

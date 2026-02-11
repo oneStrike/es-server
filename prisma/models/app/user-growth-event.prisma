@@ -1,0 +1,50 @@
+/// 用户成长事件审计表 - 记录成长事件处理过程与结果
+model UserGrowthEvent {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 业务域标识（如 forum/comic）
+  business String @db.VarChar(20)
+  /// 事件键（如 forum.topic.create）
+  eventKey String @map("event_key") @db.VarChar(50)
+  /// 用户ID
+  userId Int @map("user_id")
+  /// 目标ID（如主题ID/章节ID）
+  targetId Int? @map("target_id")
+  /// 请求IP
+  ip String? @db.VarChar(45)
+  /// 设备ID
+  deviceId String? @map("device_id") @db.VarChar(100)
+  /// 事件发生时间
+  occurredAt DateTime @map("occurred_at") @db.Timestamptz(6)
+
+  /// 处理状态（如 PROCESSED/REJECTED_ANTIFRAUD）
+  status String @db.VarChar(30)
+  /// 命中规则引用（JSON）
+  ruleRefs Json? @map("rule_refs")
+  /// 积分变动汇总
+  pointsDeltaApplied Int @default(0) @map("points_delta_applied")
+  /// 经验变动汇总
+  experienceDeltaApplied Int @default(0) @map("experience_delta_applied")
+  /// 徽章发放汇总（JSON）
+  badgeAssigned Json? @map("badge_assigned")
+  /// 事件上下文（JSON）
+  context Json? @map("context")
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 关联用户
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 积分记录关联
+  pointRecords UserPointRecord[]
+  /// 经验记录关联
+  experienceRecords UserExperienceRecord[]
+
+  @@index([business, eventKey])
+  @@index([userId])
+  @@index([occurredAt])
+  @@map("user_growth_event")
+}

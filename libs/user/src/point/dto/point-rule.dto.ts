@@ -11,9 +11,9 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ForumPointRuleTypeEnum } from '../point.constant'
+import { UserPointRuleTypeEnum } from '../point.constant'
 
-export class BaseForumPointRuleDto extends BaseDto {
+export class BaseUserPointRuleDto extends BaseDto {
   @ValidateString({
     description: '规则名称',
     example: '发表主题奖励',
@@ -25,11 +25,11 @@ export class BaseForumPointRuleDto extends BaseDto {
   @ValidateEnum({
     description:
       '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）',
-    example: ForumPointRuleTypeEnum.CREATE_TOPIC,
+    example: UserPointRuleTypeEnum.CREATE_TOPIC,
     required: true,
-    enum: ForumPointRuleTypeEnum,
+    enum: UserPointRuleTypeEnum,
   })
-  type!: ForumPointRuleTypeEnum
+  type!: UserPointRuleTypeEnum
 
   @ValidateNumber({
     description: '积分变化（正数为获得，负数为消费）',
@@ -45,6 +45,38 @@ export class BaseForumPointRuleDto extends BaseDto {
     default: 0,
   })
   dailyLimit!: number
+
+  @ValidateString({
+    description: '业务域标识',
+    example: 'forum',
+    required: false,
+    maxLength: 20,
+  })
+  business?: string
+
+  @ValidateString({
+    description: '事件键',
+    example: 'forum.topic.create',
+    required: false,
+    maxLength: 50,
+  })
+  eventKey?: string
+
+  @ValidateNumber({
+    description: '冷却秒数（0=无限制）',
+    example: 0,
+    required: false,
+    default: 0,
+  })
+  cooldownSeconds?: number
+
+  @ValidateNumber({
+    description: '总上限（0=无限制）',
+    example: 0,
+    required: false,
+    default: 0,
+  })
+  totalLimit?: number
 
   @ValidateBoolean({
     description: '是否启用',
@@ -63,17 +95,25 @@ export class BaseForumPointRuleDto extends BaseDto {
   remark?: string
 }
 
-export class CreateForumPointRuleDto extends OmitType(
-  BaseForumPointRuleDto,
+export class CreateUserPointRuleDto extends OmitType(
+  BaseUserPointRuleDto,
   OMIT_BASE_FIELDS,
 ) {}
 
-export class UpdateForumPointRuleDto extends IntersectionType(
-  PartialType(CreateForumPointRuleDto),
+export class UpdateUserPointRuleDto extends IntersectionType(
+  PartialType(CreateUserPointRuleDto),
   IdDto,
 ) {}
 
-export class QueryForumPointRuleDto extends IntersectionType(
+export class QueryUserPointRuleDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseForumPointRuleDto, ['name', 'type', 'isEnabled'])),
+  PartialType(
+    PickType(BaseUserPointRuleDto, [
+      'name',
+      'type',
+      'business',
+      'eventKey',
+      'isEnabled',
+    ]),
+  ),
 ) {}

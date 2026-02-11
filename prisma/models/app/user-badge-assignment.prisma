@@ -1,0 +1,24 @@
+/// 用户徽章关联表 - 管理用户获得的徽章
+model UserBadgeAssignment {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 关联的用户ID
+  userId Int @map("user_id")
+  /// 关联的徽章ID
+  badgeId Int @map("badge_id")
+
+  /// 获得时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 关联徽章
+  badge UserBadge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  /// 关联用户
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+  @@index([createdAt])
+  @@map("user_badge_assignment")
+}

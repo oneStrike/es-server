@@ -298,3 +298,72 @@ export class ComicChapterPageResponseDto extends OmitType(BaseComicChapterDto, [
   'contents',
   'remark',
 ]) {}
+
+export class ComicChapterPageWithUserStatusDto extends ComicChapterPageResponseDto {
+  @ApiProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+  })
+  liked!: boolean
+
+  @ApiProperty({
+    description: '是否已购买',
+    example: false,
+    required: true,
+  })
+  purchased!: boolean
+
+  @ApiProperty({
+    description: '是否已下载',
+    example: false,
+    required: true,
+  })
+  downloaded!: boolean
+}
+
+export class ComicChapterDetailWithUserStatusDto extends ComicChapterDetailDto {
+  @ApiProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+  })
+  liked!: boolean
+
+  @ApiProperty({
+    description: '是否已购买',
+    example: false,
+    required: true,
+  })
+  purchased!: boolean
+
+  @ApiProperty({
+    description: '是否已下载',
+    example: false,
+    required: true,
+  })
+  downloaded!: boolean
+}
+
+export class ComicChapterUserStatusDto extends IdDto {
+  @ApiProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+  })
+  liked!: boolean
+
+  @ApiProperty({
+    description: '是否已购买',
+    example: false,
+    required: true,
+  })
+  purchased!: boolean
+
+  @ApiProperty({
+    description: '是否已下载',
+    example: false,
+    required: true,
+  })
+  downloaded!: boolean
+}

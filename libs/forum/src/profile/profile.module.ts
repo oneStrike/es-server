@@ -1,5 +1,5 @@
-import { ForumLevelRuleModule } from '@libs/user/level-rule'
-import { ForumPointModule } from '@libs/user/point'
+import { UserLevelRuleModule } from '@libs/user/level-rule'
+import { UserPointModule } from '@libs/user/point'
 import { Module } from '@nestjs/common'
 import { ForumProfileService } from './profile.service'
 
@@ -8,7 +8,7 @@ import { ForumProfileService } from './profile.service'
  * 提供论坛用户资料管理的完整功能
  */
 @Module({
-  imports: [ForumPointModule, ForumLevelRuleModule],
+  imports: [UserPointModule, UserLevelRuleModule],
   providers: [ForumProfileService],
   exports: [ForumProfileService],
 })

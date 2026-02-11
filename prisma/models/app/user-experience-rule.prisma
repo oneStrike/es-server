@@ -1,0 +1,40 @@
+/// 用户经验规则表 - 定义经验获取规则，包括发帖、回复、点赞、签到等
+model UserExperienceRule {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 规则类型（1=发帖, 2=回复, 3=被点赞, 4=回复被点赞, 5=被收藏, 6=每日签到）
+  type Int @unique @db.SmallInt
+
+  /// 经验值变化
+  experience Int
+  /// 每日上限（0=无限制）
+  dailyLimit Int @default(0) @map("daily_limit")
+  /// 业务域标识（如 forum/comic）
+  business String? @db.VarChar(20)
+  /// 事件键（如 forum.topic.create）
+  eventKey String? @map("event_key") @db.VarChar(50)
+  /// 冷却秒数（0=无限制）
+  cooldownSeconds Int @default(0) @map("cooldown_seconds")
+  /// 总上限（0=无限制）
+  totalLimit Int @default(0) @map("total_limit")
+
+  /// 是否启用
+  isEnabled Boolean @default(true) @map("is_enabled")
+
+  /// 备注
+  remark String? @db.VarChar(500)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 经验记录关联
+  records UserExperienceRecord[]
+
+  @@index([type])
+  @@index([isEnabled])
+  @@index([createdAt])
+  @@map("user_experience_rule")
+}

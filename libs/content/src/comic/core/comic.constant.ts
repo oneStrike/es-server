@@ -13,3 +13,9 @@ export enum ComicSerialStatusEnum {
   /** 已停更 */
   DISCONTINUED = 3,
 }
+
+export const ComicGrowthEventKey = {
+  View: 'comic.work.view',
+  Like: 'comic.work.like',
+  Favorite: 'comic.work.favorite',
+} as const

@@ -11,17 +11,17 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ForumExperienceRuleTypeEnum } from '../experience.constant'
+import { UserExperienceRuleTypeEnum } from '../experience.constant'
 
-export class BaseForumExperienceRuleDto extends BaseDto {
+export class BaseUserExperienceRuleDto extends BaseDto {
   @ValidateEnum({
     description:
       '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到）',
-    example: ForumExperienceRuleTypeEnum.CREATE_TOPIC,
+    example: UserExperienceRuleTypeEnum.CREATE_TOPIC,
     required: true,
-    enum: ForumExperienceRuleTypeEnum,
+    enum: UserExperienceRuleTypeEnum,
   })
-  type!: ForumExperienceRuleTypeEnum
+  type!: UserExperienceRuleTypeEnum
 
   @ValidateNumber({
     description: '经验值变化',
@@ -37,6 +37,38 @@ export class BaseForumExperienceRuleDto extends BaseDto {
     default: 0,
   })
   dailyLimit!: number
+
+  @ValidateString({
+    description: '业务域标识',
+    example: 'forum',
+    required: false,
+    maxLength: 20,
+  })
+  business?: string
+
+  @ValidateString({
+    description: '事件键',
+    example: 'forum.topic.create',
+    required: false,
+    maxLength: 50,
+  })
+  eventKey?: string
+
+  @ValidateNumber({
+    description: '冷却秒数（0=无限制）',
+    example: 0,
+    required: false,
+    default: 0,
+  })
+  cooldownSeconds?: number
+
+  @ValidateNumber({
+    description: '总上限（0=无限制）',
+    example: 0,
+    required: false,
+    default: 0,
+  })
+  totalLimit?: number
 
   @ValidateBoolean({
     description: '是否启用',
@@ -55,17 +87,24 @@ export class BaseForumExperienceRuleDto extends BaseDto {
   remark?: string
 }
 
-export class CreateForumExperienceRuleDto extends OmitType(
-  BaseForumExperienceRuleDto,
+export class CreateUserExperienceRuleDto extends OmitType(
+  BaseUserExperienceRuleDto,
   OMIT_BASE_FIELDS,
 ) {}
 
-export class UpdateForumExperienceRuleDto extends IntersectionType(
-  PartialType(CreateForumExperienceRuleDto),
+export class UpdateUserExperienceRuleDto extends IntersectionType(
+  PartialType(CreateUserExperienceRuleDto),
   IdDto,
 ) {}
 
-export class QueryForumExperienceRuleDto extends IntersectionType(
+export class QueryUserExperienceRuleDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseForumExperienceRuleDto, ['type', 'isEnabled'])),
+  PartialType(
+    PickType(BaseUserExperienceRuleDto, [
+      'type',
+      'business',
+      'eventKey',
+      'isEnabled',
+    ]),
+  ),
 ) {}

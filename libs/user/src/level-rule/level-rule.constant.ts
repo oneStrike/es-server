@@ -1,11 +1,11 @@
 /**
- * 论坛等级规则模块常量定义
+ * 用户等级规则模块常量定义
  */
 
 /**
  * 等级规则权限类型枚举
  */
-export enum ForumLevelRulePermissionEnum {
+export enum UserLevelRulePermissionEnum {
   /** 每日发帖数量上限 */
   DAILY_TOPIC_LIMIT = 'dailyTopicLimit',
   /** 每日回复和评论数量上限 */
@@ -22,13 +22,13 @@ export enum ForumLevelRulePermissionEnum {
  * 等级规则权限名称映射
  */
 export const LevelRulePermissionNames: Record<
-  ForumLevelRulePermissionEnum,
+  UserLevelRulePermissionEnum,
   string
 > = {
-  [ForumLevelRulePermissionEnum.DAILY_TOPIC_LIMIT]: '每日发帖数量上限',
-  [ForumLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT]:
+  [UserLevelRulePermissionEnum.DAILY_TOPIC_LIMIT]: '每日发帖数量上限',
+  [UserLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT]:
     '每日回复和评论数量上限',
-  [ForumLevelRulePermissionEnum.POST_INTERVAL]: '发帖间隔秒数',
-  [ForumLevelRulePermissionEnum.DAILY_LIKE_LIMIT]: '每日点赞次数上限',
-  [ForumLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT]: '每日收藏次数上限',
+  [UserLevelRulePermissionEnum.POST_INTERVAL]: '发帖间隔秒数',
+  [UserLevelRulePermissionEnum.DAILY_LIKE_LIMIT]: '每日点赞次数上限',
+  [UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT]: '每日收藏次数上限',
 }

@@ -55,12 +55,12 @@ export async function createInitialForumPointRules(prisma: any) {
   ]
 
   for (const ruleData of INITIAL_FORUM_POINT_RULES) {
-    const existingRule = await prisma.appPointRule.findFirst({
+    const existingRule = await prisma.userPointRule.findFirst({
       where: { type: ruleData.type },
     })
 
     if (!existingRule) {
-      await prisma.appPointRule.create({
+      await prisma.userPointRule.create({
         data: {
           name: ruleData.name,
           type: ruleData.type,

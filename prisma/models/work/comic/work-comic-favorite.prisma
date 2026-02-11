@@ -1,0 +1,17 @@
+model WorkComicFavorite {
+  id Int @id @default(autoincrement())
+
+  comicId Int @map("comic_id")
+  userId  Int @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  comic WorkComic @relation(fields: [comicId], references: [id], onDelete: Cascade)
+  user  AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([comicId, userId])
+  @@index([comicId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("work_comic_favorite")
+}
