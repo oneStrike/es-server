@@ -1,70 +1,13 @@
 import type { Cache } from 'cache-manager'
-import type { ITokenStorageService } from './auth.strategy'
+import type { ITokenStorageService } from './auth.types'
+import type {
+  CreateTokenDto,
+  ITokenDelegate,
+  ITokenEntity,
+} from './token-storage.types'
 import { BaseService } from '@libs/base/database'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
-
-/**
- * Token 类型定义
- * 统一管理 Token 类型字面量
- */
-export type TokenType = 'ACCESS' | 'REFRESH'
-
-/**
- * Token 实体接口
- * 定义 Token 数据的标准结构
- */
-export interface ITokenEntity {
-  id: number
-  jti: string
-  userId: number
-  tokenType: string
-  expiresAt: Date
-  revokedAt?: Date | null
-  createdAt: Date
-  deviceInfo?: any
-  ipAddress?: string | null
-  userAgent?: string | null
-}
-
-/**
- * 创建 Token 数据传输对象
- */
-export interface CreateTokenDto {
-  userId: number
-  jti: string
-  tokenType: TokenType
-  expiresAt: Date
-  deviceInfo?: string
-  ipAddress?: string
-  userAgent?: string
-}
-
-/**
- * Prisma Delegate 接口抽象
- * 适配 AdminUserToken 和 AppUserToken
- *
- * @template T Token 实体类型
- * @template CreateInput 创建参数类型
- * @template UpdateInput 更新参数类型
- * @template WhereInput 查询条件类型
- */
-export interface ITokenDelegate<
-  T,
-  CreateInput = any,
-  UpdateInput = any,
-  WhereInput = any,
-> {
-  create: (args: { data: CreateInput }) => Promise<T>
-  createMany: (args: { data: CreateInput[] }) => Promise<any>
-  findUnique: (args: {
-    where: WhereInput & { jti?: string, id?: number }
-  }) => Promise<T | null>
-  findMany: (args: { where?: WhereInput, [key: string]: any }) => Promise<T[]>
-  update: (args: { where: WhereInput, data: UpdateInput }) => Promise<T>
-  updateMany: (args: { where: WhereInput, data: UpdateInput }) => Promise<any>
-  deleteMany: (args: { where: WhereInput }) => Promise<any>
-}
 
 /**
  * 基础 Token 存储服务
@@ -157,6 +100,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
    * 包含 Redis 缓存逻辑
    */
   async isTokenValid(jti: string): Promise<boolean> {
+    // 优先读缓存，命中即返回
     const cached = await this.cacheManager.get(`token:${jti}`)
     if (cached !== null && cached !== undefined) {
       return cached === 'valid'
@@ -164,6 +108,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
 
     const token = await this.findByJti(jti)
     if (!token) {
+      // 不存在的 token 缓存为无效，避免穿透
       await this.cacheManager.set(`token:${jti}`, 'invalid', 86400) // 缓存无效状态 24h
       return false
     }
@@ -178,7 +123,7 @@ export abstract class BaseTokenStorageService<T extends ITokenEntity>
       return false
     }
 
-    // 计算剩余 TTL (秒)
+    // 计算剩余 TTL (秒) 并写入缓存
     const ttl = Math.floor((token.expiresAt.getTime() - Date.now()) / 1000)
     if (ttl > 0) {
       await this.cacheManager.set(`token:${jti}`, 'valid', ttl)

@@ -1,14 +1,5 @@
-/**
- * 模糊匹配结果接口
- */
+import type { FuzzyMatchResult } from '../sensitive-word.types'
 import { BKTree } from './bk-tree'
-
-export interface FuzzyMatchResult {
-  word: string
-  start: number
-  end: number
-  distance: number
-}
 
 /**
  * 模糊匹配器类

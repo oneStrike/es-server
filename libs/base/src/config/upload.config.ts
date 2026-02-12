@@ -65,7 +65,7 @@ export const UploadConfig = {
   allowMimeTypesFlat,
 }
 
-export type UploadConfigInterface = typeof UploadConfig
+export type { UploadConfigInterface } from './upload.types'
 /**
  * 注册上传配置
  */ // 注册上传配置

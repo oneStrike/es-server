@@ -1,4 +1,6 @@
 import {
+  ValidateArray,
+  ValidateBoolean,
   ValidateNested,
   ValidateNumber,
   ValidateString,
@@ -43,4 +45,186 @@ export class AliyunConfigDto {
     type: AliyunSmsConfigDto,
   })
   sms!: AliyunSmsConfigDto
+}
+
+export class GrowthAntifraudLimitDto {
+  @ValidateNumber({
+    description: '冷却时间（秒）',
+    example: 60,
+    required: false,
+  })
+  cooldownSeconds?: number
+
+  @ValidateNumber({
+    description: '每日上限',
+    example: 100,
+    required: false,
+  })
+  dailyLimit?: number
+
+  @ValidateNumber({
+    description: '总上限',
+    example: 1000,
+    required: false,
+  })
+  totalLimit?: number
+}
+
+export class GrowthAntifraudEventOverrideDto {
+  @ValidateString({
+    description: '业务域',
+    example: 'forum',
+  })
+  business!: string
+
+  @ValidateString({
+    description: '事件键',
+    example: 'forum.topic.create',
+  })
+  eventKey!: string
+
+  @ValidateNested({
+    description: '用户维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  user?: GrowthAntifraudLimitDto
+
+  @ValidateNested({
+    description: 'IP 维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  ip?: GrowthAntifraudLimitDto
+
+  @ValidateNested({
+    description: '设备维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  device?: GrowthAntifraudLimitDto
+
+  @ValidateNumber({
+    description: '积分高价值阈值',
+    example: 100,
+    required: false,
+  })
+  pointsThreshold?: number
+
+  @ValidateNumber({
+    description: '经验高价值阈值',
+    example: 100,
+    required: false,
+  })
+  experienceThreshold?: number
+
+  @ValidateNested({
+    description: '高价值用户维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  highValueUser?: GrowthAntifraudLimitDto
+
+  @ValidateNested({
+    description: '高价值 IP 维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  highValueIp?: GrowthAntifraudLimitDto
+
+  @ValidateNested({
+    description: '高价值设备维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  highValueDevice?: GrowthAntifraudLimitDto
+}
+
+export class GrowthAntifraudConfigDto {
+  @ValidateBoolean({
+    description: '是否启用防刷',
+    example: true,
+    default: true,
+    required: false,
+  })
+  enabled?: boolean
+
+  @ValidateNested({
+    description: '用户维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  user?: GrowthAntifraudLimitDto
+
+  @ValidateNested({
+    description: 'IP 维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  ip?: GrowthAntifraudLimitDto
+
+  @ValidateNested({
+    description: '设备维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  device?: GrowthAntifraudLimitDto
+
+  @ValidateNumber({
+    description: '积分高价值阈值',
+    example: 100,
+    required: false,
+  })
+  pointsThreshold?: number
+
+  @ValidateNumber({
+    description: '经验高价值阈值',
+    example: 100,
+    required: false,
+  })
+  experienceThreshold?: number
+
+  @ValidateNested({
+    description: '高价值用户维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  highValueUser?: GrowthAntifraudLimitDto
+
+  @ValidateNested({
+    description: '高价值 IP 维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  highValueIp?: GrowthAntifraudLimitDto
+
+  @ValidateNested({
+    description: '高价值设备维度限制',
+    type: GrowthAntifraudLimitDto,
+    required: false,
+  })
+  highValueDevice?: GrowthAntifraudLimitDto
+
+  @ValidateArray({
+    description: '事件级覆盖规则',
+    itemType: 'object',
+    required: false,
+  })
+  overrides?: GrowthAntifraudEventOverrideDto[]
+}
+
+export class SystemConfigDto {
+  @ValidateNested({
+    description: '阿里云配置',
+    type: AliyunConfigDto,
+    required: false,
+  })
+  aliyunConfig?: AliyunConfigDto
+
+  @ValidateNested({
+    description: '成长防刷配置',
+    type: GrowthAntifraudConfigDto,
+    required: false,
+  })
+  growthAntifraudConfig?: GrowthAntifraudConfigDto
 }

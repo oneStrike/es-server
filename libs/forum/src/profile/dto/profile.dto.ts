@@ -1,3 +1,4 @@
+import { GenderEnum, UserStatusEnum } from '@libs/base/constant'
 import {
   ValidateBoolean,
   ValidateDate,
@@ -6,7 +7,6 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
-import { GenderEnum, UserStatusEnum } from '@libs/base/enum'
 import {
   ApiProperty,
   IntersectionType,

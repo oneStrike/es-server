@@ -1,14 +1,9 @@
 import type { CallHandler, ExecutionContext } from '@nestjs/common'
 import type { Observable } from 'rxjs'
+import type { Response } from './transform.types'
 import { Injectable, NestInterceptor } from '@nestjs/common'
 import { ClsService } from 'nestjs-cls'
 import { map } from 'rxjs/operators'
-
-export interface Response<T> {
-  code: number
-  data: T
-  message: string
-}
 
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<

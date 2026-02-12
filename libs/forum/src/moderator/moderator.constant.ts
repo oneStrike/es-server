@@ -1,3 +1,7 @@
+/**
+ * 版主相关常量定义
+ * 覆盖角色类型与权限类型
+ */
 export enum ForumModeratorRoleTypeEnum {
   /** 超级版主 - 管理所有板块 */
   SUPER = 1,
@@ -7,6 +11,7 @@ export enum ForumModeratorRoleTypeEnum {
   SECTION = 3,
 }
 
+/// 版主角色名称映射
 export const ForumModeratorRoleTypeNames: Record<
   ForumModeratorRoleTypeEnum,
   string
@@ -31,6 +36,7 @@ export enum ForumModeratorPermissionEnum {
   MOVE = 6,
 }
 
+/// 版主权限名称映射
 export const ForumModeratorPermissionNames: Record<
   ForumModeratorPermissionEnum,
   string

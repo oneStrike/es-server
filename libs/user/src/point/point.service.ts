@@ -125,6 +125,7 @@ export class UserPointService extends BaseService {
       throw new BadRequestException('积分规则配置错误')
     }
 
+    // 按规则校验当日可获取次数
     if (rule.dailyLimit > 0) {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
@@ -144,6 +145,7 @@ export class UserPointService extends BaseService {
       }
     }
 
+    // 记录变更与用户积分更新放在同一事务
     return this.prisma.$transaction(async (tx) => {
       const beforePoints = user.points
       const afterPoints = beforePoints + rule.points
@@ -190,6 +192,7 @@ export class UserPointService extends BaseService {
       throw new BadRequestException('积分不足')
     }
 
+    // 消费积分需保证记录与余额一致
     return this.prisma.$transaction(async (tx) => {
       const beforePoints = user.points
       const afterPoints = beforePoints - points

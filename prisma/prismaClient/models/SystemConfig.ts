@@ -49,6 +49,7 @@ export type SystemConfigMaxAggregateOutputType = {
 export type SystemConfigCountAggregateOutputType = {
   id: number
   aliyunConfig: number
+  growthAntifraudConfig: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -78,6 +79,7 @@ export type SystemConfigMaxAggregateInputType = {
 export type SystemConfigCountAggregateInputType = {
   id?: true
   aliyunConfig?: true
+  growthAntifraudConfig?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -172,6 +174,7 @@ export type SystemConfigGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type SystemConfigGroupByOutputType = {
   id: number
   aliyunConfig: runtime.JsonValue | null
+  growthAntifraudConfig: runtime.JsonValue | null
   createdAt: Date
   updatedAt: Date
   _count: SystemConfigCountAggregateOutputType | null
@@ -202,6 +205,7 @@ export type SystemConfigWhereInput = {
   NOT?: Prisma.SystemConfigWhereInput | Prisma.SystemConfigWhereInput[]
   id?: Prisma.IntFilter<"SystemConfig"> | number
   aliyunConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  growthAntifraudConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
 }
@@ -209,6 +213,7 @@ export type SystemConfigWhereInput = {
 export type SystemConfigOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   aliyunConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  growthAntifraudConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -219,6 +224,7 @@ export type SystemConfigWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.SystemConfigWhereInput[]
   NOT?: Prisma.SystemConfigWhereInput | Prisma.SystemConfigWhereInput[]
   aliyunConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  growthAntifraudConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
 }, "id">
@@ -226,6 +232,7 @@ export type SystemConfigWhereUniqueInput = Prisma.AtLeast<{
 export type SystemConfigOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   aliyunConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  growthAntifraudConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SystemConfigCountOrderByAggregateInput
@@ -241,12 +248,14 @@ export type SystemConfigScalarWhereWithAggregatesInput = {
   NOT?: Prisma.SystemConfigScalarWhereWithAggregatesInput | Prisma.SystemConfigScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"SystemConfig"> | number
   aliyunConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
+  growthAntifraudConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SystemConfig"> | Date | string
 }
 
 export type SystemConfigCreateInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -254,12 +263,14 @@ export type SystemConfigCreateInput = {
 export type SystemConfigUncheckedCreateInput = {
   id?: number
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type SystemConfigUpdateInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -267,6 +278,7 @@ export type SystemConfigUpdateInput = {
 export type SystemConfigUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -274,12 +286,14 @@ export type SystemConfigUncheckedUpdateInput = {
 export type SystemConfigCreateManyInput = {
   id?: number
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type SystemConfigUpdateManyMutationInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -287,6 +301,7 @@ export type SystemConfigUpdateManyMutationInput = {
 export type SystemConfigUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -294,6 +309,7 @@ export type SystemConfigUncheckedUpdateManyInput = {
 export type SystemConfigCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   aliyunConfig?: Prisma.SortOrder
+  growthAntifraudConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -323,6 +339,7 @@ export type SystemConfigSumOrderByAggregateInput = {
 export type SystemConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   aliyunConfig?: boolean
+  growthAntifraudConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["systemConfig"]>
@@ -330,6 +347,7 @@ export type SystemConfigSelect<ExtArgs extends runtime.Types.Extensions.Internal
 export type SystemConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   aliyunConfig?: boolean
+  growthAntifraudConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["systemConfig"]>
@@ -337,6 +355,7 @@ export type SystemConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
 export type SystemConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   aliyunConfig?: boolean
+  growthAntifraudConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["systemConfig"]>
@@ -344,11 +363,12 @@ export type SystemConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
 export type SystemConfigSelectScalar = {
   id?: boolean
   aliyunConfig?: boolean
+  growthAntifraudConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SystemConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "aliyunConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["systemConfig"]>
+export type SystemConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "aliyunConfig" | "growthAntifraudConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["systemConfig"]>
 
 export type $SystemConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SystemConfig"
@@ -362,6 +382,7 @@ export type $SystemConfigPayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 阿里云配置（JSON格式）
      */
     aliyunConfig: runtime.JsonValue | null
+    growthAntifraudConfig: runtime.JsonValue | null
     /**
      * 创建时间
      */
@@ -795,6 +816,7 @@ export interface Prisma__SystemConfigClient<T, Null = never, ExtArgs extends run
 export interface SystemConfigFieldRefs {
   readonly id: Prisma.FieldRef<"SystemConfig", 'Int'>
   readonly aliyunConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
+  readonly growthAntifraudConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
   readonly createdAt: Prisma.FieldRef<"SystemConfig", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"SystemConfig", 'DateTime'>
 }

@@ -1,11 +1,13 @@
 import { BaseService } from '@libs/base/database'
 
+import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
 } from '../action-log/action-log.constant'
 import { ForumUserActionLogService } from '../action-log/action-log.service'
+import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import {
   CreateForumReplyLikeDto,
   DeleteForumReplyLikeDto,
@@ -17,7 +19,10 @@ import {
  */
 @Injectable()
 export class ForumReplyLikeService extends BaseService {
-  constructor(private readonly actionLogService: ForumUserActionLogService) {
+  constructor(
+    private readonly actionLogService: ForumUserActionLogService,
+    private readonly userGrowthEventService: UserGrowthEventService,
+  ) {
     super()
   }
 
@@ -73,7 +78,7 @@ export class ForumReplyLikeService extends BaseService {
       throw new BadRequestException('已经点赞过该回复')
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const like = await this.prisma.$transaction(async (tx) => {
       const like = await tx.forumReplyLike.create({
         data: {
           replyId,
@@ -99,6 +104,16 @@ export class ForumReplyLikeService extends BaseService {
 
       return like
     })
+
+    await this.userGrowthEventService.handleEvent({
+      business: 'forum',
+      eventKey: ForumGrowthEventKey.ReplyLike,
+      userId,
+      targetId: replyId,
+      occurredAt: new Date(),
+    })
+
+    return like
   }
 
   /**

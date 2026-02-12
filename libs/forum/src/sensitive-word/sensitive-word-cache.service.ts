@@ -1,5 +1,6 @@
 import type { ForumSensitiveWord } from '@libs/base/database'
 import type { Cache } from 'cache-manager'
+import type { CacheQueryConfig } from './sensitive-word.types'
 import { BaseService } from '@libs/base/database'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, Logger } from '@nestjs/common'
@@ -7,15 +8,6 @@ import {
   FORUM_SENSITIVE_WORD_CACHE_KEYS,
   FORUM_SENSITIVE_WORD_CACHE_TTL,
 } from './sensitive-word-cache.constant'
-
-/**
- * 缓存查询配置接口
- */
-interface CacheQueryConfig<T> {
-  cacheKey: string
-  logMessage: (data: T[]) => string
-  queryFn: () => Promise<T[]>
-}
 
 /**
  * 敏感词缓存服务

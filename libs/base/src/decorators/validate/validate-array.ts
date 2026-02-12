@@ -246,7 +246,7 @@ export function ValidateArray<T = any>(options: ValidateArrayOptions<T>) {
       required: options.required ?? true,
       default: options.default,
       nullable: !(options.required ?? true),
-      type: getApiType(),
+      type: options.itemClass ?? getApiType(),
       isArray: true,
     }
 

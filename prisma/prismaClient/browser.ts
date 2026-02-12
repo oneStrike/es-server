@@ -88,6 +88,11 @@ export type UserExperienceRecord = Prisma.UserExperienceRecordModel
  */
 export type UserExperienceRule = Prisma.UserExperienceRuleModel
 /**
+ * Model UserGrowthEventArchive
+ * 
+ */
+export type UserGrowthEventArchive = Prisma.UserGrowthEventArchiveModel
+/**
  * Model UserGrowthEvent
  * 用户成长事件审计表 - 记录成长事件处理过程与结果
  */

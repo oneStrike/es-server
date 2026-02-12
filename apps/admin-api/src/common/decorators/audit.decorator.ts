@@ -1,19 +1,5 @@
-import type { ActionTypeEnum } from '../../modules/system/audit/audit.constant'
+import type { AuditMetadata } from './audit.types'
 import { SetMetadata } from '@nestjs/common'
-
-/**
- * 审计日志装饰器元数据
- */
-export interface AuditMetadata {
-  /**
-   * 操作类型
-   */
-  actionType: ActionTypeEnum
-  /**
-   * 自定义内容模板
-   */
-  content: string
-}
 
 /**
  * 审计日志装饰器

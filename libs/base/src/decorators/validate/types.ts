@@ -72,6 +72,8 @@ export interface ValidateArrayOptions<T = any> extends BaseValidateOptions {
   default?: T[]
   /** 数组元素类型 */
   itemType: 'string' | 'number' | 'boolean' | 'object'
+  /** 数组元素DTO类型（用于API文档） */
+  itemClass?: new (...args: any[]) => any
   /** 数组元素验证器（可选，用于复杂类型验证） */
   itemValidator?: (value: any) => boolean
   /** 数组元素验证失败时的错误消息 */

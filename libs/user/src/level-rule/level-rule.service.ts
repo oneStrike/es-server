@@ -185,10 +185,12 @@ export class UserLevelRuleService extends BaseService {
     let progressPercentage = 0
     let nextLevelExperience: number | undefined
 
+    // 计算当前等级到下一级的进度百分比
     if (nextLevelRule) {
-      nextLevelExperience = nextLevelRule.requiredExperience
+      const nextLevelExperienceValue = nextLevelRule.requiredExperience
+      nextLevelExperience = nextLevelExperienceValue
       const previousLevelExperience = user.level.requiredExperience
-      const totalRange = nextLevelExperience - previousLevelExperience
+      const totalRange = nextLevelExperienceValue - previousLevelExperience
       const currentProgress = user.experience - previousLevelExperience
       progressPercentage =
         totalRange > 0 ? Math.round((currentProgress / totalRange) * 100) : 100
@@ -247,6 +249,7 @@ export class UserLevelRuleService extends BaseService {
     let used = 0
     let hasPermission = true
 
+    // 根据权限类型计算限制与已使用数量
     switch (permissionType) {
       case UserLevelRulePermissionEnum.DAILY_TOPIC_LIMIT:
         limit = level.dailyTopicLimit

@@ -1,4 +1,6 @@
 import type { ForumSensitiveWord } from '@libs/base/database'
+import type { ForumSensitiveWordLevelEnum } from './sensitive-word-constant'
+import type { FuzzyMatchResult, MatchResult } from './sensitive-word.types'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import {
   ForumMatchedWordDto,
@@ -6,34 +8,9 @@ import {
   ForumSensitiveWordReplaceDto,
 } from './dto/sensitive-word-detect.dto'
 import { ForumSensitiveWordCacheService } from './sensitive-word-cache.service'
-import {
-  ForumMatchModeEnum,
-  ForumSensitiveWordLevelEnum,
-  ForumSensitiveWordTypeEnum,
-} from './sensitive-word-constant'
-import { ACAutomaton, MatchResult } from './utils/ac-automaton'
-import { FuzzyMatcher, FuzzyMatchResult } from './utils/fuzzy-matcher'
-
-/**
- * 匹配到的敏感词信息接口
- */
-export interface MatchedWord {
-  word: string
-  start: number
-  end: number
-  level: ForumSensitiveWordLevelEnum
-  type: ForumSensitiveWordTypeEnum
-  replaceWord?: string | null
-}
-
-/**
- * 敏感词检测选项接口
- */
-export interface DetectOptions {
-  replace?: boolean
-  replaceChar?: string
-  matchMode?: ForumMatchModeEnum
-}
+import { ForumMatchModeEnum } from './sensitive-word-constant'
+import { ACAutomaton } from './utils/ac-automaton'
+import { FuzzyMatcher } from './utils/fuzzy-matcher'
 
 /**
  * 敏感词检测服务类
@@ -121,7 +98,7 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
 
   /**
    * 获取内容中匹配的敏感词列表
-   * @param dto -
+   * @param dto 检测参数，包含文本与匹配模式
    * @returns 匹配的敏感词列表
    */
   getMatchedWords(dto: ForumSensitiveWordDetectDto) {

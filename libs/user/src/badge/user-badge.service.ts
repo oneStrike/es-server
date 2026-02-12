@@ -11,22 +11,42 @@ import {
   UpdateUserBadgeDto,
 } from './dto/user-badge.dto'
 
+/**
+ * 用户徽章服务类
+ * 负责徽章管理与用户徽章授予/回收
+ */
 @Injectable()
 export class UserBadgeService extends BaseService {
+  /**
+   * 获取徽章模型
+   */
   get userBadge() {
     return this.prisma.userBadge
   }
 
+  /**
+   * 获取徽章分配模型
+   */
   get userBadgeAssignment() {
     return this.prisma.userBadgeAssignment
   }
 
+  /**
+   * 创建徽章
+   * @param dto 创建参数
+   * @returns 新徽章
+   */
   async createBadge(dto: CreateUserBadgeDto) {
     return this.userBadge.create({
       data: dto,
     })
   }
 
+  /**
+   * 更新徽章
+   * @param dto 更新参数
+   * @returns 更新后的徽章
+   */
   async updateBadge(dto: UpdateUserBadgeDto) {
     const { id, ...updateData } = dto
     if (!(await this.userBadge.exists({ id }))) {
@@ -39,6 +59,13 @@ export class UserBadgeService extends BaseService {
     })
   }
 
+  /**
+   * 删除徽章
+   * 同步删除分配记录
+   * @param dto 删除参数
+   * @param dto.id 徽章ID
+   * @returns 删除结果
+   */
   async deleteBadge(dto: { id: number }) {
     if (!(await this.userBadge.exists({ id: dto.id }))) {
       throw new NotFoundException('徽章不存在')
@@ -55,6 +82,12 @@ export class UserBadgeService extends BaseService {
     })
   }
 
+  /**
+   * 获取徽章详情
+   * @param dto 查询参数
+   * @param dto.id 徽章ID
+   * @returns 徽章详情
+   */
   async getBadgeDetail(dto: { id: number }) {
     if (!(await this.userBadge.exists({ id: dto.id }))) {
       throw new NotFoundException('徽章不存在')
@@ -64,6 +97,11 @@ export class UserBadgeService extends BaseService {
     })
   }
 
+  /**
+   * 查询徽章列表
+   * @param dto 查询参数
+   * @returns 分页结果
+   */
   async getBadges(dto: QueryUserBadgeDto) {
     return this.userBadge.findPagination({
       where: {
@@ -75,6 +113,11 @@ export class UserBadgeService extends BaseService {
     })
   }
 
+  /**
+   * 授予徽章
+   * @param dto 授予参数
+   * @returns 授予记录
+   */
   async assignBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
@@ -107,6 +150,11 @@ export class UserBadgeService extends BaseService {
     })
   }
 
+  /**
+   * 回收徽章
+   * @param dto 回收参数
+   * @returns 回收结果
+   */
   async revokeBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 

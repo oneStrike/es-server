@@ -1,4 +1,5 @@
 import type { Type } from '@nestjs/common'
+import type { ApiDocOptions } from './api-doc.types'
 import { applyDecorators } from '@nestjs/common'
 import {
   ApiExtraModels,
@@ -6,12 +7,6 @@ import {
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger'
-
-export interface ApiDocOptions<TModel> {
-  summary: string
-  model?: Type<TModel> | Record<string, any>
-  isArray?: boolean
-}
 
 // 工具函数：判断是否是类
 function isClass(model: any): model is Type<unknown> {

@@ -5,6 +5,8 @@ interface IForumBadgeData {
   type: number
   order: number
   isEnabled: boolean
+  business?: string
+  eventKey?: string | null
 }
 
 export async function createInitialForumBadges(prisma: any) {
@@ -16,6 +18,8 @@ export async function createInitialForumBadges(prisma: any) {
       type: 2,
       order: 1,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.topic.create',
     },
     {
       name: '活跃用户',
@@ -24,6 +28,8 @@ export async function createInitialForumBadges(prisma: any) {
       type: 2,
       order: 2,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.topic.create',
     },
     {
       name: '热心回答',
@@ -32,6 +38,8 @@ export async function createInitialForumBadges(prisma: any) {
       type: 2,
       order: 3,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.reply.create',
     },
     {
       name: '技术专家',
@@ -40,6 +48,8 @@ export async function createInitialForumBadges(prisma: any) {
       type: 2,
       order: 4,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.topic.like',
     },
     {
       name: '社区贡献者',
@@ -48,6 +58,8 @@ export async function createInitialForumBadges(prisma: any) {
       type: 2,
       order: 5,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.topic.like',
     },
     {
       name: '版主认证',
@@ -56,6 +68,8 @@ export async function createInitialForumBadges(prisma: any) {
       type: 1,
       order: 6,
       isEnabled: true,
+      business: 'forum',
+      eventKey: null,
     },
   ]
 
@@ -73,6 +87,8 @@ export async function createInitialForumBadges(prisma: any) {
           type: badgeData.type,
           sortOrder: badgeData.order,
           isEnabled: badgeData.isEnabled,
+          business: badgeData.business,
+          eventKey: badgeData.eventKey ?? undefined,
         },
       })
     }

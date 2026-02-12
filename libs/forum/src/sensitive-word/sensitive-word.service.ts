@@ -23,6 +23,10 @@ import {
 } from './sensitive-word-constant'
 import { ForumSensitiveWordDetectService } from './sensitive-word-detect.service'
 
+/**
+ * 论坛敏感词服务类
+ * 负责敏感词的增删改查、状态管理以及统计分析
+ */
 @Injectable()
 export class ForumSensitiveWordService extends BaseService {
   private readonly logger = new Logger(ForumSensitiveWordDetectService.name)
@@ -34,12 +38,17 @@ export class ForumSensitiveWordService extends BaseService {
     super()
   }
 
+  /**
+   * 获取敏感词模型
+   */
   get sensitiveWord() {
     return this.prisma.forumSensitiveWord
   }
 
   /**
    * 获取敏感词列表
+   * @param dto 查询条件
+   * @returns 分页结果
    */
   async getSensitiveWordPage(dto: QueryForumSensitiveWordDto) {
     return this.sensitiveWord.findPagination({
@@ -54,6 +63,8 @@ export class ForumSensitiveWordService extends BaseService {
 
   /**
    * 创建敏感词
+   * @param dto 创建参数
+   * @returns 新建敏感词
    */
   async createSensitiveWord(dto: CreateForumSensitiveWordDto) {
     const result = await this.sensitiveWord.create({
@@ -66,6 +77,8 @@ export class ForumSensitiveWordService extends BaseService {
 
   /**
    * 更新敏感词
+   * @param dto 更新参数
+   * @returns 更新后的敏感词
    */
   async updateSensitiveWord(dto: UpdateForumSensitiveWordDto) {
     if (!(await this.sensitiveWord.exists({ id: dto.id }))) {
@@ -84,6 +97,8 @@ export class ForumSensitiveWordService extends BaseService {
 
   /**
    * 删除敏感词
+   * @param dto 删除参数
+   * @returns 删除结果
    */
   async deleteSensitiveWord(dto: IdDto) {
     const result = await this.sensitiveWord.delete({
@@ -98,6 +113,8 @@ export class ForumSensitiveWordService extends BaseService {
 
   /**
    * 更新敏感词状态
+   * @param dto 状态更新参数
+   * @returns 更新结果
    */
   async updateSensitiveWordStatus(dto: UpdateEnabledStatusDto) {
     const result = await this.sensitiveWord.update({
@@ -113,6 +130,7 @@ export class ForumSensitiveWordService extends BaseService {
 
   /**
    * 获取级别统计
+   * @returns 级别统计列表
    */
   private async getLevelStatistics(): Promise<
     ForumForumSensitiveWordLevelStatisticsDto[]
@@ -137,6 +155,7 @@ export class ForumSensitiveWordService extends BaseService {
 
   /**
    * 获取类型统计
+   * @returns 类型统计列表
    */
   private async getTypeStatistics(): Promise<
     ForumForumSensitiveWordTypeStatisticsDto[]
@@ -161,6 +180,7 @@ export class ForumSensitiveWordService extends BaseService {
 
   /**
    * 获取顶部命中统计
+   * @returns 命中次数最高的敏感词
    */
   private async getTopHitStatistics(): Promise<
     ForumSensitiveWordTopHitStatisticsDto[]
@@ -195,6 +215,7 @@ export class ForumSensitiveWordService extends BaseService {
 
   /**
    * 获取最近命中统计
+   * @returns 最近命中的敏感词
    */
   private async getRecentHitStatistics(): Promise<
     ForumSensitiveWordRecentHitStatisticsDto[]
@@ -229,6 +250,8 @@ export class ForumSensitiveWordService extends BaseService {
 
   /**
    * 获取统计查询结果
+   * @param dto 统计查询参数
+   * @returns 统计结果
    */
   async getStatistics(
     dto: ForumSensitiveWordStatisticsQueryDto,

@@ -2,6 +2,7 @@
  * 管理端认证模块常量
  */
 export enum CacheKey {
+  /** 登录验证码 Key 前缀 */
   CAPTCHA = 'admin:auth:login:captcha:',
 }
 

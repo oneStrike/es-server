@@ -18,10 +18,10 @@ export class ForumUserActionLogService extends BaseService {
 
   /**
    * 创建用户操作日志
-   * @param options - 操作日志选项对象
+   * @param dto - 操作日志选项对象
    * @returns 创建的操作日志记录
    */
-  async createActionLog(options: CreateForumActionLogDto) {
+  async createActionLog(dto: CreateForumActionLogDto) {
     const {
       userId,
       actionType,
@@ -31,7 +31,7 @@ export class ForumUserActionLogService extends BaseService {
       afterData,
       ipAddress,
       userAgent,
-    } = options
+    } = dto
 
     return this.forumUserActionLog.create({
       data: {
@@ -57,7 +57,7 @@ export class ForumUserActionLogService extends BaseService {
 
   /**
    * 根据用户ID查询操作日志（分页）
-   * @param options - 查询选项对象
+   * @param dto - 查询选项对象
    * @returns 操作日志分页结果，包含列表、总数、页码和每页数量
    */
   async getActionLogsByUserId(dto: QueryForumActionLogDto) {

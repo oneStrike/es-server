@@ -12,7 +12,8 @@ import {
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from './search.constant'
 
 /**
- * 搜索服务
+ * 论坛搜索服务类
+ * 支持主题与回复的关键词检索及混合搜索
  */
 @Injectable()
 export class ForumSearchService extends BaseService {
@@ -20,16 +21,23 @@ export class ForumSearchService extends BaseService {
     super()
   }
 
+  /**
+   * 获取主题模型
+   */
   get forumTopic() {
     return this.prisma.forumTopic
   }
 
+  /**
+   * 获取回复模型
+   */
   get forumReply() {
     return this.prisma.forumReply
   }
 
   /**
    * 搜索
+   * 根据搜索类型分发至主题/回复搜索，或合并结果
    * @param searchDto 搜索参数
    * @returns 搜索结果
    */
@@ -48,6 +56,7 @@ export class ForumSearchService extends BaseService {
       return this.searchReplies(searchDto)
     }
 
+    // 混合搜索时按比例拆分主题与回复数量
     const topicPageSize = Math.ceil(pageSize / 2)
     const replyPageSize = Math.floor(pageSize / 2)
 
@@ -56,6 +65,7 @@ export class ForumSearchService extends BaseService {
       this.searchReplies({ ...searchDto, pageSize: replyPageSize }),
     ])
 
+    // 合并不同类型的搜索结果
     const results = [...topicResults.list, ...replyResults.list]
     const total = topicResults.total + replyResults.total
 
@@ -69,6 +79,7 @@ export class ForumSearchService extends BaseService {
 
   /**
    * 搜索主题
+   * 支持按关键词与排序方式筛选
    * @param dto 搜索参数
    * @returns 主题搜索结果
    */
@@ -123,6 +134,7 @@ export class ForumSearchService extends BaseService {
 
   /**
    * 搜索回复
+   * 支持按关键词与排序方式筛选
    * @param dto 搜索参数
    * @returns 回复搜索结果
    */

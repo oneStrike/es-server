@@ -1,37 +1,10 @@
 import type { FastifyRequest } from 'fastify'
-import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/enum'
-
-/**
- * 设备信息接口
- */
-export interface DeviceInfo {
-  browser?: string
-  os?: string
-  device?: string
-  version?: string
-}
-
-/**
- * 请求参数提取结果接口
- */
-export interface RequestParams {
-  body?: any
-  query?: Record<string, any>
-  params?: Record<string, any>
-}
-
-/**
- * 请求日志字段提取结果接口
- */
-export interface ParsedRequestData {
-  ip?: string
-  method: HttpMethodEnum
-  path: string
-  params?: string
-  userAgent?: string
-  device?: string
-  apiType?: ApiTypeEnum
-}
+import type {
+  DeviceInfo,
+  ParsedRequestData,
+  RequestParams,
+} from './request-parse.types'
+import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/constant'
 
 /**
  * 从 FastifyRequest 中提取 IP 地址

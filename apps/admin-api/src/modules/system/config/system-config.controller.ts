@@ -1,5 +1,5 @@
 import { ApiDoc } from '@libs/base/decorators'
-import { AliyunConfigDto, SystemConfigService } from '@libs/system-config'
+import { SystemConfigDto, SystemConfigService } from '@libs/system-config'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -11,7 +11,7 @@ export class SystemConfigController {
   @Get('config-detail')
   @ApiDoc({
     summary: '获取系统配置',
-    model: AliyunConfigDto,
+    model: SystemConfigDto,
   })
   async getConfig() {
     // 使用脱敏方法
@@ -23,7 +23,7 @@ export class SystemConfigController {
     summary: '更新系统配置',
     model: { type: 'boolean' },
   })
-  async updateConfig(@Body() dto: { aliyunConfig: AliyunConfigDto }) {
+  async updateConfig(@Body() dto: SystemConfigDto) {
     return this.systemConfigService.updateConfig(dto)
   }
 }

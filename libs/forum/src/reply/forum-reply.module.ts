@@ -1,3 +1,4 @@
+import { UserGrowthEventModule } from '@libs/user/growth-event'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
@@ -15,6 +16,7 @@ import { ForumReplyService } from './forum-reply.service'
     ForumSensitiveWordModule,
     ForumCounterModule,
     ForumUserActionLogModule,
+    UserGrowthEventModule,
   ],
   providers: [ForumReplyService],
   exports: [ForumReplyService],

@@ -1,10 +1,4 @@
-export interface TrieNode {
-  children: Map<string, TrieNode>
-  fail: TrieNode | null
-  output: boolean
-  word: string | null
-  depth: number
-}
+import type { TrieNode } from '../sensitive-word.types'
 
 export function createTrieNode(depth: number = 0): TrieNode {
   return {

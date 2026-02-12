@@ -1,7 +1,7 @@
 import type { FastifyRequest } from 'fastify'
-import { BaseService } from '@libs/base/database'
+import { GenderEnum } from '@libs/base/constant'
 
-import { GenderEnum } from '@libs/base/enum'
+import { BaseService } from '@libs/base/database'
 import { RsaService, ScryptService } from '@libs/base/modules'
 import {
   AuthService as BaseAuthService,
@@ -118,7 +118,7 @@ export class AuthService extends BaseService {
       })
 
       // 初始化业务关联数据（如论坛资料）
-      await this.profileService.initForumProfile(tx as any, newUser.id)
+      await this.profileService.initForumProfile(tx, newUser.id)
 
       return newUser
     })

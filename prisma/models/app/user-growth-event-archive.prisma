@@ -1,0 +1,28 @@
+model UserGrowthEventArchive {
+  id Int @id @default(autoincrement())
+
+  sourceId Int @map("source_id")
+  business String @db.VarChar(20)
+  eventKey String @map("event_key") @db.VarChar(50)
+  userId Int @map("user_id")
+  targetId Int? @map("target_id")
+  ip String? @db.VarChar(45)
+  deviceId String? @map("device_id") @db.VarChar(100)
+  occurredAt DateTime @map("occurred_at") @db.Timestamptz(6)
+
+  status String @db.VarChar(30)
+  ruleRefs Json? @map("rule_refs")
+  pointsDeltaApplied Int @default(0) @map("points_delta_applied")
+  experienceDeltaApplied Int @default(0) @map("experience_delta_applied")
+  badgeAssigned Json? @map("badge_assigned")
+  context Json? @map("context")
+
+  createdAt DateTime @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @map("updated_at") @db.Timestamptz(6)
+  archivedAt DateTime @default(now()) @map("archived_at") @db.Timestamptz(6)
+
+  @@index([sourceId])
+  @@index([userId])
+  @@index([occurredAt])
+  @@map("user_growth_event_archive")
+}

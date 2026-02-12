@@ -8,7 +8,17 @@
 DROP INDEX "user_badge_sort_order_idx";
 
 -- AlterTable
-ALTER TABLE "sys_dictionary_item" ALTER COLUMN "order" DROP NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'sys_dictionary_item'
+      AND column_name = 'order'
+  ) THEN
+    ALTER TABLE "sys_dictionary_item" ALTER COLUMN "order" DROP NOT NULL;
+  END IF;
+END $$;
 
 -- AlterTable
 ALTER TABLE "user_badge" DROP COLUMN "sort_order",

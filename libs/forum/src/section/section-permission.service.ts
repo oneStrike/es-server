@@ -1,8 +1,7 @@
+import type { Permission } from './section-permission.types'
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { ForumModeratorPermissionEnum } from '../moderator/moderator.constant'
-
-export type Permission = ForumModeratorPermissionEnum
 
 /**
  * 板块权限服务类

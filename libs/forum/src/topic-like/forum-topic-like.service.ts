@@ -1,5 +1,6 @@
 import { BaseService } from '@libs/base/database'
 
+import { UserGrowthEventService } from '@libs/user/growth-event'
 import {
   BadRequestException,
   Injectable,
@@ -11,6 +12,7 @@ import {
 } from '../action-log/action-log.constant'
 import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
+import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import {
   CreateForumTopicLikeDto,
   QueryForumTopicLikeDto,
@@ -26,6 +28,7 @@ export class ForumTopicLikeService extends BaseService {
   constructor(
     private readonly forumCounterService: ForumCounterService,
     private readonly actionLogService: ForumUserActionLogService,
+    private readonly userGrowthEventService: UserGrowthEventService,
   ) {
     super()
   }
@@ -83,7 +86,7 @@ export class ForumTopicLikeService extends BaseService {
       throw new BadRequestException('已经点赞过该主题')
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const like = await this.prisma.$transaction(async (tx) => {
       const like = await tx.forumTopicLike.create({
         data: {
           topicId,
@@ -107,6 +110,16 @@ export class ForumTopicLikeService extends BaseService {
 
       return like
     })
+
+    await this.userGrowthEventService.handleEvent({
+      business: 'forum',
+      eventKey: ForumGrowthEventKey.TopicLike,
+      userId,
+      targetId: topicId,
+      occurredAt: new Date(),
+    })
+
+    return like
   }
 
   /**
@@ -139,6 +152,7 @@ export class ForumTopicLikeService extends BaseService {
       throw new BadRequestException('主题不存在')
     }
 
+    // 计数更新与点赞记录删除保持一致
     return this.prisma.$transaction(async (tx) => {
       await this.forumCounterService.updateTopicLikeRelatedCounts(
         tx,
@@ -191,6 +205,7 @@ export class ForumTopicLikeService extends BaseService {
       },
     })
 
+    // 已点赞则取消，否则新增
     if (existingLike) {
       return this.unlikeTopic(topicId, userId)
     } else {

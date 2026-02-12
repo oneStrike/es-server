@@ -1,5 +1,6 @@
 export * from './badge'
 export * from './experience'
 export * from './growth-event'
+export * from './growth-overview'
 export * from './level-rule'
 export * from './point'

@@ -8,6 +8,9 @@ const CONFIG_METADATA: Record<string, { sensitiveFields: string[] }> = {
   aliyunConfig: {
     sensitiveFields: ['accessKeyId', 'accessKeySecret'],
   },
+  growthAntifraudConfig: {
+    sensitiveFields: [],
+  },
   // 未来可以在这里添加其他配置，如 wechatConfig 等
 }
 
@@ -89,11 +92,11 @@ export class SystemConfigService extends BaseService {
    * 更新系统配置（自动处理加密和掩码忽略）
    */
   async updateConfig(dto: Record<string, any>) {
-    // 1. 获取当前数据库中的配置（解密后的明文），用于对比和回填
+    // 读取当前明文配置，用于掩码回填与增量更新
     const currentConfig = await this.findActiveConfig()
     const data: any = {}
 
-    // 特殊处理：如果传入的是扁平的 AliyunConfig (包含 accessKeyId 或 sms)，则将其包装到 aliyunConfig 中
+    // 兼容扁平入参：accessKeyId / sms 等直接视为 aliyunConfig
     if (dto.accessKeyId || dto.sms) {
       // 构造 aliyunConfig 对象
       const aliyunConfigData = { ...dto }
@@ -102,19 +105,19 @@ export class SystemConfigService extends BaseService {
         ? (currentConfig as any).aliyunConfig
         : null
 
-      // 处理加密
+      // 掩码回填 + 加密处理
       for (const field of metadata.sensitiveFields) {
         const inputValue = aliyunConfigData[field]
 
         if (inputValue && isMasked(inputValue)) {
+          // 前端传回掩码则保留旧值
           if (currentConfigItem && currentConfigItem[field]) {
             aliyunConfigData[field] = currentConfigItem[field]
           } else {
             aliyunConfigData[field] = ''
           }
         } else if (inputValue) {
-          // 尝试 RSA 解密（处理前端传输的加密值），再 AES 加密存储
-          // 适用于 accessKeyId 和 accessKeySecret 等敏感字段
+          // 尝试 RSA 解密（前端加密传输），失败则视为明文
           try {
             const decryptedValue = this.rsaService.decryptWith(inputValue)
             aliyunConfigData[field] =
@@ -128,7 +131,7 @@ export class SystemConfigService extends BaseService {
 
       data.aliyunConfig = aliyunConfigData
     } else {
-      // 常规处理（支持结构化的入参，例如 { aliyunConfig: {...}, wechatConfig: {...} }）
+      // 结构化入参处理，例如 { aliyunConfig: {...}, wechatConfig: {...} }
       for (const key of Object.keys(dto)) {
         if (CONFIG_METADATA[key]) {
           const inputConfigItem = { ...dto[key] }
@@ -141,6 +144,7 @@ export class SystemConfigService extends BaseService {
             const inputValue = inputConfigItem[field]
 
             if (inputValue && isMasked(inputValue)) {
+              // 前端传回掩码则保留旧值
               if (currentConfigItem && currentConfigItem[field]) {
                 inputConfigItem[field] = currentConfigItem[field]
               } else {
@@ -149,7 +153,7 @@ export class SystemConfigService extends BaseService {
             }
           }
 
-          // 执行加密
+          // 对敏感字段执行加密存储
           for (const field of sensitiveFields) {
             if (inputConfigItem[field]) {
               // 尝试 RSA 解密（处理前端传输的加密值），再 AES 加密存储

@@ -2,10 +2,10 @@ import type {
   ForumTopicCreateInput,
   ForumTopicWhereInput,
 } from '@libs/base/database'
-import { BaseService } from '@libs/base/database'
+import { UserStatusEnum } from '@libs/base/constant'
 
-import { UserStatusEnum } from '@libs/base/enum'
-import { UserPointRuleTypeEnum, UserPointService } from '@libs/user/point'
+import { BaseService } from '@libs/base/database'
+import { UserGrowthEventService } from '@libs/user/growth-event'
 
 import {
   BadRequestException,
@@ -20,6 +20,7 @@ import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumConfigCacheService } from '../config/forum-config-cache.service'
 import { ForumReviewPolicyEnum } from '../config/forum-config.constants'
 import { ForumCounterService } from '../counter/forum-counter.service'
+import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import { ForumSensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
 import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import {
@@ -41,7 +42,7 @@ import { ForumTopicAuditStatusEnum } from './forum-topic.constant'
 @Injectable()
 export class ForumTopicService extends BaseService {
   constructor(
-    private readonly pointService: UserPointService,
+    private readonly userGrowthEventService: UserGrowthEventService,
     private readonly forumConfigCacheService: ForumConfigCacheService,
     private readonly sensitiveWordDetectService: ForumSensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
@@ -66,6 +67,13 @@ export class ForumTopicService extends BaseService {
     return this.prisma.forumProfile
   }
 
+  /**
+   * 计算主题审核状态与隐藏策略
+   * 根据板块或全局的审核策略以及最高敏感词等级决定是否审核与隐藏
+   * @param reviewPolicy 审核策略
+   * @param highestLevel 命中的最高敏感词等级
+   * @returns 审核状态与是否隐藏
+   */
   private calculateAuditStatus(
     reviewPolicy: ForumReviewPolicyEnum,
     highestLevel?: ForumSensitiveWordLevelEnum,
@@ -103,6 +111,8 @@ export class ForumTopicService extends BaseService {
 
   /**
    * 创建论坛主题
+   * 同步处理敏感词检测、审核策略、计数器与操作日志
+   * 审核通过后触发成长事件
    * @param createTopicDto - 创建论坛主题的数据传输对象
    * @returns 创建的论坛主题信息
    * @throws {BadRequestException} 板块不存在或已禁用
@@ -131,6 +141,7 @@ export class ForumTopicService extends BaseService {
       throw new BadRequestException('用户已被禁言或封禁，无法发布主题')
     }
 
+    // 合并标题与内容进行敏感词检测
     const { hits, highestLevel } =
       this.sensitiveWordDetectService.getMatchedWords({
         content: topicData.content + topicData.title,
@@ -146,6 +157,7 @@ export class ForumTopicService extends BaseService {
       },
     }
 
+    // 优先使用板块审核策略，若未配置则回退到全局策略
     const section = await this.forumSection.findUnique({
       where: { id: sectionId },
       select: { topicReviewPolicy: true },
@@ -156,6 +168,7 @@ export class ForumTopicService extends BaseService {
 
     const reviewPolicy = section?.topicReviewPolicy ?? globalReviewPolicy
 
+    // 根据策略与敏感词等级计算审核与隐藏状态
     const { auditStatus, isHidden } = this.calculateAuditStatus(
       reviewPolicy,
       highestLevel,
@@ -171,6 +184,7 @@ export class ForumTopicService extends BaseService {
 
     createPayload.auditStatus = auditStatus
 
+    // 创建主题与计数更新放在同一事务中，避免数据与计数不一致
     const topic = await this.prisma.$transaction(async (tx) => {
       const newTopic = await tx.forumTopic.create({
         data: createPayload,
@@ -191,14 +205,7 @@ export class ForumTopicService extends BaseService {
       return newTopic
     })
 
-    if (topic.auditStatus !== ForumTopicAuditStatusEnum.PENDING) {
-      await this.pointService.addPoints({
-        userId,
-        ruleType: UserPointRuleTypeEnum.CREATE_TOPIC,
-        remark: `创建主题 ${topic.id}`,
-      })
-    }
-
+    // 记录创建行为，便于审计追踪
     await this.actionLogService.createActionLog({
       userId,
       actionType: ForumUserActionTypeEnum.CREATE_TOPIC,
@@ -206,6 +213,17 @@ export class ForumTopicService extends BaseService {
       targetId: topic.id,
       afterData: JSON.stringify(topic),
     })
+
+    // 未进入审核队列才触发成长事件
+    if (topic.auditStatus !== ForumTopicAuditStatusEnum.PENDING) {
+      await this.userGrowthEventService.handleEvent({
+        business: 'forum',
+        eventKey: ForumGrowthEventKey.TopicCreate,
+        userId,
+        targetId: topic.id,
+        occurredAt: new Date(),
+      })
+    }
 
     return topic
   }
@@ -301,6 +319,7 @@ export class ForumTopicService extends BaseService {
 
     const reviewPolicy = section?.topicReviewPolicy ?? globalReviewPolicy
 
+    // 合并标题与内容进行敏感词检测
     const { hits, highestLevel } =
       this.sensitiveWordDetectService.getMatchedWords({
         content:
@@ -308,6 +327,7 @@ export class ForumTopicService extends BaseService {
           (updateData.title || topic.title),
       })
 
+    // 根据策略与敏感词等级计算审核与隐藏状态
     const { auditStatus, isHidden } = this.calculateAuditStatus(
       reviewPolicy,
       highestLevel,
@@ -325,11 +345,13 @@ export class ForumTopicService extends BaseService {
 
     updatePayload.auditStatus = auditStatus
 
+    // 更新主题内容与审核状态
     const updatedTopic = await this.forumTopic.update({
       where: { id },
       data: updatePayload,
     })
 
+    // 记录编辑行为，保存前后差异
     await this.actionLogService.createActionLog({
       userId: topic.userId,
       actionType: ForumUserActionTypeEnum.UPDATE_TOPIC,
@@ -357,6 +379,7 @@ export class ForumTopicService extends BaseService {
       throw new NotFoundException('主题不存在')
     }
 
+    // 主题与回复软删除保持一致
     await this.prisma.$transaction(async (tx) => {
       await tx.forumReply.softDeleteMany({ topicId: id })
       await tx.forumTopic.softDelete({ id })
@@ -380,6 +403,12 @@ export class ForumTopicService extends BaseService {
     return topic
   }
 
+  /**
+   * 更新主题状态通用方法
+   * @param id 主题ID
+   * @param updateData 更新字段
+   * @returns 更新后的主题
+   */
   private async updateTopicStatus(id: number, updateData: Record<string, any>) {
     const topic = await this.forumTopic.update({
       where: { id, deletedAt: null },

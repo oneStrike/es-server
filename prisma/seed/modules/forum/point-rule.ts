@@ -5,6 +5,8 @@ interface IForumPointRuleData {
   points: number
   dailyLimit?: number
   isEnabled: boolean
+  business?: string
+  eventKey?: string | null
 }
 
 export async function createInitialForumPointRules(prisma: any) {
@@ -16,6 +18,8 @@ export async function createInitialForumPointRules(prisma: any) {
       points: 5,
       dailyLimit: 1,
       isEnabled: true,
+      business: 'forum',
+      eventKey: null,
     },
     {
       name: '发布主题',
@@ -23,6 +27,8 @@ export async function createInitialForumPointRules(prisma: any) {
       type: 1,
       points: 10,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.topic.create',
     },
     {
       name: '发布回复',
@@ -30,6 +36,8 @@ export async function createInitialForumPointRules(prisma: any) {
       type: 2,
       points: 5,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.reply.create',
     },
     {
       name: '主题被点赞',
@@ -37,6 +45,8 @@ export async function createInitialForumPointRules(prisma: any) {
       type: 3,
       points: 2,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.topic.like',
     },
     {
       name: '回复被点赞',
@@ -44,6 +54,8 @@ export async function createInitialForumPointRules(prisma: any) {
       type: 4,
       points: 2,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.reply.like',
     },
     {
       name: '主题被收藏',
@@ -51,6 +63,28 @@ export async function createInitialForumPointRules(prisma: any) {
       type: 5,
       points: 3,
       isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.topic.favorite',
+    },
+    {
+      name: '主题浏览',
+      description: '浏览主题奖励',
+      type: 8,
+      points: 1,
+      dailyLimit: 50,
+      isEnabled: true,
+      business: 'forum',
+      eventKey: 'forum.topic.view',
+    },
+    {
+      name: '举报内容',
+      description: '举报内容奖励',
+      type: 9,
+      points: 2,
+      dailyLimit: 5,
+      isEnabled: false,
+      business: 'forum',
+      eventKey: 'forum.report.create',
     },
   ]
 
@@ -68,6 +102,8 @@ export async function createInitialForumPointRules(prisma: any) {
           dailyLimit: ruleData.dailyLimit || 0,
           isEnabled: ruleData.isEnabled,
           remark: ruleData.description,
+          business: ruleData.business,
+          eventKey: ruleData.eventKey ?? undefined,
         },
       })
     }

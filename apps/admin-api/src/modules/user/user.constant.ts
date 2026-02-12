@@ -13,5 +13,6 @@ export enum UserRoleEnum {
  * 固定排除的用户信息字段
  */
 export const EXCLUDE_USER_FIELDS = {
+  /** 密码字段 */
   password: true,
 }

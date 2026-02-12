@@ -398,6 +398,7 @@ export const ModelName = {
   UserBadge: 'UserBadge',
   UserExperienceRecord: 'UserExperienceRecord',
   UserExperienceRule: 'UserExperienceRule',
+  UserGrowthEventArchive: 'UserGrowthEventArchive',
   UserGrowthEvent: 'UserGrowthEvent',
   UserLevelRule: 'UserLevelRule',
   UserPointRecord: 'UserPointRecord',
@@ -455,7 +456,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "userBadgeAssignment" | "userBadge" | "userExperienceRecord" | "userExperienceRule" | "userGrowthEvent" | "userLevelRule" | "userPointRecord" | "userPointRule" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapterDownload" | "workComicChapterLike" | "workComicChapterPurchase" | "workComicChapter" | "workComicFavorite" | "workComicLike" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "userBadgeAssignment" | "userBadge" | "userExperienceRecord" | "userExperienceRule" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userPointRecord" | "userPointRule" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapterDownload" | "workComicChapterLike" | "workComicChapterPurchase" | "workComicChapter" | "workComicFavorite" | "workComicLike" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1492,6 +1493,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserExperienceRuleCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserExperienceRuleCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserGrowthEventArchive: {
+      payload: Prisma.$UserGrowthEventArchivePayload<ExtArgs>
+      fields: Prisma.UserGrowthEventArchiveFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserGrowthEventArchiveFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserGrowthEventArchiveFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
+        }
+        findFirst: {
+          args: Prisma.UserGrowthEventArchiveFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserGrowthEventArchiveFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
+        }
+        findMany: {
+          args: Prisma.UserGrowthEventArchiveFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>[]
+        }
+        create: {
+          args: Prisma.UserGrowthEventArchiveCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
+        }
+        createMany: {
+          args: Prisma.UserGrowthEventArchiveCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserGrowthEventArchiveCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>[]
+        }
+        delete: {
+          args: Prisma.UserGrowthEventArchiveDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
+        }
+        update: {
+          args: Prisma.UserGrowthEventArchiveUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
+        }
+        deleteMany: {
+          args: Prisma.UserGrowthEventArchiveDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserGrowthEventArchiveUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserGrowthEventArchiveUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>[]
+        }
+        upsert: {
+          args: Prisma.UserGrowthEventArchiveUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
+        }
+        aggregate: {
+          args: Prisma.UserGrowthEventArchiveAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserGrowthEventArchive>
+        }
+        groupBy: {
+          args: Prisma.UserGrowthEventArchiveGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserGrowthEventArchiveGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserGrowthEventArchiveCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserGrowthEventArchiveCountAggregateOutputType> | number
         }
       }
     }
@@ -4843,6 +4918,8 @@ export const UserBadgeScalarFieldEnum = {
   type: 'type',
   description: 'description',
   icon: 'icon',
+  business: 'business',
+  eventKey: 'eventKey',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
@@ -4884,6 +4961,30 @@ export const UserExperienceRuleScalarFieldEnum = {
 } as const
 
 export type UserExperienceRuleScalarFieldEnum = (typeof UserExperienceRuleScalarFieldEnum)[keyof typeof UserExperienceRuleScalarFieldEnum]
+
+
+export const UserGrowthEventArchiveScalarFieldEnum = {
+  id: 'id',
+  sourceId: 'sourceId',
+  business: 'business',
+  eventKey: 'eventKey',
+  userId: 'userId',
+  targetId: 'targetId',
+  ip: 'ip',
+  deviceId: 'deviceId',
+  occurredAt: 'occurredAt',
+  status: 'status',
+  ruleRefs: 'ruleRefs',
+  pointsDeltaApplied: 'pointsDeltaApplied',
+  experienceDeltaApplied: 'experienceDeltaApplied',
+  badgeAssigned: 'badgeAssigned',
+  context: 'context',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt'
+} as const
+
+export type UserGrowthEventArchiveScalarFieldEnum = (typeof UserGrowthEventArchiveScalarFieldEnum)[keyof typeof UserGrowthEventArchiveScalarFieldEnum]
 
 
 export const UserGrowthEventScalarFieldEnum = {
@@ -5366,6 +5467,7 @@ export type RequestLogScalarFieldEnum = (typeof RequestLogScalarFieldEnum)[keyof
 export const SystemConfigScalarFieldEnum = {
   id: 'id',
   aliyunConfig: 'aliyunConfig',
+  growthAntifraudConfig: 'growthAntifraudConfig',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -5875,6 +5977,7 @@ export type GlobalOmitConfig = {
   userBadge?: Prisma.UserBadgeOmit
   userExperienceRecord?: Prisma.UserExperienceRecordOmit
   userExperienceRule?: Prisma.UserExperienceRuleOmit
+  userGrowthEventArchive?: Prisma.UserGrowthEventArchiveOmit
   userGrowthEvent?: Prisma.UserGrowthEventOmit
   userLevelRule?: Prisma.UserLevelRuleOmit
   userPointRecord?: Prisma.UserPointRecordOmit

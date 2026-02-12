@@ -1,3 +1,4 @@
+import { EnablePlatformEnum } from '@libs/base/constant'
 import {
   ValidateArray,
   ValidateBoolean,
@@ -8,7 +9,6 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
-import { EnablePlatformEnum } from '@libs/base/enum'
 import {
   IntersectionType,
   OmitType,

@@ -1,15 +1,5 @@
-import type { TrieNode } from './trie-node'
+import type { MatchResult, TrieNode } from '../sensitive-word.types'
 import { createTrieNode } from './trie-node'
-
-/**
- * 匹配结果接口
- * 包含匹配到的敏感词及其在文本中的位置信息
- */
-export interface MatchResult {
-  word: string
-  start: number
-  end: number
-}
 
 /**
  * AC自动机类（Aho-Corasick Automaton）

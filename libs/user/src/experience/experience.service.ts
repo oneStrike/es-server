@@ -1,6 +1,6 @@
-import { BaseService } from '@libs/base/database'
+import { UserStatusEnum } from '@libs/base/constant'
 
-import { UserStatusEnum } from '@libs/base/enum'
+import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { UserLevelRuleService } from '../level-rule/level-rule.service'
 import {
@@ -177,6 +177,7 @@ export class UserExperienceService extends BaseService {
       throw new BadRequestException('经验规则配置错误')
     }
 
+    // 按规则校验当日可获取次数
     if (rule.dailyLimit > 0) {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
@@ -196,6 +197,7 @@ export class UserExperienceService extends BaseService {
       }
     }
 
+    // 记录变更、经验更新与等级升级放在同一事务
     return this.prisma.$transaction(async (tx) => {
       const beforeExperience = user.experience
       const afterExperience = beforeExperience + rule.experience
@@ -218,6 +220,7 @@ export class UserExperienceService extends BaseService {
         },
       })
 
+      // 按经验值选择当前可达的最高等级
       const newLevelRule = await tx.userLevelRule.findFirst({
         where: {
           isEnabled: true,
@@ -230,6 +233,7 @@ export class UserExperienceService extends BaseService {
         },
       })
 
+      // 仅当等级变化时更新，避免重复写入
       if (newLevelRule && newLevelRule.id !== user.levelId) {
         await tx.appUser.update({
           where: { id: userId },

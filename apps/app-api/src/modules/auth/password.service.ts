@@ -63,7 +63,7 @@ export class PasswordService extends BaseService {
    * @throws {BadRequestException} 账号不存在
    */
   async forgotPassword(body: ForgotPasswordDto) {
-    const { phone, code, password } = body
+    const { phone, password } = body
     const user = await this.appUser.findUnique({
       where: { phone },
       select: { id: true },

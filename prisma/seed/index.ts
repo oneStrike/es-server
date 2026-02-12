@@ -30,6 +30,7 @@ import {
   createInitialComicCategories,
   createInitialComicChapters,
   createInitialComics,
+  createInitialComicGrowthRules,
   createInitialComicTags,
   createInitialWorkCategory,
   createInitialWorkTag,
@@ -62,6 +63,7 @@ async function runSeeds() {
     createInitialForumExperienceRules(prisma),
     createInitialForumLevelRules(prisma),
     createInitialForumSensitiveWords(prisma),
+    createInitialComicGrowthRules(prisma),
   ])
 
   console.log('✅ 基础配置数据初始化完成')

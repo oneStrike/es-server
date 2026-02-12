@@ -36,6 +36,22 @@ export class BaseUserBadgeDto extends BaseDto {
   })
   icon?: string
 
+  @ValidateString({
+    description: '业务域标识',
+    example: 'forum',
+    required: false,
+    maxLength: 20,
+  })
+  business?: string
+
+  @ValidateString({
+    description: '事件键',
+    example: 'forum.topic.create',
+    required: false,
+    maxLength: 50,
+  })
+  eventKey?: string
+
   @ValidateEnum({
     description: '徽章类型（1=系统徽章, 2=成就徽章, 3=活动徽章）',
     example: UserBadgeTypeEnum.System,
@@ -70,7 +86,15 @@ export class UpdateUserBadgeDto extends IntersectionType(
 
 export class QueryUserBadgeDto extends IntersectionType(
   PageDto,
-  PartialType(PickType(BaseUserBadgeDto, ['name', 'type', 'isEnabled'])),
+  PartialType(
+    PickType(BaseUserBadgeDto, [
+      'name',
+      'type',
+      'isEnabled',
+      'business',
+      'eventKey',
+    ]),
+  ),
 ) {}
 
 export class AssignUserBadgeDto {

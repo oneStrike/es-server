@@ -1,10 +1,12 @@
 import { BaseService } from '@libs/base/database'
 
+import { UserGrowthEventService } from '@libs/user/growth-event'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import {
   CreateForumViewDto,
   ForumViewStatisticsDto,
@@ -18,6 +20,12 @@ import { ForumViewTypeEnum } from './forum-view.constant'
  */
 @Injectable()
 export class ForumViewService extends BaseService {
+  constructor(
+    private readonly userGrowthEventService: UserGrowthEventService,
+  ) {
+    super()
+  }
+
   get forumView() {
     return this.prisma.forumView
   }
@@ -38,6 +46,12 @@ export class ForumViewService extends BaseService {
   //   return this.prisma.forumProfile
   // }
 
+  /**
+   * 创建浏览记录
+   * 支持主题与回复浏览，校验关联关系并触发成长事件
+   * @param createForumViewDto 浏览记录数据
+   * @returns 创建的浏览记录
+   */
   async createView(createForumViewDto: CreateForumViewDto) {
     const { topicId, replyId, userId, type, ...viewData } =
       createForumViewDto
@@ -91,11 +105,25 @@ export class ForumViewService extends BaseService {
           },
         },
       })
+
+      await this.userGrowthEventService.handleEvent({
+        business: 'forum',
+        eventKey: ForumGrowthEventKey.TopicView,
+        userId,
+        targetId: topicId,
+        ip: viewData.ipAddress,
+        occurredAt: new Date(),
+      })
     }
 
     return view
   }
 
+  /**
+   * 查询浏览记录
+   * @param queryForumViewDto 查询条件
+   * @returns 分页浏览记录
+   */
   async getForumViews(queryForumViewDto: QueryForumViewDto) {
     const { topicId, userId, type, ipAddress, ...otherDto } =
       queryForumViewDto
@@ -138,6 +166,11 @@ export class ForumViewService extends BaseService {
     })
   }
 
+  /**
+   * 获取浏览统计
+   * @param viewStatisticsDto 统计查询条件
+   * @returns 浏览统计汇总
+   */
   async getViewStatistics(viewStatisticsDto: ForumViewStatisticsDto) {
     const { topicId } = viewStatisticsDto
 
@@ -155,6 +188,7 @@ export class ForumViewService extends BaseService {
       },
     })
 
+    // 按用户去重统计浏览人数
     const uniqueViewers = await this.forumView.groupBy({
       by: ['userId'],
       where: {
@@ -162,6 +196,7 @@ export class ForumViewService extends BaseService {
       },
     })
 
+    // 按浏览类型聚合次数
     const viewsByType = await this.forumView.groupBy({
       by: ['type'],
       where: {
@@ -172,6 +207,7 @@ export class ForumViewService extends BaseService {
       },
     })
 
+    // 最近浏览记录用于展示详情
     const recentViews = await this.forumView.findMany({
       where: {
         topicId,
@@ -207,6 +243,11 @@ export class ForumViewService extends BaseService {
     }
   }
 
+  /**
+   * 获取用户浏览历史
+   * @param userId 用户ID
+   * @returns 浏览历史列表
+   */
   async getUserViewHistory(userId: number) {
     return this.forumView.findPagination({
       where: {
@@ -224,6 +265,11 @@ export class ForumViewService extends BaseService {
     })
   }
 
+  /**
+   * 删除浏览记录
+   * @param id 浏览记录ID
+   * @returns 删除结果
+   */
   async deleteForumView(id: number) {
     const view = await this.forumView.findUnique({
       where: { id },
@@ -240,6 +286,11 @@ export class ForumViewService extends BaseService {
     return { success: true }
   }
 
+  /**
+   * 清理过期浏览记录
+   * @param daysOld 过期天数
+   * @returns 清理结果
+   */
   async clearOldViews(daysOld: number = 30) {
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - daysOld)

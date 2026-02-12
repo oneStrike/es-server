@@ -65,7 +65,6 @@ export class CopyService {
 
   /**
    * 解析漫画内容
-   * @param id 漫画ID
    * @returns 漫画详情
    */
   async parseWord() {
@@ -94,7 +93,7 @@ export class CopyService {
 
   /**
    * 获取章节列表
-   * @param dto 漫画路径
+   * @param path 漫画路径
    * @returns 章节列表
    */
   async chapter(path: string) {

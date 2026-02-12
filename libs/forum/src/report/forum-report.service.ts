@@ -1,10 +1,12 @@
 import { BaseService } from '@libs/base/database'
 
+import { UserGrowthEventService } from '@libs/user/growth-event'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import {
   CreateForumReportDto,
   HandleForumReportDto,
@@ -21,6 +23,12 @@ import {
  */
 @Injectable()
 export class ForumReportService extends BaseService {
+  constructor(
+    private readonly userGrowthEventService: UserGrowthEventService,
+  ) {
+    super()
+  }
+
   /**
    * 获取论坛举报模型
    */
@@ -125,6 +133,14 @@ export class ForumReportService extends BaseService {
       },
     })
 
+    await this.userGrowthEventService.handleEvent({
+      business: 'forum',
+      eventKey: ForumGrowthEventKey.ReportCreate,
+      userId: reporterId,
+      targetId,
+      occurredAt: new Date(),
+    })
+
     return report
   }
 
@@ -216,6 +232,7 @@ export class ForumReportService extends BaseService {
       throw new NotFoundException('举报记录不存在')
     }
 
+    // 根据举报类型补充目标内容摘要
     let targetDetails: any = null
 
     if (report.type === ForumReportTypeEnum.TOPIC) {
@@ -270,6 +287,7 @@ export class ForumReportService extends BaseService {
       throw new NotFoundException('举报记录不存在')
     }
 
+    // 仅允许待处理/处理中状态更新
     if (
       report.status !== ForumReportStatusEnum.PENDING &&
       report.status !== ForumReportStatusEnum.PROCESSING

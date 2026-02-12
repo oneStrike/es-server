@@ -4,6 +4,7 @@ model SystemConfig {
 
   /// 阿里云配置（JSON格式）
   aliyunConfig Json? @map("aliyun_config")
+  growthAntifraudConfig Json? @map("growth_antifraud_config")
 
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)

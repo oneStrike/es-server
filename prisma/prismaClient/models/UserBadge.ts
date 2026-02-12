@@ -44,6 +44,8 @@ export type UserBadgeMinAggregateOutputType = {
   type: number | null
   description: string | null
   icon: string | null
+  business: string | null
+  eventKey: string | null
   sortOrder: number | null
   isEnabled: boolean | null
   createdAt: Date | null
@@ -56,6 +58,8 @@ export type UserBadgeMaxAggregateOutputType = {
   type: number | null
   description: string | null
   icon: string | null
+  business: string | null
+  eventKey: string | null
   sortOrder: number | null
   isEnabled: boolean | null
   createdAt: Date | null
@@ -68,6 +72,8 @@ export type UserBadgeCountAggregateOutputType = {
   type: number
   description: number
   icon: number
+  business: number
+  eventKey: number
   sortOrder: number
   isEnabled: number
   createdAt: number
@@ -94,6 +100,8 @@ export type UserBadgeMinAggregateInputType = {
   type?: true
   description?: true
   icon?: true
+  business?: true
+  eventKey?: true
   sortOrder?: true
   isEnabled?: true
   createdAt?: true
@@ -106,6 +114,8 @@ export type UserBadgeMaxAggregateInputType = {
   type?: true
   description?: true
   icon?: true
+  business?: true
+  eventKey?: true
   sortOrder?: true
   isEnabled?: true
   createdAt?: true
@@ -118,6 +128,8 @@ export type UserBadgeCountAggregateInputType = {
   type?: true
   description?: true
   icon?: true
+  business?: true
+  eventKey?: true
   sortOrder?: true
   isEnabled?: true
   createdAt?: true
@@ -217,6 +229,8 @@ export type UserBadgeGroupByOutputType = {
   type: number
   description: string | null
   icon: string | null
+  business: string | null
+  eventKey: string | null
   sortOrder: number
   isEnabled: boolean
   createdAt: Date
@@ -252,6 +266,8 @@ export type UserBadgeWhereInput = {
   type?: Prisma.IntFilter<"UserBadge"> | number
   description?: Prisma.StringNullableFilter<"UserBadge"> | string | null
   icon?: Prisma.StringNullableFilter<"UserBadge"> | string | null
+  business?: Prisma.StringNullableFilter<"UserBadge"> | string | null
+  eventKey?: Prisma.StringNullableFilter<"UserBadge"> | string | null
   sortOrder?: Prisma.IntFilter<"UserBadge"> | number
   isEnabled?: Prisma.BoolFilter<"UserBadge"> | boolean
   createdAt?: Prisma.DateTimeFilter<"UserBadge"> | Date | string
@@ -265,6 +281,8 @@ export type UserBadgeOrderByWithRelationInput = {
   type?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
+  business?: Prisma.SortOrderInput | Prisma.SortOrder
+  eventKey?: Prisma.SortOrderInput | Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -281,6 +299,8 @@ export type UserBadgeWhereUniqueInput = Prisma.AtLeast<{
   type?: Prisma.IntFilter<"UserBadge"> | number
   description?: Prisma.StringNullableFilter<"UserBadge"> | string | null
   icon?: Prisma.StringNullableFilter<"UserBadge"> | string | null
+  business?: Prisma.StringNullableFilter<"UserBadge"> | string | null
+  eventKey?: Prisma.StringNullableFilter<"UserBadge"> | string | null
   sortOrder?: Prisma.IntFilter<"UserBadge"> | number
   isEnabled?: Prisma.BoolFilter<"UserBadge"> | boolean
   createdAt?: Prisma.DateTimeFilter<"UserBadge"> | Date | string
@@ -294,6 +314,8 @@ export type UserBadgeOrderByWithAggregationInput = {
   type?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
+  business?: Prisma.SortOrderInput | Prisma.SortOrder
+  eventKey?: Prisma.SortOrderInput | Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -314,6 +336,8 @@ export type UserBadgeScalarWhereWithAggregatesInput = {
   type?: Prisma.IntWithAggregatesFilter<"UserBadge"> | number
   description?: Prisma.StringNullableWithAggregatesFilter<"UserBadge"> | string | null
   icon?: Prisma.StringNullableWithAggregatesFilter<"UserBadge"> | string | null
+  business?: Prisma.StringNullableWithAggregatesFilter<"UserBadge"> | string | null
+  eventKey?: Prisma.StringNullableWithAggregatesFilter<"UserBadge"> | string | null
   sortOrder?: Prisma.IntWithAggregatesFilter<"UserBadge"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"UserBadge"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserBadge"> | Date | string
@@ -325,6 +349,8 @@ export type UserBadgeCreateInput = {
   type: number
   description?: string | null
   icon?: string | null
+  business?: string | null
+  eventKey?: string | null
   sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -338,6 +364,8 @@ export type UserBadgeUncheckedCreateInput = {
   type: number
   description?: string | null
   icon?: string | null
+  business?: string | null
+  eventKey?: string | null
   sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -350,6 +378,8 @@ export type UserBadgeUpdateInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -363,6 +393,8 @@ export type UserBadgeUncheckedUpdateInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -376,6 +408,8 @@ export type UserBadgeCreateManyInput = {
   type: number
   description?: string | null
   icon?: string | null
+  business?: string | null
+  eventKey?: string | null
   sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -387,6 +421,8 @@ export type UserBadgeUpdateManyMutationInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -399,6 +435,8 @@ export type UserBadgeUncheckedUpdateManyInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -416,6 +454,8 @@ export type UserBadgeCountOrderByAggregateInput = {
   type?: Prisma.SortOrder
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
+  business?: Prisma.SortOrder
+  eventKey?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -434,6 +474,8 @@ export type UserBadgeMaxOrderByAggregateInput = {
   type?: Prisma.SortOrder
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
+  business?: Prisma.SortOrder
+  eventKey?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -446,6 +488,8 @@ export type UserBadgeMinOrderByAggregateInput = {
   type?: Prisma.SortOrder
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
+  business?: Prisma.SortOrder
+  eventKey?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -477,6 +521,8 @@ export type UserBadgeCreateWithoutAssignmentsInput = {
   type: number
   description?: string | null
   icon?: string | null
+  business?: string | null
+  eventKey?: string | null
   sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -489,6 +535,8 @@ export type UserBadgeUncheckedCreateWithoutAssignmentsInput = {
   type: number
   description?: string | null
   icon?: string | null
+  business?: string | null
+  eventKey?: string | null
   sortOrder?: number
   isEnabled?: boolean
   createdAt?: Date | string
@@ -516,6 +564,8 @@ export type UserBadgeUpdateWithoutAssignmentsInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -528,6 +578,8 @@ export type UserBadgeUncheckedUpdateWithoutAssignmentsInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -571,6 +623,8 @@ export type UserBadgeSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   type?: boolean
   description?: boolean
   icon?: boolean
+  business?: boolean
+  eventKey?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
   createdAt?: boolean
@@ -585,6 +639,8 @@ export type UserBadgeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   type?: boolean
   description?: boolean
   icon?: boolean
+  business?: boolean
+  eventKey?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
   createdAt?: boolean
@@ -597,6 +653,8 @@ export type UserBadgeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   type?: boolean
   description?: boolean
   icon?: boolean
+  business?: boolean
+  eventKey?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
   createdAt?: boolean
@@ -609,13 +667,15 @@ export type UserBadgeSelectScalar = {
   type?: boolean
   description?: boolean
   icon?: boolean
+  business?: boolean
+  eventKey?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserBadgeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "type" | "description" | "icon" | "sortOrder" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["userBadge"]>
+export type UserBadgeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "type" | "description" | "icon" | "business" | "eventKey" | "sortOrder" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["userBadge"]>
 export type UserBadgeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignments?: boolean | Prisma.UserBadge$assignmentsArgs<ExtArgs>
   _count?: boolean | Prisma.UserBadgeCountOutputTypeDefaultArgs<ExtArgs>
@@ -652,6 +712,14 @@ export type $UserBadgePayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 徽章图标URL
      */
     icon: string | null
+    /**
+     * 业务域标识（如 forum/comic）
+     */
+    business: string | null
+    /**
+     * 事件键（如 forum.topic.create）
+     */
+    eventKey: string | null
     /**
      * 排序值（数值越小越靠前）
      */
@@ -1097,6 +1165,8 @@ export interface UserBadgeFieldRefs {
   readonly type: Prisma.FieldRef<"UserBadge", 'Int'>
   readonly description: Prisma.FieldRef<"UserBadge", 'String'>
   readonly icon: Prisma.FieldRef<"UserBadge", 'String'>
+  readonly business: Prisma.FieldRef<"UserBadge", 'String'>
+  readonly eventKey: Prisma.FieldRef<"UserBadge", 'String'>
   readonly sortOrder: Prisma.FieldRef<"UserBadge", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"UserBadge", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"UserBadge", 'DateTime'>

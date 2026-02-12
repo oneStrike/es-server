@@ -18,9 +18,14 @@ export enum ChapterTypeEnum {
   PREVIEW = 1,
 }
 
+/// 章节成长事件 Key
 export const ComicChapterGrowthEventKey = {
+  /** 章节阅读 */
   Read: 'comic.chapter.read',
+  /** 章节点赞 */
   Like: 'comic.chapter.like',
+  /** 章节购买 */
   Purchase: 'comic.chapter.purchase',
+  /** 章节下载 */
   Download: 'comic.chapter.download',
 } as const

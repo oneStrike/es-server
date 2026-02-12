@@ -1,4 +1,4 @@
-import { UserPointModule } from '@libs/user/point'
+import { UserGrowthEventModule } from '@libs/user/growth-event'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
@@ -11,7 +11,13 @@ import { ForumTopicService } from './forum-topic.service'
  * 提供论坛主题管理的完整功能
  */
 @Module({
-  imports: [UserPointModule, ForumSensitiveWordModule, ForumConfigModule, ForumCounterModule, ForumUserActionLogModule],
+  imports: [
+    UserGrowthEventModule,
+    ForumSensitiveWordModule,
+    ForumConfigModule,
+    ForumCounterModule,
+    ForumUserActionLogModule,
+  ],
   controllers: [],
   providers: [ForumTopicService],
   exports: [ForumTopicService],

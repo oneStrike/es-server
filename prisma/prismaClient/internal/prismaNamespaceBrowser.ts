@@ -65,6 +65,7 @@ export const ModelName = {
   UserBadge: 'UserBadge',
   UserExperienceRecord: 'UserExperienceRecord',
   UserExperienceRule: 'UserExperienceRule',
+  UserGrowthEventArchive: 'UserGrowthEventArchive',
   UserGrowthEvent: 'UserGrowthEvent',
   UserLevelRule: 'UserLevelRule',
   UserPointRecord: 'UserPointRecord',
@@ -326,6 +327,8 @@ export const UserBadgeScalarFieldEnum = {
   type: 'type',
   description: 'description',
   icon: 'icon',
+  business: 'business',
+  eventKey: 'eventKey',
   sortOrder: 'sortOrder',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
@@ -367,6 +370,30 @@ export const UserExperienceRuleScalarFieldEnum = {
 } as const
 
 export type UserExperienceRuleScalarFieldEnum = (typeof UserExperienceRuleScalarFieldEnum)[keyof typeof UserExperienceRuleScalarFieldEnum]
+
+
+export const UserGrowthEventArchiveScalarFieldEnum = {
+  id: 'id',
+  sourceId: 'sourceId',
+  business: 'business',
+  eventKey: 'eventKey',
+  userId: 'userId',
+  targetId: 'targetId',
+  ip: 'ip',
+  deviceId: 'deviceId',
+  occurredAt: 'occurredAt',
+  status: 'status',
+  ruleRefs: 'ruleRefs',
+  pointsDeltaApplied: 'pointsDeltaApplied',
+  experienceDeltaApplied: 'experienceDeltaApplied',
+  badgeAssigned: 'badgeAssigned',
+  context: 'context',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  archivedAt: 'archivedAt'
+} as const
+
+export type UserGrowthEventArchiveScalarFieldEnum = (typeof UserGrowthEventArchiveScalarFieldEnum)[keyof typeof UserGrowthEventArchiveScalarFieldEnum]
 
 
 export const UserGrowthEventScalarFieldEnum = {
@@ -849,6 +876,7 @@ export type RequestLogScalarFieldEnum = (typeof RequestLogScalarFieldEnum)[keyof
 export const SystemConfigScalarFieldEnum = {
   id: 'id',
   aliyunConfig: 'aliyunConfig',
+  growthAntifraudConfig: 'growthAntifraudConfig',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

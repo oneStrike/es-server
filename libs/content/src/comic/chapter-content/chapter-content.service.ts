@@ -61,6 +61,7 @@ export class ChapterContentService extends BaseService {
         comicId: query.comicId,
       }))
     ) {
+      // 章节不存在时清理已上传文件，避免垃圾文件
       fsExtra.removeSync(file.filePath)
       throw new BadRequestException('章节不存在')
     }
@@ -116,11 +117,11 @@ export class ChapterContentService extends BaseService {
       throw new BadRequestException('删除的内容不存在')
     }
 
-    // 删除指定位置的内容
+    // 倒序删除避免索引移动造成错删
     index.sort((a, b) => b - a)
     index.forEach((i) => contents.splice(i, 1))
 
-    // 更新数据库
+    // 使用字符串保存内容列表
     await this.workComicChapter.update({
       where: { id },
       data: { contents: JSON.stringify(contents) },
@@ -147,11 +148,11 @@ export class ChapterContentService extends BaseService {
       throw new BadRequestException('索引超出范围')
     }
 
-    // 移动内容
+    // 先移除再插入以实现移动
     const [movedContent] = contents.splice(fromIndex, 1)
     contents.splice(toIndex, 0, movedContent)
 
-    // 更新数据库
+    // 使用字符串保存内容列表
     await this.workComicChapter.update({
       where: { id },
       data: { contents: JSON.stringify(contents) },

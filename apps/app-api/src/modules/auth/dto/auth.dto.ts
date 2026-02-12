@@ -1,10 +1,10 @@
+import { GenderEnum } from '@libs/base/constant'
 import {
   ValidateBoolean,
   ValidateEnum,
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto } from '@libs/base/dto'
-import { GenderEnum } from '@libs/base/enum'
 import { CheckVerifyCodeDto } from '@libs/base/modules'
 import {
   ApiProperty,

@@ -266,24 +266,24 @@ export class ComicChapterService extends BaseService {
       throw new BadRequestException('只能交换同一漫画下的章节号')
     }
 
-    // 使用事务确保数据一致性
+    // 使用事务确保排序交换过程原子化
     return this.prisma.$transaction(async (tx) => {
-      // 临时章节号，避免唯一约束冲突
+      // 临时章节号用于避开 sortOrder 唯一约束冲突
       const tempChapterNumber = -Math.random() * 1000000
 
-      // 第一步：将拖拽章节的章节号设为临时值
+      // 第一步：将拖拽章节置为临时值，释放目标排序号
       await tx.workComicChapter.update({
         where: { id: dragId },
         data: { sortOrder: tempChapterNumber },
       })
 
-      // 第二步：将目标章节的章节号设为拖拽章节的原章节号
+      // 第二步：目标章节占用拖拽章节原排序
       await tx.workComicChapter.update({
         where: { id: targetId },
         data: { sortOrder: dragChapter.sortOrder },
       })
 
-      // 第三步：将拖拽章节的章节号设为目标章节的原章节号
+      // 第三步：拖拽章节占用目标章节原排序
       await tx.workComicChapter.update({
         where: { id: dragId },
         data: { sortOrder: targetChapter.sortOrder },
@@ -353,6 +353,8 @@ export class ComicChapterService extends BaseService {
       throw new BadRequestException('已经点赞过该章节')
     }
 
+    // 点赞记录与计数更新保持一致
+    // 购买记录与计数更新保持一致
     await this.prisma.$transaction(async (tx) => {
       await tx.workComicChapterLike.create({
         data: {
@@ -371,6 +373,8 @@ export class ComicChapterService extends BaseService {
       })
     })
 
+    // 点赞成功后触发成长事件
+    // 购买成功后触发成长事件
     await this.userGrowthEventService.handleEvent({
       business: 'comic',
       eventKey: ComicChapterGrowthEventKey.Like,
@@ -416,6 +420,7 @@ export class ComicChapterService extends BaseService {
       throw new BadRequestException('已购买该章节')
     }
 
+    // 下载记录与计数更新保持一致
     await this.prisma.$transaction(async (tx) => {
       await tx.workComicChapterPurchase.create({
         data: {
@@ -434,6 +439,7 @@ export class ComicChapterService extends BaseService {
       })
     })
 
+    // 下载成功后触发成长事件
     await this.userGrowthEventService.handleEvent({
       business: 'comic',
       eventKey: ComicChapterGrowthEventKey.Purchase,

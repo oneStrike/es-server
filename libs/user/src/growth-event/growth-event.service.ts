@@ -3,6 +3,10 @@ import { UserGrowthEventDto } from './dto/growth-event.dto'
 import { UserGrowthEventBus } from './growth-event.bus'
 import { USER_GROWTH_EVENT_BUS } from './growth-event.constant'
 
+/**
+ * 成长事件服务类
+ * 负责接收业务侧事件并发布至成长事件总线
+ */
 @Injectable()
 export class UserGrowthEventService {
   constructor(
@@ -10,6 +14,10 @@ export class UserGrowthEventService {
     private readonly eventBus: UserGrowthEventBus,
   ) {}
 
+  /**
+   * 发布成长事件
+   * @param event 事件数据
+   */
   async handleEvent(event: UserGrowthEventDto) {
     await this.eventBus.publish(event)
   }

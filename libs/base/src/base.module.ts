@@ -1,6 +1,6 @@
 import type { Provider } from '@nestjs/common/interfaces/modules/provider.interface'
-
 import type { Type } from '@nestjs/common/interfaces/type.interface'
+import type { BaseModuleOptions } from './base.module.types'
 import { CustomPrismaModule, PrismaService } from '@libs/base/database'
 import { LoggerModule } from '@libs/base/modules'
 import {
@@ -16,24 +16,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { TransformInterceptor } from './interceptors'
 import { CustomCacheModule } from './modules/cache'
 import { HealthModule } from './modules/health'
-
-// 定义 BaseModule 可接受的配置接口
-export interface BaseModuleOptions {
-  // 是否启用日志模块
-  enableLogger?: boolean
-  // 是否启用数据库模块
-  enableDatabase?: boolean
-  // 是否启用缓存模块
-  enableCache?: boolean
-  // 是否启用限流模块
-  enableThrottler?: boolean
-  // 是否启用健康检查模块
-  enableHealth?: boolean
-  // 是否启用全局验证管道
-  enableGlobalValidationPipe?: boolean
-  // 是否启用全局响应转换拦截器
-  enableGlobalTransformInterceptor?: boolean
-}
 
 @Module({})
 export class BaseModule {

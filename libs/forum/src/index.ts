@@ -1,5 +1,6 @@
 export * from './config'
 export * from './counter'
+export * from './forum-growth-event.constant'
 export * from './forum.module'
 export * from './moderator'
 export * from './notification'

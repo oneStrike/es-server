@@ -1,12 +1,17 @@
-import { UserDefaults } from '@libs/base/constant'
-import { BaseService, Prisma } from '@libs/base/database'
-import { UserStatusEnum } from '@libs/base/enum'
+import type { PrismaClientType } from '@libs/base/database/prisma.types'
+import { UserDefaults, UserStatusEnum } from '@libs/base/constant'
+import { BaseService } from '@libs/base/database'
 import { UserPointService } from '@libs/user/point'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   QueryForumProfileListDto,
   UpdateForumProfileStatusDto,
 } from './dto/profile.dto'
+
+type ForumProfileTransactionClient = Pick<
+  PrismaClientType,
+  'userLevelRule' | 'appUser' | 'forumProfile'
+>
 
 /**
  * 论坛资料服务类
@@ -200,7 +205,7 @@ export class ForumProfileService extends BaseService {
    * @param userId - 用户 ID
    * @throws {BadRequestException} 系统配置错误：找不到默认论坛等级
    */
-  async initForumProfile(tx: Prisma.TransactionClient, userId: number) {
+  async initForumProfile(tx: ForumProfileTransactionClient, userId: number) {
     const defaultLevel = await tx.userLevelRule.findFirst({
       where: { isEnabled: true },
       orderBy: { sortOrder: 'asc' },

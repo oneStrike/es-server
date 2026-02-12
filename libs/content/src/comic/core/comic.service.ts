@@ -358,6 +358,7 @@ export class ComicService extends BaseService {
       throw new BadRequestException('已经点赞过该漫画')
     }
 
+    // 点赞记录与计数更新保持一致
     await this.prisma.$transaction(async (tx) => {
       await tx.workComicLike.create({
         data: {
@@ -376,6 +377,7 @@ export class ComicService extends BaseService {
       })
     })
 
+    // 点赞成功后触发成长事件
     await this.userGrowthEventService.handleEvent({
       business: 'comic',
       eventKey: ComicGrowthEventKey.Like,
@@ -421,6 +423,7 @@ export class ComicService extends BaseService {
       throw new BadRequestException('已经收藏过该漫画')
     }
 
+    // 收藏记录与计数更新保持一致
     await this.prisma.$transaction(async (tx) => {
       await tx.workComicFavorite.create({
         data: {
@@ -439,6 +442,7 @@ export class ComicService extends BaseService {
       })
     })
 
+    // 收藏成功后触发成长事件
     await this.userGrowthEventService.handleEvent({
       business: 'comic',
       eventKey: ComicGrowthEventKey.Favorite,
@@ -582,7 +586,7 @@ export class ComicService extends BaseService {
       }
     }
 
-    // 验证作者是否存在（如果提供了authorIds）
+    // 若提供作者列表则校验并准备全量替换关系
     if (authorIds && authorIds.length > 0) {
       const existingAuthors = await this.prisma.workAuthor.findMany({
         where: {
@@ -596,7 +600,7 @@ export class ComicService extends BaseService {
       }
     }
 
-    // 验证分类是否存在（如果提供了categoryIds）
+    // 若提供分类列表则校验并准备全量替换关系
     if (categoryIds && categoryIds.length > 0) {
       const existingCategories = await this.prisma.workCategory.findMany({
         where: {
@@ -610,7 +614,7 @@ export class ComicService extends BaseService {
       }
     }
 
-    // 验证标签是否存在（如果提供了tagIds）
+    // 若提供标签列表则校验并准备全量替换关系
     if (tagIds && tagIds.length > 0) {
       const existingTags = await this.prisma.workTag.findMany({
         where: {
@@ -624,7 +628,7 @@ export class ComicService extends BaseService {
       }
     }
 
-    // 使用事务更新漫画及其关联关系
+    // 基础信息与关联关系保持在同一事务中，避免部分更新
     return this.prisma.$transaction(async (tx) => {
       // 更新漫画基本信息，确保不包含关联属性
       const { comicTags, ...basicUpdateData } = updateData as any
@@ -633,14 +637,14 @@ export class ComicService extends BaseService {
         data: basicUpdateData,
       })
 
-      // 更新作者关联关系（如果提供了authorIds）
+      // authorIds 为 undefined 表示不更新；为空数组表示清空关联
       if (authorIds !== undefined) {
-        // 删除现有的作者关联
+        // 先清空再重建以保证顺序与一致性
         await tx.workComicAuthor.deleteMany({
           where: { comicId: id },
         })
 
-        // 创建新的作者关联
+        // 以传入顺序作为排序
         if (authorIds.length > 0) {
           await tx.workComicAuthor.createMany({
             data: authorIds.map((authorId, index) => ({
@@ -652,14 +656,14 @@ export class ComicService extends BaseService {
         }
       }
 
-      // 更新分类关联关系（如果提供了categoryIds）
+      // categoryIds 为 undefined 表示不更新；为空数组表示清空关联
       if (categoryIds !== undefined) {
-        // 删除现有的分类关联
+        // 先清空再重建以保证顺序与一致性
         await tx.workComicCategory.deleteMany({
           where: { comicId: id },
         })
 
-        // 创建新的分类关联
+        // 分类权重按列表顺序递减
         if (categoryIds.length > 0) {
           await tx.workComicCategory.createMany({
             data: categoryIds.map((categoryId, index) => ({
@@ -671,14 +675,14 @@ export class ComicService extends BaseService {
         }
       }
 
-      // 更新标签关联关系（如果提供了tagIds）
+      // tagIds 为 undefined 表示不更新；为空数组表示清空关联
       if (tagIds !== undefined) {
-        // 删除现有的标签关联
+        // 先清空再重建
         await tx.workComicTag.deleteMany({
           where: { comicId: id },
         })
 
-        // 创建新的标签关联
+        // 标签不排序，仅建立关联
         if (tagIds.length > 0) {
           await tx.workComicTag.createMany({
             data: tagIds.map((tagId) => ({

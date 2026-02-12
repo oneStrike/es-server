@@ -1,9 +1,6 @@
-export enum LoggerLevel {
-  DEBUG = 'debug',
-  INFO = 'info',
-  WARN = 'warn',
-  ERROR = 'error',
-}
+import type { LoggerLevel } from '@libs/base/constant'
+
+export type { LoggerLevel } from '@libs/base/constant'
 
 export interface LoggerConfig {
   level: LoggerLevel

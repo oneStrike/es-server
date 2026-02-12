@@ -1,25 +1,10 @@
 import type { Cache } from 'cache-manager'
+import type { CaptchaConfig } from './captcha.types'
 import { Buffer } from 'node:buffer'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable } from '@nestjs/common'
 import * as svgCaptcha from 'svg-captcha'
 import { v4 as uuid } from 'uuid'
-
-/**
- * 验证码服务配置接口
- */
-export interface CaptchaConfig {
-  /** 验证码长度 */
-  size?: number
-  /** 排除的字符 */
-  ignoreChars?: string
-  /** 噪声线条数量 */
-  noise?: number
-  /** 验证码字符是否有颜色 */
-  color?: boolean
-  /** 缓存过期时间（毫秒） */
-  ttl?: number
-}
 
 /**
  * 验证码服务

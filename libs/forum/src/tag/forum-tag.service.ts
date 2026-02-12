@@ -265,6 +265,7 @@ export class ForumTagService extends BaseService {
       throw new BadRequestException('该主题已关联此标签')
     }
 
+    // 关联关系与使用次数同步更新
     return this.prisma.$transaction(async (tx) => {
       const topicTag = await tx.forumTopicTag.create({
         data: {
@@ -308,6 +309,7 @@ export class ForumTagService extends BaseService {
       throw new NotFoundException('该主题未关联此标签')
     }
 
+    // 解除关联并回收使用次数
     return this.prisma.$transaction(async (tx) => {
       await tx.forumTopicTag.delete({
         where: {

@@ -2,9 +2,10 @@ import type {
   ForumReplyCreateInput,
   ForumReplyWhereInput,
 } from '@libs/base/database'
-import { BaseService } from '@libs/base/database'
+import { UserStatusEnum } from '@libs/base/constant'
 
-import { UserStatusEnum } from '@libs/base/enum'
+import { BaseService } from '@libs/base/database'
+import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,
@@ -12,10 +13,12 @@ import {
 } from '../action-log/action-log.constant'
 import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
+import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import { ForumNotificationService } from '../notification/notification.service'
 import { ForumSensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
 import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
+import { ForumAuditStatusEnum } from './forum-reply.constant'
 
 /**
  * 论坛回复服务类
@@ -28,6 +31,7 @@ export class ForumReplyService extends BaseService {
     private readonly sensitiveWordDetectService: ForumSensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
     private readonly actionLogService: ForumUserActionLogService,
+    private readonly userGrowthEventService: UserGrowthEventService,
   ) {
     super()
   }
@@ -46,6 +50,8 @@ export class ForumReplyService extends BaseService {
 
   /**
    * 创建论坛回复
+   * 同步处理敏感词检测、楼层计算、计数更新与通知
+   * 审核通过后触发成长事件
    * @param createForumReplyDto 创建回复的数据
    * @returns 创建的回复信息
    */
@@ -97,6 +103,7 @@ export class ForumReplyService extends BaseService {
       }
     }
 
+    // 仅顶层回复才计算楼层
     let newFloor: number | null = null
     if (!replyToId) {
       const maxFloorReply = await this.forumReply.findFirst({
@@ -115,6 +122,7 @@ export class ForumReplyService extends BaseService {
       newFloor = (maxFloorReply?.floor ?? 0) + 1
     }
 
+    // 敏感词检测决定审核状态
     const detectResult = this.sensitiveWordDetectService.detect({
       content: replyData.content,
     })
@@ -163,7 +171,8 @@ export class ForumReplyService extends BaseService {
       }
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    // 创建回复与计数更新放在同一事务中，避免计数不一致
+    const reply = await this.prisma.$transaction(async (tx) => {
       const reply = await tx.forumReply.create({
         data: updatePayload,
       })
@@ -176,6 +185,7 @@ export class ForumReplyService extends BaseService {
         1,
       )
 
+      // 回复他人时发送通知
       if (replyToId) {
         const replyTo = await tx.forumReply.findUnique({
           where: { id: replyToId },
@@ -206,6 +216,19 @@ export class ForumReplyService extends BaseService {
 
       return reply
     })
+
+    // 未进入审核队列才触发成长事件
+    if (reply.auditStatus !== ForumAuditStatusEnum.PENDING) {
+      await this.userGrowthEventService.handleEvent({
+        business: 'forum',
+        eventKey: ForumGrowthEventKey.ReplyCreate,
+        userId,
+        targetId: reply.id,
+        occurredAt: new Date(),
+      })
+    }
+
+    return reply
   }
 
   /**
@@ -300,6 +323,7 @@ export class ForumReplyService extends BaseService {
       throw new BadRequestException('论坛回复不存在')
     }
 
+    // 级联软删除回复并同步计数
     return this.prisma.$transaction(async (tx) => {
       const childReplies = await tx.forumReply.findMany({
         where: {
@@ -316,6 +340,7 @@ export class ForumReplyService extends BaseService {
       const totalDeleteCount = childReplyIds.length + 1
 
       if (childReplyIds.length > 0) {
+        // 批量软删除子回复
         await tx.forumReply.updateMany({
           where: {
             id: {
@@ -327,6 +352,7 @@ export class ForumReplyService extends BaseService {
           },
         })
 
+        // 子回复作者的个人回复数回收
         for (const childReply of childReplies) {
           await this.forumCounterService.updateProfileReplyCount(
             tx,
@@ -336,6 +362,7 @@ export class ForumReplyService extends BaseService {
         }
       }
 
+      // 主题回复数扣减包含主回复与子回复
       await this.forumCounterService.updateTopicReplyCount(
         tx,
         reply.topicId,
@@ -348,6 +375,7 @@ export class ForumReplyService extends BaseService {
       })
 
       if (topic) {
+        // 版块回复数同步扣减
         await this.forumCounterService.updateSectionReplyCount(
           tx,
           topic.sectionId,
@@ -417,6 +445,7 @@ export class ForumReplyService extends BaseService {
 
   /**
    * 批量删除回复
+   * 要求所选回复无子回复，否则中断删除
    * @param ids 回复ID列表
    * @returns 删除结果
    */
@@ -488,6 +517,7 @@ export class ForumReplyService extends BaseService {
 
   /**
    * 将第三层及以上的回复扁平化到第二层
+   * 用于前端以两级结构展示回复列表
    * @param replies 回复列表
    * @returns 扁平化后的回复列表
    */

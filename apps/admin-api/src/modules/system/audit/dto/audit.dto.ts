@@ -1,3 +1,4 @@
+import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/constant'
 import {
   ValidateBoolean,
   ValidateEnum,
@@ -6,7 +7,6 @@ import {
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
-import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/enum'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { ActionTypeEnum } from '../audit.constant'
 

@@ -12,6 +12,10 @@ model UserBadge {
   description String? @db.VarChar(200)
   /// 徽章图标URL
   icon String? @db.VarChar(255)
+  /// 业务域标识（如 forum/comic）
+  business String? @db.VarChar(20)
+  /// 事件键（如 forum.topic.create）
+  eventKey String? @map("event_key") @db.VarChar(50)
 
   /// 排序值（数值越小越靠前）
   sortOrder Int @default(0) @db.SmallInt
@@ -27,6 +31,7 @@ model UserBadge {
   assignments UserBadgeAssignment[]
 
   @@index([type])
+  @@index([business, eventKey])
   @@index([sortOrder])
   @@index([isEnabled])
   @@index([createdAt])

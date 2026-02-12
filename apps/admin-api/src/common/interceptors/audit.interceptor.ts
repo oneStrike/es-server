@@ -1,6 +1,6 @@
 import type { FastifyRequest } from 'fastify'
 // 导入 AuditMetadata 类型
-import type { AuditMetadata } from '../decorators/audit.decorator'
+import type { AuditMetadata } from '../decorators/audit.types'
 import {
   CallHandler,
   ExecutionContext,
