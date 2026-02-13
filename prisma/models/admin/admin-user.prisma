@@ -27,6 +27,8 @@ model AdminUser {
 
   /// 关联令牌
   tokens AdminUserToken[]
+  createdTasks Task[] @relation("TaskCreatedBy")
+  updatedTasks Task[] @relation("TaskUpdatedBy")
 
   @@index([isEnabled])
   @@index([role])

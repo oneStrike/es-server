@@ -88,6 +88,21 @@ export type AppUserToken = Prisma.AppUserTokenModel
  */
 export type AppUser = Prisma.AppUserModel
 /**
+ * Model TaskAssignment
+ * 
+ */
+export type TaskAssignment = Prisma.TaskAssignmentModel
+/**
+ * Model TaskProgressLog
+ * 
+ */
+export type TaskProgressLog = Prisma.TaskProgressLogModel
+/**
+ * Model Task
+ * 
+ */
+export type Task = Prisma.TaskModel
+/**
  * Model UserBadgeAssignment
  * 用户徽章关联表 - 管理用户获得的徽章
  */

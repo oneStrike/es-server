@@ -3,6 +3,7 @@ import type { Type } from '@nestjs/common/interfaces/type.interface'
 import type { BaseModuleOptions } from './base.module.types'
 import { CustomPrismaModule, PrismaService } from '@libs/base/database'
 import { LoggerModule } from '@libs/base/modules'
+import { isDevelopment } from '@libs/base/utils'
 import {
   BadRequestException,
   DynamicModule,
@@ -13,7 +14,7 @@ import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { ClsModule } from 'nestjs-cls'
 import { v4 as uuidv4 } from 'uuid'
-import { TransformInterceptor } from './interceptors'
+import { ResponseValidationInterceptor, TransformInterceptor } from './interceptors'
 import { CustomCacheModule } from './modules/cache'
 import { HealthModule } from './modules/health'
 
@@ -30,6 +31,7 @@ export class BaseModule {
       enableHealth: true,
       enableGlobalValidationPipe: true,
       enableGlobalTransformInterceptor: true,
+      enableGlobalResponseValidationInterceptor: true,
     }
 
     // 合并用户配置和默认配置
@@ -96,6 +98,16 @@ export class BaseModule {
       providers.push({
         provide: APP_INTERCEPTOR,
         useClass: TransformInterceptor, // 响应转换拦截器
+      })
+    }
+
+    if (
+      mergedOptions.enableGlobalResponseValidationInterceptor &&
+      isDevelopment()
+    ) {
+      providers.push({
+        provide: APP_INTERCEPTOR,
+        useClass: ResponseValidationInterceptor,
       })
     }
 

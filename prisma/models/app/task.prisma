@@ -1,0 +1,41 @@
+model Task {
+  id Int @id @default(autoincrement())
+
+  code String @unique @db.VarChar(50)
+  title String @db.VarChar(200)
+  description String? @db.VarChar(1000)
+  cover String? @db.VarChar(255)
+
+  type Int @db.SmallInt
+  status Int @db.SmallInt
+  priority Int @default(0) @db.SmallInt
+  isEnabled Boolean @default(true) @map("is_enabled")
+
+  claimMode Int @map("claim_mode") @db.SmallInt
+  completeMode Int @map("complete_mode") @db.SmallInt
+  targetCount Int @default(1) @map("target_count")
+
+  rewardConfig Json? @map("reward_config")
+  publishStartAt DateTime? @map("publish_start_at") @db.Timestamptz(6)
+  publishEndAt DateTime? @map("publish_end_at") @db.Timestamptz(6)
+  repeatRule Json? @map("repeat_rule")
+
+  createdById Int? @map("created_by_id")
+  updatedById Int? @map("updated_by_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  assignments TaskAssignment[]
+  createdBy AdminUser? @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  updatedBy AdminUser? @relation("TaskUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([status, isEnabled])
+  @@index([type])
+  @@index([publishStartAt])
+  @@index([publishEndAt])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("task")
+}

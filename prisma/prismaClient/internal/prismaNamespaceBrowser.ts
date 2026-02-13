@@ -61,6 +61,9 @@ export const ModelName = {
   AppPage: 'AppPage',
   AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
+  TaskAssignment: 'TaskAssignment',
+  TaskProgressLog: 'TaskProgressLog',
+  Task: 'Task',
   UserBadgeAssignment: 'UserBadgeAssignment',
   UserBadge: 'UserBadge',
   UserExperienceRecord: 'UserExperienceRecord',
@@ -309,6 +312,70 @@ export const AppUserScalarFieldEnum = {
 } as const
 
 export type AppUserScalarFieldEnum = (typeof AppUserScalarFieldEnum)[keyof typeof AppUserScalarFieldEnum]
+
+
+export const TaskAssignmentScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  userId: 'userId',
+  cycleKey: 'cycleKey',
+  status: 'status',
+  progress: 'progress',
+  target: 'target',
+  claimedAt: 'claimedAt',
+  completedAt: 'completedAt',
+  expiredAt: 'expiredAt',
+  taskSnapshot: 'taskSnapshot',
+  context: 'context',
+  version: 'version',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type TaskAssignmentScalarFieldEnum = (typeof TaskAssignmentScalarFieldEnum)[keyof typeof TaskAssignmentScalarFieldEnum]
+
+
+export const TaskProgressLogScalarFieldEnum = {
+  id: 'id',
+  assignmentId: 'assignmentId',
+  userId: 'userId',
+  actionType: 'actionType',
+  delta: 'delta',
+  beforeValue: 'beforeValue',
+  afterValue: 'afterValue',
+  context: 'context',
+  createdAt: 'createdAt'
+} as const
+
+export type TaskProgressLogScalarFieldEnum = (typeof TaskProgressLogScalarFieldEnum)[keyof typeof TaskProgressLogScalarFieldEnum]
+
+
+export const TaskScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  title: 'title',
+  description: 'description',
+  cover: 'cover',
+  type: 'type',
+  status: 'status',
+  priority: 'priority',
+  isEnabled: 'isEnabled',
+  claimMode: 'claimMode',
+  completeMode: 'completeMode',
+  targetCount: 'targetCount',
+  rewardConfig: 'rewardConfig',
+  publishStartAt: 'publishStartAt',
+  publishEndAt: 'publishEndAt',
+  repeatRule: 'repeatRule',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type TaskScalarFieldEnum = (typeof TaskScalarFieldEnum)[keyof typeof TaskScalarFieldEnum]
 
 
 export const UserBadgeAssignmentScalarFieldEnum = {

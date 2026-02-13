@@ -101,6 +101,8 @@ model AppUser {
   userBadges              UserBadgeAssignment[]
   /// 用户成长事件关联
   userGrowthEvents        UserGrowthEvent[]
+  taskAssignments         TaskAssignment[]
+  taskProgressLogs        TaskProgressLog[]
   /// 论坛配置更新关联
   updatedConfigs          ForumConfig[]               @relation("ForumConfigUpdater")
   /// 论坛配置历史操作关联

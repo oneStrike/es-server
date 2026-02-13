@@ -1,0 +1,20 @@
+model TaskProgressLog {
+  id Int @id @default(autoincrement())
+
+  assignmentId Int @map("assignment_id")
+  userId Int @map("user_id")
+  actionType Int @map("action_type") @db.SmallInt
+  delta Int
+  beforeValue Int @map("before_value")
+  afterValue Int @map("after_value")
+  context Json?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  assignment TaskAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([assignmentId])
+  @@index([userId, createdAt])
+  @@map("task_progress_log")
+}

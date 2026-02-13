@@ -7,6 +7,7 @@ import {
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger'
+import { SetResponseDtoMetadata } from './response-dto.constants'
 
 // 工具函数：判断是否是类
 function isClass(model: any): model is Type<unknown> {
@@ -70,6 +71,13 @@ export function ApiDoc<TModel extends Type<any>>(
         items: dataSchema,
       }
     }
+
+    decorators.push(
+      SetResponseDtoMetadata({
+        model,
+        isArray: Boolean(isArray),
+      }),
+    )
   }
   decorators.push(
     ApiResponse({
@@ -113,6 +121,13 @@ export function ApiPageDoc<TModel extends Type<any>>(
     } else {
       dataSchema = model
     }
+
+    decorators.push(
+      SetResponseDtoMetadata({
+        model,
+        isPage: true,
+      }),
+    )
   }
 
   decorators.push(

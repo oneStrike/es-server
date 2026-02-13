@@ -1,11 +1,10 @@
 import { UserStatusEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
-import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { OnEvent } from '@nestjs/event-emitter'
 import { UserGrowthEventDto } from './dto/growth-event.dto'
 import { UserGrowthEventAntifraudService } from './growth-event.antifraud.service'
 import { UserGrowthEventAuditService } from './growth-event.audit.service'
-import { UserGrowthEventBus } from './growth-event.bus'
-import { USER_GROWTH_EVENT_BUS } from './growth-event.constant'
 import {
   UserGrowthEventApplyResult,
   UserGrowthEventStatus,
@@ -15,27 +14,15 @@ import {
 @Injectable()
 export class UserGrowthEventConsumer
   extends BaseService
-  implements OnModuleInit, OnModuleDestroy
 {
-  private unsubscribe?: () => void
-
   constructor(
-    @Inject(USER_GROWTH_EVENT_BUS)
-    private readonly eventBus: UserGrowthEventBus,
     private readonly auditService: UserGrowthEventAuditService,
     private readonly antifraudService: UserGrowthEventAntifraudService,
   ) {
     super()
   }
 
-  onModuleInit() {
-    this.unsubscribe = this.eventBus.subscribe(async (event) => this.consume(event))
-  }
-
-  onModuleDestroy() {
-    this.unsubscribe?.()
-  }
-
+  @OnEvent('user-growth-event')
   private async consume(event: UserGrowthEventDto) {
     try {
       await this.processEvent(event)

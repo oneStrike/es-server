@@ -48,6 +48,12 @@
       ],
       "@libs/system-config/*": [
         "libs/system-config/src/*"
+      ],
+      "@libs/task": [
+        "libs/task/src"
+      ],
+      "@libs/task/*": [
+        "libs/task/src/*"
       ]
     },
     "resolveJsonModule": true,

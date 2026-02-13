@@ -1,0 +1,34 @@
+model TaskAssignment {
+  id Int @id @default(autoincrement())
+
+  taskId Int @map("task_id")
+  userId Int @map("user_id")
+  cycleKey String @map("cycle_key") @db.VarChar(32)
+
+  status Int @db.SmallInt
+  progress Int @default(0)
+  target Int @default(1)
+  claimedAt DateTime? @map("claimed_at") @db.Timestamptz(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  expiredAt DateTime? @map("expired_at") @db.Timestamptz(6)
+
+  taskSnapshot Json? @map("task_snapshot")
+  context Json?
+  version Int @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  progressLogs TaskProgressLog[]
+
+  @@unique([taskId, userId, cycleKey])
+  @@index([userId, status])
+  @@index([taskId])
+  @@index([completedAt])
+  @@index([expiredAt])
+  @@index([deletedAt])
+  @@map("task_assignment")
+}

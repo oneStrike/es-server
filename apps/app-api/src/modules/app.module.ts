@@ -6,6 +6,7 @@ import { AppPageModule } from './app-config/page/page.module'
 import { AuthModule } from './auth/auth.module'
 import { ComicModule } from './comic/comic.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
+import { TaskModule } from './task/task.module'
 import { UserModule } from './user/user.module'
 
 @Module({
@@ -18,6 +19,7 @@ import { UserModule } from './user/user.module'
     AppConfigModule,
     AgreementModule,
     ComicModule,
+    TaskModule,
   ],
 })
 export class AppApiModule { }

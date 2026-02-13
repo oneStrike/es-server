@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { EventEmitterModule } from '@nestjs/event-emitter'
 import { UserGrowthEventAntifraudService } from './growth-event.antifraud.service'
 import { UserGrowthEventAuditCronService } from './growth-event.audit-cron.service'
 import { UserGrowthEventAuditService } from './growth-event.audit.service'
@@ -8,6 +9,7 @@ import { UserGrowthEventConsumer } from './growth-event.consumer'
 import { UserGrowthEventService } from './growth-event.service'
 
 @Module({
+  imports: [EventEmitterModule.forRoot()],
   providers: [
     UserGrowthEventService,
     LocalUserGrowthEventBus,

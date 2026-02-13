@@ -14,4 +14,6 @@ export interface BaseModuleOptions {
   enableGlobalValidationPipe?: boolean
   // 是否启用全局响应转换拦截器
   enableGlobalTransformInterceptor?: boolean
+  // 是否启用全局响应校验拦截器
+  enableGlobalResponseValidationInterceptor?: boolean
 }

@@ -1,5 +1,5 @@
-import { EventEmitter } from 'node:events'
 import { Injectable } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 import { UserGrowthEventDto } from './dto/growth-event.dto'
 
 export interface UserGrowthEventBus {
@@ -11,7 +11,7 @@ export interface UserGrowthEventBus {
 
 @Injectable()
 export class LocalUserGrowthEventBus implements UserGrowthEventBus {
-  private readonly emitter = new EventEmitter()
+  constructor(private readonly emitter: EventEmitter2) {}
 
   async publish(event: UserGrowthEventDto) {
     this.emitter.emit('user-growth-event', event)
