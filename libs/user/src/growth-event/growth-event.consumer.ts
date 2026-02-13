@@ -11,6 +11,10 @@ import {
   UserGrowthRuleRef,
 } from './growth-event.types'
 
+/**
+ * 成长事件消费者
+ * 负责消费成长事件、执行防刷与规则计算，并写入审计结果
+ */
 @Injectable()
 export class UserGrowthEventConsumer
   extends BaseService
@@ -22,16 +26,25 @@ export class UserGrowthEventConsumer
     super()
   }
 
+  /**
+   * 成长事件入口
+   * 使用事件总线触发消费逻辑，避免阻塞业务线程
+   */
   @OnEvent('user-growth-event')
   private async consume(event: UserGrowthEventDto) {
     try {
       await this.processEvent(event)
     } catch {
-
+      // 事件消费失败不阻断业务主流程，具体失败原因由审计状态体现
     }
   }
 
+  /**
+   * 处理成长事件
+   * 关键流程：幂等检查 -> 审计落库 -> 防刷校验 -> 规则匹配与发放 -> 回写审计
+   */
   private async processEvent(event: UserGrowthEventDto) {
+    // 幂等：同一窗口内重复事件直接标记并退出
     const duplicate = await this.auditService.findDuplicate(event)
     if (duplicate) {
       await this.auditService.createEvent(
@@ -41,12 +54,14 @@ export class UserGrowthEventConsumer
       return
     }
 
+    // 先写入审计记录，确保后续失败可追踪
     const audit = await this.auditService.createEvent(
       event,
       UserGrowthEventStatus.PENDING,
     )
 
     try {
+      // 规则匹配：按业务域与事件键查询可用规则
       const [pointRules, experienceRules, badgeRules] = await Promise.all([
         this.prisma.userPointRule.findMany({
           where: {
@@ -76,6 +91,7 @@ export class UserGrowthEventConsumer
         experienceRules.length === 0 &&
         badgeRules.length === 0
       ) {
+        // 无匹配规则时审计标记忽略，避免误处理
         await this.auditService.updateStatus(
           audit.id,
           UserGrowthEventStatus.IGNORED_RULE_NOT_FOUND,
@@ -83,6 +99,7 @@ export class UserGrowthEventConsumer
         return
       }
 
+      // 防刷：基于规则的最大值与冷却时间做风控判断
       const cooldownSeconds = this.getCooldownSeconds(
         pointRules,
         experienceRules,
@@ -98,6 +115,7 @@ export class UserGrowthEventConsumer
         },
       )
       if (!antifraudDecision.allow) {
+        // 命中防刷时记录审计但不发放奖励
         await this.auditService.updateStatus(
           audit.id,
           UserGrowthEventStatus.REJECTED_ANTIFRAUD,
@@ -105,6 +123,7 @@ export class UserGrowthEventConsumer
         return
       }
 
+      // 发放规则：在事务内写入积分/经验/徽章记录并更新用户状态
       const result = await this.applyRules(
         event,
         audit.id,
@@ -127,6 +146,7 @@ export class UserGrowthEventConsumer
         },
       )
     } catch {
+      // 任一环节异常则标记失败，避免阻塞业务主流程
       await this.auditService.updateStatus(
         audit.id,
         UserGrowthEventStatus.FAILED,
@@ -134,6 +154,9 @@ export class UserGrowthEventConsumer
     }
   }
 
+  /**
+   * 计算规则冷却秒数（取积分与经验规则的最大冷却）
+   */
   private getCooldownSeconds(
     pointRules: { cooldownSeconds: number }[],
     experienceRules: { cooldownSeconds: number }[],
@@ -149,6 +172,10 @@ export class UserGrowthEventConsumer
     return Math.max(pointCooldown, experienceCooldown)
   }
 
+  /**
+   * 获取规则的最大增量值
+   * 用于防刷判断的价值评估
+   */
   private getMaxDelta<T extends { points?: number, experience?: number }>(
     rules: T[],
     key: 'points' | 'experience',
@@ -159,6 +186,10 @@ export class UserGrowthEventConsumer
     )
   }
 
+  /**
+   * 规则发放与用户状态更新
+   * 事务边界：积分记录、经验记录、徽章发放与用户积分/经验/等级更新必须保持一致
+   */
   private async applyRules(
     event: UserGrowthEventDto,
     eventId: number,
@@ -181,6 +212,7 @@ export class UserGrowthEventConsumer
     }[],
   ): Promise<UserGrowthEventApplyResult> {
     return this.prisma.$transaction(async (tx) => {
+      // 用户校验：不存在或封禁直接失败，避免继续发放
       const user = await tx.appUser.findUnique({
         where: { id: event.userId },
       })
@@ -200,15 +232,18 @@ export class UserGrowthEventConsumer
       let currentPoints = user.points
       let currentExperience = user.experience
 
+      // 当日统计窗口用于日上限控制
       const startOfDay = new Date(event.occurredAt)
       startOfDay.setHours(0, 0, 0, 0)
 
       for (const rule of pointRules) {
+        // 规则值为 0 时不产生任何记录
         if (rule.points === 0) {
           continue
         }
 
         if (rule.dailyLimit > 0) {
+          // 日上限：当天已发放次数达到上限则跳过
           const todayCount = await tx.userPointRecord.count({
             where: {
               userId: event.userId,
@@ -224,6 +259,7 @@ export class UserGrowthEventConsumer
         }
 
         if (rule.totalLimit > 0) {
+          // 总上限：历史累计次数达到上限则跳过
           const totalCount = await tx.userPointRecord.count({
             where: {
               userId: event.userId,
@@ -236,6 +272,7 @@ export class UserGrowthEventConsumer
         }
 
         if (rule.cooldownSeconds > 0) {
+          // 冷却：最近一次发放在冷却时间内则跳过
           const latestRecord = await tx.userPointRecord.findFirst({
             where: {
               userId: event.userId,
@@ -257,6 +294,7 @@ export class UserGrowthEventConsumer
         const beforePoints = currentPoints
         const afterPoints = beforePoints + rule.points
 
+        // 写入积分记录与用户积分快照
         await tx.userPointRecord.create({
           data: {
             userId: event.userId,
@@ -286,11 +324,13 @@ export class UserGrowthEventConsumer
       }
 
       for (const rule of experienceRules) {
+        // 规则值为 0 时不产生任何记录
         if (rule.experience === 0) {
           continue
         }
 
         if (rule.dailyLimit > 0) {
+          // 日上限：当天已发放次数达到上限则跳过
           const todayCount = await tx.userExperienceRecord.count({
             where: {
               userId: event.userId,
@@ -306,6 +346,7 @@ export class UserGrowthEventConsumer
         }
 
         if (rule.totalLimit > 0) {
+          // 总上限：历史累计次数达到上限则跳过
           const totalCount = await tx.userExperienceRecord.count({
             where: {
               userId: event.userId,
@@ -318,6 +359,7 @@ export class UserGrowthEventConsumer
         }
 
         if (rule.cooldownSeconds > 0) {
+          // 冷却：最近一次发放在冷却时间内则跳过
           const latestRecord = await tx.userExperienceRecord.findFirst({
             where: {
               userId: event.userId,
@@ -339,6 +381,7 @@ export class UserGrowthEventConsumer
         const beforeExperience = currentExperience
         const afterExperience = beforeExperience + rule.experience
 
+        // 写入经验记录与用户经验快照
         await tx.userExperienceRecord.create({
           data: {
             userId: event.userId,
@@ -368,6 +411,7 @@ export class UserGrowthEventConsumer
       }
 
       for (const rule of badgeRules) {
+        // 徽章幂等：已拥有则跳过
         const existingBadge = await tx.userBadgeAssignment.findUnique({
           where: {
             userId_badgeId: {
@@ -381,6 +425,7 @@ export class UserGrowthEventConsumer
           continue
         }
 
+        // 发放新徽章并记录命中规则
         await tx.userBadgeAssignment.create({
           data: {
             userId: event.userId,
@@ -396,6 +441,7 @@ export class UserGrowthEventConsumer
       }
 
       if (experienceDeltaApplied !== 0) {
+        // 经验变化后重新计算等级，取满足条件的最高等级规则
         const newLevelRule = await tx.userLevelRule.findFirst({
           where: {
             isEnabled: true,
@@ -408,6 +454,7 @@ export class UserGrowthEventConsumer
           },
         })
 
+        // 仅在等级变化时更新用户等级
         if (newLevelRule && newLevelRule.id !== user.levelId) {
           await tx.appUser.update({
             where: { id: event.userId },
