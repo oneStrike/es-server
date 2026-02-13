@@ -221,17 +221,11 @@ export class UserExperienceService extends BaseService {
       })
 
       // 按经验值选择当前可达的最高等级
-      const newLevelRule = await tx.userLevelRule.findFirst({
-        where: {
-          isEnabled: true,
-          requiredExperience: {
-            lte: afterExperience,
-          },
-        },
-        orderBy: {
-          requiredExperience: 'desc',
-        },
-      })
+      const newLevelRule =
+        await this.levelRuleService.getHighestLevelRuleByExperience(
+          afterExperience,
+          tx,
+        )
 
       // 仅当等级变化时更新，避免重复写入
       if (newLevelRule && newLevelRule.id !== user.levelId) {

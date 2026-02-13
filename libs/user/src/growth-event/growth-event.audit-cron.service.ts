@@ -31,14 +31,15 @@ export class UserGrowthEventAuditCronService extends BaseService {
       )
 
       let archivedCount = 0
+      let lastId: number | undefined
 
-      // 分批迁移，避免一次性处理过多数据
       while (true) {
         const events = await this.userGrowthEvent.findMany({
           where: {
             occurredAt: {
               lt: cutoffDate,
             },
+            ...(lastId ? { id: { gt: lastId } } : {}),
           },
           orderBy: {
             id: 'asc',
@@ -50,7 +51,6 @@ export class UserGrowthEventAuditCronService extends BaseService {
           break
         }
 
-        // 构造归档数据行，保持字段一致
         const archiveRows = events.map((event) => ({
           sourceId: event.id,
           business: event.business,
@@ -72,7 +72,6 @@ export class UserGrowthEventAuditCronService extends BaseService {
 
         const ids = events.map((event) => event.id)
 
-        // 使用事务保证归档与删除的一致性
         await this.prisma.$transaction(async (tx) => {
           await (tx).userGrowthEventArchive.createMany({
             data: archiveRows,
@@ -88,6 +87,7 @@ export class UserGrowthEventAuditCronService extends BaseService {
         })
 
         archivedCount += events.length
+        lastId = events[events.length - 1].id
       }
 
       if (archivedCount > 0) {

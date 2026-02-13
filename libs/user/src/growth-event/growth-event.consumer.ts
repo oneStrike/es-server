@@ -1,7 +1,9 @@
+import type { PrismaClientType } from '@libs/base/database/prisma.types'
 import { UserStatusEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { OnEvent } from '@nestjs/event-emitter'
+import { UserLevelRuleService } from '../level-rule/level-rule.service'
 import { UserGrowthEventDto } from './dto/growth-event.dto'
 import { UserGrowthEventAntifraudService } from './growth-event.antifraud.service'
 import { UserGrowthEventAuditService } from './growth-event.audit.service'
@@ -11,17 +13,21 @@ import {
   UserGrowthRuleRef,
 } from './growth-event.types'
 
+type GrowthRuleUsageClient = Pick<
+  PrismaClientType,
+  'userPointRecord' | 'userExperienceRecord'
+>
+
 /**
  * 成长事件消费者
  * 负责消费成长事件、执行防刷与规则计算，并写入审计结果
  */
 @Injectable()
-export class UserGrowthEventConsumer
-  extends BaseService
-{
+export class UserGrowthEventConsumer extends BaseService {
   constructor(
     private readonly auditService: UserGrowthEventAuditService,
     private readonly antifraudService: UserGrowthEventAntifraudService,
+    private readonly levelRuleService: UserLevelRuleService,
   ) {
     super()
   }
@@ -106,14 +112,11 @@ export class UserGrowthEventConsumer
       )
       const pointsValue = this.getMaxDelta(pointRules, 'points')
       const experienceValue = this.getMaxDelta(experienceRules, 'experience')
-      const antifraudDecision = await this.antifraudService.check(
-        event,
-        {
-          cooldownSeconds,
-          points: pointsValue,
-          experience: experienceValue,
-        },
-      )
+      const antifraudDecision = await this.antifraudService.check(event, {
+        cooldownSeconds,
+        points: pointsValue,
+        experience: experienceValue,
+      })
       if (!antifraudDecision.allow) {
         // 命中防刷时记录审计但不发放奖励
         await this.auditService.updateStatus(
@@ -180,10 +183,101 @@ export class UserGrowthEventConsumer
     rules: T[],
     key: 'points' | 'experience',
   ) {
-    return Math.max(
-      0,
-      ...rules.map((rule) => (rule[key] ?? 0)),
-    )
+    return Math.max(0, ...rules.map((rule) => rule[key] ?? 0))
+  }
+
+  private async getRuleUsageStats(
+    tx: GrowthRuleUsageClient,
+    model: 'point' | 'experience',
+    ruleIds: number[],
+    userId: number,
+    startOfDay: Date,
+  ) {
+    if (ruleIds.length === 0) {
+      return {
+        daily: new Map<number, number>(),
+        total: new Map<number, number>(),
+        last: new Map<number, Date>(),
+      }
+    }
+    const [dailyCounts, totalCounts, latestRecords] =
+      model === 'point'
+        ? await Promise.all([
+            tx.userPointRecord.groupBy({
+              by: ['ruleId'],
+              where: {
+                userId,
+                ruleId: { in: ruleIds },
+                createdAt: { gte: startOfDay },
+              },
+              _count: { _all: true },
+            }),
+            tx.userPointRecord.groupBy({
+              by: ['ruleId'],
+              where: {
+                userId,
+                ruleId: { in: ruleIds },
+              },
+              _count: { _all: true },
+            }),
+            tx.userPointRecord.groupBy({
+              by: ['ruleId'],
+              where: {
+                userId,
+                ruleId: { in: ruleIds },
+              },
+              _max: { createdAt: true },
+            }),
+          ])
+        : await Promise.all([
+            tx.userExperienceRecord.groupBy({
+              by: ['ruleId'],
+              where: {
+                userId,
+                ruleId: { in: ruleIds },
+                createdAt: { gte: startOfDay },
+              },
+              _count: { _all: true },
+            }),
+            tx.userExperienceRecord.groupBy({
+              by: ['ruleId'],
+              where: {
+                userId,
+                ruleId: { in: ruleIds },
+              },
+              _count: { _all: true },
+            }),
+            tx.userExperienceRecord.groupBy({
+              by: ['ruleId'],
+              where: {
+                userId,
+                ruleId: { in: ruleIds },
+              },
+              _max: { createdAt: true },
+            }),
+          ])
+
+    const daily = new Map<number, number>()
+    const total = new Map<number, number>()
+    const last = new Map<number, Date>()
+
+    for (const item of dailyCounts) {
+      if (item.ruleId != null) {
+        daily.set(item.ruleId, item._count._all)
+      }
+    }
+    for (const item of totalCounts) {
+      if (item.ruleId != null) {
+        total.set(item.ruleId, item._count._all)
+      }
+    }
+    for (const item of latestRecords) {
+      if (item.ruleId != null && item._max.createdAt) {
+        last.set(item.ruleId, item._max.createdAt)
+      }
+    }
+
+    return { daily, total, last }
   }
 
   /**
@@ -236,6 +330,25 @@ export class UserGrowthEventConsumer
       const startOfDay = new Date(event.occurredAt)
       startOfDay.setHours(0, 0, 0, 0)
 
+      const pointRuleIds = pointRules.map((rule) => rule.id)
+      const experienceRuleIds = experienceRules.map((rule) => rule.id)
+      const [pointStats, experienceStats] = await Promise.all([
+        this.getRuleUsageStats(
+          tx,
+          'point',
+          pointRuleIds,
+          event.userId,
+          startOfDay,
+        ),
+        this.getRuleUsageStats(
+          tx,
+          'experience',
+          experienceRuleIds,
+          event.userId,
+          startOfDay,
+        ),
+      ])
+
       for (const rule of pointRules) {
         // 规则值为 0 时不产生任何记录
         if (rule.points === 0) {
@@ -243,48 +356,24 @@ export class UserGrowthEventConsumer
         }
 
         if (rule.dailyLimit > 0) {
-          // 日上限：当天已发放次数达到上限则跳过
-          const todayCount = await tx.userPointRecord.count({
-            where: {
-              userId: event.userId,
-              ruleId: rule.id,
-              createdAt: {
-                gte: startOfDay,
-              },
-            },
-          })
+          const todayCount = pointStats.daily.get(rule.id) ?? 0
           if (todayCount >= rule.dailyLimit) {
             continue
           }
         }
 
         if (rule.totalLimit > 0) {
-          // 总上限：历史累计次数达到上限则跳过
-          const totalCount = await tx.userPointRecord.count({
-            where: {
-              userId: event.userId,
-              ruleId: rule.id,
-            },
-          })
+          const totalCount = pointStats.total.get(rule.id) ?? 0
           if (totalCount >= rule.totalLimit) {
             continue
           }
         }
 
         if (rule.cooldownSeconds > 0) {
-          // 冷却：最近一次发放在冷却时间内则跳过
-          const latestRecord = await tx.userPointRecord.findFirst({
-            where: {
-              userId: event.userId,
-              ruleId: rule.id,
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
-          })
+          const latestCreatedAt = pointStats.last.get(rule.id)
           if (
-            latestRecord &&
-            event.occurredAt.getTime() - latestRecord.createdAt.getTime() <
+            latestCreatedAt &&
+            event.occurredAt.getTime() - latestCreatedAt.getTime() <
               rule.cooldownSeconds * 1000
           ) {
             continue
@@ -330,48 +419,24 @@ export class UserGrowthEventConsumer
         }
 
         if (rule.dailyLimit > 0) {
-          // 日上限：当天已发放次数达到上限则跳过
-          const todayCount = await tx.userExperienceRecord.count({
-            where: {
-              userId: event.userId,
-              ruleId: rule.id,
-              createdAt: {
-                gte: startOfDay,
-              },
-            },
-          })
+          const todayCount = experienceStats.daily.get(rule.id) ?? 0
           if (todayCount >= rule.dailyLimit) {
             continue
           }
         }
 
         if (rule.totalLimit > 0) {
-          // 总上限：历史累计次数达到上限则跳过
-          const totalCount = await tx.userExperienceRecord.count({
-            where: {
-              userId: event.userId,
-              ruleId: rule.id,
-            },
-          })
+          const totalCount = experienceStats.total.get(rule.id) ?? 0
           if (totalCount >= rule.totalLimit) {
             continue
           }
         }
 
         if (rule.cooldownSeconds > 0) {
-          // 冷却：最近一次发放在冷却时间内则跳过
-          const latestRecord = await tx.userExperienceRecord.findFirst({
-            where: {
-              userId: event.userId,
-              ruleId: rule.id,
-            },
-            orderBy: {
-              createdAt: 'desc',
-            },
-          })
+          const latestCreatedAt = experienceStats.last.get(rule.id)
           if (
-            latestRecord &&
-            event.occurredAt.getTime() - latestRecord.createdAt.getTime() <
+            latestCreatedAt &&
+            event.occurredAt.getTime() - latestCreatedAt.getTime() <
               rule.cooldownSeconds * 1000
           ) {
             continue
@@ -442,17 +507,11 @@ export class UserGrowthEventConsumer
 
       if (experienceDeltaApplied !== 0) {
         // 经验变化后重新计算等级，取满足条件的最高等级规则
-        const newLevelRule = await tx.userLevelRule.findFirst({
-          where: {
-            isEnabled: true,
-            requiredExperience: {
-              lte: currentExperience,
-            },
-          },
-          orderBy: {
-            requiredExperience: 'desc',
-          },
-        })
+        const newLevelRule =
+          await this.levelRuleService.getHighestLevelRuleByExperience(
+            currentExperience,
+            tx,
+          )
 
         // 仅在等级变化时更新用户等级
         if (newLevelRule && newLevelRule.id !== user.levelId) {

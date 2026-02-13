@@ -58,7 +58,7 @@ export class UserGrowthEventAuditService extends BaseService {
         },
       },
       orderBy: {
-        id: 'desc',
+        occurredAt: 'desc',
       },
     })
   }

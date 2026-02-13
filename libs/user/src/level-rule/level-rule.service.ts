@@ -1,3 +1,4 @@
+import type { PrismaClientType } from '@libs/base/database/prisma.types'
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -10,6 +11,8 @@ import {
   UserLevelStatisticsDto,
 } from './dto/level-rule.dto'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
+
+type LevelRuleClient = Pick<PrismaClientType, 'userLevelRule'>
 
 /**
  * 等级规则服务
@@ -216,6 +219,24 @@ export class UserLevelRuleService extends BaseService {
         dailyFavoriteLimit: user.level.dailyFavoriteLimit,
       },
     }
+  }
+
+  async getHighestLevelRuleByExperience(
+    experience: number,
+    tx?: LevelRuleClient,
+  ) {
+    const client = tx ?? this.prisma
+    return client.userLevelRule.findFirst({
+      where: {
+        isEnabled: true,
+        requiredExperience: {
+          lte: experience,
+        },
+      },
+      orderBy: {
+        requiredExperience: 'desc',
+      },
+    })
   }
 
   /**

@@ -17,6 +17,9 @@ import {
  */
 @Injectable()
 export class UserGrowthEventAntifraudService extends BaseService {
+  private readonly configCacheTtlMs = 60000
+  private configCache: { value: GrowthAntifraudConfigDto | null, expiresAt: number } | null = null
+
   /**
    * 获取成长事件模型
    */
@@ -103,10 +106,19 @@ export class UserGrowthEventAntifraudService extends BaseService {
    * @returns 反作弊配置
    */
   private async getConfig(): Promise<GrowthAntifraudConfigDto | null> {
+    const now = Date.now()
+    if (this.configCache && this.configCache.expiresAt > now) {
+      return this.configCache.value
+    }
     const record = await (this.prisma as any).systemConfig.findUnique({
       where: { id: 1 },
     })
-    return (record)?.growthAntifraudConfig ?? null
+    const value = (record)?.growthAntifraudConfig ?? null
+    this.configCache = {
+      value,
+      expiresAt: now + this.configCacheTtlMs,
+    }
+    return value
   }
 
   /**
