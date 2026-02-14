@@ -1,7 +1,7 @@
 import type { UploadConfigInterface } from '@libs/base/config'
 import type { FastifyRequest } from 'fastify'
 import { join } from 'node:path'
-import { pipeline } from 'node:stream'
+import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 import { UploadResponseDto } from '@libs/base/dto'
 import {
@@ -11,7 +11,7 @@ import {
   PayloadTooLargeException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { fileTypeStream } from 'file-type'
+import { fileTypeFromBuffer } from 'file-type'
 import fs from 'fs-extra'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -138,9 +138,21 @@ export class UploadService {
     }
 
     // 使用fileTypeStream函数检测文件类型，返回一个带有fileType属性的流
-    const detectionStream = await fileTypeStream(targetFile.file)
-    // 从流的fileType属性中获取文件类型信息
-    const { ext, mime } = detectionStream.fileType || {}
+    const firstChunk = await new Promise<Uint8Array>((resolve, reject) => {
+      targetFile.file.once('error', reject)
+      targetFile.file.once('readable', () => {
+        const chunk =
+          targetFile.file.read(4100)
+          || targetFile.file.read()
+          || new Uint8Array(0)
+        resolve(chunk)
+      })
+    })
+    const detectedFileType = await fileTypeFromBuffer(firstChunk)
+    const detectionStream = new PassThrough()
+    detectionStream.write(firstChunk)
+    targetFile.file.pipe(detectionStream)
+    const { ext, mime } = detectedFileType || {}
     if (!ext || !mime) {
       await this.consumeStream(detectionStream)
       throw new BadRequestException('无法识别的文件类型')

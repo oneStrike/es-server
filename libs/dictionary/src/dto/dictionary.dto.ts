@@ -5,7 +5,6 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -54,18 +53,6 @@ export class BaseDictionaryDto extends BaseDto {
     maxLength: 255,
   })
   description?: string
-
-  @ApiProperty({
-    description: '创建时间',
-    example: '2024-01-01T00:00:00.000Z',
-  })
-  createdAt!: Date
-
-  @ApiProperty({
-    description: '更新时间',
-    example: '2024-01-01T00:00:00.000Z',
-  })
-  updatedAt!: Date
 }
 
 /**

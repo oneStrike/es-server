@@ -168,14 +168,6 @@ export class QueryForumModeratorActionLogDto extends IntersectionType(
  * 用于返回版主详细信息，包含用户基本信息、权限列表和管理的板块列表
  */
 export class ForumModeratorDto extends BaseForumModeratorDto {
-  @ValidateNumber({
-    description: '用户ID',
-    example: 1,
-    required: true,
-    min: 1,
-  })
-  userId!: number
-
   @ValidateString({
     description: '昵称',
     example: '张三',
@@ -191,35 +183,12 @@ export class ForumModeratorDto extends BaseForumModeratorDto {
   avatar?: string
 
   @ValidateArray({
-    description: '权限列表',
-    itemType: 'number',
-    example: [1, 2, 4, 8, 16, 32],
-    required: true,
-  })
-  permissions!: ForumModeratorPermissionEnum[]
-
-  @ValidateArray({
     description: '权限名称列表',
     itemType: 'string',
     example: ['置顶', '加精', '锁定', '删除', '审核', '移动'],
     required: true,
   })
   permissionNames!: string[]
-
-  @ValidateBoolean({
-    description: '是否启用',
-    example: true,
-    required: true,
-  })
-  isEnabled!: boolean
-
-  @ValidateString({
-    description: '备注',
-    example: '资深版主',
-    required: false,
-    maxLength: 500,
-  })
-  remark?: string
 
   @ApiProperty({
     description: '管理的板块列表',
