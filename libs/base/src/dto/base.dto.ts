@@ -1,6 +1,7 @@
 import {
   ValidateArray,
   ValidateBoolean,
+  ValidateDate,
   ValidateNumber,
 } from '@libs/base/decorators'
 import { ApiProperty, IntersectionType, PickType } from '@nestjs/swagger'
@@ -107,14 +108,14 @@ export class BatchUpdatePublishedStatusDto extends IntersectionType(
  * 基础 DTO - 包含所有实体共有的基础字段
  */
 export class BaseDto extends IdDto {
-  @ApiProperty({
+  @ValidateDate({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
   createdAt: Date
 
-  @ApiProperty({
+  @ValidateDate({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,

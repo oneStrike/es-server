@@ -1,7 +1,7 @@
 import * as process from 'node:process'
 import { Public } from '@libs/base/decorators'
 import { getEnv } from '@libs/base/utils'
-import { Controller, Get } from '@nestjs/common'
+import { Controller, Get, HttpCode } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ApiTags } from '@nestjs/swagger'
 import {
@@ -44,17 +44,22 @@ export class HealthController {
   @Get('ready')
   @HealthCheck()
   @Public()
+  @HttpCode(200)
   async readinessCheck() {
     const upload = this.configService.get('upload')
     const uploadPath = upload?.uploadDir || process.cwd()
-    return this.health.check([
-      async () => this.healthService.ping('database'),
-      async () => this.healthService.checkCacheByEnv('cache'),
-      async () =>
-        this.disk.checkStorage('disk', {
-          path: uploadPath,
-          thresholdPercent: 0.9,
-        }),
-    ])
+    try {
+      return await this.health.check([
+        async () => this.healthService.ping('database'),
+        async () => this.healthService.checkCacheByEnv('cache'),
+        async () =>
+          this.disk.checkStorage('disk', {
+            path: uploadPath,
+            thresholdPercent: 0.9,
+          }),
+      ])
+    } catch (error: any) {
+      return error?.response ?? error
+    }
   }
 }

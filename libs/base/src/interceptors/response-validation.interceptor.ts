@@ -1,7 +1,12 @@
 import type { CallHandler, ExecutionContext, Type } from '@nestjs/common'
 import type { Observable } from 'rxjs'
 import type { ResponseDtoMetadata } from '../decorators/response-dto.constants'
-import { BadRequestException, Injectable, NestInterceptor } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NestInterceptor,
+} from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { plainToInstance } from 'class-transformer'
 import { validate } from 'class-validator'
@@ -10,6 +15,7 @@ import { RESPONSE_DTO_METADATA_KEY } from '../decorators/response-dto.constants'
 
 @Injectable()
 export class ResponseValidationInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(ResponseValidationInterceptor.name)
   constructor(private readonly reflector: Reflector) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -18,9 +24,23 @@ export class ResponseValidationInterceptor implements NestInterceptor {
       return next.handle()
     }
 
+    const request = context.switchToHttp().getRequest()
     return next.handle().pipe(
       mergeMap(async (data) => {
-        await this.validateResponse(data, metadata)
+        try {
+          await this.validateResponse(data, metadata)
+        } catch (error) {
+          if (error instanceof BadRequestException) {
+            const method = request?.method ?? 'UNKNOWN'
+            const path = request?.url ?? 'UNKNOWN'
+            this.logger.error(`response_dto_mismatch ${method} ${path}`, {
+              errorMessage: error.message,
+              data,
+            })
+            return data
+          }
+          throw error
+        }
         return data
       }),
     )

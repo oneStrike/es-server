@@ -64,6 +64,9 @@ export class LibAppPageService extends BaseService {
 
     return this.appPage.findPagination({
       where: { ...where, ...other },
+      omit: {
+        description: true,
+      },
     })
   }
 

@@ -1,11 +1,11 @@
 import {
   ValidateBoolean,
+  ValidateDate,
   ValidateEnum,
   ValidateString,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   PartialType,
   PickType,
@@ -25,9 +25,9 @@ export class BaseUserDto extends BaseDto {
   @ValidateString({
     description: '手机号',
     example: '13838384388',
-    required: true,
+    required: false,
   })
-  mobile!: string
+  mobile?: string
 
   @ValidateString({
     description: '头像',
@@ -51,26 +51,19 @@ export class BaseUserDto extends BaseDto {
   })
   role: UserRoleEnum
 
-  @ApiProperty({
+  @ValidateDate({
     description: '最后登录时间',
     example: '2021-01-01 00:00:00',
     required: false,
   })
   lastLoginAt?: Date
 
-  @ApiProperty({
+  @ValidateString({
     description: '最后登录IP',
     example: '192.168.1.1',
     required: false,
   })
   lastLoginIp?: string
-
-  @ValidateBoolean({
-    description: '是否锁定',
-    example: false,
-    default: false,
-  })
-  isLocked: boolean
 }
 
 export class UserRegisterDto extends PickType(BaseUserDto, [
@@ -79,6 +72,13 @@ export class UserRegisterDto extends PickType(BaseUserDto, [
   'avatar',
   'role',
 ]) {
+  @ValidateString({
+    description: '手机号',
+    example: '13838384388',
+    required: true,
+  })
+  mobile!: string
+
   @ValidateString({
     description: '密码',
     example: 'Aa@123456',
