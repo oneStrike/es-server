@@ -36,13 +36,6 @@ export class UploadService {
    * @param uploadPath 基础上传路径
    * @param fileType 文件类型分类
    * @param scene 场景名称
-   * @returns 完整的文件保存路径
-   */
-  /**
-   * 生成文件保存路径
-   * @param uploadPath 基础上传路径
-   * @param fileType 文件类型分类
-   * @param scene 场景名称
    * @param pathSegments 路径片段数组
    * @returns 完整的文件保存路径
    */
