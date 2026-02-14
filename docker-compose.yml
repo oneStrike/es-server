@@ -1,7 +1,7 @@
 services:
   # Admin API 后端服务
   admin-server:
-    image: es/admin/server:0.0.2
+    image: es/admin/server:${SERVER_VERSION:-0.0.2}
     container_name: es-admin-server
     # 强制只使用本地镜像，不拉取
     pull_policy: never
@@ -59,9 +59,9 @@ services:
 
   # 数据库迁移服务
   migrator:
-    image: es/app/server:0.0.2
+    image: es/app/server:${SERVER_VERSION:-0.0.2}
     container_name: es-migrator
-    pull_policy: never
+    pull_policy: always
     user: '1001:1001'
     # 覆盖默认启动命令，执行迁移
     command: [bun, run, prisma, migrate, deploy, --schema, prisma/schema.prisma]
@@ -76,7 +76,7 @@ services:
 
   # App API 后端服务
   app-server:
-    image: es/app/server:0.0.2
+    image: es/app/server:${SERVER_VERSION:-0.0.2}
     container_name: es-app-server
     # 强制只使用本地镜像，不拉取
     pull_policy: never
