@@ -142,19 +142,22 @@ log "开始构建 Docker 镜像..."
 
 NEED_ADMIN=false
 NEED_APP=false
+NEED_MIGRATOR=false
 if [ "$FORCE_DEPLOY" = "true" ]; then
     log "强制部署模式：构建所有镜像"
     NEED_ADMIN=true
     NEED_APP=true
+    NEED_MIGRATOR=true
 elif echo "${CHANGED_FILES}" | grep -Eq '^(libs/|prisma/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|tsconfig(\.|$)|tsconfig\.build\.json$|nest-cli\.json$|webpack\.config\.js$)'; then
     NEED_ADMIN=true
     NEED_APP=true
+    NEED_MIGRATOR=true
 else
     if echo "${CHANGED_FILES}" | grep -Eq '^apps/admin-api/'; then NEED_ADMIN=true; fi
     if echo "${CHANGED_FILES}" | grep -Eq '^apps/app-api/'; then NEED_APP=true; fi
 fi
 
-if [ "${NEED_ADMIN}" != "true" ] && [ "${NEED_APP}" != "true" ]; then
+if [ "${NEED_ADMIN}" != "true" ] && [ "${NEED_APP}" != "true" ] && [ "${NEED_MIGRATOR}" != "true" ]; then
     log "代码更新不影响镜像构建，跳过构建。"
     pop_stash
     exit 0
@@ -177,6 +180,7 @@ fi
 
 ADMIN_PID=""
 APP_PID=""
+MIGRATOR_PID=""
 FAIL=0
 
 if [ "${NEED_ADMIN}" = "true" ]; then
@@ -189,12 +193,20 @@ if [ "${NEED_APP}" = "true" ]; then
     APP_PID=$!
 fi
 
+if [ "${NEED_MIGRATOR}" = "true" ]; then
+    build_image "Migrator" "${ROOT_DOCKERFILE}" "${APP_IMAGE}" "${VERSION}" "${CACHE_TAG}" "app" &
+    MIGRATOR_PID=$!
+fi
+
 # Wait for builds
 if [ -n "${ADMIN_PID}" ]; then
     wait "${ADMIN_PID}" || FAIL=1
 fi
 if [ -n "${APP_PID}" ]; then
     wait "${APP_PID}" || FAIL=1
+fi
+if [ -n "${MIGRATOR_PID}" ]; then
+    wait "${MIGRATOR_PID}" || FAIL=1
 fi
 
 if [ "${FAIL}" -ne 0 ]; then
@@ -211,6 +223,9 @@ if [ "${NEED_ADMIN}" = "true" ]; then
 fi
 if [ "${NEED_APP}" = "true" ]; then
     DEPLOY_TARGETS="${DEPLOY_TARGETS} app-server"
+fi
+if [ "${NEED_MIGRATOR}" = "true" ]; then
+    DEPLOY_TARGETS="${DEPLOY_TARGETS} migrator"
 fi
 
 DEPLOY_TARGETS=$(echo "${DEPLOY_TARGETS}" | xargs)

@@ -1261,26 +1261,83 @@ export type TaskAssignmentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Typ
 export type $TaskAssignmentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TaskAssignment"
   objects: {
+    /**
+     * 任务关联
+     */
     task: Prisma.$TaskPayload<ExtArgs>
+    /**
+     * 用户关联
+     */
     user: Prisma.$AppUserPayload<ExtArgs>
+    /**
+     * 任务进度日志关联
+     */
     progressLogs: Prisma.$TaskProgressLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键id
+     */
     id: number
+    /**
+     * 任务ID
+     */
     taskId: number
+    /**
+     * 用户ID
+     */
     userId: number
+    /**
+     * 周期标识
+     */
     cycleKey: string
+    /**
+     * 分配状态
+     */
     status: number
+    /**
+     * 当前进度
+     */
     progress: number
+    /**
+     * 目标次数
+     */
     target: number
+    /**
+     * 领取时间
+     */
     claimedAt: Date | null
+    /**
+     * 完成时间
+     */
     completedAt: Date | null
+    /**
+     * 过期时间
+     */
     expiredAt: Date | null
+    /**
+     * 任务快照
+     */
     taskSnapshot: runtime.JsonValue | null
+    /**
+     * 任务上下文
+     */
     context: runtime.JsonValue | null
+    /**
+     * 版本号
+     */
     version: number
+    /**
+     * 创建时间
+     */
     createdAt: Date
+    /**
+     * 更新时间
+     */
     updatedAt: Date
+    /**
+     * 删除时间
+     */
     deletedAt: Date | null
   }, ExtArgs["result"]["taskAssignment"]>
   composites: {}

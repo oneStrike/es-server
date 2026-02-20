@@ -1,6 +1,6 @@
 /// 任务定义
 model Task {
-s  /// 主键id
+  /// 主键id
   id Int @id @default(autoincrement())
 
   /// 任务编码

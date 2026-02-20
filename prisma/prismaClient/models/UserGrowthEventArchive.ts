@@ -736,23 +736,77 @@ export type $UserGrowthEventArchivePayload<ExtArgs extends runtime.Types.Extensi
   name: "UserGrowthEventArchive"
   objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键id
+     */
     id: number
+    /**
+     * 源记录ID
+     */
     sourceId: number
+    /**
+     * 业务域
+     */
     business: string
+    /**
+     * 事件标识
+     */
     eventKey: string
+    /**
+     * 用户ID
+     */
     userId: number
+    /**
+     * 目标对象ID
+     */
     targetId: number | null
+    /**
+     * 操作IP
+     */
     ip: string | null
+    /**
+     * 设备标识
+     */
     deviceId: string | null
+    /**
+     * 发生时间
+     */
     occurredAt: Date
+    /**
+     * 事件状态
+     */
     status: string
+    /**
+     * 规则引用集合
+     */
     ruleRefs: runtime.JsonValue | null
+    /**
+     * 积分变更值
+     */
     pointsDeltaApplied: number
+    /**
+     * 经验变更值
+     */
     experienceDeltaApplied: number
+    /**
+     * 徽章授予信息
+     */
     badgeAssigned: runtime.JsonValue | null
+    /**
+     * 事件上下文
+     */
     context: runtime.JsonValue | null
+    /**
+     * 创建时间
+     */
     createdAt: Date
+    /**
+     * 更新时间
+     */
     updatedAt: Date
+    /**
+     * 归档时间
+     */
     archivedAt: Date
   }, ExtArgs["result"]["userGrowthEventArchive"]>
   composites: {}

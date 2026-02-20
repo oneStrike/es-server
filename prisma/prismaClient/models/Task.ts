@@ -1481,31 +1481,103 @@ export type TaskIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type $TaskPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Task"
   objects: {
+    /**
+     * 任务分配关联
+     */
     assignments: Prisma.$TaskAssignmentPayload<ExtArgs>[]
+    /**
+     * 创建人关联
+     */
     createdBy: Prisma.$AdminUserPayload<ExtArgs> | null
+    /**
+     * 更新人关联
+     */
     updatedBy: Prisma.$AdminUserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键id
+     */
     id: number
+    /**
+     * 任务编码
+     */
     code: string
+    /**
+     * 任务标题
+     */
     title: string
+    /**
+     * 任务描述
+     */
     description: string | null
+    /**
+     * 任务封面
+     */
     cover: string | null
+    /**
+     * 任务类型
+     */
     type: number
+    /**
+     * 任务状态
+     */
     status: number
+    /**
+     * 任务优先级
+     */
     priority: number
+    /**
+     * 是否启用
+     */
     isEnabled: boolean
+    /**
+     * 领取方式
+     */
     claimMode: number
+    /**
+     * 完成方式
+     */
     completeMode: number
+    /**
+     * 目标次数
+     */
     targetCount: number
+    /**
+     * 奖励配置
+     */
     rewardConfig: runtime.JsonValue | null
+    /**
+     * 发布开始时间
+     */
     publishStartAt: Date | null
+    /**
+     * 发布结束时间
+     */
     publishEndAt: Date | null
+    /**
+     * 重复规则
+     */
     repeatRule: runtime.JsonValue | null
+    /**
+     * 创建人ID
+     */
     createdById: number | null
+    /**
+     * 更新人ID
+     */
     updatedById: number | null
+    /**
+     * 创建时间
+     */
     createdAt: Date
+    /**
+     * 更新时间
+     */
     updatedAt: Date
+    /**
+     * 删除时间
+     */
     deletedAt: Date | null
   }, ExtArgs["result"]["task"]>
   composites: {}

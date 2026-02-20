@@ -2334,7 +2334,13 @@ export type $WorkComicPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 关联的标签列表
      */
     comicTags: Prisma.$WorkComicTagPayload<ExtArgs>[]
+    /**
+     * 收藏关联
+     */
     favorites: Prisma.$WorkComicFavoritePayload<ExtArgs>[]
+    /**
+     * 点赞关联
+     */
     likes: Prisma.$WorkComicLikePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{

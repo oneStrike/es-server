@@ -61,7 +61,7 @@ services:
   migrator:
     image: es/app/server:${SERVER_VERSION:-0.0.2}
     container_name: es-migrator
-    pull_policy: always
+    pull_policy: never
     user: '1001:1001'
     # 覆盖默认启动命令，执行迁移
     command: [bun, run, prisma, migrate, deploy, --schema, prisma/schema.prisma]

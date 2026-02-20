@@ -925,7 +925,13 @@ export type $AdminUserPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 关联令牌
      */
     tokens: Prisma.$AdminUserTokenPayload<ExtArgs>[]
+    /**
+     * 创建的任务关联
+     */
     createdTasks: Prisma.$TaskPayload<ExtArgs>[]
+    /**
+     * 更新的任务关联
+     */
     updatedTasks: Prisma.$TaskPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{

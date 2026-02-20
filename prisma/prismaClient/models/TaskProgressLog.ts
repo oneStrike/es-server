@@ -830,18 +830,51 @@ export type TaskProgressLogIncludeUpdateManyAndReturn<ExtArgs extends runtime.Ty
 export type $TaskProgressLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TaskProgressLog"
   objects: {
+    /**
+     * 分配记录关联
+     */
     assignment: Prisma.$TaskAssignmentPayload<ExtArgs>
+    /**
+     * 用户关联
+     */
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键id
+     */
     id: number
+    /**
+     * 分配记录ID
+     */
     assignmentId: number
+    /**
+     * 用户ID
+     */
     userId: number
+    /**
+     * 操作类型
+     */
     actionType: number
+    /**
+     * 变更值
+     */
     delta: number
+    /**
+     * 变更前值
+     */
     beforeValue: number
+    /**
+     * 变更后值
+     */
     afterValue: number
+    /**
+     * 变更上下文
+     */
     context: runtime.JsonValue | null
+    /**
+     * 创建时间
+     */
     createdAt: Date
   }, ExtArgs["result"]["taskProgressLog"]>
   composites: {}

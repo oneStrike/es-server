@@ -11028,10 +11028,25 @@ export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      * 主题点赞关联
      */
     topicLikes: Prisma.$ForumTopicLikePayload<ExtArgs>[]
+    /**
+     * 漫画收藏关联
+     */
     comicFavorites: Prisma.$WorkComicFavoritePayload<ExtArgs>[]
+    /**
+     * 漫画点赞关联
+     */
     comicLikes: Prisma.$WorkComicLikePayload<ExtArgs>[]
+    /**
+     * 漫画章节点赞关联
+     */
     comicChapterLikes: Prisma.$WorkComicChapterLikePayload<ExtArgs>[]
+    /**
+     * 漫画章节购买关联
+     */
     comicChapterPurchases: Prisma.$WorkComicChapterPurchasePayload<ExtArgs>[]
+    /**
+     * 漫画章节下载关联
+     */
     comicChapterDownloads: Prisma.$WorkComicChapterDownloadPayload<ExtArgs>[]
     /**
      * 漫画章节评论关联
@@ -11093,7 +11108,13 @@ export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      * 用户成长事件关联
      */
     userGrowthEvents: Prisma.$UserGrowthEventPayload<ExtArgs>[]
+    /**
+     * 任务分配关联
+     */
     taskAssignments: Prisma.$TaskAssignmentPayload<ExtArgs>[]
+    /**
+     * 任务进度日志关联
+     */
     taskProgressLogs: Prisma.$TaskProgressLogPayload<ExtArgs>[]
     /**
      * 论坛配置更新关联
