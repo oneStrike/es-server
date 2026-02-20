@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model AdminUser
- * 
+ * 管理端用户
  */
 export type AdminUserModel = runtime.Types.Result.DefaultSelection<Prisma.$AdminUserPayload>
 

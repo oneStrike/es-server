@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model TaskProgressLog
- * 
+ * 任务进度日志
  */
 export type TaskProgressLogModel = runtime.Types.Result.DefaultSelection<Prisma.$TaskProgressLogPayload>
 

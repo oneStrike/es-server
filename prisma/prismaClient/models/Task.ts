@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model Task
- * 
+ * 任务定义
  */
 export type TaskModel = runtime.Types.Result.DefaultSelection<Prisma.$TaskPayload>
 

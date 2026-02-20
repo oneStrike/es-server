@@ -68,7 +68,9 @@ model WorkComic {
   relatedChapters WorkComicChapter[]
   /// 关联的标签列表
   comicTags       WorkComicTag[]
+  /// 收藏关联
   favorites       WorkComicFavorite[]
+  /// 点赞关联
   likes           WorkComicLike[]
 
   /// 发布状态与发布时间索引

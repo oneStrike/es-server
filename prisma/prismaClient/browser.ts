@@ -24,7 +24,7 @@ export * from './enums';
 export type AdminUserToken = Prisma.AdminUserTokenModel
 /**
  * Model AdminUser
- * 
+ * 管理端用户
  */
 export type AdminUser = Prisma.AdminUserModel
 /**
@@ -69,17 +69,17 @@ export type AppUserToken = Prisma.AppUserTokenModel
 export type AppUser = Prisma.AppUserModel
 /**
  * Model TaskAssignment
- * 
+ * 任务分配记录
  */
 export type TaskAssignment = Prisma.TaskAssignmentModel
 /**
  * Model TaskProgressLog
- * 
+ * 任务进度日志
  */
 export type TaskProgressLog = Prisma.TaskProgressLogModel
 /**
  * Model Task
- * 
+ * 任务定义
  */
 export type Task = Prisma.TaskModel
 /**
@@ -104,7 +104,7 @@ export type UserExperienceRecord = Prisma.UserExperienceRecordModel
 export type UserExperienceRule = Prisma.UserExperienceRuleModel
 /**
  * Model UserGrowthEventArchive
- * 
+ * 成长事件归档记录
  */
 export type UserGrowthEventArchive = Prisma.UserGrowthEventArchiveModel
 /**
@@ -230,7 +230,7 @@ export type ForumUserActionLog = Prisma.ForumUserActionLogModel
 export type ForumView = Prisma.ForumViewModel
 /**
  * Model RequestLog
- * 
+ * 请求日志
  */
 export type RequestLog = Prisma.RequestLogModel
 /**
@@ -240,17 +240,17 @@ export type RequestLog = Prisma.RequestLogModel
 export type SensitiveWord = Prisma.SensitiveWordModel
 /**
  * Model SystemConfig
- * 
+ * 系统配置
  */
 export type SystemConfig = Prisma.SystemConfigModel
 /**
  * Model Dictionary
- * 
+ * 数据字典
  */
 export type Dictionary = Prisma.DictionaryModel
 /**
  * Model DictionaryItem
- * 
+ * 数据字典项
  */
 export type DictionaryItem = Prisma.DictionaryItemModel
 /**
@@ -270,27 +270,27 @@ export type WorkComicAuthor = Prisma.WorkComicAuthorModel
 export type WorkComicCategory = Prisma.WorkComicCategoryModel
 /**
  * Model WorkComicChapterCommentReport
- * 
+ * 漫画章节评论举报记录
  */
 export type WorkComicChapterCommentReport = Prisma.WorkComicChapterCommentReportModel
 /**
  * Model WorkComicChapterComment
- * 
+ * 漫画章节评论
  */
 export type WorkComicChapterComment = Prisma.WorkComicChapterCommentModel
 /**
  * Model WorkComicChapterDownload
- * 
+ * 漫画章节下载记录
  */
 export type WorkComicChapterDownload = Prisma.WorkComicChapterDownloadModel
 /**
  * Model WorkComicChapterLike
- * 
+ * 漫画章节点赞记录
  */
 export type WorkComicChapterLike = Prisma.WorkComicChapterLikeModel
 /**
  * Model WorkComicChapterPurchase
- * 
+ * 漫画章节购买记录
  */
 export type WorkComicChapterPurchase = Prisma.WorkComicChapterPurchaseModel
 /**
@@ -300,12 +300,12 @@ export type WorkComicChapterPurchase = Prisma.WorkComicChapterPurchaseModel
 export type WorkComicChapter = Prisma.WorkComicChapterModel
 /**
  * Model WorkComicFavorite
- * 
+ * 漫画收藏记录
  */
 export type WorkComicFavorite = Prisma.WorkComicFavoriteModel
 /**
  * Model WorkComicLike
- * 
+ * 漫画点赞记录
  */
 export type WorkComicLike = Prisma.WorkComicLikeModel
 /**

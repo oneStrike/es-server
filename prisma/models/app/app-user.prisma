@@ -72,10 +72,15 @@ model AppUser {
   topicFavorites          ForumTopicFavorite[]
   /// 主题点赞关联
   topicLikes              ForumTopicLike[]
+  /// 漫画收藏关联
   comicFavorites          WorkComicFavorite[]
+  /// 漫画点赞关联
   comicLikes              WorkComicLike[]
+  /// 漫画章节点赞关联
   comicChapterLikes       WorkComicChapterLike[]
+  /// 漫画章节购买关联
   comicChapterPurchases   WorkComicChapterPurchase[]
+  /// 漫画章节下载关联
   comicChapterDownloads   WorkComicChapterDownload[]
   /// 漫画章节评论关联
   comicChapterComments    WorkComicChapterComment[]
@@ -107,7 +112,9 @@ model AppUser {
   userBadges              UserBadgeAssignment[]
   /// 用户成长事件关联
   userGrowthEvents        UserGrowthEvent[]
+  /// 任务分配关联
   taskAssignments         TaskAssignment[]
+  /// 任务进度日志关联
   taskProgressLogs        TaskProgressLog[]
   /// 论坛配置更新关联
   updatedConfigs          ForumConfig[]               @relation("ForumConfigUpdater")

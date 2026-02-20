@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkComicChapterDownload
- * 
+ * 漫画章节下载记录
  */
 export type WorkComicChapterDownloadModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkComicChapterDownloadPayload>
 

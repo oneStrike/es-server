@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model RequestLog
- * 
+ * 请求日志
  */
 export type RequestLogModel = runtime.Types.Result.DefaultSelection<Prisma.$RequestLogPayload>
 

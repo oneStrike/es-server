@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkComicChapterLike
- * 
+ * 漫画章节点赞记录
  */
 export type WorkComicChapterLikeModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkComicChapterLikePayload>
 

@@ -28,7 +28,9 @@ model AdminUser {
 
   /// 关联令牌
   tokens AdminUserToken[]
+  /// 创建的任务关联
   createdTasks Task[] @relation("TaskCreatedBy")
+  /// 更新的任务关联
   updatedTasks Task[] @relation("TaskUpdatedBy")
 
   /// 启用状态索引

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkComicChapterCommentReport
- * 
+ * 漫画章节评论举报记录
  */
 export type WorkComicChapterCommentReportModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkComicChapterCommentReportPayload>
 
@@ -1143,6 +1143,9 @@ export type $WorkComicChapterCommentReportPayload<ExtArgs extends runtime.Types.
      * 处理备注（可为空）
      */
     handlingNote: string | null
+    /**
+     * 处理时间（可为空）
+     */
     handledAt: Date | null
     /**
      * 创建时间

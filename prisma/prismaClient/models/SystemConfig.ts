@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model SystemConfig
- * 
+ * 系统配置
  */
 export type SystemConfigModel = runtime.Types.Result.DefaultSelection<Prisma.$SystemConfigPayload>
 

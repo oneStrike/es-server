@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkComicChapterPurchase
- * 
+ * 漫画章节购买记录
  */
 export type WorkComicChapterPurchaseModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkComicChapterPurchasePayload>
 

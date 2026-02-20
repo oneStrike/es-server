@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkComicLike
- * 
+ * 漫画点赞记录
  */
 export type WorkComicLikeModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkComicLikePayload>
 

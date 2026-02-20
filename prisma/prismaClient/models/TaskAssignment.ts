@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model TaskAssignment
- * 
+ * 任务分配记录
  */
 export type TaskAssignmentModel = runtime.Types.Result.DefaultSelection<Prisma.$TaskAssignmentPayload>
 

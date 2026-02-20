@@ -1,35 +1,59 @@
 /// 任务定义
 model Task {
+s  /// 主键id
   id Int @id @default(autoincrement())
 
+  /// 任务编码
   code String @unique @db.VarChar(50)
+  /// 任务标题
   title String @db.VarChar(200)
+  /// 任务描述
   description String? @db.VarChar(1000)
+  /// 任务封面
   cover String? @db.VarChar(255)
 
+  /// 任务类型
   type Int @db.SmallInt
+  /// 任务状态
   status Int @db.SmallInt
+  /// 任务优先级
   priority Int @default(0) @db.SmallInt
+  /// 是否启用
   isEnabled Boolean @default(true) @map("is_enabled")
 
+  /// 领取方式
   claimMode Int @map("claim_mode") @db.SmallInt
+  /// 完成方式
   completeMode Int @map("complete_mode") @db.SmallInt
+  /// 目标次数
   targetCount Int @default(1) @map("target_count")
 
+  /// 奖励配置
   rewardConfig Json? @map("reward_config")
+  /// 发布开始时间
   publishStartAt DateTime? @map("publish_start_at") @db.Timestamptz(6)
+  /// 发布结束时间
   publishEndAt DateTime? @map("publish_end_at") @db.Timestamptz(6)
+  /// 重复规则
   repeatRule Json? @map("repeat_rule")
 
+  /// 创建人ID
   createdById Int? @map("created_by_id")
+  /// 更新人ID
   updatedById Int? @map("updated_by_id")
 
+  /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 删除时间
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  /// 任务分配关联
   assignments TaskAssignment[]
+  /// 创建人关联
   createdBy AdminUser? @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  /// 更新人关联
   updatedBy AdminUser? @relation("TaskUpdatedBy", fields: [updatedById], references: [id])
 
   /// 状态与启用索引

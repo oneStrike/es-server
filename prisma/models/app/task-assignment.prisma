@@ -1,28 +1,47 @@
 /// 任务分配记录
 model TaskAssignment {
+  /// 主键id
   id Int @id @default(autoincrement())
 
+  /// 任务ID
   taskId Int @map("task_id")
+  /// 用户ID
   userId Int @map("user_id")
+  /// 周期标识
   cycleKey String @map("cycle_key") @db.VarChar(32)
 
+  /// 分配状态
   status Int @db.SmallInt
+  /// 当前进度
   progress Int @default(0)
+  /// 目标次数
   target Int @default(1)
+  /// 领取时间
   claimedAt DateTime? @map("claimed_at") @db.Timestamptz(6)
+  /// 完成时间
   completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  /// 过期时间
   expiredAt DateTime? @map("expired_at") @db.Timestamptz(6)
 
+  /// 任务快照
   taskSnapshot Json? @map("task_snapshot")
+  /// 任务上下文
   context Json?
+  /// 版本号
   version Int @default(0)
 
+  /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 删除时间
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  /// 任务关联
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  /// 用户关联
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 任务进度日志关联
   progressLogs TaskProgressLog[]
 
   /// 任务、用户与周期唯一约束

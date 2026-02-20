@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model DictionaryItem
- * 
+ * 数据字典项
  */
 export type DictionaryItemModel = runtime.Types.Result.DefaultSelection<Prisma.$DictionaryItemPayload>
 

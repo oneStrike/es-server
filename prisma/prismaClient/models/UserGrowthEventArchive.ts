@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model UserGrowthEventArchive
- * 
+ * 成长事件归档记录
  */
 export type UserGrowthEventArchiveModel = runtime.Types.Result.DefaultSelection<Prisma.$UserGrowthEventArchivePayload>
 
