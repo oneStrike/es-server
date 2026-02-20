@@ -13,14 +13,8 @@ import {
 } from './sensitive-word-constant'
 
 /**
- * 敏感词统计服务类
- * 提供敏感词相关的统计功能，包括：
- * - 敏感词数量统计（总数、启用数、禁用数）
- * - 命中次数统计（总命中、今日命中、最近一周、最近一月）
- * - 级别统计（按敏感词级别分组统计）
- * - 类型统计（按敏感词类型分组统计）
- * - 热门敏感词（命中次数最多的敏感词）
- * - 最近命中的敏感词
+ * 敏感词统计服务
+ * 提供敏感词数量、命中与分类统计能力
  */
 @Injectable()
 export class SensitiveWordStatisticsService extends BaseService {

@@ -6,10 +6,8 @@ import type {
 import { BaseService, Prisma } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { UserGrowthEventDto } from './dto/growth-event.dto'
-import {
-  UserGrowthAntifraudDecision,
-  UserGrowthEventStatus,
-} from './growth-event.types'
+import { UserGrowthEventStatus } from './growth-event.constant'
+import { UserGrowthAntifraudDecision } from './growth-event.types'
 
 /**
  * 成长事件反作弊服务类

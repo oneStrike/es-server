@@ -7,7 +7,7 @@ import {
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger'
-import { SetResponseDtoMetadata } from './response-dto.constants'
+import { SetResponseDtoMetadata } from './response-dto.constant'
 
 // 工具函数：判断是否是类
 function isClass(model: any): model is Type<unknown> {

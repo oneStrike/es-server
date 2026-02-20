@@ -34,6 +34,10 @@ import {
   UpdateComicChapterCommentHiddenDto,
 } from './dto/comic-chapter-comment.dto'
 
+/**
+ * 漫画章节评论服务
+ * 负责评论的创建、查询、审核与举报处理
+ */
 @Injectable()
 export class ComicChapterCommentService extends BaseService {
   get workComicChapterComment() {

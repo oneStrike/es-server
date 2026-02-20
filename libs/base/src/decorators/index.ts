@@ -1,5 +1,5 @@
 export * from './api-doc.decorator'
 export * from './current-user.decorator'
 export * from './public.decorator'
-export * from './response-dto.constants'
+export * from './response-dto.constant'
 export * from './validate.decorator'

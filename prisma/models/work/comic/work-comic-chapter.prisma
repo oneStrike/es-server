@@ -72,17 +72,29 @@ model WorkComicChapter {
   downloads             WorkComicChapterDownload[]
   comments              WorkComicChapterComment[]
 
+  /// 漫画与章节序号唯一约束
   @@unique([comicId, sortOrder])
+  /// 漫画索引
   @@index([comicId])
+  /// 漫画与章节序号索引
   @@index([comicId, sortOrder])
+  /// 发布状态与发布时间索引
   @@index([isPublished, publishAt])
+  /// 阅读规则索引
   @@index([readRule])
+  /// 试读状态索引
   @@index([isPreview])
+  /// 阅读次数索引
   @@index([viewCount])
+  /// 点赞数索引
   @@index([likeCount])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 发布时间索引
   @@index([publishAt])
+  /// 阅读权限等级索引
   @@index([requiredReadLevelId])
+  /// 下载权限等级索引
   @@index([requiredDownloadLevelId])
   @@map("work_comic_chapter")
 }

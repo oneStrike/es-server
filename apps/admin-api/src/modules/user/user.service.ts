@@ -18,6 +18,10 @@ import {
 } from './dto/user.dto'
 import { EXCLUDE_USER_FIELDS, UserRoleEnum } from './user.constant'
 
+/**
+ * 管理员用户服务
+ * 负责后台用户的注册、查询、权限校验与密码管理
+ */
 @Injectable()
 export class UserService extends BaseService {
   get adminUser() {

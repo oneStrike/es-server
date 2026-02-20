@@ -10,6 +10,10 @@ import {
   CreateRequestLogSimpleDto,
 } from './dto/audit.dto'
 
+/**
+ * 审计日志服务
+ * 负责记录与查询后台操作审计日志
+ */
 @Injectable()
 export class AuditService extends BaseService {
   get requestLog() {

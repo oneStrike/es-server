@@ -34,12 +34,18 @@ model AdminUserToken {
   user AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// 单列索引
-  @@index([userId]) // 按用户查询 Token
-  @@index([jti]) // 按 JTI 查询 Token（黑名单检查）
-  @@index([tokenType]) // 按类型查询 Token
-  @@index([expiresAt]) // 按过期时间查询（清理过期 Token）
-  @@index([revokedAt]) // 按撤销状态查询
+  /// 用户索引
+  @@index([userId])
+  /// JTI 索引（黑名单检查）
+  @@index([jti])
+  /// 类型索引
+  @@index([tokenType])
+  /// 过期时间索引
+  @@index([expiresAt])
+  /// 撤销时间索引
+  @@index([revokedAt])
   /// 组合索引
-  @@index([userId, tokenType]) // 查询用户特定类型的 Token
+  /// 用户与类型索引
+  @@index([userId, tokenType])
   @@map("admin_user_token")
 }

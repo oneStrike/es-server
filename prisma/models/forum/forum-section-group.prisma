@@ -28,9 +28,13 @@ model ForumSectionGroup {
   /// 分组版主列表
   moderators ForumModerator[]
 
+  /// 排序索引
   @@index([sortOrder])
+  /// 启用状态索引
   @@index([isEnabled])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 删除时间索引
   @@index([deletedAt])
   @@map("forum_section_group")
 }

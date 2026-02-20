@@ -33,11 +33,17 @@ model ForumReport {
   /// 关联处理人
   handler  AppUser? @relation("ReportHandler", fields: [handlerId], references: [id])
 
+  /// 举报人索引
   @@index([reporterId])
+  /// 处理人索引
   @@index([handlerId])
+  /// 举报类型索引
   @@index([type])
+  /// 被举报对象索引
   @@index([targetId])
+  /// 状态索引
   @@index([status])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("forum_report")
 }

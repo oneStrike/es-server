@@ -17,6 +17,10 @@ import {
   UpdateAgreementDto,
 } from './dto/agreement.dto'
 
+/**
+ * 协议管理服务
+ * 负责应用协议的新增、更新、发布与查询
+ */
 @Injectable()
 export class AgreementService extends BaseService {
   constructor() {

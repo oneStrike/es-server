@@ -43,8 +43,11 @@ model UserGrowthEvent {
   /// 经验记录关联
   experienceRecords UserExperienceRecord[]
 
+  /// 业务域与事件键索引
   @@index([business, eventKey])
+  /// 用户索引
   @@index([userId])
+  /// 发生时间索引
   @@index([occurredAt])
   @@map("user_growth_event")
 }

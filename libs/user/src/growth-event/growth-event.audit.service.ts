@@ -4,8 +4,10 @@ import { jsonParse } from '@libs/base/utils/jsonParse'
 import { Injectable } from '@nestjs/common'
 import { QueryUserGrowthEventDto } from './dto/growth-event-query.dto'
 import { UserGrowthEventDto } from './dto/growth-event.dto'
-import { USER_GROWTH_EVENT_IDEMPOTENCY_WINDOW_SECONDS } from './growth-event.constant'
-import { UserGrowthEventStatus } from './growth-event.types'
+import {
+  USER_GROWTH_EVENT_IDEMPOTENCY_WINDOW_SECONDS,
+  UserGrowthEventStatus,
+} from './growth-event.constant'
 
 /**
  * 成长事件审计服务类

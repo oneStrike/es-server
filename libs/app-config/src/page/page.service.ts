@@ -8,6 +8,10 @@ import {
   UpdateAppPageDto,
 } from './dto/page.dto'
 
+/**
+ * 应用页面服务
+ * 负责页面配置的创建、查询与更新
+ */
 @Injectable()
 export class LibAppPageService extends BaseService {
   get appPage() {
@@ -18,6 +22,11 @@ export class LibAppPageService extends BaseService {
     super()
   }
 
+  /**
+   * 创建应用页面配置
+   * @param createPageDto 页面数据
+   * @returns 创建后的页面记录
+   */
   async createPage(createPageDto: BaseAppPageDto) {
     const existingByCode = await this.appPage.findUnique({
       where: { code: createPageDto.code },
@@ -37,6 +46,11 @@ export class LibAppPageService extends BaseService {
     return this.appPage.create({ data: createPageDto })
   }
 
+  /**
+   * 分页查询页面配置
+   * @param queryPageDto 查询条件
+   * @returns 分页结果
+   */
   async findPage(queryPageDto: QueryAppPageDto) {
     const { name, code, accessLevel, isEnabled, enablePlatform, ...other } =
       queryPageDto
@@ -70,6 +84,11 @@ export class LibAppPageService extends BaseService {
     })
   }
 
+  /**
+   * 获取启用状态的页面列表
+   * @param accessLevel 访问级别
+   * @returns 页面列表
+   */
   async findActivePages(accessLevel?: string) {
     const where: AppPageWhereInput = {
       isEnabled: true,
@@ -94,6 +113,11 @@ export class LibAppPageService extends BaseService {
     })
   }
 
+  /**
+   * 更新页面配置
+   * @param updatePageDto 更新数据
+   * @returns 更新后的页面记录
+   */
   async updatePage(updatePageDto: UpdateAppPageDto) {
     const { id, ...updateData } = updatePageDto
 

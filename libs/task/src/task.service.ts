@@ -29,6 +29,10 @@ import {
   TaskStatusEnum,
 } from './task.constant'
 
+/**
+ * 任务服务
+ * 负责任务配置、领取、进度与完成状态管理
+ */
 @Injectable()
 export class TaskService extends BaseService {
   get task() {

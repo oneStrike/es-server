@@ -26,8 +26,11 @@ model WorkTag {
   /// 漫画标签关联
   comicTags WorkComicTag[]
 
+  /// 排序索引
   @@index([order])
+  /// 名称索引
   @@index([name])
+  /// 启用状态索引
   @@index([isEnabled])
   @@map("work_tag")
 }

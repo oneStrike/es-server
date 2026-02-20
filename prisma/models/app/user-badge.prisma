@@ -30,10 +30,15 @@ model UserBadge {
   /// 徽章分配关联
   assignments UserBadgeAssignment[]
 
+  /// 类型索引
   @@index([type])
+  /// 业务域与事件键索引
   @@index([business, eventKey])
+  /// 排序索引
   @@index([sortOrder])
+  /// 启用状态索引
   @@index([isEnabled])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("user_badge")
 }

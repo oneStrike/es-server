@@ -59,8 +59,11 @@ model UserLevelRule {
   /// 关联漫画章节阅读权限
   comicChaptersAsReadLevel WorkComicChapter[] @relation("ChapterReadLevel")
 
+  /// 启用与排序索引
   @@index([isEnabled, sortOrder])
+  /// 启用与经验索引
   @@index([isEnabled, requiredExperience])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("user_level_rule")
 }

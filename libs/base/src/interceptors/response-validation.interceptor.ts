@@ -1,6 +1,6 @@
 import type { CallHandler, ExecutionContext, Type } from '@nestjs/common'
 import type { Observable } from 'rxjs'
-import type { ResponseDtoMetadata } from '../decorators/response-dto.constants'
+import type { ResponseDtoMetadata } from '../decorators/response-dto.constant'
 import {
   BadRequestException,
   Injectable,
@@ -11,7 +11,7 @@ import { Reflector } from '@nestjs/core'
 import { plainToInstance } from 'class-transformer'
 import { validate } from 'class-validator'
 import { mergeMap } from 'rxjs/operators'
-import { RESPONSE_DTO_METADATA_KEY } from '../decorators/response-dto.constants'
+import { RESPONSE_DTO_METADATA_KEY } from '../decorators/response-dto.constant'
 
 @Injectable()
 export class ResponseValidationInterceptor implements NestInterceptor {

@@ -30,6 +30,7 @@ model AppPage {
   /// 关联通知
   notices AppNotice[] @relation("notices")
 
+  /// 访问级别与启用状态索引
   @@index([accessLevel, isEnabled])
   @@map("app_page")
 }

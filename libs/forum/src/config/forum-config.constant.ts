@@ -1,3 +1,6 @@
+/**
+ * 论坛配置常量与枚举定义
+ */
 import type { ForumConfig } from '@libs/base/database'
 
 /**

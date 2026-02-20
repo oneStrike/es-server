@@ -14,9 +14,13 @@ model ForumTopicTag {
   tag   ForumTag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
   topic ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
+  /// 主题与标签唯一约束
   @@unique([topicId, tagId])
+  /// 主题索引
   @@index([topicId])
+  /// 标签索引
   @@index([tagId])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("forum_topic_tag")
 }

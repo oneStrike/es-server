@@ -35,17 +35,28 @@ model ForumNotification {
   /// 关联回复
   reply ForumReply? @relation("NotificationReply", fields: [replyId], references: [id], onDelete: Cascade)
 
+  /// 用户索引
   @@index([userId])
+  /// 主题索引
   @@index([topicId])
+  /// 回复索引
   @@index([replyId])
+  /// 类型索引
   @@index([type])
+  /// 优先级索引
   @@index([priority])
+  /// 已读状态索引
   @@index([isRead])
+  /// 过期时间索引
   @@index([expiredAt])
+  /// 创建时间索引
   @@index([createdAt])
-  // 复合索引优化查询
+  /// 复合索引优化查询
+  /// 用户与已读状态索引
   @@index([userId, isRead])
+  /// 用户与优先级索引
   @@index([userId, priority])
+  /// 用户与创建时间索引
   @@index([userId, createdAt])
   @@map("forum_notification")
 }

@@ -7,9 +7,9 @@ import { UserLevelRuleService } from '../level-rule/level-rule.service'
 import { UserGrowthEventDto } from './dto/growth-event.dto'
 import { UserGrowthEventAntifraudService } from './growth-event.antifraud.service'
 import { UserGrowthEventAuditService } from './growth-event.audit.service'
+import { UserGrowthEventStatus } from './growth-event.constant'
 import {
   UserGrowthEventApplyResult,
-  UserGrowthEventStatus,
   UserGrowthRuleRef,
 } from './growth-event.types'
 

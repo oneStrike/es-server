@@ -116,14 +116,23 @@ model AppUser {
   /// 系统配置更新关联
   updatedSystemConfigs    SystemConfig[]              @relation("SystemConfigUpdater")
 
+  /// 启用状态索引
   @@index([isEnabled])
+  /// 性别索引
   @@index([gender])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 最近登录时间索引
   @@index([lastLoginAt])
+  /// 手机号索引
   @@index([phone])
+  /// 邮箱索引
   @@index([email])
+  /// 积分索引
   @@index([points])
+  /// 状态索引
   @@index([status])
+  /// 等级索引
   @@index([levelId])
   @@map("app_user")
 }

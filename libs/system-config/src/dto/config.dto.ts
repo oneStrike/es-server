@@ -6,6 +6,7 @@ import {
   ValidateNumber,
   ValidateString,
 } from '@libs/base/decorators'
+import { ContentReviewAuditStatusEnum } from '../system-config.constant'
 
 export class AliyunSmsConfigDto {
   @ValidateString({
@@ -212,12 +213,6 @@ export class GrowthAntifraudConfigDto {
     required: false,
   })
   overrides?: GrowthAntifraudEventOverrideDto[]
-}
-
-export enum ContentReviewAuditStatusEnum {
-  PENDING = 0,
-  APPROVED = 1,
-  REJECTED = 2,
 }
 
 export class ContentReviewActionDto {

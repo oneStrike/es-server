@@ -55,12 +55,19 @@ model ForumSection {
   /// 版主申请关联
   applications      ForumModeratorApplication[]
 
+  /// 分组索引
   @@index([groupId])
+  /// 排序索引
   @@index([sortOrder])
+  /// 启用状态索引
   @@index([isEnabled])
+  /// 主题数索引
   @@index([topicCount])
+  /// 最后发表时间索引
   @@index([lastPostAt])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 删除时间索引
   @@index([deletedAt])
   @@map("forum_section")
 }

@@ -21,9 +21,13 @@ model ForumModeratorSection {
   /// 关联板块
   section   ForumSection   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
+  /// 版主与板块唯一约束
   @@unique([moderatorId, sectionId])
+  /// 版主索引
   @@index([moderatorId])
+  /// 板块索引
   @@index([sectionId])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("forum_moderator_section")
 }

@@ -1,3 +1,4 @@
+/// 漫画章节评论举报记录
 model WorkComicChapterCommentReport {
   /// 主键ID（自增）
   id Int @id @default(autoincrement())
@@ -34,10 +35,15 @@ model WorkComicChapterCommentReport {
   /// 关联评论
   comment  WorkComicChapterComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
+  /// 举报人索引
   @@index([reporterId])
+  /// 处理人索引
   @@index([handlerId])
+  /// 评论索引
   @@index([commentId])
+  /// 状态索引
   @@index([status])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("work_comic_chapter_comment_report")
 }

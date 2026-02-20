@@ -32,8 +32,9 @@ model AppAgreement {
   /// 签署记录关联
   agreementLogs AppAgreementLog[]
 
-  /// 索引：保证同一标题的同一版本唯一
+  /// 同标题与版本唯一约束
   @@unique([title, version])
+  /// 标题与发布状态索引
   @@index([title, isPublished])
   @@map("app_agreement")
 }
@@ -67,8 +68,9 @@ model AppAgreementLog {
   /// 关联用户
   user AppUser @relation(fields: [userId], references: [id])
 
-  /// 索引
+  /// 用户与协议索引
   @@index([userId, agreementId])
+  /// 签署时间索引
   @@index([agreedAt])
   @@map("app_agreement_log")
 }

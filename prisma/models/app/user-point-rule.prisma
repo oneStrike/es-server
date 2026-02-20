@@ -35,8 +35,11 @@ model UserPointRule {
   /// 积分记录关联
   records UserPointRecord[]
 
+  /// 类型索引
   @@index([type])
+  /// 启用状态索引
   @@index([isEnabled])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("user_point_rule")
 }

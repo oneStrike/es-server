@@ -29,10 +29,15 @@ model ForumProfile {
 
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 主题数索引
   @@index([topicCount])
+  /// 回复数索引
   @@index([replyCount])
+  /// 点赞数索引
   @@index([likeCount])
+  /// 收藏数索引
   @@index([favoriteCount])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("forum_profile")
 }

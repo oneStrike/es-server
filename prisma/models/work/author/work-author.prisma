@@ -39,13 +39,21 @@ model WorkAuthor {
   /// 关联的漫画作者记录
   comicAuthors WorkComicAuthor[]
 
+  /// 作者类型索引
   @@index([type])
+  /// 启用状态索引
   @@index([isEnabled])
+  /// 启用与推荐索引
   @@index([isEnabled, isRecommended])
+  /// 启用与删除时间索引
   @@index([isEnabled, deletedAt])
+  /// 国籍索引
   @@index([nationality])
+  /// 性别索引
   @@index([gender])
+  /// 推荐与作品数索引
   @@index([isRecommended, worksCount(sort: Desc)])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("work_author")
 }

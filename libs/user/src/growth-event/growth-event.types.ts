@@ -1,19 +1,15 @@
+import type { UserGrowthEventDto } from './dto/growth-event.dto'
+
 /**
- * 成长事件处理状态枚举
+ * 成长事件消息总线接口
  */
-export enum UserGrowthEventStatus {
-  /** 待处理 */
-  PENDING = 'PENDING',
-  /** 已处理 */
-  PROCESSED = 'PROCESSED',
-  /** 被反作弊拒绝 */
-  REJECTED_ANTIFRAUD = 'REJECTED_ANTIFRAUD',
-  /** 规则不存在而忽略 */
-  IGNORED_RULE_NOT_FOUND = 'IGNORED_RULE_NOT_FOUND',
-  /** 幂等重复而忽略 */
-  IGNORED_DUPLICATE = 'IGNORED_DUPLICATE',
-  /** 处理失败 */
-  FAILED = 'FAILED',
+export interface UserGrowthEventBus {
+  /** 发布成长事件 */
+  publish: (event: UserGrowthEventDto) => Promise<void>
+  /** 订阅成长事件处理器 */
+  subscribe: (
+    handler: (event: UserGrowthEventDto) => void | Promise<void>,
+  ) => () => void
 }
 
 /**

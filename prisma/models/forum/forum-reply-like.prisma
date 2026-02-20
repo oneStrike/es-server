@@ -16,9 +16,13 @@ model ForumReplyLike {
   /// 关联用户
   user  AppUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 回复与用户唯一约束
   @@unique([replyId, userId])
+  /// 回复索引
   @@index([replyId])
+  /// 用户索引
   @@index([userId])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("forum_reply_like")
 }

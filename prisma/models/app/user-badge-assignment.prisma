@@ -16,9 +16,13 @@ model UserBadgeAssignment {
   /// 关联用户
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 用户与徽章唯一约束
   @@unique([userId, badgeId])
+  /// 用户索引
   @@index([userId])
+  /// 徽章索引
   @@index([badgeId])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("user_badge_assignment")
 }

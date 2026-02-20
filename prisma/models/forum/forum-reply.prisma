@@ -69,17 +69,29 @@ model ForumReply {
   /// 浏览记录
   views         ForumView[]
 
+  /// 主题索引
   @@index([topicId])
+  /// 用户索引
   @@index([userId])
+  /// 回复目标索引
   @@index([replyToId])
+  /// 根回复索引
   @@index([actualReplyToId])
+  /// 楼层索引
   @@index([floor])
+  /// 隐藏状态索引
   @@index([isHidden])
+  /// 审核状态索引
   @@index([auditStatus])
+  /// 点赞数索引
   @@index([likeCount])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 更新时间索引
   @@index([updatedAt])
+  /// 删除时间索引
   @@index([deletedAt])
+  /// 主题与创建时间索引
   @@index([topicId, createdAt])
   @@map("forum_reply")
 }

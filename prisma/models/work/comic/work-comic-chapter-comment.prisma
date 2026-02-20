@@ -1,3 +1,4 @@
+/// 漫画章节评论
 model WorkComicChapterComment {
   /// 主键ID（自增）
   id Int @id @default(autoincrement())
@@ -57,14 +58,23 @@ model WorkComicChapterComment {
   /// 关联举报记录
   reports WorkComicChapterCommentReport[]
 
+  /// 章节索引
   @@index([chapterId])
+  /// 用户索引
   @@index([userId])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 审核状态索引
   @@index([auditStatus])
+  /// 隐藏状态索引
   @@index([isHidden])
+  /// 回复目标索引
   @@index([replyToId])
+  /// 根回复索引
   @@index([actualReplyToId])
+  /// 删除时间索引
   @@index([deletedAt])
+  /// 章节与创建时间索引
   @@index([chapterId, createdAt])
   @@map("work_comic_chapter_comment")
 }

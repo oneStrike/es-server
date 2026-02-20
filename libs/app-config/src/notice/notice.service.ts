@@ -11,6 +11,10 @@ import {
   UpdateNoticeDto,
 } from './dto/notice.dto'
 
+/**
+ * 应用通知服务
+ * 负责通知公告的创建、查询与更新
+ */
 @Injectable()
 export class LibAppNoticeService extends BaseService {
   get appNotice() {
@@ -25,6 +29,11 @@ export class LibAppNoticeService extends BaseService {
     super()
   }
 
+  /**
+   * 创建通知公告
+   * @param createNoticeDto 创建数据
+   * @returns 创建后的通知记录
+   */
   async createNotice(createNoticeDto: CreateNoticeDto) {
     assertValidTimeRange(
       createNoticeDto.publishStartTime,
@@ -51,6 +60,11 @@ export class LibAppNoticeService extends BaseService {
     return this.appNotice.create({ data: createData })
   }
 
+  /**
+   * 分页查询通知公告
+   * @param queryNoticeDto 查询条件
+   * @returns 分页结果
+   */
   async findNoticePage(queryNoticeDto: QueryNoticeDto) {
     const {
       title,
@@ -117,6 +131,11 @@ export class LibAppNoticeService extends BaseService {
     })
   }
 
+  /**
+   * 更新通知公告
+   * @param updateNoticeDto 更新数据
+   * @returns 更新后的通知记录
+   */
   async updateNotice(updateNoticeDto: UpdateNoticeDto) {
     const { id, pageId, ...updateData } = updateNoticeDto
 

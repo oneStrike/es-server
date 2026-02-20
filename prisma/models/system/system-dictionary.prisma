@@ -1,3 +1,4 @@
+/// 数据字典
 model Dictionary {
   id              Int              @id @default(autoincrement())
   /// 字典名称
@@ -21,6 +22,7 @@ model Dictionary {
   @@map("sys_dictionary")
 }
 
+/// 数据字典项
 model DictionaryItem {
   id               Int        @id @default(autoincrement())
   /// 所属字典编码
@@ -45,8 +47,11 @@ model DictionaryItem {
   deletedAt        DateTime?  @map("deleted_at") @db.Timestamptz(6)
   parentDictionary Dictionary @relation(fields: [dictionaryCode], references: [code], onDelete: Cascade)
 
+  /// 字典编码与项编码唯一约束
   @@unique([dictionaryCode, code])
+  /// 字典编码索引
   @@index([dictionaryCode])
+  /// 排序索引
   @@index([sortOrder])
   @@map("sys_dictionary_item")
 }

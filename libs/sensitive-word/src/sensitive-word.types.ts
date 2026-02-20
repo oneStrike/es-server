@@ -4,6 +4,9 @@ import type {
   SensitiveWordTypeEnum,
 } from './sensitive-word-constant'
 
+/**
+ * 命中敏感词结果
+ */
 export interface MatchedWord {
   /** 命中的词 */
   word: string
@@ -19,6 +22,9 @@ export interface MatchedWord {
   replaceWord?: string | null
 }
 
+/**
+ * 敏感词检测选项
+ */
 export interface DetectOptions {
   /** 是否替换 */
   replace?: boolean
@@ -28,6 +34,11 @@ export interface DetectOptions {
   matchMode?: MatchModeEnum
 }
 
+/**
+ * 缓存查询配置
+ *
+ * @template T 缓存数据类型
+ */
 export interface CacheQueryConfig<T> {
   /** 缓存键 */
   cacheKey: string
@@ -37,6 +48,9 @@ export interface CacheQueryConfig<T> {
   queryFn: () => Promise<T[]>
 }
 
+/**
+ * 模糊匹配命中结果
+ */
 export interface FuzzyMatchResult {
   /** 命中的词 */
   word: string
@@ -48,6 +62,9 @@ export interface FuzzyMatchResult {
   distance: number
 }
 
+/**
+ * 精确匹配命中结果
+ */
 export interface MatchResult {
   /** 命中的词 */
   word: string
@@ -57,6 +74,9 @@ export interface MatchResult {
   end: number
 }
 
+/**
+ * AC 自动机 Trie 节点结构
+ */
 export interface TrieNode {
   /** 子节点 */
   children: Map<string, TrieNode>

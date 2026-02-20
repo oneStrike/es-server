@@ -4,6 +4,10 @@ import { UserBadgeService } from '@libs/user/badge'
 import { UserLevelRuleService } from '@libs/user/level-rule'
 import { Injectable, NotFoundException } from '@nestjs/common'
 
+/**
+ * 用户成长概览服务
+ * 负责聚合用户积分、经验、等级与徽章信息
+ */
 @Injectable()
 export class UserGrowthOverviewService extends BaseService {
   constructor(
@@ -13,6 +17,11 @@ export class UserGrowthOverviewService extends BaseService {
     super()
   }
 
+  /**
+   * 获取用户成长概览数据
+   * @param userId 用户ID
+   * @returns 成长概览信息
+   */
   async getOverview(userId: number) {
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },

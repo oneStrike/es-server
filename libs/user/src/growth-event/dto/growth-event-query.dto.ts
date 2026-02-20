@@ -7,7 +7,7 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { UserGrowthEventStatus } from '../growth-event.types'
+import { UserGrowthEventStatus } from '../growth-event.constant'
 
 export class BaseUserGrowthEventDto extends BaseDto {
   @ValidateString({

@@ -1,5 +1,7 @@
 /**
  * 标准响应结构
+ *
+ * @template T 响应数据类型
  */
 export interface Response<T> {
   /** 业务码 */

@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common'
 import { UpdateForumConfigDto } from './dto/forum-config.dto'
 import { ForumConfigCacheService } from './forum-config-cache.service'
-import { ChangeTypeEnum, DEFAULT_FORUM_CONFIG } from './forum-config.constants'
+import { ChangeTypeEnum, DEFAULT_FORUM_CONFIG } from './forum-config.constant'
 
 /**
  * 论坛配置服务

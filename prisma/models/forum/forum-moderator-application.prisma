@@ -38,12 +38,19 @@ model ForumModeratorApplication {
   /// 关联板块
   section   ForumSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
+  /// 申请人与板块唯一约束
   @@unique([applicantId, sectionId])
+  /// 申请人索引
   @@index([applicantId])
+  /// 板块索引
   @@index([sectionId])
+  /// 状态索引
   @@index([status])
+  /// 审核人索引
   @@index([auditById])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 删除时间索引
   @@index([deletedAt])
   @@map("forum_moderator_application")
 }

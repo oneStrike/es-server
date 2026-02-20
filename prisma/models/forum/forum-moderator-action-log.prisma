@@ -26,9 +26,13 @@ model ForumModeratorActionLog {
   /// 关联版主
   moderator ForumModerator @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
 
+  /// 版主索引
   @@index([moderatorId])
+  /// 操作类型索引
   @@index([actionType])
+  /// 目标类型与目标ID索引
   @@index([targetType, targetId])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("forum_moderator_action_log")
 }

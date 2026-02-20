@@ -18,6 +18,10 @@ function makePingKey(label: string) {
   return `health:cache:${label}:ping:${Math.random().toString(36).slice(2)}`
 }
 
+/**
+ * 健康检查服务
+ * 负责数据库与缓存的可用性探测
+ */
 @Injectable()
 export class HealthService {
   constructor(

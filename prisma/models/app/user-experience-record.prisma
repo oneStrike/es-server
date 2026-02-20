@@ -32,10 +32,15 @@ model UserExperienceRecord {
   /// 关联用户
   user AppUser @relation("UserExperienceRecords", fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 用户索引
   @@index([userId])
+  /// 规则索引
   @@index([ruleId])
+  /// 事件索引
   @@index([eventId])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 用户与创建时间索引
   @@index([userId, createdAt])
   @@map("user_experience_record")
 }

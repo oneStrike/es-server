@@ -1,3 +1,4 @@
+/// 漫画点赞记录
 model WorkComicLike {
   id Int @id @default(autoincrement())
 
@@ -9,9 +10,13 @@ model WorkComicLike {
   comic WorkComic @relation(fields: [comicId], references: [id], onDelete: Cascade)
   user  AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 漫画与用户唯一约束
   @@unique([comicId, userId])
+  /// 漫画索引
   @@index([comicId])
+  /// 用户索引
   @@index([userId])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("work_comic_like")
 }

@@ -4,6 +4,10 @@ import { UserBadgeService } from '@libs/user/badge'
 import { UserLevelRuleService } from '@libs/user/level-rule'
 import { Injectable } from '@nestjs/common'
 
+/**
+ * 前台用户服务
+ * 负责用户基础资料与成长概览查询
+ */
 @Injectable()
 export class UserService extends BaseService {
   constructor(
@@ -13,6 +17,11 @@ export class UserService extends BaseService {
     super()
   }
 
+  /**
+   * 获取用户资料
+   * @param userId 用户ID
+   * @returns 用户资料（已脱敏）
+   */
   async getUserProfile(userId: number) {
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },
@@ -25,6 +34,11 @@ export class UserService extends BaseService {
     return this.sanitizeUser(user)
   }
 
+  /**
+   * 获取用户成长概览
+   * @param userId 用户ID
+   * @returns 成长概览数据
+   */
   async getUserGrowthOverview(userId: number) {
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },

@@ -89,7 +89,9 @@ model ForumConfig {
   /// 最后修改人
   updatedBy AppUser?             @relation("ForumConfigUpdater", fields: [updatedById], references: [id])
 
+  /// 按最后修改人查询配置
   @@index([updatedById])
+  /// 按创建时间追踪配置变更
   @@index([createdAt])
   @@map("forum_config")
 }

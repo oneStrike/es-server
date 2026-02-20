@@ -29,9 +29,13 @@ model ForumView {
   /// 关联用户
   user  AppUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 主题索引
   @@index([topicId])
+  /// 用户索引
   @@index([userId])
+  /// 浏览时间索引
   @@index([viewedAt])
+  /// 主题与用户索引
   @@index([topicId, userId])
   @@map("forum_view")
 }

@@ -1,3 +1,4 @@
+/// 任务分配记录
 model TaskAssignment {
   id Int @id @default(autoincrement())
 
@@ -24,11 +25,17 @@ model TaskAssignment {
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
   progressLogs TaskProgressLog[]
 
+  /// 任务、用户与周期唯一约束
   @@unique([taskId, userId, cycleKey])
+  /// 用户与状态索引
   @@index([userId, status])
+  /// 任务索引
   @@index([taskId])
+  /// 完成时间索引
   @@index([completedAt])
+  /// 过期时间索引
   @@index([expiredAt])
+  /// 删除时间索引
   @@index([deletedAt])
   @@map("task_assignment")
 }

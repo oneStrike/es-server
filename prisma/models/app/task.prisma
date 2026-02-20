@@ -1,3 +1,4 @@
+/// 任务定义
 model Task {
   id Int @id @default(autoincrement())
 
@@ -31,11 +32,17 @@ model Task {
   createdBy AdminUser? @relation("TaskCreatedBy", fields: [createdById], references: [id])
   updatedBy AdminUser? @relation("TaskUpdatedBy", fields: [updatedById], references: [id])
 
+  /// 状态与启用索引
   @@index([status, isEnabled])
+  /// 任务类型索引
   @@index([type])
+  /// 发布开始时间索引
   @@index([publishStartAt])
+  /// 发布结束时间索引
   @@index([publishEndAt])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 删除时间索引
   @@index([deletedAt])
   @@map("task")
 }

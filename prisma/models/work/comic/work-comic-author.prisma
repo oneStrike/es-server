@@ -21,8 +21,11 @@ model WorkComicAuthor {
   /// 关联漫画
   comic  WorkComic  @relation(fields: [comicId], references: [id], onDelete: Cascade)
 
+  /// 漫画与作者唯一约束
   @@unique([comicId, authorId])
+  /// 漫画索引
   @@index([comicId])
+  /// 作者索引
   @@index([authorId])
   @@map("work_comic_author")
 }

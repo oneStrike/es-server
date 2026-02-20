@@ -6,18 +6,11 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { ForumAuditStatusEnum } from '../forum-reply.constant'
-
-export enum ForumReplySortFieldEnum {
-  FLOOR = 'floor',
-  CREATED_AT = 'createdAt',
-  LIKE_COUNT = 'likeCount',
-}
-
-export enum ForumReplySortOrderEnum {
-  ASC = 'asc',
-  DESC = 'desc',
-}
+import {
+  ForumAuditStatusEnum,
+  ForumReplySortFieldEnum,
+  ForumReplySortOrderEnum,
+} from '../forum-reply.constant'
 
 /**
  * 论坛回复基础DTO

@@ -29,11 +29,17 @@ model ForumUserActionLog {
   /// 关联用户
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 用户索引
   @@index([userId])
+  /// 操作类型索引
   @@index([actionType])
+  /// 目标类型与目标ID索引
   @@index([targetType, targetId])
+  /// IP 地址索引
   @@index([ipAddress])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 用户与创建时间索引
   @@index([userId, createdAt])
   @@map("forum_user_action_log")
 }

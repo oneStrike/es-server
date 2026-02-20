@@ -18,10 +18,15 @@ model WorkComicTag {
   /// 关联标签
   tag   WorkTag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
+  /// 漫画与标签复合主键
   @@id([comicId, tagId])
+  /// 标签索引
   @@index([tagId])
+  /// 漫画索引
   @@index([comicId])
+  /// 排序索引
   @@index([sortOrder])
+  /// 漫画与排序索引
   @@index([comicId, sortOrder])
   @@map("work_comic_tag")
 }

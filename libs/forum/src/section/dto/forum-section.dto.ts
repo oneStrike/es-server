@@ -11,7 +11,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ForumReviewPolicyEnum } from '../../config/forum-config.constants'
+import { ForumReviewPolicyEnum } from '../../config/forum-config.constant'
 
 /**
  * 论坛板块基础DTO

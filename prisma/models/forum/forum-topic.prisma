@@ -79,24 +79,42 @@ model ForumTopic {
   /// 浏览记录
   views         ForumView[]
 
+  /// 板块索引
   @@index([sectionId])
+  /// 用户索引
   @@index([userId])
+  /// 置顶状态与创建时间索引
   @@index([isPinned, createdAt])
+  /// 加精状态与创建时间索引
   @@index([isFeatured, createdAt])
+  /// 锁定状态索引
   @@index([isLocked])
+  /// 隐藏状态索引
   @@index([isHidden])
+  /// 审核状态索引
   @@index([auditStatus])
+  /// 浏览量索引
   @@index([viewCount])
+  /// 回复数索引
   @@index([replyCount])
+  /// 点赞数索引
   @@index([likeCount])
+  /// 收藏数索引
   @@index([favoriteCount])
+  /// 最后回复时间索引
   @@index([lastReplyAt])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 更新时间索引
   @@index([updatedAt])
+  /// 删除时间索引
   @@index([deletedAt])
+  /// 板块、置顶与创建时间索引
   @@index([sectionId, isPinned, createdAt])
+  /// 板块、加精与创建时间索引
   @@index([sectionId, isFeatured, createdAt])
-  // 复合索引优化
+  /// 复合索引优化
+  /// 板块与最后回复时间索引
   @@index([sectionId, lastReplyAt])
   @@map("forum_topic")
 }

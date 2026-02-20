@@ -33,10 +33,15 @@ model ForumModerator {
   /// 管理的板块
   sections   ForumModeratorSection[]
 
+  /// 分组索引
   @@index([groupId])
+  /// 角色类型索引
   @@index([roleType])
+  /// 启用状态索引
   @@index([isEnabled])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 删除时间索引
   @@index([deletedAt])
   @@map("forum_moderator")
 }

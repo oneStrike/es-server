@@ -22,7 +22,7 @@ import {
 } from '../action-log/action-log.constant'
 import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumConfigCacheService } from '../config/forum-config-cache.service'
-import { ForumReviewPolicyEnum } from '../config/forum-config.constants'
+import { ForumReviewPolicyEnum } from '../config/forum-config.constant'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import {

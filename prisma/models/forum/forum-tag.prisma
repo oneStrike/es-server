@@ -20,10 +20,15 @@ model ForumTag {
   updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   topicTags   ForumTopicTag[]
 
+  /// 排序索引
   @@index([sortOrder])
+  /// 名称索引
   @@index([name])
+  /// 启用状态索引
   @@index([isEnabled])
+  /// 使用次数索引
   @@index([useCount])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("forum_tag")
 }

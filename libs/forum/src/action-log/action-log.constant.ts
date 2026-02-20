@@ -43,16 +43,28 @@ export const ForumUserActionTypeDescriptionMap: Record<
   ForumUserActionTypeEnum,
   string
 > = {
+  /** 创建主题 */
   [ForumUserActionTypeEnum.CREATE_TOPIC]: '创建主题',
+  /** 创建回复 */
   [ForumUserActionTypeEnum.CREATE_REPLY]: '创建回复',
+  /** 点赞主题 */
   [ForumUserActionTypeEnum.LIKE_TOPIC]: '点赞主题',
+  /** 取消点赞主题 */
   [ForumUserActionTypeEnum.UNLIKE_TOPIC]: '取消点赞主题',
+  /** 点赞回复 */
   [ForumUserActionTypeEnum.LIKE_REPLY]: '点赞回复',
+  /** 取消点赞回复 */
   [ForumUserActionTypeEnum.UNLIKE_REPLY]: '取消点赞回复',
+  /** 收藏主题 */
   [ForumUserActionTypeEnum.FAVORITE_TOPIC]: '收藏主题',
+  /** 取消收藏主题 */
   [ForumUserActionTypeEnum.UNFAVORITE_TOPIC]: '取消收藏主题',
+  /** 更新主题 */
   [ForumUserActionTypeEnum.UPDATE_TOPIC]: '更新主题',
+  /** 更新回复 */
   [ForumUserActionTypeEnum.UPDATE_REPLY]: '更新回复',
+  /** 删除主题 */
   [ForumUserActionTypeEnum.DELETE_TOPIC]: '删除主题',
+  /** 删除回复 */
   [ForumUserActionTypeEnum.DELETE_REPLY]: '删除回复',
 }

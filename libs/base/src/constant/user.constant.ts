@@ -1,5 +1,9 @@
 /**
- * 用户默认值
+ * 用户常量定义
+ * 覆盖默认值与用户状态枚举
+ */
+/**
+ * 用户默认值常量
  */
 export const UserDefaults = {
   /** 初始积分 */
@@ -8,6 +12,9 @@ export const UserDefaults = {
   INITIAL_EXPERIENCE: 0,
 }
 
+/**
+ * 用户状态枚举
+ */
 export enum UserStatusEnum {
   /** 正常 */
   NORMAL = 1,

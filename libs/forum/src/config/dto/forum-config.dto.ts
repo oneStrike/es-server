@@ -8,7 +8,7 @@ import { ApiProperty, IntersectionType, OmitType } from '@nestjs/swagger'
 import {
   ChangeTypeEnum,
   ForumReviewPolicyEnum,
-} from '../forum-config.constants'
+} from '../forum-config.constant'
 
 export class BaseForumConfigDto extends BaseDto {
   @ValidateString({

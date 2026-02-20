@@ -8,19 +8,11 @@ import {
   FORUM_CONFIG_CACHE_METRICS,
   FORUM_CONFIG_CACHE_TTL,
 } from './forum-config-cache.constant'
-import { DEFAULT_FORUM_CONFIG } from './forum-config.constants'
+import { DEFAULT_FORUM_CONFIG } from './forum-config.constant'
 
 /**
  * 论坛配置缓存服务
- * 负责论坛配置数据的缓存管理，提供配置查询和缓存失效功能
- * 使用 Redis 作为缓存后端，提升配置查询性能
- *
- * 缓存保护策略：
- * 1. 缓存穿透：缓存空值，避免重复查询不存在的数据
- * 2. 缓存击穿：使用单飞模式，避免大量并发请求同时查询数据库
- * 3. 缓存雪崩：给缓存时间加上随机值，避免同时失效
- *
- * 注意：只缓存当前配置，不缓存配置历史记录
+ * 负责论坛配置的读取与缓存失效处理
  */
 @Injectable()
 export class ForumConfigCacheService extends BaseService {

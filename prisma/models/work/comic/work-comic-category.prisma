@@ -18,9 +18,13 @@ model WorkComicCategory {
   /// 关联漫画
   comic    WorkComic    @relation(fields: [comicId], references: [id], onDelete: Cascade)
 
+  /// 漫画与分类复合主键
   @@id([comicId, categoryId])
+  /// 分类索引
   @@index([categoryId])
+  /// 排序索引
   @@index([sortOrder])
+  /// 漫画与排序索引
   @@index([comicId, sortOrder])
   @@map("work_comic_category")
 }

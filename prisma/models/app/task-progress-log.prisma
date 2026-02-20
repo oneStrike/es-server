@@ -1,3 +1,4 @@
+/// 任务进度日志
 model TaskProgressLog {
   id Int @id @default(autoincrement())
 
@@ -14,7 +15,9 @@ model TaskProgressLog {
   assignment TaskAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 分配记录索引
   @@index([assignmentId])
+  /// 用户与创建时间索引
   @@index([userId, createdAt])
   @@map("task_progress_log")
 }

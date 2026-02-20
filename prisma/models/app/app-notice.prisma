@@ -43,11 +43,17 @@ model AppNotice {
   /// 阅读记录关联
   noticeReads AppNoticeRead[]
 
+  /// 发布状态与发布时间索引
   @@index([isPublished, publishStartTime, publishEndTime])
+  /// 类型与发布状态索引
   @@index([noticeType, isPublished])
+  /// 优先级与置顶索引
   @@index([priorityLevel, isPinned])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 页面索引
   @@index([pageId])
+  /// 弹窗与发布状态索引
   @@index([showAsPopup, isPublished])
   @@map("app_notice")
 }

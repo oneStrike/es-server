@@ -14,9 +14,13 @@ model AppNoticeRead {
   /// 关联用户
   user   AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 通知与用户唯一约束
   @@unique([noticeId, userId])
+  /// 通知索引
   @@index([noticeId])
+  /// 用户索引
   @@index([userId])
+  /// 阅读时间索引
   @@index([readAt])
   @@map("app_notice_read")
 }

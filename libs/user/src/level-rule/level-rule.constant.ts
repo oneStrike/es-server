@@ -25,10 +25,15 @@ export const LevelRulePermissionNames: Record<
   UserLevelRulePermissionEnum,
   string
 > = {
+  /** 每日发帖数量上限 */
   [UserLevelRulePermissionEnum.DAILY_TOPIC_LIMIT]: '每日发帖数量上限',
+  /** 每日回复和评论数量上限 */
   [UserLevelRulePermissionEnum.DAILY_REPLY_COMMENT_LIMIT]:
     '每日回复和评论数量上限',
+  /** 发帖间隔秒数 */
   [UserLevelRulePermissionEnum.POST_INTERVAL]: '发帖间隔秒数',
+  /** 每日点赞次数上限 */
   [UserLevelRulePermissionEnum.DAILY_LIKE_LIMIT]: '每日点赞次数上限',
+  /** 每日收藏次数上限 */
   [UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT]: '每日收藏次数上限',
 }

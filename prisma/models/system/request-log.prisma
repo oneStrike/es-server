@@ -1,3 +1,4 @@
+/// 请求日志
 model RequestLog {
   /// 主键id
   id Int @id @default(autoincrement())
@@ -35,9 +36,13 @@ model RequestLog {
   /// 更新时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  /// 创建时间索引
   @@index([createdAt])
+  /// 用户ID索引
   @@index([userId])
+  /// 用户名索引
   @@index([username])
+  /// 请求结果索引
   @@index([isSuccess])
   @@map("sys_request_log")
 }

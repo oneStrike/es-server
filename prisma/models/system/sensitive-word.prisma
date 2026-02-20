@@ -39,11 +39,17 @@ model SensitiveWord {
   /// 更新时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  /// 敏感词索引
   @@index([word])
+  /// 类型索引
   @@index([type])
+  /// 级别索引
   @@index([level])
+  /// 启用状态索引
   @@index([isEnabled])
+  /// 匹配模式索引
   @@index([matchMode])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("sensitive_word")
 }

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { UserGrowthEventDto } from './dto/growth-event.dto'
-import { UserGrowthEventBus } from './growth-event.bus'
 import { USER_GROWTH_EVENT_BUS } from './growth-event.constant'
+import { UserGrowthEventBus } from './growth-event.types'
 
 /**
  * 成长事件服务类

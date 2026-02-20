@@ -14,9 +14,13 @@ model ForumTopicFavorite {
   topic ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
   user  AppUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 主题与用户唯一约束
   @@unique([topicId, userId])
+  /// 主题索引
   @@index([topicId])
+  /// 用户索引
   @@index([userId])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("forum_topic_favorite")
 }

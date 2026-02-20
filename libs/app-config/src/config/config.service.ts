@@ -1,12 +1,14 @@
 import { BaseService } from '@libs/base/database'
-import { BadRequestException, Injectable, } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { DEFAULT_APP_CONFIG } from './config.constant'
 import {
   UpdateAppConfigDto,
 } from './dto/config.dto'
 
-/// 应用配置服务
-/// 提供应用配置的创建、查询、更新、删除等功能
+/**
+ * 应用配置服务
+ * 提供应用配置的创建、查询、更新等功能
+ */
 @Injectable()
 export class AppConfigService extends BaseService {
   get appConfig() {
@@ -17,8 +19,10 @@ export class AppConfigService extends BaseService {
     super()
   }
 
-  /// 获取最新应用配置
-  /// @returns 最新版本的应用配置
+  /**
+   * 获取最新应用配置
+   * @returns 最新版本的应用配置
+   */
   async findActiveConfig() {
     const config = await this.appConfig.findUnique({
       where: { id: 1 },
@@ -31,9 +35,11 @@ export class AppConfigService extends BaseService {
     return config
   }
 
-  /// 更新应用配置
-  /// @param updateConfigDto 更新数据
-  /// @returns 更新后的应用配置
+  /**
+   * 更新应用配置
+   * @param updateConfigDto 更新数据
+   * @returns 更新后的应用配置
+   */
   async updateConfig(updateConfigDto: UpdateAppConfigDto) {
     const existingConfig = await this.appConfig.findUnique({
       where: { id: 1 },

@@ -1,13 +1,7 @@
+import type { UserGrowthEventBus } from './growth-event.types'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { UserGrowthEventDto } from './dto/growth-event.dto'
-
-export interface UserGrowthEventBus {
-  publish: (event: UserGrowthEventDto) => Promise<void>
-  subscribe: (
-    handler: (event: UserGrowthEventDto) => void | Promise<void>,
-  ) => () => void
-}
 
 @Injectable()
 export class LocalUserGrowthEventBus implements UserGrowthEventBus {

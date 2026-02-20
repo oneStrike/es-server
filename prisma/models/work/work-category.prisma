@@ -29,8 +29,11 @@ model WorkCategory {
   /// 漫画分类关联
   workComicCategories WorkComicCategory[]
 
+  /// 排序索引
   @@index([order])
+  /// 名称索引
   @@index([name])
+  /// 内容类型索引
   @@index([contentType])
   @@map("work_category")
 }

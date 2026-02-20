@@ -31,6 +31,10 @@ export function makePrismaClient(connectionString: string) {
     },
   })
 }
+/**
+ * Prisma 连接服务
+ * 负责创建并维护 Prisma Client 实例
+ */
 @Injectable()
 export class PrismaService implements OnApplicationShutdown {
   public readonly client: PrismaClientType

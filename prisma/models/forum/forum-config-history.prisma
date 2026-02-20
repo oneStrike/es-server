@@ -29,9 +29,13 @@ model ForumConfigHistory {
   /// 操作人
   operatedBy AppUser?    @relation("ForumConfigHistoryOperator", fields: [operatedById], references: [id])
 
+  /// 配置索引
   @@index([configId])
+  /// 变更类型索引
   @@index([changeType])
+  /// 操作人索引
   @@index([operatedById])
+  /// 操作时间索引
   @@index([operatedAt])
   @@map("forum_config_history")
 }

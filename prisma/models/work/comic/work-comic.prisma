@@ -71,22 +71,39 @@ model WorkComic {
   favorites       WorkComicFavorite[]
   likes           WorkComicLike[]
 
+  /// 发布状态与发布时间索引
   @@index([isPublished, publishAt])
+  /// 热度索引
   @@index([popularity])
+  /// 语言与地区索引
   @@index([language, region])
+  /// 连载状态索引
   @@index([serialStatus])
+  /// 最后更新时间索引
   @@index([lastUpdated])
+  /// 名称索引
   @@index([name])
+  /// 年龄分级索引
   @@index([ageRating])
+  /// 评分索引
   @@index([rating])
+  /// 推荐索引
   @@index([isRecommended])
+  /// 热门与新作索引
   @@index([isHot, isNew])
+  /// 发布与推荐索引
   @@index([isPublished, isRecommended])
+  /// 发布、连载状态与更新时间索引
   @@index([isPublished, serialStatus, lastUpdated])
+  /// 创建时间索引
   @@index([createdAt])
+  /// 删除时间索引
   @@index([deletedAt])
+  /// 点赞数索引
   @@index([likeCount])
+  /// 收藏数索引
   @@index([favoriteCount])
+  /// 浏览量索引
   @@index([viewCount])
   @@map("work_comic")
 }

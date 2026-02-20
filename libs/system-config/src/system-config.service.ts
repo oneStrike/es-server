@@ -53,6 +53,10 @@ const DEFAULT_SYSTEM_CONFIG = {
   },
 }
 
+/**
+ * 系统配置服务
+ * 负责系统配置的读取、更新、加解密与缓存管理
+ */
 @Injectable()
 export class SystemConfigService extends BaseService implements OnModuleInit {
   private pendingRequests = new Map<string, Promise<any>>()
