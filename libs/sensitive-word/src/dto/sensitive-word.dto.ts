@@ -11,15 +11,15 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import {
-  ForumMatchModeEnum,
-  ForumSensitiveWordLevelEnum,
-  ForumSensitiveWordTypeEnum,
+  MatchModeEnum,
+  SensitiveWordLevelEnum,
+  SensitiveWordTypeEnum,
 } from '../sensitive-word-constant'
 
 /**
  * 敏感词基础DTO
  */
-export class BaseForumSensitiveWordDto extends BaseDto {
+export class BaseSensitiveWordDto extends BaseDto {
   @ValidateString({
     description: '敏感词',
     maxLength: 100,
@@ -48,29 +48,29 @@ export class BaseForumSensitiveWordDto extends BaseDto {
   @ValidateEnum({
     description: '敏感词级别',
     required: true,
-    example: ForumSensitiveWordLevelEnum.SEVERE,
-    default: ForumSensitiveWordLevelEnum.SEVERE,
-    enum: ForumSensitiveWordLevelEnum,
+    example: SensitiveWordLevelEnum.SEVERE,
+    default: SensitiveWordLevelEnum.SEVERE,
+    enum: SensitiveWordLevelEnum,
   })
-  level!: ForumSensitiveWordLevelEnum
+  level!: SensitiveWordLevelEnum
 
   @ValidateEnum({
     description: '敏感词类型',
     required: true,
-    example: ForumSensitiveWordTypeEnum.OTHER,
-    default: ForumSensitiveWordTypeEnum.OTHER,
-    enum: ForumSensitiveWordTypeEnum,
+    example: SensitiveWordTypeEnum.OTHER,
+    default: SensitiveWordTypeEnum.OTHER,
+    enum: SensitiveWordTypeEnum,
   })
-  type!: ForumSensitiveWordTypeEnum
+  type!: SensitiveWordTypeEnum
 
   @ValidateEnum({
     description: '匹配模式',
     required: false,
-    example: ForumMatchModeEnum.EXACT,
-    default: ForumMatchModeEnum.EXACT,
-    enum: ForumMatchModeEnum,
+    example: MatchModeEnum.EXACT,
+    default: MatchModeEnum.EXACT,
+    enum: MatchModeEnum,
   })
-  matchMode?: ForumMatchModeEnum
+  matchMode?: MatchModeEnum
 
   @ValidateString({
     description: '备注',
@@ -83,26 +83,26 @@ export class BaseForumSensitiveWordDto extends BaseDto {
 /**
  * 创建敏感词DTO
  */
-export class CreateForumSensitiveWordDto extends OmitType(
-  BaseForumSensitiveWordDto,
+export class CreateSensitiveWordDto extends OmitType(
+  BaseSensitiveWordDto,
   OMIT_BASE_FIELDS,
 ) {}
 
 /**
  * 更新敏感词DTO
  */
-export class UpdateForumSensitiveWordDto extends IntersectionType(
-  CreateForumSensitiveWordDto,
+export class UpdateSensitiveWordDto extends IntersectionType(
+  CreateSensitiveWordDto,
   IdDto,
 ) {}
 
 /**
  * 查询敏感词DTO
  */
-export class QueryForumSensitiveWordDto extends IntersectionType(
+export class QuerySensitiveWordDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(CreateForumSensitiveWordDto, [
+    PickType(CreateSensitiveWordDto, [
       'word',
       'isEnabled',
       'level',

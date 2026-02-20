@@ -2,14 +2,34 @@ model SystemConfig {
   /// 主键id
   id Int @id @default(autoincrement())
 
-  /// 阿里云配置（JSON格式）
+  /// 最后修改人ID（关联 app_user.id，可为空）
+  updatedById Int? @map("updated_by_id")
+
+  /// 阿里云配置（JSON格式，包含 accessKeyId/accessKeySecret）
   aliyunConfig Json? @map("aliyun_config")
+  /// 成长防刷配置（JSON格式，冷却时间/每日上限/总上限）
   growthAntifraudConfig Json? @map("growth_antifraud_config")
+  /// 内容审核策略（JSON格式，敏感词等级处理策略）
+  contentReviewPolicy Json? @map("content_review_policy")
+  /// 评论频率限制配置（JSON格式，按分钟/小时/天限流）
+  commentRateLimitConfig Json? @map("comment_rate_limit_config")
+  /// 站点基础配置（JSON格式，名称/描述/关键词/Logo等）
+  siteConfig Json? @map("site_config")
+  /// 维护模式配置（JSON格式，开关与提示文案）
+  maintenanceConfig Json? @map("maintenance_config")
+  /// 注册策略配置（JSON格式，注册开关/邮箱/手机验证）
+  registerConfig Json? @map("register_config")
+  /// 通知策略配置（JSON格式，邮件/站内/系统通知开关）
+  notifyConfig Json? @map("notify_config")
 
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  /// 关联最后修改人
+  updatedBy AppUser? @relation("SystemConfigUpdater", fields: [updatedById], references: [id])
+
+  @@index([updatedById])
   @@map("sys_config")
 }

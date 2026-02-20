@@ -1,7 +1,7 @@
 import type {
-  ForumMatchModeEnum,
-  ForumSensitiveWordLevelEnum,
-  ForumSensitiveWordTypeEnum,
+  MatchModeEnum,
+  SensitiveWordLevelEnum,
+  SensitiveWordTypeEnum,
 } from './sensitive-word-constant'
 
 export interface MatchedWord {
@@ -12,9 +12,9 @@ export interface MatchedWord {
   /** 结束位置 */
   end: number
   /** 敏感等级 */
-  level: ForumSensitiveWordLevelEnum
+  level: SensitiveWordLevelEnum
   /** 敏感类型 */
-  type: ForumSensitiveWordTypeEnum
+  type: SensitiveWordTypeEnum
   /** 替换后的词 */
   replaceWord?: string | null
 }
@@ -25,7 +25,7 @@ export interface DetectOptions {
   /** 替换字符 */
   replaceChar?: string
   /** 匹配模式 */
-  matchMode?: ForumMatchModeEnum
+  matchMode?: MatchModeEnum
 }
 
 export interface CacheQueryConfig<T> {

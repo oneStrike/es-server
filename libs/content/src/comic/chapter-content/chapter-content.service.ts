@@ -41,7 +41,20 @@ export class ChapterContentService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    return (chapter.contents as unknown as string[]) || []
+    if (Array.isArray(chapter.contents)) {
+      return (chapter.contents as unknown as string[]) || []
+    }
+
+    if (typeof chapter.contents === 'string') {
+      try {
+        const parsed = JSON.parse(chapter.contents)
+        return Array.isArray(parsed) ? parsed : []
+      } catch {
+        return []
+      }
+    }
+
+    return []
   }
 
   /**
@@ -121,10 +134,9 @@ export class ChapterContentService extends BaseService {
     index.sort((a, b) => b - a)
     index.forEach((i) => contents.splice(i, 1))
 
-    // 使用字符串保存内容列表
     await this.workComicChapter.update({
       where: { id },
-      data: { contents: JSON.stringify(contents) },
+      data: { contents: contents as any },
     })
 
     return contents
@@ -152,10 +164,9 @@ export class ChapterContentService extends BaseService {
     const [movedContent] = contents.splice(fromIndex, 1)
     contents.splice(toIndex, 0, movedContent)
 
-    // 使用字符串保存内容列表
     await this.workComicChapter.update({
       where: { id },
-      data: { contents: JSON.stringify(contents) },
+      data: { contents: contents as any },
     })
 
     return contents
@@ -167,7 +178,7 @@ export class ChapterContentService extends BaseService {
   async clearChapterContents(id: number) {
     await this.workComicChapter.update({
       where: { id },
-      data: { contents: '[]' },
+      data: { contents: [] as any },
     })
     return { id }
   }

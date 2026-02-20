@@ -1,5 +1,6 @@
-import type { WorkComicWhereInput } from '@libs/base/database'
-import { BaseService } from '@libs/base/database'
+import type {WorkComicWhereInput} from '@libs/base/database';
+import { BaseService, Prisma } from '@libs/base/database'
+import { PageDto } from '@libs/base/dto'
 import { isNotNil } from '@libs/base/utils'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -32,6 +33,70 @@ export class ComicService extends BaseService {
     return this.prisma.appUser
   }
 
+  /**
+   * 漫画列表轻量字段选择器
+   * @returns 漫画列表必要字段
+   */
+  private getComicListSelect() {
+    return {
+      id: true,
+      name: true,
+      alias: true,
+      cover: true,
+      popularity: true,
+      language: true,
+      region: true,
+      ageRating: true,
+      isPublished: true,
+      publishAt: true,
+      lastUpdated: true,
+      publisher: true,
+      originalSource: true,
+      serialStatus: true,
+      rating: true,
+      ratingCount: true,
+      recommendWeight: true,
+      isRecommended: true,
+      isHot: true,
+      isNew: true,
+      likeCount: true,
+      favoriteCount: true,
+      viewCount: true,
+      createdAt: true,
+      updatedAt: true,
+      comicAuthors: {
+        select: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      comicCategories: {
+        select: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      comicTags: {
+        select: {
+          tag: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    }
+  }
+
   constructor(
     private readonly userGrowthEventService: UserGrowthEventService,
   ) {
@@ -45,6 +110,14 @@ export class ComicService extends BaseService {
    */
   async createComic(createComicDto: CreateComicDto) {
     const { authorIds, categoryIds, tagIds, ...comicData } = createComicDto
+
+    const existingComic = await this.workComic.findFirst({
+      where: { name: comicData.name },
+    })
+
+    if (existingComic) {
+      throw new BadRequestException('漫画名称已存在')
+    }
 
     const existingAuthors = await this.prisma.workAuthor.findMany({
       where: {
@@ -118,24 +191,28 @@ export class ComicService extends BaseService {
     const where: WorkComicWhereInput = {}
 
     // 漫画名称模糊搜索
-    where.name = {
-      contains: name,
-      mode: 'insensitive',
+    if (name?.trim()) {
+      where.name = {
+        contains: name.trim(),
+        mode: 'insensitive',
+      }
     }
 
     // 出版社模糊搜索
-    where.publisher = {
-      contains: publisher,
-      mode: 'insensitive',
+    if (publisher?.trim()) {
+      where.publisher = {
+        contains: publisher.trim(),
+        mode: 'insensitive',
+      }
     }
 
     // 作者名称模糊搜索
-    if (author) {
+    if (author?.trim()) {
       where.comicAuthors = {
         some: {
           author: {
             name: {
-              contains: author,
+              contains: author.trim(),
               mode: 'insensitive',
             },
           },
@@ -144,7 +221,7 @@ export class ComicService extends BaseService {
     }
 
     // 标签筛选
-    if (tagIds) {
+    if (Array.isArray(tagIds) && tagIds.length > 0) {
       where.comicTags = {
         some: {
           tagId: {
@@ -554,6 +631,128 @@ export class ComicService extends BaseService {
       list: page.list.map((item) => ({
         ...item,
         liked: likeSet.has(item.id),
+        favorited: favoriteSet.has(item.id),
+      })),
+    }
+  }
+
+  /**
+   * 分页查询我的漫画收藏
+   * @param dto 分页参数
+   * @param userId 用户ID
+   * @returns 漫画列表（含用户状态）
+   */
+  async getMyFavoriteComicPage(dto: PageDto, userId: number) {
+    // 使用分页插件统一处理 pageIndex/pageSize 兼容 0/1 基
+    const { pageIndex = 0, pageSize = 15 } = dto
+    type FavoriteWhere = Prisma.WorkComicFavoriteWhereInput & {
+      pageIndex?: number
+      pageSize?: number
+    }
+    const where: FavoriteWhere = {
+      userId,
+      pageIndex,
+      pageSize,
+    }
+    const result = await this.workComicFavorite.findPagination({
+      where,
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // 依据收藏记录顺序获取漫画信息
+    const comicIds = result.list.map((item) => item.comicId)
+    if (comicIds.length === 0) {
+      return { ...result, list: [] }
+    }
+
+    // 批量拉取漫画并恢复原始顺序
+    const comics = await this.workComic.findMany({
+      where: {
+        id: { in: comicIds },
+      },
+      select: this.getComicListSelect(),
+    })
+    const comicMap = new Map(comics.map((item) => [item.id, item]))
+    const orderedComics = comicIds
+      .map((id) => comicMap.get(id))
+      .filter((item): item is NonNullable<typeof item> => !!item)
+
+    // 组装用户状态信息
+    const likes = await this.workComicLike.findMany({
+      where: {
+        userId,
+        comicId: { in: comicIds },
+      },
+      select: { comicId: true },
+    })
+    const likeSet = new Set(likes.map((item) => item.comicId))
+
+    return {
+      ...result,
+      list: orderedComics.map((item) => ({
+        ...item,
+        liked: likeSet.has(item.id),
+        favorited: true,
+      })),
+    }
+  }
+
+  /**
+   * 分页查询我的漫画点赞
+   * @param dto 分页参数
+   * @param userId 用户ID
+   * @returns 漫画列表（含用户状态）
+   */
+  async getMyLikedComicPage(dto: PageDto, userId: number) {
+    // 使用分页插件统一处理 pageIndex/pageSize 兼容 0/1 基
+    const { pageIndex = 0, pageSize = 15 } = dto
+    type LikeWhere = Prisma.WorkComicLikeWhereInput & {
+      pageIndex?: number
+      pageSize?: number
+    }
+    const where: LikeWhere = {
+      userId,
+      pageIndex,
+      pageSize,
+    }
+    const result = await this.workComicLike.findPagination({
+      where,
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // 依据点赞记录顺序获取漫画信息
+    const comicIds = result.list.map((item) => item.comicId)
+    if (comicIds.length === 0) {
+      return { ...result, list: [] }
+    }
+
+    // 批量拉取漫画并恢复原始顺序
+    const comics = await this.workComic.findMany({
+      where: {
+        id: { in: comicIds },
+      },
+      select: this.getComicListSelect(),
+    })
+    const comicMap = new Map(comics.map((item) => [item.id, item]))
+    const orderedComics = comicIds
+      .map((id) => comicMap.get(id))
+      .filter((item): item is NonNullable<typeof item> => !!item)
+
+    // 组装用户状态信息
+    const favorites = await this.workComicFavorite.findMany({
+      where: {
+        userId,
+        comicId: { in: comicIds },
+      },
+      select: { comicId: true },
+    })
+    const favoriteSet = new Set(favorites.map((item) => item.comicId))
+
+    return {
+      ...result,
+      list: orderedComics.map((item) => ({
+        ...item,
+        liked: true,
         favorited: favoriteSet.has(item.id),
       })),
     }

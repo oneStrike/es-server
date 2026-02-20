@@ -1,14 +1,14 @@
-import type { ForumSensitiveWord } from '@libs/base/database'
-import type { ForumSensitiveWordLevelEnum } from './sensitive-word-constant'
+import type { SensitiveWord } from '@libs/base/database'
+import type { SensitiveWordLevelEnum } from './sensitive-word-constant'
 import type { FuzzyMatchResult, MatchResult } from './sensitive-word.types'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import {
-  ForumMatchedWordDto,
-  ForumSensitiveWordDetectDto,
-  ForumSensitiveWordReplaceDto,
+  MatchedWordDto,
+  SensitiveWordDetectDto,
+  SensitiveWordReplaceDto,
 } from './dto/sensitive-word-detect.dto'
-import { ForumSensitiveWordCacheService } from './sensitive-word-cache.service'
-import { ForumMatchModeEnum } from './sensitive-word-constant'
+import { SensitiveWordCacheService } from './sensitive-word-cache.service'
+import { MatchModeEnum } from './sensitive-word-constant'
 import { ACAutomaton } from './utils/ac-automaton'
 import { FuzzyMatcher } from './utils/fuzzy-matcher'
 
@@ -18,18 +18,18 @@ import { FuzzyMatcher } from './utils/fuzzy-matcher'
  * 支持精确匹配和模糊匹配两种模式
  */
 @Injectable()
-export class ForumSensitiveWordDetectService implements OnModuleInit {
-  private readonly logger = new Logger(ForumSensitiveWordCacheService.name)
+export class SensitiveWordDetectService implements OnModuleInit {
+  private readonly logger = new Logger(SensitiveWordCacheService.name)
   private automaton: ACAutomaton
   private fuzzyMatcher: FuzzyMatcher
-  private wordMap: Map<string, ForumSensitiveWord>
+  private wordMap: Map<string, SensitiveWord>
   private isInitialized: boolean
 
   /**
    * 构造函数
    * @param cacheService - 缓存服务
    */
-  constructor(private readonly cacheService: ForumSensitiveWordCacheService) {
+  constructor(private readonly cacheService: SensitiveWordCacheService) {
     this.automaton = new ACAutomaton()
     this.fuzzyMatcher = new FuzzyMatcher()
     this.wordMap = new Map()
@@ -50,7 +50,7 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
    * 初始化敏感词检测器
    * @param words - 敏感词列表
    */
-  initialize(words: ForumSensitiveWord[]) {
+  initialize(words: SensitiveWord[]) {
     if (!words || words.length === 0) {
       this.automaton.clear()
       this.wordMap.clear()
@@ -65,10 +65,7 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
     this.automaton.build(wordList)
 
     const fuzzyWordList = words
-      .filter(
-        (w) =>
-          w.isEnabled && w.word && w.matchMode === ForumMatchModeEnum.FUZZY,
-      )
+      .filter((w) => w.isEnabled && w.word && w.matchMode === MatchModeEnum.FUZZY)
       .map((w) => w.word)
 
     this.fuzzyMatcher.setWords(fuzzyWordList)
@@ -101,8 +98,8 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
    * @param dto 检测参数，包含文本与匹配模式
    * @returns 匹配的敏感词列表
    */
-  getMatchedWords(dto: ForumSensitiveWordDetectDto) {
-    const { content, matchMode = ForumMatchModeEnum.EXACT } = dto
+  getMatchedWords(dto: SensitiveWordDetectDto) {
+    const { content, matchMode = MatchModeEnum.EXACT } = dto
 
     if (!this.isInitialized || !content) {
       return {}
@@ -110,14 +107,14 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
 
     let results: (MatchResult | FuzzyMatchResult)[] = []
 
-    if (matchMode === ForumMatchModeEnum.FUZZY) {
+    if (matchMode === MatchModeEnum.FUZZY) {
       results = this.fuzzyMatcher.match(content)
     } else {
       results = this.automaton.match(content)
     }
 
-    const matchedWords: ForumMatchedWordDto[] = []
-    let highestLevel: ForumSensitiveWordLevelEnum | undefined
+    const matchedWords: MatchedWordDto[] = []
+    let highestLevel: SensitiveWordLevelEnum | undefined
 
     results.forEach((result) => {
       const wordInfo = this.wordMap.get(result.word)
@@ -148,7 +145,7 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
    * @param dto - 检测请求对象
    * @returns 检测结果，包含最高敏感词级别和匹配的敏感词列表
    */
-  detect(dto: ForumSensitiveWordDetectDto) {
+  detect(dto: SensitiveWordDetectDto) {
     const result = this.getMatchedWords(dto)
 
     return {
@@ -162,7 +159,7 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
    * @param dto - 检测请求对象
    * @returns 敏感词最高等级，如果没有敏感词则返回 undefined
    */
-  getHighestSensitiveWordLevel(dto: ForumSensitiveWordDetectDto) {
+  getHighestSensitiveWordLevel(dto: SensitiveWordDetectDto) {
     if (!this.isInitialized || !dto.content) {
       return undefined
     }
@@ -177,7 +174,7 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
    * @param dto - 替换请求对象
    * @returns 替换后的文本
    */
-  replaceSensitiveWords(dto: ForumSensitiveWordReplaceDto) {
+  replaceSensitiveWords(dto: SensitiveWordReplaceDto) {
     if (!this.isInitialized || !dto.content) {
       return dto.content
     }
@@ -203,7 +200,7 @@ export class ForumSensitiveWordDetectService implements OnModuleInit {
    */
   private replaceWords(
     text: string,
-    matchedWords: ForumMatchedWordDto[],
+    matchedWords: MatchedWordDto[],
     replaceChar?: string,
   ): string {
     if (matchedWords.length === 0) {

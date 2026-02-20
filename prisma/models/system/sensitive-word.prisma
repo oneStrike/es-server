@@ -1,5 +1,5 @@
-/// 论坛敏感词表 - 存储敏感词信息，用于内容过滤和审核
-model ForumSensitiveWord {
+/// 通用敏感词表 - 存储敏感词信息，用于内容过滤和审核
+model SensitiveWord {
   /// 主键ID
   id Int @id @default(autoincrement())
 
@@ -45,5 +45,5 @@ model ForumSensitiveWord {
   @@index([isEnabled])
   @@index([matchMode])
   @@index([createdAt])
-  @@map("forum_sensitive_word")
+  @@map("sensitive_word")
 }

@@ -1,7 +1,9 @@
+import type { Cache } from 'cache-manager'
 import { BaseService } from '@libs/base/database'
 import { AesService, RsaService } from '@libs/base/modules'
 import { isMasked, maskString } from '@libs/base/utils'
-import { Injectable } from '@nestjs/common'
+import { CACHE_MANAGER } from '@nestjs/cache-manager'
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
 
 // 配置元数据定义，用于驱动通用的加解密和脱敏逻辑
 const CONFIG_METADATA: Record<string, { sensitiveFields: string[] }> = {
@@ -11,16 +13,60 @@ const CONFIG_METADATA: Record<string, { sensitiveFields: string[] }> = {
   growthAntifraudConfig: {
     sensitiveFields: [],
   },
-  // 未来可以在这里添加其他配置，如 wechatConfig 等
+}
+
+const SYSTEM_CONFIG_CACHE_KEYS = {
+  CONFIG: 'system-config',
+}
+
+const SYSTEM_CONFIG_CACHE_TTL = {
+  DEFAULT: 3600,
+  SHORT: 600,
+  LONG: 7200,
+  NULL_VALUE: 300,
+}
+
+const DEFAULT_SYSTEM_CONFIG = {
+  contentReviewPolicy: {
+    severeAction: { auditStatus: 2, isHidden: true },
+    generalAction: { auditStatus: 0, isHidden: false },
+    lightAction: { auditStatus: 1, isHidden: false },
+    recordHits: true,
+  },
+  commentRateLimitConfig: {
+    enabled: false,
+  },
+  siteConfig: {},
+  maintenanceConfig: {
+    enableMaintenanceMode: false,
+    maintenanceMessage: '系统维护中，请稍后再试',
+  },
+  registerConfig: {
+    registerEnable: true,
+    registerEmailVerify: true,
+    registerPhoneVerify: false,
+  },
+  notifyConfig: {
+    notifyEmail: true,
+    notifyInApp: true,
+    notifySystem: true,
+  },
 }
 
 @Injectable()
-export class SystemConfigService extends BaseService {
+export class SystemConfigService extends BaseService implements OnModuleInit {
+  private pendingRequests = new Map<string, Promise<any>>()
+
   constructor(
     private readonly aesService: AesService,
     private readonly rsaService: RsaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     super()
+  }
+
+  async onModuleInit() {
+    await this.getRawConfig()
   }
 
   get systemConfig() {
@@ -32,33 +78,15 @@ export class SystemConfigService extends BaseService {
    * @returns 包含明文敏感信息的配置对象
    */
   async findActiveConfig() {
-    const config = await this.systemConfig.findUnique({
-      where: { id: 1 },
-    })
+    const rawConfig = await this.getRawConfig()
 
-    if (!config) {
+    if (!rawConfig) {
       return null
     }
 
-    // 遍历元数据进行解密
-    for (const [key, metadata] of Object.entries(CONFIG_METADATA)) {
-      const configItem = (config as any)[key]
-      if (configItem) {
-        for (const field of metadata.sensitiveFields) {
-          if (configItem[field]) {
-            try {
-              configItem[field] = await this.aesService.decrypt(
-                configItem[field],
-              )
-            } catch {
-              // 忽略解密失败
-            }
-          }
-        }
-      }
-    }
-
-    return config
+    const config = JSON.parse(JSON.stringify(rawConfig))
+    await this.decryptSensitiveFields(config)
+    return this.applyDefaultConfig(config)
   }
 
   /**
@@ -190,10 +218,117 @@ export class SystemConfigService extends BaseService {
       }
     }
 
-    return this.systemConfig.upsert({
+    const result = await this.systemConfig.upsert({
       where: { id: 1 },
       create: cleanData,
       update: cleanData,
     })
+
+    await this.invalidateCache()
+    return result
+  }
+
+  private async decryptSensitiveFields(config: Record<string, any>) {
+    for (const [key, metadata] of Object.entries(CONFIG_METADATA)) {
+      const configItem = config[key]
+      if (configItem) {
+        for (const field of metadata.sensitiveFields) {
+          if (configItem[field]) {
+            try {
+              configItem[field] = await this.aesService.decrypt(
+                configItem[field],
+              )
+            } catch {
+              continue
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private applyDefaultConfig(config: Record<string, any>) {
+    const merged = {
+      ...DEFAULT_SYSTEM_CONFIG,
+      ...config,
+    }
+    merged.contentReviewPolicy = {
+      ...DEFAULT_SYSTEM_CONFIG.contentReviewPolicy,
+      ...(config.contentReviewPolicy || {}),
+    }
+    merged.commentRateLimitConfig = {
+      ...DEFAULT_SYSTEM_CONFIG.commentRateLimitConfig,
+      ...(config.commentRateLimitConfig || {}),
+    }
+    merged.siteConfig = {
+      ...DEFAULT_SYSTEM_CONFIG.siteConfig,
+      ...(config.siteConfig || {}),
+    }
+    merged.maintenanceConfig = {
+      ...DEFAULT_SYSTEM_CONFIG.maintenanceConfig,
+      ...(config.maintenanceConfig || {}),
+    }
+    merged.registerConfig = {
+      ...DEFAULT_SYSTEM_CONFIG.registerConfig,
+      ...(config.registerConfig || {}),
+    }
+    merged.notifyConfig = {
+      ...DEFAULT_SYSTEM_CONFIG.notifyConfig,
+      ...(config.notifyConfig || {}),
+    }
+    return merged
+  }
+
+  private async getRawConfig() {
+    const cacheKey = SYSTEM_CONFIG_CACHE_KEYS.CONFIG
+    const requestKey = `lock:${cacheKey}`
+    const cached = await this.cacheManager.get(cacheKey)
+    if (cached) {
+      return cached
+    }
+    if (this.pendingRequests.has(requestKey)) {
+      return this.pendingRequests.get(requestKey)!
+    }
+    const promise = this.loadConfigFromDatabase(cacheKey)
+    this.pendingRequests.set(requestKey, promise)
+    return promise
+  }
+
+  private async loadConfigFromDatabase(cacheKey: string) {
+    const requestKey = `lock:${cacheKey}`
+    try {
+      const config = await this.systemConfig.findFirst()
+      if (config) {
+        const ttl = this.getRandomTTL(SYSTEM_CONFIG_CACHE_TTL.LONG)
+        await this.cacheManager.set(cacheKey, config, ttl)
+        this.pendingRequests.delete(requestKey)
+        return config
+      }
+      const newConfig = await this.createDefaultConfig()
+      const ttl = this.getRandomTTL(SYSTEM_CONFIG_CACHE_TTL.LONG)
+      await this.cacheManager.set(cacheKey, newConfig, ttl)
+      this.pendingRequests.delete(requestKey)
+      return newConfig
+    } catch (error) {
+      this.pendingRequests.delete(requestKey)
+      throw error
+    }
+  }
+
+  private async createDefaultConfig() {
+    return this.systemConfig.create({
+      data: DEFAULT_SYSTEM_CONFIG,
+    })
+  }
+
+  private async invalidateCache() {
+    await this.cacheManager.del(SYSTEM_CONFIG_CACHE_KEYS.CONFIG)
+  }
+
+  private getRandomTTL(baseTTL: number) {
+    const randomOffset = Math.floor(baseTTL * 0.1)
+    const randomValue =
+      Math.floor(Math.random() * (2 * randomOffset + 1)) - randomOffset
+    return baseTTL + randomValue
   }
 }

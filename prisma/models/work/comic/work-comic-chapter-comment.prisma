@@ -1,0 +1,70 @@
+model WorkComicChapterComment {
+  /// 主键ID（自增）
+  id Int @id @default(autoincrement())
+
+  /// 章节ID（关联 work_comic_chapter.id）
+  chapterId Int @map("chapter_id")
+  /// 评论用户ID（关联 app_user.id）
+  userId    Int @map("user_id")
+
+  /// 评论内容（正文文本）
+  content String
+
+  /// 命中的敏感词明细（JSON，记录词条与等级，可为空）
+  sensitiveWordHits Json? @map("sensitive_word_hits") @db.JsonB
+
+  /// 被回复评论ID（楼中楼，可为空）
+  replyToId       Int? @map("reply_to_id")
+  /// 实际回复根评论ID（用于追溯链路，可为空）
+  actualReplyToId Int? @map("actual_reply_to_id")
+  /// 楼层号（一级评论编号，楼中楼为空）
+  floor           Int? @map("floor")
+
+  /// 是否隐藏（true=隐藏，false=展示）
+  isHidden    Boolean @default(false) @map("is_hidden")
+  /// 审核状态（0=待审核，1=通过，2=拒绝）
+  auditStatus Int     @default(0) @map("audit_status") @db.SmallInt
+  /// 审核原因（拒绝时填写，可为空）
+  auditReason String? @map("audit_reason") @db.VarChar(500)
+  /// 审核时间（审核动作发生时记录，可为空）
+  auditAt     DateTime? @map("audit_at") @db.Timestamptz(6)
+  /// 审核人ID（关联 app_user.id，可为空）
+  auditById   Int? @map("audit_by_id")
+  /// 审核角色（0=版主，1=管理员，可为空）
+  auditRole   Int? @map("audit_role") @db.SmallInt
+
+  /// 创建时间
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 软删除时间（可为空）
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  /// 关联被回复评论
+  replyTo       WorkComicChapterComment?  @relation("ComicChapterCommentReplyTo", fields: [replyToId], references: [id])
+  /// 关联回复列表
+  replies       WorkComicChapterComment[] @relation("ComicChapterCommentReplyTo")
+  /// 关联实际回复根评论
+  actualReplyTo WorkComicChapterComment?  @relation("ComicChapterCommentActualReplyTo", fields: [actualReplyToId], references: [id])
+  /// 关联实际回复列表
+  actualReplies WorkComicChapterComment[] @relation("ComicChapterCommentActualReplyTo")
+
+  /// 关联章节
+  chapter WorkComicChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  /// 关联用户
+  user    AppUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 关联举报记录
+  reports WorkComicChapterCommentReport[]
+
+  @@index([chapterId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([auditStatus])
+  @@index([isHidden])
+  @@index([replyToId])
+  @@index([actualReplyToId])
+  @@index([deletedAt])
+  @@index([chapterId, createdAt])
+  @@map("work_comic_chapter_comment")
+}

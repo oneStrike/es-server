@@ -1,15 +1,15 @@
 import { BaseService } from '@libs/base/database'
 import { Injectable, Logger } from '@nestjs/common'
 import {
-  ForumForumSensitiveWordLevelStatisticsDto,
-  ForumForumSensitiveWordTypeStatisticsDto,
-  ForumSensitiveWordRecentHitStatisticsDto,
-  ForumSensitiveWordStatisticsDataDto,
-  ForumSensitiveWordTopHitStatisticsDto,
+  SensitiveWordLevelStatisticsDto,
+  SensitiveWordRecentHitStatisticsDto,
+  SensitiveWordStatisticsDataDto,
+  SensitiveWordTopHitStatisticsDto,
+  SensitiveWordTypeStatisticsDto,
 } from './dto/sensitive-word-statistics.dto'
 import {
-  ForumSensitiveWordLevelNames,
-  ForumSensitiveWordTypeNames,
+  SensitiveWordLevelNames,
+  SensitiveWordTypeNames,
 } from './sensitive-word-constant'
 
 /**
@@ -23,11 +23,11 @@ import {
  * - 最近命中的敏感词
  */
 @Injectable()
-export class ForumSensitiveWordStatisticsService extends BaseService {
-  private readonly logger = new Logger(ForumSensitiveWordStatisticsService.name)
+export class SensitiveWordStatisticsService extends BaseService {
+  private readonly logger = new Logger(SensitiveWordStatisticsService.name)
 
   get sensitiveWord() {
-    return this.prisma.forumSensitiveWord
+    return this.prisma.sensitiveWord
   }
 
   /**
@@ -35,7 +35,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
    * 包含所有维度的统计信息
    * @returns 完整的统计数据
    */
-  async getStatistics(): Promise<ForumSensitiveWordStatisticsDataDto> {
+  async getStatistics(): Promise<SensitiveWordStatisticsDataDto> {
     const [
       totalWords,
       enabledWords,
@@ -183,9 +183,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
    * 按敏感词级别分组统计，包含每个级别的敏感词数量和命中次数
    * @returns 级别统计列表
    */
-  private async getLevelStatistics(): Promise<
-    ForumForumSensitiveWordLevelStatisticsDto[]
-  > {
+  private async getLevelStatistics(): Promise<SensitiveWordLevelStatisticsDto[]> {
     const results = await this.sensitiveWord.groupBy({
       by: ['level'],
       _count: {
@@ -198,7 +196,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
 
     return results.map((result) => ({
       level: result.level,
-      levelName: ForumSensitiveWordLevelNames[result.level] || '未知',
+      levelName: SensitiveWordLevelNames[result.level] || '未知',
       count: result._count.id,
       hitCount: result._sum.hitCount || 0,
     }))
@@ -209,9 +207,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
    * 按敏感词类型分组统计，包含每个类型的敏感词数量和命中次数
    * @returns 类型统计列表
    */
-  private async getTypeStatistics(): Promise<
-    ForumForumSensitiveWordTypeStatisticsDto[]
-  > {
+  private async getTypeStatistics(): Promise<SensitiveWordTypeStatisticsDto[]> {
     const results = await this.sensitiveWord.groupBy({
       by: ['type'],
       _count: {
@@ -224,7 +220,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
 
     return results.map((result) => ({
       type: result.type,
-      typeName: ForumSensitiveWordTypeNames[result.type] || '未知',
+      typeName: SensitiveWordTypeNames[result.type] || '未知',
       count: result._count.id,
       hitCount: result._sum.hitCount || 0,
     }))
@@ -235,9 +231,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
    * 返回命中次数最高的20个敏感词
    * @returns 热门敏感词列表
    */
-  private async getTopHitWords(): Promise<
-    ForumSensitiveWordTopHitStatisticsDto[]
-  > {
+  private async getTopHitWords(): Promise<SensitiveWordTopHitStatisticsDto[]> {
     const results = await this.sensitiveWord.findMany({
       where: {
         hitCount: {
@@ -262,7 +256,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
       hitCount: result.hitCount,
       level: result.level,
       type: result.type,
-      lastHitAt: result.lastHitAt,
+      lastHitAt: result.lastHitAt ?? undefined,
     }))
   }
 
@@ -272,7 +266,7 @@ export class ForumSensitiveWordStatisticsService extends BaseService {
    * @returns 最近命中的敏感词列表
    */
   private async getRecentHitWords(): Promise<
-    ForumSensitiveWordRecentHitStatisticsDto[]
+    SensitiveWordRecentHitStatisticsDto[]
   > {
     const results = await this.sensitiveWord.findMany({
       where: {

@@ -194,11 +194,6 @@ export type ForumSectionGroup = Prisma.ForumSectionGroupModel
  */
 export type ForumSection = Prisma.ForumSectionModel
 /**
- * Model ForumSensitiveWord
- * 论坛敏感词表 - 存储敏感词信息，用于内容过滤和审核
- */
-export type ForumSensitiveWord = Prisma.ForumSensitiveWordModel
-/**
  * Model ForumTag
  * 论坛标签表 - 管理论坛标签信息，包括标签名称、图标、使用次数等
  */
@@ -239,6 +234,11 @@ export type ForumView = Prisma.ForumViewModel
  */
 export type RequestLog = Prisma.RequestLogModel
 /**
+ * Model SensitiveWord
+ * 通用敏感词表 - 存储敏感词信息，用于内容过滤和审核
+ */
+export type SensitiveWord = Prisma.SensitiveWordModel
+/**
  * Model SystemConfig
  * 
  */
@@ -268,6 +268,16 @@ export type WorkComicAuthor = Prisma.WorkComicAuthorModel
  * 漫画分类关联表
  */
 export type WorkComicCategory = Prisma.WorkComicCategoryModel
+/**
+ * Model WorkComicChapterCommentReport
+ * 
+ */
+export type WorkComicChapterCommentReport = Prisma.WorkComicChapterCommentReportModel
+/**
+ * Model WorkComicChapterComment
+ * 
+ */
+export type WorkComicChapterComment = Prisma.WorkComicChapterCommentModel
 /**
  * Model WorkComicChapterDownload
  * 

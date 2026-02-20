@@ -18,12 +18,36 @@ export class SystemConfigController {
     return this.systemConfigService.findMaskedConfig()
   }
 
+  /**
+   * 兼容任务清单要求的 /admin/system/config 路径
+   */
+  @Get('config')
+  @ApiDoc({
+    summary: '获取系统配置',
+    model: SystemConfigDto,
+  })
+  async getConfigByAlias() {
+    return this.systemConfigService.findMaskedConfig()
+  }
+
   @Post('config-update')
   @ApiDoc({
     summary: '更新系统配置',
     model: { type: 'boolean' },
   })
   async updateConfig(@Body() dto: SystemConfigDto) {
+    return this.systemConfigService.updateConfig(dto)
+  }
+
+  /**
+   * 兼容任务清单要求的 /admin/system/config 路径
+   */
+  @Post('config')
+  @ApiDoc({
+    summary: '更新系统配置',
+    model: { type: 'boolean' },
+  })
+  async updateConfigByAlias(@Body() dto: SystemConfigDto) {
     return this.systemConfigService.updateConfig(dto)
   }
 }

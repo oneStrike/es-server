@@ -49,6 +49,12 @@
       "@libs/system-config/*": [
         "libs/system-config/src/*"
       ],
+      "@libs/sensitive-word": [
+        "libs/sensitive-word/src"
+      ],
+      "@libs/sensitive-word/*": [
+        "libs/sensitive-word/src/*"
+      ],
       "@libs/task": [
         "libs/task/src"
       ],

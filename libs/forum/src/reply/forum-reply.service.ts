@@ -5,6 +5,10 @@ import type {
 import { UserStatusEnum } from '@libs/base/constant'
 
 import { BaseService } from '@libs/base/database'
+import {
+  SensitiveWordDetectService,
+  SensitiveWordLevelEnum,
+} from '@libs/sensitive-word'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -15,8 +19,6 @@ import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import { ForumNotificationService } from '../notification/notification.service'
-import { ForumSensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
-import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
 import { ForumAuditStatusEnum } from './forum-reply.constant'
 
@@ -28,7 +30,7 @@ import { ForumAuditStatusEnum } from './forum-reply.constant'
 export class ForumReplyService extends BaseService {
   constructor(
     private readonly notificationService: ForumNotificationService,
-    private readonly sensitiveWordDetectService: ForumSensitiveWordDetectService,
+    private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
     private readonly actionLogService: ForumUserActionLogService,
     private readonly userGrowthEventService: UserGrowthEventService,
@@ -130,7 +132,7 @@ export class ForumReplyService extends BaseService {
     let auditStatus = 0
     let auditReason: string | undefined
 
-    if (detectResult.highestLevel === ForumSensitiveWordLevelEnum.SEVERE) {
+    if (detectResult.highestLevel === SensitiveWordLevelEnum.SEVERE) {
       auditStatus = 2
       auditReason = '包含严重敏感词，需要审核'
     }

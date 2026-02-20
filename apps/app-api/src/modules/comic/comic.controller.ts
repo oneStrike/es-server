@@ -1,7 +1,7 @@
 import type { JwtUserInfoInterface } from '@libs/base/types'
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
-import { IdDto, IdsDto } from '@libs/base/dto'
+import { IdDto, IdsDto, PageDto } from '@libs/base/dto'
 import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import {
   ComicChapterDetailWithUserStatusDto,
@@ -10,6 +10,15 @@ import {
   ComicChapterUserStatusDto,
   QueryComicChapterDto,
 } from '@libs/content/comic/chapter'
+import {
+  BaseComicChapterCommentReportDto,
+  ComicChapterCommentDto,
+  ComicChapterCommentService,
+  CreateComicChapterCommentDto,
+  CreateComicChapterCommentReportDto,
+  QueryComicChapterCommentDto,
+  QueryComicChapterCommentReportDto,
+} from '@libs/content/comic/chapter-comment'
 import {
   ComicDetailWithUserStatusDto,
   ComicPageWithUserStatusDto,
@@ -26,6 +35,7 @@ export class ComicController {
   constructor(
     private readonly comicService: ComicService,
     private readonly comicChapterService: ComicChapterService,
+    private readonly comicChapterCommentService: ComicChapterCommentService,
   ) {}
 
   private getRequestMeta(req: FastifyRequest) {
@@ -143,6 +153,30 @@ export class ComicController {
     return this.comicService.getComicUserStatus(body.ids, user.sub)
   }
 
+  @Get('my/favorites')
+  @ApiPageDoc({
+    summary: '分页查询我的漫画收藏',
+    model: ComicPageWithUserStatusDto,
+  })
+  async getMyFavoriteComics(
+    @Query() query: PageDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.comicService.getMyFavoriteComicPage(query, user.sub)
+  }
+
+  @Get('my/likes')
+  @ApiPageDoc({
+    summary: '分页查询我的漫画点赞',
+    model: ComicPageWithUserStatusDto,
+  })
+  async getMyLikedComics(
+    @Query() query: PageDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.comicService.getMyLikedComicPage(query, user.sub)
+  }
+
   @Post('chapter/read')
   @ApiDoc({
     summary: '记录章节阅读',
@@ -190,6 +224,60 @@ export class ComicController {
       query,
       user.sub,
     )
+  }
+
+  /**
+   * 分页查询我的章节购买记录
+   * @param query 分页参数
+   * @param user 当前用户
+   * @returns 章节购买记录分页结果
+   */
+  @Get('chapter/my/purchases')
+  @ApiPageDoc({
+    summary: '分页查询我的章节购买记录',
+    model: ComicChapterPageWithUserStatusDto,
+  })
+  async getMyChapterPurchases(
+    @Query() query: PageDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.comicChapterService.getMyPurchasedChapterPage(query, user.sub)
+  }
+
+  /**
+   * 分页查询我的章节下载记录
+   * @param query 分页参数
+   * @param user 当前用户
+   * @returns 章节下载记录分页结果
+   */
+  @Get('chapter/my/downloads')
+  @ApiPageDoc({
+    summary: '分页查询我的章节下载记录',
+    model: ComicChapterPageWithUserStatusDto,
+  })
+  async getMyChapterDownloads(
+    @Query() query: PageDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.comicChapterService.getMyDownloadedChapterPage(query, user.sub)
+  }
+
+  /**
+   * 分页查询我的章节阅读记录
+   * @param query 分页参数
+   * @param user 当前用户
+   * @returns 章节阅读记录分页结果
+   */
+  @Get('chapter/my/reads')
+  @ApiPageDoc({
+    summary: '分页查询我的章节阅读记录',
+    model: ComicChapterPageWithUserStatusDto,
+  })
+  async getMyChapterReads(
+    @Query() query: PageDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.comicChapterService.getMyReadChapterPage(query, user.sub)
   }
 
   @Post('chapter/like')
@@ -299,5 +387,83 @@ export class ComicController {
       body.ids,
       user.sub,
     )
+  }
+
+  @Post('chapter/comment/create')
+  @ApiDoc({
+    summary: '创建章节评论',
+    model: ComicChapterCommentDto,
+  })
+  async createChapterComment(
+    @Body() body: CreateComicChapterCommentDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.comicChapterCommentService.createComicChapterComment(
+      body,
+      user.sub,
+    )
+  }
+
+  @Post('chapter/comment/delete')
+  @ApiDoc({
+    summary: '删除章节评论',
+    model: IdDto,
+  })
+  async deleteChapterComment(
+    @Body() body: IdDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.comicChapterCommentService.deleteComicChapterComment(
+      body.id,
+      user.sub,
+    )
+  }
+
+  @Get('chapter/comment/page')
+  @ApiPageDoc({
+    summary: '分页查询章节评论',
+    model: ComicChapterCommentDto,
+  })
+  async getChapterCommentPage(@Query() query: QueryComicChapterCommentDto) {
+    return this.comicChapterCommentService.getComicChapterCommentPage(query)
+  }
+
+  @Get('chapter/comment/detail')
+  @ApiDoc({
+    summary: '获取章节评论详情',
+    model: ComicChapterCommentDto,
+  })
+  async getChapterCommentDetail(@Query() query: IdDto) {
+    return this.comicChapterCommentService.getComicChapterCommentDetail(query.id)
+  }
+
+  @Post('chapter/comment/report')
+  @ApiDoc({
+    summary: '举报章节评论',
+    model: BaseComicChapterCommentReportDto,
+  })
+  async reportChapterComment(
+    @Body() body: CreateComicChapterCommentReportDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.comicChapterCommentService.createComicChapterCommentReport(
+      { ...body, reporterId: user.sub },
+      user.sub,
+    )
+  }
+
+  @Get('chapter/comment/report/page')
+  @ApiPageDoc({
+    summary: '分页查询我的章节评论举报',
+    model: BaseComicChapterCommentReportDto,
+  })
+  async getChapterCommentReportPage(
+    @Query() query: QueryComicChapterCommentReportDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+  ) {
+    return this.comicChapterCommentService.getComicChapterCommentReportPage({
+      ...query,
+      reporterId: user.sub,
+    })
   }
 }

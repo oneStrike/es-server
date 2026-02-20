@@ -5,6 +5,10 @@ import type {
 import { UserStatusEnum } from '@libs/base/constant'
 
 import { BaseService } from '@libs/base/database'
+import {
+  SensitiveWordDetectService,
+  SensitiveWordLevelEnum,
+} from '@libs/sensitive-word'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 
 import {
@@ -21,8 +25,6 @@ import { ForumConfigCacheService } from '../config/forum-config-cache.service'
 import { ForumReviewPolicyEnum } from '../config/forum-config.constants'
 import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumGrowthEventKey } from '../forum-growth-event.constant'
-import { ForumSensitiveWordLevelEnum } from '../sensitive-word/sensitive-word-constant'
-import { ForumSensitiveWordDetectService } from '../sensitive-word/sensitive-word-detect.service'
 import {
   CreateForumTopicDto,
   QueryForumTopicDto,
@@ -44,7 +46,7 @@ export class ForumTopicService extends BaseService {
   constructor(
     private readonly userGrowthEventService: UserGrowthEventService,
     private readonly forumConfigCacheService: ForumConfigCacheService,
-    private readonly sensitiveWordDetectService: ForumSensitiveWordDetectService,
+    private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
     private readonly actionLogService: ForumUserActionLogService,
   ) {
@@ -76,7 +78,7 @@ export class ForumTopicService extends BaseService {
    */
   private calculateAuditStatus(
     reviewPolicy: ForumReviewPolicyEnum,
-    highestLevel?: ForumSensitiveWordLevelEnum,
+    highestLevel?: SensitiveWordLevelEnum,
   ) {
     let needAudit = false
     let isHidden = false
@@ -84,18 +86,18 @@ export class ForumTopicService extends BaseService {
     if (reviewPolicy === ForumReviewPolicyEnum.MANUAL) {
       needAudit = true
     } else if (highestLevel) {
-      if (highestLevel === ForumSensitiveWordLevelEnum.SEVERE) {
+      if (highestLevel === SensitiveWordLevelEnum.SEVERE) {
         isHidden = true
       }
 
       if (reviewPolicy === ForumReviewPolicyEnum.SEVERE_SENSITIVE_WORD) {
-        needAudit = highestLevel === ForumSensitiveWordLevelEnum.SEVERE
+        needAudit = highestLevel === SensitiveWordLevelEnum.SEVERE
       } else if (
         reviewPolicy === ForumReviewPolicyEnum.GENERAL_SENSITIVE_WORD
       ) {
         needAudit =
-          highestLevel === ForumSensitiveWordLevelEnum.SEVERE ||
-          highestLevel === ForumSensitiveWordLevelEnum.GENERAL
+          highestLevel === SensitiveWordLevelEnum.SEVERE ||
+          highestLevel === SensitiveWordLevelEnum.GENERAL
       } else if (reviewPolicy === ForumReviewPolicyEnum.MILD_SENSITIVE_WORD) {
         needAudit = true
       }

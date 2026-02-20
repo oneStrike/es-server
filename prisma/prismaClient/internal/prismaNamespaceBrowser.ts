@@ -86,7 +86,6 @@ export const ModelName = {
   ForumReport: 'ForumReport',
   ForumSectionGroup: 'ForumSectionGroup',
   ForumSection: 'ForumSection',
-  ForumSensitiveWord: 'ForumSensitiveWord',
   ForumTag: 'ForumTag',
   ForumTopicFavorite: 'ForumTopicFavorite',
   ForumTopicLike: 'ForumTopicLike',
@@ -95,12 +94,15 @@ export const ModelName = {
   ForumUserActionLog: 'ForumUserActionLog',
   ForumView: 'ForumView',
   RequestLog: 'RequestLog',
+  SensitiveWord: 'SensitiveWord',
   SystemConfig: 'SystemConfig',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
   WorkAuthor: 'WorkAuthor',
   WorkComicAuthor: 'WorkComicAuthor',
   WorkComicCategory: 'WorkComicCategory',
+  WorkComicChapterCommentReport: 'WorkComicChapterCommentReport',
+  WorkComicChapterComment: 'WorkComicChapterComment',
   WorkComicChapterDownload: 'WorkComicChapterDownload',
   WorkComicChapterLike: 'WorkComicChapterLike',
   WorkComicChapterPurchase: 'WorkComicChapterPurchase',
@@ -791,27 +793,6 @@ export const ForumSectionScalarFieldEnum = {
 export type ForumSectionScalarFieldEnum = (typeof ForumSectionScalarFieldEnum)[keyof typeof ForumSectionScalarFieldEnum]
 
 
-export const ForumSensitiveWordScalarFieldEnum = {
-  id: 'id',
-  word: 'word',
-  replaceWord: 'replaceWord',
-  level: 'level',
-  type: 'type',
-  matchMode: 'matchMode',
-  isEnabled: 'isEnabled',
-  hitCount: 'hitCount',
-  lastHitAt: 'lastHitAt',
-  version: 'version',
-  remark: 'remark',
-  createdBy: 'createdBy',
-  updatedBy: 'updatedBy',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ForumSensitiveWordScalarFieldEnum = (typeof ForumSensitiveWordScalarFieldEnum)[keyof typeof ForumSensitiveWordScalarFieldEnum]
-
-
 export const ForumTagScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -940,10 +921,38 @@ export const RequestLogScalarFieldEnum = {
 export type RequestLogScalarFieldEnum = (typeof RequestLogScalarFieldEnum)[keyof typeof RequestLogScalarFieldEnum]
 
 
+export const SensitiveWordScalarFieldEnum = {
+  id: 'id',
+  word: 'word',
+  replaceWord: 'replaceWord',
+  level: 'level',
+  type: 'type',
+  matchMode: 'matchMode',
+  isEnabled: 'isEnabled',
+  hitCount: 'hitCount',
+  lastHitAt: 'lastHitAt',
+  version: 'version',
+  remark: 'remark',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SensitiveWordScalarFieldEnum = (typeof SensitiveWordScalarFieldEnum)[keyof typeof SensitiveWordScalarFieldEnum]
+
+
 export const SystemConfigScalarFieldEnum = {
   id: 'id',
+  updatedById: 'updatedById',
   aliyunConfig: 'aliyunConfig',
   growthAntifraudConfig: 'growthAntifraudConfig',
+  contentReviewPolicy: 'contentReviewPolicy',
+  commentRateLimitConfig: 'commentRateLimitConfig',
+  siteConfig: 'siteConfig',
+  maintenanceConfig: 'maintenanceConfig',
+  registerConfig: 'registerConfig',
+  notifyConfig: 'notifyConfig',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1025,6 +1034,47 @@ export const WorkComicCategoryScalarFieldEnum = {
 } as const
 
 export type WorkComicCategoryScalarFieldEnum = (typeof WorkComicCategoryScalarFieldEnum)[keyof typeof WorkComicCategoryScalarFieldEnum]
+
+
+export const WorkComicChapterCommentReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  handlerId: 'handlerId',
+  commentId: 'commentId',
+  reason: 'reason',
+  description: 'description',
+  evidenceUrl: 'evidenceUrl',
+  status: 'status',
+  handlingNote: 'handlingNote',
+  handledAt: 'handledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkComicChapterCommentReportScalarFieldEnum = (typeof WorkComicChapterCommentReportScalarFieldEnum)[keyof typeof WorkComicChapterCommentReportScalarFieldEnum]
+
+
+export const WorkComicChapterCommentScalarFieldEnum = {
+  id: 'id',
+  chapterId: 'chapterId',
+  userId: 'userId',
+  content: 'content',
+  sensitiveWordHits: 'sensitiveWordHits',
+  replyToId: 'replyToId',
+  actualReplyToId: 'actualReplyToId',
+  floor: 'floor',
+  isHidden: 'isHidden',
+  auditStatus: 'auditStatus',
+  auditReason: 'auditReason',
+  auditAt: 'auditAt',
+  auditById: 'auditById',
+  auditRole: 'auditRole',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type WorkComicChapterCommentScalarFieldEnum = (typeof WorkComicChapterCommentScalarFieldEnum)[keyof typeof WorkComicChapterCommentScalarFieldEnum]
 
 
 export const WorkComicChapterDownloadScalarFieldEnum = {

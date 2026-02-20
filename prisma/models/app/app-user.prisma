@@ -77,6 +77,8 @@ model AppUser {
   comicChapterLikes       WorkComicChapterLike[]
   comicChapterPurchases   WorkComicChapterPurchase[]
   comicChapterDownloads   WorkComicChapterDownload[]
+  /// 漫画章节评论关联
+  comicChapterComments    WorkComicChapterComment[]
   /// 论坛回复关联
   forumReplies            ForumReply[]
   /// 回复点赞关联
@@ -89,6 +91,10 @@ model AppUser {
   forumReports            ForumReport[]               @relation("ReportReporter")
   /// 论坛举报关联（处理人）
   handledReports          ForumReport[]               @relation("ReportHandler")
+  /// 章节评论举报关联（举报人）
+  comicChapterCommentReports WorkComicChapterCommentReport[] @relation("ComicChapterCommentReportReporter")
+  /// 章节评论举报关联（处理人）
+  handledComicChapterCommentReports WorkComicChapterCommentReport[] @relation("ComicChapterCommentReportHandler")
   /// 版主申请关联（申请人）
   moderatorApplications   ForumModeratorApplication[] @relation("ModeratorApplicant")
   /// 版主申请关联（审核人）
@@ -107,6 +113,8 @@ model AppUser {
   updatedConfigs          ForumConfig[]               @relation("ForumConfigUpdater")
   /// 论坛配置历史操作关联
   operatedConfigHistories ForumConfigHistory[]        @relation("ForumConfigHistoryOperator")
+  /// 系统配置更新关联
+  updatedSystemConfigs    SystemConfig[]              @relation("SystemConfigUpdater")
 
   @@index([isEnabled])
   @@index([gender])

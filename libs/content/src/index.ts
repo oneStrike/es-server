@@ -1,6 +1,7 @@
 export * from './author'
 export * from './category'
 export * from './comic/chapter'
+export * from './comic/chapter-comment'
 export * from './comic/chapter-content'
 export * from './comic/core'
 export * from './tag'

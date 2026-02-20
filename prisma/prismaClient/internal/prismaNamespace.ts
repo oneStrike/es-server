@@ -419,7 +419,6 @@ export const ModelName = {
   ForumReport: 'ForumReport',
   ForumSectionGroup: 'ForumSectionGroup',
   ForumSection: 'ForumSection',
-  ForumSensitiveWord: 'ForumSensitiveWord',
   ForumTag: 'ForumTag',
   ForumTopicFavorite: 'ForumTopicFavorite',
   ForumTopicLike: 'ForumTopicLike',
@@ -428,12 +427,15 @@ export const ModelName = {
   ForumUserActionLog: 'ForumUserActionLog',
   ForumView: 'ForumView',
   RequestLog: 'RequestLog',
+  SensitiveWord: 'SensitiveWord',
   SystemConfig: 'SystemConfig',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
   WorkAuthor: 'WorkAuthor',
   WorkComicAuthor: 'WorkComicAuthor',
   WorkComicCategory: 'WorkComicCategory',
+  WorkComicChapterCommentReport: 'WorkComicChapterCommentReport',
+  WorkComicChapterComment: 'WorkComicChapterComment',
   WorkComicChapterDownload: 'WorkComicChapterDownload',
   WorkComicChapterLike: 'WorkComicChapterLike',
   WorkComicChapterPurchase: 'WorkComicChapterPurchase',
@@ -459,7 +461,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userExperienceRecord" | "userExperienceRule" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userPointRecord" | "userPointRule" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumSensitiveWord" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapterDownload" | "workComicChapterLike" | "workComicChapterPurchase" | "workComicChapter" | "workComicFavorite" | "workComicLike" | "workComicTag" | "workComic" | "workCategory" | "workTag"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userExperienceRecord" | "userExperienceRule" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userPointRecord" | "userPointRule" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComicAuthor" | "workComicCategory" | "workComicChapterCommentReport" | "workComicChapterComment" | "workComicChapterDownload" | "workComicChapterLike" | "workComicChapterPurchase" | "workComicChapter" | "workComicFavorite" | "workComicLike" | "workComicTag" | "workComic" | "workCategory" | "workTag"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3053,80 +3055,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    ForumSensitiveWord: {
-      payload: Prisma.$ForumSensitiveWordPayload<ExtArgs>
-      fields: Prisma.ForumSensitiveWordFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumSensitiveWordFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumSensitiveWordFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload>
-        }
-        findFirst: {
-          args: Prisma.ForumSensitiveWordFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumSensitiveWordFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload>
-        }
-        findMany: {
-          args: Prisma.ForumSensitiveWordFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload>[]
-        }
-        create: {
-          args: Prisma.ForumSensitiveWordCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload>
-        }
-        createMany: {
-          args: Prisma.ForumSensitiveWordCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumSensitiveWordCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload>[]
-        }
-        delete: {
-          args: Prisma.ForumSensitiveWordDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload>
-        }
-        update: {
-          args: Prisma.ForumSensitiveWordUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumSensitiveWordDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumSensitiveWordUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumSensitiveWordUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumSensitiveWordUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumSensitiveWordPayload>
-        }
-        aggregate: {
-          args: Prisma.ForumSensitiveWordAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumSensitiveWord>
-        }
-        groupBy: {
-          args: Prisma.ForumSensitiveWordGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumSensitiveWordGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumSensitiveWordCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumSensitiveWordCountAggregateOutputType> | number
-        }
-      }
-    }
     ForumTag: {
       payload: Prisma.$ForumTagPayload<ExtArgs>
       fields: Prisma.ForumTagFieldRefs
@@ -3719,6 +3647,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SensitiveWord: {
+      payload: Prisma.$SensitiveWordPayload<ExtArgs>
+      fields: Prisma.SensitiveWordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SensitiveWordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SensitiveWordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload>
+        }
+        findFirst: {
+          args: Prisma.SensitiveWordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SensitiveWordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload>
+        }
+        findMany: {
+          args: Prisma.SensitiveWordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload>[]
+        }
+        create: {
+          args: Prisma.SensitiveWordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload>
+        }
+        createMany: {
+          args: Prisma.SensitiveWordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SensitiveWordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload>[]
+        }
+        delete: {
+          args: Prisma.SensitiveWordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload>
+        }
+        update: {
+          args: Prisma.SensitiveWordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload>
+        }
+        deleteMany: {
+          args: Prisma.SensitiveWordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SensitiveWordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SensitiveWordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload>[]
+        }
+        upsert: {
+          args: Prisma.SensitiveWordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SensitiveWordPayload>
+        }
+        aggregate: {
+          args: Prisma.SensitiveWordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSensitiveWord>
+        }
+        groupBy: {
+          args: Prisma.SensitiveWordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SensitiveWordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SensitiveWordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SensitiveWordCountAggregateOutputType> | number
+        }
+      }
+    }
     SystemConfig: {
       payload: Prisma.$SystemConfigPayload<ExtArgs>
       fields: Prisma.SystemConfigFieldRefs
@@ -4160,6 +4162,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.WorkComicCategoryCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.WorkComicCategoryCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkComicChapterCommentReport: {
+      payload: Prisma.$WorkComicChapterCommentReportPayload<ExtArgs>
+      fields: Prisma.WorkComicChapterCommentReportFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkComicChapterCommentReportFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkComicChapterCommentReportFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkComicChapterCommentReportFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkComicChapterCommentReportFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload>
+        }
+        findMany: {
+          args: Prisma.WorkComicChapterCommentReportFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload>[]
+        }
+        create: {
+          args: Prisma.WorkComicChapterCommentReportCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload>
+        }
+        createMany: {
+          args: Prisma.WorkComicChapterCommentReportCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkComicChapterCommentReportCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkComicChapterCommentReportDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload>
+        }
+        update: {
+          args: Prisma.WorkComicChapterCommentReportUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkComicChapterCommentReportDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkComicChapterCommentReportUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkComicChapterCommentReportUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkComicChapterCommentReportUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentReportPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkComicChapterCommentReportAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComicChapterCommentReport>
+        }
+        groupBy: {
+          args: Prisma.WorkComicChapterCommentReportGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterCommentReportGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkComicChapterCommentReportCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterCommentReportCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkComicChapterComment: {
+      payload: Prisma.$WorkComicChapterCommentPayload<ExtArgs>
+      fields: Prisma.WorkComicChapterCommentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkComicChapterCommentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkComicChapterCommentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkComicChapterCommentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkComicChapterCommentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload>
+        }
+        findMany: {
+          args: Prisma.WorkComicChapterCommentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload>[]
+        }
+        create: {
+          args: Prisma.WorkComicChapterCommentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload>
+        }
+        createMany: {
+          args: Prisma.WorkComicChapterCommentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkComicChapterCommentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkComicChapterCommentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload>
+        }
+        update: {
+          args: Prisma.WorkComicChapterCommentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkComicChapterCommentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkComicChapterCommentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkComicChapterCommentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkComicChapterCommentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicChapterCommentPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkComicChapterCommentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComicChapterComment>
+        }
+        groupBy: {
+          args: Prisma.WorkComicChapterCommentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterCommentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkComicChapterCommentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicChapterCommentCountAggregateOutputType> | number
         }
       }
     }
@@ -5604,27 +5754,6 @@ export const ForumSectionScalarFieldEnum = {
 export type ForumSectionScalarFieldEnum = (typeof ForumSectionScalarFieldEnum)[keyof typeof ForumSectionScalarFieldEnum]
 
 
-export const ForumSensitiveWordScalarFieldEnum = {
-  id: 'id',
-  word: 'word',
-  replaceWord: 'replaceWord',
-  level: 'level',
-  type: 'type',
-  matchMode: 'matchMode',
-  isEnabled: 'isEnabled',
-  hitCount: 'hitCount',
-  lastHitAt: 'lastHitAt',
-  version: 'version',
-  remark: 'remark',
-  createdBy: 'createdBy',
-  updatedBy: 'updatedBy',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ForumSensitiveWordScalarFieldEnum = (typeof ForumSensitiveWordScalarFieldEnum)[keyof typeof ForumSensitiveWordScalarFieldEnum]
-
-
 export const ForumTagScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -5753,10 +5882,38 @@ export const RequestLogScalarFieldEnum = {
 export type RequestLogScalarFieldEnum = (typeof RequestLogScalarFieldEnum)[keyof typeof RequestLogScalarFieldEnum]
 
 
+export const SensitiveWordScalarFieldEnum = {
+  id: 'id',
+  word: 'word',
+  replaceWord: 'replaceWord',
+  level: 'level',
+  type: 'type',
+  matchMode: 'matchMode',
+  isEnabled: 'isEnabled',
+  hitCount: 'hitCount',
+  lastHitAt: 'lastHitAt',
+  version: 'version',
+  remark: 'remark',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SensitiveWordScalarFieldEnum = (typeof SensitiveWordScalarFieldEnum)[keyof typeof SensitiveWordScalarFieldEnum]
+
+
 export const SystemConfigScalarFieldEnum = {
   id: 'id',
+  updatedById: 'updatedById',
   aliyunConfig: 'aliyunConfig',
   growthAntifraudConfig: 'growthAntifraudConfig',
+  contentReviewPolicy: 'contentReviewPolicy',
+  commentRateLimitConfig: 'commentRateLimitConfig',
+  siteConfig: 'siteConfig',
+  maintenanceConfig: 'maintenanceConfig',
+  registerConfig: 'registerConfig',
+  notifyConfig: 'notifyConfig',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -5838,6 +5995,47 @@ export const WorkComicCategoryScalarFieldEnum = {
 } as const
 
 export type WorkComicCategoryScalarFieldEnum = (typeof WorkComicCategoryScalarFieldEnum)[keyof typeof WorkComicCategoryScalarFieldEnum]
+
+
+export const WorkComicChapterCommentReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  handlerId: 'handlerId',
+  commentId: 'commentId',
+  reason: 'reason',
+  description: 'description',
+  evidenceUrl: 'evidenceUrl',
+  status: 'status',
+  handlingNote: 'handlingNote',
+  handledAt: 'handledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkComicChapterCommentReportScalarFieldEnum = (typeof WorkComicChapterCommentReportScalarFieldEnum)[keyof typeof WorkComicChapterCommentReportScalarFieldEnum]
+
+
+export const WorkComicChapterCommentScalarFieldEnum = {
+  id: 'id',
+  chapterId: 'chapterId',
+  userId: 'userId',
+  content: 'content',
+  sensitiveWordHits: 'sensitiveWordHits',
+  replyToId: 'replyToId',
+  actualReplyToId: 'actualReplyToId',
+  floor: 'floor',
+  isHidden: 'isHidden',
+  auditStatus: 'auditStatus',
+  auditReason: 'auditReason',
+  auditAt: 'auditAt',
+  auditById: 'auditById',
+  auditRole: 'auditRole',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type WorkComicChapterCommentScalarFieldEnum = (typeof WorkComicChapterCommentScalarFieldEnum)[keyof typeof WorkComicChapterCommentScalarFieldEnum]
 
 
 export const WorkComicChapterDownloadScalarFieldEnum = {
@@ -6287,7 +6485,6 @@ export type GlobalOmitConfig = {
   forumReport?: Prisma.ForumReportOmit
   forumSectionGroup?: Prisma.ForumSectionGroupOmit
   forumSection?: Prisma.ForumSectionOmit
-  forumSensitiveWord?: Prisma.ForumSensitiveWordOmit
   forumTag?: Prisma.ForumTagOmit
   forumTopicFavorite?: Prisma.ForumTopicFavoriteOmit
   forumTopicLike?: Prisma.ForumTopicLikeOmit
@@ -6296,12 +6493,15 @@ export type GlobalOmitConfig = {
   forumUserActionLog?: Prisma.ForumUserActionLogOmit
   forumView?: Prisma.ForumViewOmit
   requestLog?: Prisma.RequestLogOmit
+  sensitiveWord?: Prisma.SensitiveWordOmit
   systemConfig?: Prisma.SystemConfigOmit
   dictionary?: Prisma.DictionaryOmit
   dictionaryItem?: Prisma.DictionaryItemOmit
   workAuthor?: Prisma.WorkAuthorOmit
   workComicAuthor?: Prisma.WorkComicAuthorOmit
   workComicCategory?: Prisma.WorkComicCategoryOmit
+  workComicChapterCommentReport?: Prisma.WorkComicChapterCommentReportOmit
+  workComicChapterComment?: Prisma.WorkComicChapterCommentOmit
   workComicChapterDownload?: Prisma.WorkComicChapterDownloadOmit
   workComicChapterLike?: Prisma.WorkComicChapterLikeOmit
   workComicChapterPurchase?: Prisma.WorkComicChapterPurchaseOmit

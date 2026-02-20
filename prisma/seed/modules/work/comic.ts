@@ -348,6 +348,7 @@ export async function createInitialComicGrowthRules(prisma: any) {
     if (!existingRule) {
       await prisma.userPointRule.create({
         data: {
+          name: ruleData.name,
           type: ruleData.type,
           points: ruleData.points,
           dailyLimit: ruleData.dailyLimit ?? 0,

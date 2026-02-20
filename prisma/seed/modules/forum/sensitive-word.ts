@@ -111,12 +111,12 @@ export async function createInitialForumSensitiveWords(prisma: any) {
   ]
 
   for (const wordData of INITIAL_SENSITIVE_WORDS) {
-    const existingWord = await prisma.forumSensitiveWord.findFirst({
+    const existingWord = await prisma.sensitiveWord.findFirst({
       where: { word: wordData.word },
     })
 
     if (!existingWord) {
-      await prisma.forumSensitiveWord.create({
+      await prisma.sensitiveWord.create({
         data: wordData,
       })
     }

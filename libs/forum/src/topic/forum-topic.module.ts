@@ -1,8 +1,8 @@
+import { SensitiveWordModule } from '@libs/sensitive-word'
 import { UserGrowthEventModule } from '@libs/user/growth-event'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
-import { ForumSensitiveWordModule } from '../sensitive-word/sensitive-word.module'
 import { ForumConfigModule } from './../config/forum-config.module'
 import { ForumTopicService } from './forum-topic.service'
 
@@ -13,7 +13,7 @@ import { ForumTopicService } from './forum-topic.service'
 @Module({
   imports: [
     UserGrowthEventModule,
-    ForumSensitiveWordModule,
+    SensitiveWordModule,
     ForumConfigModule,
     ForumCounterModule,
     ForumUserActionLogModule,

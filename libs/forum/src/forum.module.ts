@@ -1,3 +1,4 @@
+import { SensitiveWordModule } from '@libs/sensitive-word'
 import { UserExperienceModule } from '@libs/user/experience'
 import { UserLevelRuleModule } from '@libs/user/level-rule'
 import { UserPointModule } from '@libs/user/point'
@@ -13,7 +14,6 @@ import { ForumReportModule } from './report'
 import { ForumSearchModule } from './search'
 import { ForumSectionModule } from './section'
 import { ForumSectionGroupModule } from './section-group'
-import { ForumSensitiveWordModule } from './sensitive-word'
 import { ForumTagModule } from './tag'
 import { ForumTopicModule } from './topic'
 import { ForumTopicFavoriteModule } from './topic-favorite'
@@ -40,7 +40,7 @@ import { ForumViewModule } from './view'
     ForumSearchModule,
     ForumSectionModule,
     ForumSectionGroupModule,
-    ForumSensitiveWordModule,
+    SensitiveWordModule,
     ForumTagModule,
     ForumTopicModule,
     ForumTopicFavoriteModule,
@@ -62,7 +62,7 @@ import { ForumViewModule } from './view'
     ForumSearchModule,
     ForumSectionModule,
     ForumSectionGroupModule,
-    ForumSensitiveWordModule,
+    SensitiveWordModule,
     ForumTagModule,
     ForumTopicModule,
     ForumTopicFavoriteModule,

@@ -28,28 +28,39 @@ export type AggregateSystemConfig = {
 
 export type SystemConfigAvgAggregateOutputType = {
   id: number | null
+  updatedById: number | null
 }
 
 export type SystemConfigSumAggregateOutputType = {
   id: number | null
+  updatedById: number | null
 }
 
 export type SystemConfigMinAggregateOutputType = {
   id: number | null
+  updatedById: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type SystemConfigMaxAggregateOutputType = {
   id: number | null
+  updatedById: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
 
 export type SystemConfigCountAggregateOutputType = {
   id: number
+  updatedById: number
   aliyunConfig: number
   growthAntifraudConfig: number
+  contentReviewPolicy: number
+  commentRateLimitConfig: number
+  siteConfig: number
+  maintenanceConfig: number
+  registerConfig: number
+  notifyConfig: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -58,28 +69,39 @@ export type SystemConfigCountAggregateOutputType = {
 
 export type SystemConfigAvgAggregateInputType = {
   id?: true
+  updatedById?: true
 }
 
 export type SystemConfigSumAggregateInputType = {
   id?: true
+  updatedById?: true
 }
 
 export type SystemConfigMinAggregateInputType = {
   id?: true
+  updatedById?: true
   createdAt?: true
   updatedAt?: true
 }
 
 export type SystemConfigMaxAggregateInputType = {
   id?: true
+  updatedById?: true
   createdAt?: true
   updatedAt?: true
 }
 
 export type SystemConfigCountAggregateInputType = {
   id?: true
+  updatedById?: true
   aliyunConfig?: true
   growthAntifraudConfig?: true
+  contentReviewPolicy?: true
+  commentRateLimitConfig?: true
+  siteConfig?: true
+  maintenanceConfig?: true
+  registerConfig?: true
+  notifyConfig?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -173,8 +195,15 @@ export type SystemConfigGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 
 export type SystemConfigGroupByOutputType = {
   id: number
+  updatedById: number | null
   aliyunConfig: runtime.JsonValue | null
   growthAntifraudConfig: runtime.JsonValue | null
+  contentReviewPolicy: runtime.JsonValue | null
+  commentRateLimitConfig: runtime.JsonValue | null
+  siteConfig: runtime.JsonValue | null
+  maintenanceConfig: runtime.JsonValue | null
+  registerConfig: runtime.JsonValue | null
+  notifyConfig: runtime.JsonValue | null
   createdAt: Date
   updatedAt: Date
   _count: SystemConfigCountAggregateOutputType | null
@@ -204,18 +233,34 @@ export type SystemConfigWhereInput = {
   OR?: Prisma.SystemConfigWhereInput[]
   NOT?: Prisma.SystemConfigWhereInput | Prisma.SystemConfigWhereInput[]
   id?: Prisma.IntFilter<"SystemConfig"> | number
+  updatedById?: Prisma.IntNullableFilter<"SystemConfig"> | number | null
   aliyunConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   growthAntifraudConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
+  commentRateLimitConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  siteConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  maintenanceConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  registerConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  notifyConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
+  updatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
 }
 
 export type SystemConfigOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   aliyunConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   growthAntifraudConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  contentReviewPolicy?: Prisma.SortOrderInput | Prisma.SortOrder
+  commentRateLimitConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  siteConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  maintenanceConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  registerConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  notifyConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  updatedBy?: Prisma.AppUserOrderByWithRelationInput
 }
 
 export type SystemConfigWhereUniqueInput = Prisma.AtLeast<{
@@ -223,16 +268,31 @@ export type SystemConfigWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.SystemConfigWhereInput | Prisma.SystemConfigWhereInput[]
   OR?: Prisma.SystemConfigWhereInput[]
   NOT?: Prisma.SystemConfigWhereInput | Prisma.SystemConfigWhereInput[]
+  updatedById?: Prisma.IntNullableFilter<"SystemConfig"> | number | null
   aliyunConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   growthAntifraudConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
+  commentRateLimitConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  siteConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  maintenanceConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  registerConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  notifyConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
+  updatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
 }, "id">
 
 export type SystemConfigOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   aliyunConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   growthAntifraudConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  contentReviewPolicy?: Prisma.SortOrderInput | Prisma.SortOrder
+  commentRateLimitConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  siteConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  maintenanceConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  registerConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  notifyConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SystemConfigCountOrderByAggregateInput
@@ -247,8 +307,15 @@ export type SystemConfigScalarWhereWithAggregatesInput = {
   OR?: Prisma.SystemConfigScalarWhereWithAggregatesInput[]
   NOT?: Prisma.SystemConfigScalarWhereWithAggregatesInput | Prisma.SystemConfigScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"SystemConfig"> | number
+  updatedById?: Prisma.IntNullableWithAggregatesFilter<"SystemConfig"> | number | null
   aliyunConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
   growthAntifraudConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
+  contentReviewPolicy?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
+  commentRateLimitConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
+  siteConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
+  maintenanceConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
+  registerConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
+  notifyConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SystemConfig"> | Date | string
 }
@@ -256,14 +323,28 @@ export type SystemConfigScalarWhereWithAggregatesInput = {
 export type SystemConfigCreateInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
+  updatedBy?: Prisma.AppUserCreateNestedOneWithoutUpdatedSystemConfigsInput
 }
 
 export type SystemConfigUncheckedCreateInput = {
   id?: number
+  updatedById?: number | null
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -271,22 +352,43 @@ export type SystemConfigUncheckedCreateInput = {
 export type SystemConfigUpdateInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedBy?: Prisma.AppUserUpdateOneWithoutUpdatedSystemConfigsNestedInput
 }
 
 export type SystemConfigUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type SystemConfigCreateManyInput = {
   id?: number
+  updatedById?: number | null
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -294,95 +396,373 @@ export type SystemConfigCreateManyInput = {
 export type SystemConfigUpdateManyMutationInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type SystemConfigUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
+export type SystemConfigListRelationFilter = {
+  every?: Prisma.SystemConfigWhereInput
+  some?: Prisma.SystemConfigWhereInput
+  none?: Prisma.SystemConfigWhereInput
+}
+
+export type SystemConfigOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type SystemConfigCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
   aliyunConfig?: Prisma.SortOrder
   growthAntifraudConfig?: Prisma.SortOrder
+  contentReviewPolicy?: Prisma.SortOrder
+  commentRateLimitConfig?: Prisma.SortOrder
+  siteConfig?: Prisma.SortOrder
+  maintenanceConfig?: Prisma.SortOrder
+  registerConfig?: Prisma.SortOrder
+  notifyConfig?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type SystemConfigAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
 }
 
 export type SystemConfigMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type SystemConfigMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type SystemConfigSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  updatedById?: Prisma.SortOrder
+}
+
+export type SystemConfigCreateNestedManyWithoutUpdatedByInput = {
+  create?: Prisma.XOR<Prisma.SystemConfigCreateWithoutUpdatedByInput, Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput> | Prisma.SystemConfigCreateWithoutUpdatedByInput[] | Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput[]
+  connectOrCreate?: Prisma.SystemConfigCreateOrConnectWithoutUpdatedByInput | Prisma.SystemConfigCreateOrConnectWithoutUpdatedByInput[]
+  createMany?: Prisma.SystemConfigCreateManyUpdatedByInputEnvelope
+  connect?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+}
+
+export type SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput = {
+  create?: Prisma.XOR<Prisma.SystemConfigCreateWithoutUpdatedByInput, Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput> | Prisma.SystemConfigCreateWithoutUpdatedByInput[] | Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput[]
+  connectOrCreate?: Prisma.SystemConfigCreateOrConnectWithoutUpdatedByInput | Prisma.SystemConfigCreateOrConnectWithoutUpdatedByInput[]
+  createMany?: Prisma.SystemConfigCreateManyUpdatedByInputEnvelope
+  connect?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+}
+
+export type SystemConfigUpdateManyWithoutUpdatedByNestedInput = {
+  create?: Prisma.XOR<Prisma.SystemConfigCreateWithoutUpdatedByInput, Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput> | Prisma.SystemConfigCreateWithoutUpdatedByInput[] | Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput[]
+  connectOrCreate?: Prisma.SystemConfigCreateOrConnectWithoutUpdatedByInput | Prisma.SystemConfigCreateOrConnectWithoutUpdatedByInput[]
+  upsert?: Prisma.SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput | Prisma.SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput[]
+  createMany?: Prisma.SystemConfigCreateManyUpdatedByInputEnvelope
+  set?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+  disconnect?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+  delete?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+  connect?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+  update?: Prisma.SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput | Prisma.SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput[]
+  updateMany?: Prisma.SystemConfigUpdateManyWithWhereWithoutUpdatedByInput | Prisma.SystemConfigUpdateManyWithWhereWithoutUpdatedByInput[]
+  deleteMany?: Prisma.SystemConfigScalarWhereInput | Prisma.SystemConfigScalarWhereInput[]
+}
+
+export type SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput = {
+  create?: Prisma.XOR<Prisma.SystemConfigCreateWithoutUpdatedByInput, Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput> | Prisma.SystemConfigCreateWithoutUpdatedByInput[] | Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput[]
+  connectOrCreate?: Prisma.SystemConfigCreateOrConnectWithoutUpdatedByInput | Prisma.SystemConfigCreateOrConnectWithoutUpdatedByInput[]
+  upsert?: Prisma.SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput | Prisma.SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput[]
+  createMany?: Prisma.SystemConfigCreateManyUpdatedByInputEnvelope
+  set?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+  disconnect?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+  delete?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+  connect?: Prisma.SystemConfigWhereUniqueInput | Prisma.SystemConfigWhereUniqueInput[]
+  update?: Prisma.SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput | Prisma.SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput[]
+  updateMany?: Prisma.SystemConfigUpdateManyWithWhereWithoutUpdatedByInput | Prisma.SystemConfigUpdateManyWithWhereWithoutUpdatedByInput[]
+  deleteMany?: Prisma.SystemConfigScalarWhereInput | Prisma.SystemConfigScalarWhereInput[]
+}
+
+export type SystemConfigCreateWithoutUpdatedByInput = {
+  aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SystemConfigUncheckedCreateWithoutUpdatedByInput = {
+  id?: number
+  aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SystemConfigCreateOrConnectWithoutUpdatedByInput = {
+  where: Prisma.SystemConfigWhereUniqueInput
+  create: Prisma.XOR<Prisma.SystemConfigCreateWithoutUpdatedByInput, Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput>
+}
+
+export type SystemConfigCreateManyUpdatedByInputEnvelope = {
+  data: Prisma.SystemConfigCreateManyUpdatedByInput | Prisma.SystemConfigCreateManyUpdatedByInput[]
+  skipDuplicates?: boolean
+}
+
+export type SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput = {
+  where: Prisma.SystemConfigWhereUniqueInput
+  update: Prisma.XOR<Prisma.SystemConfigUpdateWithoutUpdatedByInput, Prisma.SystemConfigUncheckedUpdateWithoutUpdatedByInput>
+  create: Prisma.XOR<Prisma.SystemConfigCreateWithoutUpdatedByInput, Prisma.SystemConfigUncheckedCreateWithoutUpdatedByInput>
+}
+
+export type SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput = {
+  where: Prisma.SystemConfigWhereUniqueInput
+  data: Prisma.XOR<Prisma.SystemConfigUpdateWithoutUpdatedByInput, Prisma.SystemConfigUncheckedUpdateWithoutUpdatedByInput>
+}
+
+export type SystemConfigUpdateManyWithWhereWithoutUpdatedByInput = {
+  where: Prisma.SystemConfigScalarWhereInput
+  data: Prisma.XOR<Prisma.SystemConfigUpdateManyMutationInput, Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByInput>
+}
+
+export type SystemConfigScalarWhereInput = {
+  AND?: Prisma.SystemConfigScalarWhereInput | Prisma.SystemConfigScalarWhereInput[]
+  OR?: Prisma.SystemConfigScalarWhereInput[]
+  NOT?: Prisma.SystemConfigScalarWhereInput | Prisma.SystemConfigScalarWhereInput[]
+  id?: Prisma.IntFilter<"SystemConfig"> | number
+  updatedById?: Prisma.IntNullableFilter<"SystemConfig"> | number | null
+  aliyunConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  growthAntifraudConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
+  commentRateLimitConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  siteConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  maintenanceConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  registerConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  notifyConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
+}
+
+export type SystemConfigCreateManyUpdatedByInput = {
+  id?: number
+  aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type SystemConfigUpdateWithoutUpdatedByInput = {
+  aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SystemConfigUncheckedUpdateWithoutUpdatedByInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type SystemConfigUncheckedUpdateManyWithoutUpdatedByInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
 
 export type SystemConfigSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  updatedById?: boolean
   aliyunConfig?: boolean
   growthAntifraudConfig?: boolean
+  contentReviewPolicy?: boolean
+  commentRateLimitConfig?: boolean
+  siteConfig?: boolean
+  maintenanceConfig?: boolean
+  registerConfig?: boolean
+  notifyConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
 }, ExtArgs["result"]["systemConfig"]>
 
 export type SystemConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  updatedById?: boolean
   aliyunConfig?: boolean
   growthAntifraudConfig?: boolean
+  contentReviewPolicy?: boolean
+  commentRateLimitConfig?: boolean
+  siteConfig?: boolean
+  maintenanceConfig?: boolean
+  registerConfig?: boolean
+  notifyConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
 }, ExtArgs["result"]["systemConfig"]>
 
 export type SystemConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  updatedById?: boolean
   aliyunConfig?: boolean
   growthAntifraudConfig?: boolean
+  contentReviewPolicy?: boolean
+  commentRateLimitConfig?: boolean
+  siteConfig?: boolean
+  maintenanceConfig?: boolean
+  registerConfig?: boolean
+  notifyConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
 }, ExtArgs["result"]["systemConfig"]>
 
 export type SystemConfigSelectScalar = {
   id?: boolean
+  updatedById?: boolean
   aliyunConfig?: boolean
   growthAntifraudConfig?: boolean
+  contentReviewPolicy?: boolean
+  commentRateLimitConfig?: boolean
+  siteConfig?: boolean
+  maintenanceConfig?: boolean
+  registerConfig?: boolean
+  notifyConfig?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SystemConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "aliyunConfig" | "growthAntifraudConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["systemConfig"]>
+export type SystemConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "updatedById" | "aliyunConfig" | "growthAntifraudConfig" | "contentReviewPolicy" | "commentRateLimitConfig" | "siteConfig" | "maintenanceConfig" | "registerConfig" | "notifyConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["systemConfig"]>
+export type SystemConfigInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
+}
+export type SystemConfigIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
+}
+export type SystemConfigIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
+}
 
 export type $SystemConfigPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SystemConfig"
-  objects: {}
+  objects: {
+    /**
+     * 关联最后修改人
+     */
+    updatedBy: Prisma.$AppUserPayload<ExtArgs> | null
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
      * 主键id
      */
     id: number
     /**
-     * 阿里云配置（JSON格式）
+     * 最后修改人ID（关联 app_user.id，可为空）
+     */
+    updatedById: number | null
+    /**
+     * 阿里云配置（JSON格式，包含 accessKeyId/accessKeySecret）
      */
     aliyunConfig: runtime.JsonValue | null
+    /**
+     * 成长防刷配置（JSON格式，冷却时间/每日上限/总上限）
+     */
     growthAntifraudConfig: runtime.JsonValue | null
+    /**
+     * 内容审核策略（JSON格式，敏感词等级处理策略）
+     */
+    contentReviewPolicy: runtime.JsonValue | null
+    /**
+     * 评论频率限制配置（JSON格式，按分钟/小时/天限流）
+     */
+    commentRateLimitConfig: runtime.JsonValue | null
+    /**
+     * 站点基础配置（JSON格式，名称/描述/关键词/Logo等）
+     */
+    siteConfig: runtime.JsonValue | null
+    /**
+     * 维护模式配置（JSON格式，开关与提示文案）
+     */
+    maintenanceConfig: runtime.JsonValue | null
+    /**
+     * 注册策略配置（JSON格式，注册开关/邮箱/手机验证）
+     */
+    registerConfig: runtime.JsonValue | null
+    /**
+     * 通知策略配置（JSON格式，邮件/站内/系统通知开关）
+     */
+    notifyConfig: runtime.JsonValue | null
     /**
      * 创建时间
      */
@@ -785,6 +1165,7 @@ readonly fields: SystemConfigFieldRefs;
  */
 export interface Prisma__SystemConfigClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  updatedBy<T extends Prisma.SystemConfig$updatedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SystemConfig$updatedByArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -815,8 +1196,15 @@ export interface Prisma__SystemConfigClient<T, Null = never, ExtArgs extends run
  */
 export interface SystemConfigFieldRefs {
   readonly id: Prisma.FieldRef<"SystemConfig", 'Int'>
+  readonly updatedById: Prisma.FieldRef<"SystemConfig", 'Int'>
   readonly aliyunConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
   readonly growthAntifraudConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
+  readonly contentReviewPolicy: Prisma.FieldRef<"SystemConfig", 'Json'>
+  readonly commentRateLimitConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
+  readonly siteConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
+  readonly maintenanceConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
+  readonly registerConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
+  readonly notifyConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
   readonly createdAt: Prisma.FieldRef<"SystemConfig", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"SystemConfig", 'DateTime'>
 }
@@ -835,6 +1223,10 @@ export type SystemConfigFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.
    * Omit specific fields from the SystemConfig
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
   /**
    * Filter, which SystemConfig to fetch.
    */
@@ -855,6 +1247,10 @@ export type SystemConfigFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exte
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
+  /**
    * Filter, which SystemConfig to fetch.
    */
   where: Prisma.SystemConfigWhereUniqueInput
@@ -873,6 +1269,10 @@ export type SystemConfigFindFirstArgs<ExtArgs extends runtime.Types.Extensions.I
    * Omit specific fields from the SystemConfig
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
   /**
    * Filter, which SystemConfig to fetch.
    */
@@ -923,6 +1323,10 @@ export type SystemConfigFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
+  /**
    * Filter, which SystemConfig to fetch.
    */
   where?: Prisma.SystemConfigWhereInput
@@ -972,6 +1376,10 @@ export type SystemConfigFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
+  /**
    * Filter, which SystemConfigs to fetch.
    */
   where?: Prisma.SystemConfigWhereInput
@@ -1016,6 +1424,10 @@ export type SystemConfigCreateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
+  /**
    * The data needed to create a SystemConfig.
    */
   data: Prisma.XOR<Prisma.SystemConfigCreateInput, Prisma.SystemConfigUncheckedCreateInput>
@@ -1050,6 +1462,10 @@ export type SystemConfigCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Ex
    */
   data: Prisma.SystemConfigCreateManyInput | Prisma.SystemConfigCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1064,6 +1480,10 @@ export type SystemConfigUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the SystemConfig
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
   /**
    * The data needed to update a SystemConfig.
    */
@@ -1117,6 +1537,10 @@ export type SystemConfigUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Ex
    * Limit how many SystemConfigs to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1131,6 +1555,10 @@ export type SystemConfigUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the SystemConfig
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
   /**
    * The filter to search for the SystemConfig to update in case it exists.
    */
@@ -1159,6 +1587,10 @@ export type SystemConfigDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
+  /**
    * Filter which SystemConfig to delete.
    */
   where: Prisma.SystemConfigWhereUniqueInput
@@ -1180,6 +1612,25 @@ export type SystemConfigDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
 }
 
 /**
+ * SystemConfig.updatedBy
+ */
+export type SystemConfig$updatedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AppUser
+   */
+  select?: Prisma.AppUserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AppUser
+   */
+  omit?: Prisma.AppUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AppUserInclude<ExtArgs> | null
+  where?: Prisma.AppUserWhereInput
+}
+
+/**
  * SystemConfig without action
  */
 export type SystemConfigDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1191,4 +1642,8 @@ export type SystemConfigDefaultArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the SystemConfig
    */
   omit?: Prisma.SystemConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
 }

@@ -47,9 +47,9 @@ export class SmsService {
     }
 
     try {
-      const dbConfig = await this.systemConfigService.findActiveConfig()
+      const dbConfig = (await this.systemConfigService.findActiveConfig()) as any
       if (dbConfig?.aliyunConfig) {
-        const aliyunConfig = dbConfig.aliyunConfig as unknown as AliyunConfigDto
+        const aliyunConfig = dbConfig.aliyunConfig as AliyunConfigDto
         // 简单校验必要字段
         if (aliyunConfig.accessKeyId && aliyunConfig.accessKeySecret) {
           this.cachedConfig = aliyunConfig
