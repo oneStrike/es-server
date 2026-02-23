@@ -22,7 +22,7 @@ import { ComicSerialStatusEnum } from '../comic.constant'
 /**
  * 作者信息DTO
  */
-class AuthorInfoDto extends PickType(BaseAuthorDto, ['id', 'name']) {}
+class AuthorInfoDto extends PickType(BaseAuthorDto, ['id', 'name', 'avatar']) { }
 
 /**
  * 漫画作者关联DTO
@@ -40,7 +40,7 @@ export class ComicAuthorDto {
 /**
  * 分类信息DTO
  */
-class CategoryInfoDto extends PickType(BaseCategoryDto, ['id', 'name']) {}
+class CategoryInfoDto extends PickType(BaseCategoryDto, ['id', 'name']) { }
 
 /**
  * 漫画分类关联DTO
@@ -58,7 +58,7 @@ export class ComicCategoryDto {
 /**
  * 标签信息DTO
  */
-export class TagInfoDto extends PickType(BaseTagDto, ['id', 'name']) {}
+export class TagInfoDto extends PickType(BaseTagDto, ['id', 'name']) { }
 
 /**
  * 漫画标签关联DTO
@@ -135,6 +135,7 @@ export class BaseComicDto extends BaseDto {
         author: {
           id: 1,
           name: '村上春树',
+          avatar: 'https://example.com/avatar.jpg',
         },
       },
       {
@@ -143,6 +144,7 @@ export class BaseComicDto extends BaseDto {
         author: {
           id: 2,
           name: '东野圭吾',
+          avatar: 'https://example.com/avatar.jpg',
         },
       },
     ],
@@ -404,7 +406,7 @@ export class CreateComicDto extends OmitType(BaseComicDto, [
 export class UpdateComicDto extends IntersectionType(
   PartialType(CreateComicDto),
   IdDto,
-) {}
+) { }
 
 /**
  * 查询漫画DTO
@@ -442,7 +444,7 @@ export class QueryComicDto extends IntersectionType(
 export class UpdateComicRecommendedDto extends IntersectionType(
   IdDto,
   PickType(BaseComicDto, ['isRecommended']),
-) {}
+) { }
 
 /**
  * 更新漫画发布状态DTO
@@ -450,7 +452,7 @@ export class UpdateComicRecommendedDto extends IntersectionType(
 export class UpdateComicStatusDto extends IntersectionType(
   IdDto,
   PickType(BaseComicDto, ['isPublished']),
-) {}
+) { }
 
 /**
  * 更新漫画热门状态DTO
@@ -458,7 +460,7 @@ export class UpdateComicStatusDto extends IntersectionType(
 export class UpdateComicHotDto extends IntersectionType(
   IdDto,
   PickType(BaseComicDto, ['isHot']),
-) {}
+) { }
 
 /**
  * 更新漫画新作状态DTO
@@ -466,7 +468,7 @@ export class UpdateComicHotDto extends IntersectionType(
 export class UpdateComicNewDto extends IntersectionType(
   IdDto,
   PickType(BaseComicDto, ['isNew']),
-) {}
+) { }
 
 export class ComicPageWithUserStatusDto extends BaseComicDto {
   @ApiProperty({

@@ -310,6 +310,7 @@ export class ComicService extends BaseService {
               select: {
                 id: true,
                 name: true,
+                avatar: true,
               },
             },
           },
