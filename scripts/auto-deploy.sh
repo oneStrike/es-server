@@ -5,7 +5,18 @@
 
 # Get script directory
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-PROJECT_ROOT="${SCRIPT_DIR}/../"
+
+# Project directory configuration
+# In production: script and project are siblings (deploy-scripts/auto-deploy.sh and es-server/)
+# In development: script is inside project (scripts/auto-deploy.sh)
+if [ -d "${SCRIPT_DIR}/../es-server" ]; then
+    PROJECT_ROOT="${SCRIPT_DIR}/../es-server"
+elif [ -f "${SCRIPT_DIR}/../package.json" ]; then
+    PROJECT_ROOT="${SCRIPT_DIR}/.."
+else
+    echo "ERROR: Cannot find project directory. Please ensure the project folder is named 'es-server' and is located alongside the script."
+    exit 1
+fi
 
 # Colors
 GREEN='\033[0;32m'

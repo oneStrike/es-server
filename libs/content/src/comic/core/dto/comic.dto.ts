@@ -22,7 +22,7 @@ import { ComicSerialStatusEnum } from '../comic.constant'
 /**
  * 作者信息DTO
  */
-class AuthorInfoDto extends PickType(BaseAuthorDto, ['id', 'name']) {}
+class AuthorInfoDto extends PickType(BaseAuthorDto, ['id', 'name', 'avatar']) {}
 
 /**
  * 漫画作者关联DTO
