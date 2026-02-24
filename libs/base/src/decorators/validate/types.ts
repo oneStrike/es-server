@@ -19,7 +19,7 @@ export interface StringPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: string | null
   /** 默认值 */
-  default?: string
+  default?: string | null
   /** 字符串类型，支持ISO8601日期格式 */
   type?: 'ISO8601'
   /** 最大长度 */
@@ -37,13 +37,13 @@ export interface StringPropertyOptions extends BaseValidateOptions {
  */
 export interface NumberPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
-  example?: number
+  example?: number | null
   /** 最大值 */
   max?: number
   /** 最小值 */
   min?: number
   /** 默认值 */
-  default?: number
+  default?: number | null
   /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
   validation?: boolean
 }

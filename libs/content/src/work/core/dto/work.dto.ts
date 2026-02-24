@@ -4,6 +4,7 @@ import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
@@ -12,7 +13,6 @@ import { BaseAuthorDto } from '@libs/content/author'
 import { BaseCategoryDto } from '@libs/content/category'
 import { BaseTagDto } from '@libs/content/tag'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -25,7 +25,7 @@ class AuthorInfoDto extends PickType(BaseAuthorDto, ['id', 'name', 'avatar']) {}
 
 /// 作品作者关联DTO
 export class WorkAuthorRelationDto {
-  @ApiProperty({
+  @NestedProperty({
     description: '作者信息',
     example: {
       id: 1,
@@ -34,20 +34,23 @@ export class WorkAuthorRelationDto {
     },
     required: true,
     type: AuthorInfoDto,
+    validation: false,
   })
   author!: AuthorInfoDto
 
-  @ApiProperty({
+  @NumberProperty({
     description: '排序顺序',
     example: 0,
     required: false,
+    validation: false,
   })
   sortOrder?: number
 
-  @ApiProperty({
+  @StringProperty({
     description: '角色类型',
     example: '作者',
     required: false,
+    validation: false,
   })
   role?: string
 }
@@ -57,18 +60,20 @@ class CategoryInfoDto extends PickType(BaseCategoryDto, ['id', 'name', 'icon']) 
 
 /// 作品分类关联DTO
 export class WorkCategoryRelationDto {
-  @ApiProperty({
+  @NestedProperty({
     description: '分类信息',
     example: { id: 1, name: '科幻', icon: 'https://example.com/icon.jpg' },
     required: true,
     type: CategoryInfoDto,
+    validation: false,
   })
   category!: CategoryInfoDto
 
-  @ApiProperty({
+  @NumberProperty({
     description: '排序顺序',
     example: 0,
     required: false,
+    validation: false,
   })
   sortOrder?: number
 }
@@ -78,18 +83,20 @@ class TagInfoDto extends PickType(BaseTagDto, ['id', 'name', 'icon']) {}
 
 /// 作品标签关联DTO
 export class WorkTagRelationDto {
-  @ApiProperty({
+  @NestedProperty({
     description: '标签信息',
     example: { id: 1, name: '热血', icon: 'https://example.com/icon.jpg' },
     required: true,
     type: TagInfoDto,
+    validation: false,
   })
   tag!: TagInfoDto
 
-  @ApiProperty({
+  @NumberProperty({
     description: '排序顺序',
     example: 0,
     required: false,
+    validation: false,
   })
   sortOrder?: number
 }
@@ -214,11 +221,11 @@ export class BaseWorkDto extends BaseDto {
   })
   publishAt?: Date
 
-  @ApiProperty({
+  @DateProperty({
     description: '最后更新时间',
     example: '2025-10-10',
     required: false,
-    type: Date,
+    validation: false,
   })
   lastUpdated?: Date
 
@@ -309,7 +316,7 @@ export class BaseWorkDto extends BaseDto {
   })
   recommendWeight?: number
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '作品作者',
     example: [
       {
@@ -319,11 +326,13 @@ export class BaseWorkDto extends BaseDto {
       },
     ],
     required: true,
-    type: [WorkAuthorRelationDto],
+    itemClass: WorkAuthorRelationDto,
+    itemType: 'object',
+    validation: false,
   })
   authors!: WorkAuthorRelationDto[]
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '作品分类',
     example: [
       {
@@ -332,11 +341,13 @@ export class BaseWorkDto extends BaseDto {
       },
     ],
     required: true,
-    type: [WorkCategoryRelationDto],
+    itemClass: WorkCategoryRelationDto,
+    itemType: 'object',
+    validation: false,
   })
   categories!: WorkCategoryRelationDto[]
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '作品标签',
     example: [
       {
@@ -345,7 +356,9 @@ export class BaseWorkDto extends BaseDto {
       },
     ],
     required: true,
-    type: [WorkTagRelationDto],
+    itemClass: WorkTagRelationDto,
+    itemType: 'object',
+    validation: false,
   })
   tags!: WorkTagRelationDto[]
 }
@@ -424,17 +437,19 @@ export class QueryWorkDto extends IntersectionType(
 
 /// 作品用户状态字段DTO
 export class WorkUserStatusFieldsDto {
-  @ApiProperty({
+  @BooleanProperty({
     description: '是否已点赞',
     example: true,
     required: true,
+    validation: false,
   })
   liked!: boolean
 
-  @ApiProperty({
+  @BooleanProperty({
     description: '是否已收藏',
     example: false,
     required: true,
+    validation: false,
   })
   favorited!: boolean
 }

@@ -1,4 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger'
+import {
+  ArrayProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/base/decorators'
 import {
   SensitiveWordLevelEnum,
   SensitiveWordTypeEnum,
@@ -9,28 +16,32 @@ import {
  * 级别统计结果DTO
  */
 export class SensitiveWordLevelStatisticsDto {
-  @ApiProperty({
+  @EnumProperty({
     description: '敏感词级别',
     example: SensitiveWordLevelEnum.SEVERE,
     enum: SensitiveWordLevelEnum,
+    validation: false,
   })
   level!: number
 
-  @ApiProperty({
+  @StringProperty({
     description: '级别名称',
     example: '严重',
+    validation: false,
   })
   levelName!: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '该级别的敏感词数量',
     example: 100,
+    validation: false,
   })
   count!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '该级别的敏感词命中总次数',
     example: 5000,
+    validation: false,
   })
   hitCount!: number
 }
@@ -39,28 +50,32 @@ export class SensitiveWordLevelStatisticsDto {
  * 类型统计结果DTO
  */
 export class SensitiveWordTypeStatisticsDto {
-  @ApiProperty({
+  @EnumProperty({
     description: '敏感词类型',
     example: SensitiveWordTypeEnum.POLITICS,
     enum: SensitiveWordTypeEnum,
+    validation: false,
   })
   type!: number
 
-  @ApiProperty({
+  @StringProperty({
     description: '类型名称',
     example: '政治',
+    validation: false,
   })
   typeName!: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '该类型的敏感词数量',
     example: 100,
+    validation: false,
   })
   count!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '该类型的敏感词命中总次数',
     example: 5000,
+    validation: false,
   })
   hitCount!: number
 }
@@ -69,34 +84,39 @@ export class SensitiveWordTypeStatisticsDto {
  * 热门敏感词统计DTO
  */
 export class SensitiveWordTopHitStatisticsDto {
-  @ApiProperty({
+  @StringProperty({
     description: '敏感词',
     example: '测试',
+    validation: false,
   })
   word!: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '命中次数',
     example: 100,
+    validation: false,
   })
   hitCount!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '敏感词级别',
     example: SensitiveWordLevelEnum.SEVERE,
+    validation: false,
   })
   level!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '敏感词类型',
     example: SensitiveWordTypeEnum.POLITICS,
+    validation: false,
   })
   type!: number
 
-  @ApiProperty({
+  @DateProperty({
     description: '最后命中时间',
     example: '2024-01-01T00:00:00Z',
     required: false,
+    validation: false,
   })
   lastHitAt?: Date
 }
@@ -105,33 +125,38 @@ export class SensitiveWordTopHitStatisticsDto {
  * 最近命中敏感词统计DTO
  */
 export class SensitiveWordRecentHitStatisticsDto {
-  @ApiProperty({
+  @StringProperty({
     description: '敏感词',
     example: '测试',
+    validation: false,
   })
   word!: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '命中次数',
     example: 100,
+    validation: false,
   })
   hitCount!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '敏感词级别',
     example: SensitiveWordLevelEnum.SEVERE,
+    validation: false,
   })
   level!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '敏感词类型',
     example: SensitiveWordTypeEnum.POLITICS,
+    validation: false,
   })
   type!: number
 
-  @ApiProperty({
+  @DateProperty({
     description: '最后命中时间',
     example: '2024-01-01T00:00:00Z',
+    validation: false,
   })
   lastHitAt!: Date
 }
@@ -140,7 +165,7 @@ export class SensitiveWordRecentHitStatisticsDto {
  * 统计查询参数DTO
  */
 export class SensitiveWordStatisticsQueryDto {
-  @ApiProperty({
+  @EnumProperty({
     description: '统计类型',
     enum: StatisticsTypeEnum,
     required: false,
@@ -153,16 +178,17 @@ export class SensitiveWordStatisticsQueryDto {
  * 统计查询响应DTO
  */
 export class SensitiveWordStatisticsResponseDto {
-  @ApiProperty({
+  @EnumProperty({
     description: '统计类型',
     enum: StatisticsTypeEnum,
     example: StatisticsTypeEnum.LEVEL,
+    validation: false,
   })
   type!: StatisticsTypeEnum
 
-  @ApiProperty({
+  @JsonProperty({
     description: '统计数据',
-    type: Object,
+    validation: false,
   })
   data!:
     | SensitiveWordLevelStatisticsDto[]
@@ -175,69 +201,84 @@ export class SensitiveWordStatisticsResponseDto {
  * 完整统计数据DTO
  */
 export class SensitiveWordStatisticsDataDto {
-  @ApiProperty({
+  @NumberProperty({
     description: '敏感词总数',
     example: 100,
+    validation: false,
   })
   totalWords!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '启用的敏感词数量',
     example: 80,
+    validation: false,
   })
   enabledWords!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '禁用的敏感词数量',
     example: 20,
+    validation: false,
   })
   disabledWords!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '总命中次数',
     example: 5000,
+    validation: false,
   })
   totalHits!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '今日命中次数',
     example: 100,
+    validation: false,
   })
   todayHits!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '最近一周命中次数',
     example: 700,
+    validation: false,
   })
   lastWeekHits!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '最近一月命中次数',
     example: 3000,
+    validation: false,
   })
   lastMonthHits!: number
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '级别统计',
-    type: [SensitiveWordLevelStatisticsDto],
+    itemClass: SensitiveWordLevelStatisticsDto,
+    itemType: 'object',
+    validation: false,
   })
   levelStatistics!: SensitiveWordLevelStatisticsDto[]
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '类型统计',
-    type: [SensitiveWordTypeStatisticsDto],
+    itemClass: SensitiveWordTypeStatisticsDto,
+    itemType: 'object',
+    validation: false,
   })
   typeStatistics!: SensitiveWordTypeStatisticsDto[]
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '热门敏感词',
-    type: [SensitiveWordTopHitStatisticsDto],
+    itemClass: SensitiveWordTopHitStatisticsDto,
+    itemType: 'object',
+    validation: false,
   })
   topHitWords!: SensitiveWordTopHitStatisticsDto[]
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '最近命中的敏感词',
-    type: [SensitiveWordRecentHitStatisticsDto],
+    itemClass: SensitiveWordRecentHitStatisticsDto,
+    itemType: 'object',
+    validation: false,
   })
   recentHitWords!: SensitiveWordRecentHitStatisticsDto[]
 }

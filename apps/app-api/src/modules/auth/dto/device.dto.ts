@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { DateProperty, JsonProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
 
 /**
  * 用户设备信息 DTO
@@ -8,25 +8,27 @@ export class UserDeviceDto {
   /**
    * Token ID
    */
-  @ApiProperty({
+  @NumberProperty({
     description: 'Token ID',
     example: 1,
+    validation: false,
   })
   id: number
 
   /**
    * JWT Token ID（唯一标识）
    */
-  @ApiProperty({
+  @StringProperty({
     description: 'JWT Token ID',
     example: '550e8400-e29b-41d4-a716-446655440000',
+    validation: false,
   })
   jti: string
 
   /**
    * 设备信息（JSON 格式）
    */
-  @ApiProperty({
+  @JsonProperty({
     description: '设备信息',
     example: {
       deviceType: 'mobile',
@@ -35,33 +37,37 @@ export class UserDeviceDto {
       browser: 'Safari',
       browserVersion: '16.0',
     },
+    validation: false,
   })
   deviceInfo: any
 
   /**
    * IP 地址
    */
-  @ApiProperty({
+  @StringProperty({
     description: 'IP 地址',
     example: '192.168.1.1',
+    validation: false,
   })
   ipAddress: string
 
   /**
    * 最后使用时间
    */
-  @ApiProperty({
+  @DateProperty({
     description: '最后使用时间',
     example: '2023-09-15T00:00:00.000Z',
+    validation: false,
   })
   lastUsedAt: Date
 
   /**
    * 创建时间
    */
-  @ApiProperty({
+  @DateProperty({
     description: '创建时间',
     example: '2023-09-15T00:00:00.000Z',
+    validation: false,
   })
   createdAt: Date
 }
@@ -71,7 +77,7 @@ export class UserDeviceDto {
  * 用于撤销特定设备的登录
  */
 export class RevokeDeviceDto {
-  @ApiProperty({
+  @NumberProperty({
     description: 'Token ID',
     example: 1,
   })

@@ -1,12 +1,13 @@
 import {
+  ArrayProperty,
   BooleanProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -179,64 +180,67 @@ export class UserLevelPermissionsDto extends PickType(BaseUserLevelRuleDto, [
  * 用户等级信息DTO
  */
 export class UserLevelInfoDto {
-  @ApiProperty({ description: '等级ID', example: 1 })
+  @NumberProperty({ description: '等级ID', example: 1, validation: false })
   levelId!: number
 
-  @ApiProperty({ description: '等级名称', example: '新手' })
+  @StringProperty({ description: '等级名称', example: '新手', validation: false })
   levelName!: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '等级描述',
     example: '新手用户等级',
     required: false,
-    nullable: true,
+    validation: false,
   })
   levelDescription?: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '等级图标URL',
     example: 'https://example.com/icons/level1.png',
     required: false,
-    nullable: true,
+    validation: false,
   })
   levelIcon?: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '等级专属颜色（十六进制）',
     example: '#FF5733',
     required: false,
-    nullable: true,
+    validation: false,
   })
   levelColor?: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '等级徽章URL',
     example: 'https://example.com/badges/level1.png',
     required: false,
-    nullable: true,
+    validation: false,
   })
   levelBadge?: string
 
-  @ApiProperty({ description: '当前经验值', example: 100 })
+  @NumberProperty({ description: '当前经验值', example: 100, validation: false })
   currentExperience!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '下一等级所需经验值',
     example: 500,
     required: false,
+    validation: false,
   })
   nextLevelExperience?: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '升级进度百分比',
     example: 20,
     required: false,
+    validation: false,
   })
   progressPercentage?: number
 
-  @ApiProperty({
+  @NestedProperty({
     description: '等级权限',
     type: UserLevelPermissionsDto,
+    validation: false,
   })
   permissions!: UserLevelPermissionsDto
 }
@@ -250,7 +254,6 @@ export class CheckUserLevelPermissionDto {
     example: 1,
     required: true,
   })
-  @ApiProperty({ description: '用户ID', example: 1 })
   userId!: number
 
   @EnumProperty({
@@ -267,30 +270,33 @@ export class CheckUserLevelPermissionDto {
  * 返回等级权限检查的结果
  */
 export class UserLevelPermissionResultDto {
-  @ApiProperty({ description: '是否有权限', example: true })
+  @BooleanProperty({ description: '是否有权限', example: true, validation: false })
   hasPermission!: boolean
 
-  @ApiProperty({ description: '当前等级名称', example: '新手' })
+  @StringProperty({ description: '当前等级名称', example: '新手', validation: false })
   currentLevel!: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '限制数量',
     example: 10,
     required: false,
+    validation: false,
   })
   limit?: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '已使用数量',
     example: 5,
     required: false,
+    validation: false,
   })
   used?: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '剩余数量',
     example: 5,
     required: false,
+    validation: false,
   })
   remaining?: number
 }
@@ -300,13 +306,13 @@ export class UserLevelPermissionResultDto {
  * 单个等级的用户分布情况
  */
 export class UserLevelDistributionItemDto {
-  @ApiProperty({ description: '等级ID', example: 1 })
+  @NumberProperty({ description: '等级ID', example: 1, validation: false })
   levelId!: number
 
-  @ApiProperty({ description: '等级名称', example: '新手' })
+  @StringProperty({ description: '等级名称', example: '新手', validation: false })
   levelName!: string
 
-  @ApiProperty({ description: '该等级用户数量', example: 150 })
+  @NumberProperty({ description: '该等级用户数量', example: 150, validation: false })
   userCount!: number
 }
 
@@ -315,15 +321,17 @@ export class UserLevelDistributionItemDto {
  * 等级系统整体统计数据
  */
 export class UserLevelStatisticsDto {
-  @ApiProperty({ description: '总等级数量', example: 10 })
+  @NumberProperty({ description: '总等级数量', example: 10, validation: false })
   totalLevels!: number
 
-  @ApiProperty({ description: '启用的等级数量', example: 8 })
+  @NumberProperty({ description: '启用的等级数量', example: 8, validation: false })
   enabledLevels!: number
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '等级分布',
-    type: [UserLevelDistributionItemDto],
+    itemClass: UserLevelDistributionItemDto,
+    itemType: 'object',
+    validation: false,
   })
   levelDistribution!: UserLevelDistributionItemDto[]
 }

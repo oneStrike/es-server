@@ -4,7 +4,7 @@ import {
   DateProperty,
   NumberProperty,
 } from '@libs/base/decorators'
-import { ApiProperty, IntersectionType, PickType } from '@nestjs/swagger'
+import { IntersectionType, PickType } from '@nestjs/swagger'
 
 /**
  * 去除的默认字段
@@ -80,10 +80,10 @@ export class UpdatePublishedStatusDto extends IdDto {
  * 批量操作响应 DTO - 用于返回批量操作的结果
  */
 export class BatchOperationResponseDto {
-  @ApiProperty({
+  @NumberProperty({
     description: '操作成功的数据量',
     example: 1,
-    type: Number,
+    validation: false,
   })
   count!: number
 }

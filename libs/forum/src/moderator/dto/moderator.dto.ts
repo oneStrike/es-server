@@ -1,6 +1,7 @@
 import {
   ArrayProperty,
   BooleanProperty,
+  DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
@@ -13,7 +14,6 @@ import {
   UserIdDto,
 } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -190,10 +190,11 @@ export class ForumModeratorDto extends BaseForumModeratorDto {
   })
   permissionNames!: string[]
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '管理的板块列表',
-    type: [Object],
+    itemType: 'object',
     required: true,
+    validation: false,
   })
   sections!: Array<{
     id: number
@@ -209,7 +210,13 @@ export class ForumModeratorDto extends BaseForumModeratorDto {
  * 用于返回分页的版主列表数据
  */
 export class ForumModeratorPageDto {
-  @ApiProperty({ description: '版主列表', type: [ForumModeratorDto] })
+  @ArrayProperty({
+    description: '版主列表',
+    itemClass: ForumModeratorDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
+  })
   list!: ForumModeratorDto[]
 
   @NumberProperty({
@@ -312,10 +319,11 @@ export class ForumModeratorActionLogDto {
   })
   afterData?: string
 
-  @ApiProperty({
+  @DateProperty({
     description: '操作时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
+    validation: false,
   })
   createdAt!: Date
 }
@@ -325,9 +333,12 @@ export class ForumModeratorActionLogDto {
  * 用于返回分页的版主操作日志列表数据
  */
 export class ModeratorActionLogPageDto {
-  @ApiProperty({
+  @ArrayProperty({
     description: '操作日志列表',
-    type: [ForumModeratorActionLogDto],
+    itemClass: ForumModeratorActionLogDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
   })
   list!: ForumModeratorActionLogDto[]
 

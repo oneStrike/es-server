@@ -1,65 +1,73 @@
-import { ApiProperty } from '@nestjs/swagger'
+import { DateProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
 
 export class FileUploadResponseDto {
-  @ApiProperty({
+  @StringProperty({
     description: '文件名',
     example: 'avatar.jpg',
     required: true,
     maxLength: 255,
+    validation: false,
   })
   filename: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '原始文件名',
     example: 'avatar.jpg',
     required: true,
     maxLength: 255,
+    validation: false,
   })
   originalName: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '文件路径',
     example: '/uploads/avatar.jpg',
     required: true,
     maxLength: 500,
+    validation: false,
   })
   filePath: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '文件大小',
     example: 1024,
     required: true,
+    validation: false,
   })
   fileSize: number
 
-  @ApiProperty({
+  @StringProperty({
     description: 'MIME 类型',
     example: 'image/jpeg',
     required: true,
     maxLength: 255,
+    validation: false,
   })
   mimeType: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '文件类型',
     example: 'image',
     required: true,
     maxLength: 255,
+    validation: false,
   })
   fileType: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '场景',
     example: 'avatar',
     required: true,
     maxLength: 255,
+    validation: false,
   })
   scene: string
 
-  @ApiProperty({
+  @DateProperty({
     description: '上传时间',
     example: '2023-01-01T00:00:00.000Z',
     required: true,
+    validation: false,
   })
   uploadTime: Date
 }

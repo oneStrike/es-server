@@ -1,10 +1,13 @@
 import {
   BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/base/dto'
-import { ApiProperty, IntersectionType, OmitType } from '@nestjs/swagger'
+import { IntersectionType, OmitType } from '@nestjs/swagger'
 import { ChangeTypeEnum, ForumReviewPolicyEnum } from '../forum-config.constant'
 
 export class BaseForumConfigDto extends BaseDto {
@@ -256,7 +259,7 @@ export class BaseForumConfigDto extends BaseDto {
 export class CreateForumConfigDto extends OmitType(
   BaseForumConfigDto,
   OMIT_BASE_FIELDS,
-) {}
+) { }
 
 export class UpdateForumConfigDto extends IntersectionType(
   BaseForumConfigDto,
@@ -275,62 +278,70 @@ export class UpdateForumConfigDto extends IntersectionType(
  * 论坛配置变更历史项
  */
 export class ForumConfigHistoryItemDto extends BaseDto {
-  @ApiProperty({
+  @NumberProperty({
     description: '配置ID',
     example: 1,
     required: true,
+    validation: false,
   })
   configId!: number
 
-  @ApiProperty({
+  @EnumProperty({
     description: '变更类型',
     example: ChangeTypeEnum.CREATE,
     required: true,
+    enum: ChangeTypeEnum,
+    validation: false,
   })
   changeType!: ChangeTypeEnum
 
-  @ApiProperty({
+  @JsonProperty({
     description: '变更内容',
     example: '{"reviewPolicy": "SEVERE_SENSITIVE_WORD"}',
     required: true,
-    type: Object,
+    validation: false,
   })
   changes!: Record<string, any>
 
-  @ApiProperty({
+  @StringProperty({
     description: '变更原因',
     example: '更新论坛配置',
     required: false,
     maxLength: 500,
+    validation: false,
   })
   reason?: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '操作人ID',
     example: 1,
     required: false,
+    validation: false,
   })
   operatedById?: number
 
-  @ApiProperty({
+  @DateProperty({
     description: '操作时间',
     example: '2023-10-01T12:00:00Z',
     required: true,
+    validation: false,
   })
   operatedAt!: Date
 
-  @ApiProperty({
+  @StringProperty({
     description: '操作人IP地址',
     example: '127.0.0.1',
     required: false,
+    validation: false,
   })
   ipAddress?: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '操作人User-Agent',
     example:
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
     required: false,
+    validation: false,
   })
   userAgent?: string
 }

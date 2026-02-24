@@ -1,10 +1,11 @@
 import {
+  DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
 import { PageDto } from '@libs/base/dto'
-import { ApiProperty, OmitType } from '@nestjs/swagger'
+import { OmitType } from '@nestjs/swagger'
 import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '../search.constant'
 
 /**
@@ -59,46 +60,96 @@ export class ForumSearchReplyDto extends OmitType(ForumSearchDto, ['type']) {}
  * 返回搜索结果的数据结构
  */
 export class ForumSearchResultDto {
-  @ApiProperty({ description: '主题ID', example: 1 })
+  @NumberProperty({
+    description: '主题ID',
+    example: 1,
+    validation: false,
+  })
   topicId!: number
 
-  @ApiProperty({ description: '主题标题', example: '测试主题' })
+  @StringProperty({
+    description: '主题标题',
+    example: '测试主题',
+    validation: false,
+  })
   topicTitle!: string
 
-  @ApiProperty({ description: '主题内容', example: '这是测试内容' })
+  @StringProperty({
+    description: '主题内容',
+    example: '这是测试内容',
+    validation: false,
+  })
   topicContent!: string
 
-  @ApiProperty({ description: '板块ID', example: 1 })
+  @NumberProperty({
+    description: '板块ID',
+    example: 1,
+    validation: false,
+  })
   sectionId!: number
 
-  @ApiProperty({ description: '板块名称', example: '技术交流' })
+  @StringProperty({
+    description: '板块名称',
+    example: '技术交流',
+    validation: false,
+  })
   sectionName!: string
 
-  @ApiProperty({ description: '用户ID', example: 1 })
+  @NumberProperty({
+    description: '用户ID',
+    example: 1,
+    validation: false,
+  })
   userId!: number
 
-  @ApiProperty({ description: '用户昵称', example: '张三' })
+  @StringProperty({
+    description: '用户昵称',
+    example: '张三',
+    validation: false,
+  })
   userNickname!: string
 
-  @ApiProperty({ description: '回复ID', example: 1, required: false })
+  @NumberProperty({
+    description: '回复ID',
+    example: 1,
+    required: false,
+    validation: false,
+  })
   replyId?: number
 
-  @ApiProperty({
+  @StringProperty({
     description: '回复内容',
     example: '这是回复内容',
     required: false,
+    validation: false,
   })
   replyContent?: string
 
-  @ApiProperty({ description: '创建时间', example: '2024-01-01T00:00:00.000Z' })
+  @DateProperty({
+    description: '创建时间',
+    example: '2024-01-01T00:00:00.000Z',
+    validation: false,
+  })
   createdAt!: Date
 
-  @ApiProperty({ description: '回复数', example: 10 })
+  @NumberProperty({
+    description: '回复数',
+    example: 10,
+    validation: false,
+  })
   replyCount!: number
 
-  @ApiProperty({ description: '浏览数', example: 100 })
+  @NumberProperty({
+    description: '浏览数',
+    example: 100,
+    validation: false,
+  })
   viewCount!: number
 
-  @ApiProperty({ description: '点赞数', example: 5 })
+  @NumberProperty({
+    description: '点赞数',
+    example: 5,
+    validation: false,
+  })
   likeCount!: number
 }

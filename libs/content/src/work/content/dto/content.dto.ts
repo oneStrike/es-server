@@ -1,6 +1,5 @@
 import { ArrayProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
-import { ApiProperty } from '@nestjs/swagger'
 
 /// 添加章节内容DTO
 export class AddChapterContentDto extends IdDto {
@@ -72,30 +71,36 @@ export class UploadChapterFileDto extends IdDto {
 
 /// 章节内容项DTO
 export class ChapterContentItemDto {
-  @ApiProperty({
+  @NumberProperty({
     description: '内容索引',
     example: 0,
+    validation: false,
   })
   index!: number
 
-  @ApiProperty({
+  @StringProperty({
     description: '内容路径',
     example: '/uploads/comic/1/chapter/1/image.jpg',
+    validation: false,
   })
   content!: string
 }
 
 /// 章节内容列表DTO
 export class ChapterContentListDto {
-  @ApiProperty({
+  @NumberProperty({
     description: '章节ID',
     example: 1,
+    validation: false,
   })
   chapterId!: number
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '内容列表',
-    type: [ChapterContentItemDto],
+    itemClass: ChapterContentItemDto,
+    itemType: 'object',
+    required: true,
+    validation: false,
   })
   contents!: ChapterContentItemDto[]
 }

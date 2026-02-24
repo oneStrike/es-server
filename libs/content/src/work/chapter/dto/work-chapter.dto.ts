@@ -8,7 +8,6 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -141,43 +140,48 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   publishAt?: Date
 
-  @ApiProperty({
+  @NumberProperty({
     description: '阅读次数',
     example: 1000,
     required: true,
     default: 0,
+    validation: false,
   })
   viewCount!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '点赞数',
     example: 100,
     required: true,
     default: 0,
+    validation: false,
   })
   likeCount!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '评论数',
     example: 50,
     required: true,
     default: 0,
+    validation: false,
   })
   commentCount!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '购买次数',
     example: 20,
     required: true,
     default: 0,
+    validation: false,
   })
   purchaseCount!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '字数（小说章节）',
     example: 3000,
     required: true,
     default: 0,
+    validation: false,
   })
   wordCount!: number
 
@@ -228,24 +232,27 @@ export class QueryWorkChapterDto extends IntersectionType(
 
 /// 章节用户状态字段DTO
 export class ChapterUserStatusFieldsDto {
-  @ApiProperty({
+  @BooleanProperty({
     description: '是否已点赞',
     example: true,
     required: true,
+    validation: false,
   })
   liked!: boolean
 
-  @ApiProperty({
+  @BooleanProperty({
     description: '是否已购买',
     example: false,
     required: true,
+    validation: false,
   })
   purchased!: boolean
 
-  @ApiProperty({
+  @BooleanProperty({
     description: '是否已下载',
     example: false,
     required: true,
+    validation: false,
   })
   downloaded!: boolean
 }

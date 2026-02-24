@@ -1,12 +1,6 @@
-import {
-  NumberProperty,
-} from '@libs/base/decorators'
+import { NumberProperty } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class BaseForumTopicLikeDto extends BaseDto {
   @NumberProperty({
@@ -37,9 +31,7 @@ export class CreateForumTopicLikeDto extends PickType(BaseForumTopicLikeDto, [
  */
 export class DeleteForumTopicLikeDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(BaseForumTopicLikeDto, ['topicId', 'userId']),
-  ),
+  PartialType(PickType(BaseForumTopicLikeDto, ['topicId', 'userId'])),
 ) {}
 
 /**
@@ -53,7 +45,5 @@ export class ToggleForumTopicLikeDto extends PickType(CreateForumTopicLikeDto, [
 
 export class QueryForumTopicLikeDto extends IntersectionType(
   PageDto,
-  PartialType(
-    PickType(BaseForumTopicLikeDto, ['topicId', 'userId']),
-  ),
+  PartialType(PickType(BaseForumTopicLikeDto, ['topicId', 'userId'])),
 ) {}

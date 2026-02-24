@@ -1,13 +1,15 @@
 import { GenderEnum } from '@libs/base/constant'
 import {
   BooleanProperty,
+  DateProperty,
   EnumProperty,
+  NestedProperty,
+  NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto } from '@libs/base/dto'
 import { CheckVerifyCodeDto } from '@libs/base/modules'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -18,10 +20,11 @@ import {
  * RSA公钥信息
  */
 export class RsaPublicKeyDto {
-  @ApiProperty({
+  @StringProperty({
     description: 'RSA公钥',
     example:
       '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhki.......GIf8OQIDAQAB\n-----END PUBLIC KEY-----',
+    validation: false,
   })
   publicKey!: string
 }
@@ -86,70 +89,77 @@ export class BaseAppUserDto extends BaseDto {
   })
   gender!: GenderEnum
 
-  @ApiProperty({
+  @DateProperty({
     description: '出生日期',
     example: '2023-09-15T00:00:00.000Z',
     required: false,
+    validation: false,
   })
   birthDate?: Date
 
-  @ApiProperty({
+  @DateProperty({
     description: '最后登录时间',
     default: null,
     example: '2023-09-15T00:00:00.000Z',
+    validation: false,
   })
   lastLoginAt?: Date
 
-  @ApiProperty({
+  @StringProperty({
     description: '最后登录IP',
     default: null,
     example: '192.168.1.1',
+    validation: false,
   })
   lastLoginIp?: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '积分',
     default: 0,
     example: 100,
+    validation: false,
   })
   points!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '经验值',
     default: 0,
     example: 1000,
+    validation: false,
   })
   experience!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '等级ID',
     default: null,
     example: 1,
+    validation: false,
   })
   levelId?: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '状态',
     default: 1,
     example: 1,
+    validation: false,
   })
   status!: number
 
-  @ApiProperty({
+  @StringProperty({
     description: '账号封禁原因',
     default: '',
     example: '账户已被封禁',
     required: false,
-    nullable: true,
+    validation: false,
   })
   banReason?: string
 
-  @ApiProperty({
+  @DateProperty({
     description: '账号封禁截止时间',
     default: null,
     example: '2023-09-15T00:00:00.000Z',
     required: false,
-    nullable: true,
+    validation: false,
   })
   banUntil?: Date
 }
@@ -176,7 +186,7 @@ export class TokenDto {
 /**
  * 刷新令牌信息
  */
-export class RefreshTokenDto extends OmitType(TokenDto, ['accessToken']) {}
+export class RefreshTokenDto extends OmitType(TokenDto, ['accessToken']) { }
 
 /**
  * 登录请求信息
@@ -235,17 +245,19 @@ export class ChangePasswordDto {
  * 登录响应信息
  */
 export class LoginResponseDto {
-  @ApiProperty({
+  @NestedProperty({
     description: '令牌信息',
     type: TokenDto,
     required: true,
+    validation: false,
   })
   tokens: TokenDto
 
-  @ApiProperty({
+  @NestedProperty({
     description: '用户信息',
     required: true,
     type: BaseAppUserDto,
+    validation: false,
   })
   user: BaseAppUserDto
 }

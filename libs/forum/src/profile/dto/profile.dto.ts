@@ -8,7 +8,6 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   PartialType,
   PickType,
@@ -81,20 +80,27 @@ export class BaseAppUserInfoDto extends BaseDto {
   })
   birthDate?: Date
 
-  @ApiProperty({ description: '是否签到', default: false, example: true })
+  @BooleanProperty({
+    description: '是否签到',
+    default: false,
+    example: true,
+    validation: false,
+  })
   isSignedIn!: boolean
 
-  @ApiProperty({
+  @DateProperty({
     description: '最后登录时间',
     default: null,
     example: '2023-09-15T00:00:00.000Z',
+    validation: false,
   })
   lastLoginAt?: Date
 
-  @ApiProperty({
+  @StringProperty({
     description: '最后登录IP',
     default: null,
     example: '192.168.1.1',
+    validation: false,
   })
   lastLoginIp?: string
 }
@@ -164,16 +170,36 @@ export class BaseForumProfileDto extends BaseDto {
   })
   banUntil!: Date
 
-  @ApiProperty({ description: '主题数', default: 0, example: 10 })
+  @NumberProperty({
+    description: '主题数',
+    default: 0,
+    example: 10,
+    validation: false,
+  })
   topicCount!: number
 
-  @ApiProperty({ description: '回复数', default: 0, example: 100 })
+  @NumberProperty({
+    description: '回复数',
+    default: 0,
+    example: 100,
+    validation: false,
+  })
   replyCount!: number
 
-  @ApiProperty({ description: '点赞数', default: 0, example: 5 })
+  @NumberProperty({
+    description: '点赞数',
+    default: 0,
+    example: 5,
+    validation: false,
+  })
   likeCount!: number
 
-  @ApiProperty({ description: '收藏数', default: 0, example: 5 })
+  @NumberProperty({
+    description: '收藏数',
+    default: 0,
+    example: 5,
+    validation: false,
+  })
   favoriteCount!: number
 }
 

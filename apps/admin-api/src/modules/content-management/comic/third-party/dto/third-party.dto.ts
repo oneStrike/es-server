@@ -1,6 +1,6 @@
-import { StringProperty } from '@libs/base/decorators'
+import { ArrayProperty, StringProperty } from '@libs/base/decorators'
 import { IdDto, PageDto } from '@libs/base/dto'
-import { ApiProperty, PickType } from '@nestjs/swagger'
+import { PickType } from '@nestjs/swagger'
 
 export class SearchComicRequestDto extends PageDto {
   @StringProperty({
@@ -33,49 +33,50 @@ export class DetailComicRequestDto extends PickType(SearchComicRequestDto, [
 }
 
 export class PlatformResponseDto {
-  @ApiProperty({
+  @StringProperty({
     description: '平台名称',
     example: '拷贝',
-    type: 'string',
     required: true,
+    validation: false,
   })
   name: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '平台名称code',
     example: 'copy',
-    type: 'string',
     required: true,
+    validation: false,
   })
   code: string
 }
 
 export class SearchComicItemDto extends IdDto {
-  @ApiProperty({
+  @StringProperty({
     description: '漫画名称',
     example: '进击的巨人',
-    type: 'string',
+    validation: false,
   })
   name: string
 
-  @ApiProperty({
+  @StringProperty({
     description: '封面图片URL',
     example: 'https://example.com/cover.jpg',
-    type: 'string',
+    validation: false,
   })
   cover: string
 
-  @ApiProperty({
+  @ArrayProperty({
     description: '作者列表',
-    type: [String],
+    itemType: 'string',
     example: ['谏山创'],
+    validation: false,
   })
   author: string[]
 
-  @ApiProperty({
+  @StringProperty({
     description: '来源平台',
     example: '拷贝',
-    type: 'string',
+    validation: false,
   })
   source: string
 }

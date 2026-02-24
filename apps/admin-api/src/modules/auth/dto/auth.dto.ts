@@ -1,16 +1,17 @@
-import { StringProperty } from '@libs/base/decorators'
+import { NestedProperty, StringProperty } from '@libs/base/decorators'
 import { CaptchaDto } from '@libs/base/modules'
-import { ApiProperty, OmitType } from '@nestjs/swagger'
+import { OmitType } from '@nestjs/swagger'
 import { BaseUserDto } from '../../user/dto/user.dto'
 
 /**
  * RSA公钥响应DTO
  */
 export class RsaPublicKeyDto {
-  @ApiProperty({
+  @StringProperty({
     description: 'RSA公钥',
     example:
       '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhki.......GIf8OQIDAQAB\n-----END PUBLIC KEY-----',
+    validation: false,
   })
   publicKey!: string
 }
@@ -59,17 +60,19 @@ export class UserLoginDto extends CaptchaDto {
  * 登录响应 DTO
  */
 export class LoginResponseDto {
-  @ApiProperty({
+  @NestedProperty({
     description: '令牌信息',
     type: TokenDto,
     required: true,
+    validation: false,
   })
   tokens: TokenDto
 
-  @ApiProperty({
+  @NestedProperty({
     description: '用户信息',
     required: true,
     type: BaseUserDto,
+    validation: false,
   })
   user: BaseUserDto
 }

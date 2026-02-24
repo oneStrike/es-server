@@ -1,12 +1,12 @@
 import {
   BooleanProperty,
+  DateProperty,
   EnumProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   OmitType,
   PartialType,
@@ -119,44 +119,47 @@ export class BaseForumTopicDto extends BaseDto {
   })
   auditReason?: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '浏览次数',
     example: 100,
     required: true,
     default: 0,
+    validation: false,
   })
   viewCount!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '回复次数',
     example: 10,
     required: true,
     default: 0,
+    validation: false,
   })
   replyCount!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '点赞次数',
     example: 5,
     required: true,
     default: 0,
+    validation: false,
   })
   likeCount!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '收藏次数',
     example: 5,
     required: true,
     default: 0,
+    validation: false,
   })
   favoriteCount!: number
 
-  @ApiProperty({
+  @DateProperty({
     description: '最后回复时间',
     example: '2022-01-01T00:00:00.000Z',
     required: false,
-    type: Date,
-    nullable: true,
+    validation: false,
   })
   lastReplyAt?: Date
 

@@ -1,5 +1,4 @@
-import { StringProperty } from '@libs/base/decorators'
-import { ApiProperty } from '@nestjs/swagger'
+import { BooleanProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
 import {
   MatchModeEnum,
   SensitiveWordLevelEnum,
@@ -18,7 +17,7 @@ export class SensitiveWordDetectDto {
   })
   content!: string
 
-  @ApiProperty({
+  @EnumProperty({
     description: '匹配模式',
     required: false,
     enum: MatchModeEnum,
@@ -44,43 +43,48 @@ export class SensitiveWordReplaceDto extends SensitiveWordDetectDto {
  * 匹配到的敏感词信息DTO
  */
 export class MatchedWordDto {
-  @ApiProperty({
+  @StringProperty({
     description: '敏感词内容',
     example: '测试',
+    validation: false,
   })
   word!: string
 
-  @ApiProperty({
+  @NumberProperty({
     description: '起始位置',
     example: 0,
+    validation: false,
   })
   start!: number
 
-  @ApiProperty({
+  @NumberProperty({
     description: '结束位置',
     example: 2,
+    validation: false,
   })
   end!: number
 
-  @ApiProperty({
+  @EnumProperty({
     description: '敏感词级别',
     example: SensitiveWordLevelEnum.SEVERE,
     enum: SensitiveWordLevelEnum,
+    validation: false,
   })
   level!: number
 
-  @ApiProperty({
+  @EnumProperty({
     description: '敏感词类型',
     example: SensitiveWordTypeEnum.POLITICS,
     enum: SensitiveWordTypeEnum,
+    validation: false,
   })
   type!: number
 
-  @ApiProperty({
+  @StringProperty({
     description: '替换词',
     example: '***',
     required: false,
-    type: String,
+    validation: false,
   })
   replaceWord?: string | null
 }
@@ -89,9 +93,10 @@ export class MatchedWordDto {
  * 敏感词替换响应DTO
  */
 export class SensitiveWordReplaceResponseDto {
-  @ApiProperty({
+  @StringProperty({
     description: '替换后的文本',
     example: '这是一个***文本',
+    validation: false,
   })
   replacedText!: string
 }
@@ -100,11 +105,12 @@ export class SensitiveWordReplaceResponseDto {
  * 最高敏感等级响应DTO
  */
 export class SensitiveWordHighestLevelResponseDto {
-  @ApiProperty({
+  @EnumProperty({
     description: '敏感词最高等级',
     example: SensitiveWordLevelEnum.SEVERE,
     enum: SensitiveWordLevelEnum,
     required: false,
+    validation: false,
   })
   highestLevel?: SensitiveWordLevelEnum
 }
@@ -113,15 +119,17 @@ export class SensitiveWordHighestLevelResponseDto {
  * 检测器状态响应DTO
  */
 export class SensitiveWordDetectStatusResponseDto {
-  @ApiProperty({
+  @BooleanProperty({
     description: '检测器是否就绪',
     example: true,
+    validation: false,
   })
   isReady!: boolean
 
-  @ApiProperty({
+  @NumberProperty({
     description: '已加载的敏感词数量',
     example: 100,
+    validation: false,
   })
   wordCount!: number
 }
@@ -130,9 +138,10 @@ export class SensitiveWordDetectStatusResponseDto {
  * 敏感词数量响应DTO
  */
 export class SensitiveWordCountResponseDto {
-  @ApiProperty({
+  @NumberProperty({
     description: '当前加载的敏感词数量',
     example: 100,
+    validation: false,
   })
   count!: number
 }
