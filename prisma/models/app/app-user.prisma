@@ -53,75 +53,75 @@ model AppUser {
   agreementLogs AppAgreementLog[]
 
   /// 关联等级规则
-  level                   UserLevelRule?              @relation(fields: [levelId], references: [id])
+  level                     UserLevelRule?              @relation(fields: [levelId], references: [id])
   /// 用户论坛资料
-  forumProfile            ForumProfile?
+  forumProfile              ForumProfile?
   /// 用户通知阅读记录
-  noticeReads             AppNoticeRead[]
+  noticeReads               AppNoticeRead[]
   /// 用户令牌
-  tokens                  AppUserToken[]
+  tokens                    AppUserToken[]
   /// 积分记录关联
-  pointRecords            UserPointRecord[]           @relation("UserPointRecords")
+  pointRecords              UserPointRecord[]           @relation("UserPointRecords")
   /// 经验记录关联
-  experienceRecords       UserExperienceRecord[]      @relation("UserExperienceRecords")
+  experienceRecords         UserExperienceRecord[]      @relation("UserExperienceRecords")
   /// 论坛主题关联
-  forumTopics             ForumTopic[]                @relation("UserTopics")
+  forumTopics               ForumTopic[]                @relation("UserTopics")
   /// 最后回复主题关联
-  lastReplyTopics         ForumTopic[]                @relation("UserLastReplyTopics")
+  lastReplyTopics           ForumTopic[]                @relation("UserLastReplyTopics")
   /// 主题收藏关联
-  topicFavorites          ForumTopicFavorite[]
+  topicFavorites            ForumTopicFavorite[]
   /// 主题点赞关联
-  topicLikes              ForumTopicLike[]
+  topicLikes                ForumTopicLike[]
   /// 作品收藏关联
-  workFavorites           WorkFavorite[]
+  workFavorites             WorkFavorite[]
   /// 作品点赞关联
-  workLikes               WorkLike[]
+  workLikes                 WorkLike[]
   /// 章节点赞关联
-  chapterLikes            WorkChapterLike[]
+  chapterLikes              WorkChapterLike[]
   /// 章节购买关联
-  chapterPurchases        WorkChapterPurchase[]
+  chapterPurchases          WorkChapterPurchase[]
   /// 章节下载关联
-  chapterDownloads        WorkChapterDownload[]
+  chapterDownloads          WorkChapterDownload[]
   /// 作品评论关联
-  workComments            WorkComment[]
+  workComments              WorkComment[]
   /// 论坛回复关联
-  forumReplies            ForumReply[]
+  forumReplies              ForumReply[]
   /// 回复点赞关联
-  replyLikes              ForumReplyLike[]
+  replyLikes                ForumReplyLike[]
   /// 论坛通知关联
-  forumNotifications      ForumNotification[]
+  forumNotifications        ForumNotification[]
   /// 论坛浏览记录关联
-  forumViews              ForumView[]
+  forumViews                ForumView[]
   /// 论坛举报关联（举报人）
-  forumReports            ForumReport[]               @relation("ReportReporter")
+  forumReports              ForumReport[]               @relation("ReportReporter")
   /// 论坛举报关联（处理人）
-  handledReports          ForumReport[]               @relation("ReportHandler")
+  handledReports            ForumReport[]               @relation("ReportHandler")
   /// 评论举报关联（举报人）
-  workCommentReports      WorkCommentReport[]         @relation("WorkCommentReportReporter")
+  workCommentReports        WorkCommentReport[]         @relation("WorkCommentReportReporter")
   /// 评论举报关联（处理人）
-  handledWorkCommentReports WorkCommentReport[]       @relation("WorkCommentReportHandler")
+  handledWorkCommentReports WorkCommentReport[]         @relation("WorkCommentReportHandler")
   /// 版主申请关联（申请人）
-  moderatorApplications   ForumModeratorApplication[] @relation("ModeratorApplicant")
+  moderatorApplications     ForumModeratorApplication[] @relation("ModeratorApplicant")
   /// 版主申请关联（审核人）
-  auditedApplications     ForumModeratorApplication[] @relation("ModeratorAuditor")
+  auditedApplications       ForumModeratorApplication[] @relation("ModeratorAuditor")
   /// 版主信息关联
-  moderator               ForumModerator?
+  moderator                 ForumModerator?
   /// 论坛操作日志关联
-  forumActionLogs         ForumUserActionLog[]
+  forumActionLogs           ForumUserActionLog[]
   /// 用户徽章关联
-  userBadges              UserBadgeAssignment[]
+  userBadges                UserBadgeAssignment[]
   /// 用户成长事件关联
-  userGrowthEvents        UserGrowthEvent[]
+  userGrowthEvents          UserGrowthEvent[]
   /// 任务分配关联
-  taskAssignments         TaskAssignment[]
+  taskAssignments           TaskAssignment[]
   /// 任务进度日志关联
-  taskProgressLogs        TaskProgressLog[]
+  taskProgressLogs          TaskProgressLog[]
   /// 论坛配置更新关联
-  updatedConfigs          ForumConfig[]               @relation("ForumConfigUpdater")
+  updatedConfigs            ForumConfig[]               @relation("ForumConfigUpdater")
   /// 论坛配置历史操作关联
-  operatedConfigHistories ForumConfigHistory[]        @relation("ForumConfigHistoryOperator")
+  operatedConfigHistories   ForumConfigHistory[]        @relation("ForumConfigHistoryOperator")
   /// 系统配置更新关联
-  updatedSystemConfigs    SystemConfig[]              @relation("SystemConfigUpdater")
+  updatedSystemConfigs      SystemConfig[]              @relation("SystemConfigUpdater")
 
   /// 启用状态索引
   @@index([isEnabled])

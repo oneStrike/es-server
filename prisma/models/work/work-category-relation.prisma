@@ -14,7 +14,7 @@ model WorkCategoryRelation {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   /// 关联作品
-  work     Work        @relation(fields: [workId], references: [id], onDelete: Cascade)
+  work     Work         @relation(fields: [workId], references: [id], onDelete: Cascade)
   /// 关联分类
   category WorkCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 

@@ -4,9 +4,9 @@ model WorkComment {
   id Int @id @default(autoincrement())
 
   /// 作品ID（关联 work.id）
-  workId Int @map("work_id")
+  workId    Int  @map("work_id")
   /// 作品类型（1=漫画, 2=小说）
-  workType Int @map("work_type") @db.SmallInt
+  workType  Int  @map("work_type") @db.SmallInt
   /// 章节ID（关联 work_chapter.id，为空表示作品评论）
   chapterId Int? @map("chapter_id")
   /// 评论用户ID（关联 app_user.id）
@@ -26,17 +26,17 @@ model WorkComment {
   floor           Int? @map("floor")
 
   /// 是否隐藏（true=隐藏，false=展示）
-  isHidden    Boolean @default(false) @map("is_hidden")
+  isHidden    Boolean   @default(false) @map("is_hidden")
   /// 审核状态（0=待审核，1=通过，2=拒绝）
-  auditStatus Int     @default(0) @map("audit_status") @db.SmallInt
+  auditStatus Int       @default(0) @map("audit_status") @db.SmallInt
   /// 审核原因（拒绝时填写，可为空）
-  auditReason String? @map("audit_reason") @db.VarChar(500)
+  auditReason String?   @map("audit_reason") @db.VarChar(500)
   /// 审核时间（审核动作发生时记录，可为空）
   auditAt     DateTime? @map("audit_at") @db.Timestamptz(6)
   /// 审核人ID（关联 app_user.id，可为空）
-  auditById   Int? @map("audit_by_id")
+  auditById   Int?      @map("audit_by_id")
   /// 审核角色（0=版主，1=管理员，可为空）
-  auditRole   Int? @map("audit_role") @db.SmallInt
+  auditRole   Int?      @map("audit_role") @db.SmallInt
 
   /// 创建时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -46,11 +46,11 @@ model WorkComment {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   /// 关联作品
-  work   Work   @relation(fields: [workId], references: [id], onDelete: Cascade)
+  work    Work         @relation(fields: [workId], references: [id], onDelete: Cascade)
   /// 关联章节
   chapter WorkChapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   /// 关联用户
-  user    AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    AppUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// 关联被回复评论
   replyTo       WorkComment?  @relation("WorkCommentReplyTo", fields: [replyToId], references: [id])

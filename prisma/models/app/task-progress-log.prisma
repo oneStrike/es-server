@@ -4,19 +4,19 @@ model TaskProgressLog {
   id Int @id @default(autoincrement())
 
   /// 分配记录ID
-  assignmentId Int @map("assignment_id")
+  assignmentId Int   @map("assignment_id")
   /// 用户ID
-  userId Int @map("user_id")
+  userId       Int   @map("user_id")
   /// 操作类型
-  actionType Int @map("action_type") @db.SmallInt
+  actionType   Int   @map("action_type") @db.SmallInt
   /// 变更值
-  delta Int
+  delta        Int
   /// 变更前值
-  beforeValue Int @map("before_value")
+  beforeValue  Int   @map("before_value")
   /// 变更后值
-  afterValue Int @map("after_value")
+  afterValue   Int   @map("after_value")
   /// 变更上下文
-  context Json?
+  context      Json?
 
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -24,7 +24,7 @@ model TaskProgressLog {
   /// 分配记录关联
   assignment TaskAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   /// 用户关联
-  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       AppUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// 分配记录索引
   @@index([assignmentId])

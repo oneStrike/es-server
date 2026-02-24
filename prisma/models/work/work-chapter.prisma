@@ -4,7 +4,7 @@ model WorkChapter {
   id Int @id @default(autoincrement())
 
   /// 作品ID
-  workId Int @map("work_id")
+  workId   Int @map("work_id")
   /// 作品类型（1=漫画, 2=小说）
   workType Int @map("work_type") @db.SmallInt
 
@@ -55,7 +55,7 @@ model WorkChapter {
   wordCount     Int @default(0) @map("word_count")
 
   /// 内容存储路径（文件路径）
-  contentPath String? @db.VarChar(500) @map("content_path")
+  contentPath String? @map("content_path") @db.VarChar(500)
 
   /// 备注
   remark String? @db.VarChar(1000)
@@ -68,19 +68,19 @@ model WorkChapter {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   /// 关联作品
-  work                   Work             @relation(fields: [workId], references: [id], onDelete: Cascade)
+  work                  Work                  @relation(fields: [workId], references: [id], onDelete: Cascade)
   /// 关联下载权限等级
-  requiredDownloadLevel  UserLevelRule?   @relation("ChapterDownloadLevel", fields: [requiredDownloadLevelId], references: [id])
+  requiredDownloadLevel UserLevelRule?        @relation("ChapterDownloadLevel", fields: [requiredDownloadLevelId], references: [id])
   /// 关联阅读权限等级
-  requiredReadLevel      UserLevelRule?   @relation("ChapterReadLevel", fields: [requiredReadLevelId], references: [id])
+  requiredReadLevel     UserLevelRule?        @relation("ChapterReadLevel", fields: [requiredReadLevelId], references: [id])
   /// 点赞记录
-  likes                  WorkChapterLike[]
+  likes                 WorkChapterLike[]
   /// 购买记录
-  purchases              WorkChapterPurchase[]
+  purchases             WorkChapterPurchase[]
   /// 下载记录
-  downloads              WorkChapterDownload[]
+  downloads             WorkChapterDownload[]
   /// 评论
-  comments               WorkComment[]
+  comments              WorkComment[]
 
   /// 作品与章节序号唯一约束
   @@unique([workId, sortOrder])

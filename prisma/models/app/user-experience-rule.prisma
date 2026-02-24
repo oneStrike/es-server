@@ -7,17 +7,17 @@ model UserExperienceRule {
   type Int @unique @db.SmallInt
 
   /// 经验值变化
-  experience Int
+  experience      Int
   /// 每日上限（0=无限制）
-  dailyLimit Int @default(0) @map("daily_limit")
+  dailyLimit      Int     @default(0) @map("daily_limit")
   /// 业务域标识（如 forum/comic）
-  business String? @db.VarChar(20)
+  business        String? @db.VarChar(20)
   /// 事件键（如 forum.topic.create）
-  eventKey String? @map("event_key") @db.VarChar(50)
+  eventKey        String? @map("event_key") @db.VarChar(50)
   /// 冷却秒数（0=无限制）
-  cooldownSeconds Int @default(0) @map("cooldown_seconds")
+  cooldownSeconds Int     @default(0) @map("cooldown_seconds")
   /// 总上限（0=无限制）
-  totalLimit Int @default(0) @map("total_limit")
+  totalLimit      Int     @default(0) @map("total_limit")
 
   /// 是否启用
   isEnabled Boolean @default(true) @map("is_enabled")

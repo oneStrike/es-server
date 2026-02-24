@@ -4,39 +4,39 @@ model UserGrowthEventArchive {
   id Int @id @default(autoincrement())
 
   /// 源记录ID
-  sourceId Int @map("source_id")
+  sourceId   Int      @map("source_id")
   /// 业务域
-  business String @db.VarChar(20)
+  business   String   @db.VarChar(20)
   /// 事件标识
-  eventKey String @map("event_key") @db.VarChar(50)
+  eventKey   String   @map("event_key") @db.VarChar(50)
   /// 用户ID
-  userId Int @map("user_id")
+  userId     Int      @map("user_id")
   /// 目标对象ID
-  targetId Int? @map("target_id")
+  targetId   Int?     @map("target_id")
   /// 操作IP
-  ip String? @db.VarChar(45)
+  ip         String?  @db.VarChar(45)
   /// 设备标识
-  deviceId String? @map("device_id") @db.VarChar(100)
+  deviceId   String?  @map("device_id") @db.VarChar(100)
   /// 发生时间
   occurredAt DateTime @map("occurred_at") @db.Timestamptz(6)
 
   /// 事件状态
-  status String @db.VarChar(30)
+  status                 String @db.VarChar(30)
   /// 规则引用集合
-  ruleRefs Json? @map("rule_refs")
+  ruleRefs               Json?  @map("rule_refs")
   /// 积分变更值
-  pointsDeltaApplied Int @default(0) @map("points_delta_applied")
+  pointsDeltaApplied     Int    @default(0) @map("points_delta_applied")
   /// 经验变更值
-  experienceDeltaApplied Int @default(0) @map("experience_delta_applied")
+  experienceDeltaApplied Int    @default(0) @map("experience_delta_applied")
   /// 徽章授予信息
-  badgeAssigned Json? @map("badge_assigned")
+  badgeAssigned          Json?  @map("badge_assigned")
   /// 事件上下文
-  context Json? @map("context")
+  context                Json?  @map("context")
 
   /// 创建时间
-  createdAt DateTime @map("created_at") @db.Timestamptz(6)
+  createdAt  DateTime @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt DateTime @map("updated_at") @db.Timestamptz(6)
+  updatedAt  DateTime @map("updated_at") @db.Timestamptz(6)
   /// 归档时间
   archivedAt DateTime @default(now()) @map("archived_at") @db.Timestamptz(6)
 

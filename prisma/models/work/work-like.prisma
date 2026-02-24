@@ -10,7 +10,7 @@ model WorkLike {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   /// 关联作品
-  work Work @relation(fields: [workId], references: [id], onDelete: Cascade)
+  work Work    @relation(fields: [workId], references: [id], onDelete: Cascade)
   /// 关联用户
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 

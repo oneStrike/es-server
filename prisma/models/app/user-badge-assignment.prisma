@@ -4,7 +4,7 @@ model UserBadgeAssignment {
   id Int @id @default(autoincrement())
 
   /// 关联的用户ID
-  userId Int @map("user_id")
+  userId  Int @map("user_id")
   /// 关联的徽章ID
   badgeId Int @map("badge_id")
 
@@ -14,7 +14,7 @@ model UserBadgeAssignment {
   /// 关联徽章
   badge UserBadge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
   /// 关联用户
-  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// 用户与徽章唯一约束
   @@unique([userId, badgeId])
