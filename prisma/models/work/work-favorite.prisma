@@ -1,0 +1,30 @@
+/// 作品收藏记录
+model WorkFavorite {
+  id Int @id @default(autoincrement())
+
+  /// 作品ID
+  workId   Int @map("work_id")
+  /// 用户ID
+  userId   Int @map("user_id")
+  /// 作品类型（1=漫画, 2=小说）
+  workType Int @map("work_type") @db.SmallInt
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 关联作品
+  work Work @relation(fields: [workId], references: [id], onDelete: Cascade)
+  /// 关联用户
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 作品与用户唯一约束
+  @@unique([workId, userId])
+  /// 作品索引
+  @@index([workId])
+  /// 用户索引
+  @@index([userId])
+  /// 作品类型索引
+  @@index([workType])
+  /// 创建时间索引
+  @@index([createdAt])
+  @@map("work_favorite")
+}

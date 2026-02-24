@@ -390,8 +390,8 @@ export type UserLevelRuleWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"UserLevelRule"> | Date | string
   users?: Prisma.AppUserListRelationFilter
   sections?: Prisma.ForumSectionListRelationFilter
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterListRelationFilter
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterListRelationFilter
+  chaptersAsDownloadLevel?: Prisma.WorkChapterListRelationFilter
+  chaptersAsReadLevel?: Prisma.WorkChapterListRelationFilter
 }
 
 export type UserLevelRuleOrderByWithRelationInput = {
@@ -418,8 +418,8 @@ export type UserLevelRuleOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   users?: Prisma.AppUserOrderByRelationAggregateInput
   sections?: Prisma.ForumSectionOrderByRelationAggregateInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterOrderByRelationAggregateInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterOrderByRelationAggregateInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterOrderByRelationAggregateInput
+  chaptersAsReadLevel?: Prisma.WorkChapterOrderByRelationAggregateInput
 }
 
 export type UserLevelRuleWhereUniqueInput = Prisma.AtLeast<{
@@ -449,8 +449,8 @@ export type UserLevelRuleWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"UserLevelRule"> | Date | string
   users?: Prisma.AppUserListRelationFilter
   sections?: Prisma.ForumSectionListRelationFilter
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterListRelationFilter
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterListRelationFilter
+  chaptersAsDownloadLevel?: Prisma.WorkChapterListRelationFilter
+  chaptersAsReadLevel?: Prisma.WorkChapterListRelationFilter
 }, "id" | "name">
 
 export type UserLevelRuleOrderByWithAggregationInput = {
@@ -532,8 +532,8 @@ export type UserLevelRuleCreateInput = {
   updatedAt?: Date | string
   users?: Prisma.AppUserCreateNestedManyWithoutLevelInput
   sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterCreateNestedManyWithoutRequiredDownloadLevelInput
+  chaptersAsReadLevel?: Prisma.WorkChapterCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type UserLevelRuleUncheckedCreateInput = {
@@ -560,8 +560,8 @@ export type UserLevelRuleUncheckedCreateInput = {
   updatedAt?: Date | string
   users?: Prisma.AppUserUncheckedCreateNestedManyWithoutLevelInput
   sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type UserLevelRuleUpdateInput = {
@@ -587,8 +587,8 @@ export type UserLevelRuleUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUpdateManyWithoutLevelNestedInput
   sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type UserLevelRuleUncheckedUpdateInput = {
@@ -615,8 +615,8 @@ export type UserLevelRuleUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUncheckedUpdateManyWithoutLevelNestedInput
   sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type UserLevelRuleCreateManyInput = {
@@ -837,36 +837,36 @@ export type UserLevelRuleUpdateOneWithoutSectionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserLevelRuleUpdateToOneWithWhereWithoutSectionsInput, Prisma.UserLevelRuleUpdateWithoutSectionsInput>, Prisma.UserLevelRuleUncheckedUpdateWithoutSectionsInput>
 }
 
-export type UserLevelRuleCreateNestedOneWithoutComicChaptersAsDownloadLevelInput = {
-  create?: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
-  connectOrCreate?: Prisma.UserLevelRuleCreateOrConnectWithoutComicChaptersAsDownloadLevelInput
+export type UserLevelRuleCreateNestedOneWithoutChaptersAsDownloadLevelInput = {
+  create?: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutChaptersAsDownloadLevelInput>
+  connectOrCreate?: Prisma.UserLevelRuleCreateOrConnectWithoutChaptersAsDownloadLevelInput
   connect?: Prisma.UserLevelRuleWhereUniqueInput
 }
 
-export type UserLevelRuleCreateNestedOneWithoutComicChaptersAsReadLevelInput = {
-  create?: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutComicChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput>
-  connectOrCreate?: Prisma.UserLevelRuleCreateOrConnectWithoutComicChaptersAsReadLevelInput
+export type UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput = {
+  create?: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutChaptersAsReadLevelInput>
+  connectOrCreate?: Prisma.UserLevelRuleCreateOrConnectWithoutChaptersAsReadLevelInput
   connect?: Prisma.UserLevelRuleWhereUniqueInput
 }
 
-export type UserLevelRuleUpdateOneWithoutComicChaptersAsDownloadLevelNestedInput = {
-  create?: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
-  connectOrCreate?: Prisma.UserLevelRuleCreateOrConnectWithoutComicChaptersAsDownloadLevelInput
-  upsert?: Prisma.UserLevelRuleUpsertWithoutComicChaptersAsDownloadLevelInput
+export type UserLevelRuleUpdateOneWithoutChaptersAsDownloadLevelNestedInput = {
+  create?: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutChaptersAsDownloadLevelInput>
+  connectOrCreate?: Prisma.UserLevelRuleCreateOrConnectWithoutChaptersAsDownloadLevelInput
+  upsert?: Prisma.UserLevelRuleUpsertWithoutChaptersAsDownloadLevelInput
   disconnect?: Prisma.UserLevelRuleWhereInput | boolean
   delete?: Prisma.UserLevelRuleWhereInput | boolean
   connect?: Prisma.UserLevelRuleWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserLevelRuleUpdateToOneWithWhereWithoutComicChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUpdateWithoutComicChaptersAsDownloadLevelInput>, Prisma.UserLevelRuleUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserLevelRuleUpdateToOneWithWhereWithoutChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUpdateWithoutChaptersAsDownloadLevelInput>, Prisma.UserLevelRuleUncheckedUpdateWithoutChaptersAsDownloadLevelInput>
 }
 
-export type UserLevelRuleUpdateOneWithoutComicChaptersAsReadLevelNestedInput = {
-  create?: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutComicChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput>
-  connectOrCreate?: Prisma.UserLevelRuleCreateOrConnectWithoutComicChaptersAsReadLevelInput
-  upsert?: Prisma.UserLevelRuleUpsertWithoutComicChaptersAsReadLevelInput
+export type UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput = {
+  create?: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutChaptersAsReadLevelInput>
+  connectOrCreate?: Prisma.UserLevelRuleCreateOrConnectWithoutChaptersAsReadLevelInput
+  upsert?: Prisma.UserLevelRuleUpsertWithoutChaptersAsReadLevelInput
   disconnect?: Prisma.UserLevelRuleWhereInput | boolean
   delete?: Prisma.UserLevelRuleWhereInput | boolean
   connect?: Prisma.UserLevelRuleWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserLevelRuleUpdateToOneWithWhereWithoutComicChaptersAsReadLevelInput, Prisma.UserLevelRuleUpdateWithoutComicChaptersAsReadLevelInput>, Prisma.UserLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserLevelRuleUpdateToOneWithWhereWithoutChaptersAsReadLevelInput, Prisma.UserLevelRuleUpdateWithoutChaptersAsReadLevelInput>, Prisma.UserLevelRuleUncheckedUpdateWithoutChaptersAsReadLevelInput>
 }
 
 export type UserLevelRuleCreateWithoutUsersInput = {
@@ -891,8 +891,8 @@ export type UserLevelRuleCreateWithoutUsersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterCreateNestedManyWithoutRequiredDownloadLevelInput
+  chaptersAsReadLevel?: Prisma.WorkChapterCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type UserLevelRuleUncheckedCreateWithoutUsersInput = {
@@ -918,8 +918,8 @@ export type UserLevelRuleUncheckedCreateWithoutUsersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type UserLevelRuleCreateOrConnectWithoutUsersInput = {
@@ -960,8 +960,8 @@ export type UserLevelRuleUpdateWithoutUsersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type UserLevelRuleUncheckedUpdateWithoutUsersInput = {
@@ -987,8 +987,8 @@ export type UserLevelRuleUncheckedUpdateWithoutUsersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type UserLevelRuleCreateWithoutSectionsInput = {
@@ -1013,8 +1013,8 @@ export type UserLevelRuleCreateWithoutSectionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.AppUserCreateNestedManyWithoutLevelInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterCreateNestedManyWithoutRequiredDownloadLevelInput
+  chaptersAsReadLevel?: Prisma.WorkChapterCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type UserLevelRuleUncheckedCreateWithoutSectionsInput = {
@@ -1040,8 +1040,8 @@ export type UserLevelRuleUncheckedCreateWithoutSectionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.AppUserUncheckedCreateNestedManyWithoutLevelInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
 }
 
 export type UserLevelRuleCreateOrConnectWithoutSectionsInput = {
@@ -1082,8 +1082,8 @@ export type UserLevelRuleUpdateWithoutSectionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUpdateManyWithoutLevelNestedInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
 export type UserLevelRuleUncheckedUpdateWithoutSectionsInput = {
@@ -1109,11 +1109,11 @@ export type UserLevelRuleUncheckedUpdateWithoutSectionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUncheckedUpdateManyWithoutLevelNestedInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
-export type UserLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput = {
+export type UserLevelRuleCreateWithoutChaptersAsDownloadLevelInput = {
   name: string
   requiredExperience: number
   loginDays?: number
@@ -1136,10 +1136,10 @@ export type UserLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput = {
   updatedAt?: Date | string
   users?: Prisma.AppUserCreateNestedManyWithoutLevelInput
   sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredReadLevelInput
+  chaptersAsReadLevel?: Prisma.WorkChapterCreateNestedManyWithoutRequiredReadLevelInput
 }
 
-export type UserLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput = {
+export type UserLevelRuleUncheckedCreateWithoutChaptersAsDownloadLevelInput = {
   id?: number
   name: string
   requiredExperience: number
@@ -1163,15 +1163,15 @@ export type UserLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput
   updatedAt?: Date | string
   users?: Prisma.AppUserUncheckedCreateNestedManyWithoutLevelInput
   sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutRequiredReadLevelInput
 }
 
-export type UserLevelRuleCreateOrConnectWithoutComicChaptersAsDownloadLevelInput = {
+export type UserLevelRuleCreateOrConnectWithoutChaptersAsDownloadLevelInput = {
   where: Prisma.UserLevelRuleWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+  create: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutChaptersAsDownloadLevelInput>
 }
 
-export type UserLevelRuleCreateWithoutComicChaptersAsReadLevelInput = {
+export type UserLevelRuleCreateWithoutChaptersAsReadLevelInput = {
   name: string
   requiredExperience: number
   loginDays?: number
@@ -1194,10 +1194,10 @@ export type UserLevelRuleCreateWithoutComicChaptersAsReadLevelInput = {
   updatedAt?: Date | string
   users?: Prisma.AppUserCreateNestedManyWithoutLevelInput
   sections?: Prisma.ForumSectionCreateNestedManyWithoutUserLevelRuleInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterCreateNestedManyWithoutRequiredDownloadLevelInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterCreateNestedManyWithoutRequiredDownloadLevelInput
 }
 
-export type UserLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput = {
+export type UserLevelRuleUncheckedCreateWithoutChaptersAsReadLevelInput = {
   id?: number
   name: string
   requiredExperience: number
@@ -1221,26 +1221,26 @@ export type UserLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput = {
   updatedAt?: Date | string
   users?: Prisma.AppUserUncheckedCreateNestedManyWithoutLevelInput
   sections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutUserLevelRuleInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput
 }
 
-export type UserLevelRuleCreateOrConnectWithoutComicChaptersAsReadLevelInput = {
+export type UserLevelRuleCreateOrConnectWithoutChaptersAsReadLevelInput = {
   where: Prisma.UserLevelRuleWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutComicChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+  create: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutChaptersAsReadLevelInput>
 }
 
-export type UserLevelRuleUpsertWithoutComicChaptersAsDownloadLevelInput = {
-  update: Prisma.XOR<Prisma.UserLevelRuleUpdateWithoutComicChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput>
-  create: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutComicChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutComicChaptersAsDownloadLevelInput>
+export type UserLevelRuleUpsertWithoutChaptersAsDownloadLevelInput = {
+  update: Prisma.XOR<Prisma.UserLevelRuleUpdateWithoutChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedUpdateWithoutChaptersAsDownloadLevelInput>
+  create: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutChaptersAsDownloadLevelInput>
   where?: Prisma.UserLevelRuleWhereInput
 }
 
-export type UserLevelRuleUpdateToOneWithWhereWithoutComicChaptersAsDownloadLevelInput = {
+export type UserLevelRuleUpdateToOneWithWhereWithoutChaptersAsDownloadLevelInput = {
   where?: Prisma.UserLevelRuleWhereInput
-  data: Prisma.XOR<Prisma.UserLevelRuleUpdateWithoutComicChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput>
+  data: Prisma.XOR<Prisma.UserLevelRuleUpdateWithoutChaptersAsDownloadLevelInput, Prisma.UserLevelRuleUncheckedUpdateWithoutChaptersAsDownloadLevelInput>
 }
 
-export type UserLevelRuleUpdateWithoutComicChaptersAsDownloadLevelInput = {
+export type UserLevelRuleUpdateWithoutChaptersAsDownloadLevelInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
   loginDays?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1263,10 +1263,10 @@ export type UserLevelRuleUpdateWithoutComicChaptersAsDownloadLevelInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUpdateManyWithoutLevelNestedInput
   sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredReadLevelNestedInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
-export type UserLevelRuleUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput = {
+export type UserLevelRuleUncheckedUpdateWithoutChaptersAsDownloadLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1290,21 +1290,21 @@ export type UserLevelRuleUncheckedUpdateWithoutComicChaptersAsDownloadLevelInput
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUncheckedUpdateManyWithoutLevelNestedInput
   sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
-  comicChaptersAsReadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
+  chaptersAsReadLevel?: Prisma.WorkChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput
 }
 
-export type UserLevelRuleUpsertWithoutComicChaptersAsReadLevelInput = {
-  update: Prisma.XOR<Prisma.UserLevelRuleUpdateWithoutComicChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput>
-  create: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutComicChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutComicChaptersAsReadLevelInput>
+export type UserLevelRuleUpsertWithoutChaptersAsReadLevelInput = {
+  update: Prisma.XOR<Prisma.UserLevelRuleUpdateWithoutChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedUpdateWithoutChaptersAsReadLevelInput>
+  create: Prisma.XOR<Prisma.UserLevelRuleCreateWithoutChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedCreateWithoutChaptersAsReadLevelInput>
   where?: Prisma.UserLevelRuleWhereInput
 }
 
-export type UserLevelRuleUpdateToOneWithWhereWithoutComicChaptersAsReadLevelInput = {
+export type UserLevelRuleUpdateToOneWithWhereWithoutChaptersAsReadLevelInput = {
   where?: Prisma.UserLevelRuleWhereInput
-  data: Prisma.XOR<Prisma.UserLevelRuleUpdateWithoutComicChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput>
+  data: Prisma.XOR<Prisma.UserLevelRuleUpdateWithoutChaptersAsReadLevelInput, Prisma.UserLevelRuleUncheckedUpdateWithoutChaptersAsReadLevelInput>
 }
 
-export type UserLevelRuleUpdateWithoutComicChaptersAsReadLevelInput = {
+export type UserLevelRuleUpdateWithoutChaptersAsReadLevelInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
   loginDays?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1327,10 +1327,10 @@ export type UserLevelRuleUpdateWithoutComicChaptersAsReadLevelInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUpdateManyWithoutLevelNestedInput
   sections?: Prisma.ForumSectionUpdateManyWithoutUserLevelRuleNestedInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUpdateManyWithoutRequiredDownloadLevelNestedInput
 }
 
-export type UserLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput = {
+export type UserLevelRuleUncheckedUpdateWithoutChaptersAsReadLevelInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   requiredExperience?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1354,7 +1354,7 @@ export type UserLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.AppUserUncheckedUpdateManyWithoutLevelNestedInput
   sections?: Prisma.ForumSectionUncheckedUpdateManyWithoutUserLevelRuleNestedInput
-  comicChaptersAsDownloadLevel?: Prisma.WorkComicChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
+  chaptersAsDownloadLevel?: Prisma.WorkChapterUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput
 }
 
 
@@ -1365,15 +1365,15 @@ export type UserLevelRuleUncheckedUpdateWithoutComicChaptersAsReadLevelInput = {
 export type UserLevelRuleCountOutputType = {
   users: number
   sections: number
-  comicChaptersAsDownloadLevel: number
-  comicChaptersAsReadLevel: number
+  chaptersAsDownloadLevel: number
+  chaptersAsReadLevel: number
 }
 
 export type UserLevelRuleCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | UserLevelRuleCountOutputTypeCountUsersArgs
   sections?: boolean | UserLevelRuleCountOutputTypeCountSectionsArgs
-  comicChaptersAsDownloadLevel?: boolean | UserLevelRuleCountOutputTypeCountComicChaptersAsDownloadLevelArgs
-  comicChaptersAsReadLevel?: boolean | UserLevelRuleCountOutputTypeCountComicChaptersAsReadLevelArgs
+  chaptersAsDownloadLevel?: boolean | UserLevelRuleCountOutputTypeCountChaptersAsDownloadLevelArgs
+  chaptersAsReadLevel?: boolean | UserLevelRuleCountOutputTypeCountChaptersAsReadLevelArgs
 }
 
 /**
@@ -1403,15 +1403,15 @@ export type UserLevelRuleCountOutputTypeCountSectionsArgs<ExtArgs extends runtim
 /**
  * UserLevelRuleCountOutputType without action
  */
-export type UserLevelRuleCountOutputTypeCountComicChaptersAsDownloadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkComicChapterWhereInput
+export type UserLevelRuleCountOutputTypeCountChaptersAsDownloadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkChapterWhereInput
 }
 
 /**
  * UserLevelRuleCountOutputType without action
  */
-export type UserLevelRuleCountOutputTypeCountComicChaptersAsReadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkComicChapterWhereInput
+export type UserLevelRuleCountOutputTypeCountChaptersAsReadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkChapterWhereInput
 }
 
 
@@ -1439,8 +1439,8 @@ export type UserLevelRuleSelect<ExtArgs extends runtime.Types.Extensions.Interna
   updatedAt?: boolean
   users?: boolean | Prisma.UserLevelRule$usersArgs<ExtArgs>
   sections?: boolean | Prisma.UserLevelRule$sectionsArgs<ExtArgs>
-  comicChaptersAsDownloadLevel?: boolean | Prisma.UserLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs>
-  comicChaptersAsReadLevel?: boolean | Prisma.UserLevelRule$comicChaptersAsReadLevelArgs<ExtArgs>
+  chaptersAsDownloadLevel?: boolean | Prisma.UserLevelRule$chaptersAsDownloadLevelArgs<ExtArgs>
+  chaptersAsReadLevel?: boolean | Prisma.UserLevelRule$chaptersAsReadLevelArgs<ExtArgs>
   _count?: boolean | Prisma.UserLevelRuleCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userLevelRule"]>
 
@@ -1520,8 +1520,8 @@ export type UserLevelRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalA
 export type UserLevelRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | Prisma.UserLevelRule$usersArgs<ExtArgs>
   sections?: boolean | Prisma.UserLevelRule$sectionsArgs<ExtArgs>
-  comicChaptersAsDownloadLevel?: boolean | Prisma.UserLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs>
-  comicChaptersAsReadLevel?: boolean | Prisma.UserLevelRule$comicChaptersAsReadLevelArgs<ExtArgs>
+  chaptersAsDownloadLevel?: boolean | Prisma.UserLevelRule$chaptersAsDownloadLevelArgs<ExtArgs>
+  chaptersAsReadLevel?: boolean | Prisma.UserLevelRule$chaptersAsReadLevelArgs<ExtArgs>
   _count?: boolean | Prisma.UserLevelRuleCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserLevelRuleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1539,13 +1539,13 @@ export type $UserLevelRulePayload<ExtArgs extends runtime.Types.Extensions.Inter
      */
     sections: Prisma.$ForumSectionPayload<ExtArgs>[]
     /**
-     * 关联漫画章节下载权限
+     * 关联章节下载权限
      */
-    comicChaptersAsDownloadLevel: Prisma.$WorkComicChapterPayload<ExtArgs>[]
+    chaptersAsDownloadLevel: Prisma.$WorkChapterPayload<ExtArgs>[]
     /**
-     * 关联漫画章节阅读权限
+     * 关联章节阅读权限
      */
-    comicChaptersAsReadLevel: Prisma.$WorkComicChapterPayload<ExtArgs>[]
+    chaptersAsReadLevel: Prisma.$WorkChapterPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -2028,8 +2028,8 @@ export interface Prisma__UserLevelRuleClient<T, Null = never, ExtArgs extends ru
   readonly [Symbol.toStringTag]: "PrismaPromise"
   users<T extends Prisma.UserLevelRule$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserLevelRule$usersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sections<T extends Prisma.UserLevelRule$sectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserLevelRule$sectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumSectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  comicChaptersAsDownloadLevel<T extends Prisma.UserLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  comicChaptersAsReadLevel<T extends Prisma.UserLevelRule$comicChaptersAsReadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserLevelRule$comicChaptersAsReadLevelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  chaptersAsDownloadLevel<T extends Prisma.UserLevelRule$chaptersAsDownloadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserLevelRule$chaptersAsDownloadLevelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  chaptersAsReadLevel<T extends Prisma.UserLevelRule$chaptersAsReadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserLevelRule$chaptersAsReadLevelArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2525,51 +2525,51 @@ export type UserLevelRule$sectionsArgs<ExtArgs extends runtime.Types.Extensions.
 }
 
 /**
- * UserLevelRule.comicChaptersAsDownloadLevel
+ * UserLevelRule.chaptersAsDownloadLevel
  */
-export type UserLevelRule$comicChaptersAsDownloadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type UserLevelRule$chaptersAsDownloadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the WorkComicChapter
+   * Select specific fields to fetch from the WorkChapter
    */
-  select?: Prisma.WorkComicChapterSelect<ExtArgs> | null
+  select?: Prisma.WorkChapterSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the WorkComicChapter
+   * Omit specific fields from the WorkChapter
    */
-  omit?: Prisma.WorkComicChapterOmit<ExtArgs> | null
+  omit?: Prisma.WorkChapterOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.WorkComicChapterInclude<ExtArgs> | null
-  where?: Prisma.WorkComicChapterWhereInput
-  orderBy?: Prisma.WorkComicChapterOrderByWithRelationInput | Prisma.WorkComicChapterOrderByWithRelationInput[]
-  cursor?: Prisma.WorkComicChapterWhereUniqueInput
+  include?: Prisma.WorkChapterInclude<ExtArgs> | null
+  where?: Prisma.WorkChapterWhereInput
+  orderBy?: Prisma.WorkChapterOrderByWithRelationInput | Prisma.WorkChapterOrderByWithRelationInput[]
+  cursor?: Prisma.WorkChapterWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.WorkComicChapterScalarFieldEnum | Prisma.WorkComicChapterScalarFieldEnum[]
+  distinct?: Prisma.WorkChapterScalarFieldEnum | Prisma.WorkChapterScalarFieldEnum[]
 }
 
 /**
- * UserLevelRule.comicChaptersAsReadLevel
+ * UserLevelRule.chaptersAsReadLevel
  */
-export type UserLevelRule$comicChaptersAsReadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type UserLevelRule$chaptersAsReadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the WorkComicChapter
+   * Select specific fields to fetch from the WorkChapter
    */
-  select?: Prisma.WorkComicChapterSelect<ExtArgs> | null
+  select?: Prisma.WorkChapterSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the WorkComicChapter
+   * Omit specific fields from the WorkChapter
    */
-  omit?: Prisma.WorkComicChapterOmit<ExtArgs> | null
+  omit?: Prisma.WorkChapterOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.WorkComicChapterInclude<ExtArgs> | null
-  where?: Prisma.WorkComicChapterWhereInput
-  orderBy?: Prisma.WorkComicChapterOrderByWithRelationInput | Prisma.WorkComicChapterOrderByWithRelationInput[]
-  cursor?: Prisma.WorkComicChapterWhereUniqueInput
+  include?: Prisma.WorkChapterInclude<ExtArgs> | null
+  where?: Prisma.WorkChapterWhereInput
+  orderBy?: Prisma.WorkChapterOrderByWithRelationInput | Prisma.WorkChapterOrderByWithRelationInput[]
+  cursor?: Prisma.WorkChapterWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.WorkComicChapterScalarFieldEnum | Prisma.WorkComicChapterScalarFieldEnum[]
+  distinct?: Prisma.WorkChapterScalarFieldEnum | Prisma.WorkChapterScalarFieldEnum[]
 }
 
 /**

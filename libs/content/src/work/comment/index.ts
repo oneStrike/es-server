@@ -1,0 +1,5 @@
+export * from './dto/work-comment.dto'
+export * from './work-comment.constant'
+export * from './work-comment.module'
+export * from './work-comment.service'
+export * from './work-comment.types'

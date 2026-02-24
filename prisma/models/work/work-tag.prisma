@@ -23,8 +23,8 @@ model WorkTag {
   /// 更新时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  /// 漫画标签关联
-  comicTags WorkComicTag[]
+  /// 作品标签关联
+  workTags WorkTagRelation[]
 
   /// 排序索引
   @@index([order])

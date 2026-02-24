@@ -1,0 +1,49 @@
+/// 评论举报记录
+model WorkCommentReport {
+  /// 主键ID（自增）
+  id Int @id @default(autoincrement())
+
+  /// 举报人ID（关联 app_user.id）
+  reporterId Int  @map("reporter_id")
+  /// 处理人ID（关联 app_user.id，可为空）
+  handlerId  Int? @map("handler_id")
+  /// 被举报评论ID（关联 work_comment.id）
+  commentId  Int  @map("comment_id")
+
+  /// 举报原因（枚举值，如 spam/harassment 等）
+  reason      String  @db.VarChar(50)
+  /// 举报说明（补充描述，可为空）
+  description String? @db.VarChar(500)
+  /// 证据截图URL（可为空）
+  evidenceUrl String? @map("evidence_url") @db.VarChar(500)
+  /// 处理状态（pending/processing/resolved/rejected）
+  status      String  @default("pending") @db.VarChar(20)
+  /// 处理备注（可为空）
+  handlingNote String? @map("handling_note") @db.VarChar(500)
+  /// 处理时间（可为空）
+  handledAt DateTime? @map("handled_at") @db.Timestamptz(6)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 关联举报人
+  reporter AppUser @relation("WorkCommentReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  /// 关联处理人
+  handler  AppUser? @relation("WorkCommentReportHandler", fields: [handlerId], references: [id])
+  /// 关联评论
+  comment  WorkComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  /// 举报人索引
+  @@index([reporterId])
+  /// 处理人索引
+  @@index([handlerId])
+  /// 评论索引
+  @@index([commentId])
+  /// 状态索引
+  @@index([status])
+  /// 创建时间索引
+  @@index([createdAt])
+  @@map("work_comment_report")
+}

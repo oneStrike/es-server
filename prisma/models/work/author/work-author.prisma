@@ -36,8 +36,8 @@ model WorkAuthor {
   /// 软删除时间（用于数据恢复或归档）
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  /// 关联的漫画作者记录
-  comicAuthors WorkComicAuthor[]
+  /// 关联的作品作者记录
+  workAuthors WorkAuthorRelation[]
 
   /// 作者类型索引
   @@index([type])

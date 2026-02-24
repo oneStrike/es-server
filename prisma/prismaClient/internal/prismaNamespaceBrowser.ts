@@ -99,20 +99,22 @@ export const ModelName = {
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
   WorkAuthor: 'WorkAuthor',
-  WorkComicAuthor: 'WorkComicAuthor',
-  WorkComicCategory: 'WorkComicCategory',
-  WorkComicChapterCommentReport: 'WorkComicChapterCommentReport',
-  WorkComicChapterComment: 'WorkComicChapterComment',
-  WorkComicChapterDownload: 'WorkComicChapterDownload',
-  WorkComicChapterLike: 'WorkComicChapterLike',
-  WorkComicChapterPurchase: 'WorkComicChapterPurchase',
-  WorkComicChapter: 'WorkComicChapter',
-  WorkComicFavorite: 'WorkComicFavorite',
-  WorkComicLike: 'WorkComicLike',
-  WorkComicTag: 'WorkComicTag',
   WorkComic: 'WorkComic',
+  WorkNovel: 'WorkNovel',
+  WorkAuthorRelation: 'WorkAuthorRelation',
+  WorkCategoryRelation: 'WorkCategoryRelation',
   WorkCategory: 'WorkCategory',
-  WorkTag: 'WorkTag'
+  WorkChapterDownload: 'WorkChapterDownload',
+  WorkChapterLike: 'WorkChapterLike',
+  WorkChapterPurchase: 'WorkChapterPurchase',
+  WorkChapter: 'WorkChapter',
+  WorkCommentReport: 'WorkCommentReport',
+  WorkComment: 'WorkComment',
+  WorkFavorite: 'WorkFavorite',
+  WorkLike: 'WorkLike',
+  WorkTagRelation: 'WorkTagRelation',
+  WorkTag: 'WorkTag',
+  Work: 'Work'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1013,196 +1015,49 @@ export const WorkAuthorScalarFieldEnum = {
 export type WorkAuthorScalarFieldEnum = (typeof WorkAuthorScalarFieldEnum)[keyof typeof WorkAuthorScalarFieldEnum]
 
 
-export const WorkComicAuthorScalarFieldEnum = {
+export const WorkComicScalarFieldEnum = {
   id: 'id',
-  comicId: 'comicId',
-  authorId: 'authorId',
-  sortOrder: 'sortOrder',
+  workId: 'workId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type WorkComicAuthorScalarFieldEnum = (typeof WorkComicAuthorScalarFieldEnum)[keyof typeof WorkComicAuthorScalarFieldEnum]
+export type WorkComicScalarFieldEnum = (typeof WorkComicScalarFieldEnum)[keyof typeof WorkComicScalarFieldEnum]
 
 
-export const WorkComicCategoryScalarFieldEnum = {
-  comicId: 'comicId',
+export const WorkNovelScalarFieldEnum = {
+  id: 'id',
+  workId: 'workId',
+  wordCount: 'wordCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkNovelScalarFieldEnum = (typeof WorkNovelScalarFieldEnum)[keyof typeof WorkNovelScalarFieldEnum]
+
+
+export const WorkAuthorRelationScalarFieldEnum = {
+  id: 'id',
+  workId: 'workId',
+  authorId: 'authorId',
+  sortOrder: 'sortOrder',
+  role: 'role',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkAuthorRelationScalarFieldEnum = (typeof WorkAuthorRelationScalarFieldEnum)[keyof typeof WorkAuthorRelationScalarFieldEnum]
+
+
+export const WorkCategoryRelationScalarFieldEnum = {
+  workId: 'workId',
   categoryId: 'categoryId',
   sortOrder: 'sortOrder',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type WorkComicCategoryScalarFieldEnum = (typeof WorkComicCategoryScalarFieldEnum)[keyof typeof WorkComicCategoryScalarFieldEnum]
-
-
-export const WorkComicChapterCommentReportScalarFieldEnum = {
-  id: 'id',
-  reporterId: 'reporterId',
-  handlerId: 'handlerId',
-  commentId: 'commentId',
-  reason: 'reason',
-  description: 'description',
-  evidenceUrl: 'evidenceUrl',
-  status: 'status',
-  handlingNote: 'handlingNote',
-  handledAt: 'handledAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkComicChapterCommentReportScalarFieldEnum = (typeof WorkComicChapterCommentReportScalarFieldEnum)[keyof typeof WorkComicChapterCommentReportScalarFieldEnum]
-
-
-export const WorkComicChapterCommentScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  content: 'content',
-  sensitiveWordHits: 'sensitiveWordHits',
-  replyToId: 'replyToId',
-  actualReplyToId: 'actualReplyToId',
-  floor: 'floor',
-  isHidden: 'isHidden',
-  auditStatus: 'auditStatus',
-  auditReason: 'auditReason',
-  auditAt: 'auditAt',
-  auditById: 'auditById',
-  auditRole: 'auditRole',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
-} as const
-
-export type WorkComicChapterCommentScalarFieldEnum = (typeof WorkComicChapterCommentScalarFieldEnum)[keyof typeof WorkComicChapterCommentScalarFieldEnum]
-
-
-export const WorkComicChapterDownloadScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkComicChapterDownloadScalarFieldEnum = (typeof WorkComicChapterDownloadScalarFieldEnum)[keyof typeof WorkComicChapterDownloadScalarFieldEnum]
-
-
-export const WorkComicChapterLikeScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkComicChapterLikeScalarFieldEnum = (typeof WorkComicChapterLikeScalarFieldEnum)[keyof typeof WorkComicChapterLikeScalarFieldEnum]
-
-
-export const WorkComicChapterPurchaseScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkComicChapterPurchaseScalarFieldEnum = (typeof WorkComicChapterPurchaseScalarFieldEnum)[keyof typeof WorkComicChapterPurchaseScalarFieldEnum]
-
-
-export const WorkComicChapterScalarFieldEnum = {
-  id: 'id',
-  comicId: 'comicId',
-  requiredReadLevelId: 'requiredReadLevelId',
-  requiredDownloadLevelId: 'requiredDownloadLevelId',
-  title: 'title',
-  subtitle: 'subtitle',
-  description: 'description',
-  contents: 'contents',
-  sortOrder: 'sortOrder',
-  readRule: 'readRule',
-  downloadRule: 'downloadRule',
-  readPoints: 'readPoints',
-  downloadPoints: 'downloadPoints',
-  isPublished: 'isPublished',
-  isPreview: 'isPreview',
-  canComment: 'canComment',
-  publishAt: 'publishAt',
-  viewCount: 'viewCount',
-  likeCount: 'likeCount',
-  commentCount: 'commentCount',
-  purchaseCount: 'purchaseCount',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
-} as const
-
-export type WorkComicChapterScalarFieldEnum = (typeof WorkComicChapterScalarFieldEnum)[keyof typeof WorkComicChapterScalarFieldEnum]
-
-
-export const WorkComicFavoriteScalarFieldEnum = {
-  id: 'id',
-  comicId: 'comicId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkComicFavoriteScalarFieldEnum = (typeof WorkComicFavoriteScalarFieldEnum)[keyof typeof WorkComicFavoriteScalarFieldEnum]
-
-
-export const WorkComicLikeScalarFieldEnum = {
-  id: 'id',
-  comicId: 'comicId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkComicLikeScalarFieldEnum = (typeof WorkComicLikeScalarFieldEnum)[keyof typeof WorkComicLikeScalarFieldEnum]
-
-
-export const WorkComicTagScalarFieldEnum = {
-  comicId: 'comicId',
-  tagId: 'tagId',
-  sortOrder: 'sortOrder',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkComicTagScalarFieldEnum = (typeof WorkComicTagScalarFieldEnum)[keyof typeof WorkComicTagScalarFieldEnum]
-
-
-export const WorkComicScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  alias: 'alias',
-  cover: 'cover',
-  description: 'description',
-  publisher: 'publisher',
-  originalSource: 'originalSource',
-  copyright: 'copyright',
-  disclaimer: 'disclaimer',
-  language: 'language',
-  region: 'region',
-  ageRating: 'ageRating',
-  serialStatus: 'serialStatus',
-  isPublished: 'isPublished',
-  isRecommended: 'isRecommended',
-  isHot: 'isHot',
-  isNew: 'isNew',
-  popularity: 'popularity',
-  rating: 'rating',
-  recommendWeight: 'recommendWeight',
-  viewCount: 'viewCount',
-  favoriteCount: 'favoriteCount',
-  likeCount: 'likeCount',
-  ratingCount: 'ratingCount',
-  publishAt: 'publishAt',
-  lastUpdated: 'lastUpdated',
-  remark: 'remark',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt'
-} as const
-
-export type WorkComicScalarFieldEnum = (typeof WorkComicScalarFieldEnum)[keyof typeof WorkComicScalarFieldEnum]
+export type WorkCategoryRelationScalarFieldEnum = (typeof WorkCategoryRelationScalarFieldEnum)[keyof typeof WorkCategoryRelationScalarFieldEnum]
 
 
 export const WorkCategoryScalarFieldEnum = {
@@ -1221,6 +1076,144 @@ export const WorkCategoryScalarFieldEnum = {
 export type WorkCategoryScalarFieldEnum = (typeof WorkCategoryScalarFieldEnum)[keyof typeof WorkCategoryScalarFieldEnum]
 
 
+export const WorkChapterDownloadScalarFieldEnum = {
+  id: 'id',
+  chapterId: 'chapterId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkChapterDownloadScalarFieldEnum = (typeof WorkChapterDownloadScalarFieldEnum)[keyof typeof WorkChapterDownloadScalarFieldEnum]
+
+
+export const WorkChapterLikeScalarFieldEnum = {
+  id: 'id',
+  chapterId: 'chapterId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkChapterLikeScalarFieldEnum = (typeof WorkChapterLikeScalarFieldEnum)[keyof typeof WorkChapterLikeScalarFieldEnum]
+
+
+export const WorkChapterPurchaseScalarFieldEnum = {
+  id: 'id',
+  chapterId: 'chapterId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkChapterPurchaseScalarFieldEnum = (typeof WorkChapterPurchaseScalarFieldEnum)[keyof typeof WorkChapterPurchaseScalarFieldEnum]
+
+
+export const WorkChapterScalarFieldEnum = {
+  id: 'id',
+  workId: 'workId',
+  workType: 'workType',
+  title: 'title',
+  subtitle: 'subtitle',
+  description: 'description',
+  sortOrder: 'sortOrder',
+  readRule: 'readRule',
+  downloadRule: 'downloadRule',
+  readPoints: 'readPoints',
+  downloadPoints: 'downloadPoints',
+  requiredReadLevelId: 'requiredReadLevelId',
+  requiredDownloadLevelId: 'requiredDownloadLevelId',
+  isPublished: 'isPublished',
+  isPreview: 'isPreview',
+  canComment: 'canComment',
+  publishAt: 'publishAt',
+  viewCount: 'viewCount',
+  likeCount: 'likeCount',
+  commentCount: 'commentCount',
+  purchaseCount: 'purchaseCount',
+  wordCount: 'wordCount',
+  contentPath: 'contentPath',
+  remark: 'remark',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type WorkChapterScalarFieldEnum = (typeof WorkChapterScalarFieldEnum)[keyof typeof WorkChapterScalarFieldEnum]
+
+
+export const WorkCommentReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  handlerId: 'handlerId',
+  commentId: 'commentId',
+  reason: 'reason',
+  description: 'description',
+  evidenceUrl: 'evidenceUrl',
+  status: 'status',
+  handlingNote: 'handlingNote',
+  handledAt: 'handledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkCommentReportScalarFieldEnum = (typeof WorkCommentReportScalarFieldEnum)[keyof typeof WorkCommentReportScalarFieldEnum]
+
+
+export const WorkCommentScalarFieldEnum = {
+  id: 'id',
+  workId: 'workId',
+  workType: 'workType',
+  chapterId: 'chapterId',
+  userId: 'userId',
+  content: 'content',
+  sensitiveWordHits: 'sensitiveWordHits',
+  replyToId: 'replyToId',
+  actualReplyToId: 'actualReplyToId',
+  floor: 'floor',
+  isHidden: 'isHidden',
+  auditStatus: 'auditStatus',
+  auditReason: 'auditReason',
+  auditAt: 'auditAt',
+  auditById: 'auditById',
+  auditRole: 'auditRole',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type WorkCommentScalarFieldEnum = (typeof WorkCommentScalarFieldEnum)[keyof typeof WorkCommentScalarFieldEnum]
+
+
+export const WorkFavoriteScalarFieldEnum = {
+  id: 'id',
+  workId: 'workId',
+  userId: 'userId',
+  workType: 'workType',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkFavoriteScalarFieldEnum = (typeof WorkFavoriteScalarFieldEnum)[keyof typeof WorkFavoriteScalarFieldEnum]
+
+
+export const WorkLikeScalarFieldEnum = {
+  id: 'id',
+  workId: 'workId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type WorkLikeScalarFieldEnum = (typeof WorkLikeScalarFieldEnum)[keyof typeof WorkLikeScalarFieldEnum]
+
+
+export const WorkTagRelationScalarFieldEnum = {
+  workId: 'workId',
+  tagId: 'tagId',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkTagRelationScalarFieldEnum = (typeof WorkTagRelationScalarFieldEnum)[keyof typeof WorkTagRelationScalarFieldEnum]
+
+
 export const WorkTagScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -1234,6 +1227,42 @@ export const WorkTagScalarFieldEnum = {
 } as const
 
 export type WorkTagScalarFieldEnum = (typeof WorkTagScalarFieldEnum)[keyof typeof WorkTagScalarFieldEnum]
+
+
+export const WorkScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  name: 'name',
+  alias: 'alias',
+  cover: 'cover',
+  description: 'description',
+  language: 'language',
+  region: 'region',
+  ageRating: 'ageRating',
+  serialStatus: 'serialStatus',
+  publisher: 'publisher',
+  originalSource: 'originalSource',
+  copyright: 'copyright',
+  disclaimer: 'disclaimer',
+  isPublished: 'isPublished',
+  publishAt: 'publishAt',
+  lastUpdated: 'lastUpdated',
+  viewCount: 'viewCount',
+  favoriteCount: 'favoriteCount',
+  likeCount: 'likeCount',
+  rating: 'rating',
+  ratingCount: 'ratingCount',
+  popularity: 'popularity',
+  isRecommended: 'isRecommended',
+  isHot: 'isHot',
+  isNew: 'isNew',
+  recommendWeight: 'recommendWeight',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type WorkScalarFieldEnum = (typeof WorkScalarFieldEnum)[keyof typeof WorkScalarFieldEnum]
 
 
 export const SortOrder = {

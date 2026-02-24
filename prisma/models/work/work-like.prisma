@@ -1,0 +1,26 @@
+/// 作品点赞记录
+model WorkLike {
+  id Int @id @default(autoincrement())
+
+  /// 作品ID
+  workId Int @map("work_id")
+  /// 用户ID
+  userId Int @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 关联作品
+  work Work @relation(fields: [workId], references: [id], onDelete: Cascade)
+  /// 关联用户
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 作品与用户唯一约束
+  @@unique([workId, userId])
+  /// 作品索引
+  @@index([workId])
+  /// 用户索引
+  @@index([userId])
+  /// 创建时间索引
+  @@index([createdAt])
+  @@map("work_like")
+}

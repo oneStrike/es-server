@@ -1,0 +1,33 @@
+/// 作品作者关联表（多对多关系中间表）
+model WorkAuthorRelation {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 作品ID
+  workId   Int @map("work_id")
+  /// 作者ID
+  authorId Int @map("author_id")
+
+  /// 排序顺序（用于展示顺序）
+  sortOrder Int @default(0) @map("sort_order")
+  /// 角色类型（如：作者、作画、原作等）
+  role      String? @db.VarChar(50)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 关联作品
+  work   Work       @relation(fields: [workId], references: [id], onDelete: Cascade)
+  /// 关联作者
+  author WorkAuthor @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  /// 作品与作者唯一约束
+  @@unique([workId, authorId])
+  /// 作品索引
+  @@index([workId])
+  /// 作者索引
+  @@index([authorId])
+  @@map("work_author_relation")
+}

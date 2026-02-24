@@ -54,16 +54,12 @@ model UserLevelRule {
   users AppUser[]
   /// 版块关联 - 每个等级规则对应多个版块
   sections ForumSection[]
-  /// 关联漫画章节下载权限
-  comicChaptersAsDownloadLevel WorkComicChapter[] @relation("ChapterDownloadLevel")
-  /// 关联漫画章节阅读权限
-  comicChaptersAsReadLevel WorkComicChapter[] @relation("ChapterReadLevel")
+  /// 关联章节下载权限
+  chaptersAsDownloadLevel WorkChapter[] @relation("ChapterDownloadLevel")
+  /// 关联章节阅读权限
+  chaptersAsReadLevel WorkChapter[] @relation("ChapterReadLevel")
 
   /// 启用与排序索引
   @@index([isEnabled, sortOrder])
-  /// 启用与经验索引
-  @@index([isEnabled, requiredExperience])
-  /// 创建时间索引
-  @@index([createdAt])
   @@map("user_level_rule")
 }

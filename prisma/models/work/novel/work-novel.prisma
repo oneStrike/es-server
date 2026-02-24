@@ -1,0 +1,18 @@
+/// 小说作品扩展表
+model WorkNovel {
+  /// 主键id
+  id        Int      @id @default(autoincrement())
+  /// 关联的作品ID
+  workId    Int      @unique
+  /// 总字数
+  wordCount Int      @default(0)
+  /// 创建时间
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  /// 关联的作品
+  work Work @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  @@map("work_novel")
+}

@@ -279,72 +279,82 @@ export type DictionaryItem = Prisma.DictionaryItemModel
  */
 export type WorkAuthor = Prisma.WorkAuthorModel
 /**
- * Model WorkComicAuthor
- * 漫画作者关联表（多对多关系中间表）
- */
-export type WorkComicAuthor = Prisma.WorkComicAuthorModel
-/**
- * Model WorkComicCategory
- * 漫画分类关联表
- */
-export type WorkComicCategory = Prisma.WorkComicCategoryModel
-/**
- * Model WorkComicChapterCommentReport
- * 漫画章节评论举报记录
- */
-export type WorkComicChapterCommentReport = Prisma.WorkComicChapterCommentReportModel
-/**
- * Model WorkComicChapterComment
- * 漫画章节评论
- */
-export type WorkComicChapterComment = Prisma.WorkComicChapterCommentModel
-/**
- * Model WorkComicChapterDownload
- * 漫画章节下载记录
- */
-export type WorkComicChapterDownload = Prisma.WorkComicChapterDownloadModel
-/**
- * Model WorkComicChapterLike
- * 漫画章节点赞记录
- */
-export type WorkComicChapterLike = Prisma.WorkComicChapterLikeModel
-/**
- * Model WorkComicChapterPurchase
- * 漫画章节购买记录
- */
-export type WorkComicChapterPurchase = Prisma.WorkComicChapterPurchaseModel
-/**
- * Model WorkComicChapter
- * 漫画章节模型
- */
-export type WorkComicChapter = Prisma.WorkComicChapterModel
-/**
- * Model WorkComicFavorite
- * 漫画收藏记录
- */
-export type WorkComicFavorite = Prisma.WorkComicFavoriteModel
-/**
- * Model WorkComicLike
- * 漫画点赞记录
- */
-export type WorkComicLike = Prisma.WorkComicLikeModel
-/**
- * Model WorkComicTag
- * 漫画标签关联表
- */
-export type WorkComicTag = Prisma.WorkComicTagModel
-/**
  * Model WorkComic
- * 漫画作品模型
+ * 漫画作品扩展表
  */
 export type WorkComic = Prisma.WorkComicModel
+/**
+ * Model WorkNovel
+ * 小说作品扩展表
+ */
+export type WorkNovel = Prisma.WorkNovelModel
+/**
+ * Model WorkAuthorRelation
+ * 作品作者关联表（多对多关系中间表）
+ */
+export type WorkAuthorRelation = Prisma.WorkAuthorRelationModel
+/**
+ * Model WorkCategoryRelation
+ * 作品分类关联表
+ */
+export type WorkCategoryRelation = Prisma.WorkCategoryRelationModel
 /**
  * Model WorkCategory
  * 作品分类模型
  */
 export type WorkCategory = Prisma.WorkCategoryModel
 /**
+ * Model WorkChapterDownload
+ * 章节下载记录
+ */
+export type WorkChapterDownload = Prisma.WorkChapterDownloadModel
+/**
+ * Model WorkChapterLike
+ * 章节点赞记录
+ */
+export type WorkChapterLike = Prisma.WorkChapterLikeModel
+/**
+ * Model WorkChapterPurchase
+ * 章节购买记录
+ */
+export type WorkChapterPurchase = Prisma.WorkChapterPurchaseModel
+/**
+ * Model WorkChapter
+ * 通用章节模型
+ */
+export type WorkChapter = Prisma.WorkChapterModel
+/**
+ * Model WorkCommentReport
+ * 评论举报记录
+ */
+export type WorkCommentReport = Prisma.WorkCommentReportModel
+/**
+ * Model WorkComment
+ * 统一评论表（支持作品评论和章节评论）
+ */
+export type WorkComment = Prisma.WorkCommentModel
+/**
+ * Model WorkFavorite
+ * 作品收藏记录
+ */
+export type WorkFavorite = Prisma.WorkFavoriteModel
+/**
+ * Model WorkLike
+ * 作品点赞记录
+ */
+export type WorkLike = Prisma.WorkLikeModel
+/**
+ * Model WorkTagRelation
+ * 作品标签关联表
+ */
+export type WorkTagRelation = Prisma.WorkTagRelationModel
+/**
  * Model WorkTag
  * 标签模型
  */
 export type WorkTag = Prisma.WorkTagModel
+/**
+ * Model Work
+ * 作品基表模型
+ */
+export type Work = Prisma.WorkModel

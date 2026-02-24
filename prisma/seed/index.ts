@@ -3,7 +3,6 @@ import { makePrismaClient } from '../../libs/base/src/database'
 import { isProduction } from '../../libs/base/src/utils'
 import { DbConfig } from '../../libs/base/src/config'
 
-// ==================== 模块化种子数据导入 ====================
 import { createInitialAdminAccount } from './modules/admin'
 import {
   createInitialAppConfig,
@@ -26,27 +25,27 @@ import {
 import { createInitialDataDictionary } from './modules/system'
 import {
   createInitialAuthors,
-  createInitialComicAuthors,
-  createInitialComicCategories,
-  createInitialComicChapters,
-  createInitialComics,
-  createInitialComicGrowthRules,
-  createInitialComicTags,
+  createInitialWorkAuthorRelations,
   createInitialWorkCategory,
+  createInitialWorkCategoryRelations,
+  createInitialWorkChapters,
+  createInitialWorkComments,
+  createInitialWorkComics,
+  createInitialWorkGrowthRules,
+  createInitialWorkNovels,
+  createInitialWorks,
   createInitialWorkTag,
+  createInitialWorkTagRelations,
 } from './modules/work'
 
 const connectUrl = isProduction()
   ? DbConfig.connection.url
   : 'postgresql://postgres:259158@localhost:5432/foo'
 const prisma = makePrismaClient(connectUrl)
-/**
- * 执行数据库种子数据初始化
- */
+
 async function runSeeds() {
   console.log('🌱 开始初始化种子数据...')
 
-  // 第一批：基础配置和枚举数据（必须先执行）
   await Promise.all([
     createInitialAdminAccount(prisma),
     createInitialDataDictionary(prisma),
@@ -63,22 +62,23 @@ async function runSeeds() {
     createInitialForumExperienceRules(prisma),
     createInitialForumLevelRules(prisma),
     createInitialForumSensitiveWords(prisma),
-    createInitialComicGrowthRules(prisma),
+    createInitialWorkGrowthRules(prisma),
   ])
 
   console.log('✅ 基础配置数据初始化完成')
 
-  // 第二批：依赖于第一批数据的业务数据
-  await createInitialAuthors(prisma) // 作者信息
-  await createInitialComics(prisma) // 漫画基础信息
+  await createInitialAuthors(prisma)
+  await createInitialWorks(prisma)
+  await createInitialWorkComics(prisma)
+  await createInitialWorkNovels(prisma)
 
   console.log('✅ 核心业务数据初始化完成')
 
-  // 第三批：关联关系和详细数据
-  await createInitialComicAuthors(prisma)
-  await createInitialComicCategories(prisma)
-  await createInitialComicTags(prisma)
-  await createInitialComicChapters(prisma)
+  await createInitialWorkAuthorRelations(prisma)
+  await createInitialWorkCategoryRelations(prisma)
+  await createInitialWorkTagRelations(prisma)
+  await createInitialWorkChapters(prisma)
+  await createInitialWorkComments(prisma)
   await createInitialAppNotice(prisma)
   await createInitialAppUser(prisma)
   await createInitialForumProfile(prisma)

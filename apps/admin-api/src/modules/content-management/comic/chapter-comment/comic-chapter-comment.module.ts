@@ -1,11 +1,11 @@
-import { ComicChapterCommentModule as ComicChapterCommentModuleLib } from '@libs/content/comic/chapter-comment'
+import { WorkCommentModule } from '@libs/content/work/comment'
 import { Module } from '@nestjs/common'
 import { ComicChapterCommentController } from './comic-chapter-comment.controller'
 
 @Module({
-  imports: [ComicChapterCommentModuleLib],
+  imports: [WorkCommentModule],
   controllers: [ComicChapterCommentController],
   providers: [],
-  exports: [ComicChapterCommentModuleLib],
+  exports: [WorkCommentModule],
 })
 export class ComicChapterCommentModule {}

@@ -1,0 +1,30 @@
+/// 作品分类关联表
+model WorkCategoryRelation {
+  /// 作品ID
+  workId     Int @map("work_id")
+  /// 分类ID
+  categoryId Int @map("category_id")
+
+  /// 排序顺序（用于展示顺序）
+  sortOrder Int @default(0) @map("sort_order")
+
+  /// 关联时间
+  createdAt DateTime @default(now()) @map("created_at")
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// 关联作品
+  work     Work        @relation(fields: [workId], references: [id], onDelete: Cascade)
+  /// 关联分类
+  category WorkCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  /// 作品与分类复合主键
+  @@id([workId, categoryId])
+  /// 分类索引
+  @@index([categoryId])
+  /// 排序索引
+  @@index([sortOrder])
+  /// 作品与排序索引
+  @@index([workId, sortOrder])
+  @@map("work_category_relation")
+}

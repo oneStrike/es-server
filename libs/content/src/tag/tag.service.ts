@@ -144,13 +144,9 @@ export class WorkTagService extends BaseService {
    * 检查标签是否有关联的作品
    */
   async checkTagHasWorks(tagId: number) {
-    const count = await this.prisma.workComic.count({
+    const count = await this.prisma.workTagRelation.count({
       where: {
-        comicTags: {
-          some: {
-            tagId,
-          },
-        },
+        tagId,
       },
     })
     return count > 0

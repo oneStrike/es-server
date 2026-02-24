@@ -1,15 +1,11 @@
-import { ChapterContentModule as ChapterContentModuleLib } from '@libs/content/comic/chapter-content'
+import { ContentModule } from '@libs/content/work/content'
 import { Module } from '@nestjs/common'
 import { ChapterContentController } from './chapter-content.controller'
 
-/**
- * 漫画章节内容模块
- * 管理漫画章节内容相关的服务和控制器
- */
 @Module({
-  imports: [ChapterContentModuleLib],
+  imports: [ContentModule],
   controllers: [ChapterContentController],
   providers: [],
-  exports: [ChapterContentModuleLib],
+  exports: [ContentModule],
 })
 export class ChapterContentModule {}

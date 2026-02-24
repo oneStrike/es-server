@@ -4,19 +4,19 @@ import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto, IdsDto, PageDto } from '@libs/base/dto'
 import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import {
-  ComicChapterDetailWithUserStatusDto,
-  ComicChapterPageWithUserStatusDto,
-  ComicChapterService,
-  ComicChapterUserStatusDto,
-  QueryComicChapterDto,
-} from '@libs/content/comic/chapter'
+  QueryWorkChapterDto,
+  WorkChapterDetailWithUserStatusDto,
+  WorkChapterPageWithUserStatusDto,
+  WorkChapterService,
+  WorkChapterUserStatusDto,
+} from '@libs/content/work/chapter'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('漫画模块/章节')
 @Controller('app/comic')
 export class ComicChapterController {
-  constructor(private readonly comicChapterService: ComicChapterService) {}
+  constructor(private readonly workChapterService: WorkChapterService) {}
 
   private getRequestMeta(req: FastifyRequest) {
     return {
@@ -36,7 +36,7 @@ export class ComicChapterController {
     @Req() req: FastifyRequest,
   ) {
     const { ip, deviceId } = this.getRequestMeta(req)
-    return this.comicChapterService.incrementViewCount(
+    return this.workChapterService.incrementViewCount(
       body.id,
       user.sub,
       ip,
@@ -47,13 +47,13 @@ export class ComicChapterController {
   @Get('chapter/detail')
   @ApiDoc({
     summary: '获取漫画章节详情',
-    model: ComicChapterDetailWithUserStatusDto,
+    model: WorkChapterDetailWithUserStatusDto,
   })
   async getChapterDetail(
     @Query() query: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicChapterService.getComicChapterDetailWithUserStatus(
+    return this.workChapterService.getChapterDetailWithUserStatus(
       query.id,
       user.sub,
     )
@@ -62,13 +62,13 @@ export class ComicChapterController {
   @Get('chapter/page')
   @ApiPageDoc({
     summary: '分页查询漫画章节列表',
-    model: ComicChapterPageWithUserStatusDto,
+    model: WorkChapterPageWithUserStatusDto,
   })
   async getChapterPage(
-    @Query() query: QueryComicChapterDto,
+    @Query() query: QueryWorkChapterDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicChapterService.getComicChapterPageWithUserStatus(
+    return this.workChapterService.getChapterPageWithUserStatus(
       query,
       user.sub,
     )
@@ -77,37 +77,37 @@ export class ComicChapterController {
   @Get('chapter/my/purchases')
   @ApiPageDoc({
     summary: '分页查询我的章节购买记录',
-    model: ComicChapterPageWithUserStatusDto,
+    model: WorkChapterPageWithUserStatusDto,
   })
   async getMyChapterPurchases(
     @Query() query: PageDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicChapterService.getMyPurchasedChapterPage(query, user.sub)
+    return this.workChapterService.getMyPurchasedPage(query, user.sub)
   }
 
   @Get('chapter/my/downloads')
   @ApiPageDoc({
     summary: '分页查询我的章节下载记录',
-    model: ComicChapterPageWithUserStatusDto,
+    model: WorkChapterPageWithUserStatusDto,
   })
   async getMyChapterDownloads(
     @Query() query: PageDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicChapterService.getMyDownloadedChapterPage(query, user.sub)
+    return this.workChapterService.getMyDownloadedPage(query, user.sub)
   }
 
   @Get('chapter/my/reads')
   @ApiPageDoc({
     summary: '分页查询我的章节阅读记录',
-    model: ComicChapterPageWithUserStatusDto,
+    model: WorkChapterPageWithUserStatusDto,
   })
   async getMyChapterReads(
     @Query() query: PageDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicChapterService.getMyReadChapterPage(query, user.sub)
+    return this.workChapterService.getMyReadPage(query, user.sub)
   }
 
   @Post('chapter/like')
@@ -121,7 +121,7 @@ export class ComicChapterController {
     @Req() req: FastifyRequest,
   ) {
     const { ip, deviceId } = this.getRequestMeta(req)
-    return this.comicChapterService.incrementLikeCount(
+    return this.workChapterService.incrementLikeCount(
       body.id,
       user.sub,
       ip,
@@ -138,7 +138,7 @@ export class ComicChapterController {
     @Query() query: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicChapterService.checkUserLiked(query.id, user.sub)
+    return this.workChapterService.checkUserLiked(query.id, user.sub)
   }
 
   @Post('chapter/purchase')
@@ -152,7 +152,7 @@ export class ComicChapterController {
     @Req() req: FastifyRequest,
   ) {
     const { ip, deviceId } = this.getRequestMeta(req)
-    return this.comicChapterService.incrementPurchaseCount(
+    return this.workChapterService.incrementPurchaseCount(
       body.id,
       user.sub,
       ip,
@@ -169,7 +169,7 @@ export class ComicChapterController {
     @Query() query: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicChapterService.checkUserPurchased(query.id, user.sub)
+    return this.workChapterService.checkUserPurchased(query.id, user.sub)
   }
 
   @Post('chapter/download')
@@ -183,7 +183,7 @@ export class ComicChapterController {
     @Req() req: FastifyRequest,
   ) {
     const { ip, deviceId } = this.getRequestMeta(req)
-    return this.comicChapterService.reportDownload(
+    return this.workChapterService.reportDownload(
       body.id,
       user.sub,
       ip,
@@ -200,22 +200,19 @@ export class ComicChapterController {
     @Query() query: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicChapterService.checkUserDownloaded(query.id, user.sub)
+    return this.workChapterService.checkUserDownloaded(query.id, user.sub)
   }
 
   @Post('chapter/status')
   @ApiDoc({
     summary: '批量查询章节用户状态',
-    model: ComicChapterUserStatusDto,
+    model: WorkChapterUserStatusDto,
     isArray: true,
   })
   async getChapterStatus(
     @Body() body: IdsDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicChapterService.getComicChapterUserStatus(
-      body.ids,
-      user.sub,
-    )
+    return this.workChapterService.getChapterUserStatus(body.ids, user.sub)
   }
 }

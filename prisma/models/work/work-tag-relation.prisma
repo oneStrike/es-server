@@ -1,0 +1,32 @@
+/// 作品标签关联表
+model WorkTagRelation {
+  /// 作品ID
+  workId Int @map("work_id")
+  /// 标签ID
+  tagId  Int @map("tag_id")
+
+  /// 排序顺序（用于展示顺序）
+  sortOrder Int @default(0) @map("sort_order")
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 关联作品
+  work Work @relation(fields: [workId], references: [id], onDelete: Cascade)
+  /// 关联标签
+  tag  WorkTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  /// 作品与标签复合主键
+  @@id([workId, tagId])
+  /// 标签索引
+  @@index([tagId])
+  /// 作品索引
+  @@index([workId])
+  /// 排序索引
+  @@index([sortOrder])
+  /// 作品与排序索引
+  @@index([workId, sortOrder])
+  @@map("work_tag_relation")
+}

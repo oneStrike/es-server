@@ -1,94 +1,74 @@
+import { WorkTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { DragReorderDto, IdDto } from '@libs/base/dto'
 import {
-  ComicChapterDetailDto,
-  ComicChapterPageResponseDto,
-  ComicChapterService,
-  CreateComicChapterDto,
-  QueryComicChapterDto,
-  UpdateComicChapterDto,
-} from '@libs/content/comic/chapter'
+  CreateWorkChapterDto,
+  QueryWorkChapterDto,
+  UpdateWorkChapterDto,
+  WorkChapterService,
+} from '@libs/content/work/chapter'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-/**
- * 漫画章节管理控制器
- * 提供漫画章节的增删改查等接口
- */
 @ApiTags('内容管理/漫画章节模块')
 @Controller('admin/work/comic-chapter')
 export class ComicChapterController {
-  constructor(private readonly comicChapterService: ComicChapterService) {}
+  constructor(private readonly workChapterService: WorkChapterService) {}
 
-  /**
-   * 创建漫画章节
-   */
   @Post('/create')
   @ApiDoc({
     summary: '创建漫画章节',
     model: IdDto,
   })
-  async create(@Body() createComicChapterDto: CreateComicChapterDto) {
-    return this.comicChapterService.createComicChapter(createComicChapterDto)
+  async create(@Body() body: CreateWorkChapterDto) {
+    return this.workChapterService.createChapter({
+      ...body,
+      workType: WorkTypeEnum.COMIC,
+    })
   }
 
-  /**
-   * 分页查询漫画章节列表
-   */
   @Get('/page')
   @ApiPageDoc({
     summary: '分页查询漫画章节列表',
-    model: ComicChapterPageResponseDto,
+    model: IdDto,
   })
-  async getPage(@Query() queryComicChapterDto: QueryComicChapterDto) {
-    return this.comicChapterService.getComicChapterPage(queryComicChapterDto)
+  async getPage(@Query() query: QueryWorkChapterDto) {
+    return this.workChapterService.getChapterPage(query)
   }
 
-  /**
-   * 获取漫画章节详情
-   */
   @Get('/detail')
   @ApiDoc({
     summary: '获取漫画章节详情',
-    model: ComicChapterDetailDto,
+    model: IdDto,
   })
-  async getDetail(@Query() idDto: IdDto) {
-    return this.comicChapterService.getComicChapterDetail(idDto.id)
+  async getDetail(@Query() query: IdDto) {
+    return this.workChapterService.getChapterDetail(query.id)
   }
 
-  /**
-   * 更新漫画章节
-   */
   @Post('/update')
   @ApiDoc({
     summary: '更新漫画章节',
     model: IdDto,
   })
-  async update(@Body() updateComicChapterDto: UpdateComicChapterDto) {
-    return this.comicChapterService.updateComicChapter(updateComicChapterDto)
+  async update(@Body() body: UpdateWorkChapterDto) {
+    return this.workChapterService.updateChapter(body)
   }
 
-  /**
-   * 删除漫画章节
-   */
   @Post('/delete')
   @ApiDoc({
     summary: '删除漫画章节',
     model: IdDto,
   })
-  async delete(@Body() idDto: IdDto) {
-    return this.comicChapterService.deleteComicChapter(idDto.id)
+  async delete(@Body() query: IdDto) {
+    return this.workChapterService.deleteChapter(query.id)
   }
 
-  /**
-   * 交换章节序号
-   */
   @Post('/swap-sort-order')
   @ApiDoc({
     summary: '交换章节序号',
     model: DragReorderDto,
   })
-  async swapSortOrder(@Body() swapChapterNumberDto: DragReorderDto) {
-    return this.comicChapterService.swapChapterNumbers(swapChapterNumberDto)
+  async swapSortOrder(@Body() body: DragReorderDto) {
+    return this.workChapterService.swapChapterNumbers(body)
   }
 }

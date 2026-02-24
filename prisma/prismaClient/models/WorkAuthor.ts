@@ -308,7 +308,7 @@ export type WorkAuthorWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkAuthor"> | Date | string | null
-  comicAuthors?: Prisma.WorkComicAuthorListRelationFilter
+  workAuthors?: Prisma.WorkAuthorRelationListRelationFilter
 }
 
 export type WorkAuthorOrderByWithRelationInput = {
@@ -327,7 +327,7 @@ export type WorkAuthorOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  comicAuthors?: Prisma.WorkComicAuthorOrderByRelationAggregateInput
+  workAuthors?: Prisma.WorkAuthorRelationOrderByRelationAggregateInput
 }
 
 export type WorkAuthorWhereUniqueInput = Prisma.AtLeast<{
@@ -349,7 +349,7 @@ export type WorkAuthorWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"WorkAuthor"> | Date | string | null
-  comicAuthors?: Prisma.WorkComicAuthorListRelationFilter
+  workAuthors?: Prisma.WorkAuthorRelationListRelationFilter
 }, "id" | "name">
 
 export type WorkAuthorOrderByWithAggregationInput = {
@@ -411,7 +411,7 @@ export type WorkAuthorCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  comicAuthors?: Prisma.WorkComicAuthorCreateNestedManyWithoutAuthorInput
+  workAuthors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutAuthorInput
 }
 
 export type WorkAuthorUncheckedCreateInput = {
@@ -430,7 +430,7 @@ export type WorkAuthorUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  comicAuthors?: Prisma.WorkComicAuthorUncheckedCreateNestedManyWithoutAuthorInput
+  workAuthors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutAuthorInput
 }
 
 export type WorkAuthorUpdateInput = {
@@ -448,7 +448,7 @@ export type WorkAuthorUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  comicAuthors?: Prisma.WorkComicAuthorUpdateManyWithoutAuthorNestedInput
+  workAuthors?: Prisma.WorkAuthorRelationUpdateManyWithoutAuthorNestedInput
 }
 
 export type WorkAuthorUncheckedUpdateInput = {
@@ -467,7 +467,7 @@ export type WorkAuthorUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  comicAuthors?: Prisma.WorkComicAuthorUncheckedUpdateManyWithoutAuthorNestedInput
+  workAuthors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutAuthorNestedInput
 }
 
 export type WorkAuthorCreateManyInput = {
@@ -605,21 +605,21 @@ export type WorkAuthorUpdatetypeInput = {
   push?: number | number[]
 }
 
-export type WorkAuthorCreateNestedOneWithoutComicAuthorsInput = {
-  create?: Prisma.XOR<Prisma.WorkAuthorCreateWithoutComicAuthorsInput, Prisma.WorkAuthorUncheckedCreateWithoutComicAuthorsInput>
-  connectOrCreate?: Prisma.WorkAuthorCreateOrConnectWithoutComicAuthorsInput
+export type WorkAuthorCreateNestedOneWithoutWorkAuthorsInput = {
+  create?: Prisma.XOR<Prisma.WorkAuthorCreateWithoutWorkAuthorsInput, Prisma.WorkAuthorUncheckedCreateWithoutWorkAuthorsInput>
+  connectOrCreate?: Prisma.WorkAuthorCreateOrConnectWithoutWorkAuthorsInput
   connect?: Prisma.WorkAuthorWhereUniqueInput
 }
 
-export type WorkAuthorUpdateOneRequiredWithoutComicAuthorsNestedInput = {
-  create?: Prisma.XOR<Prisma.WorkAuthorCreateWithoutComicAuthorsInput, Prisma.WorkAuthorUncheckedCreateWithoutComicAuthorsInput>
-  connectOrCreate?: Prisma.WorkAuthorCreateOrConnectWithoutComicAuthorsInput
-  upsert?: Prisma.WorkAuthorUpsertWithoutComicAuthorsInput
+export type WorkAuthorUpdateOneRequiredWithoutWorkAuthorsNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkAuthorCreateWithoutWorkAuthorsInput, Prisma.WorkAuthorUncheckedCreateWithoutWorkAuthorsInput>
+  connectOrCreate?: Prisma.WorkAuthorCreateOrConnectWithoutWorkAuthorsInput
+  upsert?: Prisma.WorkAuthorUpsertWithoutWorkAuthorsInput
   connect?: Prisma.WorkAuthorWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkAuthorUpdateToOneWithWhereWithoutComicAuthorsInput, Prisma.WorkAuthorUpdateWithoutComicAuthorsInput>, Prisma.WorkAuthorUncheckedUpdateWithoutComicAuthorsInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkAuthorUpdateToOneWithWhereWithoutWorkAuthorsInput, Prisma.WorkAuthorUpdateWithoutWorkAuthorsInput>, Prisma.WorkAuthorUncheckedUpdateWithoutWorkAuthorsInput>
 }
 
-export type WorkAuthorCreateWithoutComicAuthorsInput = {
+export type WorkAuthorCreateWithoutWorkAuthorsInput = {
   name: string
   avatar?: string | null
   description?: string | null
@@ -636,7 +636,7 @@ export type WorkAuthorCreateWithoutComicAuthorsInput = {
   deletedAt?: Date | string | null
 }
 
-export type WorkAuthorUncheckedCreateWithoutComicAuthorsInput = {
+export type WorkAuthorUncheckedCreateWithoutWorkAuthorsInput = {
   id?: number
   name: string
   avatar?: string | null
@@ -654,23 +654,23 @@ export type WorkAuthorUncheckedCreateWithoutComicAuthorsInput = {
   deletedAt?: Date | string | null
 }
 
-export type WorkAuthorCreateOrConnectWithoutComicAuthorsInput = {
+export type WorkAuthorCreateOrConnectWithoutWorkAuthorsInput = {
   where: Prisma.WorkAuthorWhereUniqueInput
-  create: Prisma.XOR<Prisma.WorkAuthorCreateWithoutComicAuthorsInput, Prisma.WorkAuthorUncheckedCreateWithoutComicAuthorsInput>
+  create: Prisma.XOR<Prisma.WorkAuthorCreateWithoutWorkAuthorsInput, Prisma.WorkAuthorUncheckedCreateWithoutWorkAuthorsInput>
 }
 
-export type WorkAuthorUpsertWithoutComicAuthorsInput = {
-  update: Prisma.XOR<Prisma.WorkAuthorUpdateWithoutComicAuthorsInput, Prisma.WorkAuthorUncheckedUpdateWithoutComicAuthorsInput>
-  create: Prisma.XOR<Prisma.WorkAuthorCreateWithoutComicAuthorsInput, Prisma.WorkAuthorUncheckedCreateWithoutComicAuthorsInput>
+export type WorkAuthorUpsertWithoutWorkAuthorsInput = {
+  update: Prisma.XOR<Prisma.WorkAuthorUpdateWithoutWorkAuthorsInput, Prisma.WorkAuthorUncheckedUpdateWithoutWorkAuthorsInput>
+  create: Prisma.XOR<Prisma.WorkAuthorCreateWithoutWorkAuthorsInput, Prisma.WorkAuthorUncheckedCreateWithoutWorkAuthorsInput>
   where?: Prisma.WorkAuthorWhereInput
 }
 
-export type WorkAuthorUpdateToOneWithWhereWithoutComicAuthorsInput = {
+export type WorkAuthorUpdateToOneWithWhereWithoutWorkAuthorsInput = {
   where?: Prisma.WorkAuthorWhereInput
-  data: Prisma.XOR<Prisma.WorkAuthorUpdateWithoutComicAuthorsInput, Prisma.WorkAuthorUncheckedUpdateWithoutComicAuthorsInput>
+  data: Prisma.XOR<Prisma.WorkAuthorUpdateWithoutWorkAuthorsInput, Prisma.WorkAuthorUncheckedUpdateWithoutWorkAuthorsInput>
 }
 
-export type WorkAuthorUpdateWithoutComicAuthorsInput = {
+export type WorkAuthorUpdateWithoutWorkAuthorsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -687,7 +687,7 @@ export type WorkAuthorUpdateWithoutComicAuthorsInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
-export type WorkAuthorUncheckedUpdateWithoutComicAuthorsInput = {
+export type WorkAuthorUncheckedUpdateWithoutWorkAuthorsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -711,11 +711,11 @@ export type WorkAuthorUncheckedUpdateWithoutComicAuthorsInput = {
  */
 
 export type WorkAuthorCountOutputType = {
-  comicAuthors: number
+  workAuthors: number
 }
 
 export type WorkAuthorCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comicAuthors?: boolean | WorkAuthorCountOutputTypeCountComicAuthorsArgs
+  workAuthors?: boolean | WorkAuthorCountOutputTypeCountWorkAuthorsArgs
 }
 
 /**
@@ -731,8 +731,8 @@ export type WorkAuthorCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.E
 /**
  * WorkAuthorCountOutputType without action
  */
-export type WorkAuthorCountOutputTypeCountComicAuthorsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkComicAuthorWhereInput
+export type WorkAuthorCountOutputTypeCountWorkAuthorsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkAuthorRelationWhereInput
 }
 
 
@@ -752,7 +752,7 @@ export type WorkAuthorSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
-  comicAuthors?: boolean | Prisma.WorkAuthor$comicAuthorsArgs<ExtArgs>
+  workAuthors?: boolean | Prisma.WorkAuthor$workAuthorsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkAuthorCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workAuthor"]>
 
@@ -812,7 +812,7 @@ export type WorkAuthorSelectScalar = {
 
 export type WorkAuthorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "avatar" | "description" | "nationality" | "gender" | "type" | "isEnabled" | "isRecommended" | "worksCount" | "followersCount" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workAuthor"]>
 export type WorkAuthorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comicAuthors?: boolean | Prisma.WorkAuthor$comicAuthorsArgs<ExtArgs>
+  workAuthors?: boolean | Prisma.WorkAuthor$workAuthorsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkAuthorCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkAuthorIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -822,9 +822,9 @@ export type $WorkAuthorPayload<ExtArgs extends runtime.Types.Extensions.Internal
   name: "WorkAuthor"
   objects: {
     /**
-     * 关联的漫画作者记录
+     * 关联的作品作者记录
      */
-    comicAuthors: Prisma.$WorkComicAuthorPayload<ExtArgs>[]
+    workAuthors: Prisma.$WorkAuthorRelationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1281,7 +1281,7 @@ readonly fields: WorkAuthorFieldRefs;
  */
 export interface Prisma__WorkAuthorClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  comicAuthors<T extends Prisma.WorkAuthor$comicAuthorsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkAuthor$comicAuthorsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicAuthorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  workAuthors<T extends Prisma.WorkAuthor$workAuthorsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkAuthor$workAuthorsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkAuthorRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1723,27 +1723,27 @@ export type WorkAuthorDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.In
 }
 
 /**
- * WorkAuthor.comicAuthors
+ * WorkAuthor.workAuthors
  */
-export type WorkAuthor$comicAuthorsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type WorkAuthor$workAuthorsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the WorkComicAuthor
+   * Select specific fields to fetch from the WorkAuthorRelation
    */
-  select?: Prisma.WorkComicAuthorSelect<ExtArgs> | null
+  select?: Prisma.WorkAuthorRelationSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the WorkComicAuthor
+   * Omit specific fields from the WorkAuthorRelation
    */
-  omit?: Prisma.WorkComicAuthorOmit<ExtArgs> | null
+  omit?: Prisma.WorkAuthorRelationOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.WorkComicAuthorInclude<ExtArgs> | null
-  where?: Prisma.WorkComicAuthorWhereInput
-  orderBy?: Prisma.WorkComicAuthorOrderByWithRelationInput | Prisma.WorkComicAuthorOrderByWithRelationInput[]
-  cursor?: Prisma.WorkComicAuthorWhereUniqueInput
+  include?: Prisma.WorkAuthorRelationInclude<ExtArgs> | null
+  where?: Prisma.WorkAuthorRelationWhereInput
+  orderBy?: Prisma.WorkAuthorRelationOrderByWithRelationInput | Prisma.WorkAuthorRelationOrderByWithRelationInput[]
+  cursor?: Prisma.WorkAuthorRelationWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.WorkComicAuthorScalarFieldEnum | Prisma.WorkComicAuthorScalarFieldEnum[]
+  distinct?: Prisma.WorkAuthorRelationScalarFieldEnum | Prisma.WorkAuthorRelationScalarFieldEnum[]
 }
 
 /**

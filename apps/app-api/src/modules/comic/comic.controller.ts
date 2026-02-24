@@ -1,22 +1,23 @@
 import type { JwtUserInfoInterface } from '@libs/base/types'
 import type { FastifyRequest } from 'fastify'
+import { WorkTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto, IdsDto, PageDto } from '@libs/base/dto'
 import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import {
-  ComicDetailWithUserStatusDto,
-  ComicPageWithUserStatusDto,
-  ComicService,
-  ComicUserStatusDto,
-  QueryComicDto,
-} from '@libs/content/comic/core'
+  QueryWorkDto,
+  WorkDetailWithUserStatusDto,
+  WorkPageWithUserStatusDto,
+  WorkService,
+  WorkUserStatusDto,
+} from '@libs/content/work/core'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('漫画模块/漫画')
 @Controller('app/comic')
 export class ComicController {
-  constructor(private readonly comicService: ComicService) {}
+  constructor(private readonly workService: WorkService) {}
 
   private getRequestMeta(req: FastifyRequest) {
     return {
@@ -36,31 +37,34 @@ export class ComicController {
     @Req() req: FastifyRequest,
   ) {
     const { ip, deviceId } = this.getRequestMeta(req)
-    return this.comicService.incrementViewCount(body.id, user.sub, ip, deviceId)
+    return this.workService.incrementViewCount(body.id, user.sub, ip, deviceId)
   }
 
   @Get('detail')
   @ApiDoc({
     summary: '获取漫画详情',
-    model: ComicDetailWithUserStatusDto,
+    model: WorkDetailWithUserStatusDto,
   })
   async getComicDetail(
     @Query() query: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicService.getComicDetailWithUserStatus(query.id, user.sub)
+    return this.workService.getWorkDetailWithUserStatus(query.id, user.sub)
   }
 
   @Get('page')
   @ApiPageDoc({
     summary: '分页查询漫画列表',
-    model: ComicPageWithUserStatusDto,
+    model: WorkPageWithUserStatusDto,
   })
   async getComicPage(
-    @Query() query: QueryComicDto,
+    @Query() query: QueryWorkDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicService.getComicPageWithUserStatus(query, user.sub)
+    return this.workService.getWorkPageWithUserStatus(
+      { ...query, type: WorkTypeEnum.COMIC },
+      user.sub,
+    )
   }
 
   @Post('like')
@@ -74,7 +78,7 @@ export class ComicController {
     @Req() req: FastifyRequest,
   ) {
     const { ip, deviceId } = this.getRequestMeta(req)
-    return this.comicService.incrementLikeCount(body.id, user.sub, ip, deviceId)
+    return this.workService.incrementLikeCount(body.id, user.sub, ip, deviceId)
   }
 
   @Get('liked')
@@ -86,7 +90,7 @@ export class ComicController {
     @Query() query: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicService.checkUserLiked(query.id, user.sub)
+    return this.workService.checkUserLiked(query.id, user.sub)
   }
 
   @Post('favorite')
@@ -100,7 +104,7 @@ export class ComicController {
     @Req() req: FastifyRequest,
   ) {
     const { ip, deviceId } = this.getRequestMeta(req)
-    return this.comicService.incrementFavoriteCount(
+    return this.workService.incrementFavoriteCount(
       body.id,
       user.sub,
       ip,
@@ -117,43 +121,43 @@ export class ComicController {
     @Query() query: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicService.checkUserFavorited(query.id, user.sub)
+    return this.workService.checkUserFavorited(query.id, user.sub)
   }
 
   @Post('status')
   @ApiDoc({
     summary: '批量查询漫画用户状态',
-    model: ComicUserStatusDto,
+    model: WorkUserStatusDto,
     isArray: true,
   })
   async getComicStatus(
     @Body() body: IdsDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicService.getComicUserStatus(body.ids, user.sub)
+    return this.workService.getWorkUserStatus(body.ids, user.sub)
   }
 
   @Get('my/favorites')
   @ApiPageDoc({
     summary: '分页查询我的漫画收藏',
-    model: ComicPageWithUserStatusDto,
+    model: WorkPageWithUserStatusDto,
   })
   async getMyFavoriteComics(
     @Query() query: PageDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicService.getMyFavoriteComicPage(query, user.sub)
+    return this.workService.getMyFavoritePage(query, user.sub)
   }
 
   @Get('my/likes')
   @ApiPageDoc({
     summary: '分页查询我的漫画点赞',
-    model: ComicPageWithUserStatusDto,
+    model: WorkPageWithUserStatusDto,
   })
   async getMyLikedComics(
     @Query() query: PageDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.comicService.getMyLikedComicPage(query, user.sub)
+    return this.workService.getMyLikedPage(query, user.sub)
   }
 }

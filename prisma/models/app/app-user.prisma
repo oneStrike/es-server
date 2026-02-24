@@ -72,18 +72,18 @@ model AppUser {
   topicFavorites          ForumTopicFavorite[]
   /// 主题点赞关联
   topicLikes              ForumTopicLike[]
-  /// 漫画收藏关联
-  comicFavorites          WorkComicFavorite[]
-  /// 漫画点赞关联
-  comicLikes              WorkComicLike[]
-  /// 漫画章节点赞关联
-  comicChapterLikes       WorkComicChapterLike[]
-  /// 漫画章节购买关联
-  comicChapterPurchases   WorkComicChapterPurchase[]
-  /// 漫画章节下载关联
-  comicChapterDownloads   WorkComicChapterDownload[]
-  /// 漫画章节评论关联
-  comicChapterComments    WorkComicChapterComment[]
+  /// 作品收藏关联
+  workFavorites           WorkFavorite[]
+  /// 作品点赞关联
+  workLikes               WorkLike[]
+  /// 章节点赞关联
+  chapterLikes            WorkChapterLike[]
+  /// 章节购买关联
+  chapterPurchases        WorkChapterPurchase[]
+  /// 章节下载关联
+  chapterDownloads        WorkChapterDownload[]
+  /// 作品评论关联
+  workComments            WorkComment[]
   /// 论坛回复关联
   forumReplies            ForumReply[]
   /// 回复点赞关联
@@ -96,10 +96,10 @@ model AppUser {
   forumReports            ForumReport[]               @relation("ReportReporter")
   /// 论坛举报关联（处理人）
   handledReports          ForumReport[]               @relation("ReportHandler")
-  /// 章节评论举报关联（举报人）
-  comicChapterCommentReports WorkComicChapterCommentReport[] @relation("ComicChapterCommentReportReporter")
-  /// 章节评论举报关联（处理人）
-  handledComicChapterCommentReports WorkComicChapterCommentReport[] @relation("ComicChapterCommentReportHandler")
+  /// 评论举报关联（举报人）
+  workCommentReports      WorkCommentReport[]         @relation("WorkCommentReportReporter")
+  /// 评论举报关联（处理人）
+  handledWorkCommentReports WorkCommentReport[]       @relation("WorkCommentReportHandler")
   /// 版主申请关联（申请人）
   moderatorApplications   ForumModeratorApplication[] @relation("ModeratorApplicant")
   /// 版主申请关联（审核人）

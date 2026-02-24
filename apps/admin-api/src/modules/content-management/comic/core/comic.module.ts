@@ -1,15 +1,11 @@
-import { ComicCoreModule as ComicCoreModuleLib } from '@libs/content/comic/core'
+import { WorkModule } from '@libs/content/work/core'
 import { Module } from '@nestjs/common'
 import { ComicController } from './comic.controller'
 
-/**
- * 漫画模块
- * 提供漫画管理的完整功能
- */
 @Module({
-  imports: [ComicCoreModuleLib],
+  imports: [WorkModule],
   controllers: [ComicController],
   providers: [],
-  exports: [ComicCoreModuleLib],
+  exports: [WorkModule],
 })
 export class ComicModule {}

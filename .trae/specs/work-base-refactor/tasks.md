@@ -1,238 +1,306 @@
-        # Tasks
+# Tasks
 
-## T01 新增 Work 基表与作品类型枚举
-- [ ] 创建 prisma/models/work/work.prisma 文件
-  - [ ] 定义 Work 模型包含公共字段：name, alias, cover, description, language, region, ageRating, serialStatus, publisher, originalSource, copyright, disclaimer, isPublished, isRecommended, isHot, isNew, popularity, rating, recommendWeight, viewCount, favoriteCount, likeCount, ratingCount, publishAt, lastUpdated, remark, createdAt, updatedAt, deletedAt
-  - [ ] 定义 Work.type 字段标识作品类型（漫画/小说）
-  - [ ] 添加必要索引
-- [ ] 修改 libs/base/src/enum/base.enum.ts 新增 WorkTypeEnum
-- [ ] 修改 libs/base/src/enum/index.ts 导出枚举
-- [ ] 验证 Prisma schema 能生成 Work 模型与枚举类型
-- [ ] 验证 Work.type 枚举在基础包对外可用且被正确导出
+## T01 新增 Work 基表与作品类型常量
+- [x] 创建 prisma/models/work/work.prisma 文件
+  - [x] 定义 Work 模型包含公共字段：id, type, name, alias, cover, description, language, region, ageRating, serialStatus, publisher, originalSource, copyright, disclaimer, isPublished, publishAt, lastUpdated, viewCount, favoriteCount, likeCount, rating, ratingCount, popularity, isRecommended, isHot, isNew, recommendWeight, createdAt, updatedAt, deletedAt
+  - [x] **重要**：type 字段使用 Int 类型（1=漫画, 2=小说），不使用 Prisma enum（数据表不允许使用枚举）
+  - [x] 添加必要索引：isPublished+publishAt, popularity, language+region, serialStatus, lastUpdated, name, isRecommended, isHot+isNew
+- [x] 创建 libs/base/src/constant/work-type.constant.ts 文件
+  - [x] 定义 WorkTypeEnum 枚举（TypeScript 层面使用，值为 1 和 2）
+- [x] 修改 libs/base/src/constant/index.ts 导出常量
+- [x] 验证 Prisma schema 能生成 Work 模型
 
-## T02 改造漫画主表为类型扩展表
-- [ ] 修改 prisma/models/work/comic/work-comic.prisma
-  - [ ] 新增 workId 外键关联 Work，建立一对一关系
-  - [ ] 移除已上移到 Work 的字段：serialStatus, publisher, originalSource, copyright, disclaimer
-  - [ ] 将通用索引迁移到 Work，仅保留漫画特有索引
-- [ ] 验证 WorkComic 与 Work 关联完整
-- [ ] 验证原漫画列表/详情查询能通过 Work 过滤且结果一致
+## T02 改造漫画主表为扩展表
+- [x] 修改 prisma/models/work/comic/work-comic.prisma
+  - [x] 新增 workId 外键关联 Work，建立一对一关系
+  - [x] 移除已上移到 Work 的所有字段
+  - [x] 仅保留 workId 和时间戳字段
+- [x] 验证 WorkComic 与 Work 关联完整
 
-## T03 新增小说扩展表（空壳或最小字段）
-- [ ] 创建 prisma/models/work/novel/work-novel.prisma
-  - [ ] 仅保留 workId 关联与时间戳字段
-  - [ ] 不引入漫画字段，避免跨类型污染
-- [ ] 验证 Prisma 模型可生成，结构最小可用且可被引用
+## T03 新增小说扩展表
+- [x] 创建 prisma/models/work/novel/work-novel.prisma
+  - [x] 定义 workId 外键关联 Work
+  - [x] 包含 wordCount 字段
+  - [x] 包含时间戳字段
+- [x] 验证 Prisma 模型可生成
 
 ## T04 通用化作者/分类/标签关系表
-- [ ] 创建 prisma/models/work/work-author-relation.prisma
-  - [ ] 使用 workId 作为主关联
-  - [ ] 保留排序字段 sortOrder
-  - [ ] 添加唯一约束 (workId, authorId)
-- [ ] 创建 prisma/models/work/work-category-relation.prisma
-  - [ ] 使用 workId 作为主关联
-  - [ ] 保留排序字段 sortOrder
-  - [ ] 添加唯一约束 (workId, categoryId)
-- [ ] 创建 prisma/models/work/work-tag-relation.prisma
-  - [ ] 使用 workId 作为主关联
-  - [ ] 添加唯一约束 (workId, tagId)
-- [ ] 修改 prisma/models/work/author/work-author.prisma 关系字段改为通用关系
-- [ ] 修改 prisma/models/work/work-category.prisma 关系字段改为通用关系
-- [ ] 修改 prisma/models/work/work-tag.prisma 关系字段改为通用关系
-- [ ] 修改 prisma/seed/modules/work/comic-author.ts
-- [ ] 修改 prisma/seed/modules/work/comic-category.ts
-- [ ] 修改 prisma/seed/modules/work/comic-tag.ts
-- [ ] 修改 prisma/seed/modules/work/index.ts
-- [ ] 删除 prisma/models/work/comic/work-comic-author.prisma
-- [ ] 删除 prisma/models/work/comic/work-comic-category.prisma
-- [ ] 删除 prisma/models/work/comic/work-comic-tag.prisma
-- [ ] 验证漫画作者/分类/标签可读写，旧数据映射正确
+- [x] 创建 prisma/models/work/work-author-relation.prisma
+  - [x] 使用 workId 作为主关联
+  - [x] 包含 sortOrder, role 字段
+  - [x] 添加唯一约束 (workId, authorId)
+- [x] 创建 prisma/models/work/work-category-relation.prisma
+  - [x] 使用 workId 作为主关联
+  - [x] 包含 sortOrder 字段
+  - [x] 添加唯一约束 (workId, categoryId)
+- [x] 创建 prisma/models/work/work-tag-relation.prisma
+  - [x] 使用 workId 作为主关联
+  - [x] 添加唯一约束 (workId, tagId)
+- [x] 删除 prisma/models/work/comic/work-comic-author.prisma
+- [x] 删除 prisma/models/work/comic/work-comic-category.prisma
+- [x] 删除 prisma/models/work/comic/work-comic-tag.prisma
+- [x] 验证关系表可正常使用
 
 ## T05 通用化收藏/点赞关系表
-- [ ] 创建 prisma/models/work/work-favorite.prisma
-  - [ ] 使用 workId 与 appUserId 作为关系核心字段
-  - [ ] 添加时间戳与唯一约束
-- [ ] 创建 prisma/models/work/work-like.prisma
-  - [ ] 使用 workId 与 appUserId 作为关系核心字段
-  - [ ] 添加时间戳与唯一约束
-- [ ] 修改 prisma/models/app/app-user.prisma 关联字段改为通用关系
-- [ ] 删除 prisma/models/work/comic/work-comic-favorite.prisma
-- [ ] 删除 prisma/models/work/comic/work-comic-like.prisma
-- [ ] 验证漫画收藏/点赞可用且统计正确
+- [x] 创建 prisma/models/work/work-favorite.prisma
+  - [x] 使用 workId, userId 作为核心字段
+  - [x] 使用 workType Int 字段（1=漫画, 2=小说）区分作品类型
+  - [x] 添加唯一约束 (workId, userId)
+- [x] 创建 prisma/models/work/work-like.prisma
+  - [x] 使用 workId, userId 作为核心字段
+  - [x] 添加唯一约束 (workId, userId)
+- [x] 删除 prisma/models/work/comic/work-comic-favorite.prisma
+- [x] 删除 prisma/models/work/comic/work-comic-like.prisma
+- [x] 验证收藏/点赞表可正常使用
 
-## T06 通用章节表设计与落库
-- [ ] 创建 prisma/models/work/work-chapter.prisma
-  - [ ] 以 workId 作为主关联
-  - [ ] 增加 workType 字段区分作品类型
-  - [ ] 包含章节主字段：title, subtitle, description, sortOrder, isPublished, isPreview, canComment, publishAt, viewCount, likeCount, commentCount, purchaseCount
-  - [ ] 包含权限字段：readRule, downloadRule, readPoints, downloadPoints, requiredReadLevelId, requiredDownloadLevelId
-  - [ ] 漫画章节特有字段：contents（JSON格式存储图片URL数组）
-  - [ ] 小说章节特有字段：content（文本内容，后续扩展）
-- [ ] 修改 prisma/models/work/comic/work-comic-chapter.prisma 关联字段调整为 workId
-- [ ] 删除 prisma/models/work/comic/work-comic-chapter.prisma（迁移完成后）
-- [ ] 验证章节可通过 workId 查询到所属作品
-- [ ] 验证漫画章节功能与旧逻辑一致
+## T06 通用章节表设计
+- [x] 创建 prisma/models/work/work-chapter.prisma
+  - [x] 使用 workId 作为主关联
+  - [x] 使用 workType Int 字段（1=漫画, 2=小说）区分作品类型
+  - [x] 包含章节主字段：title, subtitle, description, sortOrder
+  - [x] 包含权限字段：readRule, readPoints, downloadRule, downloadPoints, requiredReadLevelId, requiredDownloadLevelId
+  - [x] 包含状态字段：isPublished, isPreview, canComment, publishAt
+  - [x] 包含统计字段：viewCount, likeCount, commentCount, purchaseCount, wordCount
+  - [x] 包含内容存储字段：contentPath
+  - [x] 添加唯一约束 (workId, sortOrder)
+- [x] 删除 prisma/models/work/comic/work-comic-chapter.prisma
+- [x] 验证章节表可正常使用
 
 ## T07 Prisma 生成与类型导出同步
-- [ ] 执行 Prisma 生成命令
-- [ ] 验证 prisma/prismaClient/client.ts 生成正确
-- [ ] 验证 prisma/prismaClient/models.ts 生成正确
-- [ ] 验证 prisma/prismaClient/browser.ts 生成正确
-- [ ] 验证 prisma/prismaClient/internal/prismaNamespace.ts 生成正确
-- [ ] 验证 prisma/prismaClient/internal/prismaNamespaceBrowser.ts 生成正确
-- [ ] 验证 prisma/prismaClient/internal/class.ts 生成正确
-- [ ] 验证生成脚本完成且无类型缺失
-- [ ] 验证新模型在服务层可正确导入
+- [x] 执行 `pnpm prisma:update`
+- [x] 验证类型生成正确
+- [x] 验证新模型在服务层可正确导入
 
-## T08 漫画创建/更新服务改造
-- [ ] 修改 libs/content/src/comic/core/comic.service.ts
-  - [ ] 创建：事务内先建 Work，再建 WorkComic
-  - [ ] 更新：通用字段写 Work，漫画字段写 WorkComic
-  - [ ] 查询：按 Work+WorkComic 组合返回
-  - [ ] 校验：新增作品类型与状态的基础校验
-- [ ] 修改 libs/content/src/comic/core/dto/comic.dto.ts DTO字段更新
-- [ ] 修改 libs/content/src/comic/core/comic.constant.ts 枚举重命名 (Comic* -> Work*)
-- [ ] 验证创建/更新/查询接口无字段缺失
+## T08 通用作品服务
+- [x] 创建 libs/content/src/work/core/work.service.ts
+  - [x] 实现 CRUD 方法：createWork, updateWork, getWorkDetail, getWorkPage, deleteWork
+  - [x] 实现互动方法：incrementViewCount, incrementLikeCount, incrementFavoriteCount
+  - [x] 实现用户状态方法：checkUserLiked, checkUserFavorited, getWorkUserStatus
+  - [x] 实现我的记录方法：getMyFavoritePage, getMyLikedPage
+- [x] 创建 libs/content/src/work/core/work.module.ts
+- [x] 创建 libs/content/src/work/core/work.constant.ts
+- [x] 创建 libs/content/src/work/core/index.ts
+- [x] 创建 libs/content/src/work/core/dto/work.dto.ts
+  - [x] 使用 BaseDto 继承
+  - [x] 使用 IntersectionType, OmitType, PartialType, PickType 组合
+  - [x] 使用自定义校验器：ValidateString, ValidateNumber, ValidateEnum, ValidateArray
+- [x] 验证服务可正常注入和使用
 
-## T09 漫画列表与详情查询重构
-- [ ] 修改 libs/content/src/comic/core/comic.service.ts
-  - [ ] 过滤字段拆分：通用字段走 Work，漫画特有字段走 WorkComic
-  - [ ] 排序字段迁移到 Work，保持分页与统计一致
-  - [ ] 详情查询以 workId 聚合返回
-- [ ] 修改 libs/content/src/comic/core/dto/comic.dto.ts DTO字段更新
-- [ ] 验证列表过滤/排序结果与旧逻辑一致
+## T09 通用章节服务
+- [x] 创建 libs/content/src/work/chapter/work-chapter.service.ts
+  - [x] 实现 CRUD 方法：createChapter, updateChapter, getChapterDetail, getChapterPage, deleteChapter, swapChapterNumbers
+  - [x] 实现互动方法：incrementViewCount, incrementLikeCount, incrementPurchaseCount, reportDownload
+  - [x] 实现用户状态方法：checkUserLiked, checkUserPurchased, checkUserDownloaded, getChapterUserStatus
+  - [x] 实现我的记录方法：getMyPurchasedPage, getMyDownloadedPage, getMyReadPage
+- [x] 创建 libs/content/src/work/chapter/work-chapter.module.ts
+- [x] 创建 libs/content/src/work/chapter/work-chapter.constant.ts
+- [x] 创建 libs/content/src/work/chapter/index.ts
+- [x] 创建 libs/content/src/work/chapter/dto/work-chapter.dto.ts
+  - [x] 复用 BaseWorkDto 的关联字段定义
+  - [x] 使用 ChapterUserStatusFieldsDto 定义通用用户状态
+  - [x] 使用自定义校验器
+- [x] 验证服务可正常注入和使用
 
-## T10 漫画作者/分类/标签关联逻辑迁移
-- [ ] 修改 libs/content/src/comic/core/comic.service.ts
-  - [ ] 原 WorkComicAuthor/Category/Tag 改为 WorkAuthorRelation/WorkCategoryRelation/WorkTagRelation
-  - [ ] 处理新增/删除/替换逻辑
-  - [ ] 关联写入使用 workId 作为主键关联
-- [ ] 修改 libs/content/src/comic/core/dto/comic.dto.ts DTO字段更新
-- [ ] 验证关联写入与查询结果与旧逻辑一致
+## T10 通用评论服务
+- [x] 创建 libs/content/src/work/comment/work-comment.service.ts
+  - [x] 实现 CRUD 方法：createComment, deleteComment, deleteCommentByAdmin
+  - [x] 实现查询方法：getCommentPage, getCommentManagePage, getCommentDetail
+  - [x] 实现审核方法：updateCommentAudit, updateCommentHidden, recalcCommentCount
+  - [x] 实现举报方法：createCommentReport, getCommentReportPage, handleCommentReport
+- [x] 创建 libs/content/src/work/comment/work-comment.module.ts
+- [x] 创建 libs/content/src/work/comment/work-comment.constant.ts
+- [x] 创建 libs/content/src/work/comment/work-comment.types.ts
+- [x] 创建 libs/content/src/work/comment/index.ts
+- [x] 创建 libs/content/src/work/comment/dto/work-comment.dto.ts
+  - [x] 复用 BaseDto, IdDto, PageDto
+  - [x] 使用 ValidateString 校验评论内容
+  - [x] 使用 ValidateEnum 校验审核状态
+- [x] 验证服务可正常注入和使用
 
-## T11 漫画收藏/点赞逻辑迁移
-- [ ] 修改 libs/content/src/comic/core/comic.service.ts
-  - [ ] 读取/写入时增加 workType=漫画
-  - [ ] 统计字段来源统一
-- [ ] 修改 apps/app-api/src/modules/comic/comic.controller.ts
-- [ ] 修改 libs/content/src/comic/core/dto/comic.dto.ts DTO字段更新
-- [ ] 验证收藏/点赞接口无行为变化，数据落入通用表
+## T11 内容处理服务
+- [x] 创建 libs/content/src/work/content/comic-content.service.ts
+  - [x] 实现方法：getChapterContents, addChapterContent, updateChapterContent, deleteChapterContent, moveChapterContent, clearChapterContents
+- [x] 创建 libs/content/src/work/content/novel-content.service.ts
+  - [x] 实现方法：getChapterContent, uploadChapterContent, deleteChapterContent
+- [x] 创建 libs/content/src/work/content/content.module.ts
+- [x] 创建 libs/content/src/work/content/index.ts
+- [x] 创建 libs/content/src/work/content/dto/content.dto.ts
+  - [x] 复用 IdDto 标识章节
+  - [x] 使用 ValidateArray 校验图片列表
+  - [x] 使用 ValidateString 校验文件路径
+- [x] 验证服务可正常注入和使用
 
-## T12 章节相关服务联动改造
-- [ ] 修改 libs/content/src/comic/chapter/comic-chapter.service.ts 章节服务逻辑迁移
-- [ ] 修改 libs/content/src/comic/chapter/dto/comic-chapter.dto.ts DTO字段更新
-- [ ] 修改 libs/content/src/comic/chapter/comic-chapter.constant.ts 枚举重命名
-- [ ] 修改 apps/app-api/src/modules/comic/comic-chapter.controller.ts 接口适配
-- [ ] 修改 apps/admin-api/src/modules/content-management/comic/chapter/comic-chapter.controller.ts 接口适配
-- [ ] 修改 apps/app-api/src/modules/comic/comic.module.ts 模块导入更新
-- [ ] 修改 apps/admin-api/src/modules/content-management/comic/chapter/comic-chapter.module.ts 模块导入更新
-- [ ] 创建 libs/content/src/novel/chapter/novel-chapter.service.ts（如已存在则复用）
-- [ ] 创建 libs/content/src/novel/chapter/dto/novel-chapter.dto.ts（如已存在则复用）
-- [ ] 创建 apps/app-api/src/modules/novel/novel-chapter.controller.ts（如已存在则复用）
-- [ ] 验证漫画/小说章节接口行为一致且稳定
+## T12 漫画 Controller 重构
+- [x] 修改 apps/app-api/src/modules/comic/comic.controller.ts
+  - [x] 注入 WorkService 替代 ComicService
+  - [x] 调整接口调用方式
+- [x] 修改 apps/app-api/src/modules/comic/comic-chapter.controller.ts
+  - [x] 注入 WorkChapterService 替代 ComicChapterService
+  - [x] 调整接口调用方式
+- [x] 修改 apps/app-api/src/modules/comic/comic-chapter-comment.controller.ts
+  - [x] 注入 WorkCommentService 替代 ComicChapterCommentService
+  - [x] 调整接口调用方式
+- [x] 修改 apps/app-api/src/modules/comic/comic.module.ts
+  - [x] 导入 WorkModule, WorkChapterModule, WorkCommentModule
+- [x] 修改 apps/admin-api/src/modules/content-management/comic/core/comic.controller.ts
+  - [x] 注入 WorkService 替代 ComicService
+- [x] 修改 apps/admin-api/src/modules/content-management/comic/chapter/comic-chapter.controller.ts
+  - [x] 注入 WorkChapterService 替代 ComicChapterService
+- [x] 修改 apps/admin-api/src/modules/content-management/comic/chapter-comment/comic-chapter-comment.controller.ts
+  - [x] 注入 WorkCommentService 替代 ComicChapterCommentService
+- [x] 修改 apps/admin-api/src/modules/content-management/comic/chapter-content/chapter-content.controller.ts
+  - [x] 注入 ComicContentService
+- [x] 修改 apps/admin-api/src/modules/content-management/comic/ 下所有模块文件
+  - [x] 导入 WorkModule, WorkChapterModule, WorkCommentModule, ContentModule
+- [x] 验证漫画接口功能正常
 
-## T13 章节内容服务与上传逻辑适配
-- [ ] 修改 libs/content/src/comic/chapter-content/chapter-content.service.ts 章节内容服务逻辑迁移
-- [ ] 修改 libs/content/src/comic/chapter-content/dto/chapter-content.dto.ts DTO字段更新
-- [ ] 修改 apps/admin-api/src/modules/content-management/comic/chapter-content/chapter-content.controller.ts 接口适配
-- [ ] 修改 apps/admin-api/src/modules/content-management/comic/chapter-content/chapter-content.module.ts 模块导入更新
-- [ ] 验证章节内容读写与上传路径可用
+## T13 小说 Controller 新增
+- [x] 创建 apps/app-api/src/modules/novel/novel.controller.ts
+  - [x] 注入 WorkService
+  - [x] 实现小说 CRUD 接口
+- [x] 创建 apps/app-api/src/modules/novel/novel-chapter.controller.ts
+  - [x] 注入 WorkChapterService
+  - [x] 实现章节 CRUD 接口
+- [x] 创建 apps/app-api/src/modules/novel/novel-chapter-comment.controller.ts
+  - [x] 注入 WorkCommentService
+  - [x] 实现评论接口
+- [x] 创建 apps/app-api/src/modules/novel/novel.module.ts
+  - [x] 导入 WorkModule, WorkChapterModule, WorkCommentModule
+- [x] 创建 apps/app-api/src/modules/novel/index.ts
+- [x] 创建 apps/admin-api/src/modules/content-management/novel/novel.controller.ts
+  - [x] 注入 WorkService
+  - [x] 实现小说管理接口
+- [x] 创建 apps/admin-api/src/modules/content-management/novel/novel-chapter.controller.ts
+  - [x] 注入 WorkChapterService
+  - [x] 实现章节管理接口
+- [x] 创建 apps/admin-api/src/modules/content-management/novel/novel-chapter-comment.controller.ts
+  - [x] 注入 WorkCommentService
+  - [x] 实现评论管理接口
+- [x] 创建 apps/admin-api/src/modules/content-management/novel/novel-content.controller.ts
+  - [x] 注入 NovelContentService
+  - [x] 实现章节文件上传接口
+- [x] 创建 apps/admin-api/src/modules/content-management/novel/novel.module.ts
+  - [x] 导入 WorkModule, WorkChapterModule, WorkCommentModule, ContentModule
+- [x] 创建 apps/admin-api/src/modules/content-management/novel/index.ts
+- [x] 验证小说接口功能正常
 
-## T14 通用化章节互动表（点赞/购买/下载）
-- [ ] 创建 prisma/models/work/work-chapter-like.prisma
-  - [ ] 使用 workId + chapterId + appUserId 作为关系核心字段
-  - [ ] 增加 workType 字段区分作品类型
-  - [ ] 添加时间戳与唯一约束
-- [ ] 创建 prisma/models/work/work-chapter-purchase.prisma
-  - [ ] 使用 workId + chapterId + appUserId 作为关系核心字段
-  - [ ] 增加 workType 字段区分作品类型
-  - [ ] 添加时间戳与唯一约束
-- [ ] 创建 prisma/models/work/work-chapter-download.prisma
-  - [ ] 使用 workId + chapterId + appUserId 作为关系核心字段
-  - [ ] 增加 workType 字段区分作品类型
-  - [ ] 添加时间戳与唯一约束
-- [ ] 修改 prisma/models/work/comic/work-comic-chapter.prisma 关联字段改为通用互动表
-- [ ] 修改 prisma/models/app/app-user.prisma 关联字段改为通用互动关系
-- [ ] 修改 libs/content/src/comic/chapter/comic-chapter.service.ts 互动逻辑迁移
-- [ ] 删除 prisma/models/work/comic/work-comic-chapter-like.prisma
-- [ ] 删除 prisma/models/work/comic/work-comic-chapter-purchase.prisma
-- [ ] 删除 prisma/models/work/comic/work-comic-chapter-download.prisma
-- [ ] 验证漫画章节点赞/购买/下载可用且统计正确
-- [ ] 验证数据正确落入通用表，查询结果与旧逻辑一致
+## T14 通用化章节互动表
+- [x] 创建 prisma/models/work/work-chapter-like.prisma
+  - [x] 使用 chapterId, userId 作为核心字段
+  - [x] 添加唯一约束
+- [x] 创建 prisma/models/work/work-chapter-purchase.prisma
+  - [x] 使用 chapterId, userId 作为核心字段
+  - [x] 添加唯一约束
+- [x] 创建 prisma/models/work/work-chapter-download.prisma
+  - [x] 使用 chapterId, userId 作为核心字段
+  - [x] 添加唯一约束
+- [x] 删除 prisma/models/work/comic/work-comic-chapter-like.prisma
+- [x] 删除 prisma/models/work/comic/work-comic-chapter-purchase.prisma
+- [x] 删除 prisma/models/work/comic/work-comic-chapter-download.prisma
+- [x] 验证章节互动表可正常使用
 
-## T15 统一评论表设计（作品评论 + 章节评论）
-- [ ] 创建 prisma/models/work/work-comment.prisma
-  - [ ] 核心字段：workId（必填）、workType（必填）、chapterId（可选）
-  - [ ] 评论类型区分：chapterId IS NULL = 作品评论，chapterId NOT NULL = 章节评论
-  - [ ] 包含审核字段：auditStatus, auditReason, auditAt, auditById, auditRole
-  - [ ] 包含楼中楼字段：replyToId, actualReplyToId, floor
-  - [ ] 包含敏感词字段：sensitiveWordHits
-- [ ] 创建 prisma/models/work/work-comment-report.prisma
-  - [ ] 举报记录表
-- [ ] 修改 prisma/models/app/app-user.prisma 关联字段改为通用评论/举报关系
-- [ ] 修改 libs/content/src/comic/chapter-comment/comic-chapter-comment.service.ts 评论逻辑迁移
-- [ ] 修改 libs/content/src/comic/chapter-comment/comic-chapter-comment.constant.ts 枚举重命名
-- [ ] 修改 libs/content/src/comic/chapter-comment/comic-chapter-comment.types.ts 类型定义更新
-- [ ] 修改 libs/content/src/comic/chapter-comment/dto/comic-chapter-comment.dto.ts DTO字段更新
-- [ ] 修改 apps/app-api/src/modules/comic/comic-chapter-comment.controller.ts 接口适配
-- [ ] 修改 apps/admin-api/src/modules/content-management/comic/chapter-comment/comic-chapter-comment.controller.ts 接口适配
-- [ ] 修改 apps/app-api/src/modules/comic/comic.module.ts 模块导入更新
-- [ ] 修改 apps/admin-api/src/modules/content-management/comic/chapter-comment/comic-chapter-comment.module.ts 模块导入更新
-- [ ] 删除 prisma/models/work/comic/work-comic-chapter-comment.prisma
-- [ ] 删除 prisma/models/work/comic/work-comic-chapter-comment-report.prisma
-- [ ] 验证漫画/小说作品评论可用
-- [ ] 验证漫画/小说章节评论可用
-- [ ] 验证评论查询、创建、审核、举报功能正常
-- [ ] 验证用户评论历史可统一查询
+## T15 统一评论表设计
+- [x] 创建 prisma/models/work/work-comment.prisma
+  - [x] 核心字段：workId, workType(Int: 1=漫画, 2=小说), chapterId, userId, content
+  - [x] 回复字段：replyToId, actualReplyToId, floor
+  - [x] 审核字段：auditStatus, auditReason, auditAt, auditById, auditRole
+  - [x] 其他字段：isHidden, sensitiveWordHits
+  - [x] 添加索引：workId, chapterId, userId
+- [x] 创建 prisma/models/work/work-comment-report.prisma
+  - [x] 举报记录表
+- [x] 删除 prisma/models/work/comic/work-comic-chapter-comment.prisma
+- [x] 删除 prisma/models/work/comic/work-comic-chapter-comment-report.prisma
+- [x] 验证评论表可正常使用
 
-## T16 管理端与客户端接口验收
-- [ ] 修改 apps/admin-api/src/modules/content-management/comic/core/comic.controller.ts 管理端接口适配
-- [ ] 修改 apps/app-api/src/modules/comic/comic.controller.ts 客户端接口适配
-- [ ] 修改 apps/admin-api/src/modules/content-management/comic/comic.module.ts 管理端模块导入更新
-- [ ] 修改 apps/app-api/src/modules/comic/comic.module.ts 客户端模块导入更新
-- [ ] 验证客户端与管理端接口功能正常
+## T16 删除旧服务
+- [ ] 删除 libs/content/src/comic/ 目录下所有文件
+- [ ] 验证删除后无引用错误
 
-## T17 数据迁移详细方案设计
-- [ ] 创建 scripts/migrations/work-base-backfill.ts 主迁移脚本
-  - [ ] 创建临时映射表 work_comic_id_mapping（comicId -> workId）
-  - [ ] 迁移 WorkComic 数据到 Work 表
-  - [ ] 更新 WorkComic 表，添加 workId 外键关联
-  - [ ] 迁移关系表
-  - [ ] 迁移互动表
-  - [ ] 迁移章节表
-  - [ ] 迁移章节互动表
-  - [ ] 迁移章节评论表
-  - [ ] 迁移章节评论举报表
-  - [ ] 验证数据完整性与一致性
-  - [ ] 清理临时映射表
-- [ ] 创建 scripts/migrations/work-base-rollback.ts 回滚脚本
-  - [ ] 从临时映射表恢复 comicId 映射关系
-  - [ ] 删除 Work 表数据
-  - [ ] 恢复所有表到旧结构
-- [ ] 创建 scripts/migrations/work-base-verify.ts 验证脚本
-- [ ] 验证迁移后数据总量与关系正确，无数据丢失
-- [ ] 验证所有接口功能正常，无回归问题
-- [ ] 验证回滚脚本可正常执行，数据可恢复
+## T17 数据迁移
+- [ ] 创建 scripts/migrations/work-base-backfill.ts
+  - [ ] 创建 Work 表
+  - [ ] 迁移 WorkComic 数据到 Work
+  - [ ] 更新 WorkComic 添加 workId 外键
+  - [ ] 迁移关系表数据
+  - [ ] 迁移互动表数据
+  - [ ] 迁移章节表数据（contents 字段转为文件存储）
+  - [ ] 迁移评论表数据
+  - [ ] 验证数据完整性
+- [ ] 创建 scripts/migrations/work-base-verify.ts
+  - [ ] 验证迁移后数据总量与关系正确
+- [ ] 验证迁移脚本可正常执行
 
-## T18 测试、校验与质量门禁
-- [ ] 运行 Prisma 迁移与生成
+## T18 测试验证
+- [ ] 运行 Prisma 迁移
 - [ ] 运行 lint 与 typecheck
-- [ ] 运行现有测试与关键接口手工验收
-- [ ] 验证迁移/生成/测试全通过，关键接口稳定
+- [ ] 验证漫画接口功能
+- [ ] 验证小说接口功能
+
+## T19 种子文件重构
+- [ ] 修改 prisma/seed/index.ts
+  - [ ] 调整执行顺序支持 Work 基表
+- [ ] 重命名 prisma/seed/modules/work/comic.ts → prisma/seed/modules/work/work.ts
+  - [ ] 创建 Work 基表种子数据
+  - [ ] 创建 WorkComic/WorkNovel 扩展表种子数据
+- [ ] 重命名 prisma/seed/modules/work/comic-author.ts → prisma/seed/modules/work/work-author-relation.ts
+- [ ] 重命名 prisma/seed/modules/work/comic-category.ts → prisma/seed/modules/work/work-category-relation.ts
+- [ ] 重命名 prisma/seed/modules/work/comic-tag.ts → prisma/seed/modules/work/work-tag-relation.ts
+- [ ] 重命名 prisma/seed/modules/work/comic-chapter.ts → prisma/seed/modules/work/work-chapter.ts
+- [ ] 创建 prisma/seed/modules/work/novel.ts
+  - [ ] 创建小说示例数据
+- [ ] 创建 prisma/seed/modules/work/work-comment.ts
+  - [ ] 创建统一评论种子数据
+- [ ] 删除 prisma/seed/modules/work/comic-chapter-comment.ts
+- [ ] 删除 prisma/seed/modules/work/comic-chapter-comment-report.ts
+- [ ] 验证种子数据可正常执行
 
 # Task Dependencies
 
 ```mermaid
 graph TD
-    T01[T01 Work基表] --> T02[T02 漫画扩展表]
-    T01 --> T03[T03 小说扩展表]
-    T01 --> T04[T04 作者/分类/标签关系表]
-    T01 --> T05[T05 收藏/点赞关系表]
-    T01 --> T06[T06 通用章节表]
-    T06 --> T14[T14 章节互动表]
-    T06 --> T15[T15 统一评论表]
+    subgraph 数据模型层
+        T01[T01 Work基表与枚举]
+        T02[T02 漫画扩展表]
+        T03[T03 小说扩展表]
+        T04[T04 通用关系表]
+        T05[T05 通用互动表]
+        T06[T06 通用章节表]
+        T14[T14 章节互动表]
+        T15[T15 统一评论表]
+        T07[T07 Prisma生成]
+    end
 
-    T01 --> T07[T07 Prisma生成]
+    subgraph 通用服务层
+        T08[T08 通用作品服务]
+        T09[T09 通用章节服务]
+        T10[T10 通用评论服务]
+        T11[T11 内容处理服务]
+    end
+
+    subgraph Controller层
+        T12[T12 漫画Controller重构]
+        T13[T13 小说Controller新增]
+    end
+
+    subgraph 清理与迁移
+        T16[T16 删除旧服务]
+        T17[T17 数据迁移]
+        T18[T18 测试验证]
+    end
+
+    subgraph 种子数据
+        T19[T19 种子文件重构]
+    end
+
+    T01 --> T02
+    T01 --> T03
+    T01 --> T04
+    T01 --> T05
+    T01 --> T06
+    T06 --> T14
+    T01 --> T15
+
+    T01 --> T07
     T02 --> T07
     T03 --> T07
     T04 --> T07
@@ -241,26 +309,27 @@ graph TD
     T14 --> T07
     T15 --> T07
 
-    T07 --> T08[T08 漫画创建/更新服务]
-    T07 --> T12[T12 章节服务改造]
-    T07 --> T14
-    T07 --> T15
+    T07 --> T08
+    T07 --> T09
+    T07 --> T10
+    T07 --> T11
 
-    T08 --> T09[T09 漫画列表/详情查询]
-    T08 --> T10[T10 作者/分类/标签关联]
-    T08 --> T11[T11 收藏/点赞逻辑]
+    T08 --> T12
+    T09 --> T12
+    T10 --> T12
+    T11 --> T12
 
-    T12 --> T13[T13 章节内容服务]
+    T08 --> T13
+    T09 --> T13
+    T10 --> T13
+    T11 --> T13
 
-    T08 --> T16[T16 管理端/客户端接口验收]
-    T09 --> T16
-    T10 --> T16
-    T11 --> T16
     T12 --> T16
     T13 --> T16
-    T14 --> T16
-    T15 --> T16
+    T16 --> T17
+    T17 --> T18
 
-    T16 --> T17[T17 数据迁移]
-    T17 --> T18[T18 测试与质量门禁]
+    T07 --> T19
+    T17 --> T19
+    T19 --> T18
 ```

@@ -256,7 +256,7 @@ export type WorkTagWhereInput = {
   isEnabled?: Prisma.BoolFilter<"WorkTag"> | boolean
   createdAt?: Prisma.DateTimeFilter<"WorkTag"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkTag"> | Date | string
-  comicTags?: Prisma.WorkComicTagListRelationFilter
+  workTags?: Prisma.WorkTagRelationListRelationFilter
 }
 
 export type WorkTagOrderByWithRelationInput = {
@@ -269,7 +269,7 @@ export type WorkTagOrderByWithRelationInput = {
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  comicTags?: Prisma.WorkComicTagOrderByRelationAggregateInput
+  workTags?: Prisma.WorkTagRelationOrderByRelationAggregateInput
 }
 
 export type WorkTagWhereUniqueInput = Prisma.AtLeast<{
@@ -285,7 +285,7 @@ export type WorkTagWhereUniqueInput = Prisma.AtLeast<{
   isEnabled?: Prisma.BoolFilter<"WorkTag"> | boolean
   createdAt?: Prisma.DateTimeFilter<"WorkTag"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkTag"> | Date | string
-  comicTags?: Prisma.WorkComicTagListRelationFilter
+  workTags?: Prisma.WorkTagRelationListRelationFilter
 }, "id" | "name">
 
 export type WorkTagOrderByWithAggregationInput = {
@@ -329,7 +329,7 @@ export type WorkTagCreateInput = {
   isEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  comicTags?: Prisma.WorkComicTagCreateNestedManyWithoutTagInput
+  workTags?: Prisma.WorkTagRelationCreateNestedManyWithoutTagInput
 }
 
 export type WorkTagUncheckedCreateInput = {
@@ -342,7 +342,7 @@ export type WorkTagUncheckedCreateInput = {
   isEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  comicTags?: Prisma.WorkComicTagUncheckedCreateNestedManyWithoutTagInput
+  workTags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutTagInput
 }
 
 export type WorkTagUpdateInput = {
@@ -354,7 +354,7 @@ export type WorkTagUpdateInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  comicTags?: Prisma.WorkComicTagUpdateManyWithoutTagNestedInput
+  workTags?: Prisma.WorkTagRelationUpdateManyWithoutTagNestedInput
 }
 
 export type WorkTagUncheckedUpdateInput = {
@@ -367,7 +367,7 @@ export type WorkTagUncheckedUpdateInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  comicTags?: Prisma.WorkComicTagUncheckedUpdateManyWithoutTagNestedInput
+  workTags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutTagNestedInput
 }
 
 export type WorkTagCreateManyInput = {
@@ -458,21 +458,21 @@ export type WorkTagSumOrderByAggregateInput = {
   order?: Prisma.SortOrder
 }
 
-export type WorkTagCreateNestedOneWithoutComicTagsInput = {
-  create?: Prisma.XOR<Prisma.WorkTagCreateWithoutComicTagsInput, Prisma.WorkTagUncheckedCreateWithoutComicTagsInput>
-  connectOrCreate?: Prisma.WorkTagCreateOrConnectWithoutComicTagsInput
+export type WorkTagCreateNestedOneWithoutWorkTagsInput = {
+  create?: Prisma.XOR<Prisma.WorkTagCreateWithoutWorkTagsInput, Prisma.WorkTagUncheckedCreateWithoutWorkTagsInput>
+  connectOrCreate?: Prisma.WorkTagCreateOrConnectWithoutWorkTagsInput
   connect?: Prisma.WorkTagWhereUniqueInput
 }
 
-export type WorkTagUpdateOneRequiredWithoutComicTagsNestedInput = {
-  create?: Prisma.XOR<Prisma.WorkTagCreateWithoutComicTagsInput, Prisma.WorkTagUncheckedCreateWithoutComicTagsInput>
-  connectOrCreate?: Prisma.WorkTagCreateOrConnectWithoutComicTagsInput
-  upsert?: Prisma.WorkTagUpsertWithoutComicTagsInput
+export type WorkTagUpdateOneRequiredWithoutWorkTagsNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkTagCreateWithoutWorkTagsInput, Prisma.WorkTagUncheckedCreateWithoutWorkTagsInput>
+  connectOrCreate?: Prisma.WorkTagCreateOrConnectWithoutWorkTagsInput
+  upsert?: Prisma.WorkTagUpsertWithoutWorkTagsInput
   connect?: Prisma.WorkTagWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkTagUpdateToOneWithWhereWithoutComicTagsInput, Prisma.WorkTagUpdateWithoutComicTagsInput>, Prisma.WorkTagUncheckedUpdateWithoutComicTagsInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkTagUpdateToOneWithWhereWithoutWorkTagsInput, Prisma.WorkTagUpdateWithoutWorkTagsInput>, Prisma.WorkTagUncheckedUpdateWithoutWorkTagsInput>
 }
 
-export type WorkTagCreateWithoutComicTagsInput = {
+export type WorkTagCreateWithoutWorkTagsInput = {
   name: string
   icon?: string | null
   description?: string | null
@@ -483,7 +483,7 @@ export type WorkTagCreateWithoutComicTagsInput = {
   updatedAt?: Date | string
 }
 
-export type WorkTagUncheckedCreateWithoutComicTagsInput = {
+export type WorkTagUncheckedCreateWithoutWorkTagsInput = {
   id?: number
   name: string
   icon?: string | null
@@ -495,23 +495,23 @@ export type WorkTagUncheckedCreateWithoutComicTagsInput = {
   updatedAt?: Date | string
 }
 
-export type WorkTagCreateOrConnectWithoutComicTagsInput = {
+export type WorkTagCreateOrConnectWithoutWorkTagsInput = {
   where: Prisma.WorkTagWhereUniqueInput
-  create: Prisma.XOR<Prisma.WorkTagCreateWithoutComicTagsInput, Prisma.WorkTagUncheckedCreateWithoutComicTagsInput>
+  create: Prisma.XOR<Prisma.WorkTagCreateWithoutWorkTagsInput, Prisma.WorkTagUncheckedCreateWithoutWorkTagsInput>
 }
 
-export type WorkTagUpsertWithoutComicTagsInput = {
-  update: Prisma.XOR<Prisma.WorkTagUpdateWithoutComicTagsInput, Prisma.WorkTagUncheckedUpdateWithoutComicTagsInput>
-  create: Prisma.XOR<Prisma.WorkTagCreateWithoutComicTagsInput, Prisma.WorkTagUncheckedCreateWithoutComicTagsInput>
+export type WorkTagUpsertWithoutWorkTagsInput = {
+  update: Prisma.XOR<Prisma.WorkTagUpdateWithoutWorkTagsInput, Prisma.WorkTagUncheckedUpdateWithoutWorkTagsInput>
+  create: Prisma.XOR<Prisma.WorkTagCreateWithoutWorkTagsInput, Prisma.WorkTagUncheckedCreateWithoutWorkTagsInput>
   where?: Prisma.WorkTagWhereInput
 }
 
-export type WorkTagUpdateToOneWithWhereWithoutComicTagsInput = {
+export type WorkTagUpdateToOneWithWhereWithoutWorkTagsInput = {
   where?: Prisma.WorkTagWhereInput
-  data: Prisma.XOR<Prisma.WorkTagUpdateWithoutComicTagsInput, Prisma.WorkTagUncheckedUpdateWithoutComicTagsInput>
+  data: Prisma.XOR<Prisma.WorkTagUpdateWithoutWorkTagsInput, Prisma.WorkTagUncheckedUpdateWithoutWorkTagsInput>
 }
 
-export type WorkTagUpdateWithoutComicTagsInput = {
+export type WorkTagUpdateWithoutWorkTagsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -522,7 +522,7 @@ export type WorkTagUpdateWithoutComicTagsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type WorkTagUncheckedUpdateWithoutComicTagsInput = {
+export type WorkTagUncheckedUpdateWithoutWorkTagsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -540,11 +540,11 @@ export type WorkTagUncheckedUpdateWithoutComicTagsInput = {
  */
 
 export type WorkTagCountOutputType = {
-  comicTags: number
+  workTags: number
 }
 
 export type WorkTagCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comicTags?: boolean | WorkTagCountOutputTypeCountComicTagsArgs
+  workTags?: boolean | WorkTagCountOutputTypeCountWorkTagsArgs
 }
 
 /**
@@ -560,8 +560,8 @@ export type WorkTagCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exte
 /**
  * WorkTagCountOutputType without action
  */
-export type WorkTagCountOutputTypeCountComicTagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkComicTagWhereInput
+export type WorkTagCountOutputTypeCountWorkTagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkTagRelationWhereInput
 }
 
 
@@ -575,7 +575,7 @@ export type WorkTagSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   isEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  comicTags?: boolean | Prisma.WorkTag$comicTagsArgs<ExtArgs>
+  workTags?: boolean | Prisma.WorkTag$workTagsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkTagCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workTag"]>
 
@@ -617,7 +617,7 @@ export type WorkTagSelectScalar = {
 
 export type WorkTagOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "description" | "popularity" | "order" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["workTag"]>
 export type WorkTagInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  comicTags?: boolean | Prisma.WorkTag$comicTagsArgs<ExtArgs>
+  workTags?: boolean | Prisma.WorkTag$workTagsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkTagCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkTagIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -627,9 +627,9 @@ export type $WorkTagPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "WorkTag"
   objects: {
     /**
-     * 漫画标签关联
+     * 作品标签关联
      */
-    comicTags: Prisma.$WorkComicTagPayload<ExtArgs>[]
+    workTags: Prisma.$WorkTagRelationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1062,7 +1062,7 @@ readonly fields: WorkTagFieldRefs;
  */
 export interface Prisma__WorkTagClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  comicTags<T extends Prisma.WorkTag$comicTagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkTag$comicTagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  workTags<T extends Prisma.WorkTag$workTagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkTag$workTagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkTagRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1498,27 +1498,27 @@ export type WorkTagDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
 }
 
 /**
- * WorkTag.comicTags
+ * WorkTag.workTags
  */
-export type WorkTag$comicTagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type WorkTag$workTagsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the WorkComicTag
+   * Select specific fields to fetch from the WorkTagRelation
    */
-  select?: Prisma.WorkComicTagSelect<ExtArgs> | null
+  select?: Prisma.WorkTagRelationSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the WorkComicTag
+   * Omit specific fields from the WorkTagRelation
    */
-  omit?: Prisma.WorkComicTagOmit<ExtArgs> | null
+  omit?: Prisma.WorkTagRelationOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.WorkComicTagInclude<ExtArgs> | null
-  where?: Prisma.WorkComicTagWhereInput
-  orderBy?: Prisma.WorkComicTagOrderByWithRelationInput | Prisma.WorkComicTagOrderByWithRelationInput[]
-  cursor?: Prisma.WorkComicTagWhereUniqueInput
+  include?: Prisma.WorkTagRelationInclude<ExtArgs> | null
+  where?: Prisma.WorkTagRelationWhereInput
+  orderBy?: Prisma.WorkTagRelationOrderByWithRelationInput | Prisma.WorkTagRelationOrderByWithRelationInput[]
+  cursor?: Prisma.WorkTagRelationWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.WorkComicTagScalarFieldEnum | Prisma.WorkComicTagScalarFieldEnum[]
+  distinct?: Prisma.WorkTagRelationScalarFieldEnum | Prisma.WorkTagRelationScalarFieldEnum[]
 }
 
 /**

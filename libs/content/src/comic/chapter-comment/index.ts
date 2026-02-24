@@ -1,5 +1,0 @@
-export * from './comic-chapter-comment.constant'
-export * from './comic-chapter-comment.module'
-export * from './comic-chapter-comment.service'
-export * from './comic-chapter-comment.types'
-export * from './dto/comic-chapter-comment.dto'

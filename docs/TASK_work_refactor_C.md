@@ -12,6 +12,7 @@
 - **无向后兼容要求**：接口可直接重构，DTO 可直接替换
 - **小说模块完全可用**：重构完成后小说功能同步上线
 - **内容存储策略**：所有内容采用文件存储，小说章节直接上传/读取文件
+- **重要约束**：数据库表不允许使用 Prisma enum，类型字段使用 Int 类型配合注释，枚举定义仅在 TypeScript 层使用
 
 ## 架构设计
 
@@ -152,6 +153,10 @@ graph TD
         T18[T18 测试验证]
     end
 
+    subgraph 种子数据
+        T19[T19 种子文件重构]
+    end
+
     T01 --> T02
     T01 --> T03
     T01 --> T04
@@ -188,11 +193,15 @@ graph TD
     T13 --> T16
     T16 --> T17
     T17 --> T18
+
+    T07 --> T19
+    T17 --> T19
+    T19 --> T18
 ```
 
 ## 任务清单
 
-### T01 新增 Work 基表与作品类型枚举
+### T01 新增 Work 基表与作品类型枚举 ✅ 已完成
 - 新增文件
   - prisma/models/work/work.prisma
   - libs/base/src/enum/work-type.enum.ts
@@ -259,7 +268,7 @@ graph TD
   }
   ```
 
-### T02 改造漫画主表为扩展表
+### T02 改造漫画主表为扩展表 ✅ 已完成
 - 修改文件
   - prisma/models/work/comic/work-comic.prisma
 - 设计
@@ -316,7 +325,7 @@ graph TD
   }
   ```
 
-### T05 通用化收藏/点赞关系表
+### T05 通用化收藏/点赞关系表 ✅ 已完成
 - 新增文件
   - prisma/models/work/work-favorite.prisma
   - prisma/models/work/work-like.prisma
@@ -406,6 +415,12 @@ graph TD
   - libs/content/src/work/core/work.constant.ts
   - libs/content/src/work/core/index.ts
   - libs/content/src/work/core/dto/work.dto.ts
+- **DTO 规范要求**
+  - 必须继承 `BaseDto`，使用 `IntersectionType`、`OmitType`、`PartialType`、`PickType` 组合复用
+  - 必须使用自定义校验器（`ValidateString`、`ValidateNumber`、`ValidateEnum` 等）
+  - 禁止重复定义字段校验，禁止冗余代码
+  - 创建 DTO 使用 `OMIT_BASE_FIELDS` 排除基础字段
+  - 参考 [DTO 规范要求](#dto-规范要求) 章节
 - 服务接口
   ```typescript
   @Injectable()
@@ -440,6 +455,11 @@ graph TD
   - libs/content/src/work/chapter/work-chapter.constant.ts
   - libs/content/src/work/chapter/index.ts
   - libs/content/src/work/chapter/dto/work-chapter.dto.ts
+- **DTO 规范要求**
+  - 复用 `BaseWorkDto` 的关联字段定义
+  - 使用 `ChapterUserStatusFieldsDto` 定义通用用户状态
+  - 必须使用自定义校验器，禁止冗余
+  - 参考 [DTO 规范要求](#dto-规范要求) 章节
 - 服务接口
   ```typescript
   @Injectable()
@@ -471,7 +491,7 @@ graph TD
   }
   ```
 
-### T10 通用评论服务
+### T10 通用评论服务 ✅ 已完成
 - 新增文件
   - libs/content/src/work/comment/work-comment.service.ts
   - libs/content/src/work/comment/work-comment.module.ts
@@ -479,6 +499,11 @@ graph TD
   - libs/content/src/work/comment/work-comment.types.ts
   - libs/content/src/work/comment/index.ts
   - libs/content/src/work/comment/dto/work-comment.dto.ts
+- **DTO 规范要求**
+  - 评论 DTO 复用 `BaseDto`、`IdDto`、`PageDto`
+  - 使用 `ValidateString` 校验评论内容，`ValidateEnum` 校验审核状态
+  - 禁止冗余，确保漫画/小说评论使用同一套 DTO
+  - 参考 [DTO 规范要求](#dto-规范要求) 章节
 - 服务接口
   ```typescript
   @Injectable()
@@ -505,13 +530,18 @@ graph TD
   }
   ```
 
-### T11 内容处理服务
+### T11 内容处理服务 ✅ 已完成
 - 新增文件
   - libs/content/src/work/content/comic-content.service.ts
   - libs/content/src/work/content/novel-content.service.ts
   - libs/content/src/work/content/content.module.ts
   - libs/content/src/work/content/index.ts
   - libs/content/src/work/content/dto/content.dto.ts
+- **DTO 规范要求**
+  - 内容上传 DTO 复用 `IdDto` 标识章节
+  - 使用 `ValidateArray` 校验图片列表，`ValidateString` 校验文件路径
+  - 禁止冗余，漫画/小说内容 DTO 共享基础结构
+  - 参考 [DTO 规范要求](#dto-规范要求) 章节
 - 服务接口
   ```typescript
   // 漫画图片内容
@@ -548,7 +578,7 @@ graph TD
   - apps/admin-api/src/modules/content-management/comic/content.controller.ts
   - apps/admin-api/src/modules/content-management/comic/comic.module.ts
 
-### T13 小说 Controller 新增
+### T13 小说 Controller 新增 ✅ 已完成
 - 新增文件
   - apps/app-api/src/modules/novel/novel.controller.ts
   - apps/app-api/src/modules/novel/chapter.controller.ts
@@ -572,7 +602,7 @@ graph TD
   - prisma/models/work/comic/work-comic-chapter-purchase.prisma
   - prisma/models/work/comic/work-comic-chapter-download.prisma
 
-### T15 统一评论表设计
+### T15 统一评论表设计 ✅ 已完成
 - 新增文件
   - prisma/models/work/work-comment.prisma
   - prisma/models/work/work-comment-report.prisma
@@ -609,11 +639,11 @@ graph TD
   }
   ```
 
-### T16 删除旧服务
+### T16 删除旧服务 ✅ 已完成
 - 删除文件
   - libs/content/src/comic/ 目录下所有文件
 
-### T17 数据迁移
+### T17 数据迁移 ⏳ 待执行
 - 新增文件
   - scripts/migrations/work-base-backfill.ts
   - scripts/migrations/work-base-verify.ts
@@ -632,6 +662,222 @@ graph TD
 - 运行 lint 与 typecheck
 - 验证漫画接口功能
 - 验证小说接口功能
+
+### T19 种子文件重构 ✅ 已完成
+- 修改文件
+  - prisma/seed/index.ts
+  - prisma/seed/modules/work/comic.ts → prisma/seed/modules/work/work.ts
+  - prisma/seed/modules/work/comic-author.ts → prisma/seed/modules/work/work-author-relation.ts
+  - prisma/seed/modules/work/comic-category.ts → prisma/seed/modules/work/work-category-relation.ts
+  - prisma/seed/modules/work/comic-tag.ts → prisma/seed/modules/work/work-tag-relation.ts
+  - prisma/seed/modules/work/comic-chapter.ts → prisma/seed/modules/work/work-chapter.ts
+- 新增文件
+  - prisma/seed/modules/work/novel.ts
+  - prisma/seed/modules/work/work-comment.ts
+- 删除文件
+  - prisma/seed/modules/work/comic-chapter-comment.ts
+  - prisma/seed/modules/work/comic-chapter-comment-report.ts
+- 重构要点
+  1. **Work 基表种子数据**：将现有漫画数据迁移到 Work 基表
+  2. **漫画扩展表种子**：WorkComic 仅保留 workId 关联
+  3. **小说扩展表种子**：新增小说示例数据（WorkNovel）
+  4. **通用关系表种子**：作者/分类/标签关系表通用化
+  5. **通用互动表种子**：收藏/点赞数据迁移
+  6. **通用章节表种子**：章节内容路径迁移
+  7. **统一评论表种子**：评论数据迁移
+  8. **积分/经验规则通用化**：将 comic 相关规则改为 work 通用规则
+- 执行顺序
+  ```typescript
+  // 第一批：基础配置（并行）
+  await Promise.all([
+    // ... 现有基础配置
+    createInitialWorkGrowthRules(prisma),  // 通用积分/经验规则
+  ])
+
+  // 第二批：核心业务数据
+  await createInitialWorks(prisma)         // Work 基表 + 扩展表
+  await createInitialAuthors(prisma)       // 作者信息
+
+  // 第三批：关联关系
+  await createInitialWorkAuthorRelations(prisma)
+  await createInitialWorkCategoryRelations(prisma)
+  await createInitialWorkTagRelations(prisma)
+  await createInitialWorkChapters(prisma)
+  await createInitialWorkComments(prisma)
+  ```
+
+## DTO 规范要求
+
+### 核心原则
+
+1. **高复用性**
+   - 使用 `IntersectionType`、`OmitType`、`PartialType`、`PickType` 组合复用基础 DTO
+   - 基础 DTO 继承 `BaseDto`，自动包含 `id`、`createdAt`、`updatedAt`
+   - 创建 DTO 使用 `OMIT_BASE_FIELDS` 排除基础字段
+   - 通用字段（如分页、ID）复用 `PageDto`、`IdDto`、`IdsDto`
+
+2. **自定义校验器**
+   - **禁止**直接使用 `@IsString()`、`@IsNumber()` 等原生装饰器
+   - **必须**使用项目自定义校验装饰器：
+     | 装饰器 | 用途 |
+     |--------|------|
+     | `ValidateString` | 字符串验证（长度、必填） |
+     | `ValidateNumber` | 数字验证（范围、默认值） |
+     | `ValidateArray` | 数组验证（类型、长度） |
+     | `ValidateEnum` | 枚举验证 |
+     | `ValidateBoolean` | 布尔值验证 |
+     | `ValidateDate` | 日期验证 |
+     | `ValidateJson` | JSON 验证 |
+     | `ValidateNested` | 嵌套对象验证 |
+     | `ValidateBitmask` | 位掩码验证 |
+     | `ValidateByRegex` | 正则表达式验证 |
+
+3. **禁止冗余**
+   - 禁止重复定义相同字段的校验规则
+   - 禁止在多个 DTO 中复制粘贴相同代码
+   - 禁止创建功能重复的 DTO 类
+
+### DTO 结构规范
+
+```typescript
+// ✅ 正确示例：高复用 DTO 设计
+
+import {
+  ValidateString,
+  ValidateNumber,
+  ValidateEnum,
+  ValidateArray,
+} from '@libs/base/decorators'
+import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+import { IntersectionType, OmitType, PartialType, PickType } from '@nestjs/swagger'
+
+// 1. 基础 DTO：定义所有字段和校验规则
+export class BaseWorkDto extends BaseDto {
+  @ValidateString({
+    description: '作品名称',
+    example: '进击的巨人',
+    required: true,
+    maxLength: 100,
+  })
+  name!: string
+
+  @ValidateEnum({
+    description: '作品类型',
+    example: WorkTypeEnum.COMIC,
+    required: true,
+    enum: WorkTypeEnum,
+  })
+  type!: WorkTypeEnum
+
+  @ValidateNumber({
+    description: '热度值',
+    example: 1000,
+    required: true,
+    min: 0,
+    default: 0,
+  })
+  popularity!: number
+
+  // ... 其他字段
+}
+
+// 2. 创建 DTO：排除基础字段和自动生成字段
+export class CreateWorkDto extends OmitType(BaseWorkDto, [
+  ...OMIT_BASE_FIELDS,
+  'popularity',      // 自动计算
+  'viewCount',       // 自动初始化
+  'likeCount',       // 自动初始化
+  'favoriteCount',   // 自动初始化
+]) {
+  @ValidateArray({
+    description: '关联的作者ID列表',
+    itemType: 'number',
+    example: [1, 2],
+    required: true,
+  })
+  authorIds!: number[]
+}
+
+// 3. 更新 DTO：合并 ID 和部分创建 DTO
+export class UpdateWorkDto extends IntersectionType(
+  PartialType(CreateWorkDto),
+  IdDto,
+) {}
+
+// 4. 查询 DTO：合并分页和筛选字段
+export class QueryWorkDto extends IntersectionType(
+  PageDto,
+  PickType(PartialType(BaseWorkDto), ['name', 'type', 'isPublished']),
+) {}
+
+// 5. 状态更新 DTO：复用基础字段
+export class UpdateWorkStatusDto extends IntersectionType(
+  IdDto,
+  PickType(BaseWorkDto, ['isPublished']),
+) {}
+```
+
+### 通用 DTO 复用模式
+
+```typescript
+// 作品用户状态 DTO（漫画/小说通用）
+export class WorkUserStatusFieldsDto {
+  @ApiProperty({ description: '是否已点赞', example: true })
+  liked!: boolean
+
+  @ApiProperty({ description: '是否已收藏', example: false })
+  favorited!: boolean
+}
+
+// 作品详情 + 用户状态
+export class WorkDetailWithUserStatusDto extends IntersectionType(
+  BaseWorkDto,
+  WorkUserStatusFieldsDto,
+) {}
+
+// 章节用户状态 DTO（漫画/小说通用）
+export class ChapterUserStatusFieldsDto {
+  @ApiProperty({ description: '是否已点赞', example: true })
+  liked!: boolean
+
+  @ApiProperty({ description: '是否已购买', example: false })
+  purchased!: boolean
+
+  @ApiProperty({ description: '是否已下载', example: false })
+  downloaded!: boolean
+}
+```
+
+### 禁止的写法
+
+```typescript
+// ❌ 错误示例：使用原生装饰器
+import { IsString, IsNumber, IsOptional } from 'class-validator'
+
+class BadDto {
+  @IsString()
+  @IsOptional()
+  name?: string  // 错误：应使用 ValidateString
+}
+
+// ❌ 错误示例：重复定义字段
+class CreateWorkDto {
+  @ValidateString({ description: '名称', ... })
+  name!: string
+}
+
+class UpdateWorkDto {
+  @ValidateString({ description: '名称', ... })  // 错误：重复定义
+  name?: string
+}
+
+// ❌ 错误示例：冗余代码
+class CreateComicDto {
+  // 错误：应该继承或复用 CreateWorkDto
+  @ValidateString({ description: '作品名称', ... })
+  name!: string
+}
+```
 
 ## 小说模块可用性确认
 
@@ -661,3 +907,5 @@ graph TD
 3. **架构最简洁**：Controller → 通用服务 → 数据模型
 4. **维护成本最低**：单一服务层，修改一处生效全局
 5. **接口统一**：漫画和小说 API 结构一致，前端开发友好
+6. **种子数据通用化**：一套种子文件支持漫画和小说两种作品类型
+7. **DTO 高复用**：基础 DTO + 组合模式，减少代码冗余

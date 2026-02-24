@@ -264,7 +264,7 @@ export type WorkCategoryWhereInput = {
   isEnabled?: Prisma.BoolFilter<"WorkCategory"> | boolean
   createdAt?: Prisma.DateTimeFilter<"WorkCategory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkCategory"> | Date | string
-  workComicCategories?: Prisma.WorkComicCategoryListRelationFilter
+  workCategories?: Prisma.WorkCategoryRelationListRelationFilter
 }
 
 export type WorkCategoryOrderByWithRelationInput = {
@@ -278,7 +278,7 @@ export type WorkCategoryOrderByWithRelationInput = {
   isEnabled?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  workComicCategories?: Prisma.WorkComicCategoryOrderByRelationAggregateInput
+  workCategories?: Prisma.WorkCategoryRelationOrderByRelationAggregateInput
 }
 
 export type WorkCategoryWhereUniqueInput = Prisma.AtLeast<{
@@ -295,7 +295,7 @@ export type WorkCategoryWhereUniqueInput = Prisma.AtLeast<{
   isEnabled?: Prisma.BoolFilter<"WorkCategory"> | boolean
   createdAt?: Prisma.DateTimeFilter<"WorkCategory"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkCategory"> | Date | string
-  workComicCategories?: Prisma.WorkComicCategoryListRelationFilter
+  workCategories?: Prisma.WorkCategoryRelationListRelationFilter
 }, "id" | "name">
 
 export type WorkCategoryOrderByWithAggregationInput = {
@@ -342,7 +342,7 @@ export type WorkCategoryCreateInput = {
   isEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  workComicCategories?: Prisma.WorkComicCategoryCreateNestedManyWithoutCategoryInput
+  workCategories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutCategoryInput
 }
 
 export type WorkCategoryUncheckedCreateInput = {
@@ -356,7 +356,7 @@ export type WorkCategoryUncheckedCreateInput = {
   isEnabled?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
-  workComicCategories?: Prisma.WorkComicCategoryUncheckedCreateNestedManyWithoutCategoryInput
+  workCategories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutCategoryInput
 }
 
 export type WorkCategoryUpdateInput = {
@@ -369,7 +369,7 @@ export type WorkCategoryUpdateInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  workComicCategories?: Prisma.WorkComicCategoryUpdateManyWithoutCategoryNestedInput
+  workCategories?: Prisma.WorkCategoryRelationUpdateManyWithoutCategoryNestedInput
 }
 
 export type WorkCategoryUncheckedUpdateInput = {
@@ -383,7 +383,7 @@ export type WorkCategoryUncheckedUpdateInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  workComicCategories?: Prisma.WorkComicCategoryUncheckedUpdateManyWithoutCategoryNestedInput
+  workCategories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutCategoryNestedInput
 }
 
 export type WorkCategoryCreateManyInput = {
@@ -480,18 +480,18 @@ export type WorkCategorySumOrderByAggregateInput = {
   order?: Prisma.SortOrder
 }
 
-export type WorkCategoryCreateNestedOneWithoutWorkComicCategoriesInput = {
-  create?: Prisma.XOR<Prisma.WorkCategoryCreateWithoutWorkComicCategoriesInput, Prisma.WorkCategoryUncheckedCreateWithoutWorkComicCategoriesInput>
-  connectOrCreate?: Prisma.WorkCategoryCreateOrConnectWithoutWorkComicCategoriesInput
+export type WorkCategoryCreateNestedOneWithoutWorkCategoriesInput = {
+  create?: Prisma.XOR<Prisma.WorkCategoryCreateWithoutWorkCategoriesInput, Prisma.WorkCategoryUncheckedCreateWithoutWorkCategoriesInput>
+  connectOrCreate?: Prisma.WorkCategoryCreateOrConnectWithoutWorkCategoriesInput
   connect?: Prisma.WorkCategoryWhereUniqueInput
 }
 
-export type WorkCategoryUpdateOneRequiredWithoutWorkComicCategoriesNestedInput = {
-  create?: Prisma.XOR<Prisma.WorkCategoryCreateWithoutWorkComicCategoriesInput, Prisma.WorkCategoryUncheckedCreateWithoutWorkComicCategoriesInput>
-  connectOrCreate?: Prisma.WorkCategoryCreateOrConnectWithoutWorkComicCategoriesInput
-  upsert?: Prisma.WorkCategoryUpsertWithoutWorkComicCategoriesInput
+export type WorkCategoryUpdateOneRequiredWithoutWorkCategoriesNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkCategoryCreateWithoutWorkCategoriesInput, Prisma.WorkCategoryUncheckedCreateWithoutWorkCategoriesInput>
+  connectOrCreate?: Prisma.WorkCategoryCreateOrConnectWithoutWorkCategoriesInput
+  upsert?: Prisma.WorkCategoryUpsertWithoutWorkCategoriesInput
   connect?: Prisma.WorkCategoryWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkCategoryUpdateToOneWithWhereWithoutWorkComicCategoriesInput, Prisma.WorkCategoryUpdateWithoutWorkComicCategoriesInput>, Prisma.WorkCategoryUncheckedUpdateWithoutWorkComicCategoriesInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkCategoryUpdateToOneWithWhereWithoutWorkCategoriesInput, Prisma.WorkCategoryUpdateWithoutWorkCategoriesInput>, Prisma.WorkCategoryUncheckedUpdateWithoutWorkCategoriesInput>
 }
 
 export type WorkCategoryCreatecontentTypeInput = {
@@ -503,7 +503,7 @@ export type WorkCategoryUpdatecontentTypeInput = {
   push?: number | number[]
 }
 
-export type WorkCategoryCreateWithoutWorkComicCategoriesInput = {
+export type WorkCategoryCreateWithoutWorkCategoriesInput = {
   name: string
   description?: string | null
   icon?: string | null
@@ -515,7 +515,7 @@ export type WorkCategoryCreateWithoutWorkComicCategoriesInput = {
   updatedAt?: Date | string
 }
 
-export type WorkCategoryUncheckedCreateWithoutWorkComicCategoriesInput = {
+export type WorkCategoryUncheckedCreateWithoutWorkCategoriesInput = {
   id?: number
   name: string
   description?: string | null
@@ -528,23 +528,23 @@ export type WorkCategoryUncheckedCreateWithoutWorkComicCategoriesInput = {
   updatedAt?: Date | string
 }
 
-export type WorkCategoryCreateOrConnectWithoutWorkComicCategoriesInput = {
+export type WorkCategoryCreateOrConnectWithoutWorkCategoriesInput = {
   where: Prisma.WorkCategoryWhereUniqueInput
-  create: Prisma.XOR<Prisma.WorkCategoryCreateWithoutWorkComicCategoriesInput, Prisma.WorkCategoryUncheckedCreateWithoutWorkComicCategoriesInput>
+  create: Prisma.XOR<Prisma.WorkCategoryCreateWithoutWorkCategoriesInput, Prisma.WorkCategoryUncheckedCreateWithoutWorkCategoriesInput>
 }
 
-export type WorkCategoryUpsertWithoutWorkComicCategoriesInput = {
-  update: Prisma.XOR<Prisma.WorkCategoryUpdateWithoutWorkComicCategoriesInput, Prisma.WorkCategoryUncheckedUpdateWithoutWorkComicCategoriesInput>
-  create: Prisma.XOR<Prisma.WorkCategoryCreateWithoutWorkComicCategoriesInput, Prisma.WorkCategoryUncheckedCreateWithoutWorkComicCategoriesInput>
+export type WorkCategoryUpsertWithoutWorkCategoriesInput = {
+  update: Prisma.XOR<Prisma.WorkCategoryUpdateWithoutWorkCategoriesInput, Prisma.WorkCategoryUncheckedUpdateWithoutWorkCategoriesInput>
+  create: Prisma.XOR<Prisma.WorkCategoryCreateWithoutWorkCategoriesInput, Prisma.WorkCategoryUncheckedCreateWithoutWorkCategoriesInput>
   where?: Prisma.WorkCategoryWhereInput
 }
 
-export type WorkCategoryUpdateToOneWithWhereWithoutWorkComicCategoriesInput = {
+export type WorkCategoryUpdateToOneWithWhereWithoutWorkCategoriesInput = {
   where?: Prisma.WorkCategoryWhereInput
-  data: Prisma.XOR<Prisma.WorkCategoryUpdateWithoutWorkComicCategoriesInput, Prisma.WorkCategoryUncheckedUpdateWithoutWorkComicCategoriesInput>
+  data: Prisma.XOR<Prisma.WorkCategoryUpdateWithoutWorkCategoriesInput, Prisma.WorkCategoryUncheckedUpdateWithoutWorkCategoriesInput>
 }
 
-export type WorkCategoryUpdateWithoutWorkComicCategoriesInput = {
+export type WorkCategoryUpdateWithoutWorkCategoriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -556,7 +556,7 @@ export type WorkCategoryUpdateWithoutWorkComicCategoriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type WorkCategoryUncheckedUpdateWithoutWorkComicCategoriesInput = {
+export type WorkCategoryUncheckedUpdateWithoutWorkCategoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -575,11 +575,11 @@ export type WorkCategoryUncheckedUpdateWithoutWorkComicCategoriesInput = {
  */
 
 export type WorkCategoryCountOutputType = {
-  workComicCategories: number
+  workCategories: number
 }
 
 export type WorkCategoryCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  workComicCategories?: boolean | WorkCategoryCountOutputTypeCountWorkComicCategoriesArgs
+  workCategories?: boolean | WorkCategoryCountOutputTypeCountWorkCategoriesArgs
 }
 
 /**
@@ -595,8 +595,8 @@ export type WorkCategoryCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types
 /**
  * WorkCategoryCountOutputType without action
  */
-export type WorkCategoryCountOutputTypeCountWorkComicCategoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkComicCategoryWhereInput
+export type WorkCategoryCountOutputTypeCountWorkCategoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkCategoryRelationWhereInput
 }
 
 
@@ -611,7 +611,7 @@ export type WorkCategorySelect<ExtArgs extends runtime.Types.Extensions.Internal
   isEnabled?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  workComicCategories?: boolean | Prisma.WorkCategory$workComicCategoriesArgs<ExtArgs>
+  workCategories?: boolean | Prisma.WorkCategory$workCategoriesArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCategoryCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workCategory"]>
 
@@ -656,7 +656,7 @@ export type WorkCategorySelectScalar = {
 
 export type WorkCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "icon" | "contentType" | "popularity" | "order" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["workCategory"]>
 export type WorkCategoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  workComicCategories?: boolean | Prisma.WorkCategory$workComicCategoriesArgs<ExtArgs>
+  workCategories?: boolean | Prisma.WorkCategory$workCategoriesArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCategoryCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type WorkCategoryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -666,9 +666,9 @@ export type $WorkCategoryPayload<ExtArgs extends runtime.Types.Extensions.Intern
   name: "WorkCategory"
   objects: {
     /**
-     * 漫画分类关联
+     * 作品分类关联
      */
-    workComicCategories: Prisma.$WorkComicCategoryPayload<ExtArgs>[]
+    workCategories: Prisma.$WorkCategoryRelationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1105,7 +1105,7 @@ readonly fields: WorkCategoryFieldRefs;
  */
 export interface Prisma__WorkCategoryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  workComicCategories<T extends Prisma.WorkCategory$workComicCategoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkCategory$workComicCategoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkComicCategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  workCategories<T extends Prisma.WorkCategory$workCategoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkCategory$workCategoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkCategoryRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1542,27 +1542,27 @@ export type WorkCategoryDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
 }
 
 /**
- * WorkCategory.workComicCategories
+ * WorkCategory.workCategories
  */
-export type WorkCategory$workComicCategoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type WorkCategory$workCategoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the WorkComicCategory
+   * Select specific fields to fetch from the WorkCategoryRelation
    */
-  select?: Prisma.WorkComicCategorySelect<ExtArgs> | null
+  select?: Prisma.WorkCategoryRelationSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the WorkComicCategory
+   * Omit specific fields from the WorkCategoryRelation
    */
-  omit?: Prisma.WorkComicCategoryOmit<ExtArgs> | null
+  omit?: Prisma.WorkCategoryRelationOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.WorkComicCategoryInclude<ExtArgs> | null
-  where?: Prisma.WorkComicCategoryWhereInput
-  orderBy?: Prisma.WorkComicCategoryOrderByWithRelationInput | Prisma.WorkComicCategoryOrderByWithRelationInput[]
-  cursor?: Prisma.WorkComicCategoryWhereUniqueInput
+  include?: Prisma.WorkCategoryRelationInclude<ExtArgs> | null
+  where?: Prisma.WorkCategoryRelationWhereInput
+  orderBy?: Prisma.WorkCategoryRelationOrderByWithRelationInput | Prisma.WorkCategoryRelationOrderByWithRelationInput[]
+  cursor?: Prisma.WorkCategoryRelationWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.WorkComicCategoryScalarFieldEnum | Prisma.WorkComicCategoryScalarFieldEnum[]
+  distinct?: Prisma.WorkCategoryRelationScalarFieldEnum | Prisma.WorkCategoryRelationScalarFieldEnum[]
 }
 
 /**

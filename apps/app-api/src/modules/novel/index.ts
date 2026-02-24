@@ -1,0 +1,4 @@
+export * from './novel-chapter-comment.controller'
+export * from './novel-chapter.controller'
+export * from './novel.controller'
+export * from './novel.module'
