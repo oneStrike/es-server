@@ -30,7 +30,11 @@ class AuthorInfoDto extends PickType(BaseAuthorDto, ['id', 'name']) {}
 export class ComicAuthorDto {
   @ApiProperty({
     description: '作者信息',
-    example: { id: 1, name: '村上春树' },
+    example: {
+      id: 1,
+      name: '村上春树',
+      avatar: 'https://example.com/avatar.jpg',
+    },
     required: true,
     type: AuthorInfoDto,
   })
@@ -40,7 +44,11 @@ export class ComicAuthorDto {
 /**
  * 分类信息DTO
  */
-class CategoryInfoDto extends PickType(BaseCategoryDto, ['id', 'name']) {}
+class CategoryInfoDto extends PickType(BaseCategoryDto, [
+  'id',
+  'name',
+  'icon',
+]) {}
 
 /**
  * 漫画分类关联DTO
@@ -48,7 +56,7 @@ class CategoryInfoDto extends PickType(BaseCategoryDto, ['id', 'name']) {}
 export class ComicCategoryDto {
   @ApiProperty({
     description: '分类信息',
-    example: { id: 1, name: '科幻' },
+    example: { id: 1, name: '科幻', icon: 'https://example.com/icon.jpg' },
     required: true,
     type: CategoryInfoDto,
   })
@@ -58,7 +66,7 @@ export class ComicCategoryDto {
 /**
  * 标签信息DTO
  */
-export class TagInfoDto extends PickType(BaseTagDto, ['id', 'name']) {}
+export class TagInfoDto extends PickType(BaseTagDto, ['id', 'name', 'icon']) {}
 
 /**
  * 漫画标签关联DTO
@@ -66,7 +74,7 @@ export class TagInfoDto extends PickType(BaseTagDto, ['id', 'name']) {}
 export class ComicTagDto {
   @ApiProperty({
     description: '标签信息',
-    example: { id: 1, name: '热血' },
+    example: { id: 1, name: '热血', icon: 'https://example.com/icon.jpg' },
     required: true,
     type: TagInfoDto,
   })
@@ -105,19 +113,17 @@ export class BaseComicDto extends BaseDto {
     description: '漫画分类',
     example: [
       {
-        isPrimary: true,
-        sortOrder: 0,
         category: {
           id: 1,
           name: '科幻',
+          icon: 'https://example.com/icon.jpg',
         },
       },
       {
-        isPrimary: false,
-        sortOrder: 1,
         category: {
           id: 2,
           name: '冒险',
+          icon: 'https://example.com/icon.jpg',
         },
       },
     ],
@@ -130,19 +136,17 @@ export class BaseComicDto extends BaseDto {
     description: '漫画作者',
     example: [
       {
-        isPrimary: true,
-        sortOrder: 0,
         author: {
           id: 1,
           name: '村上春树',
+          avatar: 'https://example.com/avatar.jpg',
         },
       },
       {
-        isPrimary: false,
-        sortOrder: 1,
         author: {
           id: 2,
           name: '东野圭吾',
+          avatar: 'https://example.com/avatar.jpg',
         },
       },
     ],
@@ -155,19 +159,17 @@ export class BaseComicDto extends BaseDto {
     description: '漫画标签',
     example: [
       {
-        isPrimary: true,
-        sortOrder: 0,
         tag: {
           id: 1,
           name: '热血',
+          icon: 'https://example.com/icon.jpg',
         },
       },
       {
-        isPrimary: false,
-        sortOrder: 1,
         tag: {
           id: 2,
           name: '战斗',
+          icon: 'https://example.com/icon.jpg',
         },
       },
     ],
@@ -189,6 +191,7 @@ export class BaseComicDto extends BaseDto {
     description: '语言代码',
     example: 'en',
     required: true,
+    maxLength: 10,
   })
   language!: string
 
@@ -196,15 +199,17 @@ export class BaseComicDto extends BaseDto {
     description: '地区代码',
     example: 'CN',
     required: true,
+    maxLength: 10,
   })
   region!: string
 
   @ValidateString({
     description: '年龄分级',
     example: 'R14',
-    required: true,
+    required: false,
+    maxLength: 10,
   })
-  ageRating!: string
+  ageRating?: string
 
   @ValidateBoolean({
     description: '发布状态',
@@ -227,7 +232,7 @@ export class BaseComicDto extends BaseDto {
     required: false,
     type: Date,
   })
-  lastUpdated: Date
+  lastUpdated?: Date
 
   @ValidateString({
     description: '漫画简介',
@@ -340,7 +345,7 @@ export class BaseComicDto extends BaseDto {
     description: '版权信息',
     example: '© 2024 作者名',
     required: false,
-    maxLength: 200,
+    maxLength: 500,
   })
   copyright?: string
 
@@ -355,6 +360,7 @@ export class BaseComicDto extends BaseDto {
     description: '管理员备注',
     example: '优质漫画，推荐首页展示',
     required: false,
+    maxLength: 1000,
   })
   remark?: string
 }
@@ -468,7 +474,7 @@ export class UpdateComicNewDto extends IntersectionType(
   PickType(BaseComicDto, ['isNew']),
 ) {}
 
-export class ComicPageWithUserStatusDto extends BaseComicDto {
+export class ComicUserStatusFieldsDto {
   @ApiProperty({
     description: '是否已点赞',
     example: true,
@@ -484,34 +490,14 @@ export class ComicPageWithUserStatusDto extends BaseComicDto {
   favorited!: boolean
 }
 
-export class ComicDetailWithUserStatusDto extends BaseComicDto {
-  @ApiProperty({
-    description: '是否已点赞',
-    example: true,
-    required: true,
-  })
-  liked!: boolean
+export class ComicPageWithUserStatusDto extends IntersectionType(
+  BaseComicDto,
+  ComicUserStatusFieldsDto,
+) {}
 
-  @ApiProperty({
-    description: '是否已收藏',
-    example: false,
-    required: true,
-  })
-  favorited!: boolean
-}
+export class ComicDetailWithUserStatusDto extends ComicPageWithUserStatusDto {}
 
-export class ComicUserStatusDto extends IdDto {
-  @ApiProperty({
-    description: '是否已点赞',
-    example: true,
-    required: true,
-  })
-  liked!: boolean
-
-  @ApiProperty({
-    description: '是否已收藏',
-    example: false,
-    required: true,
-  })
-  favorited!: boolean
-}
+export class ComicUserStatusDto extends IntersectionType(
+  IdDto,
+  ComicUserStatusFieldsDto,
+) {}

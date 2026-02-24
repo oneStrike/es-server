@@ -1,15 +1,11 @@
-import type {WorkComicWhereInput} from '@libs/base/database';
+import type { WorkComicWhereInput } from '@libs/base/database'
 import { BaseService, Prisma } from '@libs/base/database'
 import { PageDto } from '@libs/base/dto'
 import { isNotNil } from '@libs/base/utils'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { ComicGrowthEventKey } from './comic.constant'
-import {
-  CreateComicDto,
-  QueryComicDto,
-  UpdateComicDto,
-} from './dto/comic.dto'
+import { CreateComicDto, QueryComicDto, UpdateComicDto } from './dto/comic.dto'
 
 /**
  * 漫画服务类
@@ -17,18 +13,30 @@ import {
  */
 @Injectable()
 export class ComicService extends BaseService {
+  /**
+   * 漫画主表访问器
+   */
   get workComic() {
     return this.prisma.workComic
   }
 
+  /**
+   * 漫画点赞关联表访问器
+   */
   get workComicLike() {
     return this.prisma.workComicLike
   }
 
+  /**
+   * 漫画收藏关联表访问器
+   */
   get workComicFavorite() {
     return this.prisma.workComicFavorite
   }
 
+  /**
+   * App 用户表访问器
+   */
   get appUser() {
     return this.prisma.appUser
   }
@@ -70,6 +78,7 @@ export class ComicService extends BaseService {
             select: {
               id: true,
               name: true,
+              avatar: true,
             },
           },
         },
@@ -80,6 +89,7 @@ export class ComicService extends BaseService {
             select: {
               id: true,
               name: true,
+              icon: true,
             },
           },
         },
@@ -90,6 +100,7 @@ export class ComicService extends BaseService {
             select: {
               id: true,
               name: true,
+              icon: true,
             },
           },
         },
@@ -97,9 +108,7 @@ export class ComicService extends BaseService {
     }
   }
 
-  constructor(
-    private readonly userGrowthEventService: UserGrowthEventService,
-  ) {
+  constructor(private readonly userGrowthEventService: UserGrowthEventService) {
     super()
   }
 
@@ -111,6 +120,7 @@ export class ComicService extends BaseService {
   async createComic(createComicDto: CreateComicDto) {
     const { authorIds, categoryIds, tagIds, ...comicData } = createComicDto
 
+    // 同名校验：避免出现重名漫画
     const existingComic = await this.workComic.findFirst({
       where: { name: comicData.name },
     })
@@ -119,6 +129,7 @@ export class ComicService extends BaseService {
       throw new BadRequestException('漫画名称已存在')
     }
 
+    // 校验作者是否存在且可用
     const existingAuthors = await this.prisma.workAuthor.findMany({
       where: {
         id: { in: authorIds },
@@ -127,10 +138,10 @@ export class ComicService extends BaseService {
     })
 
     if (existingAuthors.length !== authorIds.length) {
-      throw new BadRequestException('部分作者不存在')
+      throw new BadRequestException('部分作者不存在或已禁用')
     }
 
-    // 验证分类是否存在
+    // 校验分类是否存在且可用
     const existingCategories = await this.prisma.workCategory.findMany({
       where: {
         id: { in: categoryIds },
@@ -142,7 +153,7 @@ export class ComicService extends BaseService {
       throw new BadRequestException('部分分类不存在或已禁用')
     }
 
-    // 验证标签是否存在
+    // 校验标签是否存在且可用
     const existingTags = await this.prisma.workTag.findMany({
       where: {
         id: { in: tagIds },
@@ -154,6 +165,7 @@ export class ComicService extends BaseService {
       throw new BadRequestException('部分标签不存在或已禁用')
     }
 
+    // 创建漫画与关联关系（作者/分类/标签）
     return this.workComic.create({
       data: {
         ...comicData,
@@ -187,7 +199,7 @@ export class ComicService extends BaseService {
   async getComicPage(queryComicDto: QueryComicDto) {
     const { name, publisher, author, tagIds, ...otherDto } = queryComicDto
 
-    // 构建查询条件
+    // 构建查询条件（按需叠加）
     const where: WorkComicWhereInput = {}
 
     // 漫画名称模糊搜索
@@ -233,65 +245,7 @@ export class ComicService extends BaseService {
 
     return this.workComic.findPagination({
       where: { ...where, ...otherDto },
-      select: {
-        id: true,
-        name: true,
-        alias: true,
-        cover: true,
-        popularity: true,
-        language: true,
-        region: true,
-        ageRating: true,
-        isPublished: true,
-        publishAt: true,
-        lastUpdated: true,
-        publisher: true,
-        originalSource: true,
-        serialStatus: true,
-        rating: true,
-        ratingCount: true,
-        recommendWeight: true,
-        isRecommended: true,
-        isHot: true,
-        isNew: true,
-        likeCount: true,
-        favoriteCount: true,
-        viewCount: true,
-        createdAt: true,
-        updatedAt: true,
-        // 关联关系
-        comicAuthors: {
-          select: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        comicCategories: {
-          select: {
-            category: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        // 标签关联
-        comicTags: {
-          select: {
-            tag: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
+      select: this.getComicListSelect(),
     })
   }
 
@@ -301,6 +255,7 @@ export class ComicService extends BaseService {
    * @returns 漫画详情信息
    */
   async getComicDetail(id: number) {
+    // 详情返回作者/分类/标签等完整关联信息
     const comic = await this.workComic.findUnique({
       where: { id },
       include: {
@@ -310,6 +265,7 @@ export class ComicService extends BaseService {
               select: {
                 id: true,
                 name: true,
+                avatar: true,
               },
             },
           },
@@ -347,6 +303,10 @@ export class ComicService extends BaseService {
     return comic
   }
 
+  /**
+   * 获取漫画详情并附带用户状态
+   * liked / favorited 根据当前用户计算
+   */
   async getComicDetailWithUserStatus(id: number, userId: number) {
     const [comic, like, favorite] = await Promise.all([
       this.getComicDetail(id),
@@ -375,12 +335,17 @@ export class ComicService extends BaseService {
     }
   }
 
+  /**
+   * 记录漫画浏览
+   * 同时写入成长事件以便统计用户行为
+   */
   async incrementViewCount(
     id: number,
     userId: number,
     ip?: string,
     deviceId?: string,
   ) {
+    // 先累加浏览次数
     await this.workComic.update({
       where: { id },
       data: {
@@ -390,6 +355,7 @@ export class ComicService extends BaseService {
       },
     })
 
+    // 再记录成长事件
     await this.userGrowthEventService.handleEvent({
       business: 'comic',
       eventKey: ComicGrowthEventKey.View,
@@ -403,12 +369,17 @@ export class ComicService extends BaseService {
     return { id }
   }
 
+  /**
+   * 点赞漫画
+   * 保证点赞记录与计数更新的一致性
+   */
   async incrementLikeCount(
     id: number,
     userId: number,
     ip?: string,
     deviceId?: string,
   ) {
+    // 并行检查漫画和用户
     const [comic, user] = await Promise.all([
       this.workComic.findUnique({ where: { id } }),
       this.appUser.findUnique({ where: { id: userId } }),
@@ -422,6 +393,7 @@ export class ComicService extends BaseService {
       throw new BadRequestException('用户不存在')
     }
 
+    // 防止重复点赞
     const existingLike = await this.workComicLike.findUnique({
       where: {
         comicId_userId: {
@@ -468,12 +440,17 @@ export class ComicService extends BaseService {
     return { id }
   }
 
+  /**
+   * 收藏漫画
+   * 与点赞逻辑一致，采用事务保证一致性
+   */
   async incrementFavoriteCount(
     id: number,
     userId: number,
     ip?: string,
     deviceId?: string,
   ) {
+    // 并行检查漫画和用户
     const [comic, user] = await Promise.all([
       this.workComic.findUnique({ where: { id } }),
       this.appUser.findUnique({ where: { id: userId } }),
@@ -487,6 +464,7 @@ export class ComicService extends BaseService {
       throw new BadRequestException('用户不存在')
     }
 
+    // 防止重复收藏
     const existingFavorite = await this.workComicFavorite.findUnique({
       where: {
         comicId_userId: {
@@ -533,6 +511,9 @@ export class ComicService extends BaseService {
     return { id }
   }
 
+  /**
+   * 检查用户是否点赞指定漫画
+   */
   async checkUserLiked(comicId: number, userId: number) {
     const like = await this.workComicLike.findUnique({
       where: {
@@ -548,6 +529,9 @@ export class ComicService extends BaseService {
     }
   }
 
+  /**
+   * 检查用户是否收藏指定漫画
+   */
   async checkUserFavorited(comicId: number, userId: number) {
     const favorite = await this.workComicFavorite.findUnique({
       where: {
@@ -563,6 +547,10 @@ export class ComicService extends BaseService {
     }
   }
 
+  /**
+   * 批量获取漫画用户状态
+   * 对空列表直接返回空数组，避免无意义查询
+   */
   async getComicUserStatus(ids: number[], userId: number) {
     if (ids.length === 0) {
       return []
@@ -595,6 +583,9 @@ export class ComicService extends BaseService {
     }))
   }
 
+  /**
+   * 分页漫画列表并合并用户状态
+   */
   async getComicPageWithUserStatus(
     queryComicDto: QueryComicDto,
     userId: number,
@@ -602,6 +593,7 @@ export class ComicService extends BaseService {
     const page = await this.getComicPage(queryComicDto)
     const comicIds = page.list.map((item) => item.id)
 
+    // 空列表直接返回，避免额外查询
     if (comicIds.length === 0) {
       return page
     }
@@ -677,7 +669,7 @@ export class ComicService extends BaseService {
       .map((id) => comicMap.get(id))
       .filter((item): item is NonNullable<typeof item> => !!item)
 
-    // 组装用户状态信息
+    // 组装用户状态信息（收藏列表默认 favorited 为 true）
     const likes = await this.workComicLike.findMany({
       where: {
         userId,
@@ -738,7 +730,7 @@ export class ComicService extends BaseService {
       .map((id) => comicMap.get(id))
       .filter((item): item is NonNullable<typeof item> => !!item)
 
-    // 组装用户状态信息
+    // 组装用户状态信息（点赞列表默认 liked 为 true）
     const favorites = await this.workComicFavorite.findMany({
       where: {
         userId,
@@ -902,7 +894,7 @@ export class ComicService extends BaseService {
    * @returns 删除结果
    */
   async deleteComic(id: number) {
-    // 检查是否有关联的章节
+    // 检查是否有关联的章节，避免删除仍有内容的漫画
     const chapterCount = await this.prisma.workComicChapter.count({
       where: {
         comicId: id,
