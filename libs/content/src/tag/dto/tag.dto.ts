@@ -1,7 +1,7 @@
 import {
-  ValidateBoolean,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -15,7 +15,7 @@ import {
  * 标签基础 DTO
  */
 export class BaseTagDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '标签名称',
     example: '科幻',
     required: true,
@@ -23,7 +23,7 @@ export class BaseTagDto extends BaseDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '标签图标URL',
     example: 'https://example.com/icon.png',
     required: false,
@@ -31,7 +31,7 @@ export class BaseTagDto extends BaseDto {
   })
   icon?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '人气值',
     example: 1000,
     required: false,
@@ -39,7 +39,7 @@ export class BaseTagDto extends BaseDto {
   })
   popularity!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '排序值',
     example: 1,
     required: false,
@@ -48,14 +48,14 @@ export class BaseTagDto extends BaseDto {
   })
   order!: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     required: false,
   })
   isEnabled!: boolean
 
-  @ValidateString({
+  @StringProperty({
     description: '标签描述',
     example: '漫画类型',
     required: false,

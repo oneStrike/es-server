@@ -1,8 +1,8 @@
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -14,7 +14,7 @@ import {
 import { UserExperienceRuleTypeEnum } from '../experience.constant'
 
 export class BaseUserExperienceRuleDto extends BaseDto {
-  @ValidateEnum({
+  @EnumProperty({
     description:
       '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到, 7=管理员操作, 8=主题浏览, 9=举报, 101=漫画浏览, 102=漫画点赞, 103=漫画收藏, 111=章节阅读, 112=章节点赞, 113=章节购买, 114=章节下载）',
     example: UserExperienceRuleTypeEnum.CREATE_TOPIC,
@@ -23,14 +23,14 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   })
   type!: UserExperienceRuleTypeEnum
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '经验值变化',
     example: 5,
     required: true,
   })
   experience!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '每日上限（0=无限制）',
     example: 0,
     required: true,
@@ -38,7 +38,7 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   })
   dailyLimit!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '业务域标识',
     example: 'forum',
     required: false,
@@ -46,7 +46,7 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   })
   business?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '事件键',
     example: 'forum.topic.create',
     required: false,
@@ -54,7 +54,7 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   })
   eventKey?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '冷却秒数（0=无限制）',
     example: 0,
     required: false,
@@ -62,7 +62,7 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   })
   cooldownSeconds?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '总上限（0=无限制）',
     example: 0,
     required: false,
@@ -70,7 +70,7 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   })
   totalLimit?: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     required: true,
@@ -78,7 +78,7 @@ export class BaseUserExperienceRuleDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ValidateString({
+  @StringProperty({
     description: '备注',
     example: '用户发表主题时获得经验',
     required: false,

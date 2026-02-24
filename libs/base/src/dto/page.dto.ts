@@ -1,14 +1,14 @@
 import {
-  ValidateJson,
-  ValidateNumber,
-  ValidateString,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 
 /**
  * 日期范围
  */
 export class DateRangeDto {
-  @ValidateString({
+  @StringProperty({
     description: '开始时间',
     example: '2025-05-29',
     required: false,
@@ -16,7 +16,7 @@ export class DateRangeDto {
   })
   startDate?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '结束时间',
     example: '2025-05-29',
     required: false,
@@ -26,7 +26,7 @@ export class DateRangeDto {
 }
 
 export class PageDto extends DateRangeDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '单页大小，最大500，默认15',
     example: 15,
     max: 500,
@@ -36,7 +36,7 @@ export class PageDto extends DateRangeDto {
   })
   pageSize?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '当前页码',
     example: 0,
     min: 0,
@@ -45,7 +45,7 @@ export class PageDto extends DateRangeDto {
   })
   pageIndex?: number
 
-  @ValidateJson({
+  @JsonProperty({
     description: '排序字段，json格式',
     // prettier ignore
     example: "{id:'desc'}",

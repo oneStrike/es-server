@@ -1,11 +1,11 @@
 import { GenderEnum } from '@libs/base/constant'
 import {
-  ValidateArray,
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateJson,
-  ValidateNumber,
-  ValidateString,
+  ArrayProperty,
+  BooleanProperty,
+  EnumProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -20,28 +20,28 @@ import { AuthorTypeEnum } from '../author.constant'
  * 作者基础DTO
  */
 export class BaseAuthorDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '作者姓名',
     example: '村上春树',
     required: true,
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '作者头像URL',
     example: 'https://example.com/avatar.jpg',
     required: false,
   })
   avatar?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '作者描述',
     example: '日本著名小说家，代表作有《挪威的森林》等',
     required: false,
   })
   description?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '启用状态（true: 启用, false: 禁用）',
     example: true,
     required: true,
@@ -49,7 +49,7 @@ export class BaseAuthorDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ValidateArray({
+  @ArrayProperty({
     description: '作者角色类型',
     example: [AuthorTypeEnum.COSER],
     required: true,
@@ -57,14 +57,14 @@ export class BaseAuthorDto extends BaseDto {
   })
   type!: number[]
 
-  @ValidateString({
+  @StringProperty({
     description: '国籍',
     example: '日本',
     required: false,
   })
   nationality?: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）',
     example: GenderEnum.MALE,
     required: true,
@@ -73,14 +73,14 @@ export class BaseAuthorDto extends BaseDto {
   })
   gender!: GenderEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '管理员备注',
     example: '优秀作者，作品质量高',
     required: false,
   })
   remark?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '作品数量（冗余字段，用于提升查询性能）',
     example: 10,
     required: true,
@@ -89,7 +89,7 @@ export class BaseAuthorDto extends BaseDto {
   })
   worksCount!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '粉丝数量（冗余字段，用于前台展示）',
     example: 1000,
     required: true,
@@ -98,7 +98,7 @@ export class BaseAuthorDto extends BaseDto {
   })
   followersCount!: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否为推荐作者（用于前台推荐展示）',
     example: false,
     required: true,
@@ -138,7 +138,7 @@ export class QueryAuthorDto extends IntersectionType(
     ]),
   ),
 ) {
-  @ValidateJson({
+  @JsonProperty({
     description: '作者角色类型',
     example: '[123]',
     required: false,

@@ -1,8 +1,8 @@
-import { ValidateString } from '@libs/base/decorators'
+import { StringProperty } from '@libs/base/decorators'
 import { ApiProperty } from '@nestjs/swagger'
 
 export class UploadFileDto {
-  @ValidateString({
+  @StringProperty({
     description: '上传场景',
     required: false,
     default: 'shared',

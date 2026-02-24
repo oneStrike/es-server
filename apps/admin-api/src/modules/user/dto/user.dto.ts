@@ -1,8 +1,8 @@
 import {
-  ValidateBoolean,
-  ValidateDate,
-  ValidateEnum,
-  ValidateString,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
@@ -13,7 +13,7 @@ import {
 import { UserRoleEnum } from '../user.constant'
 
 export class BaseUserDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '用户名',
     example: 'admin001',
     required: true,
@@ -22,28 +22,28 @@ export class BaseUserDto extends BaseDto {
   })
   username!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '手机号',
     example: '13838384388',
     required: false,
   })
   mobile?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '头像',
     example: 'https://example.com/avatar.png',
     required: false,
   })
   avatar?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     default: true,
   })
   isEnabled?: boolean
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '角色 0普通管理员 1超级管理员',
     example: 0,
     default: 0,
@@ -51,14 +51,14 @@ export class BaseUserDto extends BaseDto {
   })
   role: UserRoleEnum
 
-  @ValidateDate({
+  @DateProperty({
     description: '最后登录时间',
     example: '2021-01-01 00:00:00',
     required: false,
   })
   lastLoginAt?: Date
 
-  @ValidateString({
+  @StringProperty({
     description: '最后登录IP',
     example: '192.168.1.1',
     required: false,
@@ -72,14 +72,14 @@ export class UserRegisterDto extends PickType(BaseUserDto, [
   'avatar',
   'role',
 ]) {
-  @ValidateString({
+  @StringProperty({
     description: '手机号',
     example: '13838384388',
     required: true,
   })
   mobile!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '密码',
     example: 'Aa@123456',
     required: true,
@@ -87,7 +87,7 @@ export class UserRegisterDto extends PickType(BaseUserDto, [
   })
   password!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '密码',
     example: 'Aa@123456',
     required: true,
@@ -113,7 +113,7 @@ export class UserPageDto extends IntersectionType(
 ) {}
 
 export class ChangePasswordDto {
-  @ValidateString({
+  @StringProperty({
     description: '旧密码',
     example: 'Aa@123456',
     required: true,
@@ -121,7 +121,7 @@ export class ChangePasswordDto {
   })
   oldPassword!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '新密码',
     example: 'Aa@654321',
     required: true,
@@ -129,7 +129,7 @@ export class ChangePasswordDto {
   })
   newPassword!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '确认新密码',
     example: 'Aa@654321',
     required: true,

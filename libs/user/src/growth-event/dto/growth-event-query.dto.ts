@@ -1,16 +1,16 @@
 import {
-  ValidateDate,
-  ValidateEnum,
-  ValidateJson,
-  ValidateNumber,
-  ValidateString,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { UserGrowthEventStatus } from '../growth-event.constant'
 
 export class BaseUserGrowthEventDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '业务域标识',
     example: 'forum',
     required: true,
@@ -18,7 +18,7 @@ export class BaseUserGrowthEventDto extends BaseDto {
   })
   business!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '事件键',
     example: 'forum.topic.create',
     required: true,
@@ -26,7 +26,7 @@ export class BaseUserGrowthEventDto extends BaseDto {
   })
   eventKey!: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,
@@ -34,7 +34,7 @@ export class BaseUserGrowthEventDto extends BaseDto {
   })
   userId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '目标ID',
     example: 1,
     required: false,
@@ -42,7 +42,7 @@ export class BaseUserGrowthEventDto extends BaseDto {
   })
   targetId?: number
 
-  @ValidateString({
+  @StringProperty({
     description: '请求IP',
     example: '127.0.0.1',
     required: false,
@@ -50,7 +50,7 @@ export class BaseUserGrowthEventDto extends BaseDto {
   })
   ip?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '设备ID',
     example: 'device-abc',
     required: false,
@@ -58,14 +58,14 @@ export class BaseUserGrowthEventDto extends BaseDto {
   })
   deviceId?: string
 
-  @ValidateDate({
+  @DateProperty({
     description: '事件发生时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
   occurredAt!: Date
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '处理状态',
     example: UserGrowthEventStatus.PROCESSED,
     required: true,
@@ -73,35 +73,35 @@ export class BaseUserGrowthEventDto extends BaseDto {
   })
   status!: UserGrowthEventStatus
 
-  @ValidateJson({
+  @JsonProperty({
     description: '命中规则摘要',
     example: '[{"type":"point","ruleId":1,"delta":5}]',
     required: false,
   })
   ruleRefs?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '积分变更值',
     example: 5,
     required: false,
   })
   pointsDeltaApplied?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '经验变更值',
     example: 10,
     required: false,
   })
   experienceDeltaApplied?: number
 
-  @ValidateJson({
+  @JsonProperty({
     description: '徽章发放记录',
     example: '[{"badgeId":1}]',
     required: false,
   })
   badgeAssigned?: string
 
-  @ValidateJson({
+  @JsonProperty({
     description: '事件上下文',
     example: '{"source":"app"}',
     required: false,

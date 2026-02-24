@@ -1,8 +1,8 @@
 import { GenderEnum } from '@libs/base/constant'
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateString,
+  BooleanProperty,
+  EnumProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto } from '@libs/base/dto'
 import { CheckVerifyCodeDto } from '@libs/base/modules'
@@ -30,7 +30,7 @@ export class RsaPublicKeyDto {
  * 基础用户信息
  */
 export class BaseAppUserDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '账号（唯一）',
     example: '123456',
     required: true,
@@ -39,7 +39,7 @@ export class BaseAppUserDto extends BaseDto {
   })
   account!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '手机号码',
     example: '13800000000',
     required: true,
@@ -47,7 +47,7 @@ export class BaseAppUserDto extends BaseDto {
   })
   phone!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '用户昵称（显示名称）',
     example: '张三',
     required: true,
@@ -55,7 +55,7 @@ export class BaseAppUserDto extends BaseDto {
   })
   nickname!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '头像URL地址',
     example: 'https://example.com/avatar.jpg',
     required: false,
@@ -63,7 +63,7 @@ export class BaseAppUserDto extends BaseDto {
   })
   avatar?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '邮箱地址',
     example: 'user@example.com',
     required: false,
@@ -71,14 +71,14 @@ export class BaseAppUserDto extends BaseDto {
   })
   email?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '账户状态（true:启用, false:禁用）',
     example: true,
     required: true,
   })
   isEnabled!: boolean
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '性别',
     example: GenderEnum.MALE,
     enum: GenderEnum,
@@ -158,14 +158,14 @@ export class BaseAppUserDto extends BaseDto {
  * jwt令牌信息
  */
 export class TokenDto {
-  @ValidateString({
+  @StringProperty({
     description: '账号令牌',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
   })
   accessToken!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '刷新令牌',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
@@ -185,7 +185,7 @@ export class LoginDto extends IntersectionType(
   PartialType(PickType(BaseAppUserDto, ['account'])),
   PartialType(CheckVerifyCodeDto),
 ) {
-  @ValidateString({
+  @StringProperty({
     description: '密码',
     example: 'Aa@123456',
     required: false,
@@ -197,7 +197,7 @@ export class LoginDto extends IntersectionType(
  * 忘记密码请求信息
  */
 export class ForgotPasswordDto extends CheckVerifyCodeDto {
-  @ValidateString({
+  @StringProperty({
     description: '密码',
     example: 'Aa@123456',
     required: true,
@@ -209,21 +209,21 @@ export class ForgotPasswordDto extends CheckVerifyCodeDto {
  * 修改密码请求信息
  */
 export class ChangePasswordDto {
-  @ValidateString({
+  @StringProperty({
     description: '旧密码',
     example: 'Aa@123456',
     required: true,
   })
   oldPassword!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '新密码',
     example: 'Aa@123456',
     required: true,
   })
   newPassword!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '确认新密码',
     example: 'Aa@123456',
     required: true,

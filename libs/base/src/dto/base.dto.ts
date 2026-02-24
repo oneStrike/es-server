@@ -1,8 +1,8 @@
 import {
-  ValidateArray,
-  ValidateBoolean,
-  ValidateDate,
-  ValidateNumber,
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  NumberProperty,
 } from '@libs/base/decorators'
 import { ApiProperty, IntersectionType, PickType } from '@nestjs/swagger'
 
@@ -19,7 +19,7 @@ export const OMIT_BASE_FIELDS: (keyof BaseDto)[] = [
  * ID DTO - 用于接收单个实体ID参数
  */
 export class IdDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '主键id',
     example: 1,
     required: true,
@@ -31,7 +31,7 @@ export class IdDto {
  * 用户id
  */
 export class UserIdDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户id',
     example: 1,
     required: true,
@@ -43,7 +43,7 @@ export class UserIdDto {
  * IDs DTO - 用于接收多个实体ID参数
  */
 export class IdsDto {
-  @ValidateArray({
+  @ArrayProperty({
     description: '主键id集合',
     itemType: 'number',
     example: [1, 2, 3],
@@ -56,7 +56,7 @@ export class IdsDto {
  * 更新启用状态 DTO - 用于更新实体的启用/禁用状态
  */
 export class UpdateEnabledStatusDto extends IdDto {
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '状态 true启用 false禁用',
     example: true,
     required: true,
@@ -68,7 +68,7 @@ export class UpdateEnabledStatusDto extends IdDto {
  * 更新发布状态 DTO - 用于更新实体的发布/取消发布状态
  */
 export class UpdatePublishedStatusDto extends IdDto {
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '发布状态 true发布 false取消发布',
     example: true,
     required: true,
@@ -108,14 +108,14 @@ export class BatchUpdatePublishedStatusDto extends IntersectionType(
  * 基础 DTO - 包含所有实体共有的基础字段
  */
 export class BaseDto extends IdDto {
-  @ValidateDate({
+  @DateProperty({
     description: '创建时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
   createdAt: Date
 
-  @ValidateDate({
+  @DateProperty({
     description: '更新时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,

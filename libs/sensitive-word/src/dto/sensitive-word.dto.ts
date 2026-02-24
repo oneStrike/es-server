@@ -1,7 +1,7 @@
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateString,
+  BooleanProperty,
+  EnumProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -20,7 +20,7 @@ import {
  * 敏感词基础DTO
  */
 export class BaseSensitiveWordDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '敏感词',
     maxLength: 100,
     required: true,
@@ -28,7 +28,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   word!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '替换词',
     maxLength: 100,
     required: false,
@@ -37,7 +37,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   replaceWord?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     required: true,
     example: true,
@@ -45,7 +45,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '敏感词级别',
     required: true,
     example: SensitiveWordLevelEnum.SEVERE,
@@ -54,7 +54,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   level!: SensitiveWordLevelEnum
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '敏感词类型',
     required: true,
     example: SensitiveWordTypeEnum.OTHER,
@@ -63,7 +63,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   type!: SensitiveWordTypeEnum
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '匹配模式',
     required: false,
     example: MatchModeEnum.EXACT,
@@ -72,7 +72,7 @@ export class BaseSensitiveWordDto extends BaseDto {
   })
   matchMode?: MatchModeEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '备注',
     maxLength: 500,
     required: false,

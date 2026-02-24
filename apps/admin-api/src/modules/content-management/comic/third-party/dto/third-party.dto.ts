@@ -1,9 +1,9 @@
-import { ValidateString } from '@libs/base/decorators'
+import { StringProperty } from '@libs/base/decorators'
 import { IdDto, PageDto } from '@libs/base/dto'
 import { ApiProperty, PickType } from '@nestjs/swagger'
 
 export class SearchComicRequestDto extends PageDto {
-  @ValidateString({
+  @StringProperty({
     required: true,
     maxLength: 100,
     description: '搜索关键词',
@@ -11,7 +11,7 @@ export class SearchComicRequestDto extends PageDto {
   })
   keyword!: string
 
-  @ValidateString({
+  @StringProperty({
     required: true,
     maxLength: 10,
     description: '平台代码',
@@ -23,7 +23,7 @@ export class SearchComicRequestDto extends PageDto {
 export class DetailComicRequestDto extends PickType(SearchComicRequestDto, [
   'platform',
 ]) {
-  @ValidateString({
+  @StringProperty({
     required: true,
     maxLength: 100,
     description: '漫画ID',

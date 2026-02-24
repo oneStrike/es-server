@@ -1,22 +1,22 @@
 import {
-  ValidateArray,
-  ValidateBoolean,
-  ValidateDate,
-  ValidateNested,
-  ValidateNumber,
-  ValidateString,
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  NestedProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { UserLevelInfoDto } from '../../level-rule/dto/level-rule.dto'
 
 export class UserGrowthOverviewBadgeInfoDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '徽章ID',
     example: 1,
     required: true,
   })
   id!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '徽章名称',
     example: '活跃用户',
     required: true,
@@ -24,7 +24,7 @@ export class UserGrowthOverviewBadgeInfoDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '徽章描述',
     example: '连续登录7天',
     required: false,
@@ -32,7 +32,7 @@ export class UserGrowthOverviewBadgeInfoDto {
   })
   description?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '徽章图标URL',
     example: 'https://example.com/badge.png',
     required: false,
@@ -40,21 +40,21 @@ export class UserGrowthOverviewBadgeInfoDto {
   })
   icon?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '徽章类型',
     example: 1,
     required: true,
   })
   type!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '排序值',
     example: 0,
     required: true,
   })
   sortOrder!: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     required: true,
@@ -63,28 +63,28 @@ export class UserGrowthOverviewBadgeInfoDto {
 }
 
 export class UserGrowthOverviewBadgeDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,
   })
   userId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '徽章ID',
     example: 1,
     required: true,
   })
   badgeId!: number
 
-  @ValidateDate({
+  @DateProperty({
     description: '获得时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
   createdAt!: Date
 
-  @ValidateNested({
+  @NestedProperty({
     description: '徽章信息',
     type: UserGrowthOverviewBadgeInfoDto,
     required: true,
@@ -93,35 +93,35 @@ export class UserGrowthOverviewBadgeDto {
 }
 
 export class UserGrowthOverviewDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '积分',
     example: 100,
     required: true,
   })
   points!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '经验',
     example: 1000,
     required: true,
   })
   experience!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '等级ID',
     example: 1,
     required: false,
   })
   levelId?: number
 
-  @ValidateNested({
+  @NestedProperty({
     description: '等级信息',
     type: UserLevelInfoDto,
     required: false,
   })
   levelInfo?: UserLevelInfoDto
 
-  @ValidateArray({
+  @ArrayProperty({
     description: '徽章列表',
     itemType: 'object',
     itemClass: UserGrowthOverviewBadgeDto,

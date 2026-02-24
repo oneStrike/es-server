@@ -1,12 +1,12 @@
 import {
-  ValidateDate,
-  ValidateJson,
-  ValidateNumber,
-  ValidateString,
+  DateProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 
 export class UserGrowthEventDto {
-  @ValidateString({
+  @StringProperty({
     description: '业务域标识',
     example: 'forum',
     required: true,
@@ -14,7 +14,7 @@ export class UserGrowthEventDto {
   })
   business!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '事件键',
     example: 'forum.topic.create',
     required: true,
@@ -22,7 +22,7 @@ export class UserGrowthEventDto {
   })
   eventKey!: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,
@@ -30,7 +30,7 @@ export class UserGrowthEventDto {
   })
   userId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '目标ID',
     example: 1,
     required: false,
@@ -38,7 +38,7 @@ export class UserGrowthEventDto {
   })
   targetId?: number
 
-  @ValidateString({
+  @StringProperty({
     description: '请求IP',
     example: '127.0.0.1',
     required: false,
@@ -46,7 +46,7 @@ export class UserGrowthEventDto {
   })
   ip?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '设备ID',
     example: 'device-abc',
     required: false,
@@ -54,14 +54,14 @@ export class UserGrowthEventDto {
   })
   deviceId?: string
 
-  @ValidateDate({
+  @DateProperty({
     description: '事件发生时间',
     example: '2024-01-01T00:00:00.000Z',
     required: true,
   })
   occurredAt!: Date
 
-  @ValidateJson({
+  @JsonProperty({
     description: '事件上下文',
     example: '{"source":"app"}',
     required: false,

@@ -1,9 +1,9 @@
 import {
-  ValidateArray,
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  ArrayProperty,
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import {
   BaseDto,
@@ -38,7 +38,7 @@ export class BaseForumModeratorDto extends IntersectionType(
   BaseDto,
   UserIdDto,
 ) {
-  @ValidateEnum({
+  @EnumProperty({
     description: '版主角色类型',
     example: ForumModeratorRoleTypeEnum.SUPER,
     required: true,
@@ -46,7 +46,7 @@ export class BaseForumModeratorDto extends IntersectionType(
   })
   roleType!: ForumModeratorRoleTypeEnum
 
-  @ValidateArray({
+  @ArrayProperty({
     description: '权限列表',
     itemType: 'number',
     example: [1, 2, 3, 4, 5, 6],
@@ -54,14 +54,14 @@ export class BaseForumModeratorDto extends IntersectionType(
   })
   permissions!: ForumModeratorPermissionEnum[]
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     required: true,
   })
   isEnabled!: boolean
 
-  @ValidateString({
+  @StringProperty({
     description: '备注',
     example: '资深版主',
     required: false,
@@ -78,7 +78,7 @@ export class CreateForumModeratorDto extends OmitType(
   BaseForumModeratorDto,
   OMIT_BASE_FIELDS,
 ) {
-  @ValidateArray({
+  @ArrayProperty({
     description: '板块ID列表',
     itemType: 'number',
     example: [1, 2, 3],
@@ -104,7 +104,7 @@ export class AssignForumModeratorSectionDto extends PickType(
   CreateForumModeratorDto,
   ['permissions', 'sectionIds'],
 ) {
-  @ValidateNumber({
+  @NumberProperty({
     description: '版主ID',
     example: 1,
     required: true,
@@ -121,14 +121,14 @@ export class QueryForumModeratorDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseForumModeratorDto, ['isEnabled', 'userId'])),
 ) {
-  @ValidateString({
+  @StringProperty({
     description: '用户名',
     example: 'zhangsan',
     required: false,
   })
   nickname?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '板块ID',
     example: 1,
     required: false,
@@ -145,7 +145,7 @@ export class QueryForumModeratorActionLogDto extends IntersectionType(
   PageDto,
   PartialType(PickType(AssignForumModeratorSectionDto, ['moderatorId'])),
 ) {
-  @ValidateNumber({
+  @NumberProperty({
     description:
       '操作类型（1=置顶主题, 2=取消置顶, 3=加精主题, 4=取消加精, 5=锁定主题, 6=解锁主题, 7=删除主题, 8=移动主题, 9=审核主题, 10=删除回复）',
     example: 1,
@@ -154,7 +154,7 @@ export class QueryForumModeratorActionLogDto extends IntersectionType(
   })
   actionType?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '目标类型（1=主题, 2=回复）',
     example: 1,
     required: false,
@@ -168,21 +168,21 @@ export class QueryForumModeratorActionLogDto extends IntersectionType(
  * 用于返回版主详细信息，包含用户基本信息、权限列表和管理的板块列表
  */
 export class ForumModeratorDto extends BaseForumModeratorDto {
-  @ValidateString({
+  @StringProperty({
     description: '昵称',
     example: '张三',
     required: true,
   })
   nickname!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '头像',
     example: 'https://example.com/avatar.jpg',
     required: false,
   })
   avatar?: string
 
-  @ValidateArray({
+  @ArrayProperty({
     description: '权限名称列表',
     itemType: 'string',
     example: ['置顶', '加精', '锁定', '删除', '审核', '移动'],
@@ -212,7 +212,7 @@ export class ForumModeratorPageDto {
   @ApiProperty({ description: '版主列表', type: [ForumModeratorDto] })
   list!: ForumModeratorDto[]
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '总数',
     example: 100,
     required: true,
@@ -220,7 +220,7 @@ export class ForumModeratorPageDto {
   })
   total!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '页码',
     example: 1,
     required: true,
@@ -228,7 +228,7 @@ export class ForumModeratorPageDto {
   })
   page!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '每页数量',
     example: 20,
     required: true,
@@ -242,7 +242,7 @@ export class ForumModeratorPageDto {
  * 用于记录版主的操作行为，包括操作类型、目标信息和操作时间等
  */
 export class ForumModeratorActionLogDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '日志ID',
     example: 1,
     required: true,
@@ -250,7 +250,7 @@ export class ForumModeratorActionLogDto {
   })
   id!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '版主ID',
     example: 1,
     required: true,
@@ -258,14 +258,14 @@ export class ForumModeratorActionLogDto {
   })
   moderatorId!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '版主用户名',
     example: 'zhangsan',
     required: true,
   })
   moderatorUsername!: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description:
       '操作类型（1=置顶主题, 2=取消置顶, 3=加精主题, 4=取消加精, 5=锁定主题, 6=解锁主题, 7=删除主题, 8=移动主题, 9=审核主题, 10=删除回复）',
     example: 1,
@@ -274,7 +274,7 @@ export class ForumModeratorActionLogDto {
   })
   actionType!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '操作描述',
     example: '置顶主题',
     required: true,
@@ -282,7 +282,7 @@ export class ForumModeratorActionLogDto {
   })
   actionDescription!: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '目标类型（1=主题, 2=回复）',
     example: 1,
     required: true,
@@ -290,7 +290,7 @@ export class ForumModeratorActionLogDto {
   })
   targetType!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '目标ID',
     example: 1,
     required: true,
@@ -298,14 +298,14 @@ export class ForumModeratorActionLogDto {
   })
   targetId!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '操作前数据（JSON格式）',
     example: '{}',
     required: false,
   })
   beforeData?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '操作后数据（JSON格式）',
     example: '{}',
     required: false,
@@ -331,7 +331,7 @@ export class ModeratorActionLogPageDto {
   })
   list!: ForumModeratorActionLogDto[]
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '总数',
     example: 100,
     required: true,
@@ -339,7 +339,7 @@ export class ModeratorActionLogPageDto {
   })
   total!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '页码',
     example: 1,
     required: true,
@@ -347,7 +347,7 @@ export class ModeratorActionLogPageDto {
   })
   page!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '每页数量',
     example: 20,
     required: true,

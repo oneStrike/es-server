@@ -1,5 +1,5 @@
 import {
-  ValidateNumber,
+  NumberProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
@@ -9,7 +9,7 @@ import {
 } from '@nestjs/swagger'
 
 export class BaseForumTopicLikeDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '主题ID',
     example: 1,
     required: true,
@@ -17,7 +17,7 @@ export class BaseForumTopicLikeDto extends BaseDto {
   })
   topicId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,

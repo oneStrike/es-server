@@ -1,10 +1,10 @@
-import { ValidateArray, ValidateNumber, ValidateString } from '@libs/base/decorators'
+import { ArrayProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import { ApiProperty } from '@nestjs/swagger'
 
 /// 添加章节内容DTO
 export class AddChapterContentDto extends IdDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '作品ID',
     example: 1,
     required: true,
@@ -14,7 +14,7 @@ export class AddChapterContentDto extends IdDto {
 
 /// 更新章节内容DTO
 export class UpdateChapterContentDto extends IdDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '内容索引',
     example: 0,
     required: true,
@@ -22,7 +22,7 @@ export class UpdateChapterContentDto extends IdDto {
   })
   index!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '内容路径',
     example: '/uploads/comic/1/chapter/1/image.jpg',
     required: true,
@@ -32,7 +32,7 @@ export class UpdateChapterContentDto extends IdDto {
 
 /// 删除章节内容DTO
 export class DeleteChapterContentDto extends IdDto {
-  @ValidateArray({
+  @ArrayProperty({
     description: '内容索引列表',
     itemType: 'number',
     example: [0, 1],
@@ -43,7 +43,7 @@ export class DeleteChapterContentDto extends IdDto {
 
 /// 移动章节内容DTO
 export class MoveChapterContentDto extends IdDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '源索引',
     example: 0,
     required: true,
@@ -51,7 +51,7 @@ export class MoveChapterContentDto extends IdDto {
   })
   fromIndex!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '目标索引',
     example: 1,
     required: true,
@@ -62,7 +62,7 @@ export class MoveChapterContentDto extends IdDto {
 
 /// 上传章节文件DTO
 export class UploadChapterFileDto extends IdDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '作品ID',
     example: 1,
     required: true,

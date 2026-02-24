@@ -1,10 +1,10 @@
 import { WorkViewPermissionEnum } from '@libs/base/constant'
 import {
-  ValidateBoolean,
-  ValidateDate,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -17,21 +17,21 @@ import {
 
 /// 章节基础DTO
 export class BaseWorkChapterDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '作品ID',
     example: 1,
     required: true,
   })
   workId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '作品类型（1=漫画, 2=小说）',
     example: 1,
     required: true,
   })
   workType!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '章节标题',
     example: '第1话 巨人的来袭',
     required: true,
@@ -39,7 +39,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   title!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '章节副标题',
     example: '序幕',
     required: false,
@@ -47,7 +47,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   subtitle?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '章节描述',
     example: '这是第一章的内容描述',
     required: false,
@@ -55,7 +55,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   description?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '章节序号',
     example: 1,
     required: true,
@@ -63,7 +63,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   sortOrder!: number
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
     example: WorkViewPermissionEnum.ALL,
     required: true,
@@ -72,7 +72,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   readRule!: WorkViewPermissionEnum
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '阅读所需积分',
     example: 10,
     required: false,
@@ -80,7 +80,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   readPoints?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '下载规则（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）',
     example: 1,
     required: true,
@@ -88,7 +88,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   downloadRule!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '下载所需积分',
     example: 5,
     required: false,
@@ -96,21 +96,21 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   downloadPoints?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '阅读所需会员等级ID',
     example: 1,
     required: false,
   })
   requiredReadLevelId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '下载所需会员等级ID',
     example: 1,
     required: false,
   })
   requiredDownloadLevelId?: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '发布状态',
     example: false,
     required: true,
@@ -118,7 +118,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   isPublished!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否为试读章节',
     example: false,
     required: true,
@@ -126,7 +126,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   isPreview!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否允许评论',
     example: true,
     required: true,
@@ -134,7 +134,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   canComment!: boolean
 
-  @ValidateDate({
+  @DateProperty({
     description: '发布时间',
     example: '2024-01-01',
     required: false,
@@ -181,7 +181,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   wordCount!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '内容存储路径',
     example: '/uploads/chapters/1/',
     required: false,
@@ -189,7 +189,7 @@ export class BaseWorkChapterDto extends BaseDto {
   })
   contentPath?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '备注',
     example: '管理员备注',
     required: false,

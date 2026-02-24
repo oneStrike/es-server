@@ -1,7 +1,7 @@
 import {
-  ValidateBoolean,
-  ValidateJson,
-  ValidateString,
+  BooleanProperty,
+  JsonProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
@@ -15,7 +15,7 @@ import {
  * 数据字典响应DTO
  */
 export class BaseDictionaryDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '字典名称',
     example: '用户状态',
     required: true,
@@ -23,7 +23,7 @@ export class BaseDictionaryDto extends BaseDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '字典编码',
     example: 'user_status',
     required: true,
@@ -31,7 +31,7 @@ export class BaseDictionaryDto extends BaseDto {
   })
   code!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '字典封面',
     example: 'https://example.com/cover.png',
     required: false,
@@ -39,14 +39,14 @@ export class BaseDictionaryDto extends BaseDto {
   })
   cover?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '状态 true启用 false禁用',
     example: true,
     required: true,
   })
   isEnabled!: boolean
 
-  @ValidateString({
+  @StringProperty({
     description: '备注信息',
     example: '用户状态字典',
     required: false,
@@ -59,7 +59,7 @@ export class BaseDictionaryDto extends BaseDto {
  * 数据字典项响应DTO
  */
 export class BaseDictionaryItemDto extends BaseDictionaryDto {
-  @ValidateString({
+  @StringProperty({
     description: '字典编码',
     example: 'user_status',
     required: true,
@@ -108,7 +108,7 @@ export class QueryDictionaryItemDto extends IntersectionType(
     ]),
   ),
 ) {
-  @ValidateJson({
+  @JsonProperty({
     description: '排序字段，json格式',
     example: "{id:'desc'}",
     required: false,

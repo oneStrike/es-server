@@ -1,7 +1,7 @@
 import {
-  ValidateBoolean,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
@@ -11,7 +11,7 @@ import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
  * 包含论坛标签的所有基础字段定义
  */
 export class BaseForumTagDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '标签名称',
     example: '技术讨论',
     required: true,
@@ -19,7 +19,7 @@ export class BaseForumTagDto extends BaseDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '标签图标URL',
     example: 'https://example.com/icon.png',
     required: false,
@@ -27,7 +27,7 @@ export class BaseForumTagDto extends BaseDto {
   })
   icon?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '标签描述',
     example: '用于标记技术相关的讨论',
     required: false,
@@ -35,14 +35,14 @@ export class BaseForumTagDto extends BaseDto {
   })
   description?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     required: false,
   })
   isEnabled?: boolean
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '使用次数',
     example: 100,
     required: false,
@@ -50,7 +50,7 @@ export class BaseForumTagDto extends BaseDto {
   })
   useCount?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '排序权重',
     example: 0,
     required: false,
@@ -94,7 +94,7 @@ export class QueryForumTagDto extends IntersectionType(
  * 用于将标签分配给指定的主题
  */
 export class AssignForumTagToTopicDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '主题ID',
     example: 1,
     required: true,
@@ -102,7 +102,7 @@ export class AssignForumTagToTopicDto {
   })
   topicId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '标签ID',
     example: 1,
     required: true,

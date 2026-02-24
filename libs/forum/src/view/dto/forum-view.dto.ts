@@ -1,7 +1,7 @@
 import {
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
@@ -12,7 +12,7 @@ import {
 import { ForumViewTypeEnum } from '../forum-view.constant'
 
 export class BaseForumViewDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '主题ID',
     example: 1,
     required: true,
@@ -20,14 +20,14 @@ export class BaseForumViewDto extends BaseDto {
   })
   topicId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '回复ID（查看回复时必填）',
     example: 1,
     required: false,
   })
   replyId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,
@@ -35,21 +35,21 @@ export class BaseForumViewDto extends BaseDto {
   })
   userId!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '用户IP地址',
     example: '192.168.1.1',
     required: false,
   })
   ipAddress?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '用户代理',
     example: 'Mozilla/5.0...',
     required: false,
   })
   userAgent?: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '查看类型（topic=主题, reply=回复）',
     example: ForumViewTypeEnum.TOPIC,
     required: true,
@@ -57,7 +57,7 @@ export class BaseForumViewDto extends BaseDto {
   })
   type!: ForumViewTypeEnum
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '停留时长（秒）',
     example: 30,
     required: false,
@@ -88,7 +88,7 @@ export class QueryForumViewDto extends IntersectionType(
 ) {}
 
 export class ForumViewStatisticsDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '主题ID',
     example: 1,
     required: true,

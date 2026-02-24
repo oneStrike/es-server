@@ -1,7 +1,7 @@
 import {
-  ValidateBoolean,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -15,7 +15,7 @@ import {
  * 论坛板块分组基础DTO
  */
 export class BaseForumSectionGroupDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '分组名称',
     example: '技术讨论',
     required: true,
@@ -23,7 +23,7 @@ export class BaseForumSectionGroupDto extends BaseDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '分组描述',
     example: '包含所有技术相关的板块',
     required: false,
@@ -31,7 +31,7 @@ export class BaseForumSectionGroupDto extends BaseDto {
   })
   description?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '排序权重',
     example: 0,
     required: true,
@@ -40,7 +40,7 @@ export class BaseForumSectionGroupDto extends BaseDto {
   })
   sortOrder!: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     required: true,

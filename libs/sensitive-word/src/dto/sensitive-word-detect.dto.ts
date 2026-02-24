@@ -1,4 +1,4 @@
-import { ValidateString } from '@libs/base/decorators'
+import { StringProperty } from '@libs/base/decorators'
 import { ApiProperty } from '@nestjs/swagger'
 import {
   MatchModeEnum,
@@ -10,7 +10,7 @@ import {
  * 敏感词检测DTO
  */
 export class SensitiveWordDetectDto {
-  @ValidateString({
+  @StringProperty({
     description: '检测内容',
     maxLength: 10000,
     required: true,
@@ -31,7 +31,7 @@ export class SensitiveWordDetectDto {
  * 请求替换敏感词dto
  */
 export class SensitiveWordReplaceDto extends SensitiveWordDetectDto {
-  @ValidateString({
+  @StringProperty({
     description: '替换字符',
     maxLength: 10,
     required: false,

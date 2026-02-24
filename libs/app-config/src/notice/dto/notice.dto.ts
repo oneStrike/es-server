@@ -1,12 +1,12 @@
 import { EnablePlatformEnum } from '@libs/base/constant'
 import {
-  ValidateArray,
-  ValidateBoolean,
-  ValidateDate,
-  ValidateEnum,
-  ValidateJson,
-  ValidateNumber,
-  ValidateString,
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -21,21 +21,21 @@ import { NoticePriorityEnum, NoticeTypeEnum } from '../notice.constant'
  * 通知基础DTO
  */
 export class BaseNoticeDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '通知标题',
     example: '系统维护通知',
     required: true,
   })
   title!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '通知内容详情',
     example: '系统将于今晚进行维护升级...',
     required: true,
   })
   content!: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '通知类型',
     example: NoticeTypeEnum.SYSTEM,
     required: true,
@@ -44,7 +44,7 @@ export class BaseNoticeDto extends BaseDto {
   })
   noticeType!: NoticeTypeEnum
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '优先级',
     example: NoticePriorityEnum.MEDIUM,
     required: true,
@@ -53,35 +53,35 @@ export class BaseNoticeDto extends BaseDto {
   })
   priorityLevel!: NoticePriorityEnum
 
-  @ValidateDate({
+  @DateProperty({
     description: '发布开始时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,
   })
   publishStartTime?: Date
 
-  @ValidateDate({
+  @DateProperty({
     description: '发布结束时间',
     example: '2024-12-31T23:59:59.999Z',
     required: false,
   })
   publishEndTime?: Date
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联页面id',
     example: 12,
     required: false,
   })
   pageId?: number
 
-  @ValidateString({
+  @StringProperty({
     description: '通知弹窗背景图片URL',
     example: 'https://example.com/bg.jpg',
     required: false,
   })
   popupBackgroundImage?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否发布',
     example: false,
     required: true,
@@ -89,7 +89,7 @@ export class BaseNoticeDto extends BaseDto {
   })
   isPublished!: boolean
 
-  @ValidateArray({
+  @ArrayProperty({
     description: '启用的平台',
     example: [EnablePlatformEnum.APP],
     required: true,
@@ -97,7 +97,7 @@ export class BaseNoticeDto extends BaseDto {
   })
   enablePlatform!: EnablePlatformEnum[]
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否置顶',
     example: false,
     required: false,
@@ -105,7 +105,7 @@ export class BaseNoticeDto extends BaseDto {
   })
   isPinned?: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否弹窗显示',
     example: false,
     required: false,
@@ -113,7 +113,7 @@ export class BaseNoticeDto extends BaseDto {
   })
   showAsPopup?: boolean
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '阅读次数',
     example: 0,
     required: false,
@@ -156,7 +156,7 @@ export class QueryNoticeDto extends IntersectionType(
     ]),
   ),
 ) {
-  @ValidateJson({
+  @JsonProperty({
     description: '所启用的平台',
     example: '[1,2,3]',
     required: false,

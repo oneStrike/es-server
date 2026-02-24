@@ -83,7 +83,7 @@
 - [x] 创建 libs/content/src/work/core/dto/work.dto.ts
   - [x] 使用 BaseDto 继承
   - [x] 使用 IntersectionType, OmitType, PartialType, PickType 组合
-  - [x] 使用自定义校验器：ValidateString, ValidateNumber, ValidateEnum, ValidateArray
+  - [x] 使用自定义校验器：StringProperty, NumberProperty, EnumProperty, ArrayProperty
 - [x] 验证服务可正常注入和使用
 
 ## T09 通用章节服务
@@ -113,8 +113,8 @@
 - [x] 创建 libs/content/src/work/comment/index.ts
 - [x] 创建 libs/content/src/work/comment/dto/work-comment.dto.ts
   - [x] 复用 BaseDto, IdDto, PageDto
-  - [x] 使用 ValidateString 校验评论内容
-  - [x] 使用 ValidateEnum 校验审核状态
+  - [x] 使用 StringProperty 校验评论内容
+  - [x] 使用 EnumProperty 校验审核状态
 - [x] 验证服务可正常注入和使用
 
 ## T11 内容处理服务
@@ -126,8 +126,8 @@
 - [x] 创建 libs/content/src/work/content/index.ts
 - [x] 创建 libs/content/src/work/content/dto/content.dto.ts
   - [x] 复用 IdDto 标识章节
-  - [x] 使用 ValidateArray 校验图片列表
-  - [x] 使用 ValidateString 校验文件路径
+  - [x] 使用 ArrayProperty 校验图片列表
+  - [x] 使用 StringProperty 校验文件路径
 - [x] 验证服务可正常注入和使用
 
 ## T12 漫画 Controller 重构

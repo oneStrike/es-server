@@ -235,7 +235,7 @@ The system SHALL follow strict DTO standards for all services.
 
 #### Scenario: 自定义校验器
 - **WHEN** validating DTO fields
-- **THEN** DTOs SHALL use ValidateString, ValidateNumber, ValidateEnum, ValidateArray, ValidateBoolean, ValidateDate, ValidateJson, ValidateNested, ValidateBitmask, ValidateByRegex
+- **THEN** DTOs SHALL use StringProperty, NumberProperty, EnumProperty, ArrayProperty, BooleanProperty, DateProperty, JsonProperty, NestedProperty, ValidateBitmask, ValidateByRegex
 - **AND** DTOs SHALL NOT use native @IsString(), @IsNumber() decorators
 
 #### Scenario: 禁止冗余

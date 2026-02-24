@@ -1,29 +1,29 @@
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ForumAuditStatusEnum,
   ForumReplySortFieldEnum,
   ForumReplySortOrderEnum,
-} from '../forum-reply.constant'
+} from '@libs/forum/reply'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**
  * 论坛回复基础DTO
  */
 export class BaseForumReplyDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '回复内容',
     example: '这是一个很好的问题...',
     required: true,
   })
   content!: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的主题ID',
     example: 1,
     required: true,
@@ -31,7 +31,7 @@ export class BaseForumReplyDto extends BaseDto {
   })
   topicId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '论坛用户ID',
     example: 1,
     required: true,
@@ -39,35 +39,35 @@ export class BaseForumReplyDto extends BaseDto {
   })
   userId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '回复的回复ID（楼中楼）',
     example: 2,
     required: false,
   })
   replyToId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '实际回复的回复ID（用于追溯完整回复链）',
     example: 3,
     required: false,
   })
   actualReplyToId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '楼层号（直接回复主题的楼层号，楼中楼为null）',
     example: 1,
     required: false,
   })
   floor?: number
 
-  @ValidateString({
+  @StringProperty({
     description: '回复的回复',
     required: false,
     minLength: 1,
   })
   replyTo?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否隐藏',
     example: false,
     required: true,
@@ -75,7 +75,7 @@ export class BaseForumReplyDto extends BaseDto {
   })
   isHidden!: boolean
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '审核状态（0=待审核, 1=已通过, 2=已拒绝）',
     example: ForumAuditStatusEnum.APPROVED,
     required: true,
@@ -84,7 +84,7 @@ export class BaseForumReplyDto extends BaseDto {
   })
   auditStatus!: ForumAuditStatusEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '审核拒绝原因',
     example: '内容包含敏感信息',
     required: false,
@@ -120,7 +120,7 @@ export class QueryForumReplyDto extends IntersectionType(
     PartialType(PickType(CreateForumReplyDto, ['topicId', 'replyToId'])),
   ),
 ) {
-  @ValidateEnum({
+  @EnumProperty({
     description:
       '排序字段（floor=楼层号, createdAt=创建时间, likeCount=点赞数）',
     example: ForumReplySortFieldEnum.FLOOR,
@@ -129,7 +129,7 @@ export class QueryForumReplyDto extends IntersectionType(
   })
   sortBy?: ForumReplySortFieldEnum
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '排序方式（asc=升序, desc=降序）',
     example: ForumReplySortOrderEnum.ASC,
     required: false,

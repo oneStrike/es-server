@@ -417,7 +417,7 @@ graph TD
   - libs/content/src/work/core/dto/work.dto.ts
 - **DTO 规范要求**
   - 必须继承 `BaseDto`，使用 `IntersectionType`、`OmitType`、`PartialType`、`PickType` 组合复用
-  - 必须使用自定义校验器（`ValidateString`、`ValidateNumber`、`ValidateEnum` 等）
+  - 必须使用自定义校验器（`StringProperty`、`NumberProperty`、`EnumProperty` 等）
   - 禁止重复定义字段校验，禁止冗余代码
   - 创建 DTO 使用 `OMIT_BASE_FIELDS` 排除基础字段
   - 参考 [DTO 规范要求](#dto-规范要求) 章节
@@ -501,7 +501,7 @@ graph TD
   - libs/content/src/work/comment/dto/work-comment.dto.ts
 - **DTO 规范要求**
   - 评论 DTO 复用 `BaseDto`、`IdDto`、`PageDto`
-  - 使用 `ValidateString` 校验评论内容，`ValidateEnum` 校验审核状态
+  - 使用 `StringProperty` 校验评论内容，`EnumProperty` 校验审核状态
   - 禁止冗余，确保漫画/小说评论使用同一套 DTO
   - 参考 [DTO 规范要求](#dto-规范要求) 章节
 - 服务接口
@@ -539,7 +539,7 @@ graph TD
   - libs/content/src/work/content/dto/content.dto.ts
 - **DTO 规范要求**
   - 内容上传 DTO 复用 `IdDto` 标识章节
-  - 使用 `ValidateArray` 校验图片列表，`ValidateString` 校验文件路径
+  - 使用 `ArrayProperty` 校验图片列表，`StringProperty` 校验文件路径
   - 禁止冗余，漫画/小说内容 DTO 共享基础结构
   - 参考 [DTO 规范要求](#dto-规范要求) 章节
 - 服务接口
@@ -721,14 +721,14 @@ graph TD
    - **必须**使用项目自定义校验装饰器：
      | 装饰器 | 用途 |
      |--------|------|
-     | `ValidateString` | 字符串验证（长度、必填） |
-     | `ValidateNumber` | 数字验证（范围、默认值） |
-     | `ValidateArray` | 数组验证（类型、长度） |
-     | `ValidateEnum` | 枚举验证 |
-     | `ValidateBoolean` | 布尔值验证 |
-     | `ValidateDate` | 日期验证 |
-     | `ValidateJson` | JSON 验证 |
-     | `ValidateNested` | 嵌套对象验证 |
+     | `StringProperty` | 字符串验证（长度、必填） |
+     | `NumberProperty` | 数字验证（范围、默认值） |
+     | `ArrayProperty` | 数组验证（类型、长度） |
+     | `EnumProperty` | 枚举验证 |
+     | `BooleanProperty` | 布尔值验证 |
+     | `DateProperty` | 日期验证 |
+     | `JsonProperty` | JSON 验证 |
+     | `NestedProperty` | 嵌套对象验证 |
      | `ValidateBitmask` | 位掩码验证 |
      | `ValidateByRegex` | 正则表达式验证 |
 
@@ -743,17 +743,17 @@ graph TD
 // ✅ 正确示例：高复用 DTO 设计
 
 import {
-  ValidateString,
-  ValidateNumber,
-  ValidateEnum,
-  ValidateArray,
+  StringProperty,
+  NumberProperty,
+  EnumProperty,
+  ArrayProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import { IntersectionType, OmitType, PartialType, PickType } from '@nestjs/swagger'
 
 // 1. 基础 DTO：定义所有字段和校验规则
 export class BaseWorkDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '作品名称',
     example: '进击的巨人',
     required: true,
@@ -761,7 +761,7 @@ export class BaseWorkDto extends BaseDto {
   })
   name!: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '作品类型',
     example: WorkTypeEnum.COMIC,
     required: true,
@@ -769,7 +769,7 @@ export class BaseWorkDto extends BaseDto {
   })
   type!: WorkTypeEnum
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '热度值',
     example: 1000,
     required: true,
@@ -789,7 +789,7 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
   'likeCount',       // 自动初始化
   'favoriteCount',   // 自动初始化
 ]) {
-  @ValidateArray({
+  @ArrayProperty({
     description: '关联的作者ID列表',
     itemType: 'number',
     example: [1, 2],
@@ -857,24 +857,24 @@ import { IsString, IsNumber, IsOptional } from 'class-validator'
 class BadDto {
   @IsString()
   @IsOptional()
-  name?: string  // 错误：应使用 ValidateString
+  name?: string  // 错误：应使用 StringProperty
 }
 
 // ❌ 错误示例：重复定义字段
 class CreateWorkDto {
-  @ValidateString({ description: '名称', ... })
+  @StringProperty({ description: '名称', ... })
   name!: string
 }
 
 class UpdateWorkDto {
-  @ValidateString({ description: '名称', ... })  // 错误：重复定义
+  @StringProperty({ description: '名称', ... })  // 错误：重复定义
   name?: string
 }
 
 // ❌ 错误示例：冗余代码
 class CreateComicDto {
   // 错误：应该继承或复用 CreateWorkDto
-  @ValidateString({ description: '作品名称', ... })
+  @StringProperty({ description: '作品名称', ... })
   name!: string
 }
 ```

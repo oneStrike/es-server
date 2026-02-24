@@ -13,9 +13,9 @@ export interface BaseValidateOptions {
 }
 
 /**
- * 字符串验证选项
+ * 字符串属性选项
  */
-export interface ValidateStringOptions extends BaseValidateOptions {
+export interface StringPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: string | null
   /** 默认值 */
@@ -28,12 +28,14 @@ export interface ValidateStringOptions extends BaseValidateOptions {
   minLength?: number
   /** 是否为强密码验证 */
   password?: boolean
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
- * 数字验证选项
+ * 数字属性选项
  */
-export interface ValidateNumberOptions extends BaseValidateOptions {
+export interface NumberPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: number
   /** 最大值 */
@@ -42,12 +44,14 @@ export interface ValidateNumberOptions extends BaseValidateOptions {
   min?: number
   /** 默认值 */
   default?: number
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
- * 数字数组验证选项
+ * 数字数组属性选项
  */
-export interface ValidateNumberArrayOptions extends BaseValidateOptions {
+export interface NumberArrayPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: number[]
   /** 数组最大长度 */
@@ -56,12 +60,14 @@ export interface ValidateNumberArrayOptions extends BaseValidateOptions {
   minLength?: number
   /** 默认值 */
   default?: number[]
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
- * 通用数组验证选项
+ * 通用数组属性选项
  */
-export interface ValidateArrayOptions<T = any> extends BaseValidateOptions {
+export interface ArrayPropertyOptions<T = any> extends BaseValidateOptions {
   /** 示例值 */
   example?: T[]
   /** 数组最大长度 */
@@ -78,54 +84,64 @@ export interface ValidateArrayOptions<T = any> extends BaseValidateOptions {
   itemValidator?: (value: any) => boolean
   /** 数组元素验证失败时的错误消息 */
   itemErrorMessage?: string
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
- * 日期验证选项
+ * 日期属性选项
  */
-export interface ValidateDateTimeOptions extends BaseValidateOptions {
+export interface DatePropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: string | Date | null
   /** 默认值 */
   default?: Date | null
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
- * 布尔值验证选项
+ * 布尔值属性选项
  */
-export interface ValidateBooleanOptions extends BaseValidateOptions {
+export interface BooleanPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: boolean
   /** 默认值 */
   default?: boolean
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
- * 嵌套对象验证选项
+ * 嵌套对象属性选项
  */
-export interface ValidateNestedOptions extends BaseValidateOptions {
+export interface NestedPropertyOptions extends BaseValidateOptions {
   /** 嵌套对象的类型（类构造函数） */
   type: new (...args: any[]) => any
   /** 示例值 */
   example?: any
   /** 默认值 */
   default?: any
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
- * JSON验证选项
+ * JSON属性选项
  */
-export interface ValidateJsonOptions extends BaseValidateOptions {
+export interface JsonPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: string | object | null
   /** 默认值 */
   default?: string
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
- * 正则表达式验证选项
+ * 正则表达式属性选项
  */
-export interface ValidateRegexOptions extends BaseValidateOptions {
+export interface RegexPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: string | null
   /** 默认值 */
@@ -134,6 +150,8 @@ export interface ValidateRegexOptions extends BaseValidateOptions {
   regex: RegExp
   /** 验证失败时的错误消息 */
   message?: string
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
@@ -153,25 +171,29 @@ export type NumberEnumLike =
   | (Record<string, number> & Record<number, string>)
 
 /**
- * 枚举验证选项
+ * 枚举属性选项
  */
-export interface ValidateEnumOptions extends BaseValidateOptions {
+export interface EnumPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: any
   /** 枚举对象，支持字符串和数字枚举 */
   enum: EnumLike
   /** 默认值 */
   default?: any
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }
 
 /**
- * 位掩码验证选项
+ * 位掩码属性选项
  */
-export interface ValidateBitmaskOptions extends BaseValidateOptions {
+export interface BitmaskPropertyOptions extends BaseValidateOptions {
   /** 示例值 */
   example?: number
   /** 枚举对象，必须为数字枚举 */
   enum: NumberEnumLike
   /** 默认值 */
   default?: number
+  /** 是否启用校验，默认为true。设置为false时仅使用ApiProperty */
+  validation?: boolean
 }

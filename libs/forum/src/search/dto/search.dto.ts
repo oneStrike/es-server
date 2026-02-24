@@ -1,7 +1,7 @@
 import {
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { PageDto } from '@libs/base/dto'
 import { ApiProperty, OmitType } from '@nestjs/swagger'
@@ -11,7 +11,7 @@ import { ForumSearchSortTypeEnum, ForumSearchTypeEnum } from '../search.constant
  * 搜索DTO
  */
 export class ForumSearchDto extends PageDto {
-  @ValidateString({
+  @StringProperty({
     description: '搜索关键词',
     example: '测试',
     required: true,
@@ -20,7 +20,7 @@ export class ForumSearchDto extends PageDto {
   })
   keyword!: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '搜索类型',
     example: ForumSearchTypeEnum.ALL,
     required: false,
@@ -28,21 +28,21 @@ export class ForumSearchDto extends PageDto {
   })
   type?: ForumSearchTypeEnum
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '板块ID',
     example: 1,
     required: false,
   })
   sectionId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '标签ID',
     example: 1,
     required: false,
   })
   tagId?: number
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '排序类型',
     example: ForumSearchSortTypeEnum.RELEVANCE,
     required: false,

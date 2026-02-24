@@ -6,7 +6,7 @@ import { ApiTags } from '@nestjs/swagger'
 @ApiTags('系统配置')
 @Controller('admin/system')
 export class SystemConfigController {
-  constructor(private readonly systemConfigService: SystemConfigService) {}
+  constructor(private readonly systemConfigService: SystemConfigService) { }
 
   @Get('config-detail')
   @ApiDoc({
@@ -36,18 +36,6 @@ export class SystemConfigController {
     model: { type: 'boolean' },
   })
   async updateConfig(@Body() dto: SystemConfigDto) {
-    return this.systemConfigService.updateConfig(dto)
-  }
-
-  /**
-   * 兼容任务清单要求的 /admin/system/config 路径
-   */
-  @Post('config')
-  @ApiDoc({
-    summary: '更新系统配置',
-    model: { type: 'boolean' },
-  })
-  async updateConfigByAlias(@Body() dto: SystemConfigDto) {
     return this.systemConfigService.updateConfig(dto)
   }
 }

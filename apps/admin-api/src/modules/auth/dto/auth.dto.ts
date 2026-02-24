@@ -1,4 +1,4 @@
-import { ValidateString } from '@libs/base/decorators'
+import { StringProperty } from '@libs/base/decorators'
 import { CaptchaDto } from '@libs/base/modules'
 import { ApiProperty, OmitType } from '@nestjs/swagger'
 import { BaseUserDto } from '../../user/dto/user.dto'
@@ -16,14 +16,14 @@ export class RsaPublicKeyDto {
 }
 
 export class TokenDto {
-  @ValidateString({
+  @StringProperty({
     description: '账号令牌',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
   })
   accessToken!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '刷新令牌',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     required: true,
@@ -37,7 +37,7 @@ export class RefreshTokenDto extends OmitType(TokenDto, ['accessToken']) {}
  * 用户登录 DTO
  */
 export class UserLoginDto extends CaptchaDto {
-  @ValidateString({
+  @StringProperty({
     description: '用户名',
     example: 'admin001',
     required: true,
@@ -46,7 +46,7 @@ export class UserLoginDto extends CaptchaDto {
   })
   username!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '密码',
     example: 'Aa@123456',
     required: true,

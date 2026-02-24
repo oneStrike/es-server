@@ -1,14 +1,14 @@
-import { ValidateString } from '@libs/base/decorators'
+import { StringProperty } from '@libs/base/decorators'
 
 export class CaptchaDto {
-  @ValidateString({
+  @StringProperty({
     description: '验证码,base64格式',
     example: '1234',
     required: true,
   })
   captcha!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '验证码ID',
     example: 'a1b2c3d4',
     required: true,

@@ -1,10 +1,10 @@
 import { EnablePlatformEnum } from '@libs/base/constant'
 import {
-  ValidateArray,
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateJson,
-  ValidateString,
+  ArrayProperty,
+  BooleanProperty,
+  EnumProperty,
+  JsonProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -19,7 +19,7 @@ import { PageRuleEnum } from '../page.constant'
  * 页面配置基础字段DTO
  */
 export class BaseAppPageDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '页面编码（唯一标识）',
     example: 'home',
     required: true,
@@ -27,7 +27,7 @@ export class BaseAppPageDto extends BaseDto {
   })
   code!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '页面路径（URL路径）',
     example: '/home',
     required: true,
@@ -35,7 +35,7 @@ export class BaseAppPageDto extends BaseDto {
   })
   path!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '页面名称',
     example: '首页',
     required: true,
@@ -43,7 +43,7 @@ export class BaseAppPageDto extends BaseDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '页面标题',
     example: '首页 - 我的应用',
     required: true,
@@ -51,7 +51,7 @@ export class BaseAppPageDto extends BaseDto {
   })
   title!: string
 
-  @ValidateArray({
+  @ArrayProperty({
     description: '启用的平台',
     example: [EnablePlatformEnum.APP],
     required: true,
@@ -59,7 +59,7 @@ export class BaseAppPageDto extends BaseDto {
   })
   enablePlatform!: EnablePlatformEnum[]
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '页面权限级别',
     example: PageRuleEnum.GUEST,
     required: true,
@@ -68,7 +68,7 @@ export class BaseAppPageDto extends BaseDto {
   })
   accessLevel!: PageRuleEnum
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '页面启用状态',
     example: true,
     required: true,
@@ -76,7 +76,7 @@ export class BaseAppPageDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ValidateString({
+  @StringProperty({
     description: '页面描述信息',
     example: '应用首页，展示主要功能和内容',
     required: false,
@@ -110,7 +110,7 @@ export class QueryAppPageDto extends IntersectionType(
     PickType(BaseAppPageDto, ['name', 'code', 'accessLevel', 'isEnabled']),
   ),
 ) {
-  @ValidateJson({
+  @JsonProperty({
     description: '所启用的平台',
     example: '[1,2,3]',
     required: false,

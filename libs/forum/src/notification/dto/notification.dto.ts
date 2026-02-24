@@ -1,9 +1,9 @@
 import {
-  ValidateArray,
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  ArrayProperty,
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -22,14 +22,14 @@ import {
  * 包含论坛通知的所有基础字段定义
  */
 export class BaseForumNotificationDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的用户ID',
     example: 1,
     required: true,
   })
   userId!: number
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '通知类型',
     example: ForumNotificationTypeEnum.REPLY,
     required: true,
@@ -37,7 +37,7 @@ export class BaseForumNotificationDto extends BaseDto {
   })
   type!: ForumNotificationTypeEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '通知标题',
     example: '有人回复了你的主题',
     required: true,
@@ -45,7 +45,7 @@ export class BaseForumNotificationDto extends BaseDto {
   })
   title!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '通知内容',
     example: '张三 回复了你的主题《测试主题》',
     required: true,
@@ -53,28 +53,28 @@ export class BaseForumNotificationDto extends BaseDto {
   })
   content!: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否已读（0=未读, 1=已读）',
     example: true,
     required: true,
   })
   isRead: boolean
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的主题ID（可选）',
     example: 1,
     required: false,
   })
   topicId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的回复ID（可选）',
     example: 1,
     required: false,
   })
   replyId?: number
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '通知优先级',
     example: ForumNotificationPriorityEnum.NORMAL,
     required: false,
@@ -113,7 +113,7 @@ export class QueryForumNotificationListDto extends IntersectionType(
  * 标记通知已读DTO
  */
 export class ForumNotificationIdDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '通知ID',
     example: 1,
     required: true,
@@ -125,7 +125,7 @@ export class ForumNotificationIdDto {
  * 批量标记通知已读DTO
  */
 export class ForumNotificationIdsDto {
-  @ValidateArray({
+  @ArrayProperty({
     description: '通知ID列表',
     example: [1, 2, 3],
     required: true,
@@ -138,7 +138,7 @@ export class ForumNotificationIdsDto {
  * 标记所有通知已读DTO
  */
 export class ForumUserIdDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,

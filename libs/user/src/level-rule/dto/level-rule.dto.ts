@@ -1,8 +1,8 @@
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -18,7 +18,7 @@ import { UserLevelRulePermissionEnum } from '../level-rule.constant'
  * 等级规则基础DTO
  */
 export class BaseUserLevelRuleDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '等级名称',
     example: '新手',
     required: true,
@@ -26,7 +26,7 @@ export class BaseUserLevelRuleDto extends BaseDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '等级描述',
     example: '新手用户等级',
     required: false,
@@ -34,7 +34,7 @@ export class BaseUserLevelRuleDto extends BaseDto {
   })
   description?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '等级图标URL',
     example: 'https://example.com/icons/level1.png',
     required: false,
@@ -42,28 +42,28 @@ export class BaseUserLevelRuleDto extends BaseDto {
   })
   icon?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '所需经验值',
     example: 0,
     required: true,
   })
   requiredExperience!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '所需登录天数',
     example: 0,
     required: true,
   })
   loginDays!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '排序值（数值越小越靠前）',
     example: 1,
     required: true,
   })
   sortOrder!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '业务域标识',
     example: 'forum',
     required: false,
@@ -71,49 +71,49 @@ export class BaseUserLevelRuleDto extends BaseDto {
   })
   business?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     required: true,
   })
   isEnabled!: boolean
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '每日发帖数量上限，0表示无限制',
     example: 10,
     required: true,
   })
   dailyTopicLimit!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '每日回复和评论数量上限，0表示无限制',
     example: 50,
     required: true,
   })
   dailyReplyCommentLimit!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '发帖间隔秒数（防刷屏），0表示无限制',
     example: 30,
     required: true,
   })
   postInterval!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '每日点赞次数上限，0表示无限制',
     example: 20,
     required: true,
   })
   dailyLikeLimit!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '每日收藏次数上限，0表示无限制',
     example: 10,
     required: true,
   })
   dailyFavoriteLimit!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '等级专属颜色（十六进制）',
     example: '#FF5733',
     required: false,
@@ -121,7 +121,7 @@ export class BaseUserLevelRuleDto extends BaseDto {
   })
   color?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '等级徽章URL',
     example: 'https://example.com/badges/level1.png',
     required: false,
@@ -245,7 +245,7 @@ export class UserLevelInfoDto {
  * 等级权限检查DTO
  */
 export class CheckUserLevelPermissionDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,
@@ -253,7 +253,7 @@ export class CheckUserLevelPermissionDto {
   @ApiProperty({ description: '用户ID', example: 1 })
   userId!: number
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '权限类型',
     example: UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT,
     required: true,

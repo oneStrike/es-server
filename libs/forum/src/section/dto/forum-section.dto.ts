@@ -1,23 +1,23 @@
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+import { ForumReviewPolicyEnum } from '@libs/forum/config'
 import {
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { ForumReviewPolicyEnum } from '../../config/forum-config.constant'
 
 /**
  * 论坛板块基础DTO
  */
 export class BaseForumSectionDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '板块名称',
     example: '技术交流',
     required: true,
@@ -25,7 +25,7 @@ export class BaseForumSectionDto extends BaseDto {
   })
   name!: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '板块分组ID（为空表示未分组）',
     example: 1,
     required: false,
@@ -33,7 +33,7 @@ export class BaseForumSectionDto extends BaseDto {
   })
   groupId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户等级规则ID（为空表示所有用户）',
     example: 1,
     required: false,
@@ -41,7 +41,7 @@ export class BaseForumSectionDto extends BaseDto {
   })
   userLevelRuleId?: number
 
-  @ValidateString({
+  @StringProperty({
     description: '板块图标',
     example: 'https://example.com/icon.png',
     required: false,
@@ -49,7 +49,7 @@ export class BaseForumSectionDto extends BaseDto {
   })
   icon?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '排序权重',
     example: 0,
     required: true,
@@ -58,7 +58,7 @@ export class BaseForumSectionDto extends BaseDto {
   })
   sortOrder!: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     required: true,
@@ -66,7 +66,7 @@ export class BaseForumSectionDto extends BaseDto {
   })
   isEnabled!: boolean
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '审核策略',
     example: ForumReviewPolicyEnum.NONE,
     required: true,
@@ -75,7 +75,7 @@ export class BaseForumSectionDto extends BaseDto {
   })
   topicReviewPolicy!: ForumReviewPolicyEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '板块描述',
     example: '讨论技术相关问题',
     required: true,

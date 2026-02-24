@@ -1,22 +1,18 @@
 import {
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
-import {
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
 import {
   ForumReportReasonEnum,
   ForumReportStatusEnum,
   ForumReportTypeEnum,
-} from '../forum-report.constant'
+} from '@libs/forum/report'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class BaseForumReportDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '举报人用户ID',
     example: 1,
     required: true,
@@ -24,7 +20,7 @@ export class BaseForumReportDto extends BaseDto {
   })
   reporterId!: number
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '举报类型（topic=主题, reply=回复, user=用户）',
     example: ForumReportTypeEnum.TOPIC,
     required: true,
@@ -32,7 +28,7 @@ export class BaseForumReportDto extends BaseDto {
   })
   type!: ForumReportTypeEnum
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '被举报对象ID（主题ID/回复ID/用户ID）',
     example: 1,
     required: true,
@@ -40,7 +36,7 @@ export class BaseForumReportDto extends BaseDto {
   })
   targetId!: number
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '举报原因',
     example: ForumReportReasonEnum.INAPPROPRIATE_CONTENT,
     required: true,
@@ -48,21 +44,21 @@ export class BaseForumReportDto extends BaseDto {
   })
   reason!: ForumReportReasonEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '举报详细说明',
     example: '该内容包含不当言论',
     required: false,
   })
   description?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '证据截图URL',
     example: 'https://example.com/evidence.png',
     required: false,
   })
   evidenceUrl?: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '处理状态',
     example: ForumReportStatusEnum.PENDING,
     required: false,
@@ -70,14 +66,14 @@ export class BaseForumReportDto extends BaseDto {
   })
   status?: ForumReportStatusEnum
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '处理人ID',
     example: 1,
     required: false,
   })
   handlerId?: number
 
-  @ValidateString({
+  @StringProperty({
     description: '处理结果说明',
     example: '已删除违规内容',
     required: false,
@@ -97,12 +93,7 @@ export class CreateForumReportDto extends PickType(BaseForumReportDto, [
 export class QueryForumReportDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumReportDto, [
-      'type',
-      'reason',
-      'status',
-      'reporterId',
-    ]),
+    PickType(BaseForumReportDto, ['type', 'reason', 'status', 'reporterId']),
   ),
 ) {}
 

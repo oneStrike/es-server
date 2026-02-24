@@ -1,14 +1,13 @@
+// 导出验证装饰器
+export * from './validate/array-property'
+export * from './validate/bitmask-property'
+export * from './validate/boolean-property'
+export * from './validate/date-property'
+export * from './validate/enum-property'
+export * from './validate/json-property'
+export * from './validate/nested-property'
+export * from './validate/number-property'
+export * from './validate/regex-property'
+export * from './validate/string-property'
 // 导出类型定义
 export * from './validate/types'
-
-// 导出验证装饰器
-export * from './validate/validate-array'
-export * from './validate/validate-bitmask'
-export * from './validate/validate-boolean'
-export * from './validate/validate-by-regex'
-export * from './validate/validate-date'
-export * from './validate/validate-enum'
-export * from './validate/validate-json'
-export * from './validate/validate-nested'
-export * from './validate/validate-number'
-export * from './validate/validate-string'

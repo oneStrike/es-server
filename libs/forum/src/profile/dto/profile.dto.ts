@@ -1,10 +1,10 @@
 import { GenderEnum, UserStatusEnum } from '@libs/base/constant'
 import {
-  ValidateBoolean,
-  ValidateDate,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
@@ -19,7 +19,7 @@ import {
  */
 
 export class BaseAppUserInfoDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '用户名（登录账号）',
     example: 'user123',
     required: true,
@@ -27,7 +27,7 @@ export class BaseAppUserInfoDto extends BaseDto {
   })
   account!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '用户昵称（显示名称）',
     example: '张三',
     required: true,
@@ -35,7 +35,7 @@ export class BaseAppUserInfoDto extends BaseDto {
   })
   nickname!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '头像URL地址',
     example: 'https://example.com/avatar.jpg',
     required: false,
@@ -43,7 +43,7 @@ export class BaseAppUserInfoDto extends BaseDto {
   })
   avatar?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '手机号码',
     example: '13800000000',
     required: false,
@@ -51,7 +51,7 @@ export class BaseAppUserInfoDto extends BaseDto {
   })
   phone?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '邮箱地址',
     example: 'user@example.com',
     required: false,
@@ -59,14 +59,14 @@ export class BaseAppUserInfoDto extends BaseDto {
   })
   email?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '账户状态（true:启用, false:禁用）',
     example: true,
     required: true,
   })
   isEnabled!: boolean
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '性别',
     example: GenderEnum.MALE,
     enum: GenderEnum,
@@ -74,7 +74,7 @@ export class BaseAppUserInfoDto extends BaseDto {
   })
   genderType!: GenderEnum
 
-  @ValidateDate({
+  @DateProperty({
     description: '出生日期',
     example: '2023-09-15T00:00:00.000Z',
     required: false,
@@ -104,28 +104,28 @@ export class BaseAppUserInfoDto extends BaseDto {
  * 包含用户ID、积分数量、等级ID、签名、个人简介、用户状态、封禁原因、封禁结束时间等字段
  */
 export class BaseForumProfileDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,
   })
   userId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '积分数量',
     example: 100,
     required: true,
   })
   points!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '等级ID',
     example: 100,
     required: true,
   })
   levelId!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '签名',
     example: '这是我的签名',
     required: true,
@@ -133,7 +133,7 @@ export class BaseForumProfileDto extends BaseDto {
   })
   signature!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '个人简介',
     example: '这是我的个人简介',
     required: true,
@@ -141,7 +141,7 @@ export class BaseForumProfileDto extends BaseDto {
   })
   bio!: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '用户状态',
     example: UserStatusEnum.NORMAL,
     enum: UserStatusEnum,
@@ -149,7 +149,7 @@ export class BaseForumProfileDto extends BaseDto {
   })
   status!: UserStatusEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '封禁原因',
     example: '违反社区规则',
     required: true,
@@ -157,7 +157,7 @@ export class BaseForumProfileDto extends BaseDto {
   })
   banReason!: string
 
-  @ValidateDate({
+  @DateProperty({
     description: '封禁结束时间',
     example: '2023-09-15T00:00:00.000Z',
     required: true,
@@ -184,7 +184,7 @@ export class QueryForumProfileListDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseForumProfileDto, ['levelId', 'status'])),
 ) {
-  @ValidateString({
+  @StringProperty({
     description: '昵称',
     example: '张三',
     required: false,
@@ -209,7 +209,7 @@ export class UpdateForumProfileStatusDto extends PickType(BaseForumProfileDto, [
 export class GrantForumBadgeDto extends PickType(BaseForumProfileDto, [
   'userId',
 ]) {
-  @ValidateNumber({
+  @NumberProperty({
     description: '徽章ID',
     example: 1,
     required: true,

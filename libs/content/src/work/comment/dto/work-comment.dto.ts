@@ -1,4 +1,4 @@
-import { ValidateBoolean, ValidateDate, ValidateEnum, ValidateNumber, ValidateString } from '@libs/base/decorators'
+import { BooleanProperty, DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import { IntersectionType, OmitType, PartialType, PickType } from '@nestjs/swagger'
 import {
@@ -10,63 +10,63 @@ import {
 
 /// 评论基础DTO
 export class BaseWorkCommentDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '作品ID',
     example: 1,
     required: true,
   })
   workId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '作品类型（1=漫画, 2=小说）',
     example: 1,
     required: true,
   })
   workType!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '章节ID（为空表示作品评论）',
     example: 1,
     required: false,
   })
   chapterId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '评论用户ID',
     example: 1,
     required: true,
   })
   userId!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '评论内容',
     example: '这是一条评论',
     required: true,
   })
   content!: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '被回复评论ID',
     example: 1,
     required: false,
   })
   replyToId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '实际回复根评论ID',
     example: 1,
     required: false,
   })
   actualReplyToId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '楼层号',
     example: 1,
     required: false,
   })
   floor?: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否隐藏',
     example: false,
     required: true,
@@ -74,7 +74,7 @@ export class BaseWorkCommentDto extends BaseDto {
   })
   isHidden!: boolean
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '审核状态',
     example: WorkCommentAuditStatusEnum.APPROVED,
     required: true,
@@ -83,7 +83,7 @@ export class BaseWorkCommentDto extends BaseDto {
   })
   auditStatus!: WorkCommentAuditStatusEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '审核原因',
     example: '内容违规',
     required: false,
@@ -91,21 +91,21 @@ export class BaseWorkCommentDto extends BaseDto {
   })
   auditReason?: string
 
-  @ValidateDate({
+  @DateProperty({
     description: '审核时间',
     example: '2024-01-01',
     required: false,
   })
   auditAt?: Date
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '审核人ID',
     example: 1,
     required: false,
   })
   auditById?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '审核角色',
     example: 1,
     required: false,
@@ -139,14 +139,14 @@ export class QueryWorkCommentDto extends IntersectionType(
     'floor',
   ]),
 ) {
-  @ValidateString({
+  @StringProperty({
     description: '评论内容',
     example: '评论',
     required: false,
   })
   content?: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '排序字段',
     example: WorkCommentSortFieldEnum.CREATED_AT,
     required: false,
@@ -155,7 +155,7 @@ export class QueryWorkCommentDto extends IntersectionType(
   })
   sortBy?: WorkCommentSortFieldEnum
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '排序顺序',
     example: WorkCommentSortOrderEnum.DESC,
     required: false,
@@ -179,14 +179,14 @@ export class UpdateWorkCommentHiddenDto extends IntersectionType(
 
 /// 创建评论举报DTO
 export class CreateWorkCommentReportDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '评论ID',
     example: 1,
     required: true,
   })
   commentId!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '举报原因',
     example: 'spam',
     required: true,
@@ -194,7 +194,7 @@ export class CreateWorkCommentReportDto {
   })
   reason!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '举报说明',
     example: '这是一条垃圾评论',
     required: false,
@@ -202,7 +202,7 @@ export class CreateWorkCommentReportDto {
   })
   description?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '证据截图URL',
     example: 'https://example.com/evidence.jpg',
     required: false,
@@ -218,14 +218,14 @@ export class QueryWorkCommentReportDto extends IntersectionType(
     PickType(CreateWorkCommentReportDto, ['commentId', 'reason']),
   ),
 ) {
-  @ValidateNumber({
+  @NumberProperty({
     description: '举报人ID',
     example: 1,
     required: false,
   })
   reporterId?: number
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '处理状态',
     example: WorkCommentReportStatusEnum.PENDING,
     required: false,
@@ -236,7 +236,7 @@ export class QueryWorkCommentReportDto extends IntersectionType(
 
 /// 处理评论举报DTO
 export class HandleWorkCommentReportDto extends IdDto {
-  @ValidateEnum({
+  @EnumProperty({
     description: '处理状态',
     example: WorkCommentReportStatusEnum.RESOLVED,
     required: false,
@@ -244,7 +244,7 @@ export class HandleWorkCommentReportDto extends IdDto {
   })
   status?: WorkCommentReportStatusEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '处理备注',
     example: '已处理',
     required: false,

@@ -1,14 +1,14 @@
 import {
-  ValidateBoolean,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, OMIT_BASE_FIELDS } from '@libs/base/dto'
 import { OmitType } from '@nestjs/swagger'
 
 /// 应用配置基础字段DTO
 export class BaseAppConfigDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '应用名称',
     example: '我的应用',
     required: true,
@@ -16,7 +16,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   appName!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '应用描述',
     example: '这是一个示例应用',
     required: false,
@@ -24,7 +24,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   appDesc?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '应用Logo URL',
     example: 'https://example.com/logo.png',
     required: false,
@@ -32,7 +32,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   appLogo?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '引导页图片 URL',
     example: 'https://example.com/onboarding.jpg',
     required: false,
@@ -40,7 +40,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   onboardingImage?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '主题色',
     example: '#007AFF',
     required: true,
@@ -49,7 +49,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   themeColor!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '第二主题色(可选)',
     example: '#5856D6',
     required: false,
@@ -57,7 +57,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   secondaryColor?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '可选的主题色',
     example: '#FF9500,#FF3B30,#4CD964,#5AC8FA,#007AFF',
     required: false,
@@ -65,7 +65,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   optionalThemeColors?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用维护模式',
     example: false,
     required: true,
@@ -73,7 +73,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   enableMaintenanceMode!: boolean
 
-  @ValidateString({
+  @StringProperty({
     description: '维护模式提示信息',
     example: '系统维护中，请稍后再试',
     required: false,
@@ -81,7 +81,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   maintenanceMessage?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '配置版本号',
     example: '1.0.0',
     required: true,
@@ -89,7 +89,7 @@ export class BaseAppConfigDto extends BaseDto {
   })
   version!: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '最后修改人ID',
     example: 1,
     required: false,

@@ -1,44 +1,44 @@
-import { ValidateNumber, ValidateString } from '@libs/base/decorators'
+import { NumberProperty, StringProperty } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class BaseUserExperienceRecordDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的用户ID',
     example: 1,
     required: true,
   })
   userId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的规则ID',
     example: 1,
     required: false,
   })
   ruleId?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '经验值变化',
     example: 5,
     required: true,
   })
   experience!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '变化前经验值',
     example: 100,
     required: true,
   })
   beforeExperience!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '变化后经验值',
     example: 105,
     required: true,
   })
   afterExperience!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '备注',
     example: '发表主题获得经验',
     required: false,
@@ -51,7 +51,7 @@ export class QueryUserExperienceRecordDto extends IntersectionType(
   PageDto,
   PartialType(PickType(BaseUserExperienceRecordDto, ['ruleId'])),
 ) {
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,
@@ -60,21 +60,21 @@ export class QueryUserExperienceRecordDto extends IntersectionType(
 }
 
 export class AddUserExperienceDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,
   })
   userId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '规则类型',
     example: 1,
     required: true,
   })
   ruleType!: number
 
-  @ValidateString({
+  @StringProperty({
     description: '备注',
     example: '发表主题获得经验',
     required: false,

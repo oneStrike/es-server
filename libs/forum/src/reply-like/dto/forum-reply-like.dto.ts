@@ -1,4 +1,4 @@
-import { ValidateNumber } from '@libs/base/decorators'
+import { NumberProperty } from '@libs/base/decorators'
 import { BaseDto, IdDto } from '@libs/base/dto'
 import { IntersectionType, PickType } from '@nestjs/swagger'
 
@@ -7,7 +7,7 @@ import { IntersectionType, PickType } from '@nestjs/swagger'
  * 包含回复点赞的所有基础字段定义
  */
 export class BaseForumReplyLikeDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的回复ID',
     example: 1,
     required: true,
@@ -15,7 +15,7 @@ export class BaseForumReplyLikeDto extends BaseDto {
   })
   replyId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的用户ID',
     example: 1,
     required: true,

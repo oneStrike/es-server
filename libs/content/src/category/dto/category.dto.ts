@@ -1,10 +1,10 @@
 import { ContentTypeEnum } from '@libs/base/constant'
 import {
-  ValidateArray,
-  ValidateBoolean,
-  ValidateJson,
-  ValidateNumber,
-  ValidateString,
+  ArrayProperty,
+  BooleanProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -18,7 +18,7 @@ import {
  * 分类基础 DTO
  */
 export class BaseCategoryDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '分类名称',
     example: '科幻',
     required: true,
@@ -26,7 +26,7 @@ export class BaseCategoryDto extends BaseDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '分类图标URL',
     example: 'https://example.com/icon.png',
     required: false,
@@ -34,7 +34,7 @@ export class BaseCategoryDto extends BaseDto {
   })
   icon?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '人气值',
     example: 1000,
     required: false,
@@ -42,7 +42,7 @@ export class BaseCategoryDto extends BaseDto {
   })
   popularity!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '排序值',
     example: 1,
     required: false,
@@ -51,14 +51,14 @@ export class BaseCategoryDto extends BaseDto {
   })
   order!: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
     required: false,
   })
   isEnabled!: boolean
 
-  @ValidateArray({
+  @ArrayProperty({
     description: '分类关联的内容类型',
     example: [ContentTypeEnum.COMIC],
     required: true,
@@ -66,7 +66,7 @@ export class BaseCategoryDto extends BaseDto {
   })
   contentType!: number[]
 
-  @ValidateString({
+  @StringProperty({
     description: '分类的描述 （可选）',
     example: '科幻类分类',
     required: false,
@@ -97,7 +97,7 @@ export class QueryCategoryDto extends IntersectionType(
   PageDto,
   PartialType(PickType(CreateCategoryDto, ['name', 'isEnabled'])),
 ) {
-  @ValidateJson({
+  @JsonProperty({
     description: '分类关联的内容类型',
     example: '[1]',
     required: false,

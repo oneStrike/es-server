@@ -1,7 +1,7 @@
 import {
-  ValidateBoolean,
-  ValidateDate,
-  ValidateString,
+  BooleanProperty,
+  DateProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -15,7 +15,7 @@ import {
  * 协议基础DTO
  */
 export class BaseAgreementDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '协议标题',
     example: '隐私政策',
     required: true,
@@ -23,14 +23,14 @@ export class BaseAgreementDto extends BaseDto {
   })
   title!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '协议内容',
     example: '<p>...</p>',
     required: true,
   })
   content!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '版本号',
     example: '1.0.0',
     required: true,
@@ -38,7 +38,7 @@ export class BaseAgreementDto extends BaseDto {
   })
   version!: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否强制重新同意',
     example: false,
     required: false,
@@ -46,7 +46,7 @@ export class BaseAgreementDto extends BaseDto {
   })
   isForce?: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否展示在登录注册页',
     example: false,
     required: false,
@@ -54,7 +54,7 @@ export class BaseAgreementDto extends BaseDto {
   })
   showInAuth?: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否已发布',
     example: false,
     required: false,
@@ -62,7 +62,7 @@ export class BaseAgreementDto extends BaseDto {
   })
   isPublished?: boolean
 
-  @ValidateDate({
+  @DateProperty({
     description: '发布时间',
     example: '2024-01-01T00:00:00.000Z',
     required: false,

@@ -1,11 +1,11 @@
 import { WorkTypeEnum } from '@libs/base/constant'
 import {
-  ValidateArray,
-  ValidateBoolean,
-  ValidateDate,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  ArrayProperty,
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import { BaseAuthorDto } from '@libs/content/author'
@@ -96,7 +96,7 @@ export class WorkTagRelationDto {
 
 /// 作品基础DTO
 export class BaseWorkDto extends BaseDto {
-  @ValidateEnum({
+  @EnumProperty({
     description: '作品类型（1=漫画, 2=小说）',
     example: WorkTypeEnum.COMIC,
     required: true,
@@ -104,7 +104,7 @@ export class BaseWorkDto extends BaseDto {
   })
   type!: WorkTypeEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '作品名称',
     example: '进击的巨人',
     required: true,
@@ -112,7 +112,7 @@ export class BaseWorkDto extends BaseDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '作品别名（支持多别名，用逗号分隔）',
     example: 'Attack on Titan,進撃の巨人',
     required: false,
@@ -120,7 +120,7 @@ export class BaseWorkDto extends BaseDto {
   })
   alias?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '作品封面URL',
     example: 'https://example.com/cover.jpg',
     required: true,
@@ -128,14 +128,14 @@ export class BaseWorkDto extends BaseDto {
   })
   cover!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '作品简介',
     example: '这是一部关于巨人的作品...',
     required: true,
   })
   description!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '语言代码',
     example: 'en',
     required: true,
@@ -143,7 +143,7 @@ export class BaseWorkDto extends BaseDto {
   })
   language!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '地区代码',
     example: 'CN',
     required: true,
@@ -151,7 +151,7 @@ export class BaseWorkDto extends BaseDto {
   })
   region!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '年龄分级',
     example: 'R14',
     required: false,
@@ -159,7 +159,7 @@ export class BaseWorkDto extends BaseDto {
   })
   ageRating?: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '连载状态',
     example: WorkSerialStatusEnum.SERIALIZING,
     required: true,
@@ -168,7 +168,7 @@ export class BaseWorkDto extends BaseDto {
   })
   serialStatus!: WorkSerialStatusEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '出版社',
     example: '讲谈社',
     required: false,
@@ -176,7 +176,7 @@ export class BaseWorkDto extends BaseDto {
   })
   publisher?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '原始来源',
     example: '官方授权',
     required: false,
@@ -184,7 +184,7 @@ export class BaseWorkDto extends BaseDto {
   })
   originalSource?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '版权信息',
     example: '© 2024 作者名',
     required: false,
@@ -192,14 +192,14 @@ export class BaseWorkDto extends BaseDto {
   })
   copyright?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '免责声明',
     example: '本作品仅供娱乐，不代表任何立场',
     required: false,
   })
   disclaimer?: string
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '发布状态',
     example: true,
     required: true,
@@ -207,7 +207,7 @@ export class BaseWorkDto extends BaseDto {
   })
   isPublished!: boolean
 
-  @ValidateDate({
+  @DateProperty({
     description: '发布日期',
     example: '2024-01-01',
     required: false,
@@ -222,7 +222,7 @@ export class BaseWorkDto extends BaseDto {
   })
   lastUpdated?: Date
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '浏览量',
     example: 1000,
     required: true,
@@ -231,7 +231,7 @@ export class BaseWorkDto extends BaseDto {
   })
   viewCount!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '收藏数',
     example: 50,
     required: true,
@@ -240,7 +240,7 @@ export class BaseWorkDto extends BaseDto {
   })
   favoriteCount!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '点赞数',
     example: 1000,
     required: true,
@@ -249,7 +249,7 @@ export class BaseWorkDto extends BaseDto {
   })
   likeCount!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '评分（1-10分，保留1位小数）',
     example: 8.5,
     required: false,
@@ -258,7 +258,7 @@ export class BaseWorkDto extends BaseDto {
   })
   rating?: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '评分人数',
     example: 1000,
     required: true,
@@ -267,7 +267,7 @@ export class BaseWorkDto extends BaseDto {
   })
   ratingCount!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '热度值',
     example: 1000,
     required: true,
@@ -276,7 +276,7 @@ export class BaseWorkDto extends BaseDto {
   })
   popularity!: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否推荐',
     example: false,
     required: true,
@@ -284,7 +284,7 @@ export class BaseWorkDto extends BaseDto {
   })
   isRecommended!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否热门',
     example: false,
     required: true,
@@ -292,7 +292,7 @@ export class BaseWorkDto extends BaseDto {
   })
   isHot!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否新作',
     example: true,
     required: true,
@@ -300,7 +300,7 @@ export class BaseWorkDto extends BaseDto {
   })
   isNew!: boolean
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '推荐权重',
     example: 1.0,
     required: false,
@@ -363,7 +363,7 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
   'favoriteCount',
   'ratingCount',
 ]) {
-  @ValidateArray({
+  @ArrayProperty({
     description: '关联的作者ID列表',
     itemType: 'number',
     example: [1, 2],
@@ -371,7 +371,7 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
   })
   authorIds!: number[]
 
-  @ValidateArray({
+  @ArrayProperty({
     description: '关联的分类ID列表',
     itemType: 'number',
     example: [1, 2, 3],
@@ -379,7 +379,7 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
   })
   categoryIds!: number[]
 
-  @ValidateArray({
+  @ArrayProperty({
     description: '关联的标签ID列表',
     itemType: 'number',
     example: [1, 2],
@@ -414,7 +414,7 @@ export class QueryWorkDto extends IntersectionType(
     PartialType(PickType(CreateWorkDto, ['tagIds', 'categoryIds'])),
   ),
 ) {
-  @ValidateString({
+  @StringProperty({
     description: '作者名称',
     example: '村',
     required: false,

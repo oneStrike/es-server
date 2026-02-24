@@ -1,5 +1,5 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
-import type { ValidateBitmaskOptions } from './types'
+import type { BitmaskPropertyOptions } from './types'
 import { isDevelopment, isNumberEnum } from '@libs/base/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
@@ -30,38 +30,30 @@ export class BitmaskValidator implements ValidatorConstraintInterface {
   validate(value: any, args: ValidationArguments): boolean {
     const [enumObject] = args.constraints as [NumberEnumLike]
 
-    // 空值由IsOptional处理
     if (value === undefined || value === null) {
       return true
     }
 
-    // 转换为数字
     const numValue = typeof value === 'string' ? Number(value) : value
 
-    // 检查是否为有效数字
     if (Number.isNaN(numValue)) {
       return false
     }
 
-    // 检查是否为非负整数
     if (!Number.isInteger(numValue) || numValue < 0) {
       return false
     }
 
-    // 获取枚举的所有数字值
     const enumValues = Object.values(enumObject).filter(
       (enumValue): enumValue is number => typeof enumValue === 'number',
     )
 
-    // 如果没有数字枚举值，返回false
     if (enumValues.length === 0) {
       return false
     }
 
-    // 计算所有有效位的组合
     const validBits = enumValues.reduce((acc, enumValue) => acc | enumValue, 0)
 
-    // 检查是否包含无效位
     return (numValue & ~validBits) === 0
   }
 
@@ -90,9 +82,10 @@ export class BitmaskValidator implements ValidatorConstraintInterface {
 }
 
 /**
- * 位掩码验证装饰器
+ * 位掩码属性装饰器
  *
- * @description 用于验证位掩码值是否为指定数字枚举的有效组合
+ * @description 用于定义位掩码值是否为指定数字枚举的有效组合
+ * 可通过 validation 参数控制是否启用校验，设置为 false 时仅使用 ApiProperty
  *
  * @example
  * ```typescript
@@ -104,7 +97,7 @@ export class BitmaskValidator implements ValidatorConstraintInterface {
  * }
  *
  * class CreateRoleDto {
- *   @ValidateBitmask({
+ *   @BitmaskProperty({
  *     description: '权限位掩码',
  *     example: 7, // READ | WRITE | DELETE
  *     enum: Permission,
@@ -112,7 +105,7 @@ export class BitmaskValidator implements ValidatorConstraintInterface {
  *   })
  *   permissions: number
  *
- *   @ValidateBitmask({
+ *   @BitmaskProperty({
  *     description: '扩展权限',
  *     example: 0,
  *     enum: Permission,
@@ -123,74 +116,71 @@ export class BitmaskValidator implements ValidatorConstraintInterface {
  * }
  * ```
  *
- * @param options 验证选项配置
+ * @param options 属性选项配置
  * @returns 装饰器函数
  */
-export function ValidateBitmask(options: ValidateBitmaskOptions) {
+export function BitmaskProperty(options: BitmaskPropertyOptions) {
   if (!options.enum) {
-    throw new Error('ValidateBitmask: 枚举对象不能为空')
+    throw new Error('BitmaskProperty: 枚举对象不能为空')
   }
 
-  // 基础装饰器
-  const decorators = [
-    IsNumber({}, { message: '必须是数字类型' }),
-    Validate(BitmaskValidator, [options.enum], {
-      message: '位掩码值无效',
-    }),
-  ]
+  const validation = options.validation ?? true
 
-  // 可选字段处理
-  if (!(options.required ?? true)) {
-    decorators.push(IsOptional())
-  }
+  const decorators: any[] = []
 
-  // 转换逻辑
-  decorators.push(
-    Transform(({ value }) => {
-      // 处理默认值
-      if (
-        (value === undefined || value === null) &&
-        options.default !== undefined
-      ) {
-        return options.default
-      }
+  if (validation) {
+    decorators.push(
+      IsNumber({}, { message: '必须是数字类型' }),
+      Validate(BitmaskValidator, [options.enum], {
+        message: '位掩码值无效',
+      }),
+    )
 
-      // 处理空值和可选字段
-      if (value === undefined || value === null) {
-        return value
-      }
+    if (!(options.required ?? true)) {
+      decorators.push(IsOptional())
+    }
 
-      // 字符串转数字
-      if (typeof value === 'string') {
-        const trimmedValue = value.trim()
-        if (trimmedValue === '') {
-          return undefined
+    decorators.push(
+      Transform(({ value }) => {
+        if (
+          (value === undefined || value === null) &&
+          options.default !== undefined
+        ) {
+          return options.default
         }
-        const numValue = Number(trimmedValue)
-        return Number.isNaN(numValue) ? value : numValue
-      }
 
-      return value
-    }),
-  )
+        if (value === undefined || value === null) {
+          return value
+        }
 
-  // 自定义转换函数
-  if (options.transform) {
-    decorators.push(Transform(options.transform))
+        if (typeof value === 'string') {
+          const trimmedValue = value.trim()
+          if (trimmedValue === '') {
+            return undefined
+          }
+          const numValue = Number(trimmedValue)
+          return Number.isNaN(numValue) ? value : numValue
+        }
+
+        return value
+      }),
+    )
+
+    if (options.transform) {
+      decorators.push(Transform(options.transform))
+    }
   }
 
   if (isDevelopment()) {
     if (!isNumberEnum(options.enum)) {
-      throw new Error('ValidateBitmask: 枚举对象必须为数字枚举')
+      throw new Error('BitmaskProperty: 枚举对象必须为数字枚举')
     }
 
-    // 计算有效范围
     const enumValues = Object.values(options.enum).filter(
       (value): value is number => typeof value === 'number',
     )
     const maxValue = enumValues.reduce((acc, value) => acc | value, 0)
 
-    // 构建API属性配置
     const apiPropertyOptions: ApiPropertyOptions = {
       description: options.description,
       example: options.example,

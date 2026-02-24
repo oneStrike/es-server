@@ -1,17 +1,14 @@
 import {
-  ValidateBoolean,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS } from '@libs/base/dto'
 import { ApiProperty, IntersectionType, OmitType } from '@nestjs/swagger'
-import {
-  ChangeTypeEnum,
-  ForumReviewPolicyEnum,
-} from '../forum-config.constant'
+import { ChangeTypeEnum, ForumReviewPolicyEnum } from '../forum-config.constant'
 
 export class BaseForumConfigDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '站点名称',
     example: '我的社区',
     required: true,
@@ -19,7 +16,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   siteName!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '站点描述',
     example: '一个优秀的社区论坛',
     required: false,
@@ -27,7 +24,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   siteDescription?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '站点关键词',
     example: '社区,论坛,交流',
     required: false,
@@ -35,7 +32,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   siteKeywords?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '站点Logo URL',
     example: 'https://example.com/logo.png',
     required: false,
@@ -43,7 +40,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   siteLogo?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '站点Favicon URL',
     example: 'https://example.com/favicon.ico',
     required: false,
@@ -51,7 +48,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   siteFavicon?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '联系邮箱',
     example: 'contact@example.com',
     required: false,
@@ -59,7 +56,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   contactEmail?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '备案号',
     example: '京ICP备12345678号',
     required: false,
@@ -67,7 +64,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   icpNumber?: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '主题标题最大长度',
     example: 200,
     required: true,
@@ -76,7 +73,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   topicTitleMaxLength!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '主题内容最大长度',
     example: 10000,
     required: true,
@@ -85,7 +82,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   topicContentMaxLength!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '回复内容最大长度',
     example: 5000,
     required: true,
@@ -94,7 +91,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   replyContentMaxLength!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description:
       '审核策略（0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）',
     example: ForumReviewPolicyEnum.SEVERE_SENSITIVE_WORD,
@@ -104,49 +101,49 @@ export class BaseForumConfigDto extends BaseDto {
   })
   reviewPolicy!: ForumReviewPolicyEnum
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否允许匿名浏览',
     example: true,
     required: true,
   })
   allowAnonymousView!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否允许匿名发帖',
     example: false,
     required: true,
   })
   allowAnonymousPost!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否允许匿名回复',
     example: false,
     required: true,
   })
   allowAnonymousReply!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否允许用户注册',
     example: true,
     required: true,
   })
   allowUserRegister!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '注册是否需要邮箱验证',
     example: true,
     required: true,
   })
   registerRequireEmailVerify!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '注册是否需要手机验证',
     example: false,
     required: true,
   })
   registerRequirePhoneVerify!: boolean
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户名最小长度',
     example: 3,
     required: true,
@@ -155,7 +152,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   usernameMinLength!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户名最大长度',
     example: 20,
     required: true,
@@ -164,7 +161,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   usernameMaxLength!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '签名最大长度',
     example: 200,
     required: true,
@@ -173,7 +170,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   signatureMaxLength!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '个人简介最大长度',
     example: 500,
     required: true,
@@ -182,7 +179,7 @@ export class BaseForumConfigDto extends BaseDto {
   })
   bioMaxLength!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '新注册用户默认发放的积分',
     example: 100,
     required: true,
@@ -191,63 +188,63 @@ export class BaseForumConfigDto extends BaseDto {
   })
   defaultPointsForNewUser!: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用邮件通知',
     example: true,
     required: true,
   })
   enableEmailNotification!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用站内通知',
     example: true,
     required: true,
   })
   enableInAppNotification!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用新主题通知',
     example: true,
     required: true,
   })
   enableNewTopicNotification!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用新回复通知',
     example: true,
     required: true,
   })
   enableNewReplyNotification!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用点赞通知',
     example: true,
     required: true,
   })
   enableLikeNotification!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用收藏通知',
     example: true,
     required: true,
   })
   enableFavoriteNotification!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用系统通知',
     example: true,
     required: true,
   })
   enableSystemNotification!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用站点维护模式',
     example: false,
     required: true,
   })
   enableMaintenanceMode!: boolean
 
-  @ValidateString({
+  @StringProperty({
     description: '维护模式提示信息',
     example: '系统维护中，请稍后再来',
     required: false,
@@ -265,7 +262,7 @@ export class UpdateForumConfigDto extends IntersectionType(
   BaseForumConfigDto,
   IdDto,
 ) {
-  @ValidateString({
+  @StringProperty({
     description: '变更原因',
     example: '更新论坛配置',
     required: false,

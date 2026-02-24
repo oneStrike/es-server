@@ -1,8 +1,8 @@
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -22,7 +22,7 @@ import {
  * 包含论坛主题的所有基础字段定义
  */
 export class BaseForumTopicDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '主题标题',
     example: '如何学习TypeScript？',
     required: true,
@@ -30,14 +30,14 @@ export class BaseForumTopicDto extends BaseDto {
   })
   title!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '主题内容',
     example: '我想学习TypeScript，有什么好的学习资源推荐吗？',
     required: true,
   })
   content!: string
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的板块ID',
     example: 1,
     required: true,
@@ -45,7 +45,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   sectionId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1,
     required: true,
@@ -53,7 +53,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   userId!: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否置顶',
     example: false,
     required: true,
@@ -61,7 +61,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   isPinned!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否精华',
     example: false,
     required: true,
@@ -69,7 +69,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   isFeatured!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否锁定',
     example: false,
     required: true,
@@ -77,7 +77,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   isLocked!: boolean
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否隐藏',
     example: false,
     required: true,
@@ -85,7 +85,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   isHidden!: boolean
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '审核角色（0=版主, 1=管理员）',
     example: ForumTopicAuditRoleEnum.MODERATOR,
     required: false,
@@ -94,7 +94,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   auditRole?: ForumTopicAuditRoleEnum
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '关联的审核用户ID',
     example: 1,
     required: false,
@@ -102,7 +102,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   auditById?: number
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '审核状态（0=待审核, 1=已通过, 2=已拒绝）',
     example: ForumTopicAuditStatusEnum.APPROVED,
     required: true,
@@ -111,7 +111,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   auditStatus!: ForumTopicAuditStatusEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '审核拒绝原因',
     example: '内容包含敏感信息',
     required: false,
@@ -160,7 +160,7 @@ export class BaseForumTopicDto extends BaseDto {
   })
   lastReplyAt?: Date
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '最后回复用户ID',
     example: 2,
     required: false,
@@ -218,7 +218,7 @@ export class QueryForumTopicDto extends IntersectionType(
     ]),
   ),
 ) {
-  @ValidateString({
+  @StringProperty({
     description: '关键词搜索（标题或内容）',
     example: 'TypeScript',
     required: false,

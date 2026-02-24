@@ -1,8 +1,8 @@
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import {
@@ -14,7 +14,7 @@ import {
 import { UserBadgeTypeEnum } from '../user-badge.constant'
 
 export class BaseUserBadgeDto extends BaseDto {
-  @ValidateString({
+  @StringProperty({
     description: '徽章名称',
     example: '活跃用户',
     required: true,
@@ -22,21 +22,21 @@ export class BaseUserBadgeDto extends BaseDto {
   })
   name!: string
 
-  @ValidateString({
+  @StringProperty({
     description: '徽章描述',
     example: '连续登录7天',
     maxLength: 200,
   })
   description?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '徽章图标URL',
     example: 'https://example.com/badge.png',
     maxLength: 255,
   })
   icon?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '业务域标识',
     example: 'forum',
     required: false,
@@ -44,7 +44,7 @@ export class BaseUserBadgeDto extends BaseDto {
   })
   business?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '事件键',
     example: 'forum.topic.create',
     required: false,
@@ -52,7 +52,7 @@ export class BaseUserBadgeDto extends BaseDto {
   })
   eventKey?: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '徽章类型（1=系统徽章, 2=成就徽章, 3=活动徽章）',
     example: UserBadgeTypeEnum.System,
     required: true,
@@ -60,14 +60,14 @@ export class BaseUserBadgeDto extends BaseDto {
   })
   type!: UserBadgeTypeEnum
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '排序值（数值越小越靠前）',
     example: 0,
     min: 0,
   })
   sortOrder?: number
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '是否启用',
     example: true,
   })
@@ -98,14 +98,14 @@ export class QueryUserBadgeDto extends IntersectionType(
 ) {}
 
 export class AssignUserBadgeDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '徽章id',
     example: 1,
     required: true,
   })
   badgeId!: number
 
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户id',
     example: 1,
     required: true,

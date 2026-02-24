@@ -1,17 +1,17 @@
 import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/constant'
 import {
-  ValidateBoolean,
-  ValidateEnum,
-  ValidateJson,
-  ValidateNumber,
-  ValidateString,
+  BooleanProperty,
+  EnumProperty,
+  JsonProperty,
+  NumberProperty,
+  StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { ActionTypeEnum } from '../audit.constant'
 
 export class BaseAuditDto extends BaseDto {
-  @ValidateNumber({
+  @NumberProperty({
     description: '用户ID',
     example: 1001,
     required: false,
@@ -19,7 +19,7 @@ export class BaseAuditDto extends BaseDto {
   })
   userId?: number
 
-  @ValidateString({
+  @StringProperty({
     description: '用户名',
     example: 'admin001',
     required: false,
@@ -27,7 +27,7 @@ export class BaseAuditDto extends BaseDto {
   })
   username?: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '接口类型（admin/app/system等）',
     example: 'admin',
     required: false,
@@ -35,7 +35,7 @@ export class BaseAuditDto extends BaseDto {
   })
   apiType?: ApiTypeEnum
 
-  @ValidateString({
+  @StringProperty({
     description: 'IP地址',
     example: '192.168.1.100',
     required: false,
@@ -43,7 +43,7 @@ export class BaseAuditDto extends BaseDto {
   })
   ip?: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '请求方法',
     example: 'POST',
     required: true,
@@ -51,7 +51,7 @@ export class BaseAuditDto extends BaseDto {
   })
   method!: HttpMethodEnum
 
-  @ValidateString({
+  @StringProperty({
     description: '请求路径',
     example: '/api/admin/user/login',
     required: true,
@@ -59,14 +59,14 @@ export class BaseAuditDto extends BaseDto {
   })
   path!: string
 
-  @ValidateJson({
+  @JsonProperty({
     description: '请求参数（JSON格式）',
     example: '{"username": "admin", "password": "***"}',
     required: false,
   })
   params?: string
 
-  @ValidateEnum({
+  @EnumProperty({
     description: '操作类型',
     example: '用户登录',
     required: false,
@@ -74,14 +74,14 @@ export class BaseAuditDto extends BaseDto {
   })
   actionType?: ActionTypeEnum
 
-  @ValidateBoolean({
+  @BooleanProperty({
     description: '操作是否成功',
     example: true,
     required: true,
   })
   isSuccess!: boolean
 
-  @ValidateString({
+  @StringProperty({
     description: '设备信息（User-Agent）',
     example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     required: false,
@@ -89,14 +89,14 @@ export class BaseAuditDto extends BaseDto {
   })
   userAgent?: string
 
-  @ValidateJson({
+  @JsonProperty({
     description: '设备信息解析结果（JSON）',
     example: '{"browser": "Chrome", "os": "Windows", "device": "Desktop"}',
     required: false,
   })
   device?: string
 
-  @ValidateString({
+  @StringProperty({
     description: '自定义日志内容',
     example: '用户admin成功登录系统',
     required: true,
