@@ -38,6 +38,14 @@ export class UserPointService extends BaseService {
    * @returns 创建的规则信息
    */
   async createPointRule(dto: CreateUserPointRuleDto) {
+    // 校验规则类型是否存在
+    if (!Object.values(UserPointRuleTypeEnum).includes(dto.type)) {
+      throw new BadRequestException('积分规则类型不存在')
+    }
+    // 校验是否已存在相同类型规则
+    if (await this.userPointRule.exists({ type: dto.type })) {
+      throw new BadRequestException('已存在相同类型的积分规则')
+    }
     return this.userPointRule.create({
       data: dto,
     })
@@ -50,13 +58,6 @@ export class UserPointService extends BaseService {
    */
   async getPointRulePage(queryPointRuleDto: QueryUserPointRuleDto) {
     const where: UserPointRuleWhereInput = queryPointRuleDto
-
-    if (queryPointRuleDto.name) {
-      where.name = {
-        contains: queryPointRuleDto.name,
-        mode: 'insensitive',
-      }
-    }
 
     return this.userPointRule.findPagination({
       where,

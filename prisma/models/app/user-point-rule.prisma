@@ -3,10 +3,8 @@ model UserPointRule {
   /// 主键ID
   id Int @id @default(autoincrement())
 
-  /// 规则名称
-  name String @unique @db.VarChar(50)
-  /// 规则类型（1=发帖, 2=回复, 3=被点赞, 4=回复被点赞, 5=被收藏, 6=每日签到）
-  type Int    @unique @db.SmallInt
+  /// 规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到, 7=管理员操作, 8=主题浏览, 9=举报, 101=漫画浏览, 102=漫画点赞, 103=漫画收藏, 111=章节阅读, 112=章节点赞, 113=章节购买, 114=章节下载）
+  type Int @unique @db.SmallInt
 
   /// 积分变化（正数为获得，负数为扣除）
   points          Int

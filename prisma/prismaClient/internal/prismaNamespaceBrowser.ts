@@ -534,7 +534,6 @@ export type UserPointRecordScalarFieldEnum = (typeof UserPointRecordScalarFieldE
 
 export const UserPointRuleScalarFieldEnum = {
   id: 'id',
-  name: 'name',
   type: 'type',
   points: 'points',
   dailyLimit: 'dailyLimit',

@@ -14,14 +14,6 @@ import {
 import { UserPointRuleTypeEnum } from '../point.constant'
 
 export class BaseUserPointRuleDto extends BaseDto {
-  @StringProperty({
-    description: '规则名称',
-    example: '发表主题奖励',
-    required: true,
-    maxLength: 50,
-  })
-  name!: string
-
   @EnumProperty({
     description:
       '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到, 7=管理员操作, 8=主题浏览, 9=举报, 101=漫画浏览, 102=漫画点赞, 103=漫画收藏, 111=章节阅读, 112=章节点赞, 113=章节购买, 114=章节下载）',
@@ -53,14 +45,6 @@ export class BaseUserPointRuleDto extends BaseDto {
     maxLength: 20,
   })
   business?: string
-
-  @StringProperty({
-    description: '事件键',
-    example: 'forum.topic.create',
-    required: false,
-    maxLength: 50,
-  })
-  eventKey?: string
 
   @NumberProperty({
     description: '冷却秒数（0=无限制）',
@@ -98,22 +82,20 @@ export class BaseUserPointRuleDto extends BaseDto {
 export class CreateUserPointRuleDto extends OmitType(
   BaseUserPointRuleDto,
   OMIT_BASE_FIELDS,
-) {}
+) { }
 
 export class UpdateUserPointRuleDto extends IntersectionType(
   PartialType(CreateUserPointRuleDto),
   IdDto,
-) {}
+) { }
 
 export class QueryUserPointRuleDto extends IntersectionType(
   PageDto,
   PartialType(
     PickType(BaseUserPointRuleDto, [
-      'name',
       'type',
       'business',
-      'eventKey',
       'isEnabled',
     ]),
   ),
-) {}
+) { }
