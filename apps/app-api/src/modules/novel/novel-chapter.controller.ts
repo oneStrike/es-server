@@ -1,8 +1,12 @@
+import type { RequestMetaResult } from '@libs/base/decorators'
 import type { JwtUserInfoInterface } from '@libs/base/types'
-import type { FastifyRequest } from 'fastify'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
+import {
+  ApiDoc,
+  ApiPageDoc,
+  CurrentUser,
+  RequestMeta,
+} from '@libs/base/decorators'
 import { IdDto, IdsDto, PageDto } from '@libs/base/dto'
-import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import {
   QueryWorkChapterDto,
   WorkChapterDetailWithUserStatusDto,
@@ -10,20 +14,13 @@ import {
   WorkChapterService,
   WorkChapterUserStatusDto,
 } from '@libs/content/work/chapter'
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('小说模块/章节')
 @Controller('app/novel')
 export class NovelChapterController {
   constructor(private readonly workChapterService: WorkChapterService) {}
-
-  private getRequestMeta(req: FastifyRequest) {
-    return {
-      ip: extractIpAddress(req),
-      deviceId: parseDeviceInfo(req.headers['user-agent']),
-    }
-  }
 
   @Post('chapter/read')
   @ApiDoc({
@@ -33,14 +30,13 @@ export class NovelChapterController {
   async readChapter(
     @Body() body: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
-    @Req() req: FastifyRequest,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    const { ip, deviceId } = this.getRequestMeta(req)
     return this.workChapterService.incrementViewCount(
       body.id,
       user.sub,
-      ip,
-      deviceId,
+      meta.ip,
+      meta.deviceId,
     )
   }
 
@@ -118,14 +114,13 @@ export class NovelChapterController {
   async likeChapter(
     @Body() body: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
-    @Req() req: FastifyRequest,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    const { ip, deviceId } = this.getRequestMeta(req)
     return this.workChapterService.incrementLikeCount(
       body.id,
       user.sub,
-      ip,
-      deviceId,
+      meta.ip,
+      meta.deviceId,
     )
   }
 
@@ -149,14 +144,13 @@ export class NovelChapterController {
   async purchaseChapter(
     @Body() body: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
-    @Req() req: FastifyRequest,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    const { ip, deviceId } = this.getRequestMeta(req)
     return this.workChapterService.incrementPurchaseCount(
       body.id,
       user.sub,
-      ip,
-      deviceId,
+      meta.ip,
+      meta.deviceId,
     )
   }
 
@@ -180,14 +174,13 @@ export class NovelChapterController {
   async downloadChapter(
     @Body() body: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
-    @Req() req: FastifyRequest,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    const { ip, deviceId } = this.getRequestMeta(req)
     return this.workChapterService.reportDownload(
       body.id,
       user.sub,
-      ip,
-      deviceId,
+      meta.ip,
+      meta.deviceId,
     )
   }
 

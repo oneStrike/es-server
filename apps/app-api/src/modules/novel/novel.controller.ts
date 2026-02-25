@@ -1,9 +1,13 @@
+import type { RequestMetaResult } from '@libs/base/decorators'
 import type { JwtUserInfoInterface } from '@libs/base/types'
-import type { FastifyRequest } from 'fastify'
 import { WorkTypeEnum } from '@libs/base/constant'
-import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
+import {
+  ApiDoc,
+  ApiPageDoc,
+  CurrentUser,
+  RequestMeta,
+} from '@libs/base/decorators'
 import { IdDto, IdsDto, PageDto } from '@libs/base/dto'
-import { extractIpAddress, parseDeviceInfo } from '@libs/base/utils'
 import {
   QueryWorkDto,
   WorkDetailWithUserStatusDto,
@@ -11,20 +15,13 @@ import {
   WorkService,
   WorkUserStatusDto,
 } from '@libs/content/work/core'
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('小说模块/小说')
 @Controller('app/novel')
 export class NovelController {
   constructor(private readonly workService: WorkService) {}
-
-  private getRequestMeta(req: FastifyRequest) {
-    return {
-      ip: extractIpAddress(req),
-      deviceId: parseDeviceInfo(req.headers['user-agent']),
-    }
-  }
 
   @Post('view')
   @ApiDoc({
@@ -34,10 +31,9 @@ export class NovelController {
   async viewNovel(
     @Body() body: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
-    @Req() req: FastifyRequest,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    const { ip, deviceId } = this.getRequestMeta(req)
-    return this.workService.incrementViewCount(body.id, user.sub, ip, deviceId)
+    return this.workService.incrementViewCount(body.id, user.sub, meta.ip, meta.deviceId)
   }
 
   @Get('detail')
@@ -75,10 +71,9 @@ export class NovelController {
   async likeNovel(
     @Body() body: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
-    @Req() req: FastifyRequest,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    const { ip, deviceId } = this.getRequestMeta(req)
-    return this.workService.incrementLikeCount(body.id, user.sub, ip, deviceId)
+    return this.workService.incrementLikeCount(body.id, user.sub, meta.ip, meta.deviceId)
   }
 
   @Get('liked')
@@ -101,14 +96,13 @@ export class NovelController {
   async favoriteNovel(
     @Body() body: IdDto,
     @CurrentUser() user: JwtUserInfoInterface,
-    @Req() req: FastifyRequest,
+    @RequestMeta() meta: RequestMetaResult,
   ) {
-    const { ip, deviceId } = this.getRequestMeta(req)
     return this.workService.incrementFavoriteCount(
       body.id,
       user.sub,
-      ip,
-      deviceId,
+      meta.ip,
+      meta.deviceId,
     )
   }
 

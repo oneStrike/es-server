@@ -57,10 +57,8 @@ export class UserPointService extends BaseService {
    * @returns 分页的规则列表
    */
   async getPointRulePage(queryPointRuleDto: QueryUserPointRuleDto) {
-    const where: UserPointRuleWhereInput = queryPointRuleDto
-
     return this.userPointRule.findPagination({
-      where,
+      where: queryPointRuleDto,
     })
   }
 

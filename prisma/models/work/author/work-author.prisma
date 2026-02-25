@@ -13,7 +13,7 @@ model WorkAuthor {
   nationality String? @db.VarChar(50)
   /// 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）
   gender      Int     @default(0) @db.SmallInt
-  /// 作者类型（1: 漫画家, 2: 轻小说作者, 3: 插画师, 4: coser）
+  /// 作者类型（1: 漫画家, 2: 轻小说作者）
   type        Int[]   @db.SmallInt
 
   /// 启用状态（true: 启用, false: 禁用）
