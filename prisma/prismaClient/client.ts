@@ -113,6 +113,34 @@ export type UserBadgeAssignment = Prisma.UserBadgeAssignmentModel
  */
 export type UserBadge = Prisma.UserBadgeModel
 /**
+ * Model UserCommentLike
+ * 评论点赞记录表
+ * 记录用户对评论的点赞操作
+ * 支持评论点赞计数和用户点赞状态查询
+ */
+export type UserCommentLike = Prisma.UserCommentLikeModel
+/**
+ * Model UserCommentReport
+ * 评论举报记录表
+ * 记录用户对违规评论的举报信息
+ * 支持举报处理流程和举报统计
+ */
+export type UserCommentReport = Prisma.UserCommentReportModel
+/**
+ * Model UserComment
+ * 用户评论表
+ * 统一存储漫画评论、漫画章节评论、小说评论、小说章节评论、论坛回复等所有评论内容
+ * 支持楼中楼回复、审核流程、敏感词检测等功能
+ */
+export type UserComment = Prisma.UserCommentModel
+/**
+ * Model UserDownload
+ * 用户下载记录表
+ * 记录用户对作品、章节等内容的下载操作
+ * 支持下载计数统计和用户下载历史查询
+ */
+export type UserDownload = Prisma.UserDownloadModel
+/**
  * Model UserExperienceRecord
  * 用户经验记录表 - 记录用户经验变化历史
  */
@@ -122,6 +150,13 @@ export type UserExperienceRecord = Prisma.UserExperienceRecordModel
  * 用户经验规则表 - 定义经验获取规则，包括发帖、回复、点赞、签到等
  */
 export type UserExperienceRule = Prisma.UserExperienceRuleModel
+/**
+ * Model UserFavorite
+ * 用户收藏记录表
+ * 记录用户对各类目标（漫画、小说、论坛主题）的收藏操作
+ * 支持收藏计数统计和用户收藏列表查询
+ */
+export type UserFavorite = Prisma.UserFavoriteModel
 /**
  * Model UserGrowthEventArchive
  * 成长事件归档记录
@@ -138,6 +173,14 @@ export type UserGrowthEvent = Prisma.UserGrowthEventModel
  */
 export type UserLevelRule = Prisma.UserLevelRuleModel
 /**
+ * Model UserLike
+ * 用户点赞记录表
+ * 记录用户对各类目标（漫画、小说、章节、论坛主题）的点赞操作
+ * 支持点赞计数统计和用户点赞状态查询
+ * 注意：评论点赞使用独立的 user_comment_like 表
+ */
+export type UserLike = Prisma.UserLikeModel
+/**
  * Model UserPointRecord
  * 用户积分记录表 - 记录用户积分变化历史
  */
@@ -147,6 +190,14 @@ export type UserPointRecord = Prisma.UserPointRecordModel
  * 用户积分规则表 - 定义积分获取和消费规则，包括发帖、回复、点赞、签到等
  */
 export type UserPointRule = Prisma.UserPointRuleModel
+/**
+ * Model UserView
+ * 用户浏览记录表
+ * 记录用户对各类目标（漫画、小说、章节、论坛主题）的浏览行为
+ * 用于浏览历史查询、热度统计、推荐算法等
+ * 支持用户删除浏览记录
+ */
+export type UserView = Prisma.UserViewModel
 /**
  * Model ForumConfigHistory
  * 论坛配置历史表 - 记录配置项的变更历史，支持版本控制和回滚功能
@@ -189,13 +240,12 @@ export type ForumNotification = Prisma.ForumNotificationModel
 export type ForumProfile = Prisma.ForumProfileModel
 /**
  * Model ForumReplyLike
- * 论坛回复点赞表 - 记录用户对回复的点赞关系
+ * 论坛回复点赞表 - 存储用户对论坛回复的点赞记录
  */
 export type ForumReplyLike = Prisma.ForumReplyLikeModel
 /**
  * Model ForumReply
- * 论坛回复表 - 存储主题的回复内容，支持多层回复
- * 约束：数据库支持无限层级，但API返回时只展示两层（主题回复 + 一层楼中楼）
+ * 论坛回复表 - 存储论坛主题的回复信息
  */
 export type ForumReply = Prisma.ForumReplyModel
 /**
@@ -220,12 +270,12 @@ export type ForumSection = Prisma.ForumSectionModel
 export type ForumTag = Prisma.ForumTagModel
 /**
  * Model ForumTopicFavorite
- * 论坛主题收藏表 - 记录用户收藏的主题关系
+ * 论坛主题收藏表 - 存储用户对论坛主题的收藏记录
  */
 export type ForumTopicFavorite = Prisma.ForumTopicFavoriteModel
 /**
  * Model ForumTopicLike
- * 论坛主题点赞表 - 记录用户对主题的点赞关系
+ * 论坛主题点赞表 - 存储用户对论坛主题的点赞记录
  */
 export type ForumTopicLike = Prisma.ForumTopicLikeModel
 /**
@@ -245,7 +295,7 @@ export type ForumTopic = Prisma.ForumTopicModel
 export type ForumUserActionLog = Prisma.ForumUserActionLogModel
 /**
  * Model ForumView
- * 论坛浏览记录表 - 记录用户浏览主题的历史
+ * 论坛浏览记录表 - 存储用户对论坛主题的浏览记录
  */
 export type ForumView = Prisma.ForumViewModel
 /**
@@ -305,12 +355,12 @@ export type WorkCategoryRelation = Prisma.WorkCategoryRelationModel
 export type WorkCategory = Prisma.WorkCategoryModel
 /**
  * Model WorkChapterDownload
- * 章节下载记录
+ * 章节下载记录表 - 存储用户的章节下载历史
  */
 export type WorkChapterDownload = Prisma.WorkChapterDownloadModel
 /**
  * Model WorkChapterLike
- * 章节点赞记录
+ * 章节点赞表 - 存储用户对章节的点赞记录
  */
 export type WorkChapterLike = Prisma.WorkChapterLikeModel
 /**
@@ -325,22 +375,22 @@ export type WorkChapterPurchase = Prisma.WorkChapterPurchaseModel
 export type WorkChapter = Prisma.WorkChapterModel
 /**
  * Model WorkCommentReport
- * 评论举报记录
+ * 作品评论举报表 - 存储用户对评论的举报记录
  */
 export type WorkCommentReport = Prisma.WorkCommentReportModel
 /**
  * Model WorkComment
- * 统一评论表（支持作品评论和章节评论）
+ * 作品评论表 - 存储用户对作品的评论信息
  */
 export type WorkComment = Prisma.WorkCommentModel
 /**
  * Model WorkFavorite
- * 作品收藏记录
+ * 作品收藏表 - 存储用户对作品的收藏记录
  */
 export type WorkFavorite = Prisma.WorkFavoriteModel
 /**
  * Model WorkLike
- * 作品点赞记录
+ * 作品点赞表 - 存储用户对作品的点赞记录
  */
 export type WorkLike = Prisma.WorkLikeModel
 /**

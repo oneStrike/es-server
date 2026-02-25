@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkFavorite
- * 作品收藏记录
+ * 作品收藏表 - 存储用户对作品的收藏记录
  */
 export type WorkFavoriteModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkFavoritePayload>
 
@@ -678,19 +678,25 @@ export type $WorkFavoritePayload<ExtArgs extends runtime.Types.Extensions.Intern
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键ID
+     */
     id: number
     /**
-     * 作品ID
+     * 关联的作品ID
      */
     workId: number
     /**
-     * 用户ID
+     * 关联的用户ID
      */
     userId: number
     /**
-     * 作品类型（1=漫画, 2=小说）
+     * 作品类型：1=漫画, 2=小说（用于按类型筛选收藏）
      */
     workType: number
+    /**
+     * 创建时间
+     */
     createdAt: Date
   }, ExtArgs["result"]["workFavorite"]>
   composites: {}

@@ -66,13 +66,20 @@ export const ModelName = {
   Task: 'Task',
   UserBadgeAssignment: 'UserBadgeAssignment',
   UserBadge: 'UserBadge',
+  UserCommentLike: 'UserCommentLike',
+  UserCommentReport: 'UserCommentReport',
+  UserComment: 'UserComment',
+  UserDownload: 'UserDownload',
   UserExperienceRecord: 'UserExperienceRecord',
   UserExperienceRule: 'UserExperienceRule',
+  UserFavorite: 'UserFavorite',
   UserGrowthEventArchive: 'UserGrowthEventArchive',
   UserGrowthEvent: 'UserGrowthEvent',
   UserLevelRule: 'UserLevelRule',
+  UserLike: 'UserLike',
   UserPointRecord: 'UserPointRecord',
   UserPointRule: 'UserPointRule',
+  UserView: 'UserView',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
@@ -409,6 +416,72 @@ export const UserBadgeScalarFieldEnum = {
 export type UserBadgeScalarFieldEnum = (typeof UserBadgeScalarFieldEnum)[keyof typeof UserBadgeScalarFieldEnum]
 
 
+export const UserCommentLikeScalarFieldEnum = {
+  id: 'id',
+  commentId: 'commentId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type UserCommentLikeScalarFieldEnum = (typeof UserCommentLikeScalarFieldEnum)[keyof typeof UserCommentLikeScalarFieldEnum]
+
+
+export const UserCommentReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  handlerId: 'handlerId',
+  commentId: 'commentId',
+  reason: 'reason',
+  description: 'description',
+  evidenceUrl: 'evidenceUrl',
+  status: 'status',
+  handlingNote: 'handlingNote',
+  handledAt: 'handledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserCommentReportScalarFieldEnum = (typeof UserCommentReportScalarFieldEnum)[keyof typeof UserCommentReportScalarFieldEnum]
+
+
+export const UserCommentScalarFieldEnum = {
+  id: 'id',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  userId: 'userId',
+  content: 'content',
+  floor: 'floor',
+  replyToId: 'replyToId',
+  actualReplyToId: 'actualReplyToId',
+  isHidden: 'isHidden',
+  auditStatus: 'auditStatus',
+  auditReason: 'auditReason',
+  auditAt: 'auditAt',
+  auditById: 'auditById',
+  auditRole: 'auditRole',
+  likeCount: 'likeCount',
+  sensitiveWordHits: 'sensitiveWordHits',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type UserCommentScalarFieldEnum = (typeof UserCommentScalarFieldEnum)[keyof typeof UserCommentScalarFieldEnum]
+
+
+export const UserDownloadScalarFieldEnum = {
+  id: 'id',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  userId: 'userId',
+  workId: 'workId',
+  workType: 'workType',
+  createdAt: 'createdAt'
+} as const
+
+export type UserDownloadScalarFieldEnum = (typeof UserDownloadScalarFieldEnum)[keyof typeof UserDownloadScalarFieldEnum]
+
+
 export const UserExperienceRecordScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -441,6 +514,17 @@ export const UserExperienceRuleScalarFieldEnum = {
 } as const
 
 export type UserExperienceRuleScalarFieldEnum = (typeof UserExperienceRuleScalarFieldEnum)[keyof typeof UserExperienceRuleScalarFieldEnum]
+
+
+export const UserFavoriteScalarFieldEnum = {
+  id: 'id',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type UserFavoriteScalarFieldEnum = (typeof UserFavoriteScalarFieldEnum)[keyof typeof UserFavoriteScalarFieldEnum]
 
 
 export const UserGrowthEventArchiveScalarFieldEnum = {
@@ -516,6 +600,17 @@ export const UserLevelRuleScalarFieldEnum = {
 export type UserLevelRuleScalarFieldEnum = (typeof UserLevelRuleScalarFieldEnum)[keyof typeof UserLevelRuleScalarFieldEnum]
 
 
+export const UserLikeScalarFieldEnum = {
+  id: 'id',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  userId: 'userId',
+  createdAt: 'createdAt'
+} as const
+
+export type UserLikeScalarFieldEnum = (typeof UserLikeScalarFieldEnum)[keyof typeof UserLikeScalarFieldEnum]
+
+
 export const UserPointRecordScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -548,6 +643,20 @@ export const UserPointRuleScalarFieldEnum = {
 } as const
 
 export type UserPointRuleScalarFieldEnum = (typeof UserPointRuleScalarFieldEnum)[keyof typeof UserPointRuleScalarFieldEnum]
+
+
+export const UserViewScalarFieldEnum = {
+  id: 'id',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  userId: 'userId',
+  ipAddress: 'ipAddress',
+  device: 'device',
+  userAgent: 'userAgent',
+  viewedAt: 'viewedAt'
+} as const
+
+export type UserViewScalarFieldEnum = (typeof UserViewScalarFieldEnum)[keyof typeof UserViewScalarFieldEnum]
 
 
 export const ForumConfigHistoryScalarFieldEnum = {
@@ -717,19 +826,9 @@ export const ForumReplyScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
   userId: 'userId',
-  content: 'content',
-  floor: 'floor',
   replyToId: 'replyToId',
-  actualReplyToId: 'actualReplyToId',
-  isHidden: 'isHidden',
-  auditStatus: 'auditStatus',
-  auditReason: 'auditReason',
-  auditAt: 'auditAt',
-  auditById: 'auditById',
-  auditRole: 'auditRole',
+  content: 'content',
   likeCount: 'likeCount',
-  version: 'version',
-  sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -889,12 +988,7 @@ export type ForumUserActionLogScalarFieldEnum = (typeof ForumUserActionLogScalar
 export const ForumViewScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
-  replyId: 'replyId',
   userId: 'userId',
-  type: 'type',
-  duration: 'duration',
-  device: 'device',
-  ipAddress: 'ipAddress',
   viewedAt: 'viewedAt'
 } as const
 
@@ -1079,6 +1173,8 @@ export const WorkChapterDownloadScalarFieldEnum = {
   id: 'id',
   chapterId: 'chapterId',
   userId: 'userId',
+  workId: 'workId',
+  workType: 'workType',
   createdAt: 'createdAt'
 } as const
 
@@ -1140,9 +1236,9 @@ export type WorkChapterScalarFieldEnum = (typeof WorkChapterScalarFieldEnum)[key
 
 export const WorkCommentReportScalarFieldEnum = {
   id: 'id',
+  commentId: 'commentId',
   reporterId: 'reporterId',
   handlerId: 'handlerId',
-  commentId: 'commentId',
   reason: 'reason',
   description: 'description',
   evidenceUrl: 'evidenceUrl',
@@ -1163,16 +1259,16 @@ export const WorkCommentScalarFieldEnum = {
   chapterId: 'chapterId',
   userId: 'userId',
   content: 'content',
-  sensitiveWordHits: 'sensitiveWordHits',
+  floor: 'floor',
   replyToId: 'replyToId',
   actualReplyToId: 'actualReplyToId',
-  floor: 'floor',
   isHidden: 'isHidden',
   auditStatus: 'auditStatus',
   auditReason: 'auditReason',
   auditAt: 'auditAt',
   auditById: 'auditById',
-  auditRole: 'auditRole',
+  likeCount: 'likeCount',
+  sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'

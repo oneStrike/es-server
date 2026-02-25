@@ -1,12 +1,16 @@
-/// 章节下载记录
+/// 章节下载记录表 - 存储用户的章节下载历史
 model WorkChapterDownload {
-  id Int @id @default(autoincrement())
-
-  /// 章节ID
-  chapterId Int @map("chapter_id")
-  /// 用户ID
-  userId    Int @map("user_id")
-
+  /// 主键ID
+  id        Int      @id @default(autoincrement())
+  /// 关联的章节ID
+  chapterId Int      @map("chapter_id")
+  /// 关联的用户ID
+  userId    Int      @map("user_id")
+  /// 关联的作品ID
+  workId    Int      @map("work_id")
+  /// 作品类型：1=漫画, 2=小说
+  workType  Int      @map("work_type")
+  /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   /// 关联章节
@@ -20,6 +24,10 @@ model WorkChapterDownload {
   @@index([chapterId])
   /// 用户索引
   @@index([userId])
+  /// 作品索引
+  @@index([workId])
+  /// 作品类型索引
+  @@index([workType])
   /// 创建时间索引
   @@index([createdAt])
   @@map("work_chapter_download")

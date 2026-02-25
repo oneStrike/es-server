@@ -60,6 +60,12 @@
       ],
       "@libs/task/*": [
         "libs/task/src/*"
+      ],
+      "@libs/interaction": [
+        "libs/interaction/src"
+      ],
+      "@libs/interaction/*": [
+        "libs/interaction/src/*"
       ]
     },
     "resolveJsonModule": true,

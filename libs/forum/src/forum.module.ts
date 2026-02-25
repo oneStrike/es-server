@@ -23,6 +23,14 @@ import { ForumViewModule } from './view'
 /**
  * 论坛模块
  * 聚合所有论坛相关的子模块
+ * 
+ * TODO: 统一交互模块重构完成后，将使用 InteractionModule 替换以下模块：
+ * - ForumTopicLikeModule -> InteractionModule.LikeModule
+ * - ForumTopicFavoriteModule -> InteractionModule.FavoriteModule
+ * - ForumViewModule -> InteractionModule.ViewModule
+ * - ForumReplyModule -> InteractionModule.CommentModule
+ * - ForumReplyLikeModule -> InteractionModule.CommentLikeModule
+ * - ForumReportModule -> InteractionModule.CommentReportModule
  */
 @Module({
   imports: [

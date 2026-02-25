@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkLike
- * 作品点赞记录
+ * 作品点赞表 - 存储用户对作品的点赞记录
  */
 export type WorkLikeModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkLikePayload>
 
@@ -633,15 +633,21 @@ export type $WorkLikePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键ID
+     */
     id: number
     /**
-     * 作品ID
+     * 关联的作品ID
      */
     workId: number
     /**
-     * 用户ID
+     * 关联的用户ID
      */
     userId: number
+    /**
+     * 创建时间
+     */
     createdAt: Date
   }, ExtArgs["result"]["workLike"]>
   composites: {}

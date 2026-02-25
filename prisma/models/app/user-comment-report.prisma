@@ -1,0 +1,69 @@
+/// 评论举报记录表
+/// 记录用户对违规评论的举报信息
+/// 支持举报处理流程和举报统计
+model UserCommentReport {
+  /// 主键ID（自增）
+  id Int @id @default(autoincrement())
+
+  /// 举报人ID（关联 app_user.id）
+  /// 发起举报的用户
+  reporterId Int @map("reporter_id")
+
+  /// 处理人ID（关联 app_user.id）
+  /// 处理举报的管理员，未处理时为null
+  handlerId Int? @map("handler_id")
+
+  /// 被举报评论ID（关联 user_comment.id）
+  /// 被举报的评论
+  commentId Int @map("comment_id")
+
+  /// 举报原因
+  /// 预定义的举报原因类型，如：spam（垃圾信息）、harassment（骚扰）、inappropriate（不当内容）等
+  reason String @db.VarChar(50)
+
+  /// 举报说明
+  /// 用户填写的详细举报说明
+  description String? @db.VarChar(500)
+
+  /// 证据截图URL
+  /// 用户上传的证据图片链接
+  evidenceUrl String? @map("evidence_url") @db.VarChar(500)
+
+  /// 处理状态（pending=待处理, processing=处理中, resolved=已解决, rejected=已拒绝）
+  /// 标识举报的处理进度
+  status String @default("pending") @db.VarChar(20)
+
+  /// 处理备注
+  /// 管理员处理时填写的备注信息
+  handlingNote String? @map("handling_note") @db.VarChar(500)
+
+  /// 处理时间
+  /// 举报被处理的时间
+  handledAt DateTime? @map("handled_at") @db.Timestamptz(6)
+
+  /// 创建时间（举报时间）
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 关联举报人
+  reporter AppUser @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  /// 关联处理人
+  handler AppUser? @relation("ReportHandler", fields: [handlerId], references: [id])
+
+  /// 关联评论
+  comment UserComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  /// 评论ID索引，用于查询某评论的举报记录
+  @@index([commentId])
+  /// 举报人ID索引，用于查询某用户的举报记录
+  @@index([reporterId])
+  /// 处理状态索引，用于筛选待处理举报
+  @@index([status])
+  /// 创建时间索引，用于按时间排序
+  @@index([createdAt])
+  /// 表名映射
+  @@map("user_comment_report")
+}

@@ -84,22 +84,22 @@ model AppUser {
   chapterDownloads          WorkChapterDownload[]
   /// 作品评论关联
   workComments              WorkComment[]
-  /// 论坛回复关联
-  forumReplies              ForumReply[]
-  /// 回复点赞关联
-  replyLikes                ForumReplyLike[]
-  /// 论坛通知关联
-  forumNotifications        ForumNotification[]
-  /// 论坛浏览记录关联
-  forumViews                ForumView[]
-  /// 论坛举报关联（举报人）
-  forumReports              ForumReport[]               @relation("ReportReporter")
-  /// 论坛举报关联（处理人）
-  handledReports            ForumReport[]               @relation("ReportHandler")
   /// 评论举报关联（举报人）
   workCommentReports        WorkCommentReport[]         @relation("WorkCommentReportReporter")
   /// 评论举报关联（处理人）
   handledWorkCommentReports WorkCommentReport[]         @relation("WorkCommentReportHandler")
+  /// 论坛回复关联
+  forumReplies              ForumReply[]
+  /// 回复点赞关联
+  replyLikes                ForumReplyLike[]
+  /// 论坛浏览记录关联
+  forumViews                ForumView[]
+  /// 论坛通知关联
+  forumNotifications        ForumNotification[]
+  /// 论坛举报关联（举报人）
+  forumReports              ForumReport[]               @relation("ReportReporter")
+  /// 论坛举报关联（处理人）
+  handledReports            ForumReport[]               @relation("ReportHandler")
   /// 版主申请关联（申请人）
   moderatorApplications     ForumModeratorApplication[] @relation("ModeratorApplicant")
   /// 版主申请关联（审核人）
@@ -122,6 +122,23 @@ model AppUser {
   operatedConfigHistories   ForumConfigHistory[]        @relation("ForumConfigHistoryOperator")
   /// 系统配置更新关联
   updatedSystemConfigs      SystemConfig[]              @relation("SystemConfigUpdater")
+
+  /// 统一交互模块 - 点赞记录关联
+  userLikes                 UserLike[]
+  /// 统一交互模块 - 收藏记录关联
+  userFavorites             UserFavorite[]
+  /// 统一交互模块 - 浏览记录关联
+  userViews                 UserView[]
+  /// 统一交互模块 - 评论记录关联
+  userComments              UserComment[]
+  /// 统一交互模块 - 评论点赞记录关联
+  userCommentLikes          UserCommentLike[]
+  /// 统一交互模块 - 评论举报关联（举报人）
+  userCommentReports        UserCommentReport[]         @relation("ReportReporter")
+  /// 统一交互模块 - 评论举报关联（处理人）
+  handledUserCommentReports UserCommentReport[]         @relation("ReportHandler")
+  /// 统一交互模块 - 下载记录关联
+  userDownloads             UserDownload[]
 
   /// 启用状态索引
   @@index([isEnabled])

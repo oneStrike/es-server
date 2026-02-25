@@ -1,0 +1,33 @@
+/// 评论点赞记录表
+/// 记录用户对评论的点赞操作
+/// 支持评论点赞计数和用户点赞状态查询
+model UserCommentLike {
+  /// 主键ID（自增）
+  id Int @id @default(autoincrement())
+
+  /// 评论ID（关联 user_comment.id）
+  /// 被点赞的评论
+  commentId Int @map("comment_id")
+
+  /// 用户ID（关联 app_user.id）
+  /// 执行点赞操作的用户
+  userId Int @map("user_id")
+
+  /// 创建时间（点赞时间）
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 关联评论
+  comment UserComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  /// 关联用户
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 唯一约束：同一用户对同一评论只能点赞一次
+  @@unique([commentId, userId])
+  /// 评论ID索引，用于查询某评论的点赞列表
+  @@index([commentId])
+  /// 用户ID索引，用于查询某用户的点赞记录
+  @@index([userId])
+  /// 表名映射
+  @@map("user_comment_like")
+}

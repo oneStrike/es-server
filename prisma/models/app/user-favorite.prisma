@@ -1,0 +1,39 @@
+/// 用户收藏记录表
+/// 记录用户对各类目标（漫画、小说、论坛主题）的收藏操作
+/// 支持收藏计数统计和用户收藏列表查询
+model UserFavorite {
+  /// 主键ID（自增）
+  id Int @id @default(autoincrement())
+
+  /// 目标类型
+  /// 1=漫画, 2=小说, 5=论坛主题
+  /// 注意：作品必须区分漫画(1)和小说(2)，不能使用通用类型
+  targetType Int @map("target_type") @db.SmallInt
+
+  /// 目标ID
+  /// 关联的具体目标记录ID
+  /// - targetType=1/2 时：work.id
+  /// - targetType=5 时：forum_topic.id
+  targetId Int @map("target_id")
+
+  /// 用户ID（关联 app_user.id）
+  /// 执行收藏操作的用户
+  userId Int @map("user_id")
+
+  /// 创建时间（收藏时间）
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 关联用户
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 唯一约束：同一用户对同一目标只能收藏一次
+  @@unique([targetType, targetId, userId])
+  /// 目标类型与目标ID联合索引
+  @@index([targetType, targetId])
+  /// 用户ID索引
+  @@index([userId])
+  /// 创建时间索引
+  @@index([createdAt])
+  /// 表名映射
+  @@map("user_favorite")
+}

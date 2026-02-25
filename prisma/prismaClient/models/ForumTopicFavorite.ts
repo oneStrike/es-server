@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumTopicFavorite
- * 论坛主题收藏表 - 记录用户收藏的主题关系
+ * 论坛主题收藏表 - 存储用户对论坛主题的收藏记录
  */
 export type ForumTopicFavoriteModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumTopicFavoritePayload>
 
@@ -623,7 +623,13 @@ export type ForumTopicFavoriteIncludeUpdateManyAndReturn<ExtArgs extends runtime
 export type $ForumTopicFavoritePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumTopicFavorite"
   objects: {
+    /**
+     * 关联主题
+     */
     topic: Prisma.$ForumTopicPayload<ExtArgs>
+    /**
+     * 关联用户
+     */
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{

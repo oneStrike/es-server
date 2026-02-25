@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkChapterDownload
- * 章节下载记录
+ * 章节下载记录表 - 存储用户的章节下载历史
  */
 export type WorkChapterDownloadModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkChapterDownloadPayload>
 
@@ -30,18 +30,24 @@ export type WorkChapterDownloadAvgAggregateOutputType = {
   id: number | null
   chapterId: number | null
   userId: number | null
+  workId: number | null
+  workType: number | null
 }
 
 export type WorkChapterDownloadSumAggregateOutputType = {
   id: number | null
   chapterId: number | null
   userId: number | null
+  workId: number | null
+  workType: number | null
 }
 
 export type WorkChapterDownloadMinAggregateOutputType = {
   id: number | null
   chapterId: number | null
   userId: number | null
+  workId: number | null
+  workType: number | null
   createdAt: Date | null
 }
 
@@ -49,6 +55,8 @@ export type WorkChapterDownloadMaxAggregateOutputType = {
   id: number | null
   chapterId: number | null
   userId: number | null
+  workId: number | null
+  workType: number | null
   createdAt: Date | null
 }
 
@@ -56,6 +64,8 @@ export type WorkChapterDownloadCountAggregateOutputType = {
   id: number
   chapterId: number
   userId: number
+  workId: number
+  workType: number
   createdAt: number
   _all: number
 }
@@ -65,18 +75,24 @@ export type WorkChapterDownloadAvgAggregateInputType = {
   id?: true
   chapterId?: true
   userId?: true
+  workId?: true
+  workType?: true
 }
 
 export type WorkChapterDownloadSumAggregateInputType = {
   id?: true
   chapterId?: true
   userId?: true
+  workId?: true
+  workType?: true
 }
 
 export type WorkChapterDownloadMinAggregateInputType = {
   id?: true
   chapterId?: true
   userId?: true
+  workId?: true
+  workType?: true
   createdAt?: true
 }
 
@@ -84,6 +100,8 @@ export type WorkChapterDownloadMaxAggregateInputType = {
   id?: true
   chapterId?: true
   userId?: true
+  workId?: true
+  workType?: true
   createdAt?: true
 }
 
@@ -91,6 +109,8 @@ export type WorkChapterDownloadCountAggregateInputType = {
   id?: true
   chapterId?: true
   userId?: true
+  workId?: true
+  workType?: true
   createdAt?: true
   _all?: true
 }
@@ -185,6 +205,8 @@ export type WorkChapterDownloadGroupByOutputType = {
   id: number
   chapterId: number
   userId: number
+  workId: number
+  workType: number
   createdAt: Date
   _count: WorkChapterDownloadCountAggregateOutputType | null
   _avg: WorkChapterDownloadAvgAggregateOutputType | null
@@ -215,6 +237,8 @@ export type WorkChapterDownloadWhereInput = {
   id?: Prisma.IntFilter<"WorkChapterDownload"> | number
   chapterId?: Prisma.IntFilter<"WorkChapterDownload"> | number
   userId?: Prisma.IntFilter<"WorkChapterDownload"> | number
+  workId?: Prisma.IntFilter<"WorkChapterDownload"> | number
+  workType?: Prisma.IntFilter<"WorkChapterDownload"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkChapterDownload"> | Date | string
   chapter?: Prisma.XOR<Prisma.WorkChapterScalarRelationFilter, Prisma.WorkChapterWhereInput>
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
@@ -224,6 +248,8 @@ export type WorkChapterDownloadOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   chapterId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  workId?: Prisma.SortOrder
+  workType?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   chapter?: Prisma.WorkChapterOrderByWithRelationInput
   user?: Prisma.AppUserOrderByWithRelationInput
@@ -237,6 +263,8 @@ export type WorkChapterDownloadWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.WorkChapterDownloadWhereInput | Prisma.WorkChapterDownloadWhereInput[]
   chapterId?: Prisma.IntFilter<"WorkChapterDownload"> | number
   userId?: Prisma.IntFilter<"WorkChapterDownload"> | number
+  workId?: Prisma.IntFilter<"WorkChapterDownload"> | number
+  workType?: Prisma.IntFilter<"WorkChapterDownload"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkChapterDownload"> | Date | string
   chapter?: Prisma.XOR<Prisma.WorkChapterScalarRelationFilter, Prisma.WorkChapterWhereInput>
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
@@ -246,6 +274,8 @@ export type WorkChapterDownloadOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   chapterId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  workId?: Prisma.SortOrder
+  workType?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.WorkChapterDownloadCountOrderByAggregateInput
   _avg?: Prisma.WorkChapterDownloadAvgOrderByAggregateInput
@@ -261,10 +291,14 @@ export type WorkChapterDownloadScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"WorkChapterDownload"> | number
   chapterId?: Prisma.IntWithAggregatesFilter<"WorkChapterDownload"> | number
   userId?: Prisma.IntWithAggregatesFilter<"WorkChapterDownload"> | number
+  workId?: Prisma.IntWithAggregatesFilter<"WorkChapterDownload"> | number
+  workType?: Prisma.IntWithAggregatesFilter<"WorkChapterDownload"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkChapterDownload"> | Date | string
 }
 
 export type WorkChapterDownloadCreateInput = {
+  workId: number
+  workType: number
   createdAt?: Date | string
   chapter: Prisma.WorkChapterCreateNestedOneWithoutDownloadsInput
   user: Prisma.AppUserCreateNestedOneWithoutChapterDownloadsInput
@@ -274,10 +308,14 @@ export type WorkChapterDownloadUncheckedCreateInput = {
   id?: number
   chapterId: number
   userId: number
+  workId: number
+  workType: number
   createdAt?: Date | string
 }
 
 export type WorkChapterDownloadUpdateInput = {
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chapter?: Prisma.WorkChapterUpdateOneRequiredWithoutDownloadsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutChapterDownloadsNestedInput
@@ -287,6 +325,8 @@ export type WorkChapterDownloadUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   chapterId?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -294,10 +334,14 @@ export type WorkChapterDownloadCreateManyInput = {
   id?: number
   chapterId: number
   userId: number
+  workId: number
+  workType: number
   createdAt?: Date | string
 }
 
 export type WorkChapterDownloadUpdateManyMutationInput = {
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -305,6 +349,8 @@ export type WorkChapterDownloadUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   chapterId?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -327,6 +373,8 @@ export type WorkChapterDownloadCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   chapterId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  workId?: Prisma.SortOrder
+  workType?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -334,12 +382,16 @@ export type WorkChapterDownloadAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   chapterId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  workId?: Prisma.SortOrder
+  workType?: Prisma.SortOrder
 }
 
 export type WorkChapterDownloadMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   chapterId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  workId?: Prisma.SortOrder
+  workType?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -347,6 +399,8 @@ export type WorkChapterDownloadMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   chapterId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  workId?: Prisma.SortOrder
+  workType?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -354,6 +408,8 @@ export type WorkChapterDownloadSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   chapterId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  workId?: Prisma.SortOrder
+  workType?: Prisma.SortOrder
 }
 
 export type WorkChapterDownloadCreateNestedManyWithoutUserInput = {
@@ -441,6 +497,8 @@ export type WorkChapterDownloadUncheckedUpdateManyWithoutChapterNestedInput = {
 }
 
 export type WorkChapterDownloadCreateWithoutUserInput = {
+  workId: number
+  workType: number
   createdAt?: Date | string
   chapter: Prisma.WorkChapterCreateNestedOneWithoutDownloadsInput
 }
@@ -448,6 +506,8 @@ export type WorkChapterDownloadCreateWithoutUserInput = {
 export type WorkChapterDownloadUncheckedCreateWithoutUserInput = {
   id?: number
   chapterId: number
+  workId: number
+  workType: number
   createdAt?: Date | string
 }
 
@@ -484,10 +544,14 @@ export type WorkChapterDownloadScalarWhereInput = {
   id?: Prisma.IntFilter<"WorkChapterDownload"> | number
   chapterId?: Prisma.IntFilter<"WorkChapterDownload"> | number
   userId?: Prisma.IntFilter<"WorkChapterDownload"> | number
+  workId?: Prisma.IntFilter<"WorkChapterDownload"> | number
+  workType?: Prisma.IntFilter<"WorkChapterDownload"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkChapterDownload"> | Date | string
 }
 
 export type WorkChapterDownloadCreateWithoutChapterInput = {
+  workId: number
+  workType: number
   createdAt?: Date | string
   user: Prisma.AppUserCreateNestedOneWithoutChapterDownloadsInput
 }
@@ -495,6 +559,8 @@ export type WorkChapterDownloadCreateWithoutChapterInput = {
 export type WorkChapterDownloadUncheckedCreateWithoutChapterInput = {
   id?: number
   userId: number
+  workId: number
+  workType: number
   createdAt?: Date | string
 }
 
@@ -527,10 +593,14 @@ export type WorkChapterDownloadUpdateManyWithWhereWithoutChapterInput = {
 export type WorkChapterDownloadCreateManyUserInput = {
   id?: number
   chapterId: number
+  workId: number
+  workType: number
   createdAt?: Date | string
 }
 
 export type WorkChapterDownloadUpdateWithoutUserInput = {
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chapter?: Prisma.WorkChapterUpdateOneRequiredWithoutDownloadsNestedInput
 }
@@ -538,22 +608,30 @@ export type WorkChapterDownloadUpdateWithoutUserInput = {
 export type WorkChapterDownloadUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   chapterId?: Prisma.IntFieldUpdateOperationsInput | number
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkChapterDownloadUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   chapterId?: Prisma.IntFieldUpdateOperationsInput | number
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkChapterDownloadCreateManyChapterInput = {
   id?: number
   userId: number
+  workId: number
+  workType: number
   createdAt?: Date | string
 }
 
 export type WorkChapterDownloadUpdateWithoutChapterInput = {
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.AppUserUpdateOneRequiredWithoutChapterDownloadsNestedInput
 }
@@ -561,12 +639,16 @@ export type WorkChapterDownloadUpdateWithoutChapterInput = {
 export type WorkChapterDownloadUncheckedUpdateWithoutChapterInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type WorkChapterDownloadUncheckedUpdateManyWithoutChapterInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  workId?: Prisma.IntFieldUpdateOperationsInput | number
+  workType?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -576,6 +658,8 @@ export type WorkChapterDownloadSelect<ExtArgs extends runtime.Types.Extensions.I
   id?: boolean
   chapterId?: boolean
   userId?: boolean
+  workId?: boolean
+  workType?: boolean
   createdAt?: boolean
   chapter?: boolean | Prisma.WorkChapterDefaultArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -585,6 +669,8 @@ export type WorkChapterDownloadSelectCreateManyAndReturn<ExtArgs extends runtime
   id?: boolean
   chapterId?: boolean
   userId?: boolean
+  workId?: boolean
+  workType?: boolean
   createdAt?: boolean
   chapter?: boolean | Prisma.WorkChapterDefaultArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -594,6 +680,8 @@ export type WorkChapterDownloadSelectUpdateManyAndReturn<ExtArgs extends runtime
   id?: boolean
   chapterId?: boolean
   userId?: boolean
+  workId?: boolean
+  workType?: boolean
   createdAt?: boolean
   chapter?: boolean | Prisma.WorkChapterDefaultArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -603,10 +691,12 @@ export type WorkChapterDownloadSelectScalar = {
   id?: boolean
   chapterId?: boolean
   userId?: boolean
+  workId?: boolean
+  workType?: boolean
   createdAt?: boolean
 }
 
-export type WorkChapterDownloadOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "chapterId" | "userId" | "createdAt", ExtArgs["result"]["workChapterDownload"]>
+export type WorkChapterDownloadOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "chapterId" | "userId" | "workId" | "workType" | "createdAt", ExtArgs["result"]["workChapterDownload"]>
 export type WorkChapterDownloadInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   chapter?: boolean | Prisma.WorkChapterDefaultArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -633,15 +723,29 @@ export type $WorkChapterDownloadPayload<ExtArgs extends runtime.Types.Extensions
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键ID
+     */
     id: number
     /**
-     * 章节ID
+     * 关联的章节ID
      */
     chapterId: number
     /**
-     * 用户ID
+     * 关联的用户ID
      */
     userId: number
+    /**
+     * 关联的作品ID
+     */
+    workId: number
+    /**
+     * 作品类型：1=漫画, 2=小说
+     */
+    workType: number
+    /**
+     * 创建时间
+     */
     createdAt: Date
   }, ExtArgs["result"]["workChapterDownload"]>
   composites: {}
@@ -1071,6 +1175,8 @@ export interface WorkChapterDownloadFieldRefs {
   readonly id: Prisma.FieldRef<"WorkChapterDownload", 'Int'>
   readonly chapterId: Prisma.FieldRef<"WorkChapterDownload", 'Int'>
   readonly userId: Prisma.FieldRef<"WorkChapterDownload", 'Int'>
+  readonly workId: Prisma.FieldRef<"WorkChapterDownload", 'Int'>
+  readonly workType: Prisma.FieldRef<"WorkChapterDownload", 'Int'>
   readonly createdAt: Prisma.FieldRef<"WorkChapterDownload", 'DateTime'>
 }
     

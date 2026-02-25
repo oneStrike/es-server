@@ -1,67 +1,65 @@
-/// 统一评论表（支持作品评论和章节评论）
+/// 作品评论表 - 存储用户对作品的评论信息
 model WorkComment {
-  /// 主键ID（自增）
+  /// 主键ID
   id Int @id @default(autoincrement())
 
-  /// 作品ID（关联 work.id）
-  workId    Int  @map("work_id")
-  /// 作品类型（1=漫画, 2=小说）
-  workType  Int  @map("work_type") @db.SmallInt
-  /// 章节ID（关联 work_chapter.id，为空表示作品评论）
+  /// 关联的作品ID
+  workId Int @map("work_id")
+  /// 作品类型：1=漫画, 2=小说
+  workType Int @map("work_type")
+  /// 关联的章节ID（可选，章节评论时使用）
   chapterId Int? @map("chapter_id")
-  /// 评论用户ID（关联 app_user.id）
-  userId    Int  @map("user_id")
 
-  /// 评论内容（正文文本）
+  /// 评论者ID
+  userId Int @map("user_id")
+
+  /// 评论内容
   content String
-
-  /// 命中的敏感词明细（JSON，记录词条与等级，可为空）
-  sensitiveWordHits Json? @map("sensitive_word_hits") @db.JsonB
-
-  /// 被回复评论ID（楼中楼，可为空）
-  replyToId       Int? @map("reply_to_id")
-  /// 实际回复根评论ID（用于追溯链路，可为空）
+  /// 楼层号
+  floor Int @default(0)
+  /// 回复目标ID（楼中楼）
+  replyToId Int? @map("reply_to_id")
+  /// 实际回复的评论ID（用于楼中楼嵌套）
   actualReplyToId Int? @map("actual_reply_to_id")
-  /// 楼层号（一级评论编号，楼中楼为空）
-  floor           Int? @map("floor")
 
-  /// 是否隐藏（true=隐藏，false=展示）
-  isHidden    Boolean   @default(false) @map("is_hidden")
-  /// 审核状态（0=待审核，1=通过，2=拒绝）
-  auditStatus Int       @default(0) @map("audit_status") @db.SmallInt
-  /// 审核原因（拒绝时填写，可为空）
-  auditReason String?   @map("audit_reason") @db.VarChar(500)
-  /// 审核时间（审核动作发生时记录，可为空）
-  auditAt     DateTime? @map("audit_at") @db.Timestamptz(6)
-  /// 审核人ID（关联 app_user.id，可为空）
-  auditById   Int?      @map("audit_by_id")
-  /// 审核角色（0=版主，1=管理员，可为空）
-  auditRole   Int?      @map("audit_role") @db.SmallInt
+  /// 是否隐藏
+  isHidden Boolean @default(false) @map("is_hidden")
+  /// 审核状态：0=待审核, 1=已通过, 2=已拒绝
+  auditStatus Int @default(1) @map("audit_status")
+  /// 审核拒绝原因
+  auditReason String? @map("audit_reason")
+  /// 审核时间
+  auditAt DateTime? @map("audit_at") @db.Timestamptz(6)
+  /// 审核人ID
+  auditById Int? @map("audit_by_id")
+
+  /// 点赞数
+  likeCount Int @default(0) @map("like_count")
+  /// 敏感词命中记录
+  sensitiveWordHits Json? @map("sensitive_word_hits")
 
   /// 创建时间
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  /// 软删除时间（可为空）
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  /// 软删除时间
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   /// 关联作品
-  work    Work         @relation(fields: [workId], references: [id], onDelete: Cascade)
+  work Work? @relation(fields: [workId], references: [id], onDelete: Cascade)
   /// 关联章节
   chapter WorkChapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   /// 关联用户
-  user    AppUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  /// 关联被回复评论
-  replyTo       WorkComment?  @relation("WorkCommentReplyTo", fields: [replyToId], references: [id])
-  /// 关联回复列表
-  replies       WorkComment[] @relation("WorkCommentReplyTo")
-  /// 关联实际回复根评论
-  actualReplyTo WorkComment?  @relation("WorkCommentActualReplyTo", fields: [actualReplyToId], references: [id])
-  /// 关联实际回复列表
-  actualReplies WorkComment[] @relation("WorkCommentActualReplyTo")
-
-  /// 关联举报记录
+  user AppUser @relation(fields: [userId], references: [id])
+  /// 回复目标
+  replyTo WorkComment? @relation("ReplyTo", fields: [replyToId], references: [id])
+  /// 被回复列表
+  replies WorkComment[] @relation("ReplyTo")
+  /// 实际回复目标
+  actualReplyTo WorkComment? @relation("ActualReplyTo", fields: [actualReplyToId], references: [id])
+  /// 实际被回复列表
+  actualReplies WorkComment[] @relation("ActualReplyTo")
+  /// 举报列表
   reports WorkCommentReport[]
 
   /// 作品索引
@@ -70,23 +68,11 @@ model WorkComment {
   @@index([chapterId])
   /// 用户索引
   @@index([userId])
-  /// 创建时间索引
-  @@index([createdAt])
   /// 审核状态索引
   @@index([auditStatus])
-  /// 隐藏状态索引
-  @@index([isHidden])
-  /// 回复目标索引
-  @@index([replyToId])
-  /// 根回复索引
-  @@index([actualReplyToId])
+  /// 创建时间索引
+  @@index([createdAt])
   /// 删除时间索引
   @@index([deletedAt])
-  /// 作品类型索引
-  @@index([workType])
-  /// 作品与创建时间索引
-  @@index([workId, createdAt])
-  /// 章节与创建时间索引
-  @@index([chapterId, createdAt])
   @@map("work_comment")
 }

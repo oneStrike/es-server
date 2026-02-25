@@ -1,13 +1,11 @@
-/// 论坛回复点赞表 - 记录用户对回复的点赞关系
+/// 论坛回复点赞表 - 存储用户对论坛回复的点赞记录
 model ForumReplyLike {
   /// 主键ID
-  id Int @id @default(autoincrement())
-
+  id        Int      @id @default(autoincrement())
   /// 关联的回复ID
-  replyId Int @map("reply_id")
+  replyId   Int      @map("reply_id")
   /// 关联的用户ID
-  userId  Int @map("user_id")
-
+  userId    Int      @map("user_id")
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkCommentReport
- * 评论举报记录
+ * 作品评论举报表 - 存储用户对评论的举报记录
  */
 export type WorkCommentReportModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkCommentReportPayload>
 
@@ -28,23 +28,23 @@ export type AggregateWorkCommentReport = {
 
 export type WorkCommentReportAvgAggregateOutputType = {
   id: number | null
+  commentId: number | null
   reporterId: number | null
   handlerId: number | null
-  commentId: number | null
 }
 
 export type WorkCommentReportSumAggregateOutputType = {
   id: number | null
+  commentId: number | null
   reporterId: number | null
   handlerId: number | null
-  commentId: number | null
 }
 
 export type WorkCommentReportMinAggregateOutputType = {
   id: number | null
+  commentId: number | null
   reporterId: number | null
   handlerId: number | null
-  commentId: number | null
   reason: string | null
   description: string | null
   evidenceUrl: string | null
@@ -57,9 +57,9 @@ export type WorkCommentReportMinAggregateOutputType = {
 
 export type WorkCommentReportMaxAggregateOutputType = {
   id: number | null
+  commentId: number | null
   reporterId: number | null
   handlerId: number | null
-  commentId: number | null
   reason: string | null
   description: string | null
   evidenceUrl: string | null
@@ -72,9 +72,9 @@ export type WorkCommentReportMaxAggregateOutputType = {
 
 export type WorkCommentReportCountAggregateOutputType = {
   id: number
+  commentId: number
   reporterId: number
   handlerId: number
-  commentId: number
   reason: number
   description: number
   evidenceUrl: number
@@ -89,23 +89,23 @@ export type WorkCommentReportCountAggregateOutputType = {
 
 export type WorkCommentReportAvgAggregateInputType = {
   id?: true
+  commentId?: true
   reporterId?: true
   handlerId?: true
-  commentId?: true
 }
 
 export type WorkCommentReportSumAggregateInputType = {
   id?: true
+  commentId?: true
   reporterId?: true
   handlerId?: true
-  commentId?: true
 }
 
 export type WorkCommentReportMinAggregateInputType = {
   id?: true
+  commentId?: true
   reporterId?: true
   handlerId?: true
-  commentId?: true
   reason?: true
   description?: true
   evidenceUrl?: true
@@ -118,9 +118,9 @@ export type WorkCommentReportMinAggregateInputType = {
 
 export type WorkCommentReportMaxAggregateInputType = {
   id?: true
+  commentId?: true
   reporterId?: true
   handlerId?: true
-  commentId?: true
   reason?: true
   description?: true
   evidenceUrl?: true
@@ -133,9 +133,9 @@ export type WorkCommentReportMaxAggregateInputType = {
 
 export type WorkCommentReportCountAggregateInputType = {
   id?: true
+  commentId?: true
   reporterId?: true
   handlerId?: true
-  commentId?: true
   reason?: true
   description?: true
   evidenceUrl?: true
@@ -235,9 +235,9 @@ export type WorkCommentReportGroupByArgs<ExtArgs extends runtime.Types.Extension
 
 export type WorkCommentReportGroupByOutputType = {
   id: number
+  commentId: number
   reporterId: number
   handlerId: number | null
-  commentId: number
   reason: string
   description: string | null
   evidenceUrl: string | null
@@ -273,9 +273,9 @@ export type WorkCommentReportWhereInput = {
   OR?: Prisma.WorkCommentReportWhereInput[]
   NOT?: Prisma.WorkCommentReportWhereInput | Prisma.WorkCommentReportWhereInput[]
   id?: Prisma.IntFilter<"WorkCommentReport"> | number
+  commentId?: Prisma.IntFilter<"WorkCommentReport"> | number
   reporterId?: Prisma.IntFilter<"WorkCommentReport"> | number
   handlerId?: Prisma.IntNullableFilter<"WorkCommentReport"> | number | null
-  commentId?: Prisma.IntFilter<"WorkCommentReport"> | number
   reason?: Prisma.StringFilter<"WorkCommentReport"> | string
   description?: Prisma.StringNullableFilter<"WorkCommentReport"> | string | null
   evidenceUrl?: Prisma.StringNullableFilter<"WorkCommentReport"> | string | null
@@ -284,16 +284,16 @@ export type WorkCommentReportWhereInput = {
   handledAt?: Prisma.DateTimeNullableFilter<"WorkCommentReport"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkCommentReport"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkCommentReport"> | Date | string
+  comment?: Prisma.XOR<Prisma.WorkCommentScalarRelationFilter, Prisma.WorkCommentWhereInput>
   reporter?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
   handler?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
-  comment?: Prisma.XOR<Prisma.WorkCommentScalarRelationFilter, Prisma.WorkCommentWhereInput>
 }
 
 export type WorkCommentReportOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  commentId?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
   handlerId?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentId?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -302,19 +302,20 @@ export type WorkCommentReportOrderByWithRelationInput = {
   handledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  comment?: Prisma.WorkCommentOrderByWithRelationInput
   reporter?: Prisma.AppUserOrderByWithRelationInput
   handler?: Prisma.AppUserOrderByWithRelationInput
-  comment?: Prisma.WorkCommentOrderByWithRelationInput
 }
 
 export type WorkCommentReportWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  commentId_reporterId?: Prisma.WorkCommentReportCommentIdReporterIdCompoundUniqueInput
   AND?: Prisma.WorkCommentReportWhereInput | Prisma.WorkCommentReportWhereInput[]
   OR?: Prisma.WorkCommentReportWhereInput[]
   NOT?: Prisma.WorkCommentReportWhereInput | Prisma.WorkCommentReportWhereInput[]
+  commentId?: Prisma.IntFilter<"WorkCommentReport"> | number
   reporterId?: Prisma.IntFilter<"WorkCommentReport"> | number
   handlerId?: Prisma.IntNullableFilter<"WorkCommentReport"> | number | null
-  commentId?: Prisma.IntFilter<"WorkCommentReport"> | number
   reason?: Prisma.StringFilter<"WorkCommentReport"> | string
   description?: Prisma.StringNullableFilter<"WorkCommentReport"> | string | null
   evidenceUrl?: Prisma.StringNullableFilter<"WorkCommentReport"> | string | null
@@ -323,16 +324,16 @@ export type WorkCommentReportWhereUniqueInput = Prisma.AtLeast<{
   handledAt?: Prisma.DateTimeNullableFilter<"WorkCommentReport"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkCommentReport"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkCommentReport"> | Date | string
+  comment?: Prisma.XOR<Prisma.WorkCommentScalarRelationFilter, Prisma.WorkCommentWhereInput>
   reporter?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
   handler?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
-  comment?: Prisma.XOR<Prisma.WorkCommentScalarRelationFilter, Prisma.WorkCommentWhereInput>
-}, "id">
+}, "id" | "commentId_reporterId">
 
 export type WorkCommentReportOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  commentId?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
   handlerId?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentId?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -353,9 +354,9 @@ export type WorkCommentReportScalarWhereWithAggregatesInput = {
   OR?: Prisma.WorkCommentReportScalarWhereWithAggregatesInput[]
   NOT?: Prisma.WorkCommentReportScalarWhereWithAggregatesInput | Prisma.WorkCommentReportScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"WorkCommentReport"> | number
+  commentId?: Prisma.IntWithAggregatesFilter<"WorkCommentReport"> | number
   reporterId?: Prisma.IntWithAggregatesFilter<"WorkCommentReport"> | number
   handlerId?: Prisma.IntNullableWithAggregatesFilter<"WorkCommentReport"> | number | null
-  commentId?: Prisma.IntWithAggregatesFilter<"WorkCommentReport"> | number
   reason?: Prisma.StringWithAggregatesFilter<"WorkCommentReport"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"WorkCommentReport"> | string | null
   evidenceUrl?: Prisma.StringNullableWithAggregatesFilter<"WorkCommentReport"> | string | null
@@ -375,16 +376,16 @@ export type WorkCommentReportCreateInput = {
   handledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  comment: Prisma.WorkCommentCreateNestedOneWithoutReportsInput
   reporter: Prisma.AppUserCreateNestedOneWithoutWorkCommentReportsInput
   handler?: Prisma.AppUserCreateNestedOneWithoutHandledWorkCommentReportsInput
-  comment: Prisma.WorkCommentCreateNestedOneWithoutReportsInput
 }
 
 export type WorkCommentReportUncheckedCreateInput = {
   id?: number
+  commentId: number
   reporterId: number
   handlerId?: number | null
-  commentId: number
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -404,16 +405,16 @@ export type WorkCommentReportUpdateInput = {
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  comment?: Prisma.WorkCommentUpdateOneRequiredWithoutReportsNestedInput
   reporter?: Prisma.AppUserUpdateOneRequiredWithoutWorkCommentReportsNestedInput
   handler?: Prisma.AppUserUpdateOneWithoutHandledWorkCommentReportsNestedInput
-  comment?: Prisma.WorkCommentUpdateOneRequiredWithoutReportsNestedInput
 }
 
 export type WorkCommentReportUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  commentId?: Prisma.IntFieldUpdateOperationsInput | number
   reporterId?: Prisma.IntFieldUpdateOperationsInput | number
   handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  commentId?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -426,9 +427,9 @@ export type WorkCommentReportUncheckedUpdateInput = {
 
 export type WorkCommentReportCreateManyInput = {
   id?: number
+  commentId: number
   reporterId: number
   handlerId?: number | null
-  commentId: number
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -452,9 +453,9 @@ export type WorkCommentReportUpdateManyMutationInput = {
 
 export type WorkCommentReportUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
+  commentId?: Prisma.IntFieldUpdateOperationsInput | number
   reporterId?: Prisma.IntFieldUpdateOperationsInput | number
   handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  commentId?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -475,11 +476,16 @@ export type WorkCommentReportOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type WorkCommentReportCommentIdReporterIdCompoundUniqueInput = {
+  commentId: number
+  reporterId: number
+}
+
 export type WorkCommentReportCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  commentId?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
   handlerId?: Prisma.SortOrder
-  commentId?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrder
@@ -492,16 +498,16 @@ export type WorkCommentReportCountOrderByAggregateInput = {
 
 export type WorkCommentReportAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  commentId?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
   handlerId?: Prisma.SortOrder
-  commentId?: Prisma.SortOrder
 }
 
 export type WorkCommentReportMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  commentId?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
   handlerId?: Prisma.SortOrder
-  commentId?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrder
@@ -514,9 +520,9 @@ export type WorkCommentReportMaxOrderByAggregateInput = {
 
 export type WorkCommentReportMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  commentId?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
   handlerId?: Prisma.SortOrder
-  commentId?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   description?: Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrder
@@ -529,9 +535,9 @@ export type WorkCommentReportMinOrderByAggregateInput = {
 
 export type WorkCommentReportSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  commentId?: Prisma.SortOrder
   reporterId?: Prisma.SortOrder
   handlerId?: Prisma.SortOrder
-  commentId?: Prisma.SortOrder
 }
 
 export type WorkCommentReportCreateNestedManyWithoutReporterInput = {
@@ -669,14 +675,14 @@ export type WorkCommentReportCreateWithoutReporterInput = {
   handledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  handler?: Prisma.AppUserCreateNestedOneWithoutHandledWorkCommentReportsInput
   comment: Prisma.WorkCommentCreateNestedOneWithoutReportsInput
+  handler?: Prisma.AppUserCreateNestedOneWithoutHandledWorkCommentReportsInput
 }
 
 export type WorkCommentReportUncheckedCreateWithoutReporterInput = {
   id?: number
-  handlerId?: number | null
   commentId: number
+  handlerId?: number | null
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -706,14 +712,14 @@ export type WorkCommentReportCreateWithoutHandlerInput = {
   handledAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  reporter: Prisma.AppUserCreateNestedOneWithoutWorkCommentReportsInput
   comment: Prisma.WorkCommentCreateNestedOneWithoutReportsInput
+  reporter: Prisma.AppUserCreateNestedOneWithoutWorkCommentReportsInput
 }
 
 export type WorkCommentReportUncheckedCreateWithoutHandlerInput = {
   id?: number
-  reporterId: number
   commentId: number
+  reporterId: number
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -755,9 +761,9 @@ export type WorkCommentReportScalarWhereInput = {
   OR?: Prisma.WorkCommentReportScalarWhereInput[]
   NOT?: Prisma.WorkCommentReportScalarWhereInput | Prisma.WorkCommentReportScalarWhereInput[]
   id?: Prisma.IntFilter<"WorkCommentReport"> | number
+  commentId?: Prisma.IntFilter<"WorkCommentReport"> | number
   reporterId?: Prisma.IntFilter<"WorkCommentReport"> | number
   handlerId?: Prisma.IntNullableFilter<"WorkCommentReport"> | number | null
-  commentId?: Prisma.IntFilter<"WorkCommentReport"> | number
   reason?: Prisma.StringFilter<"WorkCommentReport"> | string
   description?: Prisma.StringNullableFilter<"WorkCommentReport"> | string | null
   evidenceUrl?: Prisma.StringNullableFilter<"WorkCommentReport"> | string | null
@@ -839,8 +845,8 @@ export type WorkCommentReportUpdateManyWithWhereWithoutCommentInput = {
 
 export type WorkCommentReportCreateManyReporterInput = {
   id?: number
-  handlerId?: number | null
   commentId: number
+  handlerId?: number | null
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -853,8 +859,8 @@ export type WorkCommentReportCreateManyReporterInput = {
 
 export type WorkCommentReportCreateManyHandlerInput = {
   id?: number
-  reporterId: number
   commentId: number
+  reporterId: number
   reason: string
   description?: string | null
   evidenceUrl?: string | null
@@ -874,14 +880,14 @@ export type WorkCommentReportUpdateWithoutReporterInput = {
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  handler?: Prisma.AppUserUpdateOneWithoutHandledWorkCommentReportsNestedInput
   comment?: Prisma.WorkCommentUpdateOneRequiredWithoutReportsNestedInput
+  handler?: Prisma.AppUserUpdateOneWithoutHandledWorkCommentReportsNestedInput
 }
 
 export type WorkCommentReportUncheckedUpdateWithoutReporterInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   commentId?: Prisma.IntFieldUpdateOperationsInput | number
+  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -894,8 +900,8 @@ export type WorkCommentReportUncheckedUpdateWithoutReporterInput = {
 
 export type WorkCommentReportUncheckedUpdateManyWithoutReporterInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   commentId?: Prisma.IntFieldUpdateOperationsInput | number
+  handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -915,14 +921,14 @@ export type WorkCommentReportUpdateWithoutHandlerInput = {
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  reporter?: Prisma.AppUserUpdateOneRequiredWithoutWorkCommentReportsNestedInput
   comment?: Prisma.WorkCommentUpdateOneRequiredWithoutReportsNestedInput
+  reporter?: Prisma.AppUserUpdateOneRequiredWithoutWorkCommentReportsNestedInput
 }
 
 export type WorkCommentReportUncheckedUpdateWithoutHandlerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  reporterId?: Prisma.IntFieldUpdateOperationsInput | number
   commentId?: Prisma.IntFieldUpdateOperationsInput | number
+  reporterId?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -935,8 +941,8 @@ export type WorkCommentReportUncheckedUpdateWithoutHandlerInput = {
 
 export type WorkCommentReportUncheckedUpdateManyWithoutHandlerInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  reporterId?: Prisma.IntFieldUpdateOperationsInput | number
   commentId?: Prisma.IntFieldUpdateOperationsInput | number
+  reporterId?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1006,9 +1012,9 @@ export type WorkCommentReportUncheckedUpdateManyWithoutCommentInput = {
 
 export type WorkCommentReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  commentId?: boolean
   reporterId?: boolean
   handlerId?: boolean
-  commentId?: boolean
   reason?: boolean
   description?: boolean
   evidenceUrl?: boolean
@@ -1017,16 +1023,16 @@ export type WorkCommentReportSelect<ExtArgs extends runtime.Types.Extensions.Int
   handledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
   reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.WorkCommentReport$handlerArgs<ExtArgs>
-  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workCommentReport"]>
 
 export type WorkCommentReportSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  commentId?: boolean
   reporterId?: boolean
   handlerId?: boolean
-  commentId?: boolean
   reason?: boolean
   description?: boolean
   evidenceUrl?: boolean
@@ -1035,16 +1041,16 @@ export type WorkCommentReportSelectCreateManyAndReturn<ExtArgs extends runtime.T
   handledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
   reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.WorkCommentReport$handlerArgs<ExtArgs>
-  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workCommentReport"]>
 
 export type WorkCommentReportSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  commentId?: boolean
   reporterId?: boolean
   handlerId?: boolean
-  commentId?: boolean
   reason?: boolean
   description?: boolean
   evidenceUrl?: boolean
@@ -1053,16 +1059,16 @@ export type WorkCommentReportSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   handledAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
   reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.WorkCommentReport$handlerArgs<ExtArgs>
-  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workCommentReport"]>
 
 export type WorkCommentReportSelectScalar = {
   id?: boolean
+  commentId?: boolean
   reporterId?: boolean
   handlerId?: boolean
-  commentId?: boolean
   reason?: boolean
   description?: boolean
   evidenceUrl?: boolean
@@ -1073,26 +1079,30 @@ export type WorkCommentReportSelectScalar = {
   updatedAt?: boolean
 }
 
-export type WorkCommentReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reporterId" | "handlerId" | "commentId" | "reason" | "description" | "evidenceUrl" | "status" | "handlingNote" | "handledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workCommentReport"]>
+export type WorkCommentReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "commentId" | "reporterId" | "handlerId" | "reason" | "description" | "evidenceUrl" | "status" | "handlingNote" | "handledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workCommentReport"]>
 export type WorkCommentReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
   reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.WorkCommentReport$handlerArgs<ExtArgs>
-  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
 }
 export type WorkCommentReportIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
   reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.WorkCommentReport$handlerArgs<ExtArgs>
-  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
 }
 export type WorkCommentReportIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
   reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.WorkCommentReport$handlerArgs<ExtArgs>
-  comment?: boolean | Prisma.WorkCommentDefaultArgs<ExtArgs>
 }
 
 export type $WorkCommentReportPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "WorkCommentReport"
   objects: {
+    /**
+     * 关联评论
+     */
+    comment: Prisma.$WorkCommentPayload<ExtArgs>
     /**
      * 关联举报人
      */
@@ -1101,50 +1111,46 @@ export type $WorkCommentReportPayload<ExtArgs extends runtime.Types.Extensions.I
      * 关联处理人
      */
     handler: Prisma.$AppUserPayload<ExtArgs> | null
-    /**
-     * 关联评论
-     */
-    comment: Prisma.$WorkCommentPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
-     * 主键ID（自增）
+     * 主键ID
      */
     id: number
     /**
-     * 举报人ID（关联 app_user.id）
-     */
-    reporterId: number
-    /**
-     * 处理人ID（关联 app_user.id，可为空）
-     */
-    handlerId: number | null
-    /**
-     * 被举报评论ID（关联 work_comment.id）
+     * 关联的评论ID
      */
     commentId: number
     /**
-     * 举报原因（枚举值，如 spam/harassment 等）
+     * 举报人ID
+     */
+    reporterId: number
+    /**
+     * 处理人ID
+     */
+    handlerId: number | null
+    /**
+     * 举报原因类型
      */
     reason: string
     /**
-     * 举报说明（补充描述，可为空）
+     * 举报详细说明
      */
     description: string | null
     /**
-     * 证据截图URL（可为空）
+     * 证据截图URL
      */
     evidenceUrl: string | null
     /**
-     * 处理状态（pending/processing/resolved/rejected）
+     * 处理状态：pending=待处理, processing=处理中, resolved=已解决, rejected=已拒绝
      */
     status: string
     /**
-     * 处理备注（可为空）
+     * 处理备注
      */
     handlingNote: string | null
     /**
-     * 处理时间（可为空）
+     * 处理时间
      */
     handledAt: Date | null
     /**
@@ -1549,9 +1555,9 @@ readonly fields: WorkCommentReportFieldRefs;
  */
 export interface Prisma__WorkCommentReportClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  comment<T extends Prisma.WorkCommentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkCommentDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkCommentClient<runtime.Types.Result.GetResult<Prisma.$WorkCommentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   reporter<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   handler<T extends Prisma.WorkCommentReport$handlerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkCommentReport$handlerArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  comment<T extends Prisma.WorkCommentDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkCommentDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkCommentClient<runtime.Types.Result.GetResult<Prisma.$WorkCommentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1582,9 +1588,9 @@ export interface Prisma__WorkCommentReportClient<T, Null = never, ExtArgs extend
  */
 export interface WorkCommentReportFieldRefs {
   readonly id: Prisma.FieldRef<"WorkCommentReport", 'Int'>
+  readonly commentId: Prisma.FieldRef<"WorkCommentReport", 'Int'>
   readonly reporterId: Prisma.FieldRef<"WorkCommentReport", 'Int'>
   readonly handlerId: Prisma.FieldRef<"WorkCommentReport", 'Int'>
-  readonly commentId: Prisma.FieldRef<"WorkCommentReport", 'Int'>
   readonly reason: Prisma.FieldRef<"WorkCommentReport", 'String'>
   readonly description: Prisma.FieldRef<"WorkCommentReport", 'String'>
   readonly evidenceUrl: Prisma.FieldRef<"WorkCommentReport", 'String'>

@@ -852,7 +852,7 @@ export type $WorkAuthorPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     gender: number
     /**
-     * 作者类型（1: 漫画家, 2: 轻小说作者, 3: 插画师, 4: coser）
+     * 作者类型（1: 漫画家, 2: 轻小说作者）
      */
     type: number[]
     /**

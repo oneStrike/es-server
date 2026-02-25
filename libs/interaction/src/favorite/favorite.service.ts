@@ -1,0 +1,114 @@
+import { Injectable } from '@nestjs/common'
+import { PrismaClient } from '@libs/base/database'
+import { BaseInteractionService } from '../base-interaction.service'
+import { CounterService } from '../counter/counter.service'
+import { InteractionTargetType } from '../interaction.constant'
+import { TargetValidatorRegistry } from '../validator/target-validator.registry'
+
+@Injectable()
+export class FavoriteService extends BaseInteractionService {
+  constructor(
+    protected readonly prisma: PrismaClient,
+    protected readonly counterService: CounterService,
+    protected readonly validatorRegistry: TargetValidatorRegistry,
+  ) {
+    super()
+  }
+
+  protected async checkUserInteracted(
+    targetType: InteractionTargetType,
+    targetId: number,
+    userId: number,
+  ): Promise<boolean> {
+    const favorite = await this.prisma.userFavorite.findUnique({
+      where: {
+        targetType_targetId_userId: {
+          targetType,
+          targetId,
+          userId,
+        },
+      },
+    })
+    return !!favorite
+  }
+
+  protected async createInteraction(
+    targetType: InteractionTargetType,
+    targetId: number,
+    userId: number,
+  ): Promise<void> {
+    await this.prisma.userFavorite.create({
+      data: {
+        targetType,
+        targetId,
+        userId,
+      },
+    })
+  }
+
+  protected async deleteInteraction(
+    targetType: InteractionTargetType,
+    targetId: number,
+    userId: number,
+  ): Promise<void> {
+    await this.prisma.userFavorite.delete({
+      where: {
+        targetType_targetId_userId: {
+          targetType,
+          targetId,
+          userId,
+        },
+      },
+    })
+  }
+
+  protected getCountField(): string {
+    return 'favoriteCount'
+  }
+
+  async checkStatusBatch(
+    targetType: InteractionTargetType,
+    targetIds: number[],
+    userId: number,
+  ): Promise<Map<number, boolean>> {
+    if (targetIds.length === 0) {
+      return new Map()
+    }
+
+    const favorites = await this.prisma.userFavorite.findMany({
+      where: {
+        targetType,
+        targetId: { in: targetIds },
+        userId,
+      },
+      select: {
+        targetId: true,
+      },
+    })
+
+    const favoritedSet = new Set(favorites.map((f) => f.targetId))
+    const statusMap = new Map<number, boolean>()
+
+    for (const targetId of targetIds) {
+      statusMap.set(targetId, favoritedSet.has(targetId))
+    }
+
+    return statusMap
+  }
+
+  async favorite(
+    targetType: InteractionTargetType,
+    targetId: number,
+    userId: number,
+  ): Promise<void> {
+    return this.interact(targetType, targetId, userId)
+  }
+
+  async unfavorite(
+    targetType: InteractionTargetType,
+    targetId: number,
+    userId: number,
+  ): Promise<void> {
+    return this.cancelInteract(targetType, targetId, userId)
+  }
+}

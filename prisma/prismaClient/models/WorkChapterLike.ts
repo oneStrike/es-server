@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model WorkChapterLike
- * 章节点赞记录
+ * 章节点赞表 - 存储用户对章节的点赞记录
  */
 export type WorkChapterLikeModel = runtime.Types.Result.DefaultSelection<Prisma.$WorkChapterLikePayload>
 
@@ -633,15 +633,21 @@ export type $WorkChapterLikePayload<ExtArgs extends runtime.Types.Extensions.Int
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
+    /**
+     * 主键ID
+     */
     id: number
     /**
-     * 章节ID
+     * 关联的章节ID
      */
     chapterId: number
     /**
-     * 用户ID
+     * 关联的用户ID
      */
     userId: number
+    /**
+     * 创建时间
+     */
     createdAt: Date
   }, ExtArgs["result"]["workChapterLike"]>
   composites: {}

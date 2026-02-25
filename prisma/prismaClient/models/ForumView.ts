@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumView
- * 论坛浏览记录表 - 记录用户浏览主题的历史
+ * 论坛浏览记录表 - 存储用户对论坛主题的浏览记录
  */
 export type ForumViewModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumViewPayload>
 
@@ -29,52 +29,33 @@ export type AggregateForumView = {
 export type ForumViewAvgAggregateOutputType = {
   id: number | null
   topicId: number | null
-  replyId: number | null
   userId: number | null
-  duration: number | null
 }
 
 export type ForumViewSumAggregateOutputType = {
   id: number | null
   topicId: number | null
-  replyId: number | null
   userId: number | null
-  duration: number | null
 }
 
 export type ForumViewMinAggregateOutputType = {
   id: number | null
   topicId: number | null
-  replyId: number | null
   userId: number | null
-  type: string | null
-  duration: number | null
-  device: string | null
-  ipAddress: string | null
   viewedAt: Date | null
 }
 
 export type ForumViewMaxAggregateOutputType = {
   id: number | null
   topicId: number | null
-  replyId: number | null
   userId: number | null
-  type: string | null
-  duration: number | null
-  device: string | null
-  ipAddress: string | null
   viewedAt: Date | null
 }
 
 export type ForumViewCountAggregateOutputType = {
   id: number
   topicId: number
-  replyId: number
   userId: number
-  type: number
-  duration: number
-  device: number
-  ipAddress: number
   viewedAt: number
   _all: number
 }
@@ -83,52 +64,33 @@ export type ForumViewCountAggregateOutputType = {
 export type ForumViewAvgAggregateInputType = {
   id?: true
   topicId?: true
-  replyId?: true
   userId?: true
-  duration?: true
 }
 
 export type ForumViewSumAggregateInputType = {
   id?: true
   topicId?: true
-  replyId?: true
   userId?: true
-  duration?: true
 }
 
 export type ForumViewMinAggregateInputType = {
   id?: true
   topicId?: true
-  replyId?: true
   userId?: true
-  type?: true
-  duration?: true
-  device?: true
-  ipAddress?: true
   viewedAt?: true
 }
 
 export type ForumViewMaxAggregateInputType = {
   id?: true
   topicId?: true
-  replyId?: true
   userId?: true
-  type?: true
-  duration?: true
-  device?: true
-  ipAddress?: true
   viewedAt?: true
 }
 
 export type ForumViewCountAggregateInputType = {
   id?: true
   topicId?: true
-  replyId?: true
   userId?: true
-  type?: true
-  duration?: true
-  device?: true
-  ipAddress?: true
   viewedAt?: true
   _all?: true
 }
@@ -222,12 +184,7 @@ export type ForumViewGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
 export type ForumViewGroupByOutputType = {
   id: number
   topicId: number
-  replyId: number | null
   userId: number
-  type: string | null
-  duration: number | null
-  device: string | null
-  ipAddress: string | null
   viewedAt: Date
   _count: ForumViewCountAggregateOutputType | null
   _avg: ForumViewAvgAggregateOutputType | null
@@ -257,30 +214,18 @@ export type ForumViewWhereInput = {
   NOT?: Prisma.ForumViewWhereInput | Prisma.ForumViewWhereInput[]
   id?: Prisma.IntFilter<"ForumView"> | number
   topicId?: Prisma.IntFilter<"ForumView"> | number
-  replyId?: Prisma.IntNullableFilter<"ForumView"> | number | null
   userId?: Prisma.IntFilter<"ForumView"> | number
-  type?: Prisma.StringNullableFilter<"ForumView"> | string | null
-  duration?: Prisma.IntNullableFilter<"ForumView"> | number | null
-  device?: Prisma.StringNullableFilter<"ForumView"> | string | null
-  ipAddress?: Prisma.StringNullableFilter<"ForumView"> | string | null
   viewedAt?: Prisma.DateTimeFilter<"ForumView"> | Date | string
   topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
-  reply?: Prisma.XOR<Prisma.ForumReplyNullableScalarRelationFilter, Prisma.ForumReplyWhereInput> | null
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
 }
 
 export type ForumViewOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrderInput | Prisma.SortOrder
-  duration?: Prisma.SortOrderInput | Prisma.SortOrder
-  device?: Prisma.SortOrderInput | Prisma.SortOrder
-  ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   viewedAt?: Prisma.SortOrder
   topic?: Prisma.ForumTopicOrderByWithRelationInput
-  reply?: Prisma.ForumReplyOrderByWithRelationInput
   user?: Prisma.AppUserOrderByWithRelationInput
 }
 
@@ -290,27 +235,16 @@ export type ForumViewWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ForumViewWhereInput[]
   NOT?: Prisma.ForumViewWhereInput | Prisma.ForumViewWhereInput[]
   topicId?: Prisma.IntFilter<"ForumView"> | number
-  replyId?: Prisma.IntNullableFilter<"ForumView"> | number | null
   userId?: Prisma.IntFilter<"ForumView"> | number
-  type?: Prisma.StringNullableFilter<"ForumView"> | string | null
-  duration?: Prisma.IntNullableFilter<"ForumView"> | number | null
-  device?: Prisma.StringNullableFilter<"ForumView"> | string | null
-  ipAddress?: Prisma.StringNullableFilter<"ForumView"> | string | null
   viewedAt?: Prisma.DateTimeFilter<"ForumView"> | Date | string
   topic?: Prisma.XOR<Prisma.ForumTopicScalarRelationFilter, Prisma.ForumTopicWhereInput>
-  reply?: Prisma.XOR<Prisma.ForumReplyNullableScalarRelationFilter, Prisma.ForumReplyWhereInput> | null
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
 }, "id">
 
 export type ForumViewOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrderInput | Prisma.SortOrder
-  duration?: Prisma.SortOrderInput | Prisma.SortOrder
-  device?: Prisma.SortOrderInput | Prisma.SortOrder
-  ipAddress?: Prisma.SortOrderInput | Prisma.SortOrder
   viewedAt?: Prisma.SortOrder
   _count?: Prisma.ForumViewCountOrderByAggregateInput
   _avg?: Prisma.ForumViewAvgOrderByAggregateInput
@@ -325,90 +259,51 @@ export type ForumViewScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ForumViewScalarWhereWithAggregatesInput | Prisma.ForumViewScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"ForumView"> | number
   topicId?: Prisma.IntWithAggregatesFilter<"ForumView"> | number
-  replyId?: Prisma.IntNullableWithAggregatesFilter<"ForumView"> | number | null
   userId?: Prisma.IntWithAggregatesFilter<"ForumView"> | number
-  type?: Prisma.StringNullableWithAggregatesFilter<"ForumView"> | string | null
-  duration?: Prisma.IntNullableWithAggregatesFilter<"ForumView"> | number | null
-  device?: Prisma.StringNullableWithAggregatesFilter<"ForumView"> | string | null
-  ipAddress?: Prisma.StringNullableWithAggregatesFilter<"ForumView"> | string | null
   viewedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumView"> | Date | string
 }
 
 export type ForumViewCreateInput = {
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
   viewedAt?: Date | string
   topic: Prisma.ForumTopicCreateNestedOneWithoutViewsInput
-  reply?: Prisma.ForumReplyCreateNestedOneWithoutViewsInput
   user: Prisma.AppUserCreateNestedOneWithoutForumViewsInput
 }
 
 export type ForumViewUncheckedCreateInput = {
   id?: number
   topicId: number
-  replyId?: number | null
   userId: number
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
   viewedAt?: Date | string
 }
 
 export type ForumViewUpdateInput = {
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   topic?: Prisma.ForumTopicUpdateOneRequiredWithoutViewsNestedInput
-  reply?: Prisma.ForumReplyUpdateOneWithoutViewsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutForumViewsNestedInput
 }
 
 export type ForumViewUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumViewCreateManyInput = {
   id?: number
   topicId: number
-  replyId?: number | null
   userId: number
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
   viewedAt?: Date | string
 }
 
 export type ForumViewUpdateManyMutationInput = {
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumViewUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -425,53 +320,34 @@ export type ForumViewOrderByRelationAggregateInput = {
 export type ForumViewCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
-  duration?: Prisma.SortOrder
-  device?: Prisma.SortOrder
-  ipAddress?: Prisma.SortOrder
   viewedAt?: Prisma.SortOrder
 }
 
 export type ForumViewAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  duration?: Prisma.SortOrder
 }
 
 export type ForumViewMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
-  duration?: Prisma.SortOrder
-  device?: Prisma.SortOrder
-  ipAddress?: Prisma.SortOrder
   viewedAt?: Prisma.SortOrder
 }
 
 export type ForumViewMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
-  duration?: Prisma.SortOrder
-  device?: Prisma.SortOrder
-  ipAddress?: Prisma.SortOrder
   viewedAt?: Prisma.SortOrder
 }
 
 export type ForumViewSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   topicId?: Prisma.SortOrder
-  replyId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  duration?: Prisma.SortOrder
 }
 
 export type ForumViewCreateNestedManyWithoutUserInput = {
@@ -513,48 +389,6 @@ export type ForumViewUncheckedUpdateManyWithoutUserNestedInput = {
   connect?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
   update?: Prisma.ForumViewUpdateWithWhereUniqueWithoutUserInput | Prisma.ForumViewUpdateWithWhereUniqueWithoutUserInput[]
   updateMany?: Prisma.ForumViewUpdateManyWithWhereWithoutUserInput | Prisma.ForumViewUpdateManyWithWhereWithoutUserInput[]
-  deleteMany?: Prisma.ForumViewScalarWhereInput | Prisma.ForumViewScalarWhereInput[]
-}
-
-export type ForumViewCreateNestedManyWithoutReplyInput = {
-  create?: Prisma.XOR<Prisma.ForumViewCreateWithoutReplyInput, Prisma.ForumViewUncheckedCreateWithoutReplyInput> | Prisma.ForumViewCreateWithoutReplyInput[] | Prisma.ForumViewUncheckedCreateWithoutReplyInput[]
-  connectOrCreate?: Prisma.ForumViewCreateOrConnectWithoutReplyInput | Prisma.ForumViewCreateOrConnectWithoutReplyInput[]
-  createMany?: Prisma.ForumViewCreateManyReplyInputEnvelope
-  connect?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-}
-
-export type ForumViewUncheckedCreateNestedManyWithoutReplyInput = {
-  create?: Prisma.XOR<Prisma.ForumViewCreateWithoutReplyInput, Prisma.ForumViewUncheckedCreateWithoutReplyInput> | Prisma.ForumViewCreateWithoutReplyInput[] | Prisma.ForumViewUncheckedCreateWithoutReplyInput[]
-  connectOrCreate?: Prisma.ForumViewCreateOrConnectWithoutReplyInput | Prisma.ForumViewCreateOrConnectWithoutReplyInput[]
-  createMany?: Prisma.ForumViewCreateManyReplyInputEnvelope
-  connect?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-}
-
-export type ForumViewUpdateManyWithoutReplyNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumViewCreateWithoutReplyInput, Prisma.ForumViewUncheckedCreateWithoutReplyInput> | Prisma.ForumViewCreateWithoutReplyInput[] | Prisma.ForumViewUncheckedCreateWithoutReplyInput[]
-  connectOrCreate?: Prisma.ForumViewCreateOrConnectWithoutReplyInput | Prisma.ForumViewCreateOrConnectWithoutReplyInput[]
-  upsert?: Prisma.ForumViewUpsertWithWhereUniqueWithoutReplyInput | Prisma.ForumViewUpsertWithWhereUniqueWithoutReplyInput[]
-  createMany?: Prisma.ForumViewCreateManyReplyInputEnvelope
-  set?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-  disconnect?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-  delete?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-  connect?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-  update?: Prisma.ForumViewUpdateWithWhereUniqueWithoutReplyInput | Prisma.ForumViewUpdateWithWhereUniqueWithoutReplyInput[]
-  updateMany?: Prisma.ForumViewUpdateManyWithWhereWithoutReplyInput | Prisma.ForumViewUpdateManyWithWhereWithoutReplyInput[]
-  deleteMany?: Prisma.ForumViewScalarWhereInput | Prisma.ForumViewScalarWhereInput[]
-}
-
-export type ForumViewUncheckedUpdateManyWithoutReplyNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumViewCreateWithoutReplyInput, Prisma.ForumViewUncheckedCreateWithoutReplyInput> | Prisma.ForumViewCreateWithoutReplyInput[] | Prisma.ForumViewUncheckedCreateWithoutReplyInput[]
-  connectOrCreate?: Prisma.ForumViewCreateOrConnectWithoutReplyInput | Prisma.ForumViewCreateOrConnectWithoutReplyInput[]
-  upsert?: Prisma.ForumViewUpsertWithWhereUniqueWithoutReplyInput | Prisma.ForumViewUpsertWithWhereUniqueWithoutReplyInput[]
-  createMany?: Prisma.ForumViewCreateManyReplyInputEnvelope
-  set?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-  disconnect?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-  delete?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-  connect?: Prisma.ForumViewWhereUniqueInput | Prisma.ForumViewWhereUniqueInput[]
-  update?: Prisma.ForumViewUpdateWithWhereUniqueWithoutReplyInput | Prisma.ForumViewUpdateWithWhereUniqueWithoutReplyInput[]
-  updateMany?: Prisma.ForumViewUpdateManyWithWhereWithoutReplyInput | Prisma.ForumViewUpdateManyWithWhereWithoutReplyInput[]
   deleteMany?: Prisma.ForumViewScalarWhereInput | Prisma.ForumViewScalarWhereInput[]
 }
 
@@ -601,23 +435,13 @@ export type ForumViewUncheckedUpdateManyWithoutTopicNestedInput = {
 }
 
 export type ForumViewCreateWithoutUserInput = {
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
   viewedAt?: Date | string
   topic: Prisma.ForumTopicCreateNestedOneWithoutViewsInput
-  reply?: Prisma.ForumReplyCreateNestedOneWithoutViewsInput
 }
 
 export type ForumViewUncheckedCreateWithoutUserInput = {
   id?: number
   topicId: number
-  replyId?: number | null
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
   viewedAt?: Date | string
 }
 
@@ -653,80 +477,18 @@ export type ForumViewScalarWhereInput = {
   NOT?: Prisma.ForumViewScalarWhereInput | Prisma.ForumViewScalarWhereInput[]
   id?: Prisma.IntFilter<"ForumView"> | number
   topicId?: Prisma.IntFilter<"ForumView"> | number
-  replyId?: Prisma.IntNullableFilter<"ForumView"> | number | null
   userId?: Prisma.IntFilter<"ForumView"> | number
-  type?: Prisma.StringNullableFilter<"ForumView"> | string | null
-  duration?: Prisma.IntNullableFilter<"ForumView"> | number | null
-  device?: Prisma.StringNullableFilter<"ForumView"> | string | null
-  ipAddress?: Prisma.StringNullableFilter<"ForumView"> | string | null
   viewedAt?: Prisma.DateTimeFilter<"ForumView"> | Date | string
 }
 
-export type ForumViewCreateWithoutReplyInput = {
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
-  viewedAt?: Date | string
-  topic: Prisma.ForumTopicCreateNestedOneWithoutViewsInput
-  user: Prisma.AppUserCreateNestedOneWithoutForumViewsInput
-}
-
-export type ForumViewUncheckedCreateWithoutReplyInput = {
-  id?: number
-  topicId: number
-  userId: number
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
-  viewedAt?: Date | string
-}
-
-export type ForumViewCreateOrConnectWithoutReplyInput = {
-  where: Prisma.ForumViewWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumViewCreateWithoutReplyInput, Prisma.ForumViewUncheckedCreateWithoutReplyInput>
-}
-
-export type ForumViewCreateManyReplyInputEnvelope = {
-  data: Prisma.ForumViewCreateManyReplyInput | Prisma.ForumViewCreateManyReplyInput[]
-  skipDuplicates?: boolean
-}
-
-export type ForumViewUpsertWithWhereUniqueWithoutReplyInput = {
-  where: Prisma.ForumViewWhereUniqueInput
-  update: Prisma.XOR<Prisma.ForumViewUpdateWithoutReplyInput, Prisma.ForumViewUncheckedUpdateWithoutReplyInput>
-  create: Prisma.XOR<Prisma.ForumViewCreateWithoutReplyInput, Prisma.ForumViewUncheckedCreateWithoutReplyInput>
-}
-
-export type ForumViewUpdateWithWhereUniqueWithoutReplyInput = {
-  where: Prisma.ForumViewWhereUniqueInput
-  data: Prisma.XOR<Prisma.ForumViewUpdateWithoutReplyInput, Prisma.ForumViewUncheckedUpdateWithoutReplyInput>
-}
-
-export type ForumViewUpdateManyWithWhereWithoutReplyInput = {
-  where: Prisma.ForumViewScalarWhereInput
-  data: Prisma.XOR<Prisma.ForumViewUpdateManyMutationInput, Prisma.ForumViewUncheckedUpdateManyWithoutReplyInput>
-}
-
 export type ForumViewCreateWithoutTopicInput = {
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
   viewedAt?: Date | string
-  reply?: Prisma.ForumReplyCreateNestedOneWithoutViewsInput
   user: Prisma.AppUserCreateNestedOneWithoutForumViewsInput
 }
 
 export type ForumViewUncheckedCreateWithoutTopicInput = {
   id?: number
-  replyId?: number | null
   userId: number
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
   viewedAt?: Date | string
 }
 
@@ -759,129 +521,46 @@ export type ForumViewUpdateManyWithWhereWithoutTopicInput = {
 export type ForumViewCreateManyUserInput = {
   id?: number
   topicId: number
-  replyId?: number | null
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
   viewedAt?: Date | string
 }
 
 export type ForumViewUpdateWithoutUserInput = {
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   topic?: Prisma.ForumTopicUpdateOneRequiredWithoutViewsNestedInput
-  reply?: Prisma.ForumReplyUpdateOneWithoutViewsNestedInput
 }
 
 export type ForumViewUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumViewUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ForumViewCreateManyReplyInput = {
-  id?: number
-  topicId: number
-  userId: number
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
-  viewedAt?: Date | string
-}
-
-export type ForumViewUpdateWithoutReplyInput = {
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  topic?: Prisma.ForumTopicUpdateOneRequiredWithoutViewsNestedInput
-  user?: Prisma.AppUserUpdateOneRequiredWithoutForumViewsNestedInput
-}
-
-export type ForumViewUncheckedUpdateWithoutReplyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type ForumViewUncheckedUpdateManyWithoutReplyInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  topicId?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumViewCreateManyTopicInput = {
   id?: number
-  replyId?: number | null
   userId: number
-  type?: string | null
-  duration?: number | null
-  device?: string | null
-  ipAddress?: string | null
   viewedAt?: Date | string
 }
 
 export type ForumViewUpdateWithoutTopicInput = {
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  reply?: Prisma.ForumReplyUpdateOneWithoutViewsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutForumViewsNestedInput
 }
 
 export type ForumViewUncheckedUpdateWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ForumViewUncheckedUpdateManyWithoutTopicInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  replyId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  duration?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  device?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipAddress?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   viewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -890,74 +569,48 @@ export type ForumViewUncheckedUpdateManyWithoutTopicInput = {
 export type ForumViewSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   topicId?: boolean
-  replyId?: boolean
   userId?: boolean
-  type?: boolean
-  duration?: boolean
-  device?: boolean
-  ipAddress?: boolean
   viewedAt?: boolean
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumView$replyArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumView"]>
 
 export type ForumViewSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   topicId?: boolean
-  replyId?: boolean
   userId?: boolean
-  type?: boolean
-  duration?: boolean
-  device?: boolean
-  ipAddress?: boolean
   viewedAt?: boolean
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumView$replyArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumView"]>
 
 export type ForumViewSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   topicId?: boolean
-  replyId?: boolean
   userId?: boolean
-  type?: boolean
-  duration?: boolean
-  device?: boolean
-  ipAddress?: boolean
   viewedAt?: boolean
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumView$replyArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["forumView"]>
 
 export type ForumViewSelectScalar = {
   id?: boolean
   topicId?: boolean
-  replyId?: boolean
   userId?: boolean
-  type?: boolean
-  duration?: boolean
-  device?: boolean
-  ipAddress?: boolean
   viewedAt?: boolean
 }
 
-export type ForumViewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "topicId" | "replyId" | "userId" | "type" | "duration" | "device" | "ipAddress" | "viewedAt", ExtArgs["result"]["forumView"]>
+export type ForumViewOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "topicId" | "userId" | "viewedAt", ExtArgs["result"]["forumView"]>
 export type ForumViewInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumView$replyArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type ForumViewIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumView$replyArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type ForumViewIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topic?: boolean | Prisma.ForumTopicDefaultArgs<ExtArgs>
-  reply?: boolean | Prisma.ForumView$replyArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 
@@ -968,10 +621,6 @@ export type $ForumViewPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 关联主题
      */
     topic: Prisma.$ForumTopicPayload<ExtArgs>
-    /**
-     * 关联回复
-     */
-    reply: Prisma.$ForumReplyPayload<ExtArgs> | null
     /**
      * 关联用户
      */
@@ -987,29 +636,9 @@ export type $ForumViewPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      */
     topicId: number
     /**
-     * 关联的回复ID
-     */
-    replyId: number | null
-    /**
      * 关联的用户ID
      */
     userId: number
-    /**
-     * 浏览类型（topic=主题, reply=回复）
-     */
-    type: string | null
-    /**
-     * 浏览时长（秒）
-     */
-    duration: number | null
-    /**
-     * 浏览设备类型
-     */
-    device: string | null
-    /**
-     * 浏览IP地址
-     */
-    ipAddress: string | null
     /**
      * 浏览时间
      */
@@ -1409,7 +1038,6 @@ readonly fields: ForumViewFieldRefs;
 export interface Prisma__ForumViewClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   topic<T extends Prisma.ForumTopicDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumTopicDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumTopicClient<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  reply<T extends Prisma.ForumView$replyArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumView$replyArgs<ExtArgs>>): Prisma.Prisma__ForumReplyClient<runtime.Types.Result.GetResult<Prisma.$ForumReplyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1442,12 +1070,7 @@ export interface Prisma__ForumViewClient<T, Null = never, ExtArgs extends runtim
 export interface ForumViewFieldRefs {
   readonly id: Prisma.FieldRef<"ForumView", 'Int'>
   readonly topicId: Prisma.FieldRef<"ForumView", 'Int'>
-  readonly replyId: Prisma.FieldRef<"ForumView", 'Int'>
   readonly userId: Prisma.FieldRef<"ForumView", 'Int'>
-  readonly type: Prisma.FieldRef<"ForumView", 'String'>
-  readonly duration: Prisma.FieldRef<"ForumView", 'Int'>
-  readonly device: Prisma.FieldRef<"ForumView", 'String'>
-  readonly ipAddress: Prisma.FieldRef<"ForumView", 'String'>
   readonly viewedAt: Prisma.FieldRef<"ForumView", 'DateTime'>
 }
     
@@ -1851,25 +1474,6 @@ export type ForumViewDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Limit how many ForumViews to delete.
    */
   limit?: number
-}
-
-/**
- * ForumView.reply
- */
-export type ForumView$replyArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ForumReply
-   */
-  select?: Prisma.ForumReplySelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ForumReply
-   */
-  omit?: Prisma.ForumReplyOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumReplyInclude<ExtArgs> | null
-  where?: Prisma.ForumReplyWhereInput
 }
 
 /**

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumTopicLike
- * 论坛主题点赞表 - 记录用户对主题的点赞关系
+ * 论坛主题点赞表 - 存储用户对论坛主题的点赞记录
  */
 export type ForumTopicLikeModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumTopicLikePayload>
 
@@ -623,7 +623,13 @@ export type ForumTopicLikeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Typ
 export type $ForumTopicLikePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ForumTopicLike"
   objects: {
+    /**
+     * 关联主题
+     */
     topic: Prisma.$ForumTopicPayload<ExtArgs>
+    /**
+     * 关联用户
+     */
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{

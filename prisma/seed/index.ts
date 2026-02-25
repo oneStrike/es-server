@@ -37,6 +37,7 @@ import {
   createInitialWorkTag,
   createInitialWorkTagRelations,
 } from './modules/work'
+import { createInitialInteractionData } from './modules/interaction'
 
 const connectUrl = isProduction()
   ? DbConfig.connection.url
@@ -82,6 +83,11 @@ async function runSeeds() {
   await createInitialAppNotice(prisma)
   await createInitialAppUser(prisma)
   await createInitialForumProfile(prisma)
+
+  console.log('✅ 核心业务数据初始化完成')
+
+  // 初始化交互模块数据
+  await createInitialInteractionData(prisma)
 
   console.log('🎉 所有种子数据初始化完成！')
 }

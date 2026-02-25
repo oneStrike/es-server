@@ -893,6 +893,11 @@ export type WorkScalarRelationFilter = {
   isNot?: Prisma.WorkWhereInput
 }
 
+export type WorkNullableScalarRelationFilter = {
+  is?: Prisma.WorkWhereInput | null
+  isNot?: Prisma.WorkWhereInput | null
+}
+
 export type WorkCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   type?: Prisma.SortOrder
@@ -1094,10 +1099,12 @@ export type WorkCreateNestedOneWithoutCommentsInput = {
   connect?: Prisma.WorkWhereUniqueInput
 }
 
-export type WorkUpdateOneRequiredWithoutCommentsNestedInput = {
+export type WorkUpdateOneWithoutCommentsNestedInput = {
   create?: Prisma.XOR<Prisma.WorkCreateWithoutCommentsInput, Prisma.WorkUncheckedCreateWithoutCommentsInput>
   connectOrCreate?: Prisma.WorkCreateOrConnectWithoutCommentsInput
   upsert?: Prisma.WorkUpsertWithoutCommentsInput
+  disconnect?: Prisma.WorkWhereInput | boolean
+  delete?: Prisma.WorkWhereInput | boolean
   connect?: Prisma.WorkWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkUpdateToOneWithWhereWithoutCommentsInput, Prisma.WorkUpdateWithoutCommentsInput>, Prisma.WorkUncheckedUpdateWithoutCommentsInput>
 }
