@@ -45,40 +45,32 @@ export class CommentReportService extends BaseService {
 
   async getReports(
     status?: ReportStatus,
-    page: number = 1,
+    pageIndex: number = 1,
     pageSize: number = 20,
-  ): Promise<{ list: any[], total: number }> {
-    const where: any = {}
-    if (status !== undefined) {
-      where.status = status
-    }
-
-    const [reports, total] = await Promise.all([
-      this.prisma.userCommentReport.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        include: {
-          comment: {
-            select: {
-              id: true,
-              content: true,
-              userId: true,
-            },
-          },
-          reporter: {
-            select: {
-              id: true,
-              nickname: true,
-            },
+  ) {
+    return this.prisma.userCommentReport.findPagination({
+      where: {
+        ...(status !== undefined && { status }),
+        pageIndex,
+        pageSize,
+      } as any,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        comment: {
+          select: {
+            id: true,
+            content: true,
+            userId: true,
           },
         },
-      }),
-      this.prisma.userCommentReport.count({ where }),
-    ])
-
-    return { list: reports, total }
+        reporter: {
+          select: {
+            id: true,
+            nickname: true,
+          },
+        },
+      },
+    })
   }
 
   async handleReport(

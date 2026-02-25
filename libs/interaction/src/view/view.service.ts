@@ -42,25 +42,18 @@ export class ViewService extends BaseService {
   async getUserViews(
     userId: number,
     targetType?: InteractionTargetType,
-    page: number = 1,
+    pageIndex: number = 1,
     pageSize: number = 20,
-  ): Promise<{ list: any[], total: number }> {
-    const where: any = { userId }
-    if (targetType !== undefined) {
-      where.targetType = targetType
-    }
-
-    const [views, total] = await Promise.all([
-      this.prisma.userView.findMany({
-        where,
-        orderBy: { viewedAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      this.prisma.userView.count({ where }),
-    ])
-
-    return { list: views, total }
+  ) {
+    return this.prisma.userView.findPagination({
+      where: {
+        userId,
+        ...(targetType !== undefined && { targetType }),
+        pageIndex,
+        pageSize,
+      } as any,
+      orderBy: { viewedAt: 'desc' },
+    })
   }
 
   async deleteView(

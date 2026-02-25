@@ -91,86 +91,72 @@ export class CommentService extends BaseService {
   async getComments(
     targetType: InteractionTargetType,
     targetId: number,
-    page: number = 1,
+    pageIndex: number = 1,
     pageSize: number = 20,
-  ): Promise<{ list: any[], total: number }> {
-    const where = {
-      targetType,
-      targetId,
-      replyToId: null,
-      deletedAt: null,
-    }
-
-    const [comments, total] = await Promise.all([
-      this.prisma.userComment.findMany({
-        where,
-        orderBy: { floor: 'asc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        include: {
-          user: {
-            select: {
-              id: true,
-              nickname: true,
-              avatar: true,
-            },
+  ) {
+    return this.prisma.userComment.findPagination({
+      where: {
+        targetType,
+        targetId,
+        replyToId: null,
+        deletedAt: null,
+        pageIndex,
+        pageSize,
+      } as any,
+      orderBy: { floor: 'asc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            avatar: true,
           },
-          _count: {
-            select: {
-              replies: {
-                where: { deletedAt: null },
-              },
+        },
+        _count: {
+          select: {
+            replies: {
+              where: { deletedAt: null },
             },
           },
         },
-      }),
-      this.prisma.userComment.count({ where }),
-    ])
-
-    return { list: comments, total }
+      },
+    })
   }
 
   async getReplies(
     commentId: number,
-    page: number = 1,
+    pageIndex: number = 1,
     pageSize: number = 20,
-  ): Promise<{ list: any[], total: number }> {
-    const where = {
-      actualReplyToId: commentId,
-      deletedAt: null,
-    }
-
-    const [replies, total] = await Promise.all([
-      this.prisma.userComment.findMany({
-        where,
-        orderBy: { createdAt: 'asc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        include: {
-          user: {
-            select: {
-              id: true,
-              nickname: true,
-              avatar: true,
-            },
+  ) {
+    return this.prisma.userComment.findPagination({
+      where: {
+        actualReplyToId: commentId,
+        deletedAt: null,
+        pageIndex,
+        pageSize,
+      } as any,
+      orderBy: { createdAt: 'asc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            nickname: true,
+            avatar: true,
           },
-          replyTo: {
-            select: {
-              id: true,
-              userId: true,
-              user: {
-                select: {
-                  id: true,
-                  nickname: true,
-                },
+        },
+        replyTo: {
+          select: {
+            id: true,
+            userId: true,
+            user: {
+              select: {
+                id: true,
+                nickname: true,
               },
             },
           },
         },
-      }),
-      this.prisma.userComment.count({ where }),
-    ])
-
-    return { list: replies, total }
+      },
+    })
   }
 }

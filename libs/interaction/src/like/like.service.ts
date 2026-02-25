@@ -105,29 +105,22 @@ export class LikeService extends BaseInteractionService {
   async getTargetLikes(
     targetType: InteractionTargetType,
     targetId: number,
-    page: number = 1,
+    pageIndex: number = 1,
     pageSize: number = 20,
-  ): Promise<{ list: { userId: number, createdAt: Date }[], total: number }> {
-    const where = {
-      targetType,
-      targetId,
-    }
-
-    const [likes, total] = await Promise.all([
-      this.prisma.userLike.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        select: {
-          userId: true,
-          createdAt: true,
-        },
-      }),
-      this.prisma.userLike.count({ where }),
-    ])
-
-    return { list: likes, total }
+  ) {
+    return this.prisma.userLike.findPagination({
+      where: {
+        targetType,
+        targetId,
+        pageIndex,
+        pageSize,
+      } as any,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        userId: true,
+        createdAt: true,
+      },
+    })
   }
 
   async getLikeCount(
@@ -171,29 +164,22 @@ export class LikeService extends BaseInteractionService {
   async getUserLikes(
     userId: number,
     targetType?: InteractionTargetType,
-    page: number = 0,
+    pageIndex: number = 0,
     pageSize: number = 15,
-  ): Promise<{ list: { targetId: number, targetType: number, createdAt: Date }[], total: number }> {
-    const where = {
-      userId,
-      ...(targetType !== undefined && { targetType }),
-    }
-
-    const [likes, total] = await Promise.all([
-      this.prisma.userLike.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: page * pageSize,
-        take: pageSize,
-        select: {
-          targetId: true,
-          targetType: true,
-          createdAt: true,
-        },
-      }),
-      this.prisma.userLike.count({ where }),
-    ])
-
-    return { list: likes, total }
+  ) {
+    return this.prisma.userLike.findPagination({
+      where: {
+        userId,
+        ...(targetType !== undefined && { targetType }),
+        pageIndex,
+        pageSize,
+      } as any,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        targetId: true,
+        targetType: true,
+        createdAt: true,
+      },
+    })
   }
 }

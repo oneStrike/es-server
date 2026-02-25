@@ -129,29 +129,22 @@ export class DownloadService extends BaseInteractionService {
   async getUserDownloads(
     userId: number,
     targetType?: InteractionTargetType,
-    page: number = 0,
+    pageIndex: number = 0,
     pageSize: number = 15,
-  ): Promise<{ list: { targetId: number, targetType: number, createdAt: Date }[], total: number }> {
-    const where: any = { userId }
-    if (targetType !== undefined) {
-      where.targetType = targetType
-    }
-
-    const [downloads, total] = await Promise.all([
-      this.prisma.userDownload.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: page * pageSize,
-        take: pageSize,
-        select: {
-          targetId: true,
-          targetType: true,
-          createdAt: true,
-        },
-      }),
-      this.prisma.userDownload.count({ where }),
-    ])
-
-    return { list: downloads, total }
+  ) {
+    return this.prisma.userDownload.findPagination({
+      where: {
+        userId,
+        ...(targetType !== undefined && { targetType }),
+        pageIndex,
+        pageSize,
+      } as any,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        targetId: true,
+        targetType: true,
+        createdAt: true,
+      },
+    })
   }
 }

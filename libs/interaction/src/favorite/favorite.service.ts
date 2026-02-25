@@ -129,29 +129,22 @@ export class FavoriteService extends BaseInteractionService {
   async getUserFavorites(
     userId: number,
     targetType?: InteractionTargetType,
-    page: number = 0,
+    pageIndex: number = 0,
     pageSize: number = 15,
-  ): Promise<{ list: { targetId: number, targetType: number, createdAt: Date }[], total: number }> {
-    const where = {
-      userId,
-      ...(targetType !== undefined && { targetType }),
-    }
-
-    const [favorites, total] = await Promise.all([
-      this.prisma.userFavorite.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: page * pageSize,
-        take: pageSize,
-        select: {
-          targetId: true,
-          targetType: true,
-          createdAt: true,
-        },
-      }),
-      this.prisma.userFavorite.count({ where }),
-    ])
-
-    return { list: favorites, total }
+  ) {
+    return this.prisma.userFavorite.findPagination({
+      where: {
+        userId,
+        ...(targetType !== undefined && { targetType }),
+        pageIndex,
+        pageSize,
+      } as any,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        targetId: true,
+        targetType: true,
+        createdAt: true,
+      },
+    })
   }
 }
