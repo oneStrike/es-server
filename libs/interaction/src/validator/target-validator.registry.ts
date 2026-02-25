@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common'
 import type { InteractionTargetType } from '../interaction.constant'
 import type { ITargetValidator } from './target-validator.interface'
+import { Injectable } from '@nestjs/common'
 
 /**
  * 目标校验器注册表

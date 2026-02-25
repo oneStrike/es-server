@@ -1,17 +1,17 @@
-import { Injectable, OnModuleInit } from '@nestjs/common'
 import {
-  InteractionEventEmitter,
-  InteractionEvent,
   InteractionActionType,
+  InteractionEvent,
+  InteractionEventEmitter,
   InteractionTargetType,
 } from '@libs/interaction'
 import { UserGrowthEventService } from '@libs/user/growth-event'
-import { ForumCounterService } from '../counter/forum-counter.service'
-import { ForumUserActionLogService } from '../action-log/action-log.service'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
 } from '../action-log/action-log.constant'
+import { ForumUserActionLogService } from '../action-log/action-log.service'
+import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 
 @Injectable()
@@ -35,13 +35,15 @@ export class ForumInteractionEventHandler implements OnModuleInit {
   }
 
   private async handleLike(event: InteractionEvent): Promise<void> {
-    if (!this.isForumTopic(event.targetType)) return
+    if (!this.isForumTopic(event.targetType))
+{ return }
 
     const topicId = event.targetId
     const userId = event.userId
 
     const topic = await this.forumCounterService.getTopicInfo(topicId)
-    if (!topic) return
+    if (!topic)
+{ return }
 
     await this.forumCounterService.updateTopicLikeRelatedCounts(
       {} as any,
@@ -67,13 +69,15 @@ export class ForumInteractionEventHandler implements OnModuleInit {
   }
 
   private async handleUnlike(event: InteractionEvent): Promise<void> {
-    if (!this.isForumTopic(event.targetType)) return
+    if (!this.isForumTopic(event.targetType))
+{ return }
 
     const topicId = event.targetId
     const userId = event.userId
 
     const topic = await this.forumCounterService.getTopicInfo(topicId)
-    if (!topic) return
+    if (!topic)
+{ return }
 
     await this.forumCounterService.updateTopicLikeRelatedCounts(
       {} as any,
@@ -91,13 +95,15 @@ export class ForumInteractionEventHandler implements OnModuleInit {
   }
 
   private async handleFavorite(event: InteractionEvent): Promise<void> {
-    if (!this.isForumTopic(event.targetType)) return
+    if (!this.isForumTopic(event.targetType))
+{ return }
 
     const topicId = event.targetId
     const userId = event.userId
 
     const topic = await this.forumCounterService.getTopicInfo(topicId)
-    if (!topic) return
+    if (!topic)
+{ return }
 
     await this.forumCounterService.updateTopicFavoriteRelatedCounts(
       {} as any,
@@ -123,13 +129,15 @@ export class ForumInteractionEventHandler implements OnModuleInit {
   }
 
   private async handleUnfavorite(event: InteractionEvent): Promise<void> {
-    if (!this.isForumTopic(event.targetType)) return
+    if (!this.isForumTopic(event.targetType))
+{ return }
 
     const topicId = event.targetId
     const userId = event.userId
 
     const topic = await this.forumCounterService.getTopicInfo(topicId)
-    if (!topic) return
+    if (!topic)
+{ return }
 
     await this.forumCounterService.updateTopicFavoriteRelatedCounts(
       {} as any,

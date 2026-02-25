@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaClient } from '@libs/base/database'
 import { BaseInteractionService } from '../base-interaction.service'
 import { CounterService } from '../counter/counter.service'
-import { InteractionTargetType, InteractionActionType } from '../interaction.constant'
+import { InteractionActionType, InteractionTargetType } from '../interaction.constant'
 import { TargetValidatorRegistry } from '../validator/target-validator.registry'
 
 @Injectable()
 export class DownloadService extends BaseInteractionService {
   constructor(
-    protected readonly prisma: PrismaClient,
     protected readonly counterService: CounterService,
     protected readonly validatorRegistry: TargetValidatorRegistry,
   ) {
@@ -110,14 +108,6 @@ export class DownloadService extends BaseInteractionService {
     return statusMap
   }
 
-  /**
-   * 记录下载
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @param userId 用户ID
-   * @param workId 作品ID
-   * @param workType 作品类型
-   */
   async checkDownloadStatus(
     targetType: InteractionTargetType,
     targetId: number,
@@ -141,7 +131,7 @@ export class DownloadService extends BaseInteractionService {
     targetType?: InteractionTargetType,
     page: number = 0,
     pageSize: number = 15,
-  ): Promise<{ list: { targetId: number; targetType: number; createdAt: Date }[]; total: number }> {
+  ): Promise<{ list: { targetId: number, targetType: number, createdAt: Date }[], total: number }> {
     const where: any = { userId }
     if (targetType !== undefined) {
       where.targetType = targetType

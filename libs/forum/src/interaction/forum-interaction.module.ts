@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common'
 import { InteractionModule } from '@libs/interaction'
 import { UserGrowthEventModule } from '@libs/user/growth-event'
-import { ForumCounterModule } from '../counter'
+import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
+import { ForumCounterModule } from '../counter'
 import { ForumInteractionEventHandler } from './forum-interaction.handler'
 
 @Module({

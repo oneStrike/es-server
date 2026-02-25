@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaClient } from '@libs/base/database'
 import { BaseInteractionService } from '../base-interaction.service'
 import { CounterService } from '../counter/counter.service'
-import { InteractionTargetType, InteractionActionType } from '../interaction.constant'
+import { InteractionActionType, InteractionTargetType } from '../interaction.constant'
 import { TargetValidatorRegistry } from '../validator/target-validator.registry'
 
 @Injectable()
 export class LikeService extends BaseInteractionService {
   constructor(
-    protected readonly prisma: PrismaClient,
     protected readonly counterService: CounterService,
     protected readonly validatorRegistry: TargetValidatorRegistry,
   ) {
@@ -23,9 +21,6 @@ export class LikeService extends BaseInteractionService {
     return InteractionActionType.UNLIKE
   }
 
-  /**
-   * 检查用户是否已点赞
-   */
   protected async checkUserInteracted(
     targetType: InteractionTargetType,
     targetId: number,
@@ -43,9 +38,6 @@ export class LikeService extends BaseInteractionService {
     return !!like
   }
 
-  /**
-   * 创建点赞记录
-   */
   protected async createInteraction(
     targetType: InteractionTargetType,
     targetId: number,
@@ -60,9 +52,6 @@ export class LikeService extends BaseInteractionService {
     })
   }
 
-  /**
-   * 删除点赞记录
-   */
   protected async deleteInteraction(
     targetType: InteractionTargetType,
     targetId: number,
@@ -79,16 +68,10 @@ export class LikeService extends BaseInteractionService {
     })
   }
 
-  /**
-   * 获取计数字段名
-   */
   protected getCountField(): string {
     return 'likeCount'
   }
 
-  /**
-   * 批量检查点赞状态
-   */
   async checkStatusBatch(
     targetType: InteractionTargetType,
     targetIds: number[],
@@ -124,7 +107,7 @@ export class LikeService extends BaseInteractionService {
     targetId: number,
     page: number = 1,
     pageSize: number = 20,
-  ): Promise<{ list: { userId: number; createdAt: Date }[]; total: number }> {
+  ): Promise<{ list: { userId: number, createdAt: Date }[], total: number }> {
     const where = {
       targetType,
       targetId,
@@ -147,9 +130,6 @@ export class LikeService extends BaseInteractionService {
     return { list: likes, total }
   }
 
-  /**
-   * 获取目标的点赞数
-   */
   async getLikeCount(
     targetType: InteractionTargetType,
     targetId: number,
@@ -157,9 +137,6 @@ export class LikeService extends BaseInteractionService {
     return this.getCount(targetType, targetId)
   }
 
-  /**
-   * 批量获取点赞数
-   */
   async getLikeCounts(
     targetType: InteractionTargetType,
     targetIds: number[],
@@ -167,9 +144,6 @@ export class LikeService extends BaseInteractionService {
     return this.getCounts(targetType, targetIds)
   }
 
-  /**
-   * 点赞
-   */
   async like(
     targetType: InteractionTargetType,
     targetId: number,
@@ -178,9 +152,6 @@ export class LikeService extends BaseInteractionService {
     return this.interact(targetType, targetId, userId)
   }
 
-  /**
-   * 取消点赞
-   */
   async unlike(
     targetType: InteractionTargetType,
     targetId: number,
@@ -202,7 +173,7 @@ export class LikeService extends BaseInteractionService {
     targetType?: InteractionTargetType,
     page: number = 0,
     pageSize: number = 15,
-  ): Promise<{ list: { targetId: number; targetType: number; createdAt: Date }[]; total: number }> {
+  ): Promise<{ list: { targetId: number, targetType: number, createdAt: Date }[], total: number }> {
     const where = {
       userId,
       ...(targetType !== undefined && { targetType }),

@@ -1,14 +1,9 @@
+import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { PrismaClient } from '@libs/base/database'
 import { ReportStatus } from '../interaction.constant'
 
 @Injectable()
-export class CommentReportService {
-  constructor(private readonly prisma: PrismaClient) {}
-
-  /**
-   * 举报评论
-   */
+export class CommentReportService extends BaseService {
   async reportComment(
     commentId: number,
     reporterId: number,
@@ -16,7 +11,6 @@ export class CommentReportService {
     description?: string,
     evidenceUrl?: string,
   ): Promise<void> {
-    // 检查评论是否存在
     const comment = await this.prisma.userComment.findUnique({
       where: { id: commentId },
     })
@@ -25,17 +19,16 @@ export class CommentReportService {
       throw new Error('评论不存在')
     }
 
-    // 检查是否已举报
     const existing = await this.prisma.userCommentReport.findFirst({
       where: {
         commentId,
         reporterId,
-        status: { in: [ReportStatus.PENDING, ReportStatus.PROCESSING] },
+        status: ReportStatus.PENDING,
       },
     })
 
     if (existing) {
-      throw new Error('您已举报过该评论，请等待处理结果')
+      throw new Error('已经举报过该评论，请等待处理')
     }
 
     await this.prisma.userCommentReport.create({
@@ -50,16 +43,13 @@ export class CommentReportService {
     })
   }
 
-  /**
-   * 获取举报列表（管理员）
-   */
   async getReports(
     status?: ReportStatus,
     page: number = 1,
     pageSize: number = 20,
-  ): Promise<{ list: any[]; total: number }> {
+  ): Promise<{ list: any[], total: number }> {
     const where: any = {}
-    if (status) {
+    if (status !== undefined) {
       where.status = status
     }
 
@@ -91,9 +81,6 @@ export class CommentReportService {
     return { list: reports, total }
   }
 
-  /**
-   * 处理举报（管理员）
-   */
   async handleReport(
     reportId: number,
     handlerId: number,

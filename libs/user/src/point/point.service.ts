@@ -1,4 +1,3 @@
-import type { UserPointRuleWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'

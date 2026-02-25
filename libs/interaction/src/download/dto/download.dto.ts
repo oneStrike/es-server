@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator'
+import { ApiProperty } from '@nestjs/swagger'
+import { IsInt, IsNotEmpty, Min } from 'class-validator'
 import { InteractionTargetType } from '../../interaction.constant'
 
 export class RecordDownloadDto {

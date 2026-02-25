@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common'
-import { PrismaClient } from '@libs/base/database'
 import { BaseInteractionService } from '../base-interaction.service'
 import { CounterService } from '../counter/counter.service'
-import { InteractionTargetType, InteractionActionType } from '../interaction.constant'
+import { InteractionActionType, InteractionTargetType } from '../interaction.constant'
 import { TargetValidatorRegistry } from '../validator/target-validator.registry'
 
 @Injectable()
 export class FavoriteService extends BaseInteractionService {
   constructor(
-    protected readonly prisma: PrismaClient,
     protected readonly counterService: CounterService,
     protected readonly validatorRegistry: TargetValidatorRegistry,
   ) {
@@ -133,7 +131,7 @@ export class FavoriteService extends BaseInteractionService {
     targetType?: InteractionTargetType,
     page: number = 0,
     pageSize: number = 15,
-  ): Promise<{ list: { targetId: number; targetType: number; createdAt: Date }[]; total: number }> {
+  ): Promise<{ list: { targetId: number, targetType: number, createdAt: Date }[], total: number }> {
     const where = {
       userId,
       ...(targetType !== undefined && { targetType }),

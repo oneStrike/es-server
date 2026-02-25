@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common'
-import { InteractionTargetType, InteractionActionType } from './interaction.constant'
+import { InteractionActionType, InteractionTargetType } from './interaction.constant'
 
 export interface InteractionEvent {
   actionType: InteractionActionType
@@ -38,7 +38,7 @@ export class InteractionEventEmitter implements OnModuleDestroy {
     }
 
     await Promise.all(
-      Array.from(handlers).map(handler => handler(event))
+      Array.from(handlers).map(async handler => handler(event))
     )
   }
 }

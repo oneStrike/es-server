@@ -151,6 +151,10 @@ export function getWorkTypeByChapter(
       return InteractionTargetType.COMIC
     case InteractionTargetType.NOVEL_CHAPTER:
       return InteractionTargetType.NOVEL
+    case InteractionTargetType.COMIC:
+    case InteractionTargetType.NOVEL:
+    case InteractionTargetType.FORUM_TOPIC:
+      return null
     default:
       return null
   }

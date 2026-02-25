@@ -2,7 +2,7 @@
  * 交互模块类型定义
  */
 
-import type { InteractionTargetType, InteractionActionType, AuditStatus, AuditRole, ReportStatus } from './interaction.constant'
+import type { AuditRole, AuditStatus, InteractionTargetType, ReportStatus } from './interaction.constant'
 
 /**
  * 交互记录基础接口

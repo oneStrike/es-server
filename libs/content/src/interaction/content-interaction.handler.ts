@@ -1,11 +1,11 @@
-import { Injectable, OnModuleInit } from '@nestjs/common'
 import {
-  InteractionEventEmitter,
-  InteractionEvent,
   InteractionActionType,
+  InteractionEvent,
+  InteractionEventEmitter,
   InteractionTargetType,
 } from '@libs/interaction'
 import { UserGrowthEventService } from '@libs/user/growth-event'
+import { Injectable, OnModuleInit } from '@nestjs/common'
 
 @Injectable()
 export class ContentInteractionEventHandler implements OnModuleInit {
@@ -30,13 +30,14 @@ export class ContentInteractionEventHandler implements OnModuleInit {
   }
 
   private async handleLike(event: InteractionEvent): Promise<void> {
-    if (!this.isWorkType(event.targetType)) return
+    if (!this.isWorkType(event.targetType))
+{ return }
 
     const targetId = event.targetId
     const userId = event.userId
 
     if (event.targetType === InteractionTargetType.COMIC_CHAPTER ||
-        event.targetType === InteractionTargetType.NOVEL_CHAPTER) {
+      event.targetType === InteractionTargetType.NOVEL_CHAPTER) {
       await this.userGrowthEventService.handleEvent({
         business: 'work',
         eventKey: 'chapter_like',
@@ -56,7 +57,8 @@ export class ContentInteractionEventHandler implements OnModuleInit {
   }
 
   private async handleFavorite(event: InteractionEvent): Promise<void> {
-    if (!this.isWorkType(event.targetType)) return
+    if (!this.isWorkType(event.targetType))
+{ return }
 
     const targetId = event.targetId
     const userId = event.userId
@@ -71,7 +73,8 @@ export class ContentInteractionEventHandler implements OnModuleInit {
   }
 
   private async handleDownload(event: InteractionEvent): Promise<void> {
-    if (!this.isWorkType(event.targetType)) return
+    if (!this.isWorkType(event.targetType))
+{ return }
 
     const targetId = event.targetId
     const userId = event.userId

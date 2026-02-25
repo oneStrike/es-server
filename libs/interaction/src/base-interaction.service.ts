@@ -1,24 +1,19 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common'
-import { PrismaClient } from '@libs/base/database'
-import { InteractionTargetType, InteractionActionType } from './interaction.constant'
-import { CounterService } from './counter/counter.service'
-import { TargetValidatorRegistry } from './validator/target-validator.registry'
-import { InteractionEventEmitter } from './interaction.event'
+import type { CounterService } from './counter/counter.service'
+import type { InteractionActionType, InteractionTargetType } from './interaction.constant'
+import type { InteractionEventEmitter } from './interaction.event'
+import type { TargetValidatorRegistry } from './validator/target-validator.registry'
+import { BaseService } from '@libs/base/database'
 
-export abstract class BaseInteractionService {
-  protected abstract readonly prisma: PrismaClient
-  protected abstract readonly counterService: CounterService
-  protected abstract readonly validatorRegistry: TargetValidatorRegistry
+import { BadRequestException, NotFoundException } from '@nestjs/common'
+
+export abstract class BaseInteractionService extends BaseService {
+  protected declare readonly counterService: CounterService
+  protected declare readonly validatorRegistry: TargetValidatorRegistry
   protected eventEmitter?: InteractionEventEmitter
 
   protected abstract getActionType(): InteractionActionType
   protected abstract getCancelActionType(): InteractionActionType
 
-  /**
-   * 校验目标是否存在
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   */
   protected async validateTarget(
     targetType: InteractionTargetType,
     targetId: number,
@@ -31,58 +26,36 @@ export abstract class BaseInteractionService {
     }
   }
 
-  /**
-   * 获取目标信息
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @returns 目标信息
-   */
-  protected async getTargetInfo(
-    targetType: InteractionTargetType,
-    targetId: number,
-  ): Promise<unknown | null> {
-    const validator = this.validatorRegistry.getValidator(targetType)
-    return validator.getTargetInfo(targetId)
+  protected async checkUserInteracted(
+    _targetType: InteractionTargetType,
+    _targetId: number,
+    _userId: number,
+  ): Promise<boolean> {
+    throw new Error('checkUserInteracted must be implemented')
   }
 
-  /**
-   * 检查用户是否已执行交互
-   * 子类需要实现此方法
-   */
-  protected abstract checkUserInteracted(
-    targetType: InteractionTargetType,
-    targetId: number,
-    userId: number,
-  ): Promise<boolean>
+  protected async createInteraction(
+    _targetType: InteractionTargetType,
+    _targetId: number,
+    _userId: number,
+    _extraData?: Record<string, unknown>,
+  ): Promise<void> {
+    throw new Error('createInteraction must be implemented')
+  }
 
-  /**
-   * 创建交互记录
-   * 子类需要实现此方法
-   */
-  protected abstract createInteraction(
-    targetType: InteractionTargetType,
-    targetId: number,
-    userId: number,
-    extraData?: Record<string, unknown>,
-  ): Promise<void>
+  protected async deleteInteraction(
+    _targetType: InteractionTargetType,
+    _targetId: number,
+    _userId: number,
+  ): Promise<void> {
+    throw new Error('deleteInteraction must be implemented')
+  }
 
-  /**
-   * 删除交互记录
-   * 子类需要实现此方法
-   */
-  protected abstract deleteInteraction(
-    targetType: InteractionTargetType,
-    targetId: number,
-    userId: number,
-  ): Promise<void>
+  protected getCountField(): string {
+    return 'interactionCount'
+  }
 
-  /**
-   * 获取计数字段名
-   * 子类需要实现此方法
-   */
-  protected abstract getCountField(): string
-
-  async interact(
+  protected async interact(
     targetType: InteractionTargetType,
     targetId: number,
     userId: number,
@@ -90,45 +63,46 @@ export abstract class BaseInteractionService {
   ): Promise<void> {
     await this.validateTarget(targetType, targetId)
 
-    const hasInteracted = await this.checkUserInteracted(targetType, targetId, userId)
-    if (hasInteracted) {
-      throw new BadRequestException('已经执行过该操作')
+    const alreadyInteracted = await this.checkUserInteracted(targetType, targetId, userId)
+    if (alreadyInteracted) {
+      throw new BadRequestException('已经进行过此操作')
     }
 
-    await this.createInteraction(targetType, targetId, userId, extraData)
-
-    const countField = this.getCountField()
-    await this.counterService.increment(targetType, targetId, countField)
+    await this.prisma.$transaction(async (tx) => {
+      await this.createInteraction(targetType, targetId, userId, extraData)
+      await this.counterService.incrementCount(tx, targetType, targetId, this.getCountField())
+    })
 
     if (this.eventEmitter) {
-      await this.eventEmitter.emit({
+      void this.eventEmitter.emit({
         actionType: this.getActionType(),
         targetType,
         targetId,
         userId,
         timestamp: new Date(),
-        extraData,
       })
     }
   }
 
-  async cancelInteract(
+  protected async cancelInteract(
     targetType: InteractionTargetType,
     targetId: number,
     userId: number,
   ): Promise<void> {
+    await this.validateTarget(targetType, targetId)
+
     const hasInteracted = await this.checkUserInteracted(targetType, targetId, userId)
     if (!hasInteracted) {
-      throw new BadRequestException('尚未执行过该操作')
+      throw new BadRequestException('尚未进行过此操作')
     }
 
-    await this.deleteInteraction(targetType, targetId, userId)
-
-    const countField = this.getCountField()
-    await this.counterService.decrement(targetType, targetId, countField)
+    await this.prisma.$transaction(async (tx) => {
+      await this.deleteInteraction(targetType, targetId, userId)
+      await this.counterService.decrementCount(tx, targetType, targetId, this.getCountField())
+    })
 
     if (this.eventEmitter) {
-      await this.eventEmitter.emit({
+      void this.eventEmitter.emit({
         actionType: this.getCancelActionType(),
         targetType,
         targetId,
@@ -138,13 +112,6 @@ export abstract class BaseInteractionService {
     }
   }
 
-  /**
-   * 检查用户交互状态
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @param userId 用户ID
-   * @returns 是否已交互
-   */
   async checkStatus(
     targetType: InteractionTargetType,
     targetId: number,
@@ -153,44 +120,21 @@ export abstract class BaseInteractionService {
     return this.checkUserInteracted(targetType, targetId, userId)
   }
 
-  /**
-   * 批量检查用户交互状态
-   * @param targetType 目标类型
-   * @param targetIds 目标ID数组
-   * @param userId 用户ID
-   * @returns 交互状态映射表
-   */
-  abstract checkStatusBatch(
-    targetType: InteractionTargetType,
-    targetIds: number[],
-    userId: number,
-  ): Promise<Map<number, boolean>>
-
-  /**
-   * 获取交互计数
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @returns 交互计数
-   */
-  async getCount(
+  protected async getCount(
     targetType: InteractionTargetType,
     targetId: number,
   ): Promise<number> {
-    const countField = this.getCountField()
-    return this.counterService.getCount(targetType, targetId, countField)
+    return this.counterService.getCount(targetType, targetId, this.getCountField())
   }
 
-  /**
-   * 批量获取交互计数
-   * @param targetType 目标类型
-   * @param targetIds 目标ID数组
-   * @returns 计数映射表
-   */
-  async getCounts(
+  protected async getCounts(
     targetType: InteractionTargetType,
     targetIds: number[],
   ): Promise<Map<number, number>> {
-    const countField = this.getCountField()
-    return this.counterService.getCounts(targetType, targetIds, countField)
+    return this.counterService.getCounts(targetType, targetIds, this.getCountField())
+  }
+
+  setEventEmitter(emitter: InteractionEventEmitter): void {
+    this.eventEmitter = emitter
   }
 }

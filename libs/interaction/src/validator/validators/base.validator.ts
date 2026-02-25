@@ -1,32 +1,17 @@
-import { PrismaClient } from '@libs/base/database'
-import { InteractionTargetType } from '../../interaction.constant'
+import type { InteractionTargetType } from '../../interaction.constant'
 import type { ITargetValidationResult, ITargetValidator } from '../target-validator.interface'
+import { BaseService } from '@libs/base/database'
+import { Injectable } from '@nestjs/common'
 
-/**
- * 基础目标校验器抽象类
- * 提供通用的校验逻辑
- */
-export abstract class BaseTargetValidator implements ITargetValidator {
-  /** Prisma 客户端 */
-  protected readonly prisma: PrismaClient
-
-  /** 支持的目标类型 */
+@Injectable()
+export abstract class BaseTargetValidator extends BaseService implements ITargetValidator {
   abstract readonly targetType: InteractionTargetType
-
-  /** Prisma 模型名称 */
   protected abstract readonly modelName: string
 
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma
-  }
-
-  /**
-   * 校验目标是否存在
-   */
   async validate(targetId: number): Promise<ITargetValidationResult> {
     try {
       const model = this.getModel()
-      const target = await (model as any).findUnique({
+      const target = await (model).findUnique({
         where: { id: targetId },
       })
 
@@ -37,7 +22,6 @@ export abstract class BaseTargetValidator implements ITargetValidator {
         }
       }
 
-      // 检查是否有 deletedAt 字段（软删除）
       if ('deletedAt' in target && target.deletedAt !== null) {
         return {
           valid: false,
@@ -49,7 +33,7 @@ export abstract class BaseTargetValidator implements ITargetValidator {
         valid: true,
         data: target,
       }
-    } catch (error) {
+    } catch {
       return {
         valid: false,
         message: `校验${this.getTargetName()}时发生错误`,
@@ -57,9 +41,6 @@ export abstract class BaseTargetValidator implements ITargetValidator {
     }
   }
 
-  /**
-   * 批量校验目标是否存在
-   */
   async validateBatch(targetIds: number[]): Promise<number[]> {
     if (targetIds.length === 0) {
       return []
@@ -67,7 +48,7 @@ export abstract class BaseTargetValidator implements ITargetValidator {
 
     try {
       const model = this.getModel()
-      const targets = await (model as any).findMany({
+      const targets = await (model).findMany({
         where: {
           id: { in: targetIds },
           deletedAt: null,
@@ -76,34 +57,25 @@ export abstract class BaseTargetValidator implements ITargetValidator {
       })
 
       return targets.map((t: { id: number }) => t.id)
-    } catch (error) {
+    } catch {
       return []
     }
   }
 
-  /**
-   * 获取目标信息
-   */
   async getTargetInfo(targetId: number): Promise<unknown | null> {
     try {
       const model = this.getModel()
-      return await (model as any).findUnique({
+      return await (model).findUnique({
         where: { id: targetId },
       })
-    } catch (error) {
+    } catch {
       return null
     }
   }
 
-  /**
-   * 获取 Prisma 模型
-   */
   protected getModel() {
     return (this.prisma as any)[this.modelName]
   }
 
-  /**
-   * 获取目标名称（用于错误信息）
-   */
   protected abstract getTargetName(): string
 }

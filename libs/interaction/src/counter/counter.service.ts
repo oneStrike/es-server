@@ -1,30 +1,18 @@
+import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { PrismaClient } from '@libs/base/database'
 import { InteractionTargetType } from '../interaction.constant'
 
-/**
- * 计数处理器服务
- * 统一处理各种交互计数（点赞数、收藏数、浏览数、评论数、下载数）
- */
 @Injectable()
-export class CounterService {
-  constructor(private readonly prisma: PrismaClient) {}
-
-  /**
-   * 增加计数
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @param field 计数字段名
-   * @param amount 增加数量（默认1）
-   */
-  async increment(
+export class CounterService extends BaseService {
+  async incrementCount(
+    tx: any,
     targetType: InteractionTargetType,
     targetId: number,
     field: string,
     amount: number = 1,
   ): Promise<void> {
     const { modelName, where } = this.getModelInfo(targetType, targetId)
-    const model = (this.prisma as any)[modelName]
+    const model = (tx)[modelName]
 
     if (!model) {
       throw new Error(`未找到模型: ${modelName}`)
@@ -40,21 +28,15 @@ export class CounterService {
     })
   }
 
-  /**
-   * 减少计数
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @param field 计数字段名
-   * @param amount 减少数量（默认1）
-   */
-  async decrement(
+  async decrementCount(
+    tx: any,
     targetType: InteractionTargetType,
     targetId: number,
     field: string,
     amount: number = 1,
   ): Promise<void> {
     const { modelName, where } = this.getModelInfo(targetType, targetId)
-    const model = (this.prisma as any)[modelName]
+    const model = (tx)[modelName]
 
     if (!model) {
       throw new Error(`未找到模型: ${modelName}`)
@@ -70,13 +52,6 @@ export class CounterService {
     })
   }
 
-  /**
-   * 获取计数
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @param field 计数字段名
-   * @returns 当前计数
-   */
   async getCount(
     targetType: InteractionTargetType,
     targetId: number,
@@ -99,13 +74,6 @@ export class CounterService {
     return result?.[field] ?? 0
   }
 
-  /**
-   * 批量获取计数
-   * @param targetType 目标类型
-   * @param targetIds 目标ID数组
-   * @param field 计数字段名
-   * @returns 计数映射表
-   */
   async getCounts(
     targetType: InteractionTargetType,
     targetIds: number[],
@@ -140,13 +108,6 @@ export class CounterService {
     return countMap
   }
 
-  /**
-   * 设置计数（用于数据同步）
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @param field 计数字段名
-   * @param value 计数值
-   */
   async setCount(
     targetType: InteractionTargetType,
     targetId: number,
@@ -168,13 +129,10 @@ export class CounterService {
     })
   }
 
-  /**
-   * 根据目标类型获取模型信息
-   */
   private getModelInfo(
     targetType: InteractionTargetType,
     targetId: number,
-  ): { modelName: string; where: any } {
+  ): { modelName: string, where: any } {
     switch (targetType) {
       case InteractionTargetType.COMIC:
       case InteractionTargetType.NOVEL:

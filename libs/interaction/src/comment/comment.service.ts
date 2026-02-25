@@ -1,20 +1,18 @@
+import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { PrismaClient } from '@libs/base/database'
 import { CounterService } from '../counter/counter.service'
 import { InteractionTargetType } from '../interaction.constant'
 import { TargetValidatorRegistry } from '../validator/target-validator.registry'
 
 @Injectable()
-export class CommentService {
+export class CommentService extends BaseService {
   constructor(
-    private readonly prisma: PrismaClient,
     private readonly counterService: CounterService,
     private readonly validatorRegistry: TargetValidatorRegistry,
-  ) {}
+  ) {
+    super()
+  }
 
-  /**
-   * 发表评论
-   */
   async createComment(
     targetType: InteractionTargetType,
     targetId: number,
@@ -22,7 +20,6 @@ export class CommentService {
     content: string,
     replyToId?: number,
   ): Promise<any> {
-    // 校验目标是否存在
     const validator = this.validatorRegistry.getValidator(targetType)
     const result = await validator.validate(targetId)
 
@@ -30,7 +27,6 @@ export class CommentService {
       throw new Error(result.message || '目标不存在')
     }
 
-    // 获取当前楼层号
     const lastComment = await this.prisma.userComment.findFirst({
       where: {
         targetType,
@@ -43,29 +39,28 @@ export class CommentService {
 
     const floor = (lastComment?.floor ?? 0) + 1
 
-    // 创建评论
-    const comment = await this.prisma.userComment.create({
-      data: {
-        targetType,
-        targetId,
-        userId,
-        content,
-        floor,
-        replyToId: replyToId || null,
-        actualReplyToId: replyToId || null,
-        auditStatus: 1, // 默认已通过
-      },
-    })
+    const comment = await this.prisma.$transaction(async (tx) => {
+      const newComment = await tx.userComment.create({
+        data: {
+          targetType,
+          targetId,
+          userId,
+          content,
+          floor,
+          replyToId: replyToId || null,
+          actualReplyToId: replyToId || null,
+          auditStatus: 1,
+        },
+      })
 
-    // 增加评论计数
-    await this.counterService.increment(targetType, targetId, 'commentCount')
+      await this.counterService.incrementCount(tx, targetType, targetId, 'commentCount')
+
+      return newComment
+    })
 
     return comment
   }
 
-  /**
-   * 删除评论
-   */
   async deleteComment(
     commentId: number,
     userId: number,
@@ -78,41 +73,38 @@ export class CommentService {
       throw new Error('评论不存在或无权限删除')
     }
 
-    // 软删除
-    await this.prisma.userComment.update({
-      where: { id: commentId },
-      data: { deletedAt: new Date() },
-    })
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userComment.update({
+        where: { id: commentId },
+        data: { deletedAt: new Date() },
+      })
 
-    // 减少评论计数
-    await this.counterService.decrement(
-      comment.targetType as InteractionTargetType,
-      comment.targetId,
-      'commentCount',
-    )
+      await this.counterService.decrementCount(
+        tx,
+        comment.targetType as InteractionTargetType,
+        comment.targetId,
+        'commentCount',
+      )
+    })
   }
 
-  /**
-   * 获取评论列表
-   */
   async getComments(
     targetType: InteractionTargetType,
     targetId: number,
     page: number = 1,
     pageSize: number = 20,
-  ): Promise<{ list: any[]; total: number }> {
-    const where: any = {
+  ): Promise<{ list: any[], total: number }> {
+    const where = {
       targetType,
       targetId,
       replyToId: null,
-      isHidden: false,
       deletedAt: null,
     }
 
     const [comments, total] = await Promise.all([
       this.prisma.userComment.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { floor: 'asc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: {
@@ -125,7 +117,9 @@ export class CommentService {
           },
           _count: {
             select: {
-              replies: true,
+              replies: {
+                where: { deletedAt: null },
+              },
             },
           },
         },
@@ -136,17 +130,13 @@ export class CommentService {
     return { list: comments, total }
   }
 
-  /**
-   * 获取评论回复列表
-   */
   async getReplies(
     commentId: number,
     page: number = 1,
     pageSize: number = 20,
-  ): Promise<{ list: any[]; total: number }> {
-    const where: any = {
+  ): Promise<{ list: any[], total: number }> {
+    const where = {
       actualReplyToId: commentId,
-      isHidden: false,
       deletedAt: null,
     }
 
@@ -167,6 +157,7 @@ export class CommentService {
           replyTo: {
             select: {
               id: true,
+              userId: true,
               user: {
                 select: {
                   id: true,

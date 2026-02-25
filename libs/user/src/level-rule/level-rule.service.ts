@@ -1,6 +1,6 @@
 import type { PrismaClientType } from '@libs/base/database/prisma.types'
 import { BaseService } from '@libs/base/database'
-import { LikeService, FavoriteService, InteractionTargetType } from '@libs/interaction'
+import { FavoriteService, InteractionTargetType, LikeService } from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CheckUserLevelPermissionDto,

@@ -1,11 +1,11 @@
 import type { WorkWhereInput } from '@libs/base/database'
-import { BaseService, Prisma } from '@libs/base/database'
+import { BaseService } from '@libs/base/database'
 import { PageDto } from '@libs/base/dto'
 import { isNotNil } from '@libs/base/utils'
 import {
-  LikeService,
   FavoriteService,
   InteractionTargetType,
+  LikeService,
 } from '@libs/interaction'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'

@@ -1,4 +1,3 @@
-import { PrismaClient } from '@libs/base/database'
 import { Global, Module, OnModuleInit } from '@nestjs/common'
 import { TargetValidatorRegistry } from './target-validator.registry'
 import {
@@ -12,7 +11,6 @@ import {
 @Global()
 @Module({
   providers: [
-    PrismaClient,
     TargetValidatorRegistry,
     ComicValidator,
     NovelValidator,
@@ -30,7 +28,7 @@ export class ValidatorModule implements OnModuleInit {
     private readonly comicChapterValidator: ComicChapterValidator,
     private readonly novelChapterValidator: NovelChapterValidator,
     private readonly forumTopicValidator: ForumTopicValidator,
-  ) { }
+  ) {}
 
   onModuleInit() {
     this.registry.register(this.comicValidator)
