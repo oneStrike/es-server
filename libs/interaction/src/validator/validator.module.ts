@@ -1,21 +1,18 @@
-import { Global, Module, OnModuleInit } from '@nestjs/common'
 import { PrismaClient } from '@libs/base/database'
+import { Global, Module, OnModuleInit } from '@nestjs/common'
 import { TargetValidatorRegistry } from './target-validator.registry'
 import {
-  ComicValidator,
-  NovelValidator,
   ComicChapterValidator,
-  NovelChapterValidator,
+  ComicValidator,
   ForumTopicValidator,
+  NovelChapterValidator,
+  NovelValidator,
 } from './validators'
 
-/**
- * 目标校验器模块
- * 提供所有目标类型的校验器
- */
 @Global()
 @Module({
   providers: [
+    PrismaClient,
     TargetValidatorRegistry,
     ComicValidator,
     NovelValidator,
@@ -33,10 +30,9 @@ export class ValidatorModule implements OnModuleInit {
     private readonly comicChapterValidator: ComicChapterValidator,
     private readonly novelChapterValidator: NovelChapterValidator,
     private readonly forumTopicValidator: ForumTopicValidator,
-  ) {}
+  ) { }
 
   onModuleInit() {
-    // 注册所有校验器
     this.registry.register(this.comicValidator)
     this.registry.register(this.novelValidator)
     this.registry.register(this.comicChapterValidator)

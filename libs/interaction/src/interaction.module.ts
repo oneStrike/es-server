@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common'
+import { Module, Global } from '@nestjs/common'
 import { LikeModule } from './like/like.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { ViewModule } from './view/view.module'
@@ -8,7 +8,9 @@ import { CommentReportModule } from './comment-report/comment-report.module'
 import { DownloadModule } from './download/download.module'
 import { CounterModule } from './counter/counter.module'
 import { ValidatorModule } from './validator/validator.module'
+import { InteractionEventEmitter } from './interaction.event'
 
+@Global()
 @Module({
   imports: [
     ValidatorModule,
@@ -21,6 +23,7 @@ import { ValidatorModule } from './validator/validator.module'
     CommentReportModule,
     DownloadModule,
   ],
+  providers: [InteractionEventEmitter],
   exports: [
     ValidatorModule,
     CounterModule,
@@ -31,6 +34,7 @@ import { ValidatorModule } from './validator/validator.module'
     CommentLikeModule,
     CommentReportModule,
     DownloadModule,
+    InteractionEventEmitter,
   ],
 })
 export class InteractionModule {}

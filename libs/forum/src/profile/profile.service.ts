@@ -1,6 +1,7 @@
 import type { PrismaClientType } from '@libs/base/database/prisma.types'
 import { UserDefaults, UserStatusEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
+import { FavoriteService, InteractionTargetType } from '@libs/interaction'
 import { UserPointService } from '@libs/user/point'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -13,13 +14,12 @@ type ForumProfileTransactionClient = Pick<
   'userLevelRule' | 'appUser' | 'forumProfile'
 >
 
-/**
- * 论坛资料服务类
- * 提供用户资料查询、状态管理、主题收藏、积分记录等核心业务逻辑
- */
 @Injectable()
 export class ForumProfileService extends BaseService {
-  constructor(protected readonly pointService: UserPointService) {
+  constructor(
+    protected readonly pointService: UserPointService,
+    protected readonly favoriteService: FavoriteService,
+  ) {
     super()
   }
 
@@ -156,34 +156,46 @@ export class ForumProfileService extends BaseService {
     })
   }
 
-  /**
-   * 查看我的收藏
-   * @param userId - 用户ID
-   * @returns 分页的收藏列表，包含主题信息和回复数统计
-   */
   async getMyFavorites(userId: number) {
-    return this.prisma.forumTopicFavorite.findPagination({
-      where: {
-        userId,
-      },
+    const result = await this.favoriteService.getUserFavorites(
+      userId,
+      InteractionTargetType.FORUM_TOPIC,
+    )
+
+    if (result.list.length === 0) {
+      return { list: [], total: result.total }
+    }
+
+    const topicIds = result.list.map((f) => f.targetId)
+    const topics = await this.prisma.forumTopic.findMany({
+      where: { id: { in: topicIds } },
       include: {
-        topic: {
-          include: {
-            section: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            _count: {
-              select: {
-                replies: true,
-              },
-            },
+        section: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            replies: true,
           },
         },
       },
     })
+
+    const topicMap = new Map(topics.map((t) => [t.id, t]))
+    const orderedTopics = topicIds
+      .map((id) => topicMap.get(id))
+      .filter((t): t is NonNullable<typeof t> => !!t)
+
+    return {
+      list: orderedTopics.map((topic) => ({
+        topic,
+        createdAt: result.list.find((f) => f.targetId === topic.id)?.createdAt,
+      })),
+      total: result.total,
+    }
   }
 
   /**

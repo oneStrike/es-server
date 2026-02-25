@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { PrismaClient } from '@libs/base/database'
 import { BaseInteractionService } from '../base-interaction.service'
 import { CounterService } from '../counter/counter.service'
-import { InteractionTargetType } from '../interaction.constant'
+import { InteractionTargetType, InteractionActionType } from '../interaction.constant'
 import { TargetValidatorRegistry } from '../validator/target-validator.registry'
 
 @Injectable()
@@ -13,6 +13,14 @@ export class FavoriteService extends BaseInteractionService {
     protected readonly validatorRegistry: TargetValidatorRegistry,
   ) {
     super()
+  }
+
+  protected getActionType(): InteractionActionType {
+    return InteractionActionType.FAVORITE
+  }
+
+  protected getCancelActionType(): InteractionActionType {
+    return InteractionActionType.UNFAVORITE
   }
 
   protected async checkUserInteracted(
@@ -110,5 +118,42 @@ export class FavoriteService extends BaseInteractionService {
     userId: number,
   ): Promise<void> {
     return this.cancelInteract(targetType, targetId, userId)
+  }
+
+  async checkFavoriteStatus(
+    targetType: InteractionTargetType,
+    targetId: number,
+    userId: number,
+  ): Promise<boolean> {
+    return this.checkStatus(targetType, targetId, userId)
+  }
+
+  async getUserFavorites(
+    userId: number,
+    targetType?: InteractionTargetType,
+    page: number = 0,
+    pageSize: number = 15,
+  ): Promise<{ list: { targetId: number; targetType: number; createdAt: Date }[]; total: number }> {
+    const where = {
+      userId,
+      ...(targetType !== undefined && { targetType }),
+    }
+
+    const [favorites, total] = await Promise.all([
+      this.prisma.userFavorite.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: page * pageSize,
+        take: pageSize,
+        select: {
+          targetId: true,
+          targetType: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.userFavorite.count({ where }),
+    ])
+
+    return { list: favorites, total }
   }
 }

@@ -451,9 +451,7 @@ export type WorkChapterWhereInput = {
   work?: Prisma.XOR<Prisma.WorkScalarRelationFilter, Prisma.WorkWhereInput>
   requiredDownloadLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
   requiredReadLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
-  likes?: Prisma.WorkChapterLikeListRelationFilter
   purchases?: Prisma.WorkChapterPurchaseListRelationFilter
-  downloads?: Prisma.WorkChapterDownloadListRelationFilter
   comments?: Prisma.WorkCommentListRelationFilter
 }
 
@@ -488,9 +486,7 @@ export type WorkChapterOrderByWithRelationInput = {
   work?: Prisma.WorkOrderByWithRelationInput
   requiredDownloadLevel?: Prisma.UserLevelRuleOrderByWithRelationInput
   requiredReadLevel?: Prisma.UserLevelRuleOrderByWithRelationInput
-  likes?: Prisma.WorkChapterLikeOrderByRelationAggregateInput
   purchases?: Prisma.WorkChapterPurchaseOrderByRelationAggregateInput
-  downloads?: Prisma.WorkChapterDownloadOrderByRelationAggregateInput
   comments?: Prisma.WorkCommentOrderByRelationAggregateInput
 }
 
@@ -529,9 +525,7 @@ export type WorkChapterWhereUniqueInput = Prisma.AtLeast<{
   work?: Prisma.XOR<Prisma.WorkScalarRelationFilter, Prisma.WorkWhereInput>
   requiredDownloadLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
   requiredReadLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
-  likes?: Prisma.WorkChapterLikeListRelationFilter
   purchases?: Prisma.WorkChapterPurchaseListRelationFilter
-  downloads?: Prisma.WorkChapterDownloadListRelationFilter
   comments?: Prisma.WorkCommentListRelationFilter
 }, "id" | "workId_sortOrder">
 
@@ -630,9 +624,7 @@ export type WorkChapterCreateInput = {
   work: Prisma.WorkCreateNestedOneWithoutChaptersInput
   requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsDownloadLevelInput
   requiredReadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
-  likes?: Prisma.WorkChapterLikeCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutChapterInput
 }
 
@@ -664,9 +656,7 @@ export type WorkChapterUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutChapterInput
 }
 
@@ -697,9 +687,7 @@ export type WorkChapterUpdateInput = {
   work?: Prisma.WorkUpdateOneRequiredWithoutChaptersNestedInput
   requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsDownloadLevelNestedInput
   requiredReadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
-  likes?: Prisma.WorkChapterLikeUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutChapterNestedInput
 }
 
@@ -731,9 +719,7 @@ export type WorkChapterUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutChapterNestedInput
 }
 
@@ -1058,34 +1044,6 @@ export type WorkChapterUncheckedUpdateManyWithoutRequiredReadLevelNestedInput = 
   deleteMany?: Prisma.WorkChapterScalarWhereInput | Prisma.WorkChapterScalarWhereInput[]
 }
 
-export type WorkChapterCreateNestedOneWithoutDownloadsInput = {
-  create?: Prisma.XOR<Prisma.WorkChapterCreateWithoutDownloadsInput, Prisma.WorkChapterUncheckedCreateWithoutDownloadsInput>
-  connectOrCreate?: Prisma.WorkChapterCreateOrConnectWithoutDownloadsInput
-  connect?: Prisma.WorkChapterWhereUniqueInput
-}
-
-export type WorkChapterUpdateOneRequiredWithoutDownloadsNestedInput = {
-  create?: Prisma.XOR<Prisma.WorkChapterCreateWithoutDownloadsInput, Prisma.WorkChapterUncheckedCreateWithoutDownloadsInput>
-  connectOrCreate?: Prisma.WorkChapterCreateOrConnectWithoutDownloadsInput
-  upsert?: Prisma.WorkChapterUpsertWithoutDownloadsInput
-  connect?: Prisma.WorkChapterWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkChapterUpdateToOneWithWhereWithoutDownloadsInput, Prisma.WorkChapterUpdateWithoutDownloadsInput>, Prisma.WorkChapterUncheckedUpdateWithoutDownloadsInput>
-}
-
-export type WorkChapterCreateNestedOneWithoutLikesInput = {
-  create?: Prisma.XOR<Prisma.WorkChapterCreateWithoutLikesInput, Prisma.WorkChapterUncheckedCreateWithoutLikesInput>
-  connectOrCreate?: Prisma.WorkChapterCreateOrConnectWithoutLikesInput
-  connect?: Prisma.WorkChapterWhereUniqueInput
-}
-
-export type WorkChapterUpdateOneRequiredWithoutLikesNestedInput = {
-  create?: Prisma.XOR<Prisma.WorkChapterCreateWithoutLikesInput, Prisma.WorkChapterUncheckedCreateWithoutLikesInput>
-  connectOrCreate?: Prisma.WorkChapterCreateOrConnectWithoutLikesInput
-  upsert?: Prisma.WorkChapterUpsertWithoutLikesInput
-  connect?: Prisma.WorkChapterWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkChapterUpdateToOneWithWhereWithoutLikesInput, Prisma.WorkChapterUpdateWithoutLikesInput>, Prisma.WorkChapterUncheckedUpdateWithoutLikesInput>
-}
-
 export type WorkChapterCreateNestedOneWithoutPurchasesInput = {
   create?: Prisma.XOR<Prisma.WorkChapterCreateWithoutPurchasesInput, Prisma.WorkChapterUncheckedCreateWithoutPurchasesInput>
   connectOrCreate?: Prisma.WorkChapterCreateOrConnectWithoutPurchasesInput
@@ -1184,9 +1142,7 @@ export type WorkChapterCreateWithoutRequiredDownloadLevelInput = {
   deletedAt?: Date | string | null
   work: Prisma.WorkCreateNestedOneWithoutChaptersInput
   requiredReadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
-  likes?: Prisma.WorkChapterLikeCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutChapterInput
 }
 
@@ -1217,9 +1173,7 @@ export type WorkChapterUncheckedCreateWithoutRequiredDownloadLevelInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutChapterInput
 }
 
@@ -1259,9 +1213,7 @@ export type WorkChapterCreateWithoutRequiredReadLevelInput = {
   deletedAt?: Date | string | null
   work: Prisma.WorkCreateNestedOneWithoutChaptersInput
   requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsDownloadLevelInput
-  likes?: Prisma.WorkChapterLikeCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutChapterInput
 }
 
@@ -1292,9 +1244,7 @@ export type WorkChapterUncheckedCreateWithoutRequiredReadLevelInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutChapterInput
 }
 
@@ -1373,298 +1323,6 @@ export type WorkChapterUpdateManyWithWhereWithoutRequiredReadLevelInput = {
   data: Prisma.XOR<Prisma.WorkChapterUpdateManyMutationInput, Prisma.WorkChapterUncheckedUpdateManyWithoutRequiredReadLevelInput>
 }
 
-export type WorkChapterCreateWithoutDownloadsInput = {
-  workType: number
-  title: string
-  subtitle?: string | null
-  description?: string | null
-  sortOrder?: number
-  readRule?: number
-  downloadRule?: number
-  readPoints?: number | null
-  downloadPoints?: number | null
-  isPublished?: boolean
-  isPreview?: boolean
-  canComment?: boolean
-  publishAt?: Date | string | null
-  viewCount?: number
-  likeCount?: number
-  commentCount?: number
-  purchaseCount?: number
-  wordCount?: number
-  contentPath?: string | null
-  remark?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  work: Prisma.WorkCreateNestedOneWithoutChaptersInput
-  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsDownloadLevelInput
-  requiredReadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
-  likes?: Prisma.WorkChapterLikeCreateNestedManyWithoutChapterInput
-  purchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutChapterInput
-  comments?: Prisma.WorkCommentCreateNestedManyWithoutChapterInput
-}
-
-export type WorkChapterUncheckedCreateWithoutDownloadsInput = {
-  id?: number
-  workId: number
-  workType: number
-  title: string
-  subtitle?: string | null
-  description?: string | null
-  sortOrder?: number
-  readRule?: number
-  downloadRule?: number
-  readPoints?: number | null
-  downloadPoints?: number | null
-  requiredReadLevelId?: number | null
-  requiredDownloadLevelId?: number | null
-  isPublished?: boolean
-  isPreview?: boolean
-  canComment?: boolean
-  publishAt?: Date | string | null
-  viewCount?: number
-  likeCount?: number
-  commentCount?: number
-  purchaseCount?: number
-  wordCount?: number
-  contentPath?: string | null
-  remark?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutChapterInput
-  purchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutChapterInput
-  comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutChapterInput
-}
-
-export type WorkChapterCreateOrConnectWithoutDownloadsInput = {
-  where: Prisma.WorkChapterWhereUniqueInput
-  create: Prisma.XOR<Prisma.WorkChapterCreateWithoutDownloadsInput, Prisma.WorkChapterUncheckedCreateWithoutDownloadsInput>
-}
-
-export type WorkChapterUpsertWithoutDownloadsInput = {
-  update: Prisma.XOR<Prisma.WorkChapterUpdateWithoutDownloadsInput, Prisma.WorkChapterUncheckedUpdateWithoutDownloadsInput>
-  create: Prisma.XOR<Prisma.WorkChapterCreateWithoutDownloadsInput, Prisma.WorkChapterUncheckedCreateWithoutDownloadsInput>
-  where?: Prisma.WorkChapterWhereInput
-}
-
-export type WorkChapterUpdateToOneWithWhereWithoutDownloadsInput = {
-  where?: Prisma.WorkChapterWhereInput
-  data: Prisma.XOR<Prisma.WorkChapterUpdateWithoutDownloadsInput, Prisma.WorkChapterUncheckedUpdateWithoutDownloadsInput>
-}
-
-export type WorkChapterUpdateWithoutDownloadsInput = {
-  workType?: Prisma.IntFieldUpdateOperationsInput | number
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  work?: Prisma.WorkUpdateOneRequiredWithoutChaptersNestedInput
-  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsDownloadLevelNestedInput
-  requiredReadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
-  likes?: Prisma.WorkChapterLikeUpdateManyWithoutChapterNestedInput
-  purchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutChapterNestedInput
-  comments?: Prisma.WorkCommentUpdateManyWithoutChapterNestedInput
-}
-
-export type WorkChapterUncheckedUpdateWithoutDownloadsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  workId?: Prisma.IntFieldUpdateOperationsInput | number
-  workType?: Prisma.IntFieldUpdateOperationsInput | number
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutChapterNestedInput
-  purchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutChapterNestedInput
-  comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutChapterNestedInput
-}
-
-export type WorkChapterCreateWithoutLikesInput = {
-  workType: number
-  title: string
-  subtitle?: string | null
-  description?: string | null
-  sortOrder?: number
-  readRule?: number
-  downloadRule?: number
-  readPoints?: number | null
-  downloadPoints?: number | null
-  isPublished?: boolean
-  isPreview?: boolean
-  canComment?: boolean
-  publishAt?: Date | string | null
-  viewCount?: number
-  likeCount?: number
-  commentCount?: number
-  purchaseCount?: number
-  wordCount?: number
-  contentPath?: string | null
-  remark?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  work: Prisma.WorkCreateNestedOneWithoutChaptersInput
-  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsDownloadLevelInput
-  requiredReadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
-  purchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutChapterInput
-  comments?: Prisma.WorkCommentCreateNestedManyWithoutChapterInput
-}
-
-export type WorkChapterUncheckedCreateWithoutLikesInput = {
-  id?: number
-  workId: number
-  workType: number
-  title: string
-  subtitle?: string | null
-  description?: string | null
-  sortOrder?: number
-  readRule?: number
-  downloadRule?: number
-  readPoints?: number | null
-  downloadPoints?: number | null
-  requiredReadLevelId?: number | null
-  requiredDownloadLevelId?: number | null
-  isPublished?: boolean
-  isPreview?: boolean
-  canComment?: boolean
-  publishAt?: Date | string | null
-  viewCount?: number
-  likeCount?: number
-  commentCount?: number
-  purchaseCount?: number
-  wordCount?: number
-  contentPath?: string | null
-  remark?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  purchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutChapterInput
-  comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutChapterInput
-}
-
-export type WorkChapterCreateOrConnectWithoutLikesInput = {
-  where: Prisma.WorkChapterWhereUniqueInput
-  create: Prisma.XOR<Prisma.WorkChapterCreateWithoutLikesInput, Prisma.WorkChapterUncheckedCreateWithoutLikesInput>
-}
-
-export type WorkChapterUpsertWithoutLikesInput = {
-  update: Prisma.XOR<Prisma.WorkChapterUpdateWithoutLikesInput, Prisma.WorkChapterUncheckedUpdateWithoutLikesInput>
-  create: Prisma.XOR<Prisma.WorkChapterCreateWithoutLikesInput, Prisma.WorkChapterUncheckedCreateWithoutLikesInput>
-  where?: Prisma.WorkChapterWhereInput
-}
-
-export type WorkChapterUpdateToOneWithWhereWithoutLikesInput = {
-  where?: Prisma.WorkChapterWhereInput
-  data: Prisma.XOR<Prisma.WorkChapterUpdateWithoutLikesInput, Prisma.WorkChapterUncheckedUpdateWithoutLikesInput>
-}
-
-export type WorkChapterUpdateWithoutLikesInput = {
-  workType?: Prisma.IntFieldUpdateOperationsInput | number
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  work?: Prisma.WorkUpdateOneRequiredWithoutChaptersNestedInput
-  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsDownloadLevelNestedInput
-  requiredReadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
-  purchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUpdateManyWithoutChapterNestedInput
-  comments?: Prisma.WorkCommentUpdateManyWithoutChapterNestedInput
-}
-
-export type WorkChapterUncheckedUpdateWithoutLikesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  workId?: Prisma.IntFieldUpdateOperationsInput | number
-  workType?: Prisma.IntFieldUpdateOperationsInput | number
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  readRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
-  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  purchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutChapterNestedInput
-  comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutChapterNestedInput
-}
-
 export type WorkChapterCreateWithoutPurchasesInput = {
   workType: number
   title: string
@@ -1692,8 +1350,6 @@ export type WorkChapterCreateWithoutPurchasesInput = {
   work: Prisma.WorkCreateNestedOneWithoutChaptersInput
   requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsDownloadLevelInput
   requiredReadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
-  likes?: Prisma.WorkChapterLikeCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutChapterInput
 }
 
@@ -1725,8 +1381,6 @@ export type WorkChapterUncheckedCreateWithoutPurchasesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutChapterInput
 }
 
@@ -1773,8 +1427,6 @@ export type WorkChapterUpdateWithoutPurchasesInput = {
   work?: Prisma.WorkUpdateOneRequiredWithoutChaptersNestedInput
   requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsDownloadLevelNestedInput
   requiredReadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
-  likes?: Prisma.WorkChapterLikeUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutChapterNestedInput
 }
 
@@ -1806,8 +1458,6 @@ export type WorkChapterUncheckedUpdateWithoutPurchasesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutChapterNestedInput
 }
 
@@ -1838,9 +1488,7 @@ export type WorkChapterCreateWithoutCommentsInput = {
   work: Prisma.WorkCreateNestedOneWithoutChaptersInput
   requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsDownloadLevelInput
   requiredReadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
-  likes?: Prisma.WorkChapterLikeCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutChapterInput
 }
 
 export type WorkChapterUncheckedCreateWithoutCommentsInput = {
@@ -1871,9 +1519,7 @@ export type WorkChapterUncheckedCreateWithoutCommentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutChapterInput
 }
 
 export type WorkChapterCreateOrConnectWithoutCommentsInput = {
@@ -1919,9 +1565,7 @@ export type WorkChapterUpdateWithoutCommentsInput = {
   work?: Prisma.WorkUpdateOneRequiredWithoutChaptersNestedInput
   requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsDownloadLevelNestedInput
   requiredReadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
-  likes?: Prisma.WorkChapterLikeUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUpdateManyWithoutChapterNestedInput
 }
 
 export type WorkChapterUncheckedUpdateWithoutCommentsInput = {
@@ -1952,9 +1596,7 @@ export type WorkChapterUncheckedUpdateWithoutCommentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutChapterNestedInput
 }
 
 export type WorkChapterCreateWithoutWorkInput = {
@@ -1983,9 +1625,7 @@ export type WorkChapterCreateWithoutWorkInput = {
   deletedAt?: Date | string | null
   requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsDownloadLevelInput
   requiredReadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutChaptersAsReadLevelInput
-  likes?: Prisma.WorkChapterLikeCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutChapterInput
 }
 
@@ -2016,9 +1656,7 @@ export type WorkChapterUncheckedCreateWithoutWorkInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutChapterInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutChapterInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutChapterInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutChapterInput
 }
 
@@ -2132,9 +1770,7 @@ export type WorkChapterUpdateWithoutRequiredDownloadLevelInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   work?: Prisma.WorkUpdateOneRequiredWithoutChaptersNestedInput
   requiredReadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
-  likes?: Prisma.WorkChapterLikeUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutChapterNestedInput
 }
 
@@ -2165,9 +1801,7 @@ export type WorkChapterUncheckedUpdateWithoutRequiredDownloadLevelInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutChapterNestedInput
 }
 
@@ -2226,9 +1860,7 @@ export type WorkChapterUpdateWithoutRequiredReadLevelInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   work?: Prisma.WorkUpdateOneRequiredWithoutChaptersNestedInput
   requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsDownloadLevelNestedInput
-  likes?: Prisma.WorkChapterLikeUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutChapterNestedInput
 }
 
@@ -2259,9 +1891,7 @@ export type WorkChapterUncheckedUpdateWithoutRequiredReadLevelInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutChapterNestedInput
 }
 
@@ -2349,9 +1979,7 @@ export type WorkChapterUpdateWithoutWorkInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsDownloadLevelNestedInput
   requiredReadLevel?: Prisma.UserLevelRuleUpdateOneWithoutChaptersAsReadLevelNestedInput
-  likes?: Prisma.WorkChapterLikeUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutChapterNestedInput
 }
 
@@ -2382,9 +2010,7 @@ export type WorkChapterUncheckedUpdateWithoutWorkInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  likes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutChapterNestedInput
   purchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutChapterNestedInput
-  downloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutChapterNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutChapterNestedInput
 }
 
@@ -2423,16 +2049,12 @@ export type WorkChapterUncheckedUpdateManyWithoutWorkInput = {
  */
 
 export type WorkChapterCountOutputType = {
-  likes: number
   purchases: number
-  downloads: number
   comments: number
 }
 
 export type WorkChapterCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  likes?: boolean | WorkChapterCountOutputTypeCountLikesArgs
   purchases?: boolean | WorkChapterCountOutputTypeCountPurchasesArgs
-  downloads?: boolean | WorkChapterCountOutputTypeCountDownloadsArgs
   comments?: boolean | WorkChapterCountOutputTypeCountCommentsArgs
 }
 
@@ -2449,22 +2071,8 @@ export type WorkChapterCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.
 /**
  * WorkChapterCountOutputType without action
  */
-export type WorkChapterCountOutputTypeCountLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkChapterLikeWhereInput
-}
-
-/**
- * WorkChapterCountOutputType without action
- */
 export type WorkChapterCountOutputTypeCountPurchasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.WorkChapterPurchaseWhereInput
-}
-
-/**
- * WorkChapterCountOutputType without action
- */
-export type WorkChapterCountOutputTypeCountDownloadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkChapterDownloadWhereInput
 }
 
 /**
@@ -2506,9 +2114,7 @@ export type WorkChapterSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
   requiredDownloadLevel?: boolean | Prisma.WorkChapter$requiredDownloadLevelArgs<ExtArgs>
   requiredReadLevel?: boolean | Prisma.WorkChapter$requiredReadLevelArgs<ExtArgs>
-  likes?: boolean | Prisma.WorkChapter$likesArgs<ExtArgs>
   purchases?: boolean | Prisma.WorkChapter$purchasesArgs<ExtArgs>
-  downloads?: boolean | Prisma.WorkChapter$downloadsArgs<ExtArgs>
   comments?: boolean | Prisma.WorkChapter$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkChapterCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["workChapter"]>
@@ -2614,9 +2220,7 @@ export type WorkChapterInclude<ExtArgs extends runtime.Types.Extensions.Internal
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
   requiredDownloadLevel?: boolean | Prisma.WorkChapter$requiredDownloadLevelArgs<ExtArgs>
   requiredReadLevel?: boolean | Prisma.WorkChapter$requiredReadLevelArgs<ExtArgs>
-  likes?: boolean | Prisma.WorkChapter$likesArgs<ExtArgs>
   purchases?: boolean | Prisma.WorkChapter$purchasesArgs<ExtArgs>
-  downloads?: boolean | Prisma.WorkChapter$downloadsArgs<ExtArgs>
   comments?: boolean | Prisma.WorkChapter$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkChapterCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -2647,17 +2251,9 @@ export type $WorkChapterPayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     requiredReadLevel: Prisma.$UserLevelRulePayload<ExtArgs> | null
     /**
-     * 点赞记录
-     */
-    likes: Prisma.$WorkChapterLikePayload<ExtArgs>[]
-    /**
      * 购买记录
      */
     purchases: Prisma.$WorkChapterPurchasePayload<ExtArgs>[]
-    /**
-     * 下载记录
-     */
-    downloads: Prisma.$WorkChapterDownloadPayload<ExtArgs>[]
     /**
      * 评论
      */
@@ -3169,9 +2765,7 @@ export interface Prisma__WorkChapterClient<T, Null = never, ExtArgs extends runt
   work<T extends Prisma.WorkDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkDefaultArgs<ExtArgs>>): Prisma.Prisma__WorkClient<runtime.Types.Result.GetResult<Prisma.$WorkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   requiredDownloadLevel<T extends Prisma.WorkChapter$requiredDownloadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkChapter$requiredDownloadLevelArgs<ExtArgs>>): Prisma.Prisma__UserLevelRuleClient<runtime.Types.Result.GetResult<Prisma.$UserLevelRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   requiredReadLevel<T extends Prisma.WorkChapter$requiredReadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkChapter$requiredReadLevelArgs<ExtArgs>>): Prisma.Prisma__UserLevelRuleClient<runtime.Types.Result.GetResult<Prisma.$UserLevelRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  likes<T extends Prisma.WorkChapter$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkChapter$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   purchases<T extends Prisma.WorkChapter$purchasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkChapter$purchasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterPurchasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  downloads<T extends Prisma.WorkChapter$downloadsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkChapter$downloadsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterDownloadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   comments<T extends Prisma.WorkChapter$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WorkChapter$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -3672,30 +3266,6 @@ export type WorkChapter$requiredReadLevelArgs<ExtArgs extends runtime.Types.Exte
 }
 
 /**
- * WorkChapter.likes
- */
-export type WorkChapter$likesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the WorkChapterLike
-   */
-  select?: Prisma.WorkChapterLikeSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the WorkChapterLike
-   */
-  omit?: Prisma.WorkChapterLikeOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.WorkChapterLikeInclude<ExtArgs> | null
-  where?: Prisma.WorkChapterLikeWhereInput
-  orderBy?: Prisma.WorkChapterLikeOrderByWithRelationInput | Prisma.WorkChapterLikeOrderByWithRelationInput[]
-  cursor?: Prisma.WorkChapterLikeWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.WorkChapterLikeScalarFieldEnum | Prisma.WorkChapterLikeScalarFieldEnum[]
-}
-
-/**
  * WorkChapter.purchases
  */
 export type WorkChapter$purchasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3717,30 +3287,6 @@ export type WorkChapter$purchasesArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.WorkChapterPurchaseScalarFieldEnum | Prisma.WorkChapterPurchaseScalarFieldEnum[]
-}
-
-/**
- * WorkChapter.downloads
- */
-export type WorkChapter$downloadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the WorkChapterDownload
-   */
-  select?: Prisma.WorkChapterDownloadSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the WorkChapterDownload
-   */
-  omit?: Prisma.WorkChapterDownloadOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.WorkChapterDownloadInclude<ExtArgs> | null
-  where?: Prisma.WorkChapterDownloadWhereInput
-  orderBy?: Prisma.WorkChapterDownloadOrderByWithRelationInput | Prisma.WorkChapterDownloadOrderByWithRelationInput[]
-  cursor?: Prisma.WorkChapterDownloadWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.WorkChapterDownloadScalarFieldEnum | Prisma.WorkChapterDownloadScalarFieldEnum[]
 }
 
 /**

@@ -32,6 +32,8 @@ model WorkComment {
   auditAt DateTime? @map("audit_at") @db.Timestamptz(6)
   /// 审核人ID
   auditById Int? @map("audit_by_id")
+  /// 审核人角色：0=版主, 1=管理员
+  auditRole Int? @map("audit_role") @db.SmallInt
 
   /// 点赞数
   likeCount Int @default(0) @map("like_count")

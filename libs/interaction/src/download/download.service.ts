@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { PrismaClient } from '@libs/base/database'
 import { BaseInteractionService } from '../base-interaction.service'
 import { CounterService } from '../counter/counter.service'
-import { InteractionTargetType } from '../interaction.constant'
+import { InteractionTargetType, InteractionActionType } from '../interaction.constant'
 import { TargetValidatorRegistry } from '../validator/target-validator.registry'
 
 @Injectable()
@@ -13,6 +13,14 @@ export class DownloadService extends BaseInteractionService {
     protected readonly validatorRegistry: TargetValidatorRegistry,
   ) {
     super()
+  }
+
+  protected getActionType(): InteractionActionType {
+    return InteractionActionType.DOWNLOAD
+  }
+
+  protected getCancelActionType(): InteractionActionType {
+    return InteractionActionType.DOWNLOAD
   }
 
   protected async checkUserInteracted(
@@ -110,6 +118,14 @@ export class DownloadService extends BaseInteractionService {
    * @param workId 作品ID
    * @param workType 作品类型
    */
+  async checkDownloadStatus(
+    targetType: InteractionTargetType,
+    targetId: number,
+    userId: number,
+  ): Promise<boolean> {
+    return this.checkStatus(targetType, targetId, userId)
+  }
+
   async recordDownload(
     targetType: InteractionTargetType,
     targetId: number,
@@ -120,26 +136,28 @@ export class DownloadService extends BaseInteractionService {
     return this.interact(targetType, targetId, userId, { workId, workType })
   }
 
-  /**
-   * 获取用户的下载列表
-   */
   async getUserDownloads(
     userId: number,
-    workType?: number,
-    page: number = 1,
-    pageSize: number = 20,
-  ): Promise<{ list: any[]; total: number }> {
+    targetType?: InteractionTargetType,
+    page: number = 0,
+    pageSize: number = 15,
+  ): Promise<{ list: { targetId: number; targetType: number; createdAt: Date }[]; total: number }> {
     const where: any = { userId }
-    if (workType !== undefined) {
-      where.workType = workType
+    if (targetType !== undefined) {
+      where.targetType = targetType
     }
 
     const [downloads, total] = await Promise.all([
       this.prisma.userDownload.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
+        skip: page * pageSize,
         take: pageSize,
+        select: {
+          targetId: true,
+          targetType: true,
+          createdAt: true,
+        },
       }),
       this.prisma.userDownload.count({ where }),
     ])

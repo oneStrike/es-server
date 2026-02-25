@@ -1,4 +1,4 @@
-interface IForumPointRuleData {
+export interface IForumPointRuleData {
   description: string
   type: number
   points: number

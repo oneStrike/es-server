@@ -1,6 +1,6 @@
 import type { PrismaClientType } from '@libs/base/database/prisma.types'
 import { BaseService } from '@libs/base/database'
-
+import { LikeService, FavoriteService, InteractionTargetType } from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CheckUserLevelPermissionDto,
@@ -14,45 +14,29 @@ import { UserLevelRulePermissionEnum } from './level-rule.constant'
 
 type LevelRuleClient = Pick<PrismaClientType, 'userLevelRule'>
 
-/**
- * 等级规则服务
- * 负责管理用户等级规则、权限检查、等级升级等功能
- */
 @Injectable()
 export class UserLevelRuleService extends BaseService {
-  // 获取等级规则模型
   get userLevelRule() {
     return this.prisma.userLevelRule
   }
 
-  // 获取用户资料模型
-  // get forumProfile() {
-  //   return this.prisma.forumProfile
-  // }
-
-  // 获取主题模型
   get forumTopic() {
     return this.prisma.forumTopic
   }
 
-  // 获取回复模型
   get forumReply() {
     return this.prisma.forumReply
   }
 
-  // 获取主题点赞模型
-  get forumTopicLike() {
-    return this.prisma.forumTopicLike
-  }
-
-  // 获取主题收藏模型
-  get forumTopicFavorite() {
-    return this.prisma.forumTopicFavorite
-  }
-
-  // 获取回复点赞模型
   get forumReplyLike() {
     return this.prisma.forumReplyLike
+  }
+
+  constructor(
+    private readonly likeService: LikeService,
+    private readonly favoriteService: FavoriteService,
+  ) {
+    super()
   }
 
   /**
@@ -339,9 +323,12 @@ export class UserLevelRuleService extends BaseService {
       case UserLevelRulePermissionEnum.DAILY_LIKE_LIMIT:
         limit = level.dailyLikeLimit
         if (limit > 0) {
-          const topicLikes = await this.forumTopicLike.count({
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const topicLikes = await this.prisma.userLike.count({
             where: {
               userId,
+              targetType: InteractionTargetType.FORUM_TOPIC,
               createdAt: { gte: today },
             },
           })
@@ -359,9 +346,12 @@ export class UserLevelRuleService extends BaseService {
       case UserLevelRulePermissionEnum.DAILY_FAVORITE_LIMIT:
         limit = level.dailyFavoriteLimit
         if (limit > 0) {
-          used = await this.forumTopicFavorite.count({
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          used = await this.prisma.userFavorite.count({
             where: {
               userId,
+              targetType: InteractionTargetType.FORUM_TOPIC,
               createdAt: { gte: today },
             },
           })

@@ -427,12 +427,9 @@ export const ModelName = {
   ForumSectionGroup: 'ForumSectionGroup',
   ForumSection: 'ForumSection',
   ForumTag: 'ForumTag',
-  ForumTopicFavorite: 'ForumTopicFavorite',
-  ForumTopicLike: 'ForumTopicLike',
   ForumTopicTag: 'ForumTopicTag',
   ForumTopic: 'ForumTopic',
   ForumUserActionLog: 'ForumUserActionLog',
-  ForumView: 'ForumView',
   RequestLog: 'RequestLog',
   SensitiveWord: 'SensitiveWord',
   SystemConfig: 'SystemConfig',
@@ -444,14 +441,10 @@ export const ModelName = {
   WorkAuthorRelation: 'WorkAuthorRelation',
   WorkCategoryRelation: 'WorkCategoryRelation',
   WorkCategory: 'WorkCategory',
-  WorkChapterDownload: 'WorkChapterDownload',
-  WorkChapterLike: 'WorkChapterLike',
   WorkChapterPurchase: 'WorkChapterPurchase',
   WorkChapter: 'WorkChapter',
   WorkCommentReport: 'WorkCommentReport',
   WorkComment: 'WorkComment',
-  WorkFavorite: 'WorkFavorite',
-  WorkLike: 'WorkLike',
   WorkTagRelation: 'WorkTagRelation',
   WorkTag: 'WorkTag',
   Work: 'Work'
@@ -470,7 +463,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownload" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicFavorite" | "forumTopicLike" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "forumView" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapterDownload" | "workChapterLike" | "workChapterPurchase" | "workChapter" | "workCommentReport" | "workComment" | "workFavorite" | "workLike" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownload" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapterPurchase" | "workChapter" | "workCommentReport" | "workComment" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3656,154 +3649,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    ForumTopicFavorite: {
-      payload: Prisma.$ForumTopicFavoritePayload<ExtArgs>
-      fields: Prisma.ForumTopicFavoriteFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumTopicFavoriteFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumTopicFavoriteFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload>
-        }
-        findFirst: {
-          args: Prisma.ForumTopicFavoriteFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumTopicFavoriteFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload>
-        }
-        findMany: {
-          args: Prisma.ForumTopicFavoriteFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload>[]
-        }
-        create: {
-          args: Prisma.ForumTopicFavoriteCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload>
-        }
-        createMany: {
-          args: Prisma.ForumTopicFavoriteCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumTopicFavoriteCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload>[]
-        }
-        delete: {
-          args: Prisma.ForumTopicFavoriteDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload>
-        }
-        update: {
-          args: Prisma.ForumTopicFavoriteUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumTopicFavoriteDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumTopicFavoriteUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumTopicFavoriteUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumTopicFavoriteUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicFavoritePayload>
-        }
-        aggregate: {
-          args: Prisma.ForumTopicFavoriteAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumTopicFavorite>
-        }
-        groupBy: {
-          args: Prisma.ForumTopicFavoriteGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumTopicFavoriteGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumTopicFavoriteCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumTopicFavoriteCountAggregateOutputType> | number
-        }
-      }
-    }
-    ForumTopicLike: {
-      payload: Prisma.$ForumTopicLikePayload<ExtArgs>
-      fields: Prisma.ForumTopicLikeFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumTopicLikeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumTopicLikeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload>
-        }
-        findFirst: {
-          args: Prisma.ForumTopicLikeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumTopicLikeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload>
-        }
-        findMany: {
-          args: Prisma.ForumTopicLikeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload>[]
-        }
-        create: {
-          args: Prisma.ForumTopicLikeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload>
-        }
-        createMany: {
-          args: Prisma.ForumTopicLikeCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumTopicLikeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload>[]
-        }
-        delete: {
-          args: Prisma.ForumTopicLikeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload>
-        }
-        update: {
-          args: Prisma.ForumTopicLikeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumTopicLikeDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumTopicLikeUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumTopicLikeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumTopicLikeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumTopicLikePayload>
-        }
-        aggregate: {
-          args: Prisma.ForumTopicLikeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumTopicLike>
-        }
-        groupBy: {
-          args: Prisma.ForumTopicLikeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumTopicLikeGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumTopicLikeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumTopicLikeCountAggregateOutputType> | number
-        }
-      }
-    }
     ForumTopicTag: {
       payload: Prisma.$ForumTopicTagPayload<ExtArgs>
       fields: Prisma.ForumTopicTagFieldRefs
@@ -4023,80 +3868,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ForumUserActionLogCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ForumUserActionLogCountAggregateOutputType> | number
-        }
-      }
-    }
-    ForumView: {
-      payload: Prisma.$ForumViewPayload<ExtArgs>
-      fields: Prisma.ForumViewFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ForumViewFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ForumViewFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload>
-        }
-        findFirst: {
-          args: Prisma.ForumViewFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ForumViewFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload>
-        }
-        findMany: {
-          args: Prisma.ForumViewFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload>[]
-        }
-        create: {
-          args: Prisma.ForumViewCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload>
-        }
-        createMany: {
-          args: Prisma.ForumViewCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ForumViewCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload>[]
-        }
-        delete: {
-          args: Prisma.ForumViewDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload>
-        }
-        update: {
-          args: Prisma.ForumViewUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload>
-        }
-        deleteMany: {
-          args: Prisma.ForumViewDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ForumViewUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ForumViewUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload>[]
-        }
-        upsert: {
-          args: Prisma.ForumViewUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ForumViewPayload>
-        }
-        aggregate: {
-          args: Prisma.ForumViewAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateForumView>
-        }
-        groupBy: {
-          args: Prisma.ForumViewGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumViewGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ForumViewCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ForumViewCountAggregateOutputType> | number
         }
       }
     }
@@ -4914,154 +4685,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    WorkChapterDownload: {
-      payload: Prisma.$WorkChapterDownloadPayload<ExtArgs>
-      fields: Prisma.WorkChapterDownloadFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkChapterDownloadFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkChapterDownloadFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload>
-        }
-        findFirst: {
-          args: Prisma.WorkChapterDownloadFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkChapterDownloadFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload>
-        }
-        findMany: {
-          args: Prisma.WorkChapterDownloadFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload>[]
-        }
-        create: {
-          args: Prisma.WorkChapterDownloadCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload>
-        }
-        createMany: {
-          args: Prisma.WorkChapterDownloadCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkChapterDownloadCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload>[]
-        }
-        delete: {
-          args: Prisma.WorkChapterDownloadDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload>
-        }
-        update: {
-          args: Prisma.WorkChapterDownloadUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkChapterDownloadDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkChapterDownloadUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkChapterDownloadUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkChapterDownloadUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterDownloadPayload>
-        }
-        aggregate: {
-          args: Prisma.WorkChapterDownloadAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkChapterDownload>
-        }
-        groupBy: {
-          args: Prisma.WorkChapterDownloadGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkChapterDownloadGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkChapterDownloadCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkChapterDownloadCountAggregateOutputType> | number
-        }
-      }
-    }
-    WorkChapterLike: {
-      payload: Prisma.$WorkChapterLikePayload<ExtArgs>
-      fields: Prisma.WorkChapterLikeFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkChapterLikeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkChapterLikeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload>
-        }
-        findFirst: {
-          args: Prisma.WorkChapterLikeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkChapterLikeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload>
-        }
-        findMany: {
-          args: Prisma.WorkChapterLikeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload>[]
-        }
-        create: {
-          args: Prisma.WorkChapterLikeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload>
-        }
-        createMany: {
-          args: Prisma.WorkChapterLikeCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkChapterLikeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload>[]
-        }
-        delete: {
-          args: Prisma.WorkChapterLikeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload>
-        }
-        update: {
-          args: Prisma.WorkChapterLikeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkChapterLikeDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkChapterLikeUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkChapterLikeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkChapterLikeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterLikePayload>
-        }
-        aggregate: {
-          args: Prisma.WorkChapterLikeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkChapterLike>
-        }
-        groupBy: {
-          args: Prisma.WorkChapterLikeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkChapterLikeGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkChapterLikeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkChapterLikeCountAggregateOutputType> | number
-        }
-      }
-    }
     WorkChapterPurchase: {
       payload: Prisma.$WorkChapterPurchasePayload<ExtArgs>
       fields: Prisma.WorkChapterPurchaseFieldRefs
@@ -5355,154 +4978,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.WorkCommentCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.WorkCommentCountAggregateOutputType> | number
-        }
-      }
-    }
-    WorkFavorite: {
-      payload: Prisma.$WorkFavoritePayload<ExtArgs>
-      fields: Prisma.WorkFavoriteFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkFavoriteFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkFavoriteFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload>
-        }
-        findFirst: {
-          args: Prisma.WorkFavoriteFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkFavoriteFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload>
-        }
-        findMany: {
-          args: Prisma.WorkFavoriteFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload>[]
-        }
-        create: {
-          args: Prisma.WorkFavoriteCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload>
-        }
-        createMany: {
-          args: Prisma.WorkFavoriteCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkFavoriteCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload>[]
-        }
-        delete: {
-          args: Prisma.WorkFavoriteDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload>
-        }
-        update: {
-          args: Prisma.WorkFavoriteUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkFavoriteDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkFavoriteUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkFavoriteUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkFavoriteUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkFavoritePayload>
-        }
-        aggregate: {
-          args: Prisma.WorkFavoriteAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkFavorite>
-        }
-        groupBy: {
-          args: Prisma.WorkFavoriteGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkFavoriteGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkFavoriteCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkFavoriteCountAggregateOutputType> | number
-        }
-      }
-    }
-    WorkLike: {
-      payload: Prisma.$WorkLikePayload<ExtArgs>
-      fields: Prisma.WorkLikeFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkLikeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkLikeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload>
-        }
-        findFirst: {
-          args: Prisma.WorkLikeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkLikeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload>
-        }
-        findMany: {
-          args: Prisma.WorkLikeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload>[]
-        }
-        create: {
-          args: Prisma.WorkLikeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload>
-        }
-        createMany: {
-          args: Prisma.WorkLikeCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkLikeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload>[]
-        }
-        delete: {
-          args: Prisma.WorkLikeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload>
-        }
-        update: {
-          args: Prisma.WorkLikeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkLikeDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkLikeUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkLikeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkLikeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkLikePayload>
-        }
-        aggregate: {
-          args: Prisma.WorkLikeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkLike>
-        }
-        groupBy: {
-          args: Prisma.WorkLikeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkLikeGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkLikeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkLikeCountAggregateOutputType> | number
         }
       }
     }
@@ -6454,8 +5929,14 @@ export const ForumReplyScalarFieldEnum = {
   topicId: 'topicId',
   userId: 'userId',
   replyToId: 'replyToId',
+  actualReplyToId: 'actualReplyToId',
   content: 'content',
+  floor: 'floor',
   likeCount: 'likeCount',
+  isHidden: 'isHidden',
+  auditStatus: 'auditStatus',
+  auditReason: 'auditReason',
+  sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -6535,26 +6016,6 @@ export const ForumTagScalarFieldEnum = {
 export type ForumTagScalarFieldEnum = (typeof ForumTagScalarFieldEnum)[keyof typeof ForumTagScalarFieldEnum]
 
 
-export const ForumTopicFavoriteScalarFieldEnum = {
-  id: 'id',
-  topicId: 'topicId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type ForumTopicFavoriteScalarFieldEnum = (typeof ForumTopicFavoriteScalarFieldEnum)[keyof typeof ForumTopicFavoriteScalarFieldEnum]
-
-
-export const ForumTopicLikeScalarFieldEnum = {
-  id: 'id',
-  topicId: 'topicId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type ForumTopicLikeScalarFieldEnum = (typeof ForumTopicLikeScalarFieldEnum)[keyof typeof ForumTopicLikeScalarFieldEnum]
-
-
 export const ForumTopicTagScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
@@ -6610,16 +6071,6 @@ export const ForumUserActionLogScalarFieldEnum = {
 } as const
 
 export type ForumUserActionLogScalarFieldEnum = (typeof ForumUserActionLogScalarFieldEnum)[keyof typeof ForumUserActionLogScalarFieldEnum]
-
-
-export const ForumViewScalarFieldEnum = {
-  id: 'id',
-  topicId: 'topicId',
-  userId: 'userId',
-  viewedAt: 'viewedAt'
-} as const
-
-export type ForumViewScalarFieldEnum = (typeof ForumViewScalarFieldEnum)[keyof typeof ForumViewScalarFieldEnum]
 
 
 export const RequestLogScalarFieldEnum = {
@@ -6796,28 +6247,6 @@ export const WorkCategoryScalarFieldEnum = {
 export type WorkCategoryScalarFieldEnum = (typeof WorkCategoryScalarFieldEnum)[keyof typeof WorkCategoryScalarFieldEnum]
 
 
-export const WorkChapterDownloadScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  workId: 'workId',
-  workType: 'workType',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkChapterDownloadScalarFieldEnum = (typeof WorkChapterDownloadScalarFieldEnum)[keyof typeof WorkChapterDownloadScalarFieldEnum]
-
-
-export const WorkChapterLikeScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkChapterLikeScalarFieldEnum = (typeof WorkChapterLikeScalarFieldEnum)[keyof typeof WorkChapterLikeScalarFieldEnum]
-
-
 export const WorkChapterPurchaseScalarFieldEnum = {
   id: 'id',
   chapterId: 'chapterId',
@@ -6894,6 +6323,7 @@ export const WorkCommentScalarFieldEnum = {
   auditReason: 'auditReason',
   auditAt: 'auditAt',
   auditById: 'auditById',
+  auditRole: 'auditRole',
   likeCount: 'likeCount',
   sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
@@ -6902,27 +6332,6 @@ export const WorkCommentScalarFieldEnum = {
 } as const
 
 export type WorkCommentScalarFieldEnum = (typeof WorkCommentScalarFieldEnum)[keyof typeof WorkCommentScalarFieldEnum]
-
-
-export const WorkFavoriteScalarFieldEnum = {
-  id: 'id',
-  workId: 'workId',
-  userId: 'userId',
-  workType: 'workType',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkFavoriteScalarFieldEnum = (typeof WorkFavoriteScalarFieldEnum)[keyof typeof WorkFavoriteScalarFieldEnum]
-
-
-export const WorkLikeScalarFieldEnum = {
-  id: 'id',
-  workId: 'workId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkLikeScalarFieldEnum = (typeof WorkLikeScalarFieldEnum)[keyof typeof WorkLikeScalarFieldEnum]
 
 
 export const WorkTagRelationScalarFieldEnum = {
@@ -7283,12 +6692,9 @@ export type GlobalOmitConfig = {
   forumSectionGroup?: Prisma.ForumSectionGroupOmit
   forumSection?: Prisma.ForumSectionOmit
   forumTag?: Prisma.ForumTagOmit
-  forumTopicFavorite?: Prisma.ForumTopicFavoriteOmit
-  forumTopicLike?: Prisma.ForumTopicLikeOmit
   forumTopicTag?: Prisma.ForumTopicTagOmit
   forumTopic?: Prisma.ForumTopicOmit
   forumUserActionLog?: Prisma.ForumUserActionLogOmit
-  forumView?: Prisma.ForumViewOmit
   requestLog?: Prisma.RequestLogOmit
   sensitiveWord?: Prisma.SensitiveWordOmit
   systemConfig?: Prisma.SystemConfigOmit
@@ -7300,14 +6706,10 @@ export type GlobalOmitConfig = {
   workAuthorRelation?: Prisma.WorkAuthorRelationOmit
   workCategoryRelation?: Prisma.WorkCategoryRelationOmit
   workCategory?: Prisma.WorkCategoryOmit
-  workChapterDownload?: Prisma.WorkChapterDownloadOmit
-  workChapterLike?: Prisma.WorkChapterLikeOmit
   workChapterPurchase?: Prisma.WorkChapterPurchaseOmit
   workChapter?: Prisma.WorkChapterOmit
   workCommentReport?: Prisma.WorkCommentReportOmit
   workComment?: Prisma.WorkCommentOmit
-  workFavorite?: Prisma.WorkFavoriteOmit
-  workLike?: Prisma.WorkLikeOmit
   workTagRelation?: Prisma.WorkTagRelationOmit
   workTag?: Prisma.WorkTagOmit
   work?: Prisma.WorkOmit

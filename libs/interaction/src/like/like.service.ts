@@ -2,19 +2,9 @@ import { Injectable } from '@nestjs/common'
 import { PrismaClient } from '@libs/base/database'
 import { BaseInteractionService } from '../base-interaction.service'
 import { CounterService } from '../counter/counter.service'
-import { InteractionTargetType } from '../interaction.constant'
+import { InteractionTargetType, InteractionActionType } from '../interaction.constant'
 import { TargetValidatorRegistry } from '../validator/target-validator.registry'
-import type {
-  LikeListQueryDto,
-  LikeRecordResponseDto,
-  LikeStatusQueryDto,
-  LikeStatusResponseDto,
-} from './dto/like.dto'
 
-/**
- * 点赞服务
- * 处理点赞相关的所有业务逻辑
- */
 @Injectable()
 export class LikeService extends BaseInteractionService {
   constructor(
@@ -23,6 +13,14 @@ export class LikeService extends BaseInteractionService {
     protected readonly validatorRegistry: TargetValidatorRegistry,
   ) {
     super()
+  }
+
+  protected getActionType(): InteractionActionType {
+    return InteractionActionType.LIKE
+  }
+
+  protected getCancelActionType(): InteractionActionType {
+    return InteractionActionType.UNLIKE
   }
 
   /**
@@ -121,43 +119,6 @@ export class LikeService extends BaseInteractionService {
     return statusMap
   }
 
-  /**
-   * 获取用户的点赞列表
-   */
-  async getUserLikes(
-    userId: number,
-    query: LikeListQueryDto,
-  ): Promise<{ list: LikeRecordResponseDto[]; total: number }> {
-    const { targetType, page = 1, pageSize = 20 } = query
-
-    const where = {
-      userId,
-      ...(targetType !== undefined && { targetType }),
-    }
-
-    const [likes, total] = await Promise.all([
-      this.prisma.userLike.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      this.prisma.userLike.count({ where }),
-    ])
-
-    const list: LikeRecordResponseDto[] = likes.map((like) => ({
-      id: like.id,
-      targetType: like.targetType as InteractionTargetType,
-      targetId: like.targetId,
-      createdAt: like.createdAt,
-    }))
-
-    return { list, total }
-  }
-
-  /**
-   * 获取目标的点赞用户列表
-   */
   async getTargetLikes(
     targetType: InteractionTargetType,
     targetId: number,
@@ -228,14 +189,40 @@ export class LikeService extends BaseInteractionService {
     return this.cancelInteract(targetType, targetId, userId)
   }
 
-  /**
-   * 检查点赞状态
-   */
   async checkLikeStatus(
     targetType: InteractionTargetType,
     targetId: number,
     userId: number,
   ): Promise<boolean> {
     return this.checkStatus(targetType, targetId, userId)
+  }
+
+  async getUserLikes(
+    userId: number,
+    targetType?: InteractionTargetType,
+    page: number = 0,
+    pageSize: number = 15,
+  ): Promise<{ list: { targetId: number; targetType: number; createdAt: Date }[]; total: number }> {
+    const where = {
+      userId,
+      ...(targetType !== undefined && { targetType }),
+    }
+
+    const [likes, total] = await Promise.all([
+      this.prisma.userLike.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: page * pageSize,
+        take: pageSize,
+        select: {
+          targetId: true,
+          targetType: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.userLike.count({ where }),
+    ])
+
+    return { list: likes, total }
   }
 }

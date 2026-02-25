@@ -94,12 +94,9 @@ export const ModelName = {
   ForumSectionGroup: 'ForumSectionGroup',
   ForumSection: 'ForumSection',
   ForumTag: 'ForumTag',
-  ForumTopicFavorite: 'ForumTopicFavorite',
-  ForumTopicLike: 'ForumTopicLike',
   ForumTopicTag: 'ForumTopicTag',
   ForumTopic: 'ForumTopic',
   ForumUserActionLog: 'ForumUserActionLog',
-  ForumView: 'ForumView',
   RequestLog: 'RequestLog',
   SensitiveWord: 'SensitiveWord',
   SystemConfig: 'SystemConfig',
@@ -111,14 +108,10 @@ export const ModelName = {
   WorkAuthorRelation: 'WorkAuthorRelation',
   WorkCategoryRelation: 'WorkCategoryRelation',
   WorkCategory: 'WorkCategory',
-  WorkChapterDownload: 'WorkChapterDownload',
-  WorkChapterLike: 'WorkChapterLike',
   WorkChapterPurchase: 'WorkChapterPurchase',
   WorkChapter: 'WorkChapter',
   WorkCommentReport: 'WorkCommentReport',
   WorkComment: 'WorkComment',
-  WorkFavorite: 'WorkFavorite',
-  WorkLike: 'WorkLike',
   WorkTagRelation: 'WorkTagRelation',
   WorkTag: 'WorkTag',
   Work: 'Work'
@@ -827,8 +820,14 @@ export const ForumReplyScalarFieldEnum = {
   topicId: 'topicId',
   userId: 'userId',
   replyToId: 'replyToId',
+  actualReplyToId: 'actualReplyToId',
   content: 'content',
+  floor: 'floor',
   likeCount: 'likeCount',
+  isHidden: 'isHidden',
+  auditStatus: 'auditStatus',
+  auditReason: 'auditReason',
+  sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
@@ -908,26 +907,6 @@ export const ForumTagScalarFieldEnum = {
 export type ForumTagScalarFieldEnum = (typeof ForumTagScalarFieldEnum)[keyof typeof ForumTagScalarFieldEnum]
 
 
-export const ForumTopicFavoriteScalarFieldEnum = {
-  id: 'id',
-  topicId: 'topicId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type ForumTopicFavoriteScalarFieldEnum = (typeof ForumTopicFavoriteScalarFieldEnum)[keyof typeof ForumTopicFavoriteScalarFieldEnum]
-
-
-export const ForumTopicLikeScalarFieldEnum = {
-  id: 'id',
-  topicId: 'topicId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type ForumTopicLikeScalarFieldEnum = (typeof ForumTopicLikeScalarFieldEnum)[keyof typeof ForumTopicLikeScalarFieldEnum]
-
-
 export const ForumTopicTagScalarFieldEnum = {
   id: 'id',
   topicId: 'topicId',
@@ -983,16 +962,6 @@ export const ForumUserActionLogScalarFieldEnum = {
 } as const
 
 export type ForumUserActionLogScalarFieldEnum = (typeof ForumUserActionLogScalarFieldEnum)[keyof typeof ForumUserActionLogScalarFieldEnum]
-
-
-export const ForumViewScalarFieldEnum = {
-  id: 'id',
-  topicId: 'topicId',
-  userId: 'userId',
-  viewedAt: 'viewedAt'
-} as const
-
-export type ForumViewScalarFieldEnum = (typeof ForumViewScalarFieldEnum)[keyof typeof ForumViewScalarFieldEnum]
 
 
 export const RequestLogScalarFieldEnum = {
@@ -1169,28 +1138,6 @@ export const WorkCategoryScalarFieldEnum = {
 export type WorkCategoryScalarFieldEnum = (typeof WorkCategoryScalarFieldEnum)[keyof typeof WorkCategoryScalarFieldEnum]
 
 
-export const WorkChapterDownloadScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  workId: 'workId',
-  workType: 'workType',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkChapterDownloadScalarFieldEnum = (typeof WorkChapterDownloadScalarFieldEnum)[keyof typeof WorkChapterDownloadScalarFieldEnum]
-
-
-export const WorkChapterLikeScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkChapterLikeScalarFieldEnum = (typeof WorkChapterLikeScalarFieldEnum)[keyof typeof WorkChapterLikeScalarFieldEnum]
-
-
 export const WorkChapterPurchaseScalarFieldEnum = {
   id: 'id',
   chapterId: 'chapterId',
@@ -1267,6 +1214,7 @@ export const WorkCommentScalarFieldEnum = {
   auditReason: 'auditReason',
   auditAt: 'auditAt',
   auditById: 'auditById',
+  auditRole: 'auditRole',
   likeCount: 'likeCount',
   sensitiveWordHits: 'sensitiveWordHits',
   createdAt: 'createdAt',
@@ -1275,27 +1223,6 @@ export const WorkCommentScalarFieldEnum = {
 } as const
 
 export type WorkCommentScalarFieldEnum = (typeof WorkCommentScalarFieldEnum)[keyof typeof WorkCommentScalarFieldEnum]
-
-
-export const WorkFavoriteScalarFieldEnum = {
-  id: 'id',
-  workId: 'workId',
-  userId: 'userId',
-  workType: 'workType',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkFavoriteScalarFieldEnum = (typeof WorkFavoriteScalarFieldEnum)[keyof typeof WorkFavoriteScalarFieldEnum]
-
-
-export const WorkLikeScalarFieldEnum = {
-  id: 'id',
-  workId: 'workId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkLikeScalarFieldEnum = (typeof WorkLikeScalarFieldEnum)[keyof typeof WorkLikeScalarFieldEnum]
 
 
 export const WorkTagRelationScalarFieldEnum = {

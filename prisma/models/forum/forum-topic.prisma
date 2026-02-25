@@ -68,16 +68,10 @@ model ForumTopic {
   replies       ForumReply[]
   /// 关联的最后回复板块
   lastSections  ForumSection[]       @relation("LastTopic")
-  /// 收藏列表
-  favorites     ForumTopicFavorite[]
-  /// 点赞列表
-  likes         ForumTopicLike[]
   /// 标签关联
   topicTags     ForumTopicTag[]
   /// 通知关联
   notifications ForumNotification[]  @relation("NotificationTopic")
-  /// 浏览记录
-  views         ForumView[]
 
   /// 板块索引
   @@index([sectionId])

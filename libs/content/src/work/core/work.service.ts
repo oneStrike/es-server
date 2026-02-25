@@ -2,41 +2,37 @@ import type { WorkWhereInput } from '@libs/base/database'
 import { BaseService, Prisma } from '@libs/base/database'
 import { PageDto } from '@libs/base/dto'
 import { isNotNil } from '@libs/base/utils'
+import {
+  LikeService,
+  FavoriteService,
+  InteractionTargetType,
+} from '@libs/interaction'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { CreateWorkDto, QueryWorkDto, UpdateWorkDto } from './dto/work.dto'
 import { WorkGrowthEventKey } from './work.constant'
 import { WORK_LIST_SELECT } from './work.select'
 
-/**
- * 作品服务类
- * 继承 BaseService，提供作品相关的核心业务逻辑
- * 包括作品的增删改查、点赞、收藏、浏览统计等功能
- */
 @Injectable()
 export class WorkService extends BaseService {
-  /** 获取作品模型 */
   get work() {
     return this.prisma.work
   }
 
-  /** 获取作品点赞模型 */
-  get workLike() {
-    return this.prisma.workLike
-  }
-
-  /** 获取作品收藏模型 */
-  get workFavorite() {
-    return this.prisma.workFavorite
-  }
-
-  /** 获取应用用户模型 */
   get appUser() {
     return this.prisma.appUser
   }
 
-  constructor(private readonly userGrowthEventService: UserGrowthEventService) {
+  constructor(
+    private readonly userGrowthEventService: UserGrowthEventService,
+    private readonly likeService: LikeService,
+    private readonly favoriteService: FavoriteService,
+  ) {
     super()
+  }
+
+  private getTargetType(workType: number): InteractionTargetType {
+    return workType === 1 ? InteractionTargetType.COMIC : InteractionTargetType.NOVEL
   }
 
   /**
@@ -218,38 +214,19 @@ export class WorkService extends BaseService {
     return work
   }
 
-  /**
-   * 获取作品详情并包含用户状态（点赞、收藏）
-   * @param id 作品ID
-   * @param userId 用户ID
-   * @returns 作品详情及用户状态
-   */
   async getWorkDetailWithUserStatus(id: number, userId: number) {
-    // 并行查询作品详情、点赞记录、收藏记录，提高查询效率
-    const [work, like, favorite] = await Promise.all([
-      this.getWorkDetail(id),
-      this.workLike.findUnique({
-        where: {
-          workId_userId: {
-            workId: id,
-            userId,
-          },
-        },
-      }),
-      this.workFavorite.findUnique({
-        where: {
-          workId_userId: {
-            workId: id,
-            userId,
-          },
-        },
-      }),
+    const work = await this.getWorkDetail(id)
+    const targetType = this.getTargetType(work.type)
+
+    const [liked, favorited] = await Promise.all([
+      this.likeService.checkLikeStatus(targetType, id, userId),
+      this.favoriteService.checkFavoriteStatus(targetType, id, userId),
     ])
 
     return {
       ...work,
-      liked: !!like,
-      favorited: !!favorite,
+      liked,
+      favorited,
     }
   }
 
@@ -294,59 +271,17 @@ export class WorkService extends BaseService {
     return { id }
   }
 
-  /**
-   * 增加作品点赞次数
-   * @param id 作品ID
-   * @param userId 用户ID
-   * @param ip 用户IP地址
-   * @param deviceId 设备ID
-   * @returns 作品ID
-   */
   async incrementLikeCount(
     id: number,
     userId: number,
     ip?: string,
     deviceId?: string,
   ) {
-    // 并行验证作品和用户是否存在
-    await this.verifyWorkAndUserExist(id, userId)
+    const { work } = await this.verifyWorkAndUserExist(id, userId)
+    const targetType = this.getTargetType(work.type)
 
-    // 检查是否已点赞过该作品
-    const existingLike = await this.workLike.findUnique({
-      where: {
-        workId_userId: {
-          workId: id,
-          userId,
-        },
-      },
-    })
+    await this.likeService.like(targetType, id, userId)
 
-    if (existingLike) {
-      throw new BadRequestException('已经点赞过该作品')
-    }
-
-    // 使用事务确保点赞记录创建和点赞数更新的原子性
-    await this.prisma.$transaction(async (tx) => {
-      // 创建点赞记录
-      await tx.workLike.create({
-        data: {
-          workId: id,
-          userId,
-        },
-      })
-
-      // 更新作品点赞数
-      await tx.work.update({
-        where: { id },
-        data: {
-          likeCount: {
-            increment: 1,
-          },
-        },
-      })
-    })
-
-    // 触发用户成长事件（点赞作品）
     await this.userGrowthEventService.handleEvent({
       business: 'work',
       eventKey: WorkGrowthEventKey.Like,
@@ -360,60 +295,17 @@ export class WorkService extends BaseService {
     return { id }
   }
 
-  /**
-   * 增加作品收藏次数
-   * @param id 作品ID
-   * @param userId 用户ID
-   * @param ip 用户IP地址
-   * @param deviceId 设备ID
-   * @returns 作品ID
-   */
   async incrementFavoriteCount(
     id: number,
     userId: number,
     ip?: string,
     deviceId?: string,
   ) {
-    // 并行验证作品和用户是否存在
     const { work } = await this.verifyWorkAndUserExist(id, userId)
+    const targetType = this.getTargetType(work.type)
 
-    // 检查是否已收藏过该作品
-    const existingFavorite = await this.workFavorite.findUnique({
-      where: {
-        workId_userId: {
-          workId: id,
-          userId,
-        },
-      },
-    })
+    await this.favoriteService.favorite(targetType, id, userId)
 
-    if (existingFavorite) {
-      throw new BadRequestException('已经收藏过该作品')
-    }
-
-    // 使用事务确保收藏记录创建和收藏数更新的原子性
-    await this.prisma.$transaction(async (tx) => {
-      // 创建收藏记录（包含作品类型用于按类型筛选收藏）
-      await tx.workFavorite.create({
-        data: {
-          workId: id,
-          userId,
-          workType: work.type,
-        },
-      })
-
-      // 更新作品收藏数
-      await tx.work.update({
-        where: { id },
-        data: {
-          favoriteCount: {
-            increment: 1,
-          },
-        },
-      })
-    })
-
-    // 触发用户成长事件（收藏作品）
     await this.userGrowthEventService.handleEvent({
       business: 'work',
       eventKey: WorkGrowthEventKey.Favorite,
@@ -427,257 +319,202 @@ export class WorkService extends BaseService {
     return { id }
   }
 
-  /**
-   * 检查用户是否点赞过作品
-   * @param workId 作品ID
-   * @param userId 用户ID
-   * @returns 点赞状态
-   */
   async checkUserLiked(workId: number, userId: number) {
-    const like = await this.workLike.findUnique({
-      where: {
-        workId_userId: {
-          workId,
-          userId,
-        },
-      },
-    })
-
-    return {
-      liked: !!like,
+    const work = await this.work.findUnique({ where: { id: workId } })
+    if (!work) {
+      throw new BadRequestException('作品不存在')
     }
+    const targetType = this.getTargetType(work.type)
+    const liked = await this.likeService.checkLikeStatus(targetType, workId, userId)
+    return { liked }
   }
 
-  /**
-   * 检查用户是否收藏过作品
-   * @param workId 作品ID
-   * @param userId 用户ID
-   * @returns 收藏状态
-   */
   async checkUserFavorited(workId: number, userId: number) {
-    const favorite = await this.workFavorite.findUnique({
-      where: {
-        workId_userId: {
-          workId,
-          userId,
-        },
-      },
-    })
-
-    return {
-      favorited: !!favorite,
+    const work = await this.work.findUnique({ where: { id: workId } })
+    if (!work) {
+      throw new BadRequestException('作品不存在')
     }
+    const targetType = this.getTargetType(work.type)
+    const favorited = await this.favoriteService.checkFavoriteStatus(targetType, workId, userId)
+    return { favorited }
   }
 
-  /**
-   * 批量获取作品用户状态（点赞、收藏）
-   * @param ids 作品ID数组
-   * @param userId 用户ID
-   * @returns 作品用户状态列表
-   */
   async getWorkUserStatus(ids: number[], userId: number) {
     if (ids.length === 0) {
       return []
     }
 
-    // 并行查询用户的点赞和收藏记录
-    const [likes, favorites] = await Promise.all([
-      this.workLike.findMany({
-        where: {
-          userId,
-          workId: { in: ids },
-        },
-        select: { workId: true },
-      }),
-      this.workFavorite.findMany({
-        where: {
-          userId,
-          workId: { in: ids },
-        },
-        select: { workId: true },
-      }),
+    const works = await this.work.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, type: true },
+    })
+
+    const workMap = new Map(works.map((w) => [w.id, w.type]))
+
+    const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
+    const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
+
+    const [comicLikes, novelLikes, comicFavorites, novelFavorites] = await Promise.all([
+      comicIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
+        : new Map(),
+      novelIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
+        : new Map(),
+      comicIds.length > 0
+        ? this.favoriteService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
+        : new Map(),
+      novelIds.length > 0
+        ? this.favoriteService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
+        : new Map(),
     ])
 
-    // 使用 Set 提高查询效率
-    const likeSet = new Set(likes.map((item) => item.workId))
-    const favoriteSet = new Set(favorites.map((item) => item.workId))
-
-    // 按原始 ID 顺序返回结果
-    return ids.map((id) => ({
-      id,
-      liked: likeSet.has(id),
-      favorited: favoriteSet.has(id),
-    }))
+    return ids.map((id) => {
+      const workType = workMap.get(id)
+      const isComic = workType === 1
+      return {
+        id,
+        liked: isComic ? comicLikes.get(id) ?? false : novelLikes.get(id) ?? false,
+        favorited: isComic ? comicFavorites.get(id) ?? false : novelFavorites.get(id) ?? false,
+      }
+    })
   }
 
-  /**
-   * 分页查询作品列表并包含用户状态（点赞、收藏）
-   * @param queryWorkDto 查询条件
-   * @param userId 用户ID
-   * @returns 分页的作品列表及用户状态
-   */
   async getWorkPageWithUserStatus(queryWorkDto: QueryWorkDto, userId: number) {
     const page = await this.getWorkPage(queryWorkDto)
     const workIds = page.list.map((item) => item.id)
 
-    // 如果没有数据，直接返回
     if (workIds.length === 0) {
       return page
     }
 
-    // 并行查询用户的点赞和收藏记录
-    const [likes, favorites] = await Promise.all([
-      this.workLike.findMany({
-        where: {
-          userId,
-          workId: { in: workIds },
-        },
-        select: { workId: true },
-      }),
-      this.workFavorite.findMany({
-        where: {
-          userId,
-          workId: { in: workIds },
-        },
-        select: { workId: true },
-      }),
-    ])
+    const works = page.list
+    const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
+    const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
 
-    // 使用 Set 提高查询效率
-    const likeSet = new Set(likes.map((item) => item.workId))
-    const favoriteSet = new Set(favorites.map((item) => item.workId))
+    const [comicLikes, novelLikes, comicFavorites, novelFavorites] = await Promise.all([
+      comicIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
+        : new Map(),
+      novelIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
+        : new Map(),
+      comicIds.length > 0
+        ? this.favoriteService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
+        : new Map(),
+      novelIds.length > 0
+        ? this.favoriteService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
+        : new Map(),
+    ])
 
     return {
       ...page,
-      list: page.list.map((item) => ({
-        ...item,
-        liked: likeSet.has(item.id),
-        favorited: favoriteSet.has(item.id),
-      })),
+      list: page.list.map((item) => {
+        const isComic = item.type === 1
+        return {
+          ...item,
+          liked: isComic ? comicLikes.get(item.id) ?? false : novelLikes.get(item.id) ?? false,
+          favorited: isComic ? comicFavorites.get(item.id) ?? false : novelFavorites.get(item.id) ?? false,
+        }
+      }),
     }
   }
 
-  /**
-   * 分页查询我的收藏列表
-   * @param dto 分页参数
-   * @param userId 用户ID
-   * @returns 分页的收藏作品列表
-   */
   async getMyFavoritePage(dto: PageDto, userId: number) {
     const { pageIndex = 0, pageSize = 15 } = dto
-    type FavoriteWhere = Prisma.WorkFavoriteWhereInput & {
-      pageIndex?: number
-      pageSize?: number
-    }
-    const where: FavoriteWhere = {
-      userId,
-      pageIndex,
-      pageSize,
-    }
-    // 查询收藏记录（按创建时间倒序）
-    const result = await this.workFavorite.findPagination({
-      where,
-      orderBy: { createdAt: 'desc' },
-    })
 
-    const workIds = result.list.map((item) => item.workId)
+    const [comicResult, novelResult] = await Promise.all([
+      this.favoriteService.getUserFavorites(userId, InteractionTargetType.COMIC, pageIndex, pageSize),
+      this.favoriteService.getUserFavorites(userId, InteractionTargetType.NOVEL, pageIndex, pageSize),
+    ])
+
+    const allFavorites = [...comicResult.list, ...novelResult.list]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, pageSize)
+
+    const workIds = allFavorites.map((f) => f.targetId)
     if (workIds.length === 0) {
-      return { ...result, list: [] }
+      return { list: [], total: comicResult.total + novelResult.total }
     }
 
-    // 批量查询作品详情
     const works = await this.work.findMany({
-      where: {
-        id: { in: workIds },
-      },
+      where: { id: { in: workIds } },
       select: WORK_LIST_SELECT,
     })
 
-    // 使用 Map 保持收藏顺序
     const workMap = new Map(works.map((item) => [item.id, item]))
     const orderedWorks = workIds
       .map((id) => workMap.get(id))
       .filter((item): item is NonNullable<typeof item> => !!item)
 
-    // 查询用户对这些作品的点赞状态
-    const likes = await this.workLike.findMany({
-      where: {
-        userId,
-        workId: { in: workIds },
-      },
-      select: { workId: true },
-    })
-    const likeSet = new Set(likes.map((item) => item.workId))
+    const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
+    const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
+
+    const [comicLikes, novelLikes] = await Promise.all([
+      comicIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
+        : new Map(),
+      novelIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
+        : new Map(),
+    ])
 
     return {
-      ...result,
       list: orderedWorks.map((item) => ({
         ...item,
-        liked: likeSet.has(item.id),
-        favorited: true, // 收藏列表中的作品都是已收藏状态
+        liked: item.type === 1 ? comicLikes.get(item.id) ?? false : novelLikes.get(item.id) ?? false,
+        favorited: true,
       })),
+      total: comicResult.total + novelResult.total,
     }
   }
 
-  /**
-   * 分页查询我的点赞列表
-   * @param dto 分页参数
-   * @param userId 用户ID
-   * @returns 分页的点赞作品列表
-   */
   async getMyLikedPage(dto: PageDto, userId: number) {
     const { pageIndex = 0, pageSize = 15 } = dto
-    type LikeWhere = Prisma.WorkLikeWhereInput & {
-      pageIndex?: number
-      pageSize?: number
-    }
-    const where: LikeWhere = {
-      userId,
-      pageIndex,
-      pageSize,
-    }
-    // 查询点赞记录（按创建时间倒序）
-    const result = await this.workLike.findPagination({
-      where,
-      orderBy: { createdAt: 'desc' },
-    })
 
-    const workIds = result.list.map((item) => item.workId)
+    const [comicResult, novelResult] = await Promise.all([
+      this.likeService.getUserLikes(userId, InteractionTargetType.COMIC, pageIndex, pageSize),
+      this.likeService.getUserLikes(userId, InteractionTargetType.NOVEL, pageIndex, pageSize),
+    ])
+
+    const allLikes = [...comicResult.list, ...novelResult.list]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, pageSize)
+
+    const workIds = allLikes.map((l) => l.targetId)
     if (workIds.length === 0) {
-      return { ...result, list: [] }
+      return { list: [], total: comicResult.total + novelResult.total }
     }
 
-    // 批量查询作品详情
     const works = await this.work.findMany({
-      where: {
-        id: { in: workIds },
-      },
+      where: { id: { in: workIds } },
       select: WORK_LIST_SELECT,
     })
 
-    // 使用 Map 保持点赞顺序
     const workMap = new Map(works.map((item) => [item.id, item]))
     const orderedWorks = workIds
       .map((id) => workMap.get(id))
       .filter((item): item is NonNullable<typeof item> => !!item)
 
-    // 查询用户对这些作品的收藏状态
-    const favorites = await this.workFavorite.findMany({
-      where: {
-        userId,
-        workId: { in: workIds },
-      },
-      select: { workId: true },
-    })
-    const favoriteSet = new Set(favorites.map((item) => item.workId))
+    const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
+    const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
+
+    const [comicFavorites, novelFavorites] = await Promise.all([
+      comicIds.length > 0
+        ? this.favoriteService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
+        : new Map(),
+      novelIds.length > 0
+        ? this.favoriteService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
+        : new Map(),
+    ])
 
     return {
-      ...result,
       list: orderedWorks.map((item) => ({
         ...item,
-        liked: true, // 点赞列表中的作品都是已点赞状态
-        favorited: favoriteSet.has(item.id),
+        liked: true,
+        favorited: item.type === 1 ? comicFavorites.get(item.id) ?? false : novelFavorites.get(item.id) ?? false,
       })),
+      total: comicResult.total + novelResult.total,
     }
   }
 

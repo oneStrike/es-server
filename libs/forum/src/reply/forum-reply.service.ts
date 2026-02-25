@@ -139,7 +139,7 @@ export class ForumReplyService extends BaseService {
 
     const updatePayload: ForumReplyCreateInput = {
       ...replyData,
-      floor: newFloor,
+      floor: newFloor ?? undefined,
       auditStatus,
       auditReason,
       sensitiveWordHits:

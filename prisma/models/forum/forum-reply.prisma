@@ -9,12 +9,25 @@ model ForumReply {
   userId  Int @map("user_id")
   /// 回复目标ID（楼中楼）
   replyToId Int? @map("reply_to_id")
+  /// 实际回复的根评论ID（用于楼中楼嵌套）
+  actualReplyToId Int? @map("actual_reply_to_id")
 
   /// 回复内容
   content String
 
+  /// 楼层号
+  floor Int @default(0)
   /// 点赞数
   likeCount Int @default(0) @map("like_count")
+
+  /// 是否隐藏
+  isHidden Boolean @default(false) @map("is_hidden")
+  /// 审核状态：0=待审核, 1=已通过, 2=已拒绝
+  auditStatus Int @default(0) @map("audit_status") @db.SmallInt
+  /// 审核拒绝原因
+  auditReason String? @map("audit_reason")
+  /// 敏感词命中记录
+  sensitiveWordHits Json? @map("sensitive_word_hits")
 
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -31,6 +44,10 @@ model ForumReply {
   replyTo  ForumReply?         @relation("ReplyTo", fields: [replyToId], references: [id])
   /// 被回复列表
   replies  ForumReply[]        @relation("ReplyTo")
+  /// 实际回复目标
+  actualReplyTo ForumReply?    @relation("ActualReplyTo", fields: [actualReplyToId], references: [id])
+  /// 以此评论为根评论的楼中楼列表
+  actualReplies ForumReply[]   @relation("ActualReplyTo")
   /// 点赞列表
   likes    ForumReplyLike[]
   /// 通知关联
@@ -42,9 +59,13 @@ model ForumReply {
   @@index([userId])
   /// 回复目标索引
   @@index([replyToId])
+  /// 根回复索引
+  @@index([actualReplyToId])
   /// 创建时间索引
   @@index([createdAt])
   /// 删除时间索引
   @@index([deletedAt])
+  /// 审核状态索引
+  @@index([auditStatus])
   @@map("forum_reply")
 }

@@ -285,4 +285,11 @@ export class ForumCounterService extends BaseService {
       this.updateProfileFavoriteCount(tx, authorUserId, delta),
     ])
   }
+
+  async getTopicInfo(topicId: number) {
+    return this.prisma.forumTopic.findUnique({
+      where: { id: topicId },
+      select: { id: true, userId: true, sectionId: true },
+    })
+  }
 }

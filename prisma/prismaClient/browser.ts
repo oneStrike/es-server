@@ -249,16 +249,6 @@ export type ForumSection = Prisma.ForumSectionModel
  */
 export type ForumTag = Prisma.ForumTagModel
 /**
- * Model ForumTopicFavorite
- * 论坛主题收藏表 - 存储用户对论坛主题的收藏记录
- */
-export type ForumTopicFavorite = Prisma.ForumTopicFavoriteModel
-/**
- * Model ForumTopicLike
- * 论坛主题点赞表 - 存储用户对论坛主题的点赞记录
- */
-export type ForumTopicLike = Prisma.ForumTopicLikeModel
-/**
  * Model ForumTopicTag
  * 论坛主题标签关联表 - 管理主题与标签的多对多关系
  */
@@ -273,11 +263,6 @@ export type ForumTopic = Prisma.ForumTopicModel
  * 论坛用户操作日志表 - 记录用户的所有操作行为，包括创建主题、回复、点赞、收藏等操作
  */
 export type ForumUserActionLog = Prisma.ForumUserActionLogModel
-/**
- * Model ForumView
- * 论坛浏览记录表 - 存储用户对论坛主题的浏览记录
- */
-export type ForumView = Prisma.ForumViewModel
 /**
  * Model RequestLog
  * 请求日志
@@ -334,16 +319,6 @@ export type WorkCategoryRelation = Prisma.WorkCategoryRelationModel
  */
 export type WorkCategory = Prisma.WorkCategoryModel
 /**
- * Model WorkChapterDownload
- * 章节下载记录表 - 存储用户的章节下载历史
- */
-export type WorkChapterDownload = Prisma.WorkChapterDownloadModel
-/**
- * Model WorkChapterLike
- * 章节点赞表 - 存储用户对章节的点赞记录
- */
-export type WorkChapterLike = Prisma.WorkChapterLikeModel
-/**
  * Model WorkChapterPurchase
  * 章节购买记录
  */
@@ -363,16 +338,6 @@ export type WorkCommentReport = Prisma.WorkCommentReportModel
  * 作品评论表 - 存储用户对作品的评论信息
  */
 export type WorkComment = Prisma.WorkCommentModel
-/**
- * Model WorkFavorite
- * 作品收藏表 - 存储用户对作品的收藏记录
- */
-export type WorkFavorite = Prisma.WorkFavoriteModel
-/**
- * Model WorkLike
- * 作品点赞表 - 存储用户对作品的点赞记录
- */
-export type WorkLike = Prisma.WorkLikeModel
 /**
  * Model WorkTagRelation
  * 作品标签关联表

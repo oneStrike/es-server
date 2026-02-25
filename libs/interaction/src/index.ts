@@ -2,6 +2,9 @@
 export * from './interaction.constant'
 export * from './interaction.types'
 
+// 事件系统
+export * from './interaction.event'
+
 // 基类服务
 export * from './base-interaction.service'
 

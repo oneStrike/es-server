@@ -1,6 +1,11 @@
 import { WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { DragReorderDto, PageDto } from '@libs/base/dto'
+import {
+  DownloadService,
+  InteractionTargetType,
+  LikeService,
+} from '@libs/interaction'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -20,16 +25,8 @@ export class WorkChapterService extends BaseService {
     return this.prisma.work
   }
 
-  get workChapterLike() {
-    return this.prisma.workChapterLike
-  }
-
   get workChapterPurchase() {
     return this.prisma.workChapterPurchase
-  }
-
-  get workChapterDownload() {
-    return this.prisma.workChapterDownload
   }
 
   get appUser() {
@@ -42,6 +39,8 @@ export class WorkChapterService extends BaseService {
 
   constructor(
     private readonly userGrowthEventService: UserGrowthEventService,
+    private readonly likeService: LikeService,
+    private readonly downloadService: DownloadService,
   ) {
     super()
   }
@@ -72,6 +71,12 @@ export class WorkChapterService extends BaseService {
       createdAt: true,
       updatedAt: true,
     }
+  }
+
+  private getTargetType(workType: number): InteractionTargetType {
+    return workType === 1
+      ? InteractionTargetType.COMIC_CHAPTER
+      : InteractionTargetType.NOVEL_CHAPTER
   }
 
   async createChapter(createDto: CreateWorkChapterDto) {
@@ -160,16 +165,11 @@ export class WorkChapterService extends BaseService {
   }
 
   async getChapterDetailWithUserStatus(id: number, userId: number) {
-    const [chapter, like, purchase, download] = await Promise.all([
-      this.getChapterDetail(id),
-      this.workChapterLike.findUnique({
-        where: {
-          chapterId_userId: {
-            chapterId: id,
-            userId,
-          },
-        },
-      }),
+    const chapter = await this.getChapterDetail(id)
+    const targetType = this.getTargetType(chapter.workType)
+
+    const [liked, purchased, downloaded] = await Promise.all([
+      this.likeService.checkLikeStatus(targetType, id, userId),
       this.workChapterPurchase.findUnique({
         where: {
           chapterId_userId: {
@@ -177,22 +177,15 @@ export class WorkChapterService extends BaseService {
             userId,
           },
         },
-      }),
-      this.workChapterDownload.findUnique({
-        where: {
-          chapterId_userId: {
-            chapterId: id,
-            userId,
-          },
-        },
-      }),
+      }).then((p) => !!p),
+      this.downloadService.checkDownloadStatus(targetType, id, userId),
     ])
 
     return {
       ...chapter,
-      liked: !!like,
-      purchased: !!purchase,
-      downloaded: !!download,
+      liked,
+      purchased,
+      downloaded,
     }
   }
 
@@ -363,49 +356,14 @@ export class WorkChapterService extends BaseService {
     ip?: string,
     deviceId?: string,
   ) {
-    const [chapter, user] = await Promise.all([
-      this.workChapter.findUnique({ where: { id } }),
-      this.appUser.findUnique({ where: { id: userId } }),
-    ])
-
+    const chapter = await this.workChapter.findUnique({ where: { id } })
     if (!chapter) {
       throw new BadRequestException('章节不存在')
     }
 
-    if (!user) {
-      throw new BadRequestException('用户不存在')
-    }
+    const targetType = this.getTargetType(chapter.workType)
 
-    const existingLike = await this.workChapterLike.findUnique({
-      where: {
-        chapterId_userId: {
-          chapterId: id,
-          userId,
-        },
-      },
-    })
-
-    if (existingLike) {
-      throw new BadRequestException('已经点赞过该章节')
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.workChapterLike.create({
-        data: {
-          chapterId: id,
-          userId,
-        },
-      })
-
-      await tx.workChapter.update({
-        where: { id },
-        data: {
-          likeCount: {
-            increment: 1,
-          },
-        },
-      })
-    })
+    await this.likeService.like(targetType, id, userId)
 
     await this.userGrowthEventService.handleEvent({
       business: 'work',
@@ -535,18 +493,13 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    if (!user) {
-      throw new BadRequestException('用户不存在')
-    }
+    const targetType = this.getTargetType(chapter.workType)
 
-    const existingDownload = await this.workChapterDownload.findUnique({
-      where: {
-        chapterId_userId: {
-          chapterId: id,
-          userId,
-        },
-      },
-    })
+    const existingDownload = await this.downloadService.checkDownloadStatus(
+      targetType,
+      id,
+      userId,
+    )
 
     if (existingDownload) {
       throw new BadRequestException('已下载该章节')
@@ -557,10 +510,8 @@ export class WorkChapterService extends BaseService {
     }
 
     if (chapter.downloadRule !== WorkViewPermissionEnum.ALL) {
-      if (chapter.downloadRule === WorkViewPermissionEnum.LOGGED_IN) {
-        if (!user) {
-          throw new BadRequestException('用户不存在')
-        }
+      if (!user) {
+        throw new BadRequestException('用户不存在')
       }
 
       if (chapter.downloadRule === WorkViewPermissionEnum.MEMBER) {
@@ -596,12 +547,7 @@ export class WorkChapterService extends BaseService {
       }
     }
 
-    await this.workChapterDownload.create({
-      data: {
-        chapterId: id,
-        userId,
-      },
-    })
+    await this.downloadService.recordDownload(targetType, id, userId, chapter.workId, chapter.workType)
 
     await this.userGrowthEventService.handleEvent({
       business: 'work',
@@ -617,18 +563,13 @@ export class WorkChapterService extends BaseService {
   }
 
   async checkUserLiked(chapterId: number, userId: number) {
-    const like = await this.workChapterLike.findUnique({
-      where: {
-        chapterId_userId: {
-          chapterId,
-          userId,
-        },
-      },
-    })
-
-    return {
-      liked: !!like,
+    const chapter = await this.workChapter.findUnique({ where: { id: chapterId } })
+    if (!chapter) {
+      throw new BadRequestException('章节不存在')
     }
+    const targetType = this.getTargetType(chapter.workType)
+    const liked = await this.likeService.checkLikeStatus(targetType, chapterId, userId)
+    return { liked }
   }
 
   async checkUserPurchased(chapterId: number, userId: number) {
@@ -647,18 +588,13 @@ export class WorkChapterService extends BaseService {
   }
 
   async checkUserDownloaded(chapterId: number, userId: number) {
-    const download = await this.workChapterDownload.findUnique({
-      where: {
-        chapterId_userId: {
-          chapterId,
-          userId,
-        },
-      },
-    })
-
-    return {
-      downloaded: !!download,
+    const chapter = await this.workChapter.findUnique({ where: { id: chapterId } })
+    if (!chapter) {
+      throw new BadRequestException('章节不存在')
     }
+    const targetType = this.getTargetType(chapter.workType)
+    const downloaded = await this.downloadService.checkDownloadStatus(targetType, chapterId, userId)
+    return { downloaded }
   }
 
   async getChapterUserStatus(ids: number[], userId: number) {
@@ -666,14 +602,27 @@ export class WorkChapterService extends BaseService {
       return []
     }
 
-    const [likes, purchases, downloads] = await Promise.all([
-      this.workChapterLike.findMany({
-        where: {
-          userId,
-          chapterId: { in: ids },
-        },
-        select: { chapterId: true },
-      }),
+    const chapters = await this.workChapter.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, workType: true },
+    })
+
+    const comicChapterIds = chapters.filter((c) => c.workType === 1).map((c) => c.id)
+    const novelChapterIds = chapters.filter((c) => c.workType === 2).map((c) => c.id)
+
+    const [
+      comicLikes,
+      novelLikes,
+      purchases,
+      comicDownloads,
+      novelDownloads,
+    ] = await Promise.all([
+      comicChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC_CHAPTER, comicChapterIds, userId)
+        : new Map(),
+      novelChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL_CHAPTER, novelChapterIds, userId)
+        : new Map(),
       this.workChapterPurchase.findMany({
         where: {
           userId,
@@ -681,25 +630,27 @@ export class WorkChapterService extends BaseService {
         },
         select: { chapterId: true },
       }),
-      this.workChapterDownload.findMany({
-        where: {
-          userId,
-          chapterId: { in: ids },
-        },
-        select: { chapterId: true },
-      }),
+      comicChapterIds.length > 0
+        ? this.downloadService.checkStatusBatch(InteractionTargetType.COMIC_CHAPTER, comicChapterIds, userId)
+        : new Map(),
+      novelChapterIds.length > 0
+        ? this.downloadService.checkStatusBatch(InteractionTargetType.NOVEL_CHAPTER, novelChapterIds, userId)
+        : new Map(),
     ])
 
-    const likeSet = new Set(likes.map((item) => item.chapterId))
     const purchaseSet = new Set(purchases.map((item) => item.chapterId))
-    const downloadSet = new Set(downloads.map((item) => item.chapterId))
+    const chapterMap = new Map(chapters.map((c) => [c.id, c.workType]))
 
-    return ids.map((id) => ({
-      id,
-      liked: likeSet.has(id),
-      purchased: purchaseSet.has(id),
-      downloaded: downloadSet.has(id),
-    }))
+    return ids.map((id) => {
+      const workType = chapterMap.get(id)
+      const isComic = workType === 1
+      return {
+        id,
+        liked: isComic ? comicLikes.get(id) ?? false : novelLikes.get(id) ?? false,
+        purchased: purchaseSet.has(id),
+        downloaded: isComic ? comicDownloads.get(id) ?? false : novelDownloads.get(id) ?? false,
+      }
+    })
   }
 
   async getMyPurchasedPage(dto: PageDto, userId: number) {
@@ -734,56 +685,54 @@ export class WorkChapterService extends BaseService {
       .map((id) => chapterMap.get(id))
       .filter((item): item is NonNullable<typeof item> => !!item)
 
-    const [likes, downloads] = await Promise.all([
-      this.workChapterLike.findMany({
-        where: {
-          userId,
-          chapterId: { in: chapterIds },
-        },
-        select: { chapterId: true },
-      }),
-      this.workChapterDownload.findMany({
-        where: {
-          userId,
-          chapterId: { in: chapterIds },
-        },
-        select: { chapterId: true },
-      }),
-    ])
+    const chaptersWithType = chapters.map((c) => ({ id: c.id, workType: c.workType }))
+    const comicChapterIds = chaptersWithType.filter((c) => c.workType === 1).map((c) => c.id)
+    const novelChapterIds = chaptersWithType.filter((c) => c.workType === 2).map((c) => c.id)
 
-    const likeSet = new Set(likes.map((item) => item.chapterId))
-    const downloadSet = new Set(downloads.map((item) => item.chapterId))
+    const [comicLikes, novelLikes, comicDownloads, novelDownloads] = await Promise.all([
+      comicChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC_CHAPTER, comicChapterIds, userId)
+        : new Map(),
+      novelChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL_CHAPTER, novelChapterIds, userId)
+        : new Map(),
+      comicChapterIds.length > 0
+        ? this.downloadService.checkStatusBatch(InteractionTargetType.COMIC_CHAPTER, comicChapterIds, userId)
+        : new Map(),
+      novelChapterIds.length > 0
+        ? this.downloadService.checkStatusBatch(InteractionTargetType.NOVEL_CHAPTER, novelChapterIds, userId)
+        : new Map(),
+    ])
 
     return {
       ...result,
-      list: orderedChapters.map((item) => ({
-        ...item,
-        liked: likeSet.has(item.id),
-        purchased: true,
-        downloaded: downloadSet.has(item.id),
-      })),
+      list: orderedChapters.map((item) => {
+        const isComic = item.workType === 1
+        return {
+          ...item,
+          liked: isComic ? comicLikes.get(item.id) ?? false : novelLikes.get(item.id) ?? false,
+          purchased: true,
+          downloaded: isComic ? comicDownloads.get(item.id) ?? false : novelDownloads.get(item.id) ?? false,
+        }
+      }),
     }
   }
 
   async getMyDownloadedPage(dto: PageDto, userId: number) {
     const { pageIndex = 0, pageSize = 15 } = dto
-    type DownloadWhere = Prisma.WorkChapterDownloadWhereInput & {
-      pageIndex?: number
-      pageSize?: number
-    }
-    const where: DownloadWhere = {
-      userId,
-      pageIndex,
-      pageSize,
-    }
-    const result = await this.workChapterDownload.findPagination({
-      where,
-      orderBy: { createdAt: 'desc' },
-    })
 
-    const chapterIds = result.list.map((item) => item.chapterId)
+    const [comicResult, novelResult] = await Promise.all([
+      this.downloadService.getUserDownloads(userId, InteractionTargetType.COMIC_CHAPTER, pageIndex, pageSize),
+      this.downloadService.getUserDownloads(userId, InteractionTargetType.NOVEL_CHAPTER, pageIndex, pageSize),
+    ])
+
+    const allDownloads = [...comicResult.list, ...novelResult.list]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, pageSize)
+
+    const chapterIds = allDownloads.map((d) => d.targetId)
     if (chapterIds.length === 0) {
-      return { ...result, list: [] }
+      return { list: [], total: comicResult.total + novelResult.total }
     }
 
     const chapters = await this.workChapter.findMany({
@@ -797,14 +746,16 @@ export class WorkChapterService extends BaseService {
       .map((id) => chapterMap.get(id))
       .filter((item): item is NonNullable<typeof item> => !!item)
 
-    const [likes, purchases] = await Promise.all([
-      this.workChapterLike.findMany({
-        where: {
-          userId,
-          chapterId: { in: chapterIds },
-        },
-        select: { chapterId: true },
-      }),
+    const comicChapterIds = chapters.filter((c) => c.workType === 1).map((c) => c.id)
+    const novelChapterIds = chapters.filter((c) => c.workType === 2).map((c) => c.id)
+
+    const [comicLikes, novelLikes, purchases] = await Promise.all([
+      comicChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC_CHAPTER, comicChapterIds, userId)
+        : new Map(),
+      novelChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL_CHAPTER, novelChapterIds, userId)
+        : new Map(),
       this.workChapterPurchase.findMany({
         where: {
           userId,
@@ -814,17 +765,19 @@ export class WorkChapterService extends BaseService {
       }),
     ])
 
-    const likeSet = new Set(likes.map((item) => item.chapterId))
     const purchaseSet = new Set(purchases.map((item) => item.chapterId))
 
     return {
-      ...result,
-      list: orderedChapters.map((item) => ({
-        ...item,
-        liked: likeSet.has(item.id),
-        purchased: purchaseSet.has(item.id),
-        downloaded: true,
-      })),
+      list: orderedChapters.map((item) => {
+        const isComic = item.workType === 1
+        return {
+          ...item,
+          liked: isComic ? comicLikes.get(item.id) ?? false : novelLikes.get(item.id) ?? false,
+          purchased: purchaseSet.has(item.id),
+          downloaded: true,
+        }
+      }),
+      total: comicResult.total + novelResult.total,
     }
   }
 
@@ -869,14 +822,16 @@ export class WorkChapterService extends BaseService {
       .filter((item): item is NonNullable<typeof item> => !!item)
 
     const uniqueChapterIds = Array.from(new Set(targetIds))
-    const [likes, purchases, downloads] = await Promise.all([
-      this.workChapterLike.findMany({
-        where: {
-          userId,
-          chapterId: { in: uniqueChapterIds },
-        },
-        select: { chapterId: true },
-      }),
+    const comicChapterIds = chapters.filter((c) => c.workType === 1).map((c) => c.id)
+    const novelChapterIds = chapters.filter((c) => c.workType === 2).map((c) => c.id)
+
+    const [comicLikes, novelLikes, purchases, comicDownloads, novelDownloads] = await Promise.all([
+      comicChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC_CHAPTER, comicChapterIds, userId)
+        : new Map(),
+      novelChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL_CHAPTER, novelChapterIds, userId)
+        : new Map(),
       this.workChapterPurchase.findMany({
         where: {
           userId,
@@ -884,27 +839,27 @@ export class WorkChapterService extends BaseService {
         },
         select: { chapterId: true },
       }),
-      this.workChapterDownload.findMany({
-        where: {
-          userId,
-          chapterId: { in: uniqueChapterIds },
-        },
-        select: { chapterId: true },
-      }),
+      comicChapterIds.length > 0
+        ? this.downloadService.checkStatusBatch(InteractionTargetType.COMIC_CHAPTER, comicChapterIds, userId)
+        : new Map(),
+      novelChapterIds.length > 0
+        ? this.downloadService.checkStatusBatch(InteractionTargetType.NOVEL_CHAPTER, novelChapterIds, userId)
+        : new Map(),
     ])
 
-    const likeSet = new Set(likes.map((item) => item.chapterId))
     const purchaseSet = new Set(purchases.map((item) => item.chapterId))
-    const downloadSet = new Set(downloads.map((item) => item.chapterId))
 
     return {
       ...result,
-      list: orderedChapters.map((item) => ({
-        ...item,
-        liked: likeSet.has(item.id),
-        purchased: purchaseSet.has(item.id),
-        downloaded: downloadSet.has(item.id),
-      })),
+      list: orderedChapters.map((item) => {
+        const isComic = item.workType === 1
+        return {
+          ...item,
+          liked: isComic ? comicLikes.get(item.id) ?? false : novelLikes.get(item.id) ?? false,
+          purchased: purchaseSet.has(item.id),
+          downloaded: isComic ? comicDownloads.get(item.id) ?? false : novelDownloads.get(item.id) ?? false,
+        }
+      }),
     }
   }
 
@@ -919,14 +874,16 @@ export class WorkChapterService extends BaseService {
       return page
     }
 
-    const [likes, purchases, downloads] = await Promise.all([
-      this.workChapterLike.findMany({
-        where: {
-          userId,
-          chapterId: { in: chapterIds },
-        },
-        select: { chapterId: true },
-      }),
+    const comicChapterIds = page.list.filter((c) => c.workType === 1).map((c) => c.id)
+    const novelChapterIds = page.list.filter((c) => c.workType === 2).map((c) => c.id)
+
+    const [comicLikes, novelLikes, purchases, comicDownloads, novelDownloads] = await Promise.all([
+      comicChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC_CHAPTER, comicChapterIds, userId)
+        : new Map(),
+      novelChapterIds.length > 0
+        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL_CHAPTER, novelChapterIds, userId)
+        : new Map(),
       this.workChapterPurchase.findMany({
         where: {
           userId,
@@ -934,27 +891,27 @@ export class WorkChapterService extends BaseService {
         },
         select: { chapterId: true },
       }),
-      this.workChapterDownload.findMany({
-        where: {
-          userId,
-          chapterId: { in: chapterIds },
-        },
-        select: { chapterId: true },
-      }),
+      comicChapterIds.length > 0
+        ? this.downloadService.checkStatusBatch(InteractionTargetType.COMIC_CHAPTER, comicChapterIds, userId)
+        : new Map(),
+      novelChapterIds.length > 0
+        ? this.downloadService.checkStatusBatch(InteractionTargetType.NOVEL_CHAPTER, novelChapterIds, userId)
+        : new Map(),
     ])
 
-    const likeSet = new Set(likes.map((item) => item.chapterId))
     const purchaseSet = new Set(purchases.map((item) => item.chapterId))
-    const downloadSet = new Set(downloads.map((item) => item.chapterId))
 
     return {
       ...page,
-      list: page.list.map((item) => ({
-        ...item,
-        liked: likeSet.has(item.id),
-        purchased: purchaseSet.has(item.id),
-        downloaded: downloadSet.has(item.id),
-      })),
+      list: page.list.map((item) => {
+        const isComic = item.workType === 1
+        return {
+          ...item,
+          liked: isComic ? comicLikes.get(item.id) ?? false : novelLikes.get(item.id) ?? false,
+          purchased: purchaseSet.has(item.id),
+          downloaded: isComic ? comicDownloads.get(item.id) ?? false : novelDownloads.get(item.id) ?? false,
+        }
+      }),
     }
   }
 }

@@ -1,22 +1,18 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { PrismaClient } from '@libs/base/database'
-import { InteractionTargetType } from './interaction.constant'
+import { InteractionTargetType, InteractionActionType } from './interaction.constant'
 import { CounterService } from './counter/counter.service'
 import { TargetValidatorRegistry } from './validator/target-validator.registry'
+import { InteractionEventEmitter } from './interaction.event'
 
-/**
- * 交互基类服务
- * 提供所有交互操作的通用功能
- */
 export abstract class BaseInteractionService {
-  /** Prisma 客户端 */
   protected abstract readonly prisma: PrismaClient
-
-  /** 计数服务 */
   protected abstract readonly counterService: CounterService
-
-  /** 校验器注册表 */
   protected abstract readonly validatorRegistry: TargetValidatorRegistry
+  protected eventEmitter?: InteractionEventEmitter
+
+  protected abstract getActionType(): InteractionActionType
+  protected abstract getCancelActionType(): InteractionActionType
 
   /**
    * 校验目标是否存在
@@ -86,59 +82,60 @@ export abstract class BaseInteractionService {
    */
   protected abstract getCountField(): string
 
-  /**
-   * 执行交互（点赞、收藏等）
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @param userId 用户ID
-   * @param extraData 额外数据
-   */
   async interact(
     targetType: InteractionTargetType,
     targetId: number,
     userId: number,
     extraData?: Record<string, unknown>,
   ): Promise<void> {
-    // 1. 校验目标是否存在
     await this.validateTarget(targetType, targetId)
 
-    // 2. 检查用户是否已执行过该交互
     const hasInteracted = await this.checkUserInteracted(targetType, targetId, userId)
     if (hasInteracted) {
       throw new BadRequestException('已经执行过该操作')
     }
 
-    // 3. 创建交互记录
     await this.createInteraction(targetType, targetId, userId, extraData)
 
-    // 4. 增加计数
     const countField = this.getCountField()
     await this.counterService.increment(targetType, targetId, countField)
+
+    if (this.eventEmitter) {
+      await this.eventEmitter.emit({
+        actionType: this.getActionType(),
+        targetType,
+        targetId,
+        userId,
+        timestamp: new Date(),
+        extraData,
+      })
+    }
   }
 
-  /**
-   * 取消交互（取消点赞、取消收藏等）
-   * @param targetType 目标类型
-   * @param targetId 目标ID
-   * @param userId 用户ID
-   */
   async cancelInteract(
     targetType: InteractionTargetType,
     targetId: number,
     userId: number,
   ): Promise<void> {
-    // 1. 检查用户是否已执行过该交互
     const hasInteracted = await this.checkUserInteracted(targetType, targetId, userId)
     if (!hasInteracted) {
       throw new BadRequestException('尚未执行过该操作')
     }
 
-    // 2. 删除交互记录
     await this.deleteInteraction(targetType, targetId, userId)
 
-    // 3. 减少计数
     const countField = this.getCountField()
     await this.counterService.decrement(targetType, targetId, countField)
+
+    if (this.eventEmitter) {
+      await this.eventEmitter.emit({
+        actionType: this.getCancelActionType(),
+        targetType,
+        targetId,
+        userId,
+        timestamp: new Date(),
+      })
+    }
   }
 
   /**

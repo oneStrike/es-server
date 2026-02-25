@@ -458,8 +458,6 @@ export type WorkWhereInput = {
   categories?: Prisma.WorkCategoryRelationListRelationFilter
   tags?: Prisma.WorkTagRelationListRelationFilter
   chapters?: Prisma.WorkChapterListRelationFilter
-  favorites?: Prisma.WorkFavoriteListRelationFilter
-  likes?: Prisma.WorkLikeListRelationFilter
   comments?: Prisma.WorkCommentListRelationFilter
 }
 
@@ -500,8 +498,6 @@ export type WorkOrderByWithRelationInput = {
   categories?: Prisma.WorkCategoryRelationOrderByRelationAggregateInput
   tags?: Prisma.WorkTagRelationOrderByRelationAggregateInput
   chapters?: Prisma.WorkChapterOrderByRelationAggregateInput
-  favorites?: Prisma.WorkFavoriteOrderByRelationAggregateInput
-  likes?: Prisma.WorkLikeOrderByRelationAggregateInput
   comments?: Prisma.WorkCommentOrderByRelationAggregateInput
 }
 
@@ -545,8 +541,6 @@ export type WorkWhereUniqueInput = Prisma.AtLeast<{
   categories?: Prisma.WorkCategoryRelationListRelationFilter
   tags?: Prisma.WorkTagRelationListRelationFilter
   chapters?: Prisma.WorkChapterListRelationFilter
-  favorites?: Prisma.WorkFavoriteListRelationFilter
-  likes?: Prisma.WorkLikeListRelationFilter
   comments?: Prisma.WorkCommentListRelationFilter
 }, "id">
 
@@ -660,8 +654,6 @@ export type WorkCreateInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
 }
 
@@ -702,8 +694,6 @@ export type WorkUncheckedCreateInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
 }
 
@@ -743,8 +733,6 @@ export type WorkUpdateInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
 }
 
@@ -785,8 +773,6 @@ export type WorkUncheckedUpdateInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUncheckedUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
 }
 
@@ -1109,34 +1095,6 @@ export type WorkUpdateOneWithoutCommentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkUpdateToOneWithWhereWithoutCommentsInput, Prisma.WorkUpdateWithoutCommentsInput>, Prisma.WorkUncheckedUpdateWithoutCommentsInput>
 }
 
-export type WorkCreateNestedOneWithoutFavoritesInput = {
-  create?: Prisma.XOR<Prisma.WorkCreateWithoutFavoritesInput, Prisma.WorkUncheckedCreateWithoutFavoritesInput>
-  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutFavoritesInput
-  connect?: Prisma.WorkWhereUniqueInput
-}
-
-export type WorkUpdateOneRequiredWithoutFavoritesNestedInput = {
-  create?: Prisma.XOR<Prisma.WorkCreateWithoutFavoritesInput, Prisma.WorkUncheckedCreateWithoutFavoritesInput>
-  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutFavoritesInput
-  upsert?: Prisma.WorkUpsertWithoutFavoritesInput
-  connect?: Prisma.WorkWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkUpdateToOneWithWhereWithoutFavoritesInput, Prisma.WorkUpdateWithoutFavoritesInput>, Prisma.WorkUncheckedUpdateWithoutFavoritesInput>
-}
-
-export type WorkCreateNestedOneWithoutLikesInput = {
-  create?: Prisma.XOR<Prisma.WorkCreateWithoutLikesInput, Prisma.WorkUncheckedCreateWithoutLikesInput>
-  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutLikesInput
-  connect?: Prisma.WorkWhereUniqueInput
-}
-
-export type WorkUpdateOneRequiredWithoutLikesNestedInput = {
-  create?: Prisma.XOR<Prisma.WorkCreateWithoutLikesInput, Prisma.WorkUncheckedCreateWithoutLikesInput>
-  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutLikesInput
-  upsert?: Prisma.WorkUpsertWithoutLikesInput
-  connect?: Prisma.WorkWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkUpdateToOneWithWhereWithoutLikesInput, Prisma.WorkUpdateWithoutLikesInput>, Prisma.WorkUncheckedUpdateWithoutLikesInput>
-}
-
 export type WorkCreateNestedOneWithoutTagsInput = {
   create?: Prisma.XOR<Prisma.WorkCreateWithoutTagsInput, Prisma.WorkUncheckedCreateWithoutTagsInput>
   connectOrCreate?: Prisma.WorkCreateOrConnectWithoutTagsInput
@@ -1202,8 +1160,6 @@ export type WorkCreateWithoutComicInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
 }
 
@@ -1243,8 +1199,6 @@ export type WorkUncheckedCreateWithoutComicInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
 }
 
@@ -1299,8 +1253,6 @@ export type WorkUpdateWithoutComicInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
 }
 
@@ -1340,8 +1292,6 @@ export type WorkUncheckedUpdateWithoutComicInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUncheckedUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
 }
 
@@ -1380,8 +1330,6 @@ export type WorkCreateWithoutNovelInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
 }
 
@@ -1421,8 +1369,6 @@ export type WorkUncheckedCreateWithoutNovelInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
 }
 
@@ -1477,8 +1423,6 @@ export type WorkUpdateWithoutNovelInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
 }
 
@@ -1518,8 +1462,6 @@ export type WorkUncheckedUpdateWithoutNovelInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUncheckedUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
 }
 
@@ -1558,8 +1500,6 @@ export type WorkCreateWithoutAuthorsInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
 }
 
@@ -1599,8 +1539,6 @@ export type WorkUncheckedCreateWithoutAuthorsInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
 }
 
@@ -1655,8 +1593,6 @@ export type WorkUpdateWithoutAuthorsInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
 }
 
@@ -1696,8 +1632,6 @@ export type WorkUncheckedUpdateWithoutAuthorsInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUncheckedUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
 }
 
@@ -1736,8 +1670,6 @@ export type WorkCreateWithoutCategoriesInput = {
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
 }
 
@@ -1777,8 +1709,6 @@ export type WorkUncheckedCreateWithoutCategoriesInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
 }
 
@@ -1833,8 +1763,6 @@ export type WorkUpdateWithoutCategoriesInput = {
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
 }
 
@@ -1874,8 +1802,6 @@ export type WorkUncheckedUpdateWithoutCategoriesInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUncheckedUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
 }
 
@@ -1914,8 +1840,6 @@ export type WorkCreateWithoutChaptersInput = {
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
 }
 
@@ -1955,8 +1879,6 @@ export type WorkUncheckedCreateWithoutChaptersInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
 }
 
@@ -2011,8 +1933,6 @@ export type WorkUpdateWithoutChaptersInput = {
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
 }
 
@@ -2052,8 +1972,6 @@ export type WorkUncheckedUpdateWithoutChaptersInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUncheckedUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
 }
 
@@ -2093,8 +2011,6 @@ export type WorkCreateWithoutCommentsInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeCreateNestedManyWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutCommentsInput = {
@@ -2134,8 +2050,6 @@ export type WorkUncheckedCreateWithoutCommentsInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutWorkInput
 }
 
 export type WorkCreateOrConnectWithoutCommentsInput = {
@@ -2190,8 +2104,6 @@ export type WorkUpdateWithoutCommentsInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutCommentsInput = {
@@ -2231,364 +2143,6 @@ export type WorkUncheckedUpdateWithoutCommentsInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUncheckedUpdateManyWithoutWorkNestedInput
-}
-
-export type WorkCreateWithoutFavoritesInput = {
-  type: number
-  name: string
-  alias?: string | null
-  cover: string
-  description: string
-  language: string
-  region: string
-  ageRating?: string | null
-  serialStatus?: number
-  publisher?: string | null
-  originalSource?: string | null
-  copyright?: string | null
-  disclaimer?: string | null
-  isPublished?: boolean
-  publishAt?: Date | string | null
-  lastUpdated?: Date | string | null
-  viewCount?: number
-  favoriteCount?: number
-  likeCount?: number
-  rating?: number | null
-  ratingCount?: number
-  popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
-  novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
-  authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
-  categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
-  tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
-  chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeCreateNestedManyWithoutWorkInput
-  comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
-}
-
-export type WorkUncheckedCreateWithoutFavoritesInput = {
-  id?: number
-  type: number
-  name: string
-  alias?: string | null
-  cover: string
-  description: string
-  language: string
-  region: string
-  ageRating?: string | null
-  serialStatus?: number
-  publisher?: string | null
-  originalSource?: string | null
-  copyright?: string | null
-  disclaimer?: string | null
-  isPublished?: boolean
-  publishAt?: Date | string | null
-  lastUpdated?: Date | string | null
-  viewCount?: number
-  favoriteCount?: number
-  likeCount?: number
-  rating?: number | null
-  ratingCount?: number
-  popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  comic?: Prisma.WorkComicUncheckedCreateNestedOneWithoutWorkInput
-  novel?: Prisma.WorkNovelUncheckedCreateNestedOneWithoutWorkInput
-  authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
-  categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
-  tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
-  chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutWorkInput
-  comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
-}
-
-export type WorkCreateOrConnectWithoutFavoritesInput = {
-  where: Prisma.WorkWhereUniqueInput
-  create: Prisma.XOR<Prisma.WorkCreateWithoutFavoritesInput, Prisma.WorkUncheckedCreateWithoutFavoritesInput>
-}
-
-export type WorkUpsertWithoutFavoritesInput = {
-  update: Prisma.XOR<Prisma.WorkUpdateWithoutFavoritesInput, Prisma.WorkUncheckedUpdateWithoutFavoritesInput>
-  create: Prisma.XOR<Prisma.WorkCreateWithoutFavoritesInput, Prisma.WorkUncheckedCreateWithoutFavoritesInput>
-  where?: Prisma.WorkWhereInput
-}
-
-export type WorkUpdateToOneWithWhereWithoutFavoritesInput = {
-  where?: Prisma.WorkWhereInput
-  data: Prisma.XOR<Prisma.WorkUpdateWithoutFavoritesInput, Prisma.WorkUncheckedUpdateWithoutFavoritesInput>
-}
-
-export type WorkUpdateWithoutFavoritesInput = {
-  type?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.StringFieldUpdateOperationsInput | string
-  language?: Prisma.StringFieldUpdateOperationsInput | string
-  region?: Prisma.StringFieldUpdateOperationsInput | string
-  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
-  novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
-  authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
-  categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
-  tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
-  chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUpdateManyWithoutWorkNestedInput
-  comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
-}
-
-export type WorkUncheckedUpdateWithoutFavoritesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.StringFieldUpdateOperationsInput | string
-  language?: Prisma.StringFieldUpdateOperationsInput | string
-  region?: Prisma.StringFieldUpdateOperationsInput | string
-  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  comic?: Prisma.WorkComicUncheckedUpdateOneWithoutWorkNestedInput
-  novel?: Prisma.WorkNovelUncheckedUpdateOneWithoutWorkNestedInput
-  authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
-  categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
-  tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
-  chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUncheckedUpdateManyWithoutWorkNestedInput
-  comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
-}
-
-export type WorkCreateWithoutLikesInput = {
-  type: number
-  name: string
-  alias?: string | null
-  cover: string
-  description: string
-  language: string
-  region: string
-  ageRating?: string | null
-  serialStatus?: number
-  publisher?: string | null
-  originalSource?: string | null
-  copyright?: string | null
-  disclaimer?: string | null
-  isPublished?: boolean
-  publishAt?: Date | string | null
-  lastUpdated?: Date | string | null
-  viewCount?: number
-  favoriteCount?: number
-  likeCount?: number
-  rating?: number | null
-  ratingCount?: number
-  popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
-  novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
-  authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
-  categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
-  tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
-  chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteCreateNestedManyWithoutWorkInput
-  comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
-}
-
-export type WorkUncheckedCreateWithoutLikesInput = {
-  id?: number
-  type: number
-  name: string
-  alias?: string | null
-  cover: string
-  description: string
-  language: string
-  region: string
-  ageRating?: string | null
-  serialStatus?: number
-  publisher?: string | null
-  originalSource?: string | null
-  copyright?: string | null
-  disclaimer?: string | null
-  isPublished?: boolean
-  publishAt?: Date | string | null
-  lastUpdated?: Date | string | null
-  viewCount?: number
-  favoriteCount?: number
-  likeCount?: number
-  rating?: number | null
-  ratingCount?: number
-  popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  comic?: Prisma.WorkComicUncheckedCreateNestedOneWithoutWorkInput
-  novel?: Prisma.WorkNovelUncheckedCreateNestedOneWithoutWorkInput
-  authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
-  categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
-  tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
-  chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutWorkInput
-  comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
-}
-
-export type WorkCreateOrConnectWithoutLikesInput = {
-  where: Prisma.WorkWhereUniqueInput
-  create: Prisma.XOR<Prisma.WorkCreateWithoutLikesInput, Prisma.WorkUncheckedCreateWithoutLikesInput>
-}
-
-export type WorkUpsertWithoutLikesInput = {
-  update: Prisma.XOR<Prisma.WorkUpdateWithoutLikesInput, Prisma.WorkUncheckedUpdateWithoutLikesInput>
-  create: Prisma.XOR<Prisma.WorkCreateWithoutLikesInput, Prisma.WorkUncheckedCreateWithoutLikesInput>
-  where?: Prisma.WorkWhereInput
-}
-
-export type WorkUpdateToOneWithWhereWithoutLikesInput = {
-  where?: Prisma.WorkWhereInput
-  data: Prisma.XOR<Prisma.WorkUpdateWithoutLikesInput, Prisma.WorkUncheckedUpdateWithoutLikesInput>
-}
-
-export type WorkUpdateWithoutLikesInput = {
-  type?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.StringFieldUpdateOperationsInput | string
-  language?: Prisma.StringFieldUpdateOperationsInput | string
-  region?: Prisma.StringFieldUpdateOperationsInput | string
-  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
-  novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
-  authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
-  categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
-  tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
-  chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUpdateManyWithoutWorkNestedInput
-  comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
-}
-
-export type WorkUncheckedUpdateWithoutLikesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cover?: Prisma.StringFieldUpdateOperationsInput | string
-  description?: Prisma.StringFieldUpdateOperationsInput | string
-  language?: Prisma.StringFieldUpdateOperationsInput | string
-  region?: Prisma.StringFieldUpdateOperationsInput | string
-  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
-  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
-  popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  comic?: Prisma.WorkComicUncheckedUpdateOneWithoutWorkNestedInput
-  novel?: Prisma.WorkNovelUncheckedUpdateOneWithoutWorkNestedInput
-  authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
-  categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
-  tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
-  chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutWorkNestedInput
-  comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkCreateWithoutTagsInput = {
@@ -2626,8 +2180,6 @@ export type WorkCreateWithoutTagsInput = {
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
 }
 
@@ -2667,8 +2219,6 @@ export type WorkUncheckedCreateWithoutTagsInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
-  favorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutWorkInput
-  likes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutWorkInput
   comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
 }
 
@@ -2723,8 +2273,6 @@ export type WorkUpdateWithoutTagsInput = {
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
 }
 
@@ -2764,8 +2312,6 @@ export type WorkUncheckedUpdateWithoutTagsInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
-  favorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutWorkNestedInput
-  likes?: Prisma.WorkLikeUncheckedUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
 }
 
@@ -2779,8 +2325,6 @@ export type WorkCountOutputType = {
   categories: number
   tags: number
   chapters: number
-  favorites: number
-  likes: number
   comments: number
 }
 
@@ -2789,8 +2333,6 @@ export type WorkCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   categories?: boolean | WorkCountOutputTypeCountCategoriesArgs
   tags?: boolean | WorkCountOutputTypeCountTagsArgs
   chapters?: boolean | WorkCountOutputTypeCountChaptersArgs
-  favorites?: boolean | WorkCountOutputTypeCountFavoritesArgs
-  likes?: boolean | WorkCountOutputTypeCountLikesArgs
   comments?: boolean | WorkCountOutputTypeCountCommentsArgs
 }
 
@@ -2830,20 +2372,6 @@ export type WorkCountOutputTypeCountTagsArgs<ExtArgs extends runtime.Types.Exten
  */
 export type WorkCountOutputTypeCountChaptersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.WorkChapterWhereInput
-}
-
-/**
- * WorkCountOutputType without action
- */
-export type WorkCountOutputTypeCountFavoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkFavoriteWhereInput
-}
-
-/**
- * WorkCountOutputType without action
- */
-export type WorkCountOutputTypeCountLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkLikeWhereInput
 }
 
 /**
@@ -2891,8 +2419,6 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   categories?: boolean | Prisma.Work$categoriesArgs<ExtArgs>
   tags?: boolean | Prisma.Work$tagsArgs<ExtArgs>
   chapters?: boolean | Prisma.Work$chaptersArgs<ExtArgs>
-  favorites?: boolean | Prisma.Work$favoritesArgs<ExtArgs>
-  likes?: boolean | Prisma.Work$likesArgs<ExtArgs>
   comments?: boolean | Prisma.Work$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["work"]>
@@ -3004,8 +2530,6 @@ export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   categories?: boolean | Prisma.Work$categoriesArgs<ExtArgs>
   tags?: boolean | Prisma.Work$tagsArgs<ExtArgs>
   chapters?: boolean | Prisma.Work$chaptersArgs<ExtArgs>
-  favorites?: boolean | Prisma.Work$favoritesArgs<ExtArgs>
-  likes?: boolean | Prisma.Work$likesArgs<ExtArgs>
   comments?: boolean | Prisma.Work$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -3039,14 +2563,6 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 关联的章节列表
      */
     chapters: Prisma.$WorkChapterPayload<ExtArgs>[]
-    /**
-     * 收藏关联
-     */
-    favorites: Prisma.$WorkFavoritePayload<ExtArgs>[]
-    /**
-     * 点赞关联
-     */
-    likes: Prisma.$WorkLikePayload<ExtArgs>[]
     /**
      * 评论关联
      */
@@ -3573,8 +3089,6 @@ export interface Prisma__WorkClient<T, Null = never, ExtArgs extends runtime.Typ
   categories<T extends Prisma.Work$categoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$categoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkCategoryRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tags<T extends Prisma.Work$tagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkTagRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   chapters<T extends Prisma.Work$chaptersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$chaptersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  favorites<T extends Prisma.Work$favoritesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$favoritesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkFavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  likes<T extends Prisma.Work$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   comments<T extends Prisma.Work$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -4163,54 +3677,6 @@ export type Work$chaptersArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.WorkChapterScalarFieldEnum | Prisma.WorkChapterScalarFieldEnum[]
-}
-
-/**
- * Work.favorites
- */
-export type Work$favoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the WorkFavorite
-   */
-  select?: Prisma.WorkFavoriteSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the WorkFavorite
-   */
-  omit?: Prisma.WorkFavoriteOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.WorkFavoriteInclude<ExtArgs> | null
-  where?: Prisma.WorkFavoriteWhereInput
-  orderBy?: Prisma.WorkFavoriteOrderByWithRelationInput | Prisma.WorkFavoriteOrderByWithRelationInput[]
-  cursor?: Prisma.WorkFavoriteWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.WorkFavoriteScalarFieldEnum | Prisma.WorkFavoriteScalarFieldEnum[]
-}
-
-/**
- * Work.likes
- */
-export type Work$likesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the WorkLike
-   */
-  select?: Prisma.WorkLikeSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the WorkLike
-   */
-  omit?: Prisma.WorkLikeOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.WorkLikeInclude<ExtArgs> | null
-  where?: Prisma.WorkLikeWhereInput
-  orderBy?: Prisma.WorkLikeOrderByWithRelationInput | Prisma.WorkLikeOrderByWithRelationInput[]
-  cursor?: Prisma.WorkLikeWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.WorkLikeScalarFieldEnum | Prisma.WorkLikeScalarFieldEnum[]
 }
 
 /**

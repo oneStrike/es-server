@@ -373,19 +373,12 @@ export type AppUserWhereInput = {
   experienceRecords?: Prisma.UserExperienceRecordListRelationFilter
   forumTopics?: Prisma.ForumTopicListRelationFilter
   lastReplyTopics?: Prisma.ForumTopicListRelationFilter
-  topicFavorites?: Prisma.ForumTopicFavoriteListRelationFilter
-  topicLikes?: Prisma.ForumTopicLikeListRelationFilter
-  workFavorites?: Prisma.WorkFavoriteListRelationFilter
-  workLikes?: Prisma.WorkLikeListRelationFilter
-  chapterLikes?: Prisma.WorkChapterLikeListRelationFilter
   chapterPurchases?: Prisma.WorkChapterPurchaseListRelationFilter
-  chapterDownloads?: Prisma.WorkChapterDownloadListRelationFilter
   workComments?: Prisma.WorkCommentListRelationFilter
   workCommentReports?: Prisma.WorkCommentReportListRelationFilter
   handledWorkCommentReports?: Prisma.WorkCommentReportListRelationFilter
   forumReplies?: Prisma.ForumReplyListRelationFilter
   replyLikes?: Prisma.ForumReplyLikeListRelationFilter
-  forumViews?: Prisma.ForumViewListRelationFilter
   forumNotifications?: Prisma.ForumNotificationListRelationFilter
   forumReports?: Prisma.ForumReportListRelationFilter
   handledReports?: Prisma.ForumReportListRelationFilter
@@ -441,19 +434,12 @@ export type AppUserOrderByWithRelationInput = {
   experienceRecords?: Prisma.UserExperienceRecordOrderByRelationAggregateInput
   forumTopics?: Prisma.ForumTopicOrderByRelationAggregateInput
   lastReplyTopics?: Prisma.ForumTopicOrderByRelationAggregateInput
-  topicFavorites?: Prisma.ForumTopicFavoriteOrderByRelationAggregateInput
-  topicLikes?: Prisma.ForumTopicLikeOrderByRelationAggregateInput
-  workFavorites?: Prisma.WorkFavoriteOrderByRelationAggregateInput
-  workLikes?: Prisma.WorkLikeOrderByRelationAggregateInput
-  chapterLikes?: Prisma.WorkChapterLikeOrderByRelationAggregateInput
   chapterPurchases?: Prisma.WorkChapterPurchaseOrderByRelationAggregateInput
-  chapterDownloads?: Prisma.WorkChapterDownloadOrderByRelationAggregateInput
   workComments?: Prisma.WorkCommentOrderByRelationAggregateInput
   workCommentReports?: Prisma.WorkCommentReportOrderByRelationAggregateInput
   handledWorkCommentReports?: Prisma.WorkCommentReportOrderByRelationAggregateInput
   forumReplies?: Prisma.ForumReplyOrderByRelationAggregateInput
   replyLikes?: Prisma.ForumReplyLikeOrderByRelationAggregateInput
-  forumViews?: Prisma.ForumViewOrderByRelationAggregateInput
   forumNotifications?: Prisma.ForumNotificationOrderByRelationAggregateInput
   forumReports?: Prisma.ForumReportOrderByRelationAggregateInput
   handledReports?: Prisma.ForumReportOrderByRelationAggregateInput
@@ -512,19 +498,12 @@ export type AppUserWhereUniqueInput = Prisma.AtLeast<{
   experienceRecords?: Prisma.UserExperienceRecordListRelationFilter
   forumTopics?: Prisma.ForumTopicListRelationFilter
   lastReplyTopics?: Prisma.ForumTopicListRelationFilter
-  topicFavorites?: Prisma.ForumTopicFavoriteListRelationFilter
-  topicLikes?: Prisma.ForumTopicLikeListRelationFilter
-  workFavorites?: Prisma.WorkFavoriteListRelationFilter
-  workLikes?: Prisma.WorkLikeListRelationFilter
-  chapterLikes?: Prisma.WorkChapterLikeListRelationFilter
   chapterPurchases?: Prisma.WorkChapterPurchaseListRelationFilter
-  chapterDownloads?: Prisma.WorkChapterDownloadListRelationFilter
   workComments?: Prisma.WorkCommentListRelationFilter
   workCommentReports?: Prisma.WorkCommentReportListRelationFilter
   handledWorkCommentReports?: Prisma.WorkCommentReportListRelationFilter
   forumReplies?: Prisma.ForumReplyListRelationFilter
   replyLikes?: Prisma.ForumReplyLikeListRelationFilter
-  forumViews?: Prisma.ForumViewListRelationFilter
   forumNotifications?: Prisma.ForumNotificationListRelationFilter
   forumReports?: Prisma.ForumReportListRelationFilter
   handledReports?: Prisma.ForumReportListRelationFilter
@@ -634,19 +613,12 @@ export type AppUserCreateInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -701,19 +673,12 @@ export type AppUserUncheckedCreateInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -767,19 +732,12 @@ export type AppUserUpdateInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -834,19 +792,12 @@ export type AppUserUncheckedUpdateInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -1495,34 +1446,6 @@ export type AppUserUpdateOneWithoutHandledReportsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutHandledReportsInput, Prisma.AppUserUpdateWithoutHandledReportsInput>, Prisma.AppUserUncheckedUpdateWithoutHandledReportsInput>
 }
 
-export type AppUserCreateNestedOneWithoutTopicFavoritesInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutTopicFavoritesInput, Prisma.AppUserUncheckedCreateWithoutTopicFavoritesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutTopicFavoritesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-}
-
-export type AppUserUpdateOneRequiredWithoutTopicFavoritesNestedInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutTopicFavoritesInput, Prisma.AppUserUncheckedCreateWithoutTopicFavoritesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutTopicFavoritesInput
-  upsert?: Prisma.AppUserUpsertWithoutTopicFavoritesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutTopicFavoritesInput, Prisma.AppUserUpdateWithoutTopicFavoritesInput>, Prisma.AppUserUncheckedUpdateWithoutTopicFavoritesInput>
-}
-
-export type AppUserCreateNestedOneWithoutTopicLikesInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutTopicLikesInput, Prisma.AppUserUncheckedCreateWithoutTopicLikesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutTopicLikesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-}
-
-export type AppUserUpdateOneRequiredWithoutTopicLikesNestedInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutTopicLikesInput, Prisma.AppUserUncheckedCreateWithoutTopicLikesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutTopicLikesInput
-  upsert?: Prisma.AppUserUpsertWithoutTopicLikesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutTopicLikesInput, Prisma.AppUserUpdateWithoutTopicLikesInput>, Prisma.AppUserUncheckedUpdateWithoutTopicLikesInput>
-}
-
 export type AppUserCreateNestedOneWithoutForumTopicsInput = {
   create?: Prisma.XOR<Prisma.AppUserCreateWithoutForumTopicsInput, Prisma.AppUserUncheckedCreateWithoutForumTopicsInput>
   connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutForumTopicsInput
@@ -1567,20 +1490,6 @@ export type AppUserUpdateOneRequiredWithoutForumActionLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutForumActionLogsInput, Prisma.AppUserUpdateWithoutForumActionLogsInput>, Prisma.AppUserUncheckedUpdateWithoutForumActionLogsInput>
 }
 
-export type AppUserCreateNestedOneWithoutForumViewsInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutForumViewsInput, Prisma.AppUserUncheckedCreateWithoutForumViewsInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutForumViewsInput
-  connect?: Prisma.AppUserWhereUniqueInput
-}
-
-export type AppUserUpdateOneRequiredWithoutForumViewsNestedInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutForumViewsInput, Prisma.AppUserUncheckedCreateWithoutForumViewsInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutForumViewsInput
-  upsert?: Prisma.AppUserUpsertWithoutForumViewsInput
-  connect?: Prisma.AppUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutForumViewsInput, Prisma.AppUserUpdateWithoutForumViewsInput>, Prisma.AppUserUncheckedUpdateWithoutForumViewsInput>
-}
-
 export type AppUserCreateNestedOneWithoutUpdatedSystemConfigsInput = {
   create?: Prisma.XOR<Prisma.AppUserCreateWithoutUpdatedSystemConfigsInput, Prisma.AppUserUncheckedCreateWithoutUpdatedSystemConfigsInput>
   connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutUpdatedSystemConfigsInput
@@ -1595,34 +1504,6 @@ export type AppUserUpdateOneWithoutUpdatedSystemConfigsNestedInput = {
   delete?: Prisma.AppUserWhereInput | boolean
   connect?: Prisma.AppUserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutUpdatedSystemConfigsInput, Prisma.AppUserUpdateWithoutUpdatedSystemConfigsInput>, Prisma.AppUserUncheckedUpdateWithoutUpdatedSystemConfigsInput>
-}
-
-export type AppUserCreateNestedOneWithoutChapterDownloadsInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutChapterDownloadsInput, Prisma.AppUserUncheckedCreateWithoutChapterDownloadsInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutChapterDownloadsInput
-  connect?: Prisma.AppUserWhereUniqueInput
-}
-
-export type AppUserUpdateOneRequiredWithoutChapterDownloadsNestedInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutChapterDownloadsInput, Prisma.AppUserUncheckedCreateWithoutChapterDownloadsInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutChapterDownloadsInput
-  upsert?: Prisma.AppUserUpsertWithoutChapterDownloadsInput
-  connect?: Prisma.AppUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutChapterDownloadsInput, Prisma.AppUserUpdateWithoutChapterDownloadsInput>, Prisma.AppUserUncheckedUpdateWithoutChapterDownloadsInput>
-}
-
-export type AppUserCreateNestedOneWithoutChapterLikesInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutChapterLikesInput, Prisma.AppUserUncheckedCreateWithoutChapterLikesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutChapterLikesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-}
-
-export type AppUserUpdateOneRequiredWithoutChapterLikesNestedInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutChapterLikesInput, Prisma.AppUserUncheckedCreateWithoutChapterLikesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutChapterLikesInput
-  upsert?: Prisma.AppUserUpsertWithoutChapterLikesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutChapterLikesInput, Prisma.AppUserUpdateWithoutChapterLikesInput>, Prisma.AppUserUncheckedUpdateWithoutChapterLikesInput>
 }
 
 export type AppUserCreateNestedOneWithoutChapterPurchasesInput = {
@@ -1683,34 +1564,6 @@ export type AppUserUpdateOneRequiredWithoutWorkCommentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutWorkCommentsInput, Prisma.AppUserUpdateWithoutWorkCommentsInput>, Prisma.AppUserUncheckedUpdateWithoutWorkCommentsInput>
 }
 
-export type AppUserCreateNestedOneWithoutWorkFavoritesInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutWorkFavoritesInput, Prisma.AppUserUncheckedCreateWithoutWorkFavoritesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutWorkFavoritesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-}
-
-export type AppUserUpdateOneRequiredWithoutWorkFavoritesNestedInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutWorkFavoritesInput, Prisma.AppUserUncheckedCreateWithoutWorkFavoritesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutWorkFavoritesInput
-  upsert?: Prisma.AppUserUpsertWithoutWorkFavoritesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutWorkFavoritesInput, Prisma.AppUserUpdateWithoutWorkFavoritesInput>, Prisma.AppUserUncheckedUpdateWithoutWorkFavoritesInput>
-}
-
-export type AppUserCreateNestedOneWithoutWorkLikesInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutWorkLikesInput, Prisma.AppUserUncheckedCreateWithoutWorkLikesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutWorkLikesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-}
-
-export type AppUserUpdateOneRequiredWithoutWorkLikesNestedInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutWorkLikesInput, Prisma.AppUserUncheckedCreateWithoutWorkLikesInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutWorkLikesInput
-  upsert?: Prisma.AppUserUpsertWithoutWorkLikesInput
-  connect?: Prisma.AppUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutWorkLikesInput, Prisma.AppUserUpdateWithoutWorkLikesInput>, Prisma.AppUserUncheckedUpdateWithoutWorkLikesInput>
-}
-
 export type AppUserCreateWithoutAgreementLogsInput = {
   account: string
   phone?: string | null
@@ -1739,19 +1592,12 @@ export type AppUserCreateWithoutAgreementLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -1805,19 +1651,12 @@ export type AppUserUncheckedCreateWithoutAgreementLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -1886,19 +1725,12 @@ export type AppUserUpdateWithoutAgreementLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -1952,19 +1784,12 @@ export type AppUserUncheckedUpdateWithoutAgreementLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -2017,19 +1842,12 @@ export type AppUserCreateWithoutNoticeReadsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -2083,19 +1901,12 @@ export type AppUserUncheckedCreateWithoutNoticeReadsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -2164,19 +1975,12 @@ export type AppUserUpdateWithoutNoticeReadsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -2230,19 +2034,12 @@ export type AppUserUncheckedUpdateWithoutNoticeReadsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -2295,19 +2092,12 @@ export type AppUserCreateWithoutTokensInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -2361,19 +2151,12 @@ export type AppUserUncheckedCreateWithoutTokensInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -2442,19 +2225,12 @@ export type AppUserUpdateWithoutTokensInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -2508,19 +2284,12 @@ export type AppUserUncheckedUpdateWithoutTokensInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -2574,19 +2343,12 @@ export type AppUserCreateWithoutTaskAssignmentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -2640,19 +2402,12 @@ export type AppUserUncheckedCreateWithoutTaskAssignmentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -2721,19 +2476,12 @@ export type AppUserUpdateWithoutTaskAssignmentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -2787,19 +2535,12 @@ export type AppUserUncheckedUpdateWithoutTaskAssignmentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -2852,19 +2593,12 @@ export type AppUserCreateWithoutTaskProgressLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -2918,19 +2652,12 @@ export type AppUserUncheckedCreateWithoutTaskProgressLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -2999,19 +2726,12 @@ export type AppUserUpdateWithoutTaskProgressLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -3065,19 +2785,12 @@ export type AppUserUncheckedUpdateWithoutTaskProgressLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -3130,19 +2843,12 @@ export type AppUserCreateWithoutUserBadgesInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -3196,19 +2902,12 @@ export type AppUserUncheckedCreateWithoutUserBadgesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -3277,19 +2976,12 @@ export type AppUserUpdateWithoutUserBadgesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -3343,19 +3035,12 @@ export type AppUserUncheckedUpdateWithoutUserBadgesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -3408,19 +3093,12 @@ export type AppUserCreateWithoutUserCommentLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -3474,19 +3152,12 @@ export type AppUserUncheckedCreateWithoutUserCommentLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -3555,19 +3226,12 @@ export type AppUserUpdateWithoutUserCommentLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -3621,19 +3285,12 @@ export type AppUserUncheckedUpdateWithoutUserCommentLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -3686,19 +3343,12 @@ export type AppUserCreateWithoutUserCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -3752,19 +3402,12 @@ export type AppUserUncheckedCreateWithoutUserCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -3822,19 +3465,12 @@ export type AppUserCreateWithoutHandledUserCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -3888,19 +3524,12 @@ export type AppUserUncheckedCreateWithoutHandledUserCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -3969,19 +3598,12 @@ export type AppUserUpdateWithoutUserCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -4035,19 +3657,12 @@ export type AppUserUncheckedUpdateWithoutUserCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -4111,19 +3726,12 @@ export type AppUserUpdateWithoutHandledUserCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -4177,19 +3785,12 @@ export type AppUserUncheckedUpdateWithoutHandledUserCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -4242,19 +3843,12 @@ export type AppUserCreateWithoutUserCommentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -4308,19 +3902,12 @@ export type AppUserUncheckedCreateWithoutUserCommentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -4389,19 +3976,12 @@ export type AppUserUpdateWithoutUserCommentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -4455,19 +4035,12 @@ export type AppUserUncheckedUpdateWithoutUserCommentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -4520,19 +4093,12 @@ export type AppUserCreateWithoutUserDownloadsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -4586,19 +4152,12 @@ export type AppUserUncheckedCreateWithoutUserDownloadsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -4667,19 +4226,12 @@ export type AppUserUpdateWithoutUserDownloadsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -4733,19 +4285,12 @@ export type AppUserUncheckedUpdateWithoutUserDownloadsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -4797,19 +4342,12 @@ export type AppUserCreateWithoutExperienceRecordsInput = {
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -4863,19 +4401,12 @@ export type AppUserUncheckedCreateWithoutExperienceRecordsInput = {
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -4944,19 +4475,12 @@ export type AppUserUpdateWithoutExperienceRecordsInput = {
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -5010,19 +4534,12 @@ export type AppUserUncheckedUpdateWithoutExperienceRecordsInput = {
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -5076,19 +4593,12 @@ export type AppUserCreateWithoutUserFavoritesInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -5142,19 +4652,12 @@ export type AppUserUncheckedCreateWithoutUserFavoritesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -5223,19 +4726,12 @@ export type AppUserUpdateWithoutUserFavoritesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -5289,19 +4785,12 @@ export type AppUserUncheckedUpdateWithoutUserFavoritesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -5354,19 +4843,12 @@ export type AppUserCreateWithoutUserGrowthEventsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -5420,19 +4902,12 @@ export type AppUserUncheckedCreateWithoutUserGrowthEventsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -5501,19 +4976,12 @@ export type AppUserUpdateWithoutUserGrowthEventsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -5567,19 +5035,12 @@ export type AppUserUncheckedUpdateWithoutUserGrowthEventsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -5631,19 +5092,12 @@ export type AppUserCreateWithoutLevelInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -5697,19 +5151,12 @@ export type AppUserUncheckedCreateWithoutLevelInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -5816,19 +5263,12 @@ export type AppUserCreateWithoutUserLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -5882,19 +5322,12 @@ export type AppUserUncheckedCreateWithoutUserLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -5963,19 +5396,12 @@ export type AppUserUpdateWithoutUserLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -6029,19 +5455,12 @@ export type AppUserUncheckedUpdateWithoutUserLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -6093,19 +5512,12 @@ export type AppUserCreateWithoutPointRecordsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -6159,19 +5571,12 @@ export type AppUserUncheckedCreateWithoutPointRecordsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -6240,19 +5645,12 @@ export type AppUserUpdateWithoutPointRecordsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -6306,19 +5704,12 @@ export type AppUserUncheckedUpdateWithoutPointRecordsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -6372,19 +5763,12 @@ export type AppUserCreateWithoutUserViewsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -6438,19 +5822,12 @@ export type AppUserUncheckedCreateWithoutUserViewsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -6519,19 +5896,12 @@ export type AppUserUpdateWithoutUserViewsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -6585,19 +5955,12 @@ export type AppUserUncheckedUpdateWithoutUserViewsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -6650,19 +6013,12 @@ export type AppUserCreateWithoutOperatedConfigHistoriesInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -6716,19 +6072,12 @@ export type AppUserUncheckedCreateWithoutOperatedConfigHistoriesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -6797,19 +6146,12 @@ export type AppUserUpdateWithoutOperatedConfigHistoriesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -6863,19 +6205,12 @@ export type AppUserUncheckedUpdateWithoutOperatedConfigHistoriesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -6928,19 +6263,12 @@ export type AppUserCreateWithoutUpdatedConfigsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -6994,19 +6322,12 @@ export type AppUserUncheckedCreateWithoutUpdatedConfigsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -7075,19 +6396,12 @@ export type AppUserUpdateWithoutUpdatedConfigsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -7141,19 +6455,12 @@ export type AppUserUncheckedUpdateWithoutUpdatedConfigsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -7206,19 +6513,12 @@ export type AppUserCreateWithoutModeratorApplicationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -7272,19 +6572,12 @@ export type AppUserUncheckedCreateWithoutModeratorApplicationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -7342,19 +6635,12 @@ export type AppUserCreateWithoutAuditedApplicationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -7408,19 +6694,12 @@ export type AppUserUncheckedCreateWithoutAuditedApplicationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -7489,19 +6768,12 @@ export type AppUserUpdateWithoutModeratorApplicationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -7555,19 +6827,12 @@ export type AppUserUncheckedUpdateWithoutModeratorApplicationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -7631,19 +6896,12 @@ export type AppUserUpdateWithoutAuditedApplicationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -7697,19 +6955,12 @@ export type AppUserUncheckedUpdateWithoutAuditedApplicationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -7762,19 +7013,12 @@ export type AppUserCreateWithoutModeratorInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -7828,19 +7072,12 @@ export type AppUserUncheckedCreateWithoutModeratorInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -7909,19 +7146,12 @@ export type AppUserUpdateWithoutModeratorInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -7975,19 +7205,12 @@ export type AppUserUncheckedUpdateWithoutModeratorInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -8040,19 +7263,12 @@ export type AppUserCreateWithoutForumNotificationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
   moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
@@ -8106,19 +7322,12 @@ export type AppUserUncheckedCreateWithoutForumNotificationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
   moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
@@ -8187,19 +7396,12 @@ export type AppUserUpdateWithoutForumNotificationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
   moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
@@ -8253,19 +7455,12 @@ export type AppUserUncheckedUpdateWithoutForumNotificationsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
   moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
@@ -8317,19 +7512,12 @@ export type AppUserCreateWithoutForumProfileInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -8383,19 +7571,12 @@ export type AppUserUncheckedCreateWithoutForumProfileInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -8464,19 +7645,12 @@ export type AppUserUpdateWithoutForumProfileInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -8530,19 +7704,12 @@ export type AppUserUncheckedUpdateWithoutForumProfileInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -8596,18 +7763,11 @@ export type AppUserCreateWithoutReplyLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -8662,18 +7822,11 @@ export type AppUserUncheckedCreateWithoutReplyLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -8743,18 +7896,11 @@ export type AppUserUpdateWithoutReplyLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -8809,18 +7955,11 @@ export type AppUserUncheckedUpdateWithoutReplyLikesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -8874,18 +8013,11 @@ export type AppUserCreateWithoutForumRepliesInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -8940,18 +8072,11 @@ export type AppUserUncheckedCreateWithoutForumRepliesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -9021,18 +8146,11 @@ export type AppUserUpdateWithoutForumRepliesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -9087,18 +8205,11 @@ export type AppUserUncheckedUpdateWithoutForumRepliesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -9152,19 +8263,12 @@ export type AppUserCreateWithoutForumReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
   moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
@@ -9218,19 +8322,12 @@ export type AppUserUncheckedCreateWithoutForumReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
   moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
@@ -9288,19 +8385,12 @@ export type AppUserCreateWithoutHandledReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
@@ -9354,19 +8444,12 @@ export type AppUserUncheckedCreateWithoutHandledReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
@@ -9435,19 +8518,12 @@ export type AppUserUpdateWithoutForumReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
   moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
@@ -9501,19 +8577,12 @@ export type AppUserUncheckedUpdateWithoutForumReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
   moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
@@ -9577,19 +8646,12 @@ export type AppUserUpdateWithoutHandledReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
@@ -9643,577 +8705,14 @@ export type AppUserUncheckedUpdateWithoutHandledReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserCreateWithoutTopicFavoritesInput = {
-  account: string
-  phone?: string | null
-  email?: string | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
-  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadCreateNestedManyWithoutUserInput
-}
-
-export type AppUserUncheckedCreateWithoutTopicFavoritesInput = {
-  id?: number
-  account: string
-  phone?: string | null
-  email?: string | null
-  levelId?: number | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type AppUserCreateOrConnectWithoutTopicFavoritesInput = {
-  where: Prisma.AppUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutTopicFavoritesInput, Prisma.AppUserUncheckedCreateWithoutTopicFavoritesInput>
-}
-
-export type AppUserUpsertWithoutTopicFavoritesInput = {
-  update: Prisma.XOR<Prisma.AppUserUpdateWithoutTopicFavoritesInput, Prisma.AppUserUncheckedUpdateWithoutTopicFavoritesInput>
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutTopicFavoritesInput, Prisma.AppUserUncheckedCreateWithoutTopicFavoritesInput>
-  where?: Prisma.AppUserWhereInput
-}
-
-export type AppUserUpdateToOneWithWhereWithoutTopicFavoritesInput = {
-  where?: Prisma.AppUserWhereInput
-  data: Prisma.XOR<Prisma.AppUserUpdateWithoutTopicFavoritesInput, Prisma.AppUserUncheckedUpdateWithoutTopicFavoritesInput>
-}
-
-export type AppUserUpdateWithoutTopicFavoritesInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
-  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserUncheckedUpdateWithoutTopicFavoritesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserCreateWithoutTopicLikesInput = {
-  account: string
-  phone?: string | null
-  email?: string | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
-  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadCreateNestedManyWithoutUserInput
-}
-
-export type AppUserUncheckedCreateWithoutTopicLikesInput = {
-  id?: number
-  account: string
-  phone?: string | null
-  email?: string | null
-  levelId?: number | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type AppUserCreateOrConnectWithoutTopicLikesInput = {
-  where: Prisma.AppUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutTopicLikesInput, Prisma.AppUserUncheckedCreateWithoutTopicLikesInput>
-}
-
-export type AppUserUpsertWithoutTopicLikesInput = {
-  update: Prisma.XOR<Prisma.AppUserUpdateWithoutTopicLikesInput, Prisma.AppUserUncheckedUpdateWithoutTopicLikesInput>
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutTopicLikesInput, Prisma.AppUserUncheckedCreateWithoutTopicLikesInput>
-  where?: Prisma.AppUserWhereInput
-}
-
-export type AppUserUpdateToOneWithWhereWithoutTopicLikesInput = {
-  where?: Prisma.AppUserWhereInput
-  data: Prisma.XOR<Prisma.AppUserUpdateWithoutTopicLikesInput, Prisma.AppUserUncheckedUpdateWithoutTopicLikesInput>
-}
-
-export type AppUserUpdateWithoutTopicLikesInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
-  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserUncheckedUpdateWithoutTopicLikesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
   moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
   auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
@@ -10263,19 +8762,12 @@ export type AppUserCreateWithoutForumTopicsInput = {
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -10329,19 +8821,12 @@ export type AppUserUncheckedCreateWithoutForumTopicsInput = {
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -10399,19 +8884,12 @@ export type AppUserCreateWithoutLastReplyTopicsInput = {
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -10465,19 +8943,12 @@ export type AppUserUncheckedCreateWithoutLastReplyTopicsInput = {
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -10546,19 +9017,12 @@ export type AppUserUpdateWithoutForumTopicsInput = {
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -10612,19 +9076,12 @@ export type AppUserUncheckedUpdateWithoutForumTopicsInput = {
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -10688,19 +9145,12 @@ export type AppUserUpdateWithoutLastReplyTopicsInput = {
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -10754,19 +9204,12 @@ export type AppUserUncheckedUpdateWithoutLastReplyTopicsInput = {
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -10820,19 +9263,12 @@ export type AppUserCreateWithoutForumActionLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -10886,19 +9322,12 @@ export type AppUserUncheckedCreateWithoutForumActionLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -10967,19 +9396,12 @@ export type AppUserUpdateWithoutForumActionLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -11033,291 +9455,7 @@ export type AppUserUncheckedUpdateWithoutForumActionLogsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserCreateWithoutForumViewsInput = {
-  account: string
-  phone?: string | null
-  email?: string | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
-  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadCreateNestedManyWithoutUserInput
-}
-
-export type AppUserUncheckedCreateWithoutForumViewsInput = {
-  id?: number
-  account: string
-  phone?: string | null
-  email?: string | null
-  levelId?: number | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type AppUserCreateOrConnectWithoutForumViewsInput = {
-  where: Prisma.AppUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutForumViewsInput, Prisma.AppUserUncheckedCreateWithoutForumViewsInput>
-}
-
-export type AppUserUpsertWithoutForumViewsInput = {
-  update: Prisma.XOR<Prisma.AppUserUpdateWithoutForumViewsInput, Prisma.AppUserUncheckedUpdateWithoutForumViewsInput>
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutForumViewsInput, Prisma.AppUserUncheckedCreateWithoutForumViewsInput>
-  where?: Prisma.AppUserWhereInput
-}
-
-export type AppUserUpdateToOneWithWhereWithoutForumViewsInput = {
-  where?: Prisma.AppUserWhereInput
-  data: Prisma.XOR<Prisma.AppUserUpdateWithoutForumViewsInput, Prisma.AppUserUncheckedUpdateWithoutForumViewsInput>
-}
-
-export type AppUserUpdateWithoutForumViewsInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
-  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserUncheckedUpdateWithoutForumViewsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -11329,7 +9467,6 @@ export type AppUserUncheckedUpdateWithoutForumViewsInput = {
   moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
   auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
   userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
   userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
   taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -11376,19 +9513,12 @@ export type AppUserCreateWithoutUpdatedSystemConfigsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -11442,19 +9572,12 @@ export type AppUserUncheckedCreateWithoutUpdatedSystemConfigsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -11523,19 +9646,12 @@ export type AppUserUpdateWithoutUpdatedSystemConfigsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -11589,19 +9705,12 @@ export type AppUserUncheckedUpdateWithoutUpdatedSystemConfigsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -11615,562 +9724,6 @@ export type AppUserUncheckedUpdateWithoutUpdatedSystemConfigsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserCreateWithoutChapterDownloadsInput = {
-  account: string
-  phone?: string | null
-  email?: string | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
-  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadCreateNestedManyWithoutUserInput
-}
-
-export type AppUserUncheckedCreateWithoutChapterDownloadsInput = {
-  id?: number
-  account: string
-  phone?: string | null
-  email?: string | null
-  levelId?: number | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type AppUserCreateOrConnectWithoutChapterDownloadsInput = {
-  where: Prisma.AppUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutChapterDownloadsInput, Prisma.AppUserUncheckedCreateWithoutChapterDownloadsInput>
-}
-
-export type AppUserUpsertWithoutChapterDownloadsInput = {
-  update: Prisma.XOR<Prisma.AppUserUpdateWithoutChapterDownloadsInput, Prisma.AppUserUncheckedUpdateWithoutChapterDownloadsInput>
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutChapterDownloadsInput, Prisma.AppUserUncheckedCreateWithoutChapterDownloadsInput>
-  where?: Prisma.AppUserWhereInput
-}
-
-export type AppUserUpdateToOneWithWhereWithoutChapterDownloadsInput = {
-  where?: Prisma.AppUserWhereInput
-  data: Prisma.XOR<Prisma.AppUserUpdateWithoutChapterDownloadsInput, Prisma.AppUserUncheckedUpdateWithoutChapterDownloadsInput>
-}
-
-export type AppUserUpdateWithoutChapterDownloadsInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
-  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserUncheckedUpdateWithoutChapterDownloadsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserCreateWithoutChapterLikesInput = {
-  account: string
-  phone?: string | null
-  email?: string | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
-  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadCreateNestedManyWithoutUserInput
-}
-
-export type AppUserUncheckedCreateWithoutChapterLikesInput = {
-  id?: number
-  account: string
-  phone?: string | null
-  email?: string | null
-  levelId?: number | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type AppUserCreateOrConnectWithoutChapterLikesInput = {
-  where: Prisma.AppUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutChapterLikesInput, Prisma.AppUserUncheckedCreateWithoutChapterLikesInput>
-}
-
-export type AppUserUpsertWithoutChapterLikesInput = {
-  update: Prisma.XOR<Prisma.AppUserUpdateWithoutChapterLikesInput, Prisma.AppUserUncheckedUpdateWithoutChapterLikesInput>
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutChapterLikesInput, Prisma.AppUserUncheckedCreateWithoutChapterLikesInput>
-  where?: Prisma.AppUserWhereInput
-}
-
-export type AppUserUpdateToOneWithWhereWithoutChapterLikesInput = {
-  where?: Prisma.AppUserWhereInput
-  data: Prisma.XOR<Prisma.AppUserUpdateWithoutChapterLikesInput, Prisma.AppUserUncheckedUpdateWithoutChapterLikesInput>
-}
-
-export type AppUserUpdateWithoutChapterLikesInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
-  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserUncheckedUpdateWithoutChapterLikesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -12210,18 +9763,11 @@ export type AppUserCreateWithoutChapterPurchasesInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -12276,18 +9822,11 @@ export type AppUserUncheckedCreateWithoutChapterPurchasesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -12357,18 +9896,11 @@ export type AppUserUpdateWithoutChapterPurchasesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -12423,18 +9955,11 @@ export type AppUserUncheckedUpdateWithoutChapterPurchasesInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -12488,18 +10013,11 @@ export type AppUserCreateWithoutWorkCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -12554,18 +10072,11 @@ export type AppUserUncheckedCreateWithoutWorkCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -12624,18 +10135,11 @@ export type AppUserCreateWithoutHandledWorkCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -12690,18 +10194,11 @@ export type AppUserUncheckedCreateWithoutHandledWorkCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -12771,18 +10268,11 @@ export type AppUserUpdateWithoutWorkCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -12837,18 +10327,11 @@ export type AppUserUncheckedUpdateWithoutWorkCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -12913,18 +10396,11 @@ export type AppUserUpdateWithoutHandledWorkCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -12979,18 +10455,11 @@ export type AppUserUncheckedUpdateWithoutHandledWorkCommentReportsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -13044,18 +10513,11 @@ export type AppUserCreateWithoutWorkCommentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
@@ -13110,18 +10572,11 @@ export type AppUserUncheckedCreateWithoutWorkCommentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
   forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
   forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
   forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
   handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -13191,18 +10646,11 @@ export type AppUserUpdateWithoutWorkCommentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -13257,574 +10705,11 @@ export type AppUserUncheckedUpdateWithoutWorkCommentsInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserCreateWithoutWorkFavoritesInput = {
-  account: string
-  phone?: string | null
-  email?: string | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
-  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadCreateNestedManyWithoutUserInput
-}
-
-export type AppUserUncheckedCreateWithoutWorkFavoritesInput = {
-  id?: number
-  account: string
-  phone?: string | null
-  email?: string | null
-  levelId?: number | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workLikes?: Prisma.WorkLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type AppUserCreateOrConnectWithoutWorkFavoritesInput = {
-  where: Prisma.AppUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutWorkFavoritesInput, Prisma.AppUserUncheckedCreateWithoutWorkFavoritesInput>
-}
-
-export type AppUserUpsertWithoutWorkFavoritesInput = {
-  update: Prisma.XOR<Prisma.AppUserUpdateWithoutWorkFavoritesInput, Prisma.AppUserUncheckedUpdateWithoutWorkFavoritesInput>
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutWorkFavoritesInput, Prisma.AppUserUncheckedCreateWithoutWorkFavoritesInput>
-  where?: Prisma.AppUserWhereInput
-}
-
-export type AppUserUpdateToOneWithWhereWithoutWorkFavoritesInput = {
-  where?: Prisma.AppUserWhereInput
-  data: Prisma.XOR<Prisma.AppUserUpdateWithoutWorkFavoritesInput, Prisma.AppUserUncheckedUpdateWithoutWorkFavoritesInput>
-}
-
-export type AppUserUpdateWithoutWorkFavoritesInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
-  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserUncheckedUpdateWithoutWorkFavoritesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserCreateWithoutWorkLikesInput = {
-  account: string
-  phone?: string | null
-  email?: string | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
-  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadCreateNestedManyWithoutUserInput
-}
-
-export type AppUserUncheckedCreateWithoutWorkLikesInput = {
-  id?: number
-  account: string
-  phone?: string | null
-  email?: string | null
-  levelId?: number | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedCreateNestedManyWithoutUserInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedCreateNestedManyWithoutUserInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedCreateNestedManyWithoutUserInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedCreateNestedManyWithoutUserInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedCreateNestedManyWithoutUserInput
-  workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
-  forumViews?: Prisma.ForumViewUncheckedCreateNestedManyWithoutUserInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
-  forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
-  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutUserInput
-  userCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutReporterInput
-  handledUserCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutHandlerInput
-  userDownloads?: Prisma.UserDownloadUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type AppUserCreateOrConnectWithoutWorkLikesInput = {
-  where: Prisma.AppUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutWorkLikesInput, Prisma.AppUserUncheckedCreateWithoutWorkLikesInput>
-}
-
-export type AppUserUpsertWithoutWorkLikesInput = {
-  update: Prisma.XOR<Prisma.AppUserUpdateWithoutWorkLikesInput, Prisma.AppUserUncheckedUpdateWithoutWorkLikesInput>
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutWorkLikesInput, Prisma.AppUserUncheckedCreateWithoutWorkLikesInput>
-  where?: Prisma.AppUserWhereInput
-}
-
-export type AppUserUpdateToOneWithWhereWithoutWorkLikesInput = {
-  where?: Prisma.AppUserWhereInput
-  data: Prisma.XOR<Prisma.AppUserUpdateWithoutWorkLikesInput, Prisma.AppUserUncheckedUpdateWithoutWorkLikesInput>
-}
-
-export type AppUserUpdateWithoutWorkLikesInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
-  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
-  forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
-  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUpdateManyWithoutUserNestedInput
-  userCommentReports?: Prisma.UserCommentReportUpdateManyWithoutReporterNestedInput
-  handledUserCommentReports?: Prisma.UserCommentReportUpdateManyWithoutHandlerNestedInput
-  userDownloads?: Prisma.UserDownloadUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserUncheckedUpdateWithoutWorkLikesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
-  workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
-  workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
-  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
-  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -13900,19 +10785,12 @@ export type AppUserUpdateWithoutLevelInput = {
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
@@ -13966,19 +10844,12 @@ export type AppUserUncheckedUpdateWithoutLevelInput = {
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  topicFavorites?: Prisma.ForumTopicFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  topicLikes?: Prisma.ForumTopicLikeUncheckedUpdateManyWithoutUserNestedInput
-  workFavorites?: Prisma.WorkFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  workLikes?: Prisma.WorkLikeUncheckedUpdateManyWithoutUserNestedInput
-  chapterLikes?: Prisma.WorkChapterLikeUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
-  chapterDownloads?: Prisma.WorkChapterDownloadUncheckedUpdateManyWithoutUserNestedInput
   workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
   workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
   handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
   forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
   replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
-  forumViews?: Prisma.ForumViewUncheckedUpdateManyWithoutUserNestedInput
   forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
   forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
   handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -14039,19 +10910,12 @@ export type AppUserCountOutputType = {
   experienceRecords: number
   forumTopics: number
   lastReplyTopics: number
-  topicFavorites: number
-  topicLikes: number
-  workFavorites: number
-  workLikes: number
-  chapterLikes: number
   chapterPurchases: number
-  chapterDownloads: number
   workComments: number
   workCommentReports: number
   handledWorkCommentReports: number
   forumReplies: number
   replyLikes: number
-  forumViews: number
   forumNotifications: number
   forumReports: number
   handledReports: number
@@ -14083,19 +10947,12 @@ export type AppUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   experienceRecords?: boolean | AppUserCountOutputTypeCountExperienceRecordsArgs
   forumTopics?: boolean | AppUserCountOutputTypeCountForumTopicsArgs
   lastReplyTopics?: boolean | AppUserCountOutputTypeCountLastReplyTopicsArgs
-  topicFavorites?: boolean | AppUserCountOutputTypeCountTopicFavoritesArgs
-  topicLikes?: boolean | AppUserCountOutputTypeCountTopicLikesArgs
-  workFavorites?: boolean | AppUserCountOutputTypeCountWorkFavoritesArgs
-  workLikes?: boolean | AppUserCountOutputTypeCountWorkLikesArgs
-  chapterLikes?: boolean | AppUserCountOutputTypeCountChapterLikesArgs
   chapterPurchases?: boolean | AppUserCountOutputTypeCountChapterPurchasesArgs
-  chapterDownloads?: boolean | AppUserCountOutputTypeCountChapterDownloadsArgs
   workComments?: boolean | AppUserCountOutputTypeCountWorkCommentsArgs
   workCommentReports?: boolean | AppUserCountOutputTypeCountWorkCommentReportsArgs
   handledWorkCommentReports?: boolean | AppUserCountOutputTypeCountHandledWorkCommentReportsArgs
   forumReplies?: boolean | AppUserCountOutputTypeCountForumRepliesArgs
   replyLikes?: boolean | AppUserCountOutputTypeCountReplyLikesArgs
-  forumViews?: boolean | AppUserCountOutputTypeCountForumViewsArgs
   forumNotifications?: boolean | AppUserCountOutputTypeCountForumNotificationsArgs
   forumReports?: boolean | AppUserCountOutputTypeCountForumReportsArgs
   handledReports?: boolean | AppUserCountOutputTypeCountHandledReportsArgs
@@ -14181,50 +11038,8 @@ export type AppUserCountOutputTypeCountLastReplyTopicsArgs<ExtArgs extends runti
 /**
  * AppUserCountOutputType without action
  */
-export type AppUserCountOutputTypeCountTopicFavoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ForumTopicFavoriteWhereInput
-}
-
-/**
- * AppUserCountOutputType without action
- */
-export type AppUserCountOutputTypeCountTopicLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ForumTopicLikeWhereInput
-}
-
-/**
- * AppUserCountOutputType without action
- */
-export type AppUserCountOutputTypeCountWorkFavoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkFavoriteWhereInput
-}
-
-/**
- * AppUserCountOutputType without action
- */
-export type AppUserCountOutputTypeCountWorkLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkLikeWhereInput
-}
-
-/**
- * AppUserCountOutputType without action
- */
-export type AppUserCountOutputTypeCountChapterLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkChapterLikeWhereInput
-}
-
-/**
- * AppUserCountOutputType without action
- */
 export type AppUserCountOutputTypeCountChapterPurchasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.WorkChapterPurchaseWhereInput
-}
-
-/**
- * AppUserCountOutputType without action
- */
-export type AppUserCountOutputTypeCountChapterDownloadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.WorkChapterDownloadWhereInput
 }
 
 /**
@@ -14260,13 +11075,6 @@ export type AppUserCountOutputTypeCountForumRepliesArgs<ExtArgs extends runtime.
  */
 export type AppUserCountOutputTypeCountReplyLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ForumReplyLikeWhereInput
-}
-
-/**
- * AppUserCountOutputType without action
- */
-export type AppUserCountOutputTypeCountForumViewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ForumViewWhereInput
 }
 
 /**
@@ -14448,19 +11256,12 @@ export type AppUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   experienceRecords?: boolean | Prisma.AppUser$experienceRecordsArgs<ExtArgs>
   forumTopics?: boolean | Prisma.AppUser$forumTopicsArgs<ExtArgs>
   lastReplyTopics?: boolean | Prisma.AppUser$lastReplyTopicsArgs<ExtArgs>
-  topicFavorites?: boolean | Prisma.AppUser$topicFavoritesArgs<ExtArgs>
-  topicLikes?: boolean | Prisma.AppUser$topicLikesArgs<ExtArgs>
-  workFavorites?: boolean | Prisma.AppUser$workFavoritesArgs<ExtArgs>
-  workLikes?: boolean | Prisma.AppUser$workLikesArgs<ExtArgs>
-  chapterLikes?: boolean | Prisma.AppUser$chapterLikesArgs<ExtArgs>
   chapterPurchases?: boolean | Prisma.AppUser$chapterPurchasesArgs<ExtArgs>
-  chapterDownloads?: boolean | Prisma.AppUser$chapterDownloadsArgs<ExtArgs>
   workComments?: boolean | Prisma.AppUser$workCommentsArgs<ExtArgs>
   workCommentReports?: boolean | Prisma.AppUser$workCommentReportsArgs<ExtArgs>
   handledWorkCommentReports?: boolean | Prisma.AppUser$handledWorkCommentReportsArgs<ExtArgs>
   forumReplies?: boolean | Prisma.AppUser$forumRepliesArgs<ExtArgs>
   replyLikes?: boolean | Prisma.AppUser$replyLikesArgs<ExtArgs>
-  forumViews?: boolean | Prisma.AppUser$forumViewsArgs<ExtArgs>
   forumNotifications?: boolean | Prisma.AppUser$forumNotificationsArgs<ExtArgs>
   forumReports?: boolean | Prisma.AppUser$forumReportsArgs<ExtArgs>
   handledReports?: boolean | Prisma.AppUser$handledReportsArgs<ExtArgs>
@@ -14571,19 +11372,12 @@ export type AppUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   experienceRecords?: boolean | Prisma.AppUser$experienceRecordsArgs<ExtArgs>
   forumTopics?: boolean | Prisma.AppUser$forumTopicsArgs<ExtArgs>
   lastReplyTopics?: boolean | Prisma.AppUser$lastReplyTopicsArgs<ExtArgs>
-  topicFavorites?: boolean | Prisma.AppUser$topicFavoritesArgs<ExtArgs>
-  topicLikes?: boolean | Prisma.AppUser$topicLikesArgs<ExtArgs>
-  workFavorites?: boolean | Prisma.AppUser$workFavoritesArgs<ExtArgs>
-  workLikes?: boolean | Prisma.AppUser$workLikesArgs<ExtArgs>
-  chapterLikes?: boolean | Prisma.AppUser$chapterLikesArgs<ExtArgs>
   chapterPurchases?: boolean | Prisma.AppUser$chapterPurchasesArgs<ExtArgs>
-  chapterDownloads?: boolean | Prisma.AppUser$chapterDownloadsArgs<ExtArgs>
   workComments?: boolean | Prisma.AppUser$workCommentsArgs<ExtArgs>
   workCommentReports?: boolean | Prisma.AppUser$workCommentReportsArgs<ExtArgs>
   handledWorkCommentReports?: boolean | Prisma.AppUser$handledWorkCommentReportsArgs<ExtArgs>
   forumReplies?: boolean | Prisma.AppUser$forumRepliesArgs<ExtArgs>
   replyLikes?: boolean | Prisma.AppUser$replyLikesArgs<ExtArgs>
-  forumViews?: boolean | Prisma.AppUser$forumViewsArgs<ExtArgs>
   forumNotifications?: boolean | Prisma.AppUser$forumNotificationsArgs<ExtArgs>
   forumReports?: boolean | Prisma.AppUser$forumReportsArgs<ExtArgs>
   handledReports?: boolean | Prisma.AppUser$handledReportsArgs<ExtArgs>
@@ -14655,33 +11449,9 @@ export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      */
     lastReplyTopics: Prisma.$ForumTopicPayload<ExtArgs>[]
     /**
-     * 主题收藏关联
-     */
-    topicFavorites: Prisma.$ForumTopicFavoritePayload<ExtArgs>[]
-    /**
-     * 主题点赞关联
-     */
-    topicLikes: Prisma.$ForumTopicLikePayload<ExtArgs>[]
-    /**
-     * 作品收藏关联
-     */
-    workFavorites: Prisma.$WorkFavoritePayload<ExtArgs>[]
-    /**
-     * 作品点赞关联
-     */
-    workLikes: Prisma.$WorkLikePayload<ExtArgs>[]
-    /**
-     * 章节点赞关联
-     */
-    chapterLikes: Prisma.$WorkChapterLikePayload<ExtArgs>[]
-    /**
      * 章节购买关联
      */
     chapterPurchases: Prisma.$WorkChapterPurchasePayload<ExtArgs>[]
-    /**
-     * 章节下载关联
-     */
-    chapterDownloads: Prisma.$WorkChapterDownloadPayload<ExtArgs>[]
     /**
      * 作品评论关联
      */
@@ -14702,10 +11472,6 @@ export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      * 回复点赞关联
      */
     replyLikes: Prisma.$ForumReplyLikePayload<ExtArgs>[]
-    /**
-     * 论坛浏览记录关联
-     */
-    forumViews: Prisma.$ForumViewPayload<ExtArgs>[]
     /**
      * 论坛通知关联
      */
@@ -15283,19 +12049,12 @@ export interface Prisma__AppUserClient<T, Null = never, ExtArgs extends runtime.
   experienceRecords<T extends Prisma.AppUser$experienceRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$experienceRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserExperienceRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   forumTopics<T extends Prisma.AppUser$forumTopicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$forumTopicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lastReplyTopics<T extends Prisma.AppUser$lastReplyTopicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$lastReplyTopicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  topicFavorites<T extends Prisma.AppUser$topicFavoritesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$topicFavoritesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicFavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  topicLikes<T extends Prisma.AppUser$topicLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$topicLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  workFavorites<T extends Prisma.AppUser$workFavoritesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$workFavoritesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkFavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  workLikes<T extends Prisma.AppUser$workLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$workLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  chapterLikes<T extends Prisma.AppUser$chapterLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$chapterLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   chapterPurchases<T extends Prisma.AppUser$chapterPurchasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$chapterPurchasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterPurchasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  chapterDownloads<T extends Prisma.AppUser$chapterDownloadsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$chapterDownloadsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterDownloadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   workComments<T extends Prisma.AppUser$workCommentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$workCommentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   workCommentReports<T extends Prisma.AppUser$workCommentReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$workCommentReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkCommentReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   handledWorkCommentReports<T extends Prisma.AppUser$handledWorkCommentReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$handledWorkCommentReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkCommentReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   forumReplies<T extends Prisma.AppUser$forumRepliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$forumRepliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReplyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   replyLikes<T extends Prisma.AppUser$replyLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$replyLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReplyLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  forumViews<T extends Prisma.AppUser$forumViewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$forumViewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumViewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   forumNotifications<T extends Prisma.AppUser$forumNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$forumNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumNotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   forumReports<T extends Prisma.AppUser$forumReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$forumReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   handledReports<T extends Prisma.AppUser$handledReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$handledReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -15979,126 +12738,6 @@ export type AppUser$lastReplyTopicsArgs<ExtArgs extends runtime.Types.Extensions
 }
 
 /**
- * AppUser.topicFavorites
- */
-export type AppUser$topicFavoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ForumTopicFavorite
-   */
-  select?: Prisma.ForumTopicFavoriteSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ForumTopicFavorite
-   */
-  omit?: Prisma.ForumTopicFavoriteOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumTopicFavoriteInclude<ExtArgs> | null
-  where?: Prisma.ForumTopicFavoriteWhereInput
-  orderBy?: Prisma.ForumTopicFavoriteOrderByWithRelationInput | Prisma.ForumTopicFavoriteOrderByWithRelationInput[]
-  cursor?: Prisma.ForumTopicFavoriteWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ForumTopicFavoriteScalarFieldEnum | Prisma.ForumTopicFavoriteScalarFieldEnum[]
-}
-
-/**
- * AppUser.topicLikes
- */
-export type AppUser$topicLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ForumTopicLike
-   */
-  select?: Prisma.ForumTopicLikeSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ForumTopicLike
-   */
-  omit?: Prisma.ForumTopicLikeOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumTopicLikeInclude<ExtArgs> | null
-  where?: Prisma.ForumTopicLikeWhereInput
-  orderBy?: Prisma.ForumTopicLikeOrderByWithRelationInput | Prisma.ForumTopicLikeOrderByWithRelationInput[]
-  cursor?: Prisma.ForumTopicLikeWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ForumTopicLikeScalarFieldEnum | Prisma.ForumTopicLikeScalarFieldEnum[]
-}
-
-/**
- * AppUser.workFavorites
- */
-export type AppUser$workFavoritesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the WorkFavorite
-   */
-  select?: Prisma.WorkFavoriteSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the WorkFavorite
-   */
-  omit?: Prisma.WorkFavoriteOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.WorkFavoriteInclude<ExtArgs> | null
-  where?: Prisma.WorkFavoriteWhereInput
-  orderBy?: Prisma.WorkFavoriteOrderByWithRelationInput | Prisma.WorkFavoriteOrderByWithRelationInput[]
-  cursor?: Prisma.WorkFavoriteWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.WorkFavoriteScalarFieldEnum | Prisma.WorkFavoriteScalarFieldEnum[]
-}
-
-/**
- * AppUser.workLikes
- */
-export type AppUser$workLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the WorkLike
-   */
-  select?: Prisma.WorkLikeSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the WorkLike
-   */
-  omit?: Prisma.WorkLikeOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.WorkLikeInclude<ExtArgs> | null
-  where?: Prisma.WorkLikeWhereInput
-  orderBy?: Prisma.WorkLikeOrderByWithRelationInput | Prisma.WorkLikeOrderByWithRelationInput[]
-  cursor?: Prisma.WorkLikeWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.WorkLikeScalarFieldEnum | Prisma.WorkLikeScalarFieldEnum[]
-}
-
-/**
- * AppUser.chapterLikes
- */
-export type AppUser$chapterLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the WorkChapterLike
-   */
-  select?: Prisma.WorkChapterLikeSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the WorkChapterLike
-   */
-  omit?: Prisma.WorkChapterLikeOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.WorkChapterLikeInclude<ExtArgs> | null
-  where?: Prisma.WorkChapterLikeWhereInput
-  orderBy?: Prisma.WorkChapterLikeOrderByWithRelationInput | Prisma.WorkChapterLikeOrderByWithRelationInput[]
-  cursor?: Prisma.WorkChapterLikeWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.WorkChapterLikeScalarFieldEnum | Prisma.WorkChapterLikeScalarFieldEnum[]
-}
-
-/**
  * AppUser.chapterPurchases
  */
 export type AppUser$chapterPurchasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -16120,30 +12759,6 @@ export type AppUser$chapterPurchasesArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.WorkChapterPurchaseScalarFieldEnum | Prisma.WorkChapterPurchaseScalarFieldEnum[]
-}
-
-/**
- * AppUser.chapterDownloads
- */
-export type AppUser$chapterDownloadsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the WorkChapterDownload
-   */
-  select?: Prisma.WorkChapterDownloadSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the WorkChapterDownload
-   */
-  omit?: Prisma.WorkChapterDownloadOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.WorkChapterDownloadInclude<ExtArgs> | null
-  where?: Prisma.WorkChapterDownloadWhereInput
-  orderBy?: Prisma.WorkChapterDownloadOrderByWithRelationInput | Prisma.WorkChapterDownloadOrderByWithRelationInput[]
-  cursor?: Prisma.WorkChapterDownloadWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.WorkChapterDownloadScalarFieldEnum | Prisma.WorkChapterDownloadScalarFieldEnum[]
 }
 
 /**
@@ -16264,30 +12879,6 @@ export type AppUser$replyLikesArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.ForumReplyLikeScalarFieldEnum | Prisma.ForumReplyLikeScalarFieldEnum[]
-}
-
-/**
- * AppUser.forumViews
- */
-export type AppUser$forumViewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ForumView
-   */
-  select?: Prisma.ForumViewSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ForumView
-   */
-  omit?: Prisma.ForumViewOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumViewInclude<ExtArgs> | null
-  where?: Prisma.ForumViewWhereInput
-  orderBy?: Prisma.ForumViewOrderByWithRelationInput | Prisma.ForumViewOrderByWithRelationInput[]
-  cursor?: Prisma.ForumViewWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ForumViewScalarFieldEnum | Prisma.ForumViewScalarFieldEnum[]
 }
 
 /**

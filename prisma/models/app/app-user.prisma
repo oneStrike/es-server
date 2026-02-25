@@ -68,20 +68,8 @@ model AppUser {
   forumTopics               ForumTopic[]                @relation("UserTopics")
   /// 最后回复主题关联
   lastReplyTopics           ForumTopic[]                @relation("UserLastReplyTopics")
-  /// 主题收藏关联
-  topicFavorites            ForumTopicFavorite[]
-  /// 主题点赞关联
-  topicLikes                ForumTopicLike[]
-  /// 作品收藏关联
-  workFavorites             WorkFavorite[]
-  /// 作品点赞关联
-  workLikes                 WorkLike[]
-  /// 章节点赞关联
-  chapterLikes              WorkChapterLike[]
   /// 章节购买关联
   chapterPurchases          WorkChapterPurchase[]
-  /// 章节下载关联
-  chapterDownloads          WorkChapterDownload[]
   /// 作品评论关联
   workComments              WorkComment[]
   /// 评论举报关联（举报人）
@@ -92,8 +80,6 @@ model AppUser {
   forumReplies              ForumReply[]
   /// 回复点赞关联
   replyLikes                ForumReplyLike[]
-  /// 论坛浏览记录关联
-  forumViews                ForumView[]
   /// 论坛通知关联
   forumNotifications        ForumNotification[]
   /// 论坛举报关联（举报人）

@@ -73,12 +73,8 @@ model WorkChapter {
   requiredDownloadLevel UserLevelRule?        @relation("ChapterDownloadLevel", fields: [requiredDownloadLevelId], references: [id])
   /// 关联阅读权限等级
   requiredReadLevel     UserLevelRule?        @relation("ChapterReadLevel", fields: [requiredReadLevelId], references: [id])
-  /// 点赞记录
-  likes                 WorkChapterLike[]
   /// 购买记录
   purchases             WorkChapterPurchase[]
-  /// 下载记录
-  downloads             WorkChapterDownload[]
   /// 评论
   comments              WorkComment[]
 

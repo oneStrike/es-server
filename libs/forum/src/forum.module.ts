@@ -1,3 +1,4 @@
+import { InteractionModule } from '@libs/interaction'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { UserExperienceModule } from '@libs/user/experience'
 import { UserLevelRuleModule } from '@libs/user/level-rule'
@@ -5,6 +6,7 @@ import { UserPointModule } from '@libs/user/point'
 import { Module } from '@nestjs/common'
 import { ForumConfigModule } from './config'
 import { ForumCounterModule } from './counter'
+import { ForumInteractionModule } from './interaction'
 import { ForumModeratorModule } from './moderator'
 import { ForumNotificationModule } from './notification'
 import { ForumProfileModule } from './profile'
@@ -16,24 +18,11 @@ import { ForumSectionModule } from './section'
 import { ForumSectionGroupModule } from './section-group'
 import { ForumTagModule } from './tag'
 import { ForumTopicModule } from './topic'
-import { ForumTopicFavoriteModule } from './topic-favorite'
-import { ForumTopicLikeModule } from './topic-like'
-import { ForumViewModule } from './view'
 
-/**
- * 论坛模块
- * 聚合所有论坛相关的子模块
- * 
- * TODO: 统一交互模块重构完成后，将使用 InteractionModule 替换以下模块：
- * - ForumTopicLikeModule -> InteractionModule.LikeModule
- * - ForumTopicFavoriteModule -> InteractionModule.FavoriteModule
- * - ForumViewModule -> InteractionModule.ViewModule
- * - ForumReplyModule -> InteractionModule.CommentModule
- * - ForumReplyLikeModule -> InteractionModule.CommentLikeModule
- * - ForumReportModule -> InteractionModule.CommentReportModule
- */
 @Module({
   imports: [
+    InteractionModule,
+    ForumInteractionModule,
     ForumConfigModule,
     ForumCounterModule,
     UserExperienceModule,
@@ -51,11 +40,9 @@ import { ForumViewModule } from './view'
     SensitiveWordModule,
     ForumTagModule,
     ForumTopicModule,
-    ForumTopicFavoriteModule,
-    ForumTopicLikeModule,
-    ForumViewModule,
   ],
   exports: [
+    InteractionModule,
     ForumConfigModule,
     ForumCounterModule,
     UserExperienceModule,
@@ -73,9 +60,6 @@ import { ForumViewModule } from './view'
     SensitiveWordModule,
     ForumTagModule,
     ForumTopicModule,
-    ForumTopicFavoriteModule,
-    ForumTopicLikeModule,
-    ForumViewModule,
   ],
 })
 export class ForumModule {}

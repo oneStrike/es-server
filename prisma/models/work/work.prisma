@@ -73,10 +73,6 @@ model Work {
   tags       WorkTagRelation[]
   /// 关联的章节列表
   chapters   WorkChapter[]
-  /// 收藏关联
-  favorites  WorkFavorite[]
-  /// 点赞关联
-  likes      WorkLike[]
   /// 评论关联
   comments   WorkComment[]
 
