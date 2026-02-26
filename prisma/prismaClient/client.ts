@@ -134,12 +134,12 @@ export type UserCommentReport = Prisma.UserCommentReportModel
  */
 export type UserComment = Prisma.UserCommentModel
 /**
- * Model UserDownload
+ * Model UserDownloadRecord
  * 用户下载记录表
  * 记录用户对作品、章节等内容的下载操作
  * 支持下载计数统计和用户下载历史查询
  */
-export type UserDownload = Prisma.UserDownloadModel
+export type UserDownloadRecord = Prisma.UserDownloadRecordModel
 /**
  * Model UserExperienceRecord
  * 用户经验记录表 - 记录用户经验变化历史
@@ -190,6 +190,13 @@ export type UserPointRecord = Prisma.UserPointRecordModel
  * 用户积分规则表 - 定义积分获取和消费规则，包括发帖、回复、点赞、签到等
  */
 export type UserPointRule = Prisma.UserPointRuleModel
+/**
+ * Model UserPurchaseRecord
+ * 用户购买记录表
+ * 记录用户对作品、章节等内容的购买操作
+ * 支持购买历史查询和消费统计
+ */
+export type UserPurchaseRecord = Prisma.UserPurchaseRecordModel
 /**
  * Model UserView
  * 用户浏览记录表

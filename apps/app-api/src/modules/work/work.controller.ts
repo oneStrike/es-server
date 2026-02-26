@@ -68,14 +68,4 @@ export class WorkController {
   async getWorkDetail(@Query() query: IdDto) {
     return this.workService.getWorkDetail(query.id)
   }
-
-  @Get('chapter/page')
-  @Public()
-  @ApiPageDoc({
-    summary: '分页查询作品章节',
-    model: PageWorkChapterDto,
-  })
-  async getWorkChapterPage(@Query() query: IdDto) {
-    return this.workChapterService.getWorkChapterPage(query.id)
-  }
 }

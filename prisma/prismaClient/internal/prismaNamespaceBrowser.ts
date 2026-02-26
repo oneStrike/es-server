@@ -69,7 +69,7 @@ export const ModelName = {
   UserCommentLike: 'UserCommentLike',
   UserCommentReport: 'UserCommentReport',
   UserComment: 'UserComment',
-  UserDownload: 'UserDownload',
+  UserDownloadRecord: 'UserDownloadRecord',
   UserExperienceRecord: 'UserExperienceRecord',
   UserExperienceRule: 'UserExperienceRule',
   UserFavorite: 'UserFavorite',
@@ -79,6 +79,7 @@ export const ModelName = {
   UserLike: 'UserLike',
   UserPointRecord: 'UserPointRecord',
   UserPointRule: 'UserPointRule',
+  UserPurchaseRecord: 'UserPurchaseRecord',
   UserView: 'UserView',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
@@ -462,17 +463,15 @@ export const UserCommentScalarFieldEnum = {
 export type UserCommentScalarFieldEnum = (typeof UserCommentScalarFieldEnum)[keyof typeof UserCommentScalarFieldEnum]
 
 
-export const UserDownloadScalarFieldEnum = {
+export const UserDownloadRecordScalarFieldEnum = {
   id: 'id',
   targetType: 'targetType',
   targetId: 'targetId',
   userId: 'userId',
-  workId: 'workId',
-  workType: 'workType',
   createdAt: 'createdAt'
 } as const
 
-export type UserDownloadScalarFieldEnum = (typeof UserDownloadScalarFieldEnum)[keyof typeof UserDownloadScalarFieldEnum]
+export type UserDownloadRecordScalarFieldEnum = (typeof UserDownloadRecordScalarFieldEnum)[keyof typeof UserDownloadRecordScalarFieldEnum]
 
 
 export const UserExperienceRecordScalarFieldEnum = {
@@ -636,6 +635,22 @@ export const UserPointRuleScalarFieldEnum = {
 } as const
 
 export type UserPointRuleScalarFieldEnum = (typeof UserPointRuleScalarFieldEnum)[keyof typeof UserPointRuleScalarFieldEnum]
+
+
+export const UserPurchaseRecordScalarFieldEnum = {
+  id: 'id',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  userId: 'userId',
+  price: 'price',
+  status: 'status',
+  paymentMethod: 'paymentMethod',
+  outTradeNo: 'outTradeNo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserPurchaseRecordScalarFieldEnum = (typeof UserPurchaseRecordScalarFieldEnum)[keyof typeof UserPurchaseRecordScalarFieldEnum]
 
 
 export const UserViewScalarFieldEnum = {
@@ -1170,8 +1185,9 @@ export const WorkChapterScalarFieldEnum = {
   likeCount: 'likeCount',
   commentCount: 'commentCount',
   purchaseCount: 'purchaseCount',
+  downloadCount: 'downloadCount',
   wordCount: 'wordCount',
-  contentPath: 'contentPath',
+  content: 'content',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',

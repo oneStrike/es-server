@@ -1,0 +1,41 @@
+/// 用户购买记录表
+/// 记录用户对作品、章节等内容的购买操作
+/// 支持购买历史查询和消费统计
+model UserPurchaseRecord {
+  /// 主键ID（自增）
+  id            Int      @id @default(autoincrement())
+  /// 目标类型 1=漫画, 2=小说, 3=漫画章节, 4=小说章节
+  targetType    Int      @map("target_type") @db.SmallInt
+  /// 目标ID（作品ID或章节ID）
+  targetId      Int      @map("target_id")
+  /// 用户ID（关联 app_user.id）
+  userId        Int      @map("user_id")
+  /// 购买价格（实际支付金额）
+  price         Int      @map("price")
+  /// 购买状态（1=成功, 2=失败, 3=退款中, 4=已退款）
+  status        Int      @default(1) @map("status") @db.SmallInt
+  /// 支付方式（1=余额, 2=支付宝, 3=微信, 4=积分兑换）
+  paymentMethod Int      @map("payment_method") @db.SmallInt
+  /// 第三方支付订单号
+  outTradeNo    String?  @map("out_trade_no") @db.VarChar(100)
+  /// 创建时间（购买时间）
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 关联用户
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 唯一约束：同一用户对同一目标只能有一条成功购买记录
+  @@unique([targetType, targetId, userId, status])
+  /// 目标类型与目标ID联合索引
+  @@index([targetType, targetId])
+  /// 用户ID索引
+  @@index([userId])
+  /// 购买状态索引
+  @@index([status])
+  /// 创建时间索引
+  @@index([createdAt])
+  /// 表名映射
+  @@map("user_purchase_record")
+}

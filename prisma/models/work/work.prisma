@@ -40,6 +40,8 @@ model Work {
   favoriteCount   Int       @default(0)
   /// 点赞数
   likeCount       Int       @default(0)
+  /// 下载数
+  downloadCount   Int       @default(0)
   /// 评分（1-10分，保留一位小数）
   rating          Float?
   /// 评分人数

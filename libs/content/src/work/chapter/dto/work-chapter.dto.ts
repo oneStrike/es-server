@@ -47,6 +47,14 @@ export class BaseWorkChapterDto extends BaseDto {
   subtitle?: string
 
   @StringProperty({
+    description: '章节封面',
+    example: 'https://example.com/cover.jpg',
+    required: false,
+    maxLength: 500,
+  })
+  cover?: string
+
+  @StringProperty({
     description: '章节描述',
     example: '这是第一章的内容描述',
     required: false,
@@ -177,6 +185,15 @@ export class BaseWorkChapterDto extends BaseDto {
   purchaseCount!: number
 
   @NumberProperty({
+    description: '下载次数',
+    example: 20,
+    required: true,
+    default: 0,
+    validation: false,
+  })
+  downloadCount!: number
+
+  @NumberProperty({
     description: '字数（小说章节）',
     example: 3000,
     required: true,
@@ -191,7 +208,7 @@ export class BaseWorkChapterDto extends BaseDto {
     required: false,
     maxLength: 500,
   })
-  contentPath?: string
+  content?: string
 
   @StringProperty({
     description: '备注',
@@ -209,7 +226,24 @@ export class CreateWorkChapterDto extends OmitType(BaseWorkChapterDto, [
   'likeCount',
   'commentCount',
   'purchaseCount',
+  'downloadCount',
   'wordCount',
+]) {}
+
+// 分页返回的章节DTO
+export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
+  'id',
+  'isPreview',
+  'cover',
+  'title',
+  'canComment',
+  'sortOrder',
+  'readRule',
+  'downloadRule',
+  'readPoints',
+  'downloadPoints',
+  'requiredReadLevelId',
+  'requiredDownloadLevelId',
 ]) {}
 
 /// 更新章节DTO
@@ -220,9 +254,8 @@ export class UpdateWorkChapterDto extends IntersectionType(
 
 /// 查询章节DTO
 export class QueryWorkChapterDto extends IntersectionType(
-  PageDto,
+  IntersectionType(PageDto, PickType(BaseWorkChapterDto, ['workId'])),
   PickType(PartialType(BaseWorkChapterDto), [
-    'workId',
     'title',
     'isPublished',
     'isPreview',

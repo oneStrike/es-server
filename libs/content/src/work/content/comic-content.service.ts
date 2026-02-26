@@ -24,7 +24,7 @@ export class ComicContentService extends BaseService {
     const chapter = await this.workChapter.findUnique({
       where: { id: chapterId },
       select: {
-        contentPath: true,
+        content: true,
       },
     })
 
@@ -32,12 +32,12 @@ export class ComicContentService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    if (!chapter.contentPath) {
+    if (!chapter.content) {
       return []
     }
 
     try {
-      const content = await fsExtra.readFile(chapter.contentPath, 'utf-8')
+      const content = await fsExtra.readFile(chapter.content, 'utf-8')
       const parsed = JSON.parse(content)
       return Array.isArray(parsed) ? parsed : []
     } catch {
@@ -67,13 +67,13 @@ export class ComicContentService extends BaseService {
 
     contents.push(file.filePath)
 
-    const contentPath = `/uploads/comic/${query.workId}/chapter/${id}/content.json`
-    await fsExtra.ensureFile(contentPath)
-    await fsExtra.writeFile(contentPath, JSON.stringify(contents))
+    const content = `/uploads/comic/${query.workId}/chapter/${id}/content.json`
+    await fsExtra.ensureFile(content)
+    await fsExtra.writeFile(content, JSON.stringify(contents))
 
     await this.workChapter.update({
       where: { id },
-      data: { contentPath },
+      data: { content },
     })
 
     return file
@@ -92,11 +92,11 @@ export class ComicContentService extends BaseService {
 
     const chapter = await this.workChapter.findUnique({
       where: { id },
-      select: { contentPath: true },
+      select: { content: true },
     })
 
-    if (chapter?.contentPath) {
-      await fsExtra.writeFile(chapter.contentPath, JSON.stringify(contents))
+    if (chapter?.content) {
+      await fsExtra.writeFile(chapter.content, JSON.stringify(contents))
     }
 
     return { id }
@@ -116,11 +116,11 @@ export class ComicContentService extends BaseService {
 
     const chapter = await this.workChapter.findUnique({
       where: { id },
-      select: { contentPath: true },
+      select: { content: true },
     })
 
-    if (chapter?.contentPath) {
-      await fsExtra.writeFile(chapter.contentPath, JSON.stringify(contents))
+    if (chapter?.content) {
+      await fsExtra.writeFile(chapter.content, JSON.stringify(contents))
     }
 
     return contents
@@ -145,11 +145,11 @@ export class ComicContentService extends BaseService {
 
     const chapter = await this.workChapter.findUnique({
       where: { id },
-      select: { contentPath: true },
+      select: { content: true },
     })
 
-    if (chapter?.contentPath) {
-      await fsExtra.writeFile(chapter.contentPath, JSON.stringify(contents))
+    if (chapter?.content) {
+      await fsExtra.writeFile(chapter.content, JSON.stringify(contents))
     }
 
     return contents
@@ -158,11 +158,11 @@ export class ComicContentService extends BaseService {
   async clearChapterContents(id: number) {
     const chapter = await this.workChapter.findUnique({
       where: { id },
-      select: { contentPath: true },
+      select: { content: true },
     })
 
-    if (chapter?.contentPath) {
-      await fsExtra.writeFile(chapter.contentPath, JSON.stringify([]))
+    if (chapter?.content) {
+      await fsExtra.writeFile(chapter.content, JSON.stringify([]))
     }
 
     return { id }

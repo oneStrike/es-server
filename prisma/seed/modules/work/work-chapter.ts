@@ -23,7 +23,7 @@ export async function createInitialWorkChapters(prisma: any) {
           workType: work.type,
           isPublished: true,
           readRule: 0,
-          contentPath: null,
+          content: null,
           isPreview: i <= 3,
           publishAt: new Date(),
           sortOrder: i,

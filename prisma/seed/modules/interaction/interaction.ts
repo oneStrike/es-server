@@ -27,10 +27,10 @@ export async function createInitialInteractionData(prisma: PrismaClient) {
   // 获取论坛主题数据
   const topics = await prisma.forumTopic.findMany({ take: 10 })
 
-  const userIds = users.map(u => u.id)
-  const workIds = works.map(w => w.id)
-  const chapterIds = chapters.map(c => c.id)
-  const topicIds = topics.map(t => t.id)
+  const userIds = users.map((u) => u.id)
+  const workIds = works.map((w) => w.id)
+  const chapterIds = chapters.map((c) => c.id)
+  const topicIds = topics.map((t) => t.id)
 
   // 1. 创建点赞数据
   await createLikes(prisma, userIds, workIds, chapterIds, topicIds)
@@ -42,7 +42,13 @@ export async function createInitialInteractionData(prisma: PrismaClient) {
   await createViews(prisma, userIds, workIds, chapterIds, topicIds)
 
   // 4. 创建评论数据
-  const commentIds = await createComments(prisma, userIds, workIds, chapterIds, topicIds)
+  const commentIds = await createComments(
+    prisma,
+    userIds,
+    workIds,
+    chapterIds,
+    topicIds,
+  )
 
   // 5. 创建评论点赞数据
   if (commentIds.length > 0) {
@@ -77,7 +83,9 @@ async function createLikes(
         targetType: Math.random() > 0.5 ? 1 : 2,
         targetId: workId,
         userId,
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -89,7 +97,9 @@ async function createLikes(
         targetType: Math.random() > 0.5 ? 3 : 4,
         targetId: chapterId,
         userId,
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -101,7 +111,9 @@ async function createLikes(
         targetType: 5,
         targetId: topicId,
         userId,
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -134,7 +146,9 @@ async function createFavorites(
         targetType: Math.random() > 0.5 ? 1 : 2,
         targetId: workId,
         userId,
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 14 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 14 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -146,7 +160,9 @@ async function createFavorites(
         targetType: 5,
         targetId: topicId,
         userId,
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -184,7 +200,9 @@ async function createViews(
         ipAddress: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
         device: devices[Math.floor(Math.random() * devices.length)],
         userAgent: 'Mozilla/5.0 (Test)',
-        viewedAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
+        viewedAt: new Date(
+          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -199,7 +217,9 @@ async function createViews(
         ipAddress: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
         device: devices[Math.floor(Math.random() * devices.length)],
         userAgent: 'Mozilla/5.0 (Test)',
-        viewedAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
+        viewedAt: new Date(
+          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -214,7 +234,9 @@ async function createViews(
         ipAddress: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
         device: devices[Math.floor(Math.random() * devices.length)],
         userAgent: 'Mozilla/5.0 (Test)',
-        viewedAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
+        viewedAt: new Date(
+          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -263,7 +285,9 @@ async function createComments(
         floor: floor++,
         auditStatus: 1, // 已通过
         likeCount: Math.floor(Math.random() * 50),
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -279,7 +303,9 @@ async function createComments(
         floor: floor++,
         auditStatus: 1,
         likeCount: Math.floor(Math.random() * 30),
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -295,7 +321,9 @@ async function createComments(
         floor: floor++,
         auditStatus: 1,
         likeCount: Math.floor(Math.random() * 20),
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -328,7 +356,9 @@ async function createCommentLikes(
       likes.push({
         commentId,
         userId,
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -362,9 +392,9 @@ async function createDownloads(
         targetType: workType,
         targetId: workId,
         userId,
-        workId,
-        workType,
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
+        createdAt: new Date(
+          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
+        ),
       })
     }
   }
@@ -389,9 +419,9 @@ async function createDownloads(
             targetType,
             targetId: chapterId,
             userId,
-            workId: chapter.workId,
-            workType,
-            createdAt: new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
+            createdAt: new Date(
+              Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
+            ),
           })
         }
       }
@@ -399,7 +429,7 @@ async function createDownloads(
   }
 
   if (downloads.length > 0) {
-    await prisma.userDownload.createMany({
+    await prisma.userDownloadRecord.createMany({
       data: downloads,
       skipDuplicates: true,
     })

@@ -41,6 +41,7 @@ export type WorkChapterAvgAggregateOutputType = {
   likeCount: number | null
   commentCount: number | null
   purchaseCount: number | null
+  downloadCount: number | null
   wordCount: number | null
 }
 
@@ -59,6 +60,7 @@ export type WorkChapterSumAggregateOutputType = {
   likeCount: number | null
   commentCount: number | null
   purchaseCount: number | null
+  downloadCount: number | null
   wordCount: number | null
 }
 
@@ -85,8 +87,9 @@ export type WorkChapterMinAggregateOutputType = {
   likeCount: number | null
   commentCount: number | null
   purchaseCount: number | null
+  downloadCount: number | null
   wordCount: number | null
-  contentPath: string | null
+  content: string | null
   remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -116,8 +119,9 @@ export type WorkChapterMaxAggregateOutputType = {
   likeCount: number | null
   commentCount: number | null
   purchaseCount: number | null
+  downloadCount: number | null
   wordCount: number | null
-  contentPath: string | null
+  content: string | null
   remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -147,8 +151,9 @@ export type WorkChapterCountAggregateOutputType = {
   likeCount: number
   commentCount: number
   purchaseCount: number
+  downloadCount: number
   wordCount: number
-  contentPath: number
+  content: number
   remark: number
   createdAt: number
   updatedAt: number
@@ -172,6 +177,7 @@ export type WorkChapterAvgAggregateInputType = {
   likeCount?: true
   commentCount?: true
   purchaseCount?: true
+  downloadCount?: true
   wordCount?: true
 }
 
@@ -190,6 +196,7 @@ export type WorkChapterSumAggregateInputType = {
   likeCount?: true
   commentCount?: true
   purchaseCount?: true
+  downloadCount?: true
   wordCount?: true
 }
 
@@ -216,8 +223,9 @@ export type WorkChapterMinAggregateInputType = {
   likeCount?: true
   commentCount?: true
   purchaseCount?: true
+  downloadCount?: true
   wordCount?: true
-  contentPath?: true
+  content?: true
   remark?: true
   createdAt?: true
   updatedAt?: true
@@ -247,8 +255,9 @@ export type WorkChapterMaxAggregateInputType = {
   likeCount?: true
   commentCount?: true
   purchaseCount?: true
+  downloadCount?: true
   wordCount?: true
-  contentPath?: true
+  content?: true
   remark?: true
   createdAt?: true
   updatedAt?: true
@@ -278,8 +287,9 @@ export type WorkChapterCountAggregateInputType = {
   likeCount?: true
   commentCount?: true
   purchaseCount?: true
+  downloadCount?: true
   wordCount?: true
-  contentPath?: true
+  content?: true
   remark?: true
   createdAt?: true
   updatedAt?: true
@@ -396,8 +406,9 @@ export type WorkChapterGroupByOutputType = {
   likeCount: number
   commentCount: number
   purchaseCount: number
+  downloadCount: number
   wordCount: number
-  contentPath: string | null
+  content: string | null
   remark: string | null
   createdAt: Date
   updatedAt: Date
@@ -450,8 +461,9 @@ export type WorkChapterWhereInput = {
   likeCount?: Prisma.IntFilter<"WorkChapter"> | number
   commentCount?: Prisma.IntFilter<"WorkChapter"> | number
   purchaseCount?: Prisma.IntFilter<"WorkChapter"> | number
+  downloadCount?: Prisma.IntFilter<"WorkChapter"> | number
   wordCount?: Prisma.IntFilter<"WorkChapter"> | number
-  contentPath?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
+  content?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   remark?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkChapter"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkChapter"> | Date | string
@@ -486,8 +498,9 @@ export type WorkChapterOrderByWithRelationInput = {
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
   wordCount?: Prisma.SortOrder
-  contentPath?: Prisma.SortOrderInput | Prisma.SortOrder
+  content?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -526,8 +539,9 @@ export type WorkChapterWhereUniqueInput = Prisma.AtLeast<{
   likeCount?: Prisma.IntFilter<"WorkChapter"> | number
   commentCount?: Prisma.IntFilter<"WorkChapter"> | number
   purchaseCount?: Prisma.IntFilter<"WorkChapter"> | number
+  downloadCount?: Prisma.IntFilter<"WorkChapter"> | number
   wordCount?: Prisma.IntFilter<"WorkChapter"> | number
-  contentPath?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
+  content?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   remark?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkChapter"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkChapter"> | Date | string
@@ -562,8 +576,9 @@ export type WorkChapterOrderByWithAggregationInput = {
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
   wordCount?: Prisma.SortOrder
-  contentPath?: Prisma.SortOrderInput | Prisma.SortOrder
+  content?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -601,8 +616,9 @@ export type WorkChapterScalarWhereWithAggregatesInput = {
   likeCount?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
   commentCount?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
   purchaseCount?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
+  downloadCount?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
   wordCount?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
-  contentPath?: Prisma.StringNullableWithAggregatesFilter<"WorkChapter"> | string | null
+  content?: Prisma.StringNullableWithAggregatesFilter<"WorkChapter"> | string | null
   remark?: Prisma.StringNullableWithAggregatesFilter<"WorkChapter"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkChapter"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WorkChapter"> | Date | string
@@ -628,8 +644,9 @@ export type WorkChapterCreateInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -664,8 +681,9 @@ export type WorkChapterUncheckedCreateInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -693,8 +711,9 @@ export type WorkChapterUpdateInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -729,8 +748,9 @@ export type WorkChapterUncheckedUpdateInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -762,8 +782,9 @@ export type WorkChapterCreateManyInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -789,8 +810,9 @@ export type WorkChapterUpdateManyMutationInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -820,8 +842,9 @@ export type WorkChapterUncheckedUpdateManyInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -871,8 +894,9 @@ export type WorkChapterCountOrderByAggregateInput = {
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
   wordCount?: Prisma.SortOrder
-  contentPath?: Prisma.SortOrder
+  content?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -894,6 +918,7 @@ export type WorkChapterAvgOrderByAggregateInput = {
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
   wordCount?: Prisma.SortOrder
 }
 
@@ -920,8 +945,9 @@ export type WorkChapterMaxOrderByAggregateInput = {
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
   wordCount?: Prisma.SortOrder
-  contentPath?: Prisma.SortOrder
+  content?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -951,8 +977,9 @@ export type WorkChapterMinOrderByAggregateInput = {
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
   wordCount?: Prisma.SortOrder
-  contentPath?: Prisma.SortOrder
+  content?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -974,6 +1001,7 @@ export type WorkChapterSumOrderByAggregateInput = {
   likeCount?: Prisma.SortOrder
   commentCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
   wordCount?: Prisma.SortOrder
 }
 
@@ -1157,8 +1185,9 @@ export type WorkChapterCreateWithoutRequiredDownloadLevelInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1191,8 +1220,9 @@ export type WorkChapterUncheckedCreateWithoutRequiredDownloadLevelInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1230,8 +1260,9 @@ export type WorkChapterCreateWithoutRequiredReadLevelInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1264,8 +1295,9 @@ export type WorkChapterUncheckedCreateWithoutRequiredReadLevelInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1326,8 +1358,9 @@ export type WorkChapterScalarWhereInput = {
   likeCount?: Prisma.IntFilter<"WorkChapter"> | number
   commentCount?: Prisma.IntFilter<"WorkChapter"> | number
   purchaseCount?: Prisma.IntFilter<"WorkChapter"> | number
+  downloadCount?: Prisma.IntFilter<"WorkChapter"> | number
   wordCount?: Prisma.IntFilter<"WorkChapter"> | number
-  contentPath?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
+  content?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   remark?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkChapter"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkChapter"> | Date | string
@@ -1369,8 +1402,9 @@ export type WorkChapterCreateWithoutPurchasesInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1404,8 +1438,9 @@ export type WorkChapterUncheckedCreateWithoutPurchasesInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1448,8 +1483,9 @@ export type WorkChapterUpdateWithoutPurchasesInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1483,8 +1519,9 @@ export type WorkChapterUncheckedUpdateWithoutPurchasesInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1511,8 +1548,9 @@ export type WorkChapterCreateWithoutCommentsInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1546,8 +1584,9 @@ export type WorkChapterUncheckedCreateWithoutCommentsInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1590,8 +1629,9 @@ export type WorkChapterUpdateWithoutCommentsInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1625,8 +1665,9 @@ export type WorkChapterUncheckedUpdateWithoutCommentsInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1653,8 +1694,9 @@ export type WorkChapterCreateWithoutWorkInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1687,8 +1729,9 @@ export type WorkChapterUncheckedCreateWithoutWorkInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1745,8 +1788,9 @@ export type WorkChapterCreateManyRequiredDownloadLevelInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1775,8 +1819,9 @@ export type WorkChapterCreateManyRequiredReadLevelInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1802,8 +1847,9 @@ export type WorkChapterUpdateWithoutRequiredDownloadLevelInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1836,8 +1882,9 @@ export type WorkChapterUncheckedUpdateWithoutRequiredDownloadLevelInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1868,8 +1915,9 @@ export type WorkChapterUncheckedUpdateManyWithoutRequiredDownloadLevelInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1895,8 +1943,9 @@ export type WorkChapterUpdateWithoutRequiredReadLevelInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1929,8 +1978,9 @@ export type WorkChapterUncheckedUpdateWithoutRequiredReadLevelInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1961,8 +2011,9 @@ export type WorkChapterUncheckedUpdateManyWithoutRequiredReadLevelInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1991,8 +2042,9 @@ export type WorkChapterCreateManyWorkInput = {
   likeCount?: number
   commentCount?: number
   purchaseCount?: number
+  downloadCount?: number
   wordCount?: number
-  contentPath?: string | null
+  content?: string | null
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -2018,8 +2070,9 @@ export type WorkChapterUpdateWithoutWorkInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2052,8 +2105,9 @@ export type WorkChapterUncheckedUpdateWithoutWorkInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2084,8 +2138,9 @@ export type WorkChapterUncheckedUpdateManyWithoutWorkInput = {
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   wordCount?: Prisma.IntFieldUpdateOperationsInput | number
-  contentPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  content?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2155,8 +2210,9 @@ export type WorkChapterSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   likeCount?: boolean
   commentCount?: boolean
   purchaseCount?: boolean
+  downloadCount?: boolean
   wordCount?: boolean
-  contentPath?: boolean
+  content?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2192,8 +2248,9 @@ export type WorkChapterSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   likeCount?: boolean
   commentCount?: boolean
   purchaseCount?: boolean
+  downloadCount?: boolean
   wordCount?: boolean
-  contentPath?: boolean
+  content?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2226,8 +2283,9 @@ export type WorkChapterSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   likeCount?: boolean
   commentCount?: boolean
   purchaseCount?: boolean
+  downloadCount?: boolean
   wordCount?: boolean
-  contentPath?: boolean
+  content?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -2260,15 +2318,16 @@ export type WorkChapterSelectScalar = {
   likeCount?: boolean
   commentCount?: boolean
   purchaseCount?: boolean
+  downloadCount?: boolean
   wordCount?: boolean
-  contentPath?: boolean
+  content?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type WorkChapterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "workType" | "title" | "subtitle" | "cover" | "description" | "sortOrder" | "readRule" | "downloadRule" | "readPoints" | "downloadPoints" | "requiredReadLevelId" | "requiredDownloadLevelId" | "isPublished" | "isPreview" | "canComment" | "publishAt" | "viewCount" | "likeCount" | "commentCount" | "purchaseCount" | "wordCount" | "contentPath" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workChapter"]>
+export type WorkChapterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "workType" | "title" | "subtitle" | "cover" | "description" | "sortOrder" | "readRule" | "downloadRule" | "readPoints" | "downloadPoints" | "requiredReadLevelId" | "requiredDownloadLevelId" | "isPublished" | "isPreview" | "canComment" | "publishAt" | "viewCount" | "likeCount" | "commentCount" | "purchaseCount" | "downloadCount" | "wordCount" | "content" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workChapter"]>
 export type WorkChapterInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
   requiredDownloadLevel?: boolean | Prisma.WorkChapter$requiredDownloadLevelArgs<ExtArgs>
@@ -2402,13 +2461,17 @@ export type $WorkChapterPayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     purchaseCount: number
     /**
+     * 下载次数
+     */
+    downloadCount: number
+    /**
      * 字数（小说章节）
      */
     wordCount: number
     /**
      * 内容存储路径（文件路径）
      */
-    contentPath: string | null
+    content: string | null
     /**
      * 备注
      */
@@ -2875,8 +2938,9 @@ export interface WorkChapterFieldRefs {
   readonly likeCount: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly commentCount: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly purchaseCount: Prisma.FieldRef<"WorkChapter", 'Int'>
+  readonly downloadCount: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly wordCount: Prisma.FieldRef<"WorkChapter", 'Int'>
-  readonly contentPath: Prisma.FieldRef<"WorkChapter", 'String'>
+  readonly content: Prisma.FieldRef<"WorkChapter", 'String'>
   readonly remark: Prisma.FieldRef<"WorkChapter", 'String'>
   readonly createdAt: Prisma.FieldRef<"WorkChapter", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WorkChapter", 'DateTime'>

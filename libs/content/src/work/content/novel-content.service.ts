@@ -19,7 +19,7 @@ export class NovelContentService extends BaseService {
     const chapter = await this.workChapter.findUnique({
       where: { id: chapterId },
       select: {
-        contentPath: true,
+        content: true,
       },
     })
 
@@ -27,12 +27,12 @@ export class NovelContentService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    if (!chapter.contentPath) {
+    if (!chapter.content) {
       return ''
     }
 
     try {
-      const content = await fsExtra.readFile(chapter.contentPath, 'utf-8')
+      const content = await fsExtra.readFile(chapter.content, 'utf-8')
       return content
     } catch {
       return ''
@@ -60,7 +60,7 @@ export class NovelContentService extends BaseService {
 
     await this.workChapter.update({
       where: { id },
-      data: { contentPath: file.filePath },
+      data: { content: file.filePath },
     })
 
     return file
@@ -69,16 +69,16 @@ export class NovelContentService extends BaseService {
   async deleteChapterContent(chapterId: number) {
     const chapter = await this.workChapter.findUnique({
       where: { id: chapterId },
-      select: { contentPath: true },
+      select: { content: true },
     })
 
     if (!chapter) {
       throw new BadRequestException('章节不存在')
     }
 
-    if (chapter.contentPath) {
+    if (chapter.content) {
       try {
-        await fsExtra.remove(chapter.contentPath)
+        await fsExtra.remove(chapter.content)
       } catch {
         // ignore
       }
@@ -86,7 +86,7 @@ export class NovelContentService extends BaseService {
 
     await this.workChapter.update({
       where: { id: chapterId },
-      data: { contentPath: null },
+      data: { content: null },
     })
 
     return { id: chapterId }

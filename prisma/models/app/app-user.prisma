@@ -120,11 +120,13 @@ model AppUser {
   /// 统一交互模块 - 评论点赞记录关联
   userCommentLikes          UserCommentLike[]
   /// 统一交互模块 - 评论举报关联（举报人）
-  userCommentReports        UserCommentReport[] @relation("ReportReporter")
+  userCommentReports        UserCommentReport[]  @relation("ReportReporter")
   /// 统一交互模块 - 评论举报关联（处理人）
-  handledUserCommentReports UserCommentReport[] @relation("ReportHandler")
+  handledUserCommentReports UserCommentReport[]  @relation("ReportHandler")
   /// 统一交互模块 - 下载记录关联
-  userDownloads             UserDownload[]
+  userDownloadRecords       UserDownloadRecord[]
+  /// 统一交互模块 - 购买记录关联
+  userPurchaseRecords       UserPurchaseRecord[]
 
   /// 启用状态索引
   @@index([isEnabled])

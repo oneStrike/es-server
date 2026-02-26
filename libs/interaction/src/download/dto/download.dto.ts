@@ -1,40 +1,36 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { IsInt, IsNotEmpty, Min } from 'class-validator'
-import { InteractionTargetType } from '../../interaction.constant'
+import { EnumProperty, NumberProperty } from '@libs/base/decorators'
+import { BaseDto, PageDto } from '@libs/base/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { DownloadTargetTypeEnum } from '../download.constant'
 
-export class RecordDownloadDto {
-  @ApiProperty({
+export class BaseUserDownloadRecordDto extends BaseDto {
+  @EnumProperty({
     description: '目标类型：1=漫画, 2=小说, 3=漫画章节, 4=小说章节',
-    enum: InteractionTargetType,
+    enum: DownloadTargetTypeEnum,
     example: 1,
+    required: true,
   })
-  @IsInt()
-  @IsNotEmpty()
-  targetType!: InteractionTargetType
+  targetType!: DownloadTargetTypeEnum
 
-  @ApiProperty({
+  @NumberProperty({
     description: '目标ID',
     example: 1,
+    required: true,
   })
-  @IsInt()
-  @Min(1)
-  @IsNotEmpty()
   targetId!: number
 
-  @ApiProperty({
-    description: '作品ID',
+  @NumberProperty({
+    description: '用户ID',
     example: 1,
+    required: true,
   })
-  @IsInt()
-  @Min(1)
-  @IsNotEmpty()
-  workId!: number
-
-  @ApiProperty({
-    description: '作品类型：1=漫画, 2=小说',
-    example: 1,
-  })
-  @IsInt()
-  @IsNotEmpty()
-  workType!: number
+  userId!: number
 }
+
+export class QueryUserDownloadRecordDto extends IntersectionType(
+  IntersectionType(
+    PageDto,
+    PartialType(PickType(BaseUserDownloadRecordDto, ['targetType'])),
+  ),
+  PickType(BaseUserDownloadRecordDto, ['userId']),
+) {}

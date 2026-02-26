@@ -1,0 +1,26 @@
+/// 用户下载记录表
+/// 记录用户对作品、章节等内容的下载操作
+/// 支持下载计数统计和用户下载历史查询
+model UserDownloadRecord {
+  /// 主键ID（自增）
+  id         Int      @id @default(autoincrement())
+  /// 目标类型 1=漫画, 2=小说, 3=漫画章节, 4=小说章节
+  targetType Int      @map("target_type") @db.SmallInt
+  /// 目标ID
+  targetId   Int      @map("target_id")
+  /// 用户ID（关联 app_user.id）
+  userId     Int      @map("user_id")
+  /// 创建时间（下载时间）
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 关联用户
+  user       AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 目标类型与目标ID联合索引
+  @@index([targetType, targetId])
+  /// 用户ID索引
+  @@index([userId])
+  /// 创建时间索引
+  @@index([createdAt])
+  /// 表名映射
+  @@map("user_download_record")
+}

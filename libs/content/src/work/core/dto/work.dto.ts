@@ -236,8 +236,19 @@ export class BaseWorkDto extends BaseDto {
     required: true,
     min: 0,
     default: 0,
+    validation: false,
   })
   viewCount!: number
+
+  @NumberProperty({
+    description: '下载量',
+    example: 1000,
+    required: true,
+    min: 0,
+    default: 0,
+    validation: false,
+  })
+  downloadCount!: number
 
   @NumberProperty({
     description: '收藏数',
@@ -245,6 +256,7 @@ export class BaseWorkDto extends BaseDto {
     required: true,
     min: 0,
     default: 0,
+    validation: false,
   })
   favoriteCount!: number
 
@@ -254,6 +266,7 @@ export class BaseWorkDto extends BaseDto {
     required: true,
     min: 0,
     default: 0,
+    validation: false,
   })
   likeCount!: number
 
@@ -263,6 +276,7 @@ export class BaseWorkDto extends BaseDto {
     required: false,
     min: 0,
     max: 10,
+    validation: false,
   })
   rating?: number
 
@@ -272,6 +286,7 @@ export class BaseWorkDto extends BaseDto {
     required: true,
     min: 0,
     default: 0,
+    validation: false,
   })
   ratingCount!: number
 
@@ -391,6 +406,7 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
   'categories',
   'tags',
   'viewCount',
+  'downloadCount',
   'likeCount',
   'favoriteCount',
   'ratingCount',

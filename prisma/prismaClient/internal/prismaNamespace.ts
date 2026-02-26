@@ -402,7 +402,7 @@ export const ModelName = {
   UserCommentLike: 'UserCommentLike',
   UserCommentReport: 'UserCommentReport',
   UserComment: 'UserComment',
-  UserDownload: 'UserDownload',
+  UserDownloadRecord: 'UserDownloadRecord',
   UserExperienceRecord: 'UserExperienceRecord',
   UserExperienceRule: 'UserExperienceRule',
   UserFavorite: 'UserFavorite',
@@ -412,6 +412,7 @@ export const ModelName = {
   UserLike: 'UserLike',
   UserPointRecord: 'UserPointRecord',
   UserPointRule: 'UserPointRule',
+  UserPurchaseRecord: 'UserPurchaseRecord',
   UserView: 'UserView',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
@@ -463,7 +464,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownload" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapterPurchase" | "workChapter" | "workCommentReport" | "workComment" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownloadRecord" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userPurchaseRecord" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapterPurchase" | "workChapter" | "workCommentReport" | "workComment" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1799,77 +1800,77 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    UserDownload: {
-      payload: Prisma.$UserDownloadPayload<ExtArgs>
-      fields: Prisma.UserDownloadFieldRefs
+    UserDownloadRecord: {
+      payload: Prisma.$UserDownloadRecordPayload<ExtArgs>
+      fields: Prisma.UserDownloadRecordFieldRefs
       operations: {
         findUnique: {
-          args: Prisma.UserDownloadFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload> | null
+          args: Prisma.UserDownloadRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload> | null
         }
         findUniqueOrThrow: {
-          args: Prisma.UserDownloadFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload>
+          args: Prisma.UserDownloadRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload>
         }
         findFirst: {
-          args: Prisma.UserDownloadFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload> | null
+          args: Prisma.UserDownloadRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload> | null
         }
         findFirstOrThrow: {
-          args: Prisma.UserDownloadFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload>
+          args: Prisma.UserDownloadRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload>
         }
         findMany: {
-          args: Prisma.UserDownloadFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload>[]
+          args: Prisma.UserDownloadRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload>[]
         }
         create: {
-          args: Prisma.UserDownloadCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload>
+          args: Prisma.UserDownloadRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload>
         }
         createMany: {
-          args: Prisma.UserDownloadCreateManyArgs<ExtArgs>
+          args: Prisma.UserDownloadRecordCreateManyArgs<ExtArgs>
           result: BatchPayload
         }
         createManyAndReturn: {
-          args: Prisma.UserDownloadCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload>[]
+          args: Prisma.UserDownloadRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload>[]
         }
         delete: {
-          args: Prisma.UserDownloadDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload>
+          args: Prisma.UserDownloadRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload>
         }
         update: {
-          args: Prisma.UserDownloadUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload>
+          args: Prisma.UserDownloadRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload>
         }
         deleteMany: {
-          args: Prisma.UserDownloadDeleteManyArgs<ExtArgs>
+          args: Prisma.UserDownloadRecordDeleteManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateMany: {
-          args: Prisma.UserDownloadUpdateManyArgs<ExtArgs>
+          args: Prisma.UserDownloadRecordUpdateManyArgs<ExtArgs>
           result: BatchPayload
         }
         updateManyAndReturn: {
-          args: Prisma.UserDownloadUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload>[]
+          args: Prisma.UserDownloadRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload>[]
         }
         upsert: {
-          args: Prisma.UserDownloadUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadPayload>
+          args: Prisma.UserDownloadRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserDownloadRecordPayload>
         }
         aggregate: {
-          args: Prisma.UserDownloadAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateUserDownload>
+          args: Prisma.UserDownloadRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserDownloadRecord>
         }
         groupBy: {
-          args: Prisma.UserDownloadGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserDownloadGroupByOutputType>[]
+          args: Prisma.UserDownloadRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserDownloadRecordGroupByOutputType>[]
         }
         count: {
-          args: Prisma.UserDownloadCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserDownloadCountAggregateOutputType> | number
+          args: Prisma.UserDownloadRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserDownloadRecordCountAggregateOutputType> | number
         }
       }
     }
@@ -2536,6 +2537,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserPointRuleCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserPointRuleCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserPurchaseRecord: {
+      payload: Prisma.$UserPurchaseRecordPayload<ExtArgs>
+      fields: Prisma.UserPurchaseRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserPurchaseRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserPurchaseRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.UserPurchaseRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserPurchaseRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload>
+        }
+        findMany: {
+          args: Prisma.UserPurchaseRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload>[]
+        }
+        create: {
+          args: Prisma.UserPurchaseRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload>
+        }
+        createMany: {
+          args: Prisma.UserPurchaseRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserPurchaseRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.UserPurchaseRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload>
+        }
+        update: {
+          args: Prisma.UserPurchaseRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserPurchaseRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserPurchaseRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserPurchaseRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserPurchaseRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPurchaseRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.UserPurchaseRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserPurchaseRecord>
+        }
+        groupBy: {
+          args: Prisma.UserPurchaseRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserPurchaseRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserPurchaseRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserPurchaseRecordCountAggregateOutputType> | number
         }
       }
     }
@@ -5571,17 +5646,15 @@ export const UserCommentScalarFieldEnum = {
 export type UserCommentScalarFieldEnum = (typeof UserCommentScalarFieldEnum)[keyof typeof UserCommentScalarFieldEnum]
 
 
-export const UserDownloadScalarFieldEnum = {
+export const UserDownloadRecordScalarFieldEnum = {
   id: 'id',
   targetType: 'targetType',
   targetId: 'targetId',
   userId: 'userId',
-  workId: 'workId',
-  workType: 'workType',
   createdAt: 'createdAt'
 } as const
 
-export type UserDownloadScalarFieldEnum = (typeof UserDownloadScalarFieldEnum)[keyof typeof UserDownloadScalarFieldEnum]
+export type UserDownloadRecordScalarFieldEnum = (typeof UserDownloadRecordScalarFieldEnum)[keyof typeof UserDownloadRecordScalarFieldEnum]
 
 
 export const UserExperienceRecordScalarFieldEnum = {
@@ -5745,6 +5818,22 @@ export const UserPointRuleScalarFieldEnum = {
 } as const
 
 export type UserPointRuleScalarFieldEnum = (typeof UserPointRuleScalarFieldEnum)[keyof typeof UserPointRuleScalarFieldEnum]
+
+
+export const UserPurchaseRecordScalarFieldEnum = {
+  id: 'id',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  userId: 'userId',
+  price: 'price',
+  status: 'status',
+  paymentMethod: 'paymentMethod',
+  outTradeNo: 'outTradeNo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserPurchaseRecordScalarFieldEnum = (typeof UserPurchaseRecordScalarFieldEnum)[keyof typeof UserPurchaseRecordScalarFieldEnum]
 
 
 export const UserViewScalarFieldEnum = {
@@ -6279,8 +6368,9 @@ export const WorkChapterScalarFieldEnum = {
   likeCount: 'likeCount',
   commentCount: 'commentCount',
   purchaseCount: 'purchaseCount',
+  downloadCount: 'downloadCount',
   wordCount: 'wordCount',
-  contentPath: 'contentPath',
+  content: 'content',
   remark: 'remark',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -6667,7 +6757,7 @@ export type GlobalOmitConfig = {
   userCommentLike?: Prisma.UserCommentLikeOmit
   userCommentReport?: Prisma.UserCommentReportOmit
   userComment?: Prisma.UserCommentOmit
-  userDownload?: Prisma.UserDownloadOmit
+  userDownloadRecord?: Prisma.UserDownloadRecordOmit
   userExperienceRecord?: Prisma.UserExperienceRecordOmit
   userExperienceRule?: Prisma.UserExperienceRuleOmit
   userFavorite?: Prisma.UserFavoriteOmit
@@ -6677,6 +6767,7 @@ export type GlobalOmitConfig = {
   userLike?: Prisma.UserLikeOmit
   userPointRecord?: Prisma.UserPointRecordOmit
   userPointRule?: Prisma.UserPointRuleOmit
+  userPurchaseRecord?: Prisma.UserPurchaseRecordOmit
   userView?: Prisma.UserViewOmit
   forumConfigHistory?: Prisma.ForumConfigHistoryOmit
   forumConfig?: Prisma.ForumConfigOmit
