@@ -4,25 +4,25 @@ model WorkCommentReport {
   id Int @id @default(autoincrement())
 
   /// 关联的评论ID
-  commentId Int @map("comment_id")
+  commentId  Int  @map("comment_id")
   /// 举报人ID
-  reporterId Int @map("reporter_id")
+  reporterId Int  @map("reporter_id")
   /// 处理人ID
-  handlerId Int? @map("handler_id")
+  handlerId  Int? @map("handler_id")
 
   /// 举报原因类型
-  reason String
+  reason      String
   /// 举报详细说明
   description String?
   /// 证据截图URL
   evidenceUrl String? @map("evidence_url")
 
   /// 处理状态：pending=待处理, processing=处理中, resolved=已解决, rejected=已拒绝
-  status String @default("pending")
+  status       String    @default("pending")
   /// 处理备注
-  handlingNote String? @map("handling_note")
+  handlingNote String?   @map("handling_note")
   /// 处理时间
-  handledAt DateTime? @map("handled_at") @db.Timestamptz(6)
+  handledAt    DateTime? @map("handled_at") @db.Timestamptz(6)
 
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -30,11 +30,11 @@ model WorkCommentReport {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   /// 关联评论
-  comment WorkComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  comment  WorkComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
   /// 关联举报人
-  reporter AppUser @relation("WorkCommentReportReporter", fields: [reporterId], references: [id])
+  reporter AppUser     @relation("WorkCommentReportReporter", fields: [reporterId], references: [id])
   /// 关联处理人
-  handler AppUser? @relation("WorkCommentReportHandler", fields: [handlerId], references: [id])
+  handler  AppUser?    @relation("WorkCommentReportHandler", fields: [handlerId], references: [id])
 
   /// 评论与举报人唯一约束
   @@unique([commentId, reporterId])

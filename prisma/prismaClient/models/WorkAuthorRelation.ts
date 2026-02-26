@@ -45,7 +45,6 @@ export type WorkAuthorRelationMinAggregateOutputType = {
   workId: number | null
   authorId: number | null
   sortOrder: number | null
-  role: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -55,7 +54,6 @@ export type WorkAuthorRelationMaxAggregateOutputType = {
   workId: number | null
   authorId: number | null
   sortOrder: number | null
-  role: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -65,7 +63,6 @@ export type WorkAuthorRelationCountAggregateOutputType = {
   workId: number
   authorId: number
   sortOrder: number
-  role: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -91,7 +88,6 @@ export type WorkAuthorRelationMinAggregateInputType = {
   workId?: true
   authorId?: true
   sortOrder?: true
-  role?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -101,7 +97,6 @@ export type WorkAuthorRelationMaxAggregateInputType = {
   workId?: true
   authorId?: true
   sortOrder?: true
-  role?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -111,7 +106,6 @@ export type WorkAuthorRelationCountAggregateInputType = {
   workId?: true
   authorId?: true
   sortOrder?: true
-  role?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -208,7 +202,6 @@ export type WorkAuthorRelationGroupByOutputType = {
   workId: number
   authorId: number
   sortOrder: number
-  role: string | null
   createdAt: Date
   updatedAt: Date
   _count: WorkAuthorRelationCountAggregateOutputType | null
@@ -241,7 +234,6 @@ export type WorkAuthorRelationWhereInput = {
   workId?: Prisma.IntFilter<"WorkAuthorRelation"> | number
   authorId?: Prisma.IntFilter<"WorkAuthorRelation"> | number
   sortOrder?: Prisma.IntFilter<"WorkAuthorRelation"> | number
-  role?: Prisma.StringNullableFilter<"WorkAuthorRelation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkAuthorRelation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkAuthorRelation"> | Date | string
   work?: Prisma.XOR<Prisma.WorkScalarRelationFilter, Prisma.WorkWhereInput>
@@ -253,7 +245,6 @@ export type WorkAuthorRelationOrderByWithRelationInput = {
   workId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
-  role?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   work?: Prisma.WorkOrderByWithRelationInput
@@ -269,7 +260,6 @@ export type WorkAuthorRelationWhereUniqueInput = Prisma.AtLeast<{
   workId?: Prisma.IntFilter<"WorkAuthorRelation"> | number
   authorId?: Prisma.IntFilter<"WorkAuthorRelation"> | number
   sortOrder?: Prisma.IntFilter<"WorkAuthorRelation"> | number
-  role?: Prisma.StringNullableFilter<"WorkAuthorRelation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkAuthorRelation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkAuthorRelation"> | Date | string
   work?: Prisma.XOR<Prisma.WorkScalarRelationFilter, Prisma.WorkWhereInput>
@@ -281,7 +271,6 @@ export type WorkAuthorRelationOrderByWithAggregationInput = {
   workId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
-  role?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.WorkAuthorRelationCountOrderByAggregateInput
@@ -299,14 +288,12 @@ export type WorkAuthorRelationScalarWhereWithAggregatesInput = {
   workId?: Prisma.IntWithAggregatesFilter<"WorkAuthorRelation"> | number
   authorId?: Prisma.IntWithAggregatesFilter<"WorkAuthorRelation"> | number
   sortOrder?: Prisma.IntWithAggregatesFilter<"WorkAuthorRelation"> | number
-  role?: Prisma.StringNullableWithAggregatesFilter<"WorkAuthorRelation"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkAuthorRelation"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WorkAuthorRelation"> | Date | string
 }
 
 export type WorkAuthorRelationCreateInput = {
   sortOrder?: number
-  role?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   work: Prisma.WorkCreateNestedOneWithoutAuthorsInput
@@ -318,14 +305,12 @@ export type WorkAuthorRelationUncheckedCreateInput = {
   workId: number
   authorId: number
   sortOrder?: number
-  role?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkAuthorRelationUpdateInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   work?: Prisma.WorkUpdateOneRequiredWithoutAuthorsNestedInput
@@ -337,7 +322,6 @@ export type WorkAuthorRelationUncheckedUpdateInput = {
   workId?: Prisma.IntFieldUpdateOperationsInput | number
   authorId?: Prisma.IntFieldUpdateOperationsInput | number
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -347,14 +331,12 @@ export type WorkAuthorRelationCreateManyInput = {
   workId: number
   authorId: number
   sortOrder?: number
-  role?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkAuthorRelationUpdateManyMutationInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -364,7 +346,6 @@ export type WorkAuthorRelationUncheckedUpdateManyInput = {
   workId?: Prisma.IntFieldUpdateOperationsInput | number
   authorId?: Prisma.IntFieldUpdateOperationsInput | number
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -389,7 +370,6 @@ export type WorkAuthorRelationCountOrderByAggregateInput = {
   workId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
-  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -406,7 +386,6 @@ export type WorkAuthorRelationMaxOrderByAggregateInput = {
   workId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
-  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -416,7 +395,6 @@ export type WorkAuthorRelationMinOrderByAggregateInput = {
   workId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
-  role?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -514,7 +492,6 @@ export type WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput = {
 
 export type WorkAuthorRelationCreateWithoutAuthorInput = {
   sortOrder?: number
-  role?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   work: Prisma.WorkCreateNestedOneWithoutAuthorsInput
@@ -524,7 +501,6 @@ export type WorkAuthorRelationUncheckedCreateWithoutAuthorInput = {
   id?: number
   workId: number
   sortOrder?: number
-  role?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -563,14 +539,12 @@ export type WorkAuthorRelationScalarWhereInput = {
   workId?: Prisma.IntFilter<"WorkAuthorRelation"> | number
   authorId?: Prisma.IntFilter<"WorkAuthorRelation"> | number
   sortOrder?: Prisma.IntFilter<"WorkAuthorRelation"> | number
-  role?: Prisma.StringNullableFilter<"WorkAuthorRelation"> | string | null
   createdAt?: Prisma.DateTimeFilter<"WorkAuthorRelation"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkAuthorRelation"> | Date | string
 }
 
 export type WorkAuthorRelationCreateWithoutWorkInput = {
   sortOrder?: number
-  role?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   author: Prisma.WorkAuthorCreateNestedOneWithoutWorkAuthorsInput
@@ -580,7 +554,6 @@ export type WorkAuthorRelationUncheckedCreateWithoutWorkInput = {
   id?: number
   authorId: number
   sortOrder?: number
-  role?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -615,14 +588,12 @@ export type WorkAuthorRelationCreateManyAuthorInput = {
   id?: number
   workId: number
   sortOrder?: number
-  role?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkAuthorRelationUpdateWithoutAuthorInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   work?: Prisma.WorkUpdateOneRequiredWithoutAuthorsNestedInput
@@ -632,7 +603,6 @@ export type WorkAuthorRelationUncheckedUpdateWithoutAuthorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   workId?: Prisma.IntFieldUpdateOperationsInput | number
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -641,7 +611,6 @@ export type WorkAuthorRelationUncheckedUpdateManyWithoutAuthorInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   workId?: Prisma.IntFieldUpdateOperationsInput | number
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -650,14 +619,12 @@ export type WorkAuthorRelationCreateManyWorkInput = {
   id?: number
   authorId: number
   sortOrder?: number
-  role?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type WorkAuthorRelationUpdateWithoutWorkInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   author?: Prisma.WorkAuthorUpdateOneRequiredWithoutWorkAuthorsNestedInput
@@ -667,7 +634,6 @@ export type WorkAuthorRelationUncheckedUpdateWithoutWorkInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   authorId?: Prisma.IntFieldUpdateOperationsInput | number
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -676,7 +642,6 @@ export type WorkAuthorRelationUncheckedUpdateManyWithoutWorkInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   authorId?: Prisma.IntFieldUpdateOperationsInput | number
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
-  role?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -688,7 +653,6 @@ export type WorkAuthorRelationSelect<ExtArgs extends runtime.Types.Extensions.In
   workId?: boolean
   authorId?: boolean
   sortOrder?: boolean
-  role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
@@ -700,7 +664,6 @@ export type WorkAuthorRelationSelectCreateManyAndReturn<ExtArgs extends runtime.
   workId?: boolean
   authorId?: boolean
   sortOrder?: boolean
-  role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
@@ -712,7 +675,6 @@ export type WorkAuthorRelationSelectUpdateManyAndReturn<ExtArgs extends runtime.
   workId?: boolean
   authorId?: boolean
   sortOrder?: boolean
-  role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
@@ -724,12 +686,11 @@ export type WorkAuthorRelationSelectScalar = {
   workId?: boolean
   authorId?: boolean
   sortOrder?: boolean
-  role?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type WorkAuthorRelationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "authorId" | "sortOrder" | "role" | "createdAt" | "updatedAt", ExtArgs["result"]["workAuthorRelation"]>
+export type WorkAuthorRelationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "authorId" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["workAuthorRelation"]>
 export type WorkAuthorRelationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
   author?: boolean | Prisma.WorkAuthorDefaultArgs<ExtArgs>
@@ -772,10 +733,6 @@ export type $WorkAuthorRelationPayload<ExtArgs extends runtime.Types.Extensions.
      * 排序顺序（用于展示顺序）
      */
     sortOrder: number
-    /**
-     * 角色类型（如：作者、作画、原作等）
-     */
-    role: string | null
     /**
      * 创建时间
      */
@@ -1213,7 +1170,6 @@ export interface WorkAuthorRelationFieldRefs {
   readonly workId: Prisma.FieldRef<"WorkAuthorRelation", 'Int'>
   readonly authorId: Prisma.FieldRef<"WorkAuthorRelation", 'Int'>
   readonly sortOrder: Prisma.FieldRef<"WorkAuthorRelation", 'Int'>
-  readonly role: Prisma.FieldRef<"WorkAuthorRelation", 'String'>
   readonly createdAt: Prisma.FieldRef<"WorkAuthorRelation", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WorkAuthorRelation", 'DateTime'>
 }

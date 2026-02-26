@@ -8,7 +8,7 @@ import {
   ForumReportReasonEnum,
   ForumReportStatusEnum,
   ForumReportTypeEnum,
-} from '@libs/forum/report'
+} from '../forum-report.constant'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class BaseForumReportDto extends BaseDto {

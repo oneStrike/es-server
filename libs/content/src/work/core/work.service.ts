@@ -9,9 +9,14 @@ import {
 } from '@libs/interaction'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { CreateWorkDto, QueryWorkDto, UpdateWorkDto } from './dto/work.dto'
+import {
+  CreateWorkDto,
+  QueryWorkDto,
+  QueryWorkTypeDto,
+  UpdateWorkDto,
+} from './dto/work.dto'
 import { WorkGrowthEventKey } from './work.constant'
-import { WORK_LIST_SELECT } from './work.select'
+import { PAGE_WORK_SELECT, WORK_RELATION_SELECT } from './work.select'
 
 @Injectable()
 export class WorkService extends BaseService {
@@ -32,7 +37,9 @@ export class WorkService extends BaseService {
   }
 
   private getTargetType(workType: number): InteractionTargetType {
-    return workType === 1 ? InteractionTargetType.COMIC : InteractionTargetType.NOVEL
+    return workType === 1
+      ? InteractionTargetType.COMIC
+      : InteractionTargetType.NOVEL
   }
 
   /**
@@ -135,6 +142,45 @@ export class WorkService extends BaseService {
   }
 
   /**
+   * 分页查询热门作品
+   */
+  async getHotWorkPage(dto: QueryWorkTypeDto) {
+    return this.work.findPagination({
+      where: {
+        ...dto,
+        isHot: true,
+      },
+      select: PAGE_WORK_SELECT,
+    })
+  }
+
+  /**
+   * 分页查询最新作品
+   */
+  async getNewWorkPage(dto: QueryWorkTypeDto) {
+    return this.work.findPagination({
+      where: {
+        ...dto,
+        isNew: true,
+      },
+      select: PAGE_WORK_SELECT,
+    })
+  }
+
+  /**
+   * 分页查询推荐作品
+   */
+  async getRecommendedWorkPage(dto: QueryWorkTypeDto) {
+    return this.work.findPagination({
+      where: {
+        ...dto,
+        isRecommended: true,
+      },
+      select: PAGE_WORK_SELECT,
+    })
+  }
+
+  /**
    * 分页查询作品列表
    * @param queryWorkDto 查询条件
    * @returns 分页的作品列表
@@ -188,7 +234,7 @@ export class WorkService extends BaseService {
 
     return this.work.findPagination({
       where: { ...where, ...otherDto },
-      select: WORK_LIST_SELECT,
+      select: PAGE_WORK_SELECT,
     })
   }
 
@@ -201,9 +247,9 @@ export class WorkService extends BaseService {
     const work = await this.work.findUnique({
       where: { id },
       include: {
-        authors: WORK_LIST_SELECT.authors,
-        categories: WORK_LIST_SELECT.categories,
-        tags: WORK_LIST_SELECT.tags,
+        authors: WORK_RELATION_SELECT.authors,
+        categories: WORK_RELATION_SELECT.categories,
+        tags: WORK_RELATION_SELECT.tags,
       },
     })
 
@@ -325,7 +371,11 @@ export class WorkService extends BaseService {
       throw new BadRequestException('作品不存在')
     }
     const targetType = this.getTargetType(work.type)
-    const liked = await this.likeService.checkLikeStatus(targetType, workId, userId)
+    const liked = await this.likeService.checkLikeStatus(
+      targetType,
+      workId,
+      userId,
+    )
     return { liked }
   }
 
@@ -335,7 +385,11 @@ export class WorkService extends BaseService {
       throw new BadRequestException('作品不存在')
     }
     const targetType = this.getTargetType(work.type)
-    const favorited = await this.favoriteService.checkFavoriteStatus(targetType, workId, userId)
+    const favorited = await this.favoriteService.checkFavoriteStatus(
+      targetType,
+      workId,
+      userId,
+    )
     return { favorited }
   }
 
@@ -354,28 +408,49 @@ export class WorkService extends BaseService {
     const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
     const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
 
-    const [comicLikes, novelLikes, comicFavorites, novelFavorites] = await Promise.all([
-      comicIds.length > 0
-        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
-        : new Map(),
-      novelIds.length > 0
-        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
-        : new Map(),
-      comicIds.length > 0
-        ? this.favoriteService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
-        : new Map(),
-      novelIds.length > 0
-        ? this.favoriteService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
-        : new Map(),
-    ])
+    const [comicLikes, novelLikes, comicFavorites, novelFavorites] =
+      await Promise.all([
+        comicIds.length > 0
+          ? this.likeService.checkStatusBatch(
+              InteractionTargetType.COMIC,
+              comicIds,
+              userId,
+            )
+          : new Map(),
+        novelIds.length > 0
+          ? this.likeService.checkStatusBatch(
+              InteractionTargetType.NOVEL,
+              novelIds,
+              userId,
+            )
+          : new Map(),
+        comicIds.length > 0
+          ? this.favoriteService.checkStatusBatch(
+              InteractionTargetType.COMIC,
+              comicIds,
+              userId,
+            )
+          : new Map(),
+        novelIds.length > 0
+          ? this.favoriteService.checkStatusBatch(
+              InteractionTargetType.NOVEL,
+              novelIds,
+              userId,
+            )
+          : new Map(),
+      ])
 
     return ids.map((id) => {
       const workType = workMap.get(id)
       const isComic = workType === 1
       return {
         id,
-        liked: isComic ? comicLikes.get(id) ?? false : novelLikes.get(id) ?? false,
-        favorited: isComic ? comicFavorites.get(id) ?? false : novelFavorites.get(id) ?? false,
+        liked: isComic
+          ? (comicLikes.get(id) ?? false)
+          : (novelLikes.get(id) ?? false),
+        favorited: isComic
+          ? (comicFavorites.get(id) ?? false)
+          : (novelFavorites.get(id) ?? false),
       }
     })
   }
@@ -392,20 +467,37 @@ export class WorkService extends BaseService {
     const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
     const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
 
-    const [comicLikes, novelLikes, comicFavorites, novelFavorites] = await Promise.all([
-      comicIds.length > 0
-        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
-        : new Map(),
-      novelIds.length > 0
-        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
-        : new Map(),
-      comicIds.length > 0
-        ? this.favoriteService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
-        : new Map(),
-      novelIds.length > 0
-        ? this.favoriteService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
-        : new Map(),
-    ])
+    const [comicLikes, novelLikes, comicFavorites, novelFavorites] =
+      await Promise.all([
+        comicIds.length > 0
+          ? this.likeService.checkStatusBatch(
+              InteractionTargetType.COMIC,
+              comicIds,
+              userId,
+            )
+          : new Map(),
+        novelIds.length > 0
+          ? this.likeService.checkStatusBatch(
+              InteractionTargetType.NOVEL,
+              novelIds,
+              userId,
+            )
+          : new Map(),
+        comicIds.length > 0
+          ? this.favoriteService.checkStatusBatch(
+              InteractionTargetType.COMIC,
+              comicIds,
+              userId,
+            )
+          : new Map(),
+        novelIds.length > 0
+          ? this.favoriteService.checkStatusBatch(
+              InteractionTargetType.NOVEL,
+              novelIds,
+              userId,
+            )
+          : new Map(),
+      ])
 
     return {
       ...page,
@@ -413,8 +505,12 @@ export class WorkService extends BaseService {
         const isComic = item.type === 1
         return {
           ...item,
-          liked: isComic ? comicLikes.get(item.id) ?? false : novelLikes.get(item.id) ?? false,
-          favorited: isComic ? comicFavorites.get(item.id) ?? false : novelFavorites.get(item.id) ?? false,
+          liked: isComic
+            ? (comicLikes.get(item.id) ?? false)
+            : (novelLikes.get(item.id) ?? false),
+          favorited: isComic
+            ? (comicFavorites.get(item.id) ?? false)
+            : (novelFavorites.get(item.id) ?? false),
         }
       }),
     }
@@ -424,8 +520,18 @@ export class WorkService extends BaseService {
     const { pageIndex = 0, pageSize = 15 } = dto
 
     const [comicResult, novelResult] = await Promise.all([
-      this.favoriteService.getUserFavorites(userId, InteractionTargetType.COMIC, pageIndex, pageSize),
-      this.favoriteService.getUserFavorites(userId, InteractionTargetType.NOVEL, pageIndex, pageSize),
+      this.favoriteService.getUserFavorites(
+        userId,
+        InteractionTargetType.COMIC,
+        pageIndex,
+        pageSize,
+      ),
+      this.favoriteService.getUserFavorites(
+        userId,
+        InteractionTargetType.NOVEL,
+        pageIndex,
+        pageSize,
+      ),
     ])
 
     const allFavorites = [...comicResult.list, ...novelResult.list]
@@ -439,7 +545,11 @@ export class WorkService extends BaseService {
 
     const works = await this.work.findMany({
       where: { id: { in: workIds } },
-      select: WORK_LIST_SELECT,
+      include: {
+        authors: WORK_RELATION_SELECT.authors,
+        categories: WORK_RELATION_SELECT.categories,
+        tags: WORK_RELATION_SELECT.tags,
+      },
     })
 
     const workMap = new Map(works.map((item) => [item.id, item]))
@@ -452,17 +562,28 @@ export class WorkService extends BaseService {
 
     const [comicLikes, novelLikes] = await Promise.all([
       comicIds.length > 0
-        ? this.likeService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
+        ? this.likeService.checkStatusBatch(
+            InteractionTargetType.COMIC,
+            comicIds,
+            userId,
+          )
         : new Map(),
       novelIds.length > 0
-        ? this.likeService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
+        ? this.likeService.checkStatusBatch(
+            InteractionTargetType.NOVEL,
+            novelIds,
+            userId,
+          )
         : new Map(),
     ])
 
     return {
       list: orderedWorks.map((item) => ({
         ...item,
-        liked: item.type === 1 ? comicLikes.get(item.id) ?? false : novelLikes.get(item.id) ?? false,
+        liked:
+          item.type === 1
+            ? (comicLikes.get(item.id) ?? false)
+            : (novelLikes.get(item.id) ?? false),
         favorited: true,
       })),
       total: comicResult.total + novelResult.total,
@@ -473,8 +594,18 @@ export class WorkService extends BaseService {
     const { pageIndex = 0, pageSize = 15 } = dto
 
     const [comicResult, novelResult] = await Promise.all([
-      this.likeService.getUserLikes(userId, InteractionTargetType.COMIC, pageIndex, pageSize),
-      this.likeService.getUserLikes(userId, InteractionTargetType.NOVEL, pageIndex, pageSize),
+      this.likeService.getUserLikes(
+        userId,
+        InteractionTargetType.COMIC,
+        pageIndex,
+        pageSize,
+      ),
+      this.likeService.getUserLikes(
+        userId,
+        InteractionTargetType.NOVEL,
+        pageIndex,
+        pageSize,
+      ),
     ])
 
     const allLikes = [...comicResult.list, ...novelResult.list]
@@ -488,7 +619,11 @@ export class WorkService extends BaseService {
 
     const works = await this.work.findMany({
       where: { id: { in: workIds } },
-      select: WORK_LIST_SELECT,
+      include: {
+        authors: WORK_RELATION_SELECT.authors,
+        categories: WORK_RELATION_SELECT.categories,
+        tags: WORK_RELATION_SELECT.tags,
+      },
     })
 
     const workMap = new Map(works.map((item) => [item.id, item]))
@@ -501,10 +636,18 @@ export class WorkService extends BaseService {
 
     const [comicFavorites, novelFavorites] = await Promise.all([
       comicIds.length > 0
-        ? this.favoriteService.checkStatusBatch(InteractionTargetType.COMIC, comicIds, userId)
+        ? this.favoriteService.checkStatusBatch(
+            InteractionTargetType.COMIC,
+            comicIds,
+            userId,
+          )
         : new Map(),
       novelIds.length > 0
-        ? this.favoriteService.checkStatusBatch(InteractionTargetType.NOVEL, novelIds, userId)
+        ? this.favoriteService.checkStatusBatch(
+            InteractionTargetType.NOVEL,
+            novelIds,
+            userId,
+          )
         : new Map(),
     ])
 
@@ -512,7 +655,10 @@ export class WorkService extends BaseService {
       list: orderedWorks.map((item) => ({
         ...item,
         liked: true,
-        favorited: item.type === 1 ? comicFavorites.get(item.id) ?? false : novelFavorites.get(item.id) ?? false,
+        favorited:
+          item.type === 1
+            ? (comicFavorites.get(item.id) ?? false)
+            : (novelFavorites.get(item.id) ?? false),
       })),
       total: comicResult.total + novelResult.total,
     }

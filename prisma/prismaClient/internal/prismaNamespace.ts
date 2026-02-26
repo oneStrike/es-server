@@ -6212,7 +6212,6 @@ export const WorkAuthorRelationScalarFieldEnum = {
   workId: 'workId',
   authorId: 'authorId',
   sortOrder: 'sortOrder',
-  role: 'role',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -6263,6 +6262,7 @@ export const WorkChapterScalarFieldEnum = {
   workType: 'workType',
   title: 'title',
   subtitle: 'subtitle',
+  cover: 'cover',
   description: 'description',
   sortOrder: 'sortOrder',
   readRule: 'readRule',

@@ -90,12 +90,12 @@ model UserComment {
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// 回复的评论
-  replyTo UserComment? @relation("CommentReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replyTo UserComment?  @relation("CommentReply", fields: [replyToId], references: [id], onDelete: SetNull)
   /// 该评论的回复列表
   replies UserComment[] @relation("CommentReply")
 
   /// 实际回复的根评论
-  actualReplyTo UserComment? @relation("CommentActualReply", fields: [actualReplyToId], references: [id], onDelete: SetNull)
+  actualReplyTo UserComment?  @relation("CommentActualReply", fields: [actualReplyToId], references: [id], onDelete: SetNull)
   /// 以此评论为根评论的楼中楼列表
   actualReplies UserComment[] @relation("CommentActualReply")
 

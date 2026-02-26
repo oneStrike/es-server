@@ -21,7 +21,12 @@ import {
 import { WorkSerialStatusEnum } from '../work.constant'
 
 /// 作者信息DTO
-class AuthorInfoDto extends PickType(BaseAuthorDto, ['id', 'name', 'avatar']) {}
+class AuthorInfoDto extends PickType(BaseAuthorDto, [
+  'id',
+  'name',
+  'type',
+  'avatar',
+]) {}
 
 /// 作品作者关联DTO
 export class WorkAuthorRelationDto {
@@ -45,18 +50,14 @@ export class WorkAuthorRelationDto {
     validation: false,
   })
   sortOrder?: number
-
-  @StringProperty({
-    description: '角色类型',
-    example: '作者',
-    required: false,
-    validation: false,
-  })
-  role?: string
 }
 
 /// 分类信息DTO
-class CategoryInfoDto extends PickType(BaseCategoryDto, ['id', 'name', 'icon']) {}
+class CategoryInfoDto extends PickType(BaseCategoryDto, [
+  'id',
+  'name',
+  'icon',
+]) {}
 
 /// 作品分类关联DTO
 export class WorkCategoryRelationDto {
@@ -101,7 +102,7 @@ export class WorkTagRelationDto {
   sortOrder?: number
 }
 
-/// 作品基础DTO
+// 作品基础DTO
 export class BaseWorkDto extends BaseDto {
   @EnumProperty({
     description: '作品类型（1=漫画, 2=小说）',
@@ -320,7 +321,11 @@ export class BaseWorkDto extends BaseDto {
     description: '作品作者',
     example: [
       {
-        author: { id: 1, name: '村上春树', avatar: 'https://example.com/avatar.jpg' },
+        author: {
+          id: 1,
+          name: '村上春树',
+          avatar: 'https://example.com/avatar.jpg',
+        },
         sortOrder: 0,
         role: '作者',
       },
@@ -362,6 +367,20 @@ export class BaseWorkDto extends BaseDto {
   })
   tags!: WorkTagRelationDto[]
 }
+
+// 分页返回作品DTO
+export class PageWorkDto extends PickType(BaseWorkDto, [
+  'id',
+  'name',
+  'type',
+  'cover',
+  'popularity',
+  'isRecommended',
+  'isHot',
+  'isNew',
+  'categories',
+  'tags',
+]) {}
 
 /// 创建作品DTO
 export class CreateWorkDto extends OmitType(BaseWorkDto, [
@@ -407,23 +426,24 @@ export class UpdateWorkDto extends IntersectionType(
   IdDto,
 ) {}
 
-/// 查询作品DTO
+// 查询作品DTO
 export class QueryWorkDto extends IntersectionType(
   PageDto,
   IntersectionType(
-    PickType(PartialType(BaseWorkDto), [
-      'name',
-      'type',
-      'publisher',
-      'isPublished',
-      'serialStatus',
-      'language',
-      'region',
-      'ageRating',
-      'isRecommended',
-      'isHot',
-      'isNew',
-    ]),
+    PartialType(
+      PickType(BaseWorkDto, [
+        'name',
+        'publisher',
+        'isPublished',
+        'serialStatus',
+        'language',
+        'region',
+        'ageRating',
+        'isRecommended',
+        'isHot',
+        'isNew',
+      ]),
+    ),
     PartialType(PickType(CreateWorkDto, ['tagIds', 'categoryIds'])),
   ),
 ) {
@@ -433,7 +453,21 @@ export class QueryWorkDto extends IntersectionType(
     required: false,
   })
   author?: string
+
+  @EnumProperty({
+    description: '作品类型（1=漫画, 2=小说）',
+    example: WorkTypeEnum.COMIC,
+    required: true,
+    enum: WorkTypeEnum,
+  })
+  type!: WorkTypeEnum
 }
+
+// 根据类型查询作品
+export class QueryWorkTypeDto extends IntersectionType(
+  PageDto,
+  PickType(QueryWorkDto, ['type']),
+) {}
 
 /// 作品用户状态字段DTO
 export class WorkUserStatusFieldsDto {

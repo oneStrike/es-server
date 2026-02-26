@@ -59,19 +59,19 @@ model ForumTopic {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   /// 关联板块
-  section       ForumSection         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  section       ForumSection        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   /// 关联用户
-  user          AppUser              @relation("UserTopics", fields: [userId], references: [id])
+  user          AppUser             @relation("UserTopics", fields: [userId], references: [id])
   /// 关联最后回复用户
-  lastReplyUser AppUser?             @relation("UserLastReplyTopics", fields: [lastReplyUserId], references: [id])
+  lastReplyUser AppUser?            @relation("UserLastReplyTopics", fields: [lastReplyUserId], references: [id])
   /// 回复列表
   replies       ForumReply[]
   /// 关联的最后回复板块
-  lastSections  ForumSection[]       @relation("LastTopic")
+  lastSections  ForumSection[]      @relation("LastTopic")
   /// 标签关联
   topicTags     ForumTopicTag[]
   /// 通知关联
-  notifications ForumNotification[]  @relation("NotificationTopic")
+  notifications ForumNotification[] @relation("NotificationTopic")
 
   /// 板块索引
   @@index([sectionId])

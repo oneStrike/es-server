@@ -9,7 +9,7 @@ import {
   ForumAuditStatusEnum,
   ForumReplySortFieldEnum,
   ForumReplySortOrderEnum,
-} from '@libs/forum/reply'
+} from '../forum-reply.constant'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**

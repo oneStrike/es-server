@@ -68,6 +68,7 @@ export type WorkChapterMinAggregateOutputType = {
   workType: number | null
   title: string | null
   subtitle: string | null
+  cover: string | null
   description: string | null
   sortOrder: number | null
   readRule: number | null
@@ -98,6 +99,7 @@ export type WorkChapterMaxAggregateOutputType = {
   workType: number | null
   title: string | null
   subtitle: string | null
+  cover: string | null
   description: string | null
   sortOrder: number | null
   readRule: number | null
@@ -128,6 +130,7 @@ export type WorkChapterCountAggregateOutputType = {
   workType: number
   title: number
   subtitle: number
+  cover: number
   description: number
   sortOrder: number
   readRule: number
@@ -196,6 +199,7 @@ export type WorkChapterMinAggregateInputType = {
   workType?: true
   title?: true
   subtitle?: true
+  cover?: true
   description?: true
   sortOrder?: true
   readRule?: true
@@ -226,6 +230,7 @@ export type WorkChapterMaxAggregateInputType = {
   workType?: true
   title?: true
   subtitle?: true
+  cover?: true
   description?: true
   sortOrder?: true
   readRule?: true
@@ -256,6 +261,7 @@ export type WorkChapterCountAggregateInputType = {
   workType?: true
   title?: true
   subtitle?: true
+  cover?: true
   description?: true
   sortOrder?: true
   readRule?: true
@@ -373,6 +379,7 @@ export type WorkChapterGroupByOutputType = {
   workType: number
   title: string
   subtitle: string | null
+  cover: string | null
   description: string | null
   sortOrder: number
   readRule: number
@@ -426,6 +433,7 @@ export type WorkChapterWhereInput = {
   workType?: Prisma.IntFilter<"WorkChapter"> | number
   title?: Prisma.StringFilter<"WorkChapter"> | string
   subtitle?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
+  cover?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   description?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   sortOrder?: Prisma.IntFilter<"WorkChapter"> | number
   readRule?: Prisma.IntFilter<"WorkChapter"> | number
@@ -461,6 +469,7 @@ export type WorkChapterOrderByWithRelationInput = {
   workType?: Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrderInput | Prisma.SortOrder
+  cover?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
@@ -500,6 +509,7 @@ export type WorkChapterWhereUniqueInput = Prisma.AtLeast<{
   workType?: Prisma.IntFilter<"WorkChapter"> | number
   title?: Prisma.StringFilter<"WorkChapter"> | string
   subtitle?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
+  cover?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   description?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   sortOrder?: Prisma.IntFilter<"WorkChapter"> | number
   readRule?: Prisma.IntFilter<"WorkChapter"> | number
@@ -535,6 +545,7 @@ export type WorkChapterOrderByWithAggregationInput = {
   workType?: Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrderInput | Prisma.SortOrder
+  cover?: Prisma.SortOrderInput | Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
@@ -573,6 +584,7 @@ export type WorkChapterScalarWhereWithAggregatesInput = {
   workType?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
   title?: Prisma.StringWithAggregatesFilter<"WorkChapter"> | string
   subtitle?: Prisma.StringNullableWithAggregatesFilter<"WorkChapter"> | string | null
+  cover?: Prisma.StringNullableWithAggregatesFilter<"WorkChapter"> | string | null
   description?: Prisma.StringNullableWithAggregatesFilter<"WorkChapter"> | string | null
   sortOrder?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
   readRule?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
@@ -601,6 +613,7 @@ export type WorkChapterCreateInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -634,6 +647,7 @@ export type WorkChapterUncheckedCreateInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -664,6 +678,7 @@ export type WorkChapterUpdateInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -697,6 +712,7 @@ export type WorkChapterUncheckedUpdateInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -729,6 +745,7 @@ export type WorkChapterCreateManyInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -757,6 +774,7 @@ export type WorkChapterUpdateManyMutationInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -785,6 +803,7 @@ export type WorkChapterUncheckedUpdateManyInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -835,6 +854,7 @@ export type WorkChapterCountOrderByAggregateInput = {
   workType?: Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrder
+  cover?: Prisma.SortOrder
   description?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
@@ -883,6 +903,7 @@ export type WorkChapterMaxOrderByAggregateInput = {
   workType?: Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrder
+  cover?: Prisma.SortOrder
   description?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
@@ -913,6 +934,7 @@ export type WorkChapterMinOrderByAggregateInput = {
   workType?: Prisma.SortOrder
   title?: Prisma.SortOrder
   subtitle?: Prisma.SortOrder
+  cover?: Prisma.SortOrder
   description?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
@@ -1120,6 +1142,7 @@ export type WorkChapterCreateWithoutRequiredDownloadLevelInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1152,6 +1175,7 @@ export type WorkChapterUncheckedCreateWithoutRequiredDownloadLevelInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1191,6 +1215,7 @@ export type WorkChapterCreateWithoutRequiredReadLevelInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1223,6 +1248,7 @@ export type WorkChapterUncheckedCreateWithoutRequiredReadLevelInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1283,6 +1309,7 @@ export type WorkChapterScalarWhereInput = {
   workType?: Prisma.IntFilter<"WorkChapter"> | number
   title?: Prisma.StringFilter<"WorkChapter"> | string
   subtitle?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
+  cover?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   description?: Prisma.StringNullableFilter<"WorkChapter"> | string | null
   sortOrder?: Prisma.IntFilter<"WorkChapter"> | number
   readRule?: Prisma.IntFilter<"WorkChapter"> | number
@@ -1327,6 +1354,7 @@ export type WorkChapterCreateWithoutPurchasesInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1359,6 +1387,7 @@ export type WorkChapterUncheckedCreateWithoutPurchasesInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1404,6 +1433,7 @@ export type WorkChapterUpdateWithoutPurchasesInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1436,6 +1466,7 @@ export type WorkChapterUncheckedUpdateWithoutPurchasesInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1465,6 +1496,7 @@ export type WorkChapterCreateWithoutCommentsInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1497,6 +1529,7 @@ export type WorkChapterUncheckedCreateWithoutCommentsInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1542,6 +1575,7 @@ export type WorkChapterUpdateWithoutCommentsInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1574,6 +1608,7 @@ export type WorkChapterUncheckedUpdateWithoutCommentsInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1603,6 +1638,7 @@ export type WorkChapterCreateWithoutWorkInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1634,6 +1670,7 @@ export type WorkChapterUncheckedCreateWithoutWorkInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1692,6 +1729,7 @@ export type WorkChapterCreateManyRequiredDownloadLevelInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1721,6 +1759,7 @@ export type WorkChapterCreateManyRequiredReadLevelInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1748,6 +1787,7 @@ export type WorkChapterUpdateWithoutRequiredDownloadLevelInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1780,6 +1820,7 @@ export type WorkChapterUncheckedUpdateWithoutRequiredDownloadLevelInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1811,6 +1852,7 @@ export type WorkChapterUncheckedUpdateManyWithoutRequiredDownloadLevelInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1838,6 +1880,7 @@ export type WorkChapterUpdateWithoutRequiredReadLevelInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1870,6 +1913,7 @@ export type WorkChapterUncheckedUpdateWithoutRequiredReadLevelInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1901,6 +1945,7 @@ export type WorkChapterUncheckedUpdateManyWithoutRequiredReadLevelInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1929,6 +1974,7 @@ export type WorkChapterCreateManyWorkInput = {
   workType: number
   title: string
   subtitle?: string | null
+  cover?: string | null
   description?: string | null
   sortOrder?: number
   readRule?: number
@@ -1957,6 +2003,7 @@ export type WorkChapterUpdateWithoutWorkInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1988,6 +2035,7 @@ export type WorkChapterUncheckedUpdateWithoutWorkInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2019,6 +2067,7 @@ export type WorkChapterUncheckedUpdateManyWithoutWorkInput = {
   workType?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   subtitle?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2089,6 +2138,7 @@ export type WorkChapterSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   workType?: boolean
   title?: boolean
   subtitle?: boolean
+  cover?: boolean
   description?: boolean
   sortOrder?: boolean
   readRule?: boolean
@@ -2125,6 +2175,7 @@ export type WorkChapterSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   workType?: boolean
   title?: boolean
   subtitle?: boolean
+  cover?: boolean
   description?: boolean
   sortOrder?: boolean
   readRule?: boolean
@@ -2158,6 +2209,7 @@ export type WorkChapterSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   workType?: boolean
   title?: boolean
   subtitle?: boolean
+  cover?: boolean
   description?: boolean
   sortOrder?: boolean
   readRule?: boolean
@@ -2191,6 +2243,7 @@ export type WorkChapterSelectScalar = {
   workType?: boolean
   title?: boolean
   subtitle?: boolean
+  cover?: boolean
   description?: boolean
   sortOrder?: boolean
   readRule?: boolean
@@ -2215,7 +2268,7 @@ export type WorkChapterSelectScalar = {
   deletedAt?: boolean
 }
 
-export type WorkChapterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "workType" | "title" | "subtitle" | "description" | "sortOrder" | "readRule" | "downloadRule" | "readPoints" | "downloadPoints" | "requiredReadLevelId" | "requiredDownloadLevelId" | "isPublished" | "isPreview" | "canComment" | "publishAt" | "viewCount" | "likeCount" | "commentCount" | "purchaseCount" | "wordCount" | "contentPath" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workChapter"]>
+export type WorkChapterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "workType" | "title" | "subtitle" | "cover" | "description" | "sortOrder" | "readRule" | "downloadRule" | "readPoints" | "downloadPoints" | "requiredReadLevelId" | "requiredDownloadLevelId" | "isPublished" | "isPreview" | "canComment" | "publishAt" | "viewCount" | "likeCount" | "commentCount" | "purchaseCount" | "wordCount" | "contentPath" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workChapter"]>
 export type WorkChapterInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
   requiredDownloadLevel?: boolean | Prisma.WorkChapter$requiredDownloadLevelArgs<ExtArgs>
@@ -2280,6 +2333,10 @@ export type $WorkChapterPayload<ExtArgs extends runtime.Types.Extensions.Interna
      * 章节副标题或描述
      */
     subtitle: string | null
+    /**
+     * 章节封面
+     */
+    cover: string | null
     /**
      * 章节描述
      */
@@ -2801,6 +2858,7 @@ export interface WorkChapterFieldRefs {
   readonly workType: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly title: Prisma.FieldRef<"WorkChapter", 'String'>
   readonly subtitle: Prisma.FieldRef<"WorkChapter", 'String'>
+  readonly cover: Prisma.FieldRef<"WorkChapter", 'String'>
   readonly description: Prisma.FieldRef<"WorkChapter", 'String'>
   readonly sortOrder: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly readRule: Prisma.FieldRef<"WorkChapter", 'Int'>

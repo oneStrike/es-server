@@ -50,8 +50,8 @@ export class BaseAuthorDto extends BaseDto {
   isEnabled!: boolean
 
   @ArrayProperty({
-    description: '作者角色类型',
-    example: [AuthorTypeEnum.COSER],
+    description: '作者角色类型，1 => 漫画家 2 => 小说家',
+    example: [AuthorTypeEnum.NOVEL],
     required: true,
     itemType: 'number',
   })

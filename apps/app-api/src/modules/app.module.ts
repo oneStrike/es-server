@@ -9,6 +9,7 @@ import { DictionaryModule } from './dictionary/dictionary.module'
 import { NovelModule } from './novel/novel.module'
 import { TaskModule } from './task/task.module'
 import { UserModule } from './user/user.module'
+import { WorkModule } from './work/work.module'
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { UserModule } from './user/user.module'
     AgreementModule,
     ComicModule,
     TaskModule,
-    NovelModule
+    NovelModule,
+    WorkModule,
   ],
 })
-export class AppApiModule { }
+export class AppApiModule {}
