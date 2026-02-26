@@ -20,8 +20,8 @@ model WorkChapter {
   readRule                Int                   @default(0) @map("read_rule") @db.SmallInt
   /// 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
   downloadRule            Int                   @default(1) @map("download_rule") @db.SmallInt
-  /// 阅读所需要的积分（积分购买时必填）
-  readPoints              Int?                  @default(0) @map("read_points")
+  /// 价格
+  price                   Int                   @default(0) @map("price")
   /// 下载所需要的积分（积分可下载时必填）
   downloadPoints          Int?                  @default(0) @map("download_points")
   /// 允许查看的会员等级ID

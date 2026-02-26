@@ -3,7 +3,10 @@ import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { DownloadTargetTypeEnum } from '../download.constant'
 
-export class BaseUserDownloadRecordDto extends BaseDto {
+export class BaseUserDownloadRecordDto extends PickType(BaseDto, [
+  'id',
+  'createdAt',
+]) {
   @EnumProperty({
     description: '目标类型：1=漫画, 2=小说, 3=漫画章节, 4=小说章节',
     enum: DownloadTargetTypeEnum,
@@ -26,6 +29,12 @@ export class BaseUserDownloadRecordDto extends BaseDto {
   })
   userId!: number
 }
+
+export class UserDownloadRecordKeyDto extends PickType(
+  BaseUserDownloadRecordDto,
+  ['targetType', 'targetId', 'userId'],
+) {}
+
 
 export class QueryUserDownloadRecordDto extends IntersectionType(
   IntersectionType(

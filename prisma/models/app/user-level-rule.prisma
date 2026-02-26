@@ -58,6 +58,8 @@ model UserLevelRule {
   chaptersAsDownloadLevel WorkChapter[]  @relation("ChapterDownloadLevel")
   /// 关联章节阅读权限
   chaptersAsReadLevel     WorkChapter[]  @relation("ChapterReadLevel")
+  /// 关联作品下载权限
+  worksAsDownloadLevel    Work[]         @relation("WorkDownloadLevel")
 
   /// 启用与排序索引
   @@index([isEnabled, sortOrder])

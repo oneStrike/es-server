@@ -44,6 +44,10 @@ export enum InteractionActionType {
   DELETE_COMMENT = 8,
   /** 下载 - 用户下载目标内容 */
   DOWNLOAD = 9,
+  /** 购买 - 用户购买目标内容 */
+  PURCHASE = 10,
+  /** 退款 - 用户申请退款 */
+  REFUND = 11,
 }
 
 /**
@@ -206,6 +210,13 @@ export const VIEW_TARGET_TYPES = [
  * 下载功能支持的目标类型
  */
 export const DOWNLOAD_TARGET_TYPES = [
+  InteractionTargetType.COMIC,
+  InteractionTargetType.NOVEL,
+  InteractionTargetType.COMIC_CHAPTER,
+  InteractionTargetType.NOVEL_CHAPTER,
+] as const
+
+export const PURCHASE_TARGET_TYPES = [
   InteractionTargetType.COMIC,
   InteractionTargetType.NOVEL,
   InteractionTargetType.COMIC_CHAPTER,

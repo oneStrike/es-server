@@ -33,7 +33,7 @@ export type WorkChapterAvgAggregateOutputType = {
   sortOrder: number | null
   readRule: number | null
   downloadRule: number | null
-  readPoints: number | null
+  price: number | null
   downloadPoints: number | null
   requiredReadLevelId: number | null
   requiredDownloadLevelId: number | null
@@ -52,7 +52,7 @@ export type WorkChapterSumAggregateOutputType = {
   sortOrder: number | null
   readRule: number | null
   downloadRule: number | null
-  readPoints: number | null
+  price: number | null
   downloadPoints: number | null
   requiredReadLevelId: number | null
   requiredDownloadLevelId: number | null
@@ -75,7 +75,7 @@ export type WorkChapterMinAggregateOutputType = {
   sortOrder: number | null
   readRule: number | null
   downloadRule: number | null
-  readPoints: number | null
+  price: number | null
   downloadPoints: number | null
   requiredReadLevelId: number | null
   requiredDownloadLevelId: number | null
@@ -107,7 +107,7 @@ export type WorkChapterMaxAggregateOutputType = {
   sortOrder: number | null
   readRule: number | null
   downloadRule: number | null
-  readPoints: number | null
+  price: number | null
   downloadPoints: number | null
   requiredReadLevelId: number | null
   requiredDownloadLevelId: number | null
@@ -139,7 +139,7 @@ export type WorkChapterCountAggregateOutputType = {
   sortOrder: number
   readRule: number
   downloadRule: number
-  readPoints: number
+  price: number
   downloadPoints: number
   requiredReadLevelId: number
   requiredDownloadLevelId: number
@@ -169,7 +169,7 @@ export type WorkChapterAvgAggregateInputType = {
   sortOrder?: true
   readRule?: true
   downloadRule?: true
-  readPoints?: true
+  price?: true
   downloadPoints?: true
   requiredReadLevelId?: true
   requiredDownloadLevelId?: true
@@ -188,7 +188,7 @@ export type WorkChapterSumAggregateInputType = {
   sortOrder?: true
   readRule?: true
   downloadRule?: true
-  readPoints?: true
+  price?: true
   downloadPoints?: true
   requiredReadLevelId?: true
   requiredDownloadLevelId?: true
@@ -211,7 +211,7 @@ export type WorkChapterMinAggregateInputType = {
   sortOrder?: true
   readRule?: true
   downloadRule?: true
-  readPoints?: true
+  price?: true
   downloadPoints?: true
   requiredReadLevelId?: true
   requiredDownloadLevelId?: true
@@ -243,7 +243,7 @@ export type WorkChapterMaxAggregateInputType = {
   sortOrder?: true
   readRule?: true
   downloadRule?: true
-  readPoints?: true
+  price?: true
   downloadPoints?: true
   requiredReadLevelId?: true
   requiredDownloadLevelId?: true
@@ -275,7 +275,7 @@ export type WorkChapterCountAggregateInputType = {
   sortOrder?: true
   readRule?: true
   downloadRule?: true
-  readPoints?: true
+  price?: true
   downloadPoints?: true
   requiredReadLevelId?: true
   requiredDownloadLevelId?: true
@@ -394,7 +394,7 @@ export type WorkChapterGroupByOutputType = {
   sortOrder: number
   readRule: number
   downloadRule: number
-  readPoints: number | null
+  price: number
   downloadPoints: number | null
   requiredReadLevelId: number | null
   requiredDownloadLevelId: number | null
@@ -449,7 +449,7 @@ export type WorkChapterWhereInput = {
   sortOrder?: Prisma.IntFilter<"WorkChapter"> | number
   readRule?: Prisma.IntFilter<"WorkChapter"> | number
   downloadRule?: Prisma.IntFilter<"WorkChapter"> | number
-  readPoints?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
+  price?: Prisma.IntFilter<"WorkChapter"> | number
   downloadPoints?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
   requiredReadLevelId?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
   requiredDownloadLevelId?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
@@ -486,7 +486,7 @@ export type WorkChapterOrderByWithRelationInput = {
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   downloadRule?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrderInput | Prisma.SortOrder
+  price?: Prisma.SortOrder
   downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
   requiredReadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
   requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -527,7 +527,7 @@ export type WorkChapterWhereUniqueInput = Prisma.AtLeast<{
   sortOrder?: Prisma.IntFilter<"WorkChapter"> | number
   readRule?: Prisma.IntFilter<"WorkChapter"> | number
   downloadRule?: Prisma.IntFilter<"WorkChapter"> | number
-  readPoints?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
+  price?: Prisma.IntFilter<"WorkChapter"> | number
   downloadPoints?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
   requiredReadLevelId?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
   requiredDownloadLevelId?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
@@ -564,7 +564,7 @@ export type WorkChapterOrderByWithAggregationInput = {
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   downloadRule?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrderInput | Prisma.SortOrder
+  price?: Prisma.SortOrder
   downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
   requiredReadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
   requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -604,7 +604,7 @@ export type WorkChapterScalarWhereWithAggregatesInput = {
   sortOrder?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
   readRule?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
   downloadRule?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
-  readPoints?: Prisma.IntNullableWithAggregatesFilter<"WorkChapter"> | number | null
+  price?: Prisma.IntWithAggregatesFilter<"WorkChapter"> | number
   downloadPoints?: Prisma.IntNullableWithAggregatesFilter<"WorkChapter"> | number | null
   requiredReadLevelId?: Prisma.IntNullableWithAggregatesFilter<"WorkChapter"> | number | null
   requiredDownloadLevelId?: Prisma.IntNullableWithAggregatesFilter<"WorkChapter"> | number | null
@@ -634,7 +634,7 @@ export type WorkChapterCreateInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   isPublished?: boolean
   isPreview?: boolean
@@ -669,7 +669,7 @@ export type WorkChapterUncheckedCreateInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredReadLevelId?: number | null
   requiredDownloadLevelId?: number | null
@@ -701,7 +701,7 @@ export type WorkChapterUpdateInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -736,7 +736,7 @@ export type WorkChapterUncheckedUpdateInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -770,7 +770,7 @@ export type WorkChapterCreateManyInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredReadLevelId?: number | null
   requiredDownloadLevelId?: number | null
@@ -800,7 +800,7 @@ export type WorkChapterUpdateManyMutationInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -830,7 +830,7 @@ export type WorkChapterUncheckedUpdateManyInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -882,7 +882,7 @@ export type WorkChapterCountOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   downloadRule?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
+  price?: Prisma.SortOrder
   downloadPoints?: Prisma.SortOrder
   requiredReadLevelId?: Prisma.SortOrder
   requiredDownloadLevelId?: Prisma.SortOrder
@@ -910,7 +910,7 @@ export type WorkChapterAvgOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   downloadRule?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
+  price?: Prisma.SortOrder
   downloadPoints?: Prisma.SortOrder
   requiredReadLevelId?: Prisma.SortOrder
   requiredDownloadLevelId?: Prisma.SortOrder
@@ -933,7 +933,7 @@ export type WorkChapterMaxOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   downloadRule?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
+  price?: Prisma.SortOrder
   downloadPoints?: Prisma.SortOrder
   requiredReadLevelId?: Prisma.SortOrder
   requiredDownloadLevelId?: Prisma.SortOrder
@@ -965,7 +965,7 @@ export type WorkChapterMinOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   downloadRule?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
+  price?: Prisma.SortOrder
   downloadPoints?: Prisma.SortOrder
   requiredReadLevelId?: Prisma.SortOrder
   requiredDownloadLevelId?: Prisma.SortOrder
@@ -993,7 +993,7 @@ export type WorkChapterSumOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
   readRule?: Prisma.SortOrder
   downloadRule?: Prisma.SortOrder
-  readPoints?: Prisma.SortOrder
+  price?: Prisma.SortOrder
   downloadPoints?: Prisma.SortOrder
   requiredReadLevelId?: Prisma.SortOrder
   requiredDownloadLevelId?: Prisma.SortOrder
@@ -1175,7 +1175,7 @@ export type WorkChapterCreateWithoutRequiredDownloadLevelInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   isPublished?: boolean
   isPreview?: boolean
@@ -1209,7 +1209,7 @@ export type WorkChapterUncheckedCreateWithoutRequiredDownloadLevelInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredReadLevelId?: number | null
   isPublished?: boolean
@@ -1250,7 +1250,7 @@ export type WorkChapterCreateWithoutRequiredReadLevelInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   isPublished?: boolean
   isPreview?: boolean
@@ -1284,7 +1284,7 @@ export type WorkChapterUncheckedCreateWithoutRequiredReadLevelInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredDownloadLevelId?: number | null
   isPublished?: boolean
@@ -1346,7 +1346,7 @@ export type WorkChapterScalarWhereInput = {
   sortOrder?: Prisma.IntFilter<"WorkChapter"> | number
   readRule?: Prisma.IntFilter<"WorkChapter"> | number
   downloadRule?: Prisma.IntFilter<"WorkChapter"> | number
-  readPoints?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
+  price?: Prisma.IntFilter<"WorkChapter"> | number
   downloadPoints?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
   requiredReadLevelId?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
   requiredDownloadLevelId?: Prisma.IntNullableFilter<"WorkChapter"> | number | null
@@ -1392,7 +1392,7 @@ export type WorkChapterCreateWithoutPurchasesInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   isPublished?: boolean
   isPreview?: boolean
@@ -1426,7 +1426,7 @@ export type WorkChapterUncheckedCreateWithoutPurchasesInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredReadLevelId?: number | null
   requiredDownloadLevelId?: number | null
@@ -1473,7 +1473,7 @@ export type WorkChapterUpdateWithoutPurchasesInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1507,7 +1507,7 @@ export type WorkChapterUncheckedUpdateWithoutPurchasesInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1538,7 +1538,7 @@ export type WorkChapterCreateWithoutCommentsInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   isPublished?: boolean
   isPreview?: boolean
@@ -1572,7 +1572,7 @@ export type WorkChapterUncheckedCreateWithoutCommentsInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredReadLevelId?: number | null
   requiredDownloadLevelId?: number | null
@@ -1619,7 +1619,7 @@ export type WorkChapterUpdateWithoutCommentsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1653,7 +1653,7 @@ export type WorkChapterUncheckedUpdateWithoutCommentsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1684,7 +1684,7 @@ export type WorkChapterCreateWithoutWorkInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   isPublished?: boolean
   isPreview?: boolean
@@ -1717,7 +1717,7 @@ export type WorkChapterUncheckedCreateWithoutWorkInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredReadLevelId?: number | null
   requiredDownloadLevelId?: number | null
@@ -1777,7 +1777,7 @@ export type WorkChapterCreateManyRequiredDownloadLevelInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredReadLevelId?: number | null
   isPublished?: boolean
@@ -1808,7 +1808,7 @@ export type WorkChapterCreateManyRequiredReadLevelInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredDownloadLevelId?: number | null
   isPublished?: boolean
@@ -1837,7 +1837,7 @@ export type WorkChapterUpdateWithoutRequiredDownloadLevelInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1871,7 +1871,7 @@ export type WorkChapterUncheckedUpdateWithoutRequiredDownloadLevelInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1904,7 +1904,7 @@ export type WorkChapterUncheckedUpdateManyWithoutRequiredDownloadLevelInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1933,7 +1933,7 @@ export type WorkChapterUpdateWithoutRequiredReadLevelInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1967,7 +1967,7 @@ export type WorkChapterUncheckedUpdateWithoutRequiredReadLevelInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2000,7 +2000,7 @@ export type WorkChapterUncheckedUpdateManyWithoutRequiredReadLevelInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2030,7 +2030,7 @@ export type WorkChapterCreateManyWorkInput = {
   sortOrder?: number
   readRule?: number
   downloadRule?: number
-  readPoints?: number | null
+  price?: number
   downloadPoints?: number | null
   requiredReadLevelId?: number | null
   requiredDownloadLevelId?: number | null
@@ -2060,7 +2060,7 @@ export type WorkChapterUpdateWithoutWorkInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPreview?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2093,7 +2093,7 @@ export type WorkChapterUncheckedUpdateWithoutWorkInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -2126,7 +2126,7 @@ export type WorkChapterUncheckedUpdateManyWithoutWorkInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   readRule?: Prisma.IntFieldUpdateOperationsInput | number
   downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  readPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
   downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredReadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -2198,7 +2198,7 @@ export type WorkChapterSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   sortOrder?: boolean
   readRule?: boolean
   downloadRule?: boolean
-  readPoints?: boolean
+  price?: boolean
   downloadPoints?: boolean
   requiredReadLevelId?: boolean
   requiredDownloadLevelId?: boolean
@@ -2236,7 +2236,7 @@ export type WorkChapterSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   sortOrder?: boolean
   readRule?: boolean
   downloadRule?: boolean
-  readPoints?: boolean
+  price?: boolean
   downloadPoints?: boolean
   requiredReadLevelId?: boolean
   requiredDownloadLevelId?: boolean
@@ -2271,7 +2271,7 @@ export type WorkChapterSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   sortOrder?: boolean
   readRule?: boolean
   downloadRule?: boolean
-  readPoints?: boolean
+  price?: boolean
   downloadPoints?: boolean
   requiredReadLevelId?: boolean
   requiredDownloadLevelId?: boolean
@@ -2306,7 +2306,7 @@ export type WorkChapterSelectScalar = {
   sortOrder?: boolean
   readRule?: boolean
   downloadRule?: boolean
-  readPoints?: boolean
+  price?: boolean
   downloadPoints?: boolean
   requiredReadLevelId?: boolean
   requiredDownloadLevelId?: boolean
@@ -2327,7 +2327,7 @@ export type WorkChapterSelectScalar = {
   deletedAt?: boolean
 }
 
-export type WorkChapterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "workType" | "title" | "subtitle" | "cover" | "description" | "sortOrder" | "readRule" | "downloadRule" | "readPoints" | "downloadPoints" | "requiredReadLevelId" | "requiredDownloadLevelId" | "isPublished" | "isPreview" | "canComment" | "publishAt" | "viewCount" | "likeCount" | "commentCount" | "purchaseCount" | "downloadCount" | "wordCount" | "content" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workChapter"]>
+export type WorkChapterOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "workType" | "title" | "subtitle" | "cover" | "description" | "sortOrder" | "readRule" | "downloadRule" | "price" | "downloadPoints" | "requiredReadLevelId" | "requiredDownloadLevelId" | "isPublished" | "isPreview" | "canComment" | "publishAt" | "viewCount" | "likeCount" | "commentCount" | "purchaseCount" | "downloadCount" | "wordCount" | "content" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workChapter"]>
 export type WorkChapterInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   work?: boolean | Prisma.WorkDefaultArgs<ExtArgs>
   requiredDownloadLevel?: boolean | Prisma.WorkChapter$requiredDownloadLevelArgs<ExtArgs>
@@ -2413,9 +2413,9 @@ export type $WorkChapterPayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     downloadRule: number
     /**
-     * 阅读所需要的积分（积分购买时必填）
+     * 价格
      */
-    readPoints: number | null
+    price: number
     /**
      * 下载所需要的积分（积分可下载时必填）
      */
@@ -2926,7 +2926,7 @@ export interface WorkChapterFieldRefs {
   readonly sortOrder: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly readRule: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly downloadRule: Prisma.FieldRef<"WorkChapter", 'Int'>
-  readonly readPoints: Prisma.FieldRef<"WorkChapter", 'Int'>
+  readonly price: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly downloadPoints: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly requiredReadLevelId: Prisma.FieldRef<"WorkChapter", 'Int'>
   readonly requiredDownloadLevelId: Prisma.FieldRef<"WorkChapter", 'Int'>

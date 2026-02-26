@@ -1,82 +1,94 @@
 /// 作品基表模型
 model Work {
   /// 主键id
-  id              Int       @id @default(autoincrement())
+  id                      Int       @id @default(autoincrement())
   /// 作品类型（1=漫画, 2=小说）
-  type            Int       @db.SmallInt
+  type                    Int       @db.SmallInt
   /// 作品名称
-  name            String    @db.VarChar(100)
+  name                    String    @db.VarChar(100)
   /// 作品别名（多个别名用逗号分隔）
-  alias           String?   @db.VarChar(200)
+  alias                   String?   @db.VarChar(200)
   /// 作品封面URL
-  cover           String    @db.VarChar(500)
+  cover                   String    @db.VarChar(500)
   /// 作品简介
-  description     String
+  description             String
   /// 语言代码（数据字典）
-  language        String    @db.VarChar(10)
+  language                String    @db.VarChar(10)
   /// 地区代码（数据字典）
-  region          String    @db.VarChar(10)
+  region                  String    @db.VarChar(10)
   /// 内容年龄分级 数据字典
-  ageRating       String?   @db.VarChar(10)
+  ageRating               String?   @db.VarChar(10)
   /// 连载状态（0=未开始, 1=连载中, 2=已完结, 3=暂停, 4=停更）
-  serialStatus    Int       @default(0) @db.SmallInt
+  serialStatus            Int       @default(0) @db.SmallInt
   /// 出版社
-  publisher       String?   @db.VarChar(100)
+  publisher               String?   @db.VarChar(100)
   /// 原作来源（如：小说改编、游戏改编等）
-  originalSource  String?   @db.VarChar(100)
+  originalSource          String?   @db.VarChar(100)
   /// 版权信息
-  copyright       String?   @db.VarChar(500)
+  copyright               String?   @db.VarChar(500)
   /// 免责声明
-  disclaimer      String?
+  disclaimer              String?
   /// 发布状态
-  isPublished     Boolean   @default(true)
+  isPublished             Boolean   @default(true)
   /// 发布日期
-  publishAt       DateTime? @db.Date
+  publishAt               DateTime? @db.Date
   /// 最后更新时间（内容更新时间）
-  lastUpdated     DateTime? @db.Timestamptz(6)
+  lastUpdated             DateTime? @db.Timestamptz(6)
   /// 浏览量
-  viewCount       Int       @default(0)
+  viewCount               Int       @default(0)
   /// 收藏数
-  favoriteCount   Int       @default(0)
+  favoriteCount           Int       @default(0)
   /// 点赞数
-  likeCount       Int       @default(0)
+  likeCount               Int       @default(0)
   /// 下载数
-  downloadCount   Int       @default(0)
+  downloadCount           Int       @default(0)
+  /// 购买数
+  purchaseCount           Int       @default(0) @map("purchase_count")
+  /// 价格
+  price                   Int       @default(0) @map("price")
+  /// 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
+  downloadRule            Int       @default(1) @map("download_rule") @db.SmallInt
+  /// 下载所需要的积分（积分可下载时必填）
+  downloadPoints          Int?      @default(0) @map("download_points")
+  /// 允许下载的会员等级ID
+  requiredDownloadLevelId Int?      @map("required_download_level_id")
   /// 评分（1-10分，保留一位小数）
-  rating          Float?
+  rating                  Float?
   /// 评分人数
-  ratingCount     Int       @default(0)
+  ratingCount             Int       @default(0)
   /// 热度（真实数据）
-  popularity      Int       @default(0)
+  popularity              Int       @default(0)
   /// 是否推荐到首页
-  isRecommended   Boolean   @default(false)
+  isRecommended           Boolean   @default(false)
   /// 是否热门
-  isHot           Boolean   @default(false)
+  isHot                   Boolean   @default(false)
   /// 是否新作
-  isNew           Boolean   @default(false)
+  isNew                   Boolean   @default(false)
   /// 推荐权重（影响推荐排序）
-  recommendWeight Float     @default(1.0)
+  recommendWeight         Float     @default(1.0)
   /// 创建时间
-  createdAt       DateTime  @default(now()) @db.Timestamptz(6)
+  createdAt               DateTime  @default(now()) @db.Timestamptz(6)
   /// 更新时间
-  updatedAt       DateTime  @updatedAt @db.Timestamptz(6)
+  updatedAt               DateTime  @updatedAt @db.Timestamptz(6)
   /// 软删除时间（用于数据恢复或归档）
-  deletedAt       DateTime? @db.Timestamptz(6)
+  deletedAt               DateTime? @db.Timestamptz(6)
 
+  /// 关联下载权限等级
+  requiredDownloadLevel UserLevelRule?         @relation("WorkDownloadLevel", fields: [requiredDownloadLevelId], references: [id])
   /// 漫画扩展信息
-  comic      WorkComic?
+  comic                 WorkComic?
   /// 小说扩展信息
-  novel      WorkNovel?
+  novel                 WorkNovel?
   /// 关联的作者列表
-  authors    WorkAuthorRelation[]
+  authors               WorkAuthorRelation[]
   /// 关联的分类列表
-  categories WorkCategoryRelation[]
+  categories            WorkCategoryRelation[]
   /// 关联的标签列表
-  tags       WorkTagRelation[]
+  tags                  WorkTagRelation[]
   /// 关联的章节列表
-  chapters   WorkChapter[]
+  chapters              WorkChapter[]
   /// 评论关联
-  comments   WorkComment[]
+  comments              WorkComment[]
 
   /// 发布状态与发布时间索引
   @@index([isPublished, publishAt])
@@ -96,5 +108,9 @@ model Work {
   @@index([isHot, isNew])
   /// 作品类型索引
   @@index([type])
+  /// 价格索引
+  @@index([price])
+  /// 下载权限等级索引
+  @@index([requiredDownloadLevelId])
   @@map("work")
 }

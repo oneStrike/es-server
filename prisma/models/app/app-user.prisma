@@ -25,8 +25,10 @@ model AppUser {
   /// 出生日期
   birthDate DateTime? @map("birth_date") @db.Date
 
-  /// 论坛积分
+  /// 积分
   points     Int @default(0)
+  /// 余额
+  balance    Int @default(0)
   /// 论坛经验值
   experience Int @default(0)
 
@@ -142,6 +144,8 @@ model AppUser {
   @@index([email])
   /// 积分索引
   @@index([points])
+  /// 余额索引
+  @@index([balance])
   /// 状态索引
   @@index([status])
   /// 等级索引

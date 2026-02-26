@@ -7,6 +7,7 @@ import { DownloadModule } from './download/download.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { InteractionEventEmitter } from './interaction.event'
 import { LikeModule } from './like/like.module'
+import { PurchaseModule } from './purchase/purchase.module'
 import { ValidatorModule } from './validator/validator.module'
 import { ViewModule } from './view/view.module'
 
@@ -22,6 +23,7 @@ import { ViewModule } from './view/view.module'
     CommentLikeModule,
     CommentReportModule,
     DownloadModule,
+    PurchaseModule,
   ],
   providers: [InteractionEventEmitter],
   exports: [
@@ -34,6 +36,7 @@ import { ViewModule } from './view/view.module'
     CommentLikeModule,
     CommentReportModule,
     DownloadModule,
+    PurchaseModule,
     InteractionEventEmitter,
   ],
 })

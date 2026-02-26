@@ -3,6 +3,7 @@ import { BaseService, Prisma } from '@libs/base/database'
 import { DragReorderDto, PageDto } from '@libs/base/dto'
 import {
   DownloadService,
+  DownloadTargetTypeEnum,
   InteractionTargetType,
   LikeService,
 } from '@libs/interaction'
@@ -86,7 +87,7 @@ export class WorkChapterService extends BaseService {
       workType: true, // 作品类型(1=漫画, 2=小说)
       sortOrder: true, // 排序号
       readRule: true, // 阅读权限规则
-      readPoints: true, // 阅读所需积分
+      price: true, // 价格
       downloadRule: true, // 下载权限规则
       downloadPoints: true, // 下载所需积分
       canComment: true, // 是否允许评论
@@ -113,6 +114,17 @@ export class WorkChapterService extends BaseService {
     return workType === 1
       ? InteractionTargetType.COMIC_CHAPTER
       : InteractionTargetType.NOVEL_CHAPTER
+  }
+
+  /**
+   * 根据作品类型获取下载目标类型
+   * @param workType 作品类型(1=漫画, 2=小说)
+   * @returns 对应的下载目标类型枚举
+   */
+  private getDownloadTargetType(workType: number): DownloadTargetTypeEnum {
+    return workType === 1
+      ? DownloadTargetTypeEnum.COMIC_CHAPTER
+      : DownloadTargetTypeEnum.NOVEL_CHAPTER
   }
 
   /**
@@ -207,6 +219,7 @@ export class WorkChapterService extends BaseService {
   async getChapterDetailWithUserStatus(id: number, userId: number) {
     const chapter = await this.getChapterDetail(id)
     const targetType = this.getTargetType(chapter.workType)
+    const downloadTargetType = this.getDownloadTargetType(chapter.workType)
 
     // 并行查询用户的点赞、购买、下载状态
     const [liked, purchased, downloaded] = await Promise.all([
@@ -221,7 +234,11 @@ export class WorkChapterService extends BaseService {
           },
         })
         .then((p) => !!p),
-      this.downloadService.checkDownloadStatus(targetType, id, userId),
+      this.downloadService.checkDownloadStatus({
+        targetType: downloadTargetType,
+        targetId: id,
+        userId,
+      }),
     ])
 
     return {
@@ -400,9 +417,9 @@ export class WorkChapterService extends BaseService {
 
       // 积分权限验证
       if (chapter.readRule === WorkViewPermissionEnum.POINTS) {
-        const requiredPoints = chapter.readPoints ?? 0
+        const requiredPoints = chapter.price ?? 0
         if (requiredPoints <= 0) {
-          throw new BadRequestException('章节未配置购买积分')
+          throw new BadRequestException('章节未配置购买价格')
         }
         if (user.points < requiredPoints) {
           throw new BadRequestException('积分不足')
@@ -542,10 +559,10 @@ export class WorkChapterService extends BaseService {
       }
     }
 
-    // 验证积分
-    const requiredPoints = chapter.readPoints ?? 0
+    // 验证价格
+    const requiredPoints = chapter.price ?? 0
     if (requiredPoints <= 0) {
-      throw new BadRequestException('章节未配置购买积分')
+      throw new BadRequestException('章节未配置购买价格')
     }
 
     if (user.points < requiredPoints) {
@@ -612,14 +629,14 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    const targetType = this.getTargetType(chapter.workType)
+    const downloadTargetType = this.getDownloadTargetType(chapter.workType)
 
     // 检查是否已下载
-    const existingDownload = await this.downloadService.checkDownloadStatus(
-      targetType,
-      id,
+    const existingDownload = await this.downloadService.checkDownloadStatus({
+      targetType: downloadTargetType,
+      targetId: id,
       userId,
-    )
+    })
 
     if (existingDownload) {
       throw new BadRequestException('已下载该章节')
@@ -673,13 +690,11 @@ export class WorkChapterService extends BaseService {
     }
 
     // 记录下载
-    await this.downloadService.recordDownload(
-      targetType,
-      id,
+    await this.downloadService.recordDownload({
+      targetType: downloadTargetType,
+      targetId: id,
       userId,
-      chapter.workId,
-      chapter.workType,
-    )
+    })
 
     // 触发下载成长事件
     await this.userGrowthEventService.handleEvent({
@@ -753,12 +768,12 @@ export class WorkChapterService extends BaseService {
     if (!chapter) {
       throw new BadRequestException('章节不存在')
     }
-    const targetType = this.getTargetType(chapter.workType)
-    const downloaded = await this.downloadService.checkDownloadStatus(
-      targetType,
-      chapterId,
+    const downloadTargetType = this.getDownloadTargetType(chapter.workType)
+    const downloaded = await this.downloadService.checkDownloadStatus({
+      targetType: downloadTargetType,
+      targetId: chapterId,
       userId,
-    )
+    })
     return { downloaded }
   }
 
@@ -813,14 +828,14 @@ export class WorkChapterService extends BaseService {
         }),
         comicChapterIds.length > 0
           ? this.downloadService.checkStatusBatch(
-              InteractionTargetType.COMIC_CHAPTER,
+              DownloadTargetTypeEnum.COMIC_CHAPTER,
               comicChapterIds,
               userId,
             )
           : new Map(),
         novelChapterIds.length > 0
           ? this.downloadService.checkStatusBatch(
-              InteractionTargetType.NOVEL_CHAPTER,
+              DownloadTargetTypeEnum.NOVEL_CHAPTER,
               novelChapterIds,
               userId,
             )
@@ -916,14 +931,14 @@ export class WorkChapterService extends BaseService {
           : new Map(),
         comicChapterIds.length > 0
           ? this.downloadService.checkStatusBatch(
-              InteractionTargetType.COMIC_CHAPTER,
+              DownloadTargetTypeEnum.COMIC_CHAPTER,
               comicChapterIds,
               userId,
             )
           : new Map(),
         novelChapterIds.length > 0
           ? this.downloadService.checkStatusBatch(
-              InteractionTargetType.NOVEL_CHAPTER,
+              DownloadTargetTypeEnum.NOVEL_CHAPTER,
               novelChapterIds,
               userId,
             )
@@ -959,18 +974,14 @@ export class WorkChapterService extends BaseService {
 
     // 分别查询漫画和小说下载记录
     const [comicResult, novelResult] = await Promise.all([
-      this.downloadService.getUserDownloads(
+      this.downloadService.getUserDownloads({
         userId,
-        InteractionTargetType.COMIC_CHAPTER,
-        pageIndex,
-        pageSize,
-      ),
-      this.downloadService.getUserDownloads(
+        targetType: DownloadTargetTypeEnum.COMIC_CHAPTER,
+      }),
+      this.downloadService.getUserDownloads({
         userId,
-        InteractionTargetType.NOVEL_CHAPTER,
-        pageIndex,
-        pageSize,
-      ),
+        targetType: DownloadTargetTypeEnum.NOVEL_CHAPTER,
+      }),
     ])
 
     // 合并并按时间排序
@@ -1127,14 +1138,14 @@ export class WorkChapterService extends BaseService {
         }),
         comicChapterIds.length > 0
           ? this.downloadService.checkStatusBatch(
-              InteractionTargetType.COMIC_CHAPTER,
+              DownloadTargetTypeEnum.COMIC_CHAPTER,
               comicChapterIds,
               userId,
             )
           : new Map(),
         novelChapterIds.length > 0
           ? this.downloadService.checkStatusBatch(
-              InteractionTargetType.NOVEL_CHAPTER,
+              DownloadTargetTypeEnum.NOVEL_CHAPTER,
               novelChapterIds,
               userId,
             )
@@ -1209,14 +1220,14 @@ export class WorkChapterService extends BaseService {
         }),
         comicChapterIds.length > 0
           ? this.downloadService.checkStatusBatch(
-              InteractionTargetType.COMIC_CHAPTER,
+              DownloadTargetTypeEnum.COMIC_CHAPTER,
               comicChapterIds,
               userId,
             )
           : new Map(),
         novelChapterIds.length > 0
           ? this.downloadService.checkStatusBatch(
-              InteractionTargetType.NOVEL_CHAPTER,
+              DownloadTargetTypeEnum.NOVEL_CHAPTER,
               novelChapterIds,
               userId,
             )

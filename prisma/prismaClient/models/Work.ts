@@ -33,6 +33,12 @@ export type WorkAvgAggregateOutputType = {
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
+  downloadCount: number | null
+  purchaseCount: number | null
+  price: number | null
+  downloadRule: number | null
+  downloadPoints: number | null
+  requiredDownloadLevelId: number | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
@@ -46,6 +52,12 @@ export type WorkSumAggregateOutputType = {
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
+  downloadCount: number | null
+  purchaseCount: number | null
+  price: number | null
+  downloadRule: number | null
+  downloadPoints: number | null
+  requiredDownloadLevelId: number | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
@@ -73,6 +85,12 @@ export type WorkMinAggregateOutputType = {
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
+  downloadCount: number | null
+  purchaseCount: number | null
+  price: number | null
+  downloadRule: number | null
+  downloadPoints: number | null
+  requiredDownloadLevelId: number | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
@@ -106,6 +124,12 @@ export type WorkMaxAggregateOutputType = {
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
+  downloadCount: number | null
+  purchaseCount: number | null
+  price: number | null
+  downloadRule: number | null
+  downloadPoints: number | null
+  requiredDownloadLevelId: number | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
@@ -139,6 +163,12 @@ export type WorkCountAggregateOutputType = {
   viewCount: number
   favoriteCount: number
   likeCount: number
+  downloadCount: number
+  purchaseCount: number
+  price: number
+  downloadRule: number
+  downloadPoints: number
+  requiredDownloadLevelId: number
   rating: number
   ratingCount: number
   popularity: number
@@ -160,6 +190,12 @@ export type WorkAvgAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  downloadCount?: true
+  purchaseCount?: true
+  price?: true
+  downloadRule?: true
+  downloadPoints?: true
+  requiredDownloadLevelId?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -173,6 +209,12 @@ export type WorkSumAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  downloadCount?: true
+  purchaseCount?: true
+  price?: true
+  downloadRule?: true
+  downloadPoints?: true
+  requiredDownloadLevelId?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -200,6 +242,12 @@ export type WorkMinAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  downloadCount?: true
+  purchaseCount?: true
+  price?: true
+  downloadRule?: true
+  downloadPoints?: true
+  requiredDownloadLevelId?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -233,6 +281,12 @@ export type WorkMaxAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  downloadCount?: true
+  purchaseCount?: true
+  price?: true
+  downloadRule?: true
+  downloadPoints?: true
+  requiredDownloadLevelId?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -266,6 +320,12 @@ export type WorkCountAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  downloadCount?: true
+  purchaseCount?: true
+  price?: true
+  downloadRule?: true
+  downloadPoints?: true
+  requiredDownloadLevelId?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -386,6 +446,12 @@ export type WorkGroupByOutputType = {
   viewCount: number
   favoriteCount: number
   likeCount: number
+  downloadCount: number
+  purchaseCount: number
+  price: number
+  downloadRule: number
+  downloadPoints: number | null
+  requiredDownloadLevelId: number | null
   rating: number | null
   ratingCount: number
   popularity: number
@@ -442,6 +508,12 @@ export type WorkWhereInput = {
   viewCount?: Prisma.IntFilter<"Work"> | number
   favoriteCount?: Prisma.IntFilter<"Work"> | number
   likeCount?: Prisma.IntFilter<"Work"> | number
+  downloadCount?: Prisma.IntFilter<"Work"> | number
+  purchaseCount?: Prisma.IntFilter<"Work"> | number
+  price?: Prisma.IntFilter<"Work"> | number
+  downloadRule?: Prisma.IntFilter<"Work"> | number
+  downloadPoints?: Prisma.IntNullableFilter<"Work"> | number | null
+  requiredDownloadLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
   popularity?: Prisma.IntFilter<"Work"> | number
@@ -452,6 +524,7 @@ export type WorkWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
+  requiredDownloadLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
   comic?: Prisma.XOR<Prisma.WorkComicNullableScalarRelationFilter, Prisma.WorkComicWhereInput> | null
   novel?: Prisma.XOR<Prisma.WorkNovelNullableScalarRelationFilter, Prisma.WorkNovelWhereInput> | null
   authors?: Prisma.WorkAuthorRelationListRelationFilter
@@ -482,6 +555,12 @@ export type WorkOrderByWithRelationInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -492,6 +571,7 @@ export type WorkOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  requiredDownloadLevel?: Prisma.UserLevelRuleOrderByWithRelationInput
   comic?: Prisma.WorkComicOrderByWithRelationInput
   novel?: Prisma.WorkNovelOrderByWithRelationInput
   authors?: Prisma.WorkAuthorRelationOrderByRelationAggregateInput
@@ -525,6 +605,12 @@ export type WorkWhereUniqueInput = Prisma.AtLeast<{
   viewCount?: Prisma.IntFilter<"Work"> | number
   favoriteCount?: Prisma.IntFilter<"Work"> | number
   likeCount?: Prisma.IntFilter<"Work"> | number
+  downloadCount?: Prisma.IntFilter<"Work"> | number
+  purchaseCount?: Prisma.IntFilter<"Work"> | number
+  price?: Prisma.IntFilter<"Work"> | number
+  downloadRule?: Prisma.IntFilter<"Work"> | number
+  downloadPoints?: Prisma.IntNullableFilter<"Work"> | number | null
+  requiredDownloadLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
   popularity?: Prisma.IntFilter<"Work"> | number
@@ -535,6 +621,7 @@ export type WorkWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
+  requiredDownloadLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
   comic?: Prisma.XOR<Prisma.WorkComicNullableScalarRelationFilter, Prisma.WorkComicWhereInput> | null
   novel?: Prisma.XOR<Prisma.WorkNovelNullableScalarRelationFilter, Prisma.WorkNovelWhereInput> | null
   authors?: Prisma.WorkAuthorRelationListRelationFilter
@@ -565,6 +652,12 @@ export type WorkOrderByWithAggregationInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -606,6 +699,12 @@ export type WorkScalarWhereWithAggregatesInput = {
   viewCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   favoriteCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   likeCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  downloadCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  purchaseCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  price?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  downloadRule?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  downloadPoints?: Prisma.IntNullableWithAggregatesFilter<"Work"> | number | null
+  requiredDownloadLevelId?: Prisma.IntNullableWithAggregatesFilter<"Work"> | number | null
   rating?: Prisma.FloatNullableWithAggregatesFilter<"Work"> | number | null
   ratingCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   popularity?: Prisma.IntWithAggregatesFilter<"Work"> | number
@@ -638,6 +737,11 @@ export type WorkCreateInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -648,6 +752,7 @@ export type WorkCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsDownloadLevelInput
   comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
   novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
@@ -678,6 +783,12 @@ export type WorkUncheckedCreateInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  requiredDownloadLevelId?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -717,6 +828,11 @@ export type WorkUpdateInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -727,6 +843,7 @@ export type WorkUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsDownloadLevelNestedInput
   comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
   novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
@@ -757,6 +874,12 @@ export type WorkUncheckedUpdateInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -797,6 +920,12 @@ export type WorkCreateManyInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  requiredDownloadLevelId?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -829,6 +958,11 @@ export type WorkUpdateManyMutationInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -862,6 +996,12 @@ export type WorkUncheckedUpdateManyInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -872,6 +1012,16 @@ export type WorkUncheckedUpdateManyInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type WorkListRelationFilter = {
+  every?: Prisma.WorkWhereInput
+  some?: Prisma.WorkWhereInput
+  none?: Prisma.WorkWhereInput
+}
+
+export type WorkOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type WorkScalarRelationFilter = {
@@ -905,6 +1055,12 @@ export type WorkCountOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -924,6 +1080,12 @@ export type WorkAvgOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -951,6 +1113,12 @@ export type WorkMaxOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -984,6 +1152,12 @@ export type WorkMinOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -1003,10 +1177,58 @@ export type WorkSumOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  downloadCount?: Prisma.SortOrder
+  purchaseCount?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  downloadRule?: Prisma.SortOrder
+  downloadPoints?: Prisma.SortOrder
+  requiredDownloadLevelId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
   recommendWeight?: Prisma.SortOrder
+}
+
+export type WorkCreateNestedManyWithoutRequiredDownloadLevelInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutRequiredDownloadLevelInput, Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput> | Prisma.WorkCreateWithoutRequiredDownloadLevelInput[] | Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput[]
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutRequiredDownloadLevelInput | Prisma.WorkCreateOrConnectWithoutRequiredDownloadLevelInput[]
+  createMany?: Prisma.WorkCreateManyRequiredDownloadLevelInputEnvelope
+  connect?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+}
+
+export type WorkUncheckedCreateNestedManyWithoutRequiredDownloadLevelInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutRequiredDownloadLevelInput, Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput> | Prisma.WorkCreateWithoutRequiredDownloadLevelInput[] | Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput[]
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutRequiredDownloadLevelInput | Prisma.WorkCreateOrConnectWithoutRequiredDownloadLevelInput[]
+  createMany?: Prisma.WorkCreateManyRequiredDownloadLevelInputEnvelope
+  connect?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+}
+
+export type WorkUpdateManyWithoutRequiredDownloadLevelNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutRequiredDownloadLevelInput, Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput> | Prisma.WorkCreateWithoutRequiredDownloadLevelInput[] | Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput[]
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutRequiredDownloadLevelInput | Prisma.WorkCreateOrConnectWithoutRequiredDownloadLevelInput[]
+  upsert?: Prisma.WorkUpsertWithWhereUniqueWithoutRequiredDownloadLevelInput | Prisma.WorkUpsertWithWhereUniqueWithoutRequiredDownloadLevelInput[]
+  createMany?: Prisma.WorkCreateManyRequiredDownloadLevelInputEnvelope
+  set?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+  disconnect?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+  delete?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+  connect?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+  update?: Prisma.WorkUpdateWithWhereUniqueWithoutRequiredDownloadLevelInput | Prisma.WorkUpdateWithWhereUniqueWithoutRequiredDownloadLevelInput[]
+  updateMany?: Prisma.WorkUpdateManyWithWhereWithoutRequiredDownloadLevelInput | Prisma.WorkUpdateManyWithWhereWithoutRequiredDownloadLevelInput[]
+  deleteMany?: Prisma.WorkScalarWhereInput | Prisma.WorkScalarWhereInput[]
+}
+
+export type WorkUncheckedUpdateManyWithoutRequiredDownloadLevelNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutRequiredDownloadLevelInput, Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput> | Prisma.WorkCreateWithoutRequiredDownloadLevelInput[] | Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput[]
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutRequiredDownloadLevelInput | Prisma.WorkCreateOrConnectWithoutRequiredDownloadLevelInput[]
+  upsert?: Prisma.WorkUpsertWithWhereUniqueWithoutRequiredDownloadLevelInput | Prisma.WorkUpsertWithWhereUniqueWithoutRequiredDownloadLevelInput[]
+  createMany?: Prisma.WorkCreateManyRequiredDownloadLevelInputEnvelope
+  set?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+  disconnect?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+  delete?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+  connect?: Prisma.WorkWhereUniqueInput | Prisma.WorkWhereUniqueInput[]
+  update?: Prisma.WorkUpdateWithWhereUniqueWithoutRequiredDownloadLevelInput | Prisma.WorkUpdateWithWhereUniqueWithoutRequiredDownloadLevelInput[]
+  updateMany?: Prisma.WorkUpdateManyWithWhereWithoutRequiredDownloadLevelInput | Prisma.WorkUpdateManyWithWhereWithoutRequiredDownloadLevelInput[]
+  deleteMany?: Prisma.WorkScalarWhereInput | Prisma.WorkScalarWhereInput[]
 }
 
 export type WorkCreateNestedOneWithoutComicInput = {
@@ -1125,6 +1347,163 @@ export type FloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type WorkCreateWithoutRequiredDownloadLevelInput = {
+  type: number
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  isPublished?: boolean
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  rating?: number | null
+  ratingCount?: number
+  popularity?: number
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  recommendWeight?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
+  novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
+  authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
+  categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
+  tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
+  chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  comments?: Prisma.WorkCommentCreateNestedManyWithoutWorkInput
+}
+
+export type WorkUncheckedCreateWithoutRequiredDownloadLevelInput = {
+  id?: number
+  type: number
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  isPublished?: boolean
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  rating?: number | null
+  ratingCount?: number
+  popularity?: number
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  recommendWeight?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comic?: Prisma.WorkComicUncheckedCreateNestedOneWithoutWorkInput
+  novel?: Prisma.WorkNovelUncheckedCreateNestedOneWithoutWorkInput
+  authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
+  categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
+  tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
+  chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+  comments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutWorkInput
+}
+
+export type WorkCreateOrConnectWithoutRequiredDownloadLevelInput = {
+  where: Prisma.WorkWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkCreateWithoutRequiredDownloadLevelInput, Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput>
+}
+
+export type WorkCreateManyRequiredDownloadLevelInputEnvelope = {
+  data: Prisma.WorkCreateManyRequiredDownloadLevelInput | Prisma.WorkCreateManyRequiredDownloadLevelInput[]
+  skipDuplicates?: boolean
+}
+
+export type WorkUpsertWithWhereUniqueWithoutRequiredDownloadLevelInput = {
+  where: Prisma.WorkWhereUniqueInput
+  update: Prisma.XOR<Prisma.WorkUpdateWithoutRequiredDownloadLevelInput, Prisma.WorkUncheckedUpdateWithoutRequiredDownloadLevelInput>
+  create: Prisma.XOR<Prisma.WorkCreateWithoutRequiredDownloadLevelInput, Prisma.WorkUncheckedCreateWithoutRequiredDownloadLevelInput>
+}
+
+export type WorkUpdateWithWhereUniqueWithoutRequiredDownloadLevelInput = {
+  where: Prisma.WorkWhereUniqueInput
+  data: Prisma.XOR<Prisma.WorkUpdateWithoutRequiredDownloadLevelInput, Prisma.WorkUncheckedUpdateWithoutRequiredDownloadLevelInput>
+}
+
+export type WorkUpdateManyWithWhereWithoutRequiredDownloadLevelInput = {
+  where: Prisma.WorkScalarWhereInput
+  data: Prisma.XOR<Prisma.WorkUpdateManyMutationInput, Prisma.WorkUncheckedUpdateManyWithoutRequiredDownloadLevelInput>
+}
+
+export type WorkScalarWhereInput = {
+  AND?: Prisma.WorkScalarWhereInput | Prisma.WorkScalarWhereInput[]
+  OR?: Prisma.WorkScalarWhereInput[]
+  NOT?: Prisma.WorkScalarWhereInput | Prisma.WorkScalarWhereInput[]
+  id?: Prisma.IntFilter<"Work"> | number
+  type?: Prisma.IntFilter<"Work"> | number
+  name?: Prisma.StringFilter<"Work"> | string
+  alias?: Prisma.StringNullableFilter<"Work"> | string | null
+  cover?: Prisma.StringFilter<"Work"> | string
+  description?: Prisma.StringFilter<"Work"> | string
+  language?: Prisma.StringFilter<"Work"> | string
+  region?: Prisma.StringFilter<"Work"> | string
+  ageRating?: Prisma.StringNullableFilter<"Work"> | string | null
+  serialStatus?: Prisma.IntFilter<"Work"> | number
+  publisher?: Prisma.StringNullableFilter<"Work"> | string | null
+  originalSource?: Prisma.StringNullableFilter<"Work"> | string | null
+  copyright?: Prisma.StringNullableFilter<"Work"> | string | null
+  disclaimer?: Prisma.StringNullableFilter<"Work"> | string | null
+  isPublished?: Prisma.BoolFilter<"Work"> | boolean
+  publishAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
+  lastUpdated?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
+  viewCount?: Prisma.IntFilter<"Work"> | number
+  favoriteCount?: Prisma.IntFilter<"Work"> | number
+  likeCount?: Prisma.IntFilter<"Work"> | number
+  downloadCount?: Prisma.IntFilter<"Work"> | number
+  purchaseCount?: Prisma.IntFilter<"Work"> | number
+  price?: Prisma.IntFilter<"Work"> | number
+  downloadRule?: Prisma.IntFilter<"Work"> | number
+  downloadPoints?: Prisma.IntNullableFilter<"Work"> | number | null
+  requiredDownloadLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
+  rating?: Prisma.FloatNullableFilter<"Work"> | number | null
+  ratingCount?: Prisma.IntFilter<"Work"> | number
+  popularity?: Prisma.IntFilter<"Work"> | number
+  isRecommended?: Prisma.BoolFilter<"Work"> | boolean
+  isHot?: Prisma.BoolFilter<"Work"> | boolean
+  isNew?: Prisma.BoolFilter<"Work"> | boolean
+  recommendWeight?: Prisma.FloatFilter<"Work"> | number
+  createdAt?: Prisma.DateTimeFilter<"Work"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Work"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
+}
+
 export type WorkCreateWithoutComicInput = {
   type: number
   name: string
@@ -1145,6 +1524,11 @@ export type WorkCreateWithoutComicInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1155,6 +1539,7 @@ export type WorkCreateWithoutComicInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsDownloadLevelInput
   novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
@@ -1184,6 +1569,12 @@ export type WorkUncheckedCreateWithoutComicInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  requiredDownloadLevelId?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1238,6 +1629,11 @@ export type WorkUpdateWithoutComicInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1248,6 +1644,7 @@ export type WorkUpdateWithoutComicInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsDownloadLevelNestedInput
   novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
@@ -1277,6 +1674,12 @@ export type WorkUncheckedUpdateWithoutComicInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1315,6 +1718,11 @@ export type WorkCreateWithoutNovelInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1325,6 +1733,7 @@ export type WorkCreateWithoutNovelInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsDownloadLevelInput
   comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
@@ -1354,6 +1763,12 @@ export type WorkUncheckedCreateWithoutNovelInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  requiredDownloadLevelId?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1408,6 +1823,11 @@ export type WorkUpdateWithoutNovelInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1418,6 +1838,7 @@ export type WorkUpdateWithoutNovelInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsDownloadLevelNestedInput
   comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
@@ -1447,6 +1868,12 @@ export type WorkUncheckedUpdateWithoutNovelInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1485,6 +1912,11 @@ export type WorkCreateWithoutAuthorsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1495,6 +1927,7 @@ export type WorkCreateWithoutAuthorsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsDownloadLevelInput
   comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
   novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
@@ -1524,6 +1957,12 @@ export type WorkUncheckedCreateWithoutAuthorsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  requiredDownloadLevelId?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1578,6 +2017,11 @@ export type WorkUpdateWithoutAuthorsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1588,6 +2032,7 @@ export type WorkUpdateWithoutAuthorsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsDownloadLevelNestedInput
   comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
   novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
@@ -1617,6 +2062,12 @@ export type WorkUncheckedUpdateWithoutAuthorsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1655,6 +2106,11 @@ export type WorkCreateWithoutCategoriesInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1665,6 +2121,7 @@ export type WorkCreateWithoutCategoriesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsDownloadLevelInput
   comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
   novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
@@ -1694,6 +2151,12 @@ export type WorkUncheckedCreateWithoutCategoriesInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  requiredDownloadLevelId?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1748,6 +2211,11 @@ export type WorkUpdateWithoutCategoriesInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1758,6 +2226,7 @@ export type WorkUpdateWithoutCategoriesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsDownloadLevelNestedInput
   comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
   novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
@@ -1787,6 +2256,12 @@ export type WorkUncheckedUpdateWithoutCategoriesInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1825,6 +2300,11 @@ export type WorkCreateWithoutChaptersInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1835,6 +2315,7 @@ export type WorkCreateWithoutChaptersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsDownloadLevelInput
   comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
   novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
@@ -1864,6 +2345,12 @@ export type WorkUncheckedCreateWithoutChaptersInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  requiredDownloadLevelId?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1918,6 +2405,11 @@ export type WorkUpdateWithoutChaptersInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1928,6 +2420,7 @@ export type WorkUpdateWithoutChaptersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsDownloadLevelNestedInput
   comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
   novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
@@ -1957,6 +2450,12 @@ export type WorkUncheckedUpdateWithoutChaptersInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1995,6 +2494,11 @@ export type WorkCreateWithoutCommentsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2005,6 +2509,7 @@ export type WorkCreateWithoutCommentsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsDownloadLevelInput
   comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
   novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
@@ -2034,6 +2539,12 @@ export type WorkUncheckedCreateWithoutCommentsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  requiredDownloadLevelId?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2088,6 +2599,11 @@ export type WorkUpdateWithoutCommentsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2098,6 +2614,7 @@ export type WorkUpdateWithoutCommentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsDownloadLevelNestedInput
   comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
   novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
@@ -2127,6 +2644,12 @@ export type WorkUncheckedUpdateWithoutCommentsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2165,6 +2688,11 @@ export type WorkCreateWithoutTagsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2175,6 +2703,7 @@ export type WorkCreateWithoutTagsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsDownloadLevelInput
   comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
   novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
@@ -2204,6 +2733,12 @@ export type WorkUncheckedCreateWithoutTagsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  requiredDownloadLevelId?: number | null
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2258,6 +2793,11 @@ export type WorkUpdateWithoutTagsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2268,6 +2808,7 @@ export type WorkUpdateWithoutTagsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  requiredDownloadLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsDownloadLevelNestedInput
   comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
   novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
@@ -2297,6 +2838,12 @@ export type WorkUncheckedUpdateWithoutTagsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2313,6 +2860,171 @@ export type WorkUncheckedUpdateWithoutTagsInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
   comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
+}
+
+export type WorkCreateManyRequiredDownloadLevelInput = {
+  id?: number
+  type: number
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  isPublished?: boolean
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  downloadCount?: number
+  purchaseCount?: number
+  price?: number
+  downloadRule?: number
+  downloadPoints?: number | null
+  rating?: number | null
+  ratingCount?: number
+  popularity?: number
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  recommendWeight?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+}
+
+export type WorkUpdateWithoutRequiredDownloadLevelInput = {
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
+  novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
+  authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
+  categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
+  tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
+  chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  comments?: Prisma.WorkCommentUpdateManyWithoutWorkNestedInput
+}
+
+export type WorkUncheckedUpdateWithoutRequiredDownloadLevelInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comic?: Prisma.WorkComicUncheckedUpdateOneWithoutWorkNestedInput
+  novel?: Prisma.WorkNovelUncheckedUpdateOneWithoutWorkNestedInput
+  authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
+  categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
+  tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
+  chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+  comments?: Prisma.WorkCommentUncheckedUpdateManyWithoutWorkNestedInput
+}
+
+export type WorkUncheckedUpdateManyWithoutRequiredDownloadLevelInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -2403,6 +3115,12 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
+  downloadCount?: boolean
+  purchaseCount?: boolean
+  price?: boolean
+  downloadRule?: boolean
+  downloadPoints?: boolean
+  requiredDownloadLevelId?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
@@ -2413,6 +3131,7 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  requiredDownloadLevel?: boolean | Prisma.Work$requiredDownloadLevelArgs<ExtArgs>
   comic?: boolean | Prisma.Work$comicArgs<ExtArgs>
   novel?: boolean | Prisma.Work$novelArgs<ExtArgs>
   authors?: boolean | Prisma.Work$authorsArgs<ExtArgs>
@@ -2444,6 +3163,12 @@ export type WorkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
+  downloadCount?: boolean
+  purchaseCount?: boolean
+  price?: boolean
+  downloadRule?: boolean
+  downloadPoints?: boolean
+  requiredDownloadLevelId?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
@@ -2454,6 +3179,7 @@ export type WorkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  requiredDownloadLevel?: boolean | Prisma.Work$requiredDownloadLevelArgs<ExtArgs>
 }, ExtArgs["result"]["work"]>
 
 export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -2477,6 +3203,12 @@ export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
+  downloadCount?: boolean
+  purchaseCount?: boolean
+  price?: boolean
+  downloadRule?: boolean
+  downloadPoints?: boolean
+  requiredDownloadLevelId?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
@@ -2487,6 +3219,7 @@ export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
+  requiredDownloadLevel?: boolean | Prisma.Work$requiredDownloadLevelArgs<ExtArgs>
 }, ExtArgs["result"]["work"]>
 
 export type WorkSelectScalar = {
@@ -2510,6 +3243,12 @@ export type WorkSelectScalar = {
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
+  downloadCount?: boolean
+  purchaseCount?: boolean
+  price?: boolean
+  downloadRule?: boolean
+  downloadPoints?: boolean
+  requiredDownloadLevelId?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
@@ -2522,8 +3261,9 @@ export type WorkSelectScalar = {
   deletedAt?: boolean
 }
 
-export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "isPublished" | "publishAt" | "lastUpdated" | "viewCount" | "favoriteCount" | "likeCount" | "rating" | "ratingCount" | "popularity" | "isRecommended" | "isHot" | "isNew" | "recommendWeight" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
+export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "isPublished" | "publishAt" | "lastUpdated" | "viewCount" | "favoriteCount" | "likeCount" | "downloadCount" | "purchaseCount" | "price" | "downloadRule" | "downloadPoints" | "requiredDownloadLevelId" | "rating" | "ratingCount" | "popularity" | "isRecommended" | "isHot" | "isNew" | "recommendWeight" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
 export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  requiredDownloadLevel?: boolean | Prisma.Work$requiredDownloadLevelArgs<ExtArgs>
   comic?: boolean | Prisma.Work$comicArgs<ExtArgs>
   novel?: boolean | Prisma.Work$novelArgs<ExtArgs>
   authors?: boolean | Prisma.Work$authorsArgs<ExtArgs>
@@ -2533,12 +3273,20 @@ export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   comments?: boolean | Prisma.Work$commentsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type WorkIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type WorkIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type WorkIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  requiredDownloadLevel?: boolean | Prisma.Work$requiredDownloadLevelArgs<ExtArgs>
+}
+export type WorkIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  requiredDownloadLevel?: boolean | Prisma.Work$requiredDownloadLevelArgs<ExtArgs>
+}
 
 export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Work"
   objects: {
+    /**
+     * 关联下载权限等级
+     */
+    requiredDownloadLevel: Prisma.$UserLevelRulePayload<ExtArgs> | null
     /**
      * 漫画扩展信息
      */
@@ -2649,6 +3397,30 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 点赞数
      */
     likeCount: number
+    /**
+     * 下载数
+     */
+    downloadCount: number
+    /**
+     * 购买数
+     */
+    purchaseCount: number
+    /**
+     * 价格
+     */
+    price: number
+    /**
+     * 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
+     */
+    downloadRule: number
+    /**
+     * 下载所需要的积分（积分可下载时必填）
+     */
+    downloadPoints: number | null
+    /**
+     * 允许下载的会员等级ID
+     */
+    requiredDownloadLevelId: number | null
     /**
      * 评分（1-10分，保留一位小数）
      */
@@ -3083,6 +3855,7 @@ readonly fields: WorkFieldRefs;
  */
 export interface Prisma__WorkClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  requiredDownloadLevel<T extends Prisma.Work$requiredDownloadLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$requiredDownloadLevelArgs<ExtArgs>>): Prisma.Prisma__UserLevelRuleClient<runtime.Types.Result.GetResult<Prisma.$UserLevelRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   comic<T extends Prisma.Work$comicArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$comicArgs<ExtArgs>>): Prisma.Prisma__WorkComicClient<runtime.Types.Result.GetResult<Prisma.$WorkComicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   novel<T extends Prisma.Work$novelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$novelArgs<ExtArgs>>): Prisma.Prisma__WorkNovelClient<runtime.Types.Result.GetResult<Prisma.$WorkNovelPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   authors<T extends Prisma.Work$authorsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$authorsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkAuthorRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3139,6 +3912,12 @@ export interface WorkFieldRefs {
   readonly viewCount: Prisma.FieldRef<"Work", 'Int'>
   readonly favoriteCount: Prisma.FieldRef<"Work", 'Int'>
   readonly likeCount: Prisma.FieldRef<"Work", 'Int'>
+  readonly downloadCount: Prisma.FieldRef<"Work", 'Int'>
+  readonly purchaseCount: Prisma.FieldRef<"Work", 'Int'>
+  readonly price: Prisma.FieldRef<"Work", 'Int'>
+  readonly downloadRule: Prisma.FieldRef<"Work", 'Int'>
+  readonly downloadPoints: Prisma.FieldRef<"Work", 'Int'>
+  readonly requiredDownloadLevelId: Prisma.FieldRef<"Work", 'Int'>
   readonly rating: Prisma.FieldRef<"Work", 'Float'>
   readonly ratingCount: Prisma.FieldRef<"Work", 'Int'>
   readonly popularity: Prisma.FieldRef<"Work", 'Int'>
@@ -3404,6 +4183,10 @@ export type WorkCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.WorkCreateManyInput | Prisma.WorkCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -3475,6 +4258,10 @@ export type WorkUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Works to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -3543,6 +4330,25 @@ export type WorkDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Limit how many Works to delete.
    */
   limit?: number
+}
+
+/**
+ * Work.requiredDownloadLevel
+ */
+export type Work$requiredDownloadLevelArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserLevelRule
+   */
+  select?: Prisma.UserLevelRuleSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserLevelRule
+   */
+  omit?: Prisma.UserLevelRuleOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserLevelRuleInclude<ExtArgs> | null
+  where?: Prisma.UserLevelRuleWhereInput
 }
 
 /**

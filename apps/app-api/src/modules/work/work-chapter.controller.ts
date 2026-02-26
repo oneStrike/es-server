@@ -1,4 +1,4 @@
-import { ApiPageDoc, Public } from '@libs/base/decorators'
+import { ApiDoc, ApiPageDoc, Public } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
   BaseWorkChapterDto,
@@ -26,7 +26,7 @@ export class WorkChapterController {
 
   @Get('detail')
   @Public()
-  @ApiPageDoc({
+  @ApiDoc({
     summary: '查询作品章节详情',
     model: BaseWorkChapterDto,
   })

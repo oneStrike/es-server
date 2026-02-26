@@ -31,6 +31,7 @@ export type AppUserAvgAggregateOutputType = {
   levelId: number | null
   gender: number | null
   points: number | null
+  balance: number | null
   experience: number | null
   status: number | null
 }
@@ -40,6 +41,7 @@ export type AppUserSumAggregateOutputType = {
   levelId: number | null
   gender: number | null
   points: number | null
+  balance: number | null
   experience: number | null
   status: number | null
 }
@@ -57,6 +59,7 @@ export type AppUserMinAggregateOutputType = {
   gender: number | null
   birthDate: Date | null
   points: number | null
+  balance: number | null
   experience: number | null
   status: number | null
   banReason: string | null
@@ -81,6 +84,7 @@ export type AppUserMaxAggregateOutputType = {
   gender: number | null
   birthDate: Date | null
   points: number | null
+  balance: number | null
   experience: number | null
   status: number | null
   banReason: string | null
@@ -105,6 +109,7 @@ export type AppUserCountAggregateOutputType = {
   gender: number
   birthDate: number
   points: number
+  balance: number
   experience: number
   status: number
   banReason: number
@@ -123,6 +128,7 @@ export type AppUserAvgAggregateInputType = {
   levelId?: true
   gender?: true
   points?: true
+  balance?: true
   experience?: true
   status?: true
 }
@@ -132,6 +138,7 @@ export type AppUserSumAggregateInputType = {
   levelId?: true
   gender?: true
   points?: true
+  balance?: true
   experience?: true
   status?: true
 }
@@ -149,6 +156,7 @@ export type AppUserMinAggregateInputType = {
   gender?: true
   birthDate?: true
   points?: true
+  balance?: true
   experience?: true
   status?: true
   banReason?: true
@@ -173,6 +181,7 @@ export type AppUserMaxAggregateInputType = {
   gender?: true
   birthDate?: true
   points?: true
+  balance?: true
   experience?: true
   status?: true
   banReason?: true
@@ -197,6 +206,7 @@ export type AppUserCountAggregateInputType = {
   gender?: true
   birthDate?: true
   points?: true
+  balance?: true
   experience?: true
   status?: true
   banReason?: true
@@ -308,6 +318,7 @@ export type AppUserGroupByOutputType = {
   gender: number
   birthDate: Date | null
   points: number
+  balance: number
   experience: number
   status: number
   banReason: string | null
@@ -355,6 +366,7 @@ export type AppUserWhereInput = {
   gender?: Prisma.IntFilter<"AppUser"> | number
   birthDate?: Prisma.DateTimeNullableFilter<"AppUser"> | Date | string | null
   points?: Prisma.IntFilter<"AppUser"> | number
+  balance?: Prisma.IntFilter<"AppUser"> | number
   experience?: Prisma.IntFilter<"AppUser"> | number
   status?: Prisma.IntFilter<"AppUser"> | number
   banReason?: Prisma.StringNullableFilter<"AppUser"> | string | null
@@ -417,6 +429,7 @@ export type AppUserOrderByWithRelationInput = {
   gender?: Prisma.SortOrder
   birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
   points?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   status?: Prisma.SortOrder
   banReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -482,6 +495,7 @@ export type AppUserWhereUniqueInput = Prisma.AtLeast<{
   gender?: Prisma.IntFilter<"AppUser"> | number
   birthDate?: Prisma.DateTimeNullableFilter<"AppUser"> | Date | string | null
   points?: Prisma.IntFilter<"AppUser"> | number
+  balance?: Prisma.IntFilter<"AppUser"> | number
   experience?: Prisma.IntFilter<"AppUser"> | number
   status?: Prisma.IntFilter<"AppUser"> | number
   banReason?: Prisma.StringNullableFilter<"AppUser"> | string | null
@@ -544,6 +558,7 @@ export type AppUserOrderByWithAggregationInput = {
   gender?: Prisma.SortOrder
   birthDate?: Prisma.SortOrderInput | Prisma.SortOrder
   points?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   status?: Prisma.SortOrder
   banReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -576,6 +591,7 @@ export type AppUserScalarWhereWithAggregatesInput = {
   gender?: Prisma.IntWithAggregatesFilter<"AppUser"> | number
   birthDate?: Prisma.DateTimeNullableWithAggregatesFilter<"AppUser"> | Date | string | null
   points?: Prisma.IntWithAggregatesFilter<"AppUser"> | number
+  balance?: Prisma.IntWithAggregatesFilter<"AppUser"> | number
   experience?: Prisma.IntWithAggregatesFilter<"AppUser"> | number
   status?: Prisma.IntWithAggregatesFilter<"AppUser"> | number
   banReason?: Prisma.StringNullableWithAggregatesFilter<"AppUser"> | string | null
@@ -598,6 +614,7 @@ export type AppUserCreateInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -660,6 +677,7 @@ export type AppUserUncheckedCreateInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -719,6 +737,7 @@ export type AppUserUpdateInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -781,6 +800,7 @@ export type AppUserUncheckedUpdateInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -842,6 +862,7 @@ export type AppUserCreateManyInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -864,6 +885,7 @@ export type AppUserUpdateManyMutationInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -888,6 +910,7 @@ export type AppUserUncheckedUpdateManyInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -917,6 +940,7 @@ export type AppUserCountOrderByAggregateInput = {
   gender?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   status?: Prisma.SortOrder
   banReason?: Prisma.SortOrder
@@ -933,6 +957,7 @@ export type AppUserAvgOrderByAggregateInput = {
   levelId?: Prisma.SortOrder
   gender?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   status?: Prisma.SortOrder
 }
@@ -950,6 +975,7 @@ export type AppUserMaxOrderByAggregateInput = {
   gender?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   status?: Prisma.SortOrder
   banReason?: Prisma.SortOrder
@@ -974,6 +1000,7 @@ export type AppUserMinOrderByAggregateInput = {
   gender?: Prisma.SortOrder
   birthDate?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   status?: Prisma.SortOrder
   banReason?: Prisma.SortOrder
@@ -990,6 +1017,7 @@ export type AppUserSumOrderByAggregateInput = {
   levelId?: Prisma.SortOrder
   gender?: Prisma.SortOrder
   points?: Prisma.SortOrder
+  balance?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   status?: Prisma.SortOrder
 }
@@ -1596,6 +1624,7 @@ export type AppUserCreateWithoutAgreementLogsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -1657,6 +1686,7 @@ export type AppUserUncheckedCreateWithoutAgreementLogsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -1731,6 +1761,7 @@ export type AppUserUpdateWithoutAgreementLogsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1792,6 +1823,7 @@ export type AppUserUncheckedUpdateWithoutAgreementLogsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1850,6 +1882,7 @@ export type AppUserCreateWithoutNoticeReadsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -1911,6 +1944,7 @@ export type AppUserUncheckedCreateWithoutNoticeReadsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -1985,6 +2019,7 @@ export type AppUserUpdateWithoutNoticeReadsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2046,6 +2081,7 @@ export type AppUserUncheckedUpdateWithoutNoticeReadsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2104,6 +2140,7 @@ export type AppUserCreateWithoutTokensInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -2165,6 +2202,7 @@ export type AppUserUncheckedCreateWithoutTokensInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -2239,6 +2277,7 @@ export type AppUserUpdateWithoutTokensInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2300,6 +2339,7 @@ export type AppUserUncheckedUpdateWithoutTokensInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2358,6 +2398,7 @@ export type AppUserCreateWithoutTaskAssignmentsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -2419,6 +2460,7 @@ export type AppUserUncheckedCreateWithoutTaskAssignmentsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -2493,6 +2535,7 @@ export type AppUserUpdateWithoutTaskAssignmentsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2554,6 +2597,7 @@ export type AppUserUncheckedUpdateWithoutTaskAssignmentsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2612,6 +2656,7 @@ export type AppUserCreateWithoutTaskProgressLogsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -2673,6 +2718,7 @@ export type AppUserUncheckedCreateWithoutTaskProgressLogsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -2747,6 +2793,7 @@ export type AppUserUpdateWithoutTaskProgressLogsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2808,6 +2855,7 @@ export type AppUserUncheckedUpdateWithoutTaskProgressLogsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2866,6 +2914,7 @@ export type AppUserCreateWithoutUserBadgesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -2927,6 +2976,7 @@ export type AppUserUncheckedCreateWithoutUserBadgesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -3001,6 +3051,7 @@ export type AppUserUpdateWithoutUserBadgesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3062,6 +3113,7 @@ export type AppUserUncheckedUpdateWithoutUserBadgesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3120,6 +3172,7 @@ export type AppUserCreateWithoutUserCommentLikesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -3181,6 +3234,7 @@ export type AppUserUncheckedCreateWithoutUserCommentLikesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -3255,6 +3309,7 @@ export type AppUserUpdateWithoutUserCommentLikesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3316,6 +3371,7 @@ export type AppUserUncheckedUpdateWithoutUserCommentLikesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3374,6 +3430,7 @@ export type AppUserCreateWithoutUserCommentReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -3435,6 +3492,7 @@ export type AppUserUncheckedCreateWithoutUserCommentReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -3498,6 +3556,7 @@ export type AppUserCreateWithoutHandledUserCommentReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -3559,6 +3618,7 @@ export type AppUserUncheckedCreateWithoutHandledUserCommentReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -3633,6 +3693,7 @@ export type AppUserUpdateWithoutUserCommentReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3694,6 +3755,7 @@ export type AppUserUncheckedUpdateWithoutUserCommentReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3763,6 +3825,7 @@ export type AppUserUpdateWithoutHandledUserCommentReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3824,6 +3887,7 @@ export type AppUserUncheckedUpdateWithoutHandledUserCommentReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3882,6 +3946,7 @@ export type AppUserCreateWithoutUserCommentsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -3943,6 +4008,7 @@ export type AppUserUncheckedCreateWithoutUserCommentsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -4017,6 +4083,7 @@ export type AppUserUpdateWithoutUserCommentsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4078,6 +4145,7 @@ export type AppUserUncheckedUpdateWithoutUserCommentsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4136,6 +4204,7 @@ export type AppUserCreateWithoutUserDownloadRecordsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -4197,6 +4266,7 @@ export type AppUserUncheckedCreateWithoutUserDownloadRecordsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -4271,6 +4341,7 @@ export type AppUserUpdateWithoutUserDownloadRecordsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4332,6 +4403,7 @@ export type AppUserUncheckedUpdateWithoutUserDownloadRecordsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4390,6 +4462,7 @@ export type AppUserCreateWithoutExperienceRecordsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -4451,6 +4524,7 @@ export type AppUserUncheckedCreateWithoutExperienceRecordsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -4525,6 +4599,7 @@ export type AppUserUpdateWithoutExperienceRecordsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4586,6 +4661,7 @@ export type AppUserUncheckedUpdateWithoutExperienceRecordsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4644,6 +4720,7 @@ export type AppUserCreateWithoutUserFavoritesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -4705,6 +4782,7 @@ export type AppUserUncheckedCreateWithoutUserFavoritesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -4779,6 +4857,7 @@ export type AppUserUpdateWithoutUserFavoritesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4840,6 +4919,7 @@ export type AppUserUncheckedUpdateWithoutUserFavoritesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -4898,6 +4978,7 @@ export type AppUserCreateWithoutUserGrowthEventsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -4959,6 +5040,7 @@ export type AppUserUncheckedCreateWithoutUserGrowthEventsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -5033,6 +5115,7 @@ export type AppUserUpdateWithoutUserGrowthEventsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5094,6 +5177,7 @@ export type AppUserUncheckedUpdateWithoutUserGrowthEventsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5152,6 +5236,7 @@ export type AppUserCreateWithoutLevelInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -5212,6 +5297,7 @@ export type AppUserUncheckedCreateWithoutLevelInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -5302,6 +5388,7 @@ export type AppUserScalarWhereInput = {
   gender?: Prisma.IntFilter<"AppUser"> | number
   birthDate?: Prisma.DateTimeNullableFilter<"AppUser"> | Date | string | null
   points?: Prisma.IntFilter<"AppUser"> | number
+  balance?: Prisma.IntFilter<"AppUser"> | number
   experience?: Prisma.IntFilter<"AppUser"> | number
   status?: Prisma.IntFilter<"AppUser"> | number
   banReason?: Prisma.StringNullableFilter<"AppUser"> | string | null
@@ -5324,6 +5411,7 @@ export type AppUserCreateWithoutUserLikesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -5385,6 +5473,7 @@ export type AppUserUncheckedCreateWithoutUserLikesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -5459,6 +5548,7 @@ export type AppUserUpdateWithoutUserLikesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5520,6 +5610,7 @@ export type AppUserUncheckedUpdateWithoutUserLikesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5578,6 +5669,7 @@ export type AppUserCreateWithoutPointRecordsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -5639,6 +5731,7 @@ export type AppUserUncheckedCreateWithoutPointRecordsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -5713,6 +5806,7 @@ export type AppUserUpdateWithoutPointRecordsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5774,6 +5868,7 @@ export type AppUserUncheckedUpdateWithoutPointRecordsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -5832,6 +5927,7 @@ export type AppUserCreateWithoutUserPurchaseRecordsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -5893,6 +5989,7 @@ export type AppUserUncheckedCreateWithoutUserPurchaseRecordsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -5967,6 +6064,7 @@ export type AppUserUpdateWithoutUserPurchaseRecordsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6028,6 +6126,7 @@ export type AppUserUncheckedUpdateWithoutUserPurchaseRecordsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6086,6 +6185,7 @@ export type AppUserCreateWithoutUserViewsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -6147,6 +6247,7 @@ export type AppUserUncheckedCreateWithoutUserViewsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -6221,6 +6322,7 @@ export type AppUserUpdateWithoutUserViewsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6282,6 +6384,7 @@ export type AppUserUncheckedUpdateWithoutUserViewsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6340,6 +6443,7 @@ export type AppUserCreateWithoutOperatedConfigHistoriesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -6401,6 +6505,7 @@ export type AppUserUncheckedCreateWithoutOperatedConfigHistoriesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -6475,6 +6580,7 @@ export type AppUserUpdateWithoutOperatedConfigHistoriesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6536,6 +6642,7 @@ export type AppUserUncheckedUpdateWithoutOperatedConfigHistoriesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6594,6 +6701,7 @@ export type AppUserCreateWithoutUpdatedConfigsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -6655,6 +6763,7 @@ export type AppUserUncheckedCreateWithoutUpdatedConfigsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -6729,6 +6838,7 @@ export type AppUserUpdateWithoutUpdatedConfigsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6790,6 +6900,7 @@ export type AppUserUncheckedUpdateWithoutUpdatedConfigsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -6848,6 +6959,7 @@ export type AppUserCreateWithoutModeratorApplicationsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -6909,6 +7021,7 @@ export type AppUserUncheckedCreateWithoutModeratorApplicationsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -6972,6 +7085,7 @@ export type AppUserCreateWithoutAuditedApplicationsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -7033,6 +7147,7 @@ export type AppUserUncheckedCreateWithoutAuditedApplicationsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -7107,6 +7222,7 @@ export type AppUserUpdateWithoutModeratorApplicationsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7168,6 +7284,7 @@ export type AppUserUncheckedUpdateWithoutModeratorApplicationsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7237,6 +7354,7 @@ export type AppUserUpdateWithoutAuditedApplicationsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7298,6 +7416,7 @@ export type AppUserUncheckedUpdateWithoutAuditedApplicationsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7356,6 +7475,7 @@ export type AppUserCreateWithoutModeratorInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -7417,6 +7537,7 @@ export type AppUserUncheckedCreateWithoutModeratorInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -7491,6 +7612,7 @@ export type AppUserUpdateWithoutModeratorInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7552,6 +7674,7 @@ export type AppUserUncheckedUpdateWithoutModeratorInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7610,6 +7733,7 @@ export type AppUserCreateWithoutForumNotificationsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -7671,6 +7795,7 @@ export type AppUserUncheckedCreateWithoutForumNotificationsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -7745,6 +7870,7 @@ export type AppUserUpdateWithoutForumNotificationsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7806,6 +7932,7 @@ export type AppUserUncheckedUpdateWithoutForumNotificationsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -7864,6 +7991,7 @@ export type AppUserCreateWithoutForumProfileInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -7925,6 +8053,7 @@ export type AppUserUncheckedCreateWithoutForumProfileInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -7999,6 +8128,7 @@ export type AppUserUpdateWithoutForumProfileInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8060,6 +8190,7 @@ export type AppUserUncheckedUpdateWithoutForumProfileInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8118,6 +8249,7 @@ export type AppUserCreateWithoutReplyLikesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -8179,6 +8311,7 @@ export type AppUserUncheckedCreateWithoutReplyLikesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -8253,6 +8386,7 @@ export type AppUserUpdateWithoutReplyLikesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8314,6 +8448,7 @@ export type AppUserUncheckedUpdateWithoutReplyLikesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8372,6 +8507,7 @@ export type AppUserCreateWithoutForumRepliesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -8433,6 +8569,7 @@ export type AppUserUncheckedCreateWithoutForumRepliesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -8507,6 +8644,7 @@ export type AppUserUpdateWithoutForumRepliesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8568,6 +8706,7 @@ export type AppUserUncheckedUpdateWithoutForumRepliesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8626,6 +8765,7 @@ export type AppUserCreateWithoutForumReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -8687,6 +8827,7 @@ export type AppUserUncheckedCreateWithoutForumReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -8750,6 +8891,7 @@ export type AppUserCreateWithoutHandledReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -8811,6 +8953,7 @@ export type AppUserUncheckedCreateWithoutHandledReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -8885,6 +9028,7 @@ export type AppUserUpdateWithoutForumReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -8946,6 +9090,7 @@ export type AppUserUncheckedUpdateWithoutForumReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9015,6 +9160,7 @@ export type AppUserUpdateWithoutHandledReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9076,6 +9222,7 @@ export type AppUserUncheckedUpdateWithoutHandledReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9134,6 +9281,7 @@ export type AppUserCreateWithoutForumTopicsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -9195,6 +9343,7 @@ export type AppUserUncheckedCreateWithoutForumTopicsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -9258,6 +9407,7 @@ export type AppUserCreateWithoutLastReplyTopicsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -9319,6 +9469,7 @@ export type AppUserUncheckedCreateWithoutLastReplyTopicsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -9393,6 +9544,7 @@ export type AppUserUpdateWithoutForumTopicsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9454,6 +9606,7 @@ export type AppUserUncheckedUpdateWithoutForumTopicsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9523,6 +9676,7 @@ export type AppUserUpdateWithoutLastReplyTopicsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9584,6 +9738,7 @@ export type AppUserUncheckedUpdateWithoutLastReplyTopicsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9642,6 +9797,7 @@ export type AppUserCreateWithoutForumActionLogsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -9703,6 +9859,7 @@ export type AppUserUncheckedCreateWithoutForumActionLogsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -9777,6 +9934,7 @@ export type AppUserUpdateWithoutForumActionLogsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9838,6 +9996,7 @@ export type AppUserUncheckedUpdateWithoutForumActionLogsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -9896,6 +10055,7 @@ export type AppUserCreateWithoutUpdatedSystemConfigsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -9957,6 +10117,7 @@ export type AppUserUncheckedCreateWithoutUpdatedSystemConfigsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -10031,6 +10192,7 @@ export type AppUserUpdateWithoutUpdatedSystemConfigsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10092,6 +10254,7 @@ export type AppUserUncheckedUpdateWithoutUpdatedSystemConfigsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10150,6 +10313,7 @@ export type AppUserCreateWithoutChapterPurchasesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -10211,6 +10375,7 @@ export type AppUserUncheckedCreateWithoutChapterPurchasesInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -10285,6 +10450,7 @@ export type AppUserUpdateWithoutChapterPurchasesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10346,6 +10512,7 @@ export type AppUserUncheckedUpdateWithoutChapterPurchasesInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10404,6 +10571,7 @@ export type AppUserCreateWithoutWorkCommentReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -10465,6 +10633,7 @@ export type AppUserUncheckedCreateWithoutWorkCommentReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -10528,6 +10697,7 @@ export type AppUserCreateWithoutHandledWorkCommentReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -10589,6 +10759,7 @@ export type AppUserUncheckedCreateWithoutHandledWorkCommentReportsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -10663,6 +10834,7 @@ export type AppUserUpdateWithoutWorkCommentReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10724,6 +10896,7 @@ export type AppUserUncheckedUpdateWithoutWorkCommentReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10793,6 +10966,7 @@ export type AppUserUpdateWithoutHandledWorkCommentReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10854,6 +11028,7 @@ export type AppUserUncheckedUpdateWithoutHandledWorkCommentReportsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -10912,6 +11087,7 @@ export type AppUserCreateWithoutWorkCommentsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -10973,6 +11149,7 @@ export type AppUserUncheckedCreateWithoutWorkCommentsInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -11047,6 +11224,7 @@ export type AppUserUpdateWithoutWorkCommentsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -11108,6 +11286,7 @@ export type AppUserUncheckedUpdateWithoutWorkCommentsInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -11167,6 +11346,7 @@ export type AppUserCreateManyLevelInput = {
   gender?: number
   birthDate?: Date | string | null
   points?: number
+  balance?: number
   experience?: number
   status?: number
   banReason?: string | null
@@ -11189,6 +11369,7 @@ export type AppUserUpdateWithoutLevelInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -11249,6 +11430,7 @@ export type AppUserUncheckedUpdateWithoutLevelInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -11309,6 +11491,7 @@ export type AppUserUncheckedUpdateManyWithoutLevelInput = {
   gender?: Prisma.IntFieldUpdateOperationsInput | number
   birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
   banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -11670,6 +11853,7 @@ export type AppUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   gender?: boolean
   birthDate?: boolean
   points?: boolean
+  balance?: boolean
   experience?: boolean
   status?: boolean
   banReason?: boolean
@@ -11733,6 +11917,7 @@ export type AppUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   gender?: boolean
   birthDate?: boolean
   points?: boolean
+  balance?: boolean
   experience?: boolean
   status?: boolean
   banReason?: boolean
@@ -11758,6 +11943,7 @@ export type AppUserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   gender?: boolean
   birthDate?: boolean
   points?: boolean
+  balance?: boolean
   experience?: boolean
   status?: boolean
   banReason?: boolean
@@ -11783,6 +11969,7 @@ export type AppUserSelectScalar = {
   gender?: boolean
   birthDate?: boolean
   points?: boolean
+  balance?: boolean
   experience?: boolean
   status?: boolean
   banReason?: boolean
@@ -11794,7 +11981,7 @@ export type AppUserSelectScalar = {
   deletedAt?: boolean
 }
 
-export type AppUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "account" | "phone" | "email" | "levelId" | "nickname" | "password" | "avatar" | "isEnabled" | "gender" | "birthDate" | "points" | "experience" | "status" | "banReason" | "banUntil" | "lastLoginAt" | "lastLoginIp" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["appUser"]>
+export type AppUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "account" | "phone" | "email" | "levelId" | "nickname" | "password" | "avatar" | "isEnabled" | "gender" | "birthDate" | "points" | "balance" | "experience" | "status" | "banReason" | "banUntil" | "lastLoginAt" | "lastLoginIp" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["appUser"]>
 export type AppUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   agreementLogs?: boolean | Prisma.AppUser$agreementLogsArgs<ExtArgs>
   level?: boolean | Prisma.AppUser$levelArgs<ExtArgs>
@@ -12045,9 +12232,13 @@ export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      */
     birthDate: Date | null
     /**
-     * 论坛积分
+     * 积分
      */
     points: number
+    /**
+     * 余额
+     */
+    balance: number
     /**
      * 论坛经验值
      */
@@ -12557,6 +12748,7 @@ export interface AppUserFieldRefs {
   readonly gender: Prisma.FieldRef<"AppUser", 'Int'>
   readonly birthDate: Prisma.FieldRef<"AppUser", 'DateTime'>
   readonly points: Prisma.FieldRef<"AppUser", 'Int'>
+  readonly balance: Prisma.FieldRef<"AppUser", 'Int'>
   readonly experience: Prisma.FieldRef<"AppUser", 'Int'>
   readonly status: Prisma.FieldRef<"AppUser", 'Int'>
   readonly banReason: Prisma.FieldRef<"AppUser", 'String'>

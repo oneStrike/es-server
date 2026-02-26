@@ -762,7 +762,7 @@ export type $UserPurchaseRecordPayload<ExtArgs extends runtime.Types.Extensions.
      */
     userId: number
     /**
-     * 购买价格（实际支付金额，单位：分）
+     * 购买价格（实际支付金额）
      */
     price: number
     /**
