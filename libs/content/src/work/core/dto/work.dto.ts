@@ -278,6 +278,14 @@ export class BaseWorkDto extends BaseDto {
   })
   canExchange!: boolean
 
+  @BooleanProperty({
+    description: '是否允许下载',
+    example: false,
+    required: true,
+    default: false,
+  })
+  canDownload!: boolean
+
   @NumberProperty({
     description: '浏览量',
     example: 1000,

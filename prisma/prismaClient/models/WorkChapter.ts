@@ -2129,14 +2129,20 @@ export type $WorkChapterPayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     canDownload: boolean
     /**
-     * 价格
+     * 价格（单位：分）
      */
     price: number
     /**
      * 允许查看的会员等级ID
      */
     requiredViewLevelId: number | null
+    /**
+     * 兑换所需积分
+     */
     exchangePoints: number
+    /**
+     * 是否允许积分兑换
+     */
     canExchange: boolean
     /**
      * 发布状态

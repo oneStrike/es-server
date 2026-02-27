@@ -20,11 +20,13 @@ model WorkChapter {
   viewRule                Int                   @default(-1) @map("read_rule") @db.SmallInt
   /// 是否允许下载
   canDownload             Boolean               @default(true) @map("can_download")
-  /// 价格
+  /// 价格（单位：分）
   price                   Int                   @default(0) @map("price")
   /// 允许查看的会员等级ID
   requiredViewLevelId     Int?                  @map("required_read_level_id")
+  /// 兑换所需积分
   exchangePoints          Int                   @default(0) @map("exchange_points")
+  /// 是否允许积分兑换
   canExchange             Boolean               @default(false) @map("can_exchange")
   /// 发布状态
   isPublished             Boolean               @default(false) @map("is_published")

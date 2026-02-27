@@ -40,9 +40,6 @@ export type WorkAvgAggregateOutputType = {
   requiredViewLevelId: number | null
   chapterPrice: number | null
   chapterExchangePoints: number | null
-  downloadRule: number | null
-  downloadPoints: number | null
-  requiredDownloadLevelId: number | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
@@ -63,9 +60,6 @@ export type WorkSumAggregateOutputType = {
   requiredViewLevelId: number | null
   chapterPrice: number | null
   chapterExchangePoints: number | null
-  downloadRule: number | null
-  downloadPoints: number | null
-  requiredDownloadLevelId: number | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
@@ -101,9 +95,7 @@ export type WorkMinAggregateOutputType = {
   chapterPrice: number | null
   chapterExchangePoints: number | null
   canExchange: boolean | null
-  downloadRule: number | null
-  downloadPoints: number | null
-  requiredDownloadLevelId: number | null
+  canDownload: boolean | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
@@ -145,9 +137,7 @@ export type WorkMaxAggregateOutputType = {
   chapterPrice: number | null
   chapterExchangePoints: number | null
   canExchange: boolean | null
-  downloadRule: number | null
-  downloadPoints: number | null
-  requiredDownloadLevelId: number | null
+  canDownload: boolean | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
@@ -189,9 +179,7 @@ export type WorkCountAggregateOutputType = {
   chapterPrice: number
   chapterExchangePoints: number
   canExchange: number
-  downloadRule: number
-  downloadPoints: number
-  requiredDownloadLevelId: number
+  canDownload: number
   rating: number
   ratingCount: number
   popularity: number
@@ -220,9 +208,6 @@ export type WorkAvgAggregateInputType = {
   requiredViewLevelId?: true
   chapterPrice?: true
   chapterExchangePoints?: true
-  downloadRule?: true
-  downloadPoints?: true
-  requiredDownloadLevelId?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -243,9 +228,6 @@ export type WorkSumAggregateInputType = {
   requiredViewLevelId?: true
   chapterPrice?: true
   chapterExchangePoints?: true
-  downloadRule?: true
-  downloadPoints?: true
-  requiredDownloadLevelId?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -281,9 +263,7 @@ export type WorkMinAggregateInputType = {
   chapterPrice?: true
   chapterExchangePoints?: true
   canExchange?: true
-  downloadRule?: true
-  downloadPoints?: true
-  requiredDownloadLevelId?: true
+  canDownload?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -325,9 +305,7 @@ export type WorkMaxAggregateInputType = {
   chapterPrice?: true
   chapterExchangePoints?: true
   canExchange?: true
-  downloadRule?: true
-  downloadPoints?: true
-  requiredDownloadLevelId?: true
+  canDownload?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -369,9 +347,7 @@ export type WorkCountAggregateInputType = {
   chapterPrice?: true
   chapterExchangePoints?: true
   canExchange?: true
-  downloadRule?: true
-  downloadPoints?: true
-  requiredDownloadLevelId?: true
+  canDownload?: true
   rating?: true
   ratingCount?: true
   popularity?: true
@@ -500,9 +476,7 @@ export type WorkGroupByOutputType = {
   chapterPrice: number
   chapterExchangePoints: number
   canExchange: boolean
-  downloadRule: number
-  downloadPoints: number | null
-  requiredDownloadLevelId: number | null
+  canDownload: boolean
   rating: number | null
   ratingCount: number
   popularity: number
@@ -567,9 +541,7 @@ export type WorkWhereInput = {
   chapterPrice?: Prisma.IntFilter<"Work"> | number
   chapterExchangePoints?: Prisma.IntFilter<"Work"> | number
   canExchange?: Prisma.BoolFilter<"Work"> | boolean
-  downloadRule?: Prisma.IntFilter<"Work"> | number
-  downloadPoints?: Prisma.IntNullableFilter<"Work"> | number | null
-  requiredDownloadLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
+  canDownload?: Prisma.BoolFilter<"Work"> | boolean
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
   popularity?: Prisma.IntFilter<"Work"> | number
@@ -619,9 +591,7 @@ export type WorkOrderByWithRelationInput = {
   chapterPrice?: Prisma.SortOrder
   chapterExchangePoints?: Prisma.SortOrder
   canExchange?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -674,9 +644,7 @@ export type WorkWhereUniqueInput = Prisma.AtLeast<{
   chapterPrice?: Prisma.IntFilter<"Work"> | number
   chapterExchangePoints?: Prisma.IntFilter<"Work"> | number
   canExchange?: Prisma.BoolFilter<"Work"> | boolean
-  downloadRule?: Prisma.IntFilter<"Work"> | number
-  downloadPoints?: Prisma.IntNullableFilter<"Work"> | number | null
-  requiredDownloadLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
+  canDownload?: Prisma.BoolFilter<"Work"> | boolean
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
   popularity?: Prisma.IntFilter<"Work"> | number
@@ -726,9 +694,7 @@ export type WorkOrderByWithAggregationInput = {
   chapterPrice?: Prisma.SortOrder
   chapterExchangePoints?: Prisma.SortOrder
   canExchange?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrderInput | Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -778,9 +744,7 @@ export type WorkScalarWhereWithAggregatesInput = {
   chapterPrice?: Prisma.IntWithAggregatesFilter<"Work"> | number
   chapterExchangePoints?: Prisma.IntWithAggregatesFilter<"Work"> | number
   canExchange?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
-  downloadRule?: Prisma.IntWithAggregatesFilter<"Work"> | number
-  downloadPoints?: Prisma.IntNullableWithAggregatesFilter<"Work"> | number | null
-  requiredDownloadLevelId?: Prisma.IntNullableWithAggregatesFilter<"Work"> | number | null
+  canDownload?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
   rating?: Prisma.FloatNullableWithAggregatesFilter<"Work"> | number | null
   ratingCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   popularity?: Prisma.IntWithAggregatesFilter<"Work"> | number
@@ -820,9 +784,7 @@ export type WorkCreateInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -872,9 +834,7 @@ export type WorkUncheckedCreateInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -921,9 +881,7 @@ export type WorkUpdateInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -973,9 +931,7 @@ export type WorkUncheckedUpdateInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1024,9 +980,7 @@ export type WorkCreateManyInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1066,9 +1020,7 @@ export type WorkUpdateManyMutationInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1110,9 +1062,7 @@ export type WorkUncheckedUpdateManyInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1174,9 +1124,7 @@ export type WorkCountOrderByAggregateInput = {
   chapterPrice?: Prisma.SortOrder
   chapterExchangePoints?: Prisma.SortOrder
   canExchange?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -1203,9 +1151,6 @@ export type WorkAvgOrderByAggregateInput = {
   requiredViewLevelId?: Prisma.SortOrder
   chapterPrice?: Prisma.SortOrder
   chapterExchangePoints?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -1241,9 +1186,7 @@ export type WorkMaxOrderByAggregateInput = {
   chapterPrice?: Prisma.SortOrder
   chapterExchangePoints?: Prisma.SortOrder
   canExchange?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -1285,9 +1228,7 @@ export type WorkMinOrderByAggregateInput = {
   chapterPrice?: Prisma.SortOrder
   chapterExchangePoints?: Prisma.SortOrder
   canExchange?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -1314,9 +1255,6 @@ export type WorkSumOrderByAggregateInput = {
   requiredViewLevelId?: Prisma.SortOrder
   chapterPrice?: Prisma.SortOrder
   chapterExchangePoints?: Prisma.SortOrder
-  downloadRule?: Prisma.SortOrder
-  downloadPoints?: Prisma.SortOrder
-  requiredDownloadLevelId?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
@@ -1508,9 +1446,7 @@ export type WorkCreateWithoutRequiredViewLevelInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1558,9 +1494,7 @@ export type WorkUncheckedCreateWithoutRequiredViewLevelInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1638,9 +1572,7 @@ export type WorkScalarWhereInput = {
   chapterPrice?: Prisma.IntFilter<"Work"> | number
   chapterExchangePoints?: Prisma.IntFilter<"Work"> | number
   canExchange?: Prisma.BoolFilter<"Work"> | boolean
-  downloadRule?: Prisma.IntFilter<"Work"> | number
-  downloadPoints?: Prisma.IntNullableFilter<"Work"> | number | null
-  requiredDownloadLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
+  canDownload?: Prisma.BoolFilter<"Work"> | boolean
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
   popularity?: Prisma.IntFilter<"Work"> | number
@@ -1680,9 +1612,7 @@ export type WorkCreateWithoutComicInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1731,9 +1661,7 @@ export type WorkUncheckedCreateWithoutComicInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1795,9 +1723,7 @@ export type WorkUpdateWithoutComicInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1846,9 +1772,7 @@ export type WorkUncheckedUpdateWithoutComicInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1894,9 +1818,7 @@ export type WorkCreateWithoutNovelInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -1945,9 +1867,7 @@ export type WorkUncheckedCreateWithoutNovelInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2009,9 +1929,7 @@ export type WorkUpdateWithoutNovelInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2060,9 +1978,7 @@ export type WorkUncheckedUpdateWithoutNovelInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2108,9 +2024,7 @@ export type WorkCreateWithoutAuthorsInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2159,9 +2073,7 @@ export type WorkUncheckedCreateWithoutAuthorsInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2223,9 +2135,7 @@ export type WorkUpdateWithoutAuthorsInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2274,9 +2184,7 @@ export type WorkUncheckedUpdateWithoutAuthorsInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2322,9 +2230,7 @@ export type WorkCreateWithoutCategoriesInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2373,9 +2279,7 @@ export type WorkUncheckedCreateWithoutCategoriesInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2437,9 +2341,7 @@ export type WorkUpdateWithoutCategoriesInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2488,9 +2390,7 @@ export type WorkUncheckedUpdateWithoutCategoriesInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2536,9 +2436,7 @@ export type WorkCreateWithoutChaptersInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2587,9 +2485,7 @@ export type WorkUncheckedCreateWithoutChaptersInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2651,9 +2547,7 @@ export type WorkUpdateWithoutChaptersInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2702,9 +2596,7 @@ export type WorkUncheckedUpdateWithoutChaptersInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2750,9 +2642,7 @@ export type WorkCreateWithoutCommentsInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2801,9 +2691,7 @@ export type WorkUncheckedCreateWithoutCommentsInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -2865,9 +2753,7 @@ export type WorkUpdateWithoutCommentsInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2916,9 +2802,7 @@ export type WorkUncheckedUpdateWithoutCommentsInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2964,9 +2848,7 @@ export type WorkCreateWithoutTagsInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -3015,9 +2897,7 @@ export type WorkUncheckedCreateWithoutTagsInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -3079,9 +2959,7 @@ export type WorkUpdateWithoutTagsInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3130,9 +3008,7 @@ export type WorkUncheckedUpdateWithoutTagsInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3179,9 +3055,7 @@ export type WorkCreateManyRequiredViewLevelInput = {
   chapterPrice?: number
   chapterExchangePoints?: number
   canExchange?: boolean
-  downloadRule?: number
-  downloadPoints?: number | null
-  requiredDownloadLevelId?: number | null
+  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
@@ -3221,9 +3095,7 @@ export type WorkUpdateWithoutRequiredViewLevelInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3271,9 +3143,7 @@ export type WorkUncheckedUpdateWithoutRequiredViewLevelInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3321,9 +3191,7 @@ export type WorkUncheckedUpdateManyWithoutRequiredViewLevelInput = {
   chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
   chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
   canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  downloadRule?: Prisma.IntFieldUpdateOperationsInput | number
-  downloadPoints?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  requiredDownloadLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3432,9 +3300,7 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   chapterPrice?: boolean
   chapterExchangePoints?: boolean
   canExchange?: boolean
-  downloadRule?: boolean
-  downloadPoints?: boolean
-  requiredDownloadLevelId?: boolean
+  canDownload?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
@@ -3485,9 +3351,7 @@ export type WorkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   chapterPrice?: boolean
   chapterExchangePoints?: boolean
   canExchange?: boolean
-  downloadRule?: boolean
-  downloadPoints?: boolean
-  requiredDownloadLevelId?: boolean
+  canDownload?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
@@ -3530,9 +3394,7 @@ export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   chapterPrice?: boolean
   chapterExchangePoints?: boolean
   canExchange?: boolean
-  downloadRule?: boolean
-  downloadPoints?: boolean
-  requiredDownloadLevelId?: boolean
+  canDownload?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
@@ -3575,9 +3437,7 @@ export type WorkSelectScalar = {
   chapterPrice?: boolean
   chapterExchangePoints?: boolean
   canExchange?: boolean
-  downloadRule?: boolean
-  downloadPoints?: boolean
-  requiredDownloadLevelId?: boolean
+  canDownload?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
@@ -3590,7 +3450,7 @@ export type WorkSelectScalar = {
   deletedAt?: boolean
 }
 
-export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "isPublished" | "publishAt" | "lastUpdated" | "viewCount" | "favoriteCount" | "likeCount" | "downloadCount" | "purchaseCount" | "price" | "viewRule" | "requiredViewLevelId" | "chapterPrice" | "chapterExchangePoints" | "canExchange" | "downloadRule" | "downloadPoints" | "requiredDownloadLevelId" | "rating" | "ratingCount" | "popularity" | "isRecommended" | "isHot" | "isNew" | "recommendWeight" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
+export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "isPublished" | "publishAt" | "lastUpdated" | "viewCount" | "favoriteCount" | "likeCount" | "downloadCount" | "purchaseCount" | "price" | "viewRule" | "requiredViewLevelId" | "chapterPrice" | "chapterExchangePoints" | "canExchange" | "canDownload" | "rating" | "ratingCount" | "popularity" | "isRecommended" | "isHot" | "isNew" | "recommendWeight" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
 export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comic?: boolean | Prisma.Work$comicArgs<ExtArgs>
   novel?: boolean | Prisma.Work$novelArgs<ExtArgs>
@@ -3640,6 +3500,9 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 评论关联
      */
     comments: Prisma.$WorkCommentPayload<ExtArgs>[]
+    /**
+     * 阅读所需的会员等级
+     */
     requiredViewLevel: Prisma.$UserLevelRulePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -3732,26 +3595,33 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      */
     purchaseCount: number
     /**
-     * 价格
+     * 价格（单位：分）
      */
     price: number
+    /**
+     * 阅读权限规则（0=所有人, 1=登录, 2=会员, 3=购买）
+     */
     viewRule: number
+    /**
+     * 阅读所需的会员等级ID
+     */
     requiredViewLevelId: number | null
+    /**
+     * 章节价格（单位：分）
+     */
     chapterPrice: number
+    /**
+     * 章节兑换所需积分
+     */
     chapterExchangePoints: number
+    /**
+     * 是否允许积分兑换
+     */
     canExchange: boolean
     /**
-     * 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
+     * 是否允许下载
      */
-    downloadRule: number
-    /**
-     * 下载所需要的积分（积分可下载时必填）
-     */
-    downloadPoints: number | null
-    /**
-     * 允许下载的会员等级ID
-     */
-    requiredDownloadLevelId: number | null
+    canDownload: boolean
     /**
      * 评分（1-10分，保留一位小数）
      */
@@ -4251,9 +4121,7 @@ export interface WorkFieldRefs {
   readonly chapterPrice: Prisma.FieldRef<"Work", 'Int'>
   readonly chapterExchangePoints: Prisma.FieldRef<"Work", 'Int'>
   readonly canExchange: Prisma.FieldRef<"Work", 'Boolean'>
-  readonly downloadRule: Prisma.FieldRef<"Work", 'Int'>
-  readonly downloadPoints: Prisma.FieldRef<"Work", 'Int'>
-  readonly requiredDownloadLevelId: Prisma.FieldRef<"Work", 'Int'>
+  readonly canDownload: Prisma.FieldRef<"Work", 'Boolean'>
   readonly rating: Prisma.FieldRef<"Work", 'Float'>
   readonly ratingCount: Prisma.FieldRef<"Work", 'Int'>
   readonly popularity: Prisma.FieldRef<"Work", 'Int'>
