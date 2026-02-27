@@ -64,10 +64,7 @@ export class NovelChapterController {
     @Query() query: QueryWorkChapterDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.workChapterService.getChapterPageWithUserStatus(
-      query,
-      user.sub,
-    )
+    return this.workChapterService.getChapterPageWithUserStatus(query, user.sub)
   }
 
   @Get('chapter/my/purchases')
@@ -182,24 +179,6 @@ export class NovelChapterController {
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
     return this.workChapterService.checkUserPurchased(query.id, user.sub)
-  }
-
-  @Post('chapter/download')
-  @ApiDoc({
-    summary: '记录章节下载',
-    model: IdDto,
-  })
-  async downloadChapter(
-    @Body() body: IdDto,
-    @CurrentUser() user: JwtUserInfoInterface,
-    @RequestMeta() meta: RequestMetaResult,
-  ) {
-    return this.workChapterService.reportDownload(
-      body.id,
-      user.sub,
-      meta.ip,
-      meta.deviceId,
-    )
   }
 
   @Get('chapter/downloaded')

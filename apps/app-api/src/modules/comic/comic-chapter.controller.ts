@@ -184,24 +184,7 @@ export class ComicChapterController {
     return this.workChapterService.checkUserPurchased(query.id, user.sub)
   }
 
-  @Post('chapter/download')
-  @ApiDoc({
-    summary: '记录章节下载',
-    model: IdDto,
-  })
-  async downloadChapter(
-    @Body() body: IdDto,
-    @CurrentUser() user: JwtUserInfoInterface,
-    @RequestMeta() meta: RequestMetaResult,
-  ) {
-    return this.workChapterService.reportDownload(
-      body.id,
-      user.sub,
-      meta.ip,
-      meta.deviceId,
-    )
-  }
-
+ 
   @Get('chapter/downloaded')
   @ApiDoc({
     summary: '检查是否下载章节',

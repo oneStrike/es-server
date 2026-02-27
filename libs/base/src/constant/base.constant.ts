@@ -77,6 +77,6 @@ export enum WorkViewPermissionEnum {
   LOGGED_IN = 1,
   /** 会员可见 */
   MEMBER = 2,
-  /** 需积分可见 */
-  POINTS = 3,
+  /** 需购买可见 */
+  PURCHASE = 3,
 }

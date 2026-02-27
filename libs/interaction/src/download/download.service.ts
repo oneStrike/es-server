@@ -5,16 +5,7 @@ import {
   QueryUserDownloadRecordDto,
   UserDownloadRecordKeyDto,
 } from './dto/download.dto'
-
-/**
- * 下载权限配置接口
- * 用于统一处理作品和章节的下载权限校验
- */
-interface DownloadPermissionConfig {
-  /** 是否允许下载 */
-  canDownload?: boolean
-  downloadRule?: number
-}
+import { ContentPermissionService } from '@libs/content/permission'
 
 /**
  * 下载服务
@@ -22,23 +13,10 @@ interface DownloadPermissionConfig {
  */
 @Injectable()
 export class DownloadService extends BaseService {
-  constructor() {
+  constructor(
+    private readonly contentPermissionService: ContentPermissionService,
+  ) {
     super()
-  }
-
-  /** 作品数据访问对象 */
-  get work() {
-    return this.prisma.work
-  }
-
-  /** 章节数据访问对象 */
-  get workChapter() {
-    return this.prisma.workChapter
-  }
-
-  /** 用户数据访问对象 */
-  get appUser() {
-    return this.prisma.appUser
   }
 
   /** 用户下载记录数据访问对象 */
@@ -46,119 +24,53 @@ export class DownloadService extends BaseService {
     return this.prisma.userDownloadRecord
   }
 
+  isWorkType(targetType: DownloadTargetTypeEnum) {
+    return [
+      DownloadTargetTypeEnum.COMIC,
+      DownloadTargetTypeEnum.NOVEL,
+    ].includes(targetType)
+  }
+
   /**
    * 下载目标（作品或章节）
-   * @param dto 下载记录DTO，包含 targetType（目标类型）、targetId（目标ID）、userId（用户ID）
+   * @param dto 下载记录DTO
    * @returns 下载记录
    * @throws BadRequestException 当目标不存在、禁止下载或权限不足时抛出
    */
   async downloadTarget(dto: UserDownloadRecordKeyDto) {
-    const { targetType, targetId } = dto
+    const { targetType, targetId, userId } = dto
 
     // 根据目标类型校验下载权限
-    if (
-      targetType === DownloadTargetTypeEnum.COMIC_CHAPTER ||
-      targetType === DownloadTargetTypeEnum.NOVEL_CHAPTER
-    ) {
-      await this.validateChapterDownloadPermission(targetId)
-    } else if (
-      targetType === DownloadTargetTypeEnum.COMIC ||
-      targetType === DownloadTargetTypeEnum.NOVEL
-    ) {
-      await this.validateWorkDownloadPermission(targetId)
+    if (this.isWorkType(targetType)) {
+      await this.contentPermissionService.checkWorkDownload(targetId, userId)
+    } else {
+      await this.contentPermissionService.checkChapterDownload(targetId, userId)
     }
 
     // 使用事务保证一致性：创建下载记录 + 增加下载次数
     return this.prisma.$transaction(async (tx) => {
-      const record = await tx.userDownloadRecord.create({
-        data: dto,
-      })
+      try {
+        const record = await tx.userDownloadRecord.create({
+          data: dto,
+        })
 
-      if (
-        targetType === DownloadTargetTypeEnum.COMIC_CHAPTER ||
-        targetType === DownloadTargetTypeEnum.NOVEL_CHAPTER
-      ) {
-        await tx.workChapter.update({
-          where: { id: targetId },
-          data: { downloadCount: { increment: 1 } },
-        })
-      } else if (
-        targetType === DownloadTargetTypeEnum.COMIC ||
-        targetType === DownloadTargetTypeEnum.NOVEL
-      ) {
-        await tx.work.update({
-          where: { id: targetId },
-          data: { downloadCount: { increment: 1 } },
-        })
+        if (this.isWorkType(targetType)) {
+          await tx.work.update({
+            where: { id: targetId },
+            data: { downloadCount: { increment: 1 } },
+          })
+        } else {
+          await tx.workChapter.update({
+            where: { id: targetId },
+            data: { downloadCount: { increment: 1 } },
+          })
+        }
+
+        return record
+      } catch (error) {
+        throw new BadRequestException('下载操作失败，请稍后重试')
       }
-
-      return record
     })
-  }
-
-  /**
-   * 校验章节下载权限
-   * @param chapterId 章节ID
-   * @throws BadRequestException 当章节不存在或禁止下载时抛出
-   */
-  private async validateChapterDownloadPermission(chapterId: number) {
-    const chapter = await this.workChapter.findUnique({
-      where: { id: chapterId },
-    })
-
-    if (!chapter) {
-      throw new BadRequestException('章节不存在')
-    }
-
-    await this.validateDownloadPermission(
-      {
-        canDownload: chapter.canDownload,
-      },
-      '章节',
-    )
-  }
-
-  /**
-   * 校验作品下载权限
-   * @param workId 作品ID
-   * @throws BadRequestException 当作品不存在或禁止下载时抛出
-   */
-  private async validateWorkDownloadPermission(workId: number) {
-    const work = await this.work.findUnique({
-      where: { id: workId },
-    })
-
-    if (!work) {
-      throw new BadRequestException('作品不存在')
-    }
-
-    await this.validateDownloadPermission(
-      {
-        downloadRule: work.downloadRule,
-      },
-      '作品',
-    )
-  }
-
-  /**
-   * 校验下载权限（通用方法）
-   * 仅检查是否允许下载
-   * @param config 下载权限配置
-   * @param targetName 目标名称（用于错误提示）
-   * @throws BadRequestException 当禁止下载时抛出
-   */
-  private async validateDownloadPermission(
-    config: DownloadPermissionConfig,
-    targetName: string,
-  ) {
-    // 检查是否禁止下载
-    if (config.canDownload === false) {
-      throw new BadRequestException(`该${targetName}禁止下载`)
-    }
-
-    if (config.downloadRule === 0) {
-      throw new BadRequestException(`该${targetName}禁止下载`)
-    }
   }
 
   /**
@@ -186,11 +98,13 @@ export class DownloadService extends BaseService {
       return new Map()
     }
 
+    const uniqueTargetIds = [...new Set(targetIds)]
+
     // 查询已下载的目标ID
     const downloads = await this.userDownloadRecord.findMany({
       where: {
         targetType,
-        targetId: { in: targetIds },
+        targetId: { in: uniqueTargetIds },
         userId,
       },
       select: {
@@ -198,19 +112,16 @@ export class DownloadService extends BaseService {
       },
     })
 
-    // 构建结果Map
     const downloadedIds = new Set(downloads.map((d) => d.targetId))
-    const result = new Map<number, boolean>()
 
-    for (const id of targetIds) {
-      result.set(id, downloadedIds.has(id))
+    const result = new Map<number, boolean>(
+      uniqueTargetIds.map((id) => [id, false]),
+    )
+    for (const id of downloadedIds) {
+      result.set(id, true)
     }
 
     return result
-  }
-
-  async getUserDownloads(dto: QueryUserDownloadRecordDto) {
-    return this.queryUserDownloadRecords(dto)
   }
 
   /**
@@ -241,7 +152,7 @@ export class DownloadService extends BaseService {
    * @param dto 查询下载记录DTO
    * @returns 下载记录分页列表
    */
-  async queryUserDownloadRecords(dto: QueryUserDownloadRecordDto) {
+  async getUserDownloadRecord(dto: QueryUserDownloadRecordDto) {
     const { userId, targetType, ...restDto } = dto
 
     return this.userDownloadRecord.findPagination({

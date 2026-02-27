@@ -12687,7 +12687,7 @@ export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      */
     balance: number
     /**
-     * 论坛经验值
+     * 经验值
      */
     experience: number
     /**

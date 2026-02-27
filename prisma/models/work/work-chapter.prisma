@@ -16,7 +16,7 @@ model WorkChapter {
   description             String?               @db.VarChar(1000)
   /// 章节序号（用于排序）
   sortOrder               Int                   @default(0) @map("sort_order")
-  /// 查看规则（0=所有人, 1=登录用户, 2=会员, 3=购买）
+  /// 查看规则（-1=继承作品权限 0=所有人, 1=登录用户, 2=会员, 3=购买）
   viewRule                Int                   @default(-1) @map("read_rule") @db.SmallInt
   /// 是否允许下载
   canDownload             Boolean               @default(true) @map("can_download")

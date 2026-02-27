@@ -241,7 +241,7 @@ export class PurchaseService extends BaseService {
     userId: number,
     targetName: string,
   ) {
-    if (config.purchaseRule !== WorkViewPermissionEnum.POINTS) {
+    if (config.purchaseRule !== WorkViewPermissionEnum.PURCHASE) {
       throw new BadRequestException(`该${targetName}暂不支持购买`)
     }
 

@@ -2121,7 +2121,7 @@ export type $WorkChapterPayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     sortOrder: number
     /**
-     * 查看规则（0=所有人, 1=登录用户, 2=会员, 3=购买）
+     * 查看规则（-1=继承作品权限 0=所有人, 1=登录用户, 2=会员, 3=购买）
      */
     viewRule: number
     /**

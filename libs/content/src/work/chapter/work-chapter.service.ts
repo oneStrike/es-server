@@ -7,7 +7,10 @@ import {
   InteractionTargetType,
   LikeService,
 } from '@libs/interaction'
-import { UserBalanceRecordTypeEnum, UserBalanceService } from '@libs/user/balance'
+import {
+  UserBalanceRecordTypeEnum,
+  UserBalanceService,
+} from '@libs/user/balance'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { UserPermissionService } from '@libs/user/permission'
 import { UserPointService } from '@libs/user/point'
@@ -19,6 +22,7 @@ import {
 } from './dto/work-chapter.dto'
 import { WorkChapterGrowthEventKey } from './work-chapter.constant'
 import { PAGE_WORK_CHAPTER_SELECT } from './work-chapter.select'
+import { ContentPermissionService } from '@libs/content/permission'
 
 /**
  * 作品章节服务
@@ -133,7 +137,6 @@ export class WorkChapterService extends BaseService {
       ? DownloadTargetTypeEnum.COMIC_CHAPTER
       : DownloadTargetTypeEnum.NOVEL_CHAPTER
   }
-
 
   /**
    * 创建新章节
@@ -373,13 +376,8 @@ export class WorkChapterService extends BaseService {
     }
 
     const effectivePermission =
-      await this.contentPermissionService.resolveChapterPermission(chapter)
-    await this.contentPermissionService.checkAccess(
-      userId,
-      id,
-      effectivePermission,
-      'view',
-    )
+      await this.contentPermissionService.resolveChapterPermission(chapter.id)
+    await this.contentPermissionService.checkChapterAccess(userId, id)
 
     // 增加浏览次数
     await this.workChapter.update({
@@ -480,14 +478,14 @@ export class WorkChapterService extends BaseService {
     }
 
     const effectivePermission =
-      await this.contentPermissionService.resolveChapterPermission(chapter)
+      await this.contentPermissionService.resolveChapterPermission(chapter.id)
     await this.userPermissionService.validateViewPermission(
       effectivePermission.viewRule,
       userId,
       effectivePermission.requiredViewLevelId,
     )
 
-    if (effectivePermission.viewRule !== WorkViewPermissionEnum.POINTS) {
+    if (effectivePermission.viewRule !== WorkViewPermissionEnum.PURCHASE) {
       throw new BadRequestException('该章节不支持购买')
     }
 
@@ -566,7 +564,7 @@ export class WorkChapterService extends BaseService {
     }
 
     const effectivePermission =
-      await this.contentPermissionService.resolveChapterPermission(chapter)
+      await this.contentPermissionService.resolveChapterPermission(chapter.id)
     await this.userPermissionService.validateViewPermission(
       effectivePermission.viewRule,
       userId,
@@ -618,80 +616,6 @@ export class WorkChapterService extends BaseService {
     await this.userGrowthEventService.handleEvent({
       business: 'work',
       eventKey: WorkChapterGrowthEventKey.Purchase,
-      userId,
-      targetId: id,
-      ip,
-      deviceId,
-      occurredAt: new Date(),
-    })
-
-    return { id }
-  }
-
-  /**
-   * 报告章节下载
-   * @param id 章节ID
-   * @param userId 用户ID
-   * @param ip 用户IP地址
-   * @param deviceId 设备ID
-   * @returns 章节ID
-   * @throws BadRequestException 当已下载、禁止下载、会员等级不足或积分不足时抛出
-   */
-  async reportDownload(
-    id: number,
-    userId: number,
-    ip?: string,
-    deviceId?: string,
-  ) {
-    const chapter = await this.workChapter.findUnique({ where: { id } })
-
-    if (!chapter) {
-      throw new BadRequestException('章节不存在')
-    }
-
-    const work = await this.work.findUnique({ where: { id: chapter.workId } })
-    if (!work) {
-      throw new BadRequestException('作品不存在')
-    }
-
-    const downloadTargetType = this.getDownloadTargetType(chapter.workType)
-
-    // 检查是否已下载
-    const existingDownload = await this.downloadService.checkDownloadStatus({
-      targetType: downloadTargetType,
-      targetId: id,
-      userId,
-    })
-
-    if (existingDownload) {
-      throw new BadRequestException('已下载该章节')
-    }
-
-    // 获取有效权限并校验
-    const effectivePermission =
-      await this.contentPermissionService.resolveChapterPermission(
-        chapter,
-        work,
-      )
-
-    await this.contentPermissionService.checkAccess(
-      userId,
-      id,
-      effectivePermission,
-      'download',
-    )
-
-    // 记录下载
-    await this.downloadService.recordDownload({
-      targetType: downloadTargetType,
-      targetId: id,
-      userId,
-    })
-
-    // 触发下载成长事件
-    await this.userGrowthEventService.handleEvent({
-      business: 'work',
-      eventKey: WorkChapterGrowthEventKey.Download,
       userId,
       targetId: id,
       ip,
@@ -966,11 +890,11 @@ export class WorkChapterService extends BaseService {
 
     // 分别查询漫画和小说下载记录
     const [comicResult, novelResult] = await Promise.all([
-      this.downloadService.getUserDownloads({
+      this.downloadService.getUserDownloadRecord({
         userId,
         targetType: DownloadTargetTypeEnum.COMIC_CHAPTER,
       }),
-      this.downloadService.getUserDownloads({
+      this.downloadService.getUserDownloadRecord({
         userId,
         targetType: DownloadTargetTypeEnum.NOVEL_CHAPTER,
       }),

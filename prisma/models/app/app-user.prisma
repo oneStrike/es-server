@@ -29,7 +29,7 @@ model AppUser {
   points     Int @default(0)
   /// 余额
   balance    Int @default(0)
-  /// 论坛经验值
+  /// 经验值
   experience Int @default(0)
 
   /// 用户状态（1:正常, 2:被禁言, 3:永久禁言，4:被封禁，5:永久封禁）

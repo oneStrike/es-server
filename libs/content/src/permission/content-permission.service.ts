@@ -1,121 +1,252 @@
 import { WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import { UserPermissionService } from '@libs/user/permission'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import {
+  WORK_PERMISSION_SELECT,
+  CHAPTER_PERMISSION_SELECT,
+} from './content-permission.select'
+import { PurchaseStatusEnum } from '@libs/interaction/purchase'
 
-export interface EffectiveChapterPermission {
-  viewRule: WorkViewPermissionEnum
-  requiredViewLevelId: number | null
-  price: number
-  exchangePoints: number
-  canExchange: boolean
-  canDownload: boolean
+/** 用户等级信息接口 */
+interface UserWithLevel {
+  id: number
+  levelId: number | null
+  level: { requiredExperience: number } | null
 }
 
 @Injectable()
 export class ContentPermissionService extends BaseService {
-  constructor(private readonly userPermissionService: UserPermissionService) {
-    super()
+  get appUser() {
+    return this.prisma.appUser
   }
 
   get work() {
     return this.prisma.work
   }
 
-  get workChapterPurchase() {
-    return this.prisma.workChapterPurchase
+  get workChapter() {
+    return this.prisma.workChapter
+  }
+
+  get userLevelRule() {
+    return this.prisma.userLevelRule
+  }
+
+  get userPurchaseRecord() {
+    return this.prisma.userPurchaseRecord
   }
 
   /**
-   * 解析章节有效权限
-   * 处理继承逻辑：若章节 viewRule 为 INHERIT (-1)，则继承作品所有配置（包括下载）
+   * 解析作品的有效权限
    */
-  async resolveChapterPermission(
-    chapter: {
-      workId: number
-      viewRule: number
-      requiredViewLevelId?: number | null
-      price: number
-      exchangePoints: number
-      canExchange: boolean
-      canDownload: boolean
-    },
-    work?: {
-      viewRule: number
-      requiredViewLevelId?: number | null
-      chapterPrice: number
-      chapterExchangePoints: number
-      canExchange: boolean
-      canDownload: boolean
-    } | null,
-  ): Promise<EffectiveChapterPermission> {
-    if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
-      const currentWork =
-        work ??
-        (await this.work.findUnique({
-          where: { id: chapter.workId },
-        }))
-
-      if (!currentWork) {
-        throw new BadRequestException('作品不存在')
-      }
-
-      return {
-        viewRule: currentWork.viewRule as WorkViewPermissionEnum,
-        requiredViewLevelId: currentWork.requiredViewLevelId ?? null,
-        price: currentWork.chapterPrice,
-        exchangePoints: currentWork.chapterExchangePoints,
-        canExchange: currentWork.canExchange,
-        canDownload: currentWork.canDownload,
-      }
+  async resolveWorkPermission(workId: number) {
+    const work = await this.work.findUnique({
+      where: { id: workId },
+      select: WORK_PERMISSION_SELECT,
+    })
+    if (!work) {
+      throw new BadRequestException('作品不存在')
     }
-
     return {
-      viewRule: chapter.viewRule as WorkViewPermissionEnum,
-      requiredViewLevelId: chapter.requiredViewLevelId ?? null,
-      price: chapter.price,
-      exchangePoints: chapter.exchangePoints,
-      canExchange: chapter.canExchange,
-      canDownload: chapter.canDownload,
+      ...work,
+      viewRule: work.viewRule as WorkViewPermissionEnum,
+      requiredExperience: work.requiredViewLevel?.requiredExperience ?? null,
     }
   }
 
   /**
-   * 检查章节访问权限
-   * 适用于阅读和下载操作
+   * 解析章节的有效权限
    */
-  async checkAccess(
-    userId: number,
-    chapterId: number,
-    permission: EffectiveChapterPermission,
-    action: 'view' | 'download',
-  ) {
-    // 1. 如果是下载操作，先检查下载开关
-    if (action === 'download' && !permission.canDownload) {
-      throw new BadRequestException('该章节禁止下载')
+  async resolveChapterPermission(chapterId: number) {
+    const chapter = await this.workChapter.findUnique({
+      where: { id: chapterId },
+      select: CHAPTER_PERMISSION_SELECT,
+    })
+    if (!chapter) {
+      throw new BadRequestException('章节不存在')
     }
 
-    // 2. 检查基础阅读权限（登录、会员等级）
-    await this.userPermissionService.validateViewPermission(
-      permission.viewRule,
-      userId,
-      permission.requiredViewLevelId,
-    )
-
-    // 3. 如果是付费/积分章节，检查购买状态
-    if (permission.viewRule === WorkViewPermissionEnum.POINTS) {
-      const purchased = await this.workChapterPurchase.findUnique({
-        where: {
-          chapterId_userId: {
-            chapterId,
-            userId,
-          },
-        },
-      })
-
-      if (!purchased) {
-        throw new BadRequestException('请先购买或兑换该章节')
+    // 判断是否继承作品权限
+    if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
+      const workPermission = await this.resolveWorkPermission(chapter.workId)
+      return {
+        ...workPermission,
+        exchangePoints: workPermission.chapterExchangePoints,
+        price: workPermission.chapterPrice,
+        isPreview: chapter.isPreview,
       }
     }
+
+    // 章节有独立权限配置
+    return {
+      ...chapter,
+      viewRule: chapter.viewRule as WorkViewPermissionEnum,
+      requiredExperience: chapter.requiredViewLevel?.requiredExperience ?? null,
+    }
+  }
+
+  /**
+   * 获取用户及其等级信息
+   */
+  private async getUserWithLevel(userId: number) {
+    const user = await this.appUser.findUnique({
+      where: { id: userId },
+      include: {
+        level: {
+          select: { requiredExperience: true },
+        },
+      },
+    })
+    if (!user) {
+      throw new BadRequestException('用户不存在')
+    }
+    return user
+  }
+
+  /**
+   * 验证会员等级权限
+   */
+  private async validateMemberPermission(
+    user: UserWithLevel,
+    requiredViewLevelId: number | null,
+  ) {
+    if (!user.levelId || !user.level) {
+      throw new BadRequestException('会员等级不足')
+    }
+
+    if (requiredViewLevelId) {
+      const requiredLevel = await this.userLevelRule.findUnique({
+        where: { id: requiredViewLevelId },
+      })
+      if (!requiredLevel) {
+        throw new BadRequestException('指定的阅读会员等级不存在')
+      }
+      if (user.level.requiredExperience < requiredLevel.requiredExperience) {
+        throw new BadRequestException('会员等级不足')
+      }
+    }
+  }
+
+  /**
+   * 验证购买权限
+   */
+  private async validatePurchasePermission(
+    userId: number,
+    targetId: number,
+    targetType: 'work' | 'chapter',
+  ) {
+    const purchased = await this.userPurchaseRecord.findFirst({
+      where: {
+        targetId,
+        userId,
+        status: PurchaseStatusEnum.SUCCESS, // 购买成功状态
+      },
+    })
+    if (!purchased) {
+      throw new BadRequestException(
+        targetType === 'work' ? '请先购买该作品' : '请先购买该章节',
+      )
+    }
+  }
+
+  /**
+   * 核心权限检查逻辑
+   */
+  private async checkAccessPermission(
+    viewRule: WorkViewPermissionEnum,
+    userId: number,
+    requiredViewLevelId: number | null,
+    purchaseCheck?: { targetId: number; targetType: 'work' | 'chapter' },
+  ) {
+    // 所有人可见或继承权限时，直接放行
+    if (
+      viewRule === WorkViewPermissionEnum.ALL ||
+      viewRule === WorkViewPermissionEnum.INHERIT
+    ) {
+      return true
+    }
+
+    const user = await this.getUserWithLevel(userId)
+
+    // 仅需登录即可访问
+    if (viewRule === WorkViewPermissionEnum.LOGGED_IN) {
+      return true
+    }
+
+    // 需要会员身份
+    if (viewRule === WorkViewPermissionEnum.MEMBER) {
+      await this.validateMemberPermission(user, requiredViewLevelId)
+      return true
+    }
+
+    // 需要购买
+    if (viewRule === WorkViewPermissionEnum.PURCHASE && purchaseCheck) {
+      await this.validatePurchasePermission(
+        userId,
+        purchaseCheck.targetId,
+        purchaseCheck.targetType,
+      )
+      return true
+    }
+
+    return true
+  }
+
+  /**
+   * 检查用户对作品的访问权限
+   */
+  async checkWorkAccess(userId: number, workId: number) {
+    const { viewRule, requiredViewLevelId } =
+      await this.resolveWorkPermission(workId)
+    return this.checkAccessPermission(viewRule, userId, requiredViewLevelId, {
+      targetId: workId,
+      targetType: 'work',
+    })
+  }
+
+  /**
+   * 检查用户对章节的访问权限
+   */
+  async checkChapterAccess(userId: number, chapterId: number) {
+    const { viewRule, requiredViewLevelId, isPreview } =
+      await this.resolveChapterPermission(chapterId)
+    if (isPreview) {
+      return true
+    }
+    return this.checkAccessPermission(viewRule, userId, requiredViewLevelId, {
+      targetId: chapterId,
+      targetType: 'chapter',
+    })
+  }
+
+  /**
+   * 检查用户对作品的下载权限
+   */
+  async checkWorkDownload(userId: number, workId: number) {
+    const { viewRule, requiredViewLevelId, canDownload } =
+      await this.resolveWorkPermission(workId)
+    if (!canDownload) {
+      throw new BadRequestException('作品禁止下载')
+    }
+    return this.checkAccessPermission(viewRule, userId, requiredViewLevelId, {
+      targetId: workId,
+      targetType: 'work',
+    })
+  }
+
+  /**
+   * 检查用户对章节的下载权限
+   */
+  async checkChapterDownload(userId: number, chapterId: number) {
+    const { viewRule, requiredViewLevelId, canDownload } =
+      await this.resolveChapterPermission(chapterId)
+
+    if (!canDownload) {
+      throw new BadRequestException('章节禁止下载')
+    }
+    return this.checkAccessPermission(viewRule, userId, requiredViewLevelId, {
+      targetId: chapterId,
+      targetType: 'chapter',
+    })
   }
 }

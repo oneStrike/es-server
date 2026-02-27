@@ -54,8 +54,12 @@ model Work {
   chapterPrice            Int       @default(0) @map("chapter_price")
   /// 章节兑换所需积分
   chapterExchangePoints   Int       @default(0) @map("chapter_exchange_points")
+  /// 是否允许评论
+  canComment              Boolean               @default(true) @map("can_comment")
   /// 是否允许积分兑换
   canExchange             Boolean   @default(false) @map("can_exchange")
+  /// 对换所需要的积分
+  exchangePoints          Int       @default(0) @map("exchange_points")
   /// 是否允许下载
   canDownload            Boolean       @default(false) @map("can_download") 
   /// 评分（1-10分，保留一位小数）
