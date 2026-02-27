@@ -70,6 +70,7 @@ export enum GenderEnum {
 
 /// 作品可见权限枚举
 export enum WorkViewPermissionEnum {
+  INHERIT = -1,
   /** 所有人可见 */
   ALL = 0,
   /** 登录用户可见 */

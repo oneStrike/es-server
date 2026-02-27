@@ -154,6 +154,24 @@ export class ComicChapterController {
     )
   }
 
+  @Post('chapter/exchange')
+  @ApiDoc({
+    summary: '记录章节兑换',
+    model: IdDto,
+  })
+  async exchangeChapter(
+    @Body() body: IdDto,
+    @CurrentUser() user: JwtUserInfoInterface,
+    @RequestMeta() meta: RequestMetaResult,
+  ) {
+    return this.workChapterService.exchangeChapter(
+      body.id,
+      user.sub,
+      meta.ip,
+      meta.deviceId,
+    )
+  }
+
   @Get('chapter/purchased')
   @ApiDoc({
     summary: '检查是否购买章节',

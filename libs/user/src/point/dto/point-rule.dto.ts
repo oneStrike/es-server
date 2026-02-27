@@ -16,7 +16,7 @@ import { UserPointRuleTypeEnum } from '../point.constant'
 export class BaseUserPointRuleDto extends BaseDto {
   @EnumProperty({
     description:
-      '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到, 7=管理员操作, 8=主题浏览, 9=举报, 101=漫画浏览, 102=漫画点赞, 103=漫画收藏, 111=章节阅读, 112=章节点赞, 113=章节购买, 114=章节下载）',
+      '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到, 7=管理员操作, 8=主题浏览, 9=举报, 101=漫画浏览, 102=漫画点赞, 103=漫画收藏, 111=章节阅读, 112=章节点赞, 113=章节购买, 114=章节下载, 115=章节兑换）',
     example: UserPointRuleTypeEnum.CREATE_TOPIC,
     required: true,
     enum: UserPointRuleTypeEnum,

@@ -71,51 +71,52 @@ export class BaseWorkChapterDto extends BaseDto {
   sortOrder!: number
 
   @EnumProperty({
-    description: '查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
-    example: WorkViewPermissionEnum.ALL,
+    description: '查看规则（-1=继承, 0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
+    example: WorkViewPermissionEnum.INHERIT,
     required: true,
     enum: WorkViewPermissionEnum,
-    default: WorkViewPermissionEnum.ALL,
+    default: WorkViewPermissionEnum.INHERIT,
   })
-  readRule!: WorkViewPermissionEnum
+  viewRule!: WorkViewPermissionEnum
 
   @NumberProperty({
-    description: '阅读所需积分',
-    example: 10,
-    required: false,
-    min: 0,
-  })
-  readPoints?: number
-
-  @NumberProperty({
-    description: '下载规则（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）',
-    example: 1,
+    description: '章节价格（0=免费）',
+    example: 0,
     required: true,
-    default: 1,
+    default: 0,
   })
-  downloadRule!: number
-
-  @NumberProperty({
-    description: '下载所需积分',
-    example: 5,
-    required: false,
-    min: 0,
-  })
-  downloadPoints?: number
+  price!: number
 
   @NumberProperty({
     description: '阅读所需会员等级ID',
     example: 1,
     required: false,
   })
-  requiredReadLevelId?: number
+  requiredViewLevelId?: number
 
   @NumberProperty({
-    description: '下载所需会员等级ID',
-    example: 1,
-    required: false,
+    description: '章节兑换积分',
+    example: 0,
+    required: true,
+    default: 0,
   })
-  requiredDownloadLevelId?: number
+  exchangePoints!: number
+
+  @BooleanProperty({
+    description: '是否允许兑换',
+    example: false,
+    required: true,
+    default: false,
+  })
+  canExchange!: boolean
+
+  @BooleanProperty({
+    description: '是否允许下载',
+    example: true,
+    required: true,
+    default: true,
+  })
+  canDownload!: boolean
 
   @BooleanProperty({
     description: '发布状态',
@@ -238,12 +239,10 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'title',
   'canComment',
   'sortOrder',
-  'readRule',
-  'downloadRule',
-  'readPoints',
-  'downloadPoints',
-  'requiredReadLevelId',
-  'requiredDownloadLevelId',
+  'viewRule',
+  'canDownload',
+  'price',
+  'requiredViewLevelId',
 ]) {}
 
 /// 更新章节DTO
@@ -259,7 +258,7 @@ export class QueryWorkChapterDto extends IntersectionType(
     'title',
     'isPublished',
     'isPreview',
-    'readRule',
+    'viewRule',
   ]),
 ) {}
 

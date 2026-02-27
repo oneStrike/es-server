@@ -64,6 +64,7 @@ model AppUser {
   tokens                    AppUserToken[]
   /// 积分记录关联
   pointRecords              UserPointRecord[]           @relation("UserPointRecords")
+  userBalanceRecords        UserBalanceRecord[]
   /// 经验记录关联
   experienceRecords         UserExperienceRecord[]      @relation("UserExperienceRecords")
   /// 论坛主题关联

@@ -6,10 +6,7 @@ export const PAGE_WORK_CHAPTER_SELECT = {
   title: true,
   canComment: true,
   sortOrder: true,
-  readRule: true,
-  downloadRule: true,
-  readPoints: true,
-  downloadPoints: true,
-  requiredReadLevelId: true,
-  requiredDownloadLevelId: true,
+  viewRule: true,
+  canDownload: true,
+  requiredViewLevelId: true,
 } as const

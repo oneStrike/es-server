@@ -26,17 +26,10 @@ export class BaseUserPurchaseRecordDto extends BaseDto {
   })
   userId!: number
 
-  @NumberProperty({
-    description: '购买价格（单位：积分或余额的最小单位）',
-    example: 100,
-    required: true,
-  })
-  price!: number
-
   @EnumProperty({
-    description: '支付方式：1=积分, 2=余额, 3=支付宝, 4=微信',
+    description: '支付方式：2=余额（积分用于兑换，不用于购买）',
     enum: PaymentMethodEnum,
-    example: 1,
+    example: PaymentMethodEnum.BALANCE,
     required: true,
   })
   paymentMethod!: PaymentMethodEnum

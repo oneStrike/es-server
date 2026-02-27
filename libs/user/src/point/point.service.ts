@@ -175,8 +175,12 @@ export class UserPointService extends BaseService {
    * @param consumePointsDto 消费积分的数据
    * @returns 消费积分的结果
    */
-  async consumePoints(consumePointsDto: ConsumeUserPointsDto) {
-    const { userId, points, remark } = consumePointsDto
+  async consumePoints(
+    consumePointsDto: ConsumeUserPointsDto,
+    tx?: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
+  ) {
+    const { userId, points, remark, targetType, targetId, exchangeId } =
+      consumePointsDto
 
     const user = await this.appUser.findUnique({
       where: { id: userId },
@@ -190,8 +194,7 @@ export class UserPointService extends BaseService {
       throw new BadRequestException('积分不足')
     }
 
-    // 消费积分需保证记录与余额一致
-    return this.prisma.$transaction(async (tx) => {
+    if (tx) {
       const beforePoints = user.points
       const afterPoints = beforePoints - points
 
@@ -202,10 +205,40 @@ export class UserPointService extends BaseService {
           beforePoints,
           afterPoints,
           remark,
+          targetType,
+          targetId,
+          exchangeId,
         },
       })
 
       await tx.appUser.update({
+        where: { id: userId },
+        data: {
+          points: afterPoints,
+        },
+      })
+
+      return record
+    }
+
+    return this.prisma.$transaction(async (transaction) => {
+      const beforePoints = user.points
+      const afterPoints = beforePoints - points
+
+      const record = await transaction.userPointRecord.create({
+        data: {
+          userId,
+          points: -points,
+          beforePoints,
+          afterPoints,
+          remark,
+          targetType,
+          targetId,
+          exchangeId,
+        },
+      })
+
+      await transaction.appUser.update({
         where: { id: userId },
         data: {
           points: afterPoints,

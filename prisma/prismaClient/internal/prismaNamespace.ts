@@ -399,6 +399,7 @@ export const ModelName = {
   Task: 'Task',
   UserBadgeAssignment: 'UserBadgeAssignment',
   UserBadge: 'UserBadge',
+  UserBalanceRecord: 'UserBalanceRecord',
   UserCommentLike: 'UserCommentLike',
   UserCommentReport: 'UserCommentReport',
   UserComment: 'UserComment',
@@ -464,7 +465,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownloadRecord" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userPurchaseRecord" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapterPurchase" | "workChapter" | "workCommentReport" | "workComment" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userBalanceRecord" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownloadRecord" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userPurchaseRecord" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapterPurchase" | "workChapter" | "workCommentReport" | "workComment" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1575,6 +1576,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserBadgeCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserBadgeCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserBalanceRecord: {
+      payload: Prisma.$UserBalanceRecordPayload<ExtArgs>
+      fields: Prisma.UserBalanceRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserBalanceRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserBalanceRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.UserBalanceRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserBalanceRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload>
+        }
+        findMany: {
+          args: Prisma.UserBalanceRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload>[]
+        }
+        create: {
+          args: Prisma.UserBalanceRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload>
+        }
+        createMany: {
+          args: Prisma.UserBalanceRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserBalanceRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.UserBalanceRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload>
+        }
+        update: {
+          args: Prisma.UserBalanceRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserBalanceRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserBalanceRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserBalanceRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserBalanceRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserBalanceRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.UserBalanceRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserBalanceRecord>
+        }
+        groupBy: {
+          args: Prisma.UserBalanceRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserBalanceRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserBalanceRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserBalanceRecordCountAggregateOutputType> | number
         }
       }
     }
@@ -5594,6 +5669,20 @@ export const UserBadgeScalarFieldEnum = {
 export type UserBadgeScalarFieldEnum = (typeof UserBadgeScalarFieldEnum)[keyof typeof UserBadgeScalarFieldEnum]
 
 
+export const UserBalanceRecordScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  amount: 'amount',
+  beforeBalance: 'beforeBalance',
+  afterBalance: 'afterBalance',
+  type: 'type',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type UserBalanceRecordScalarFieldEnum = (typeof UserBalanceRecordScalarFieldEnum)[keyof typeof UserBalanceRecordScalarFieldEnum]
+
+
 export const UserCommentLikeScalarFieldEnum = {
   id: 'id',
   commentId: 'commentId',
@@ -5792,6 +5881,9 @@ export const UserPointRecordScalarFieldEnum = {
   userId: 'userId',
   ruleId: 'ruleId',
   eventId: 'eventId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  exchangeId: 'exchangeId',
   points: 'points',
   beforePoints: 'beforePoints',
   afterPoints: 'afterPoints',
@@ -6355,12 +6447,12 @@ export const WorkChapterScalarFieldEnum = {
   cover: 'cover',
   description: 'description',
   sortOrder: 'sortOrder',
-  readRule: 'readRule',
-  downloadRule: 'downloadRule',
+  viewRule: 'viewRule',
+  canDownload: 'canDownload',
   price: 'price',
-  downloadPoints: 'downloadPoints',
-  requiredReadLevelId: 'requiredReadLevelId',
-  requiredDownloadLevelId: 'requiredDownloadLevelId',
+  requiredViewLevelId: 'requiredViewLevelId',
+  exchangePoints: 'exchangePoints',
+  canExchange: 'canExchange',
   isPublished: 'isPublished',
   isPreview: 'isPreview',
   canComment: 'canComment',
@@ -6475,6 +6567,11 @@ export const WorkScalarFieldEnum = {
   downloadCount: 'downloadCount',
   purchaseCount: 'purchaseCount',
   price: 'price',
+  viewRule: 'viewRule',
+  requiredViewLevelId: 'requiredViewLevelId',
+  chapterPrice: 'chapterPrice',
+  chapterExchangePoints: 'chapterExchangePoints',
+  canExchange: 'canExchange',
   downloadRule: 'downloadRule',
   downloadPoints: 'downloadPoints',
   requiredDownloadLevelId: 'requiredDownloadLevelId',
@@ -6761,6 +6858,7 @@ export type GlobalOmitConfig = {
   task?: Prisma.TaskOmit
   userBadgeAssignment?: Prisma.UserBadgeAssignmentOmit
   userBadge?: Prisma.UserBadgeOmit
+  userBalanceRecord?: Prisma.UserBalanceRecordOmit
   userCommentLike?: Prisma.UserCommentLikeOmit
   userCommentReport?: Prisma.UserCommentReportOmit
   userComment?: Prisma.UserCommentOmit

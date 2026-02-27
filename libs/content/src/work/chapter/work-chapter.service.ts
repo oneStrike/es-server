@@ -7,7 +7,10 @@ import {
   InteractionTargetType,
   LikeService,
 } from '@libs/interaction'
+import { UserBalanceRecordTypeEnum, UserBalanceService } from '@libs/user/balance'
 import { UserGrowthEventService } from '@libs/user/growth-event'
+import { UserPermissionService } from '@libs/user/permission'
+import { UserPointService } from '@libs/user/point'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkChapterDto,
@@ -68,6 +71,9 @@ export class WorkChapterService extends BaseService {
     private readonly userGrowthEventService: UserGrowthEventService,
     private readonly likeService: LikeService,
     private readonly downloadService: DownloadService,
+    private readonly userPermissionService: UserPermissionService,
+    private readonly userPointService: UserPointService,
+    private readonly userBalanceService: UserBalanceService,
   ) {
     super()
   }
@@ -86,13 +92,13 @@ export class WorkChapterService extends BaseService {
       workId: true, // 关联作品ID
       workType: true, // 作品类型(1=漫画, 2=小说)
       sortOrder: true, // 排序号
-      readRule: true, // 阅读权限规则
+      viewRule: true, // 阅读权限规则
       price: true, // 价格
-      downloadRule: true, // 下载权限规则
-      downloadPoints: true, // 下载所需积分
+      exchangePoints: true, // 兑换积分
+      canExchange: true, // 是否允许兑换
+      canDownload: true, // 是否允许下载
       canComment: true, // 是否允许评论
-      requiredReadLevelId: true, // 阅读所需会员等级ID
-      requiredDownloadLevelId: true, // 下载所需会员等级ID
+      requiredViewLevelId: true, // 阅读所需会员等级ID
       isPreview: true, // 是否为预览章节
       publishAt: true, // 发布时间
       purchaseCount: true, // 购买次数
@@ -125,6 +131,52 @@ export class WorkChapterService extends BaseService {
     return workType === 1
       ? DownloadTargetTypeEnum.COMIC_CHAPTER
       : DownloadTargetTypeEnum.NOVEL_CHAPTER
+  }
+
+  private async resolveChapterPermission(
+    chapter: {
+      workId: number
+      viewRule: WorkViewPermissionEnum
+      requiredViewLevelId?: number | null
+      price: number
+      exchangePoints: number
+      canExchange: boolean
+    },
+    work?: {
+      viewRule: WorkViewPermissionEnum
+      requiredViewLevelId?: number | null
+      chapterPrice: number
+      chapterExchangePoints: number
+      canExchange: boolean
+    } | null,
+  ) {
+    if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
+      const currentWork =
+        work ??
+        (await this.work.findUnique({
+          where: { id: chapter.workId },
+        }))
+
+      if (!currentWork) {
+        throw new BadRequestException('作品不存在')
+      }
+
+      return {
+        viewRule: currentWork.viewRule as WorkViewPermissionEnum,
+        requiredViewLevelId: currentWork.requiredViewLevelId,
+        price: currentWork.chapterPrice,
+        exchangePoints: currentWork.chapterExchangePoints,
+        canExchange: currentWork.canExchange,
+      }
+    }
+
+    return {
+      viewRule: chapter.viewRule,
+      requiredViewLevelId: chapter.requiredViewLevelId ?? null,
+      price: chapter.price,
+      exchangePoints: chapter.exchangePoints,
+      canExchange: chapter.canExchange,
+    }
   }
 
   /**
@@ -186,14 +238,7 @@ export class WorkChapterService extends BaseService {
             type: true,
           },
         },
-        requiredReadLevel: {
-          select: {
-            id: true,
-            name: true,
-            color: true,
-          },
-        },
-        requiredDownloadLevel: {
+        requiredViewLevel: {
           select: {
             id: true,
             name: true,
@@ -257,8 +302,7 @@ export class WorkChapterService extends BaseService {
    */
   async updateChapter(dto: UpdateWorkChapterDto) {
     const { id, workId, ...updateData } = dto
-    const { requiredReadLevelId, requiredDownloadLevelId, sortOrder } =
-      updateData
+    const { requiredViewLevelId, sortOrder } = updateData
 
     // 验证章节号是否与其他章节冲突
     if (
@@ -275,18 +319,10 @@ export class WorkChapterService extends BaseService {
 
     // 验证阅读会员等级是否存在
     if (
-      requiredReadLevelId &&
-      !(await this.userLevelRule.exists({ id: requiredReadLevelId }))
+      requiredViewLevelId &&
+      !(await this.userLevelRule.exists({ id: requiredViewLevelId }))
     ) {
       throw new BadRequestException('指定的阅读会员等级不存在')
-    }
-
-    // 验证下载会员等级是否存在
-    if (
-      requiredDownloadLevelId &&
-      !(await this.userLevelRule.exists({ id: requiredDownloadLevelId }))
-    ) {
-      throw new BadRequestException('指定的下载会员等级不存在')
     }
 
     return this.workChapter.update({
@@ -380,50 +416,21 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    // 验证阅读权限
-    if (chapter.readRule !== WorkViewPermissionEnum.ALL) {
-      const user = await this.appUser.findUnique({
-        where: { id: userId },
-        include: { level: true },
+    const effectivePermission = await this.resolveChapterPermission(chapter)
+    await this.userPermissionService.validateViewPermission(
+      effectivePermission.viewRule,
+      userId,
+      effectivePermission.requiredViewLevelId,
+    )
+
+    if (effectivePermission.viewRule === WorkViewPermissionEnum.POINTS) {
+      const purchased = await this.workChapterPurchase.exists({
+        chapterId: id,
+        userId,
       })
 
-      if (!user) {
-        throw new BadRequestException('用户不存在')
-      }
-
-      // 会员权限验证
-      if (chapter.readRule === WorkViewPermissionEnum.MEMBER) {
-        if (!user.levelId || !user.level) {
-          throw new BadRequestException('会员等级不足')
-        }
-
-        // 验证会员等级要求
-        if (chapter.requiredReadLevelId) {
-          const requiredLevel = await this.userLevelRule.findUnique({
-            where: { id: chapter.requiredReadLevelId },
-          })
-
-          if (!requiredLevel) {
-            throw new BadRequestException('指定的阅读会员等级不存在')
-          }
-
-          if (
-            user.level.requiredExperience < requiredLevel.requiredExperience
-          ) {
-            throw new BadRequestException('会员等级不足')
-          }
-        }
-      }
-
-      // 积分权限验证
-      if (chapter.readRule === WorkViewPermissionEnum.POINTS) {
-        const requiredPoints = chapter.price ?? 0
-        if (requiredPoints <= 0) {
-          throw new BadRequestException('章节未配置购买价格')
-        }
-        if (user.points < requiredPoints) {
-          throw new BadRequestException('积分不足')
-        }
+      if (!purchased) {
+        throw new BadRequestException('请先购买或兑换该章节')
       }
     }
 
@@ -505,20 +512,10 @@ export class WorkChapterService extends BaseService {
     ip?: string,
     deviceId?: string,
   ) {
-    const [chapter, user] = await Promise.all([
-      this.workChapter.findUnique({ where: { id } }),
-      this.appUser.findUnique({
-        where: { id: userId },
-        include: { level: true },
-      }),
-    ])
+    const chapter = await this.workChapter.findUnique({ where: { id } })
 
     if (!chapter) {
       throw new BadRequestException('章节不存在')
-    }
-
-    if (!user) {
-      throw new BadRequestException('用户不存在')
     }
 
     // 检查是否已购买
@@ -535,42 +532,35 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('已购买该章节')
     }
 
-    // 验证是否支持购买
-    if (chapter.readRule !== WorkViewPermissionEnum.POINTS) {
+    const effectivePermission = await this.resolveChapterPermission(chapter)
+    await this.userPermissionService.validateViewPermission(
+      effectivePermission.viewRule,
+      userId,
+      effectivePermission.requiredViewLevelId,
+    )
+
+    if (effectivePermission.viewRule !== WorkViewPermissionEnum.POINTS) {
       throw new BadRequestException('该章节不支持购买')
     }
 
-    // 验证会员等级
-    if (chapter.requiredReadLevelId) {
-      if (!user.levelId || !user.level) {
-        throw new BadRequestException('会员等级不足')
-      }
-
-      const requiredLevel = await this.userLevelRule.findUnique({
-        where: { id: chapter.requiredReadLevelId },
-      })
-
-      if (!requiredLevel) {
-        throw new BadRequestException('指定的阅读会员等级不存在')
-      }
-
-      if (user.level.requiredExperience < requiredLevel.requiredExperience) {
-        throw new BadRequestException('会员等级不足')
-      }
-    }
-
-    // 验证价格
-    const requiredPoints = chapter.price ?? 0
-    if (requiredPoints <= 0) {
+    const price = effectivePermission.price ?? 0
+    if (price <= 0) {
       throw new BadRequestException('章节未配置购买价格')
     }
 
-    if (user.points < requiredPoints) {
-      throw new BadRequestException('积分不足')
-    }
+    await this.userPermissionService.validateBalance(userId, price)
 
     // 创建购买记录并增加购买次数
     await this.prisma.$transaction(async (tx) => {
+      await this.userBalanceService.changeBalance(
+        {
+          userId,
+          amount: -price,
+          type: UserBalanceRecordTypeEnum.CHAPTER_PURCHASE,
+          remark: '章节购买',
+        },
+        tx,
+      )
       await tx.workChapterPurchase.create({
         data: {
           chapterId: id,
@@ -602,6 +592,93 @@ export class WorkChapterService extends BaseService {
     return { id }
   }
 
+  async exchangeChapter(
+    id: number,
+    userId: number,
+    ip?: string,
+    deviceId?: string,
+  ) {
+    const chapter = await this.workChapter.findUnique({ where: { id } })
+
+    if (!chapter) {
+      throw new BadRequestException('章节不存在')
+    }
+
+    const existingPurchase = await this.workChapterPurchase.findUnique({
+      where: {
+        chapterId_userId: {
+          chapterId: id,
+          userId,
+        },
+      },
+    })
+
+    if (existingPurchase) {
+      throw new BadRequestException('已获取该章节')
+    }
+
+    const effectivePermission = await this.resolveChapterPermission(chapter)
+    await this.userPermissionService.validateViewPermission(
+      effectivePermission.viewRule,
+      userId,
+      effectivePermission.requiredViewLevelId,
+    )
+
+    if (!effectivePermission.canExchange) {
+      throw new BadRequestException('该章节不支持兑换')
+    }
+
+    const exchangePoints = effectivePermission.exchangePoints ?? 0
+    if (exchangePoints <= 0) {
+      throw new BadRequestException('章节未配置兑换积分')
+    }
+
+    await this.userPermissionService.validatePoints(userId, exchangePoints)
+
+    const targetType = this.getTargetType(chapter.workType)
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.userPointService.consumePoints(
+        {
+          userId,
+          points: exchangePoints,
+          remark: '章节兑换',
+          targetType,
+          targetId: id,
+        },
+        tx,
+      )
+
+      await tx.workChapterPurchase.create({
+        data: {
+          chapterId: id,
+          userId,
+        },
+      })
+
+      await tx.workChapter.update({
+        where: { id },
+        data: {
+          purchaseCount: {
+            increment: 1,
+          },
+        },
+      })
+    })
+
+    await this.userGrowthEventService.handleEvent({
+      business: 'work',
+      eventKey: WorkChapterGrowthEventKey.Purchase,
+      userId,
+      targetId: id,
+      ip,
+      deviceId,
+      occurredAt: new Date(),
+    })
+
+    return { id }
+  }
+
   /**
    * 报告章节下载
    * @param id 章节ID
@@ -617,16 +694,15 @@ export class WorkChapterService extends BaseService {
     ip?: string,
     deviceId?: string,
   ) {
-    const [chapter, user] = await Promise.all([
-      this.workChapter.findUnique({ where: { id } }),
-      this.appUser.findUnique({
-        where: { id: userId },
-        include: { level: true },
-      }),
-    ])
+    const chapter = await this.workChapter.findUnique({ where: { id } })
 
     if (!chapter) {
       throw new BadRequestException('章节不存在')
+    }
+
+    const work = await this.work.findUnique({ where: { id: chapter.workId } })
+    if (!work) {
+      throw new BadRequestException('作品不存在')
     }
 
     const downloadTargetType = this.getDownloadTargetType(chapter.workType)
@@ -642,50 +718,40 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('已下载该章节')
     }
 
-    // 验证是否允许下载
-    if (chapter.downloadRule === 0) {
+    if (!chapter.canDownload) {
       throw new BadRequestException('该章节禁止下载')
     }
 
-    // 验证下载权限
-    if (chapter.downloadRule !== WorkViewPermissionEnum.ALL) {
-      if (!user) {
-        throw new BadRequestException('用户不存在')
+    if (work.downloadRule === 0) {
+      throw new BadRequestException('该作品禁止下载')
+    }
+
+    await this.userPermissionService.validateViewPermission(
+      work.downloadRule as WorkViewPermissionEnum,
+      userId,
+      work.requiredDownloadLevelId,
+    )
+
+    if (work.downloadRule === WorkViewPermissionEnum.POINTS) {
+      const requiredPoints = work.downloadPoints ?? 0
+      if (requiredPoints <= 0) {
+        throw new BadRequestException('作品未配置下载积分')
       }
+      await this.userPermissionService.validatePoints(userId, requiredPoints)
+    }
 
-      // 会员权限验证
-      if (chapter.downloadRule === WorkViewPermissionEnum.MEMBER) {
-        if (!user.levelId || !user.level) {
-          throw new BadRequestException('会员等级不足')
-        }
+    const effectivePermission = await this.resolveChapterPermission(
+      chapter,
+      work,
+    )
+    if (effectivePermission.viewRule === WorkViewPermissionEnum.POINTS) {
+      const purchased = await this.workChapterPurchase.exists({
+        chapterId: id,
+        userId,
+      })
 
-        // 验证会员等级要求
-        if (chapter.requiredDownloadLevelId) {
-          const requiredLevel = await this.userLevelRule.findUnique({
-            where: { id: chapter.requiredDownloadLevelId },
-          })
-
-          if (!requiredLevel) {
-            throw new BadRequestException('指定的下载会员等级不存在')
-          }
-
-          if (
-            user.level.requiredExperience < requiredLevel.requiredExperience
-          ) {
-            throw new BadRequestException('会员等级不足')
-          }
-        }
-      }
-
-      // 积分权限验证
-      if (chapter.downloadRule === WorkViewPermissionEnum.POINTS) {
-        const requiredPoints = chapter.downloadPoints ?? 0
-        if (requiredPoints <= 0) {
-          throw new BadRequestException('章节未配置下载积分')
-        }
-        if (user.points < requiredPoints) {
-          throw new BadRequestException('积分不足')
-        }
+      if (!purchased) {
+        throw new BadRequestException('请先购买或兑换该章节')
       }
     }
 
@@ -970,7 +1036,7 @@ export class WorkChapterService extends BaseService {
    * @returns 分页章节列表及状态
    */
   async getMyDownloadedPage(dto: PageDto, userId: number) {
-    const { pageIndex = 0, pageSize = 15 } = dto
+    const { pageSize = 15 } = dto
 
     // 分别查询漫画和小说下载记录
     const [comicResult, novelResult] = await Promise.all([

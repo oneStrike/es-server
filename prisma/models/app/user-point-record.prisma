@@ -9,6 +9,9 @@ model UserPointRecord {
   ruleId  Int? @map("rule_id")
   /// 关联的事件ID
   eventId Int? @map("event_id")
+  targetType Int? @map("target_type") @db.SmallInt
+  targetId   Int? @map("target_id")
+  exchangeId Int? @map("exchange_id")
 
   /// 积分变化（正数为获得，负数为消费）
   points       Int
@@ -42,5 +45,7 @@ model UserPointRecord {
   @@index([createdAt])
   /// 用户与创建时间索引
   @@index([userId, createdAt])
+  @@index([targetType, targetId])
+  @@index([exchangeId])
   @@map("user_point_record")
 }

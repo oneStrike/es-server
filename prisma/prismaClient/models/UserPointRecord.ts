@@ -31,6 +31,9 @@ export type UserPointRecordAvgAggregateOutputType = {
   userId: number | null
   ruleId: number | null
   eventId: number | null
+  targetType: number | null
+  targetId: number | null
+  exchangeId: number | null
   points: number | null
   beforePoints: number | null
   afterPoints: number | null
@@ -41,6 +44,9 @@ export type UserPointRecordSumAggregateOutputType = {
   userId: number | null
   ruleId: number | null
   eventId: number | null
+  targetType: number | null
+  targetId: number | null
+  exchangeId: number | null
   points: number | null
   beforePoints: number | null
   afterPoints: number | null
@@ -51,6 +57,9 @@ export type UserPointRecordMinAggregateOutputType = {
   userId: number | null
   ruleId: number | null
   eventId: number | null
+  targetType: number | null
+  targetId: number | null
+  exchangeId: number | null
   points: number | null
   beforePoints: number | null
   afterPoints: number | null
@@ -64,6 +73,9 @@ export type UserPointRecordMaxAggregateOutputType = {
   userId: number | null
   ruleId: number | null
   eventId: number | null
+  targetType: number | null
+  targetId: number | null
+  exchangeId: number | null
   points: number | null
   beforePoints: number | null
   afterPoints: number | null
@@ -77,6 +89,9 @@ export type UserPointRecordCountAggregateOutputType = {
   userId: number
   ruleId: number
   eventId: number
+  targetType: number
+  targetId: number
+  exchangeId: number
   points: number
   beforePoints: number
   afterPoints: number
@@ -92,6 +107,9 @@ export type UserPointRecordAvgAggregateInputType = {
   userId?: true
   ruleId?: true
   eventId?: true
+  targetType?: true
+  targetId?: true
+  exchangeId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -102,6 +120,9 @@ export type UserPointRecordSumAggregateInputType = {
   userId?: true
   ruleId?: true
   eventId?: true
+  targetType?: true
+  targetId?: true
+  exchangeId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -112,6 +133,9 @@ export type UserPointRecordMinAggregateInputType = {
   userId?: true
   ruleId?: true
   eventId?: true
+  targetType?: true
+  targetId?: true
+  exchangeId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -125,6 +149,9 @@ export type UserPointRecordMaxAggregateInputType = {
   userId?: true
   ruleId?: true
   eventId?: true
+  targetType?: true
+  targetId?: true
+  exchangeId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -138,6 +165,9 @@ export type UserPointRecordCountAggregateInputType = {
   userId?: true
   ruleId?: true
   eventId?: true
+  targetType?: true
+  targetId?: true
+  exchangeId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -238,6 +268,9 @@ export type UserPointRecordGroupByOutputType = {
   userId: number
   ruleId: number | null
   eventId: number | null
+  targetType: number | null
+  targetId: number | null
+  exchangeId: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -274,6 +307,9 @@ export type UserPointRecordWhereInput = {
   userId?: Prisma.IntFilter<"UserPointRecord"> | number
   ruleId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   eventId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  targetType?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  targetId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  exchangeId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   points?: Prisma.IntFilter<"UserPointRecord"> | number
   beforePoints?: Prisma.IntFilter<"UserPointRecord"> | number
   afterPoints?: Prisma.IntFilter<"UserPointRecord"> | number
@@ -290,6 +326,9 @@ export type UserPointRecordOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrderInput | Prisma.SortOrder
   eventId?: Prisma.SortOrderInput | Prisma.SortOrder
+  targetType?: Prisma.SortOrderInput | Prisma.SortOrder
+  targetId?: Prisma.SortOrderInput | Prisma.SortOrder
+  exchangeId?: Prisma.SortOrderInput | Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -309,6 +348,9 @@ export type UserPointRecordWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.IntFilter<"UserPointRecord"> | number
   ruleId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   eventId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  targetType?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  targetId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  exchangeId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   points?: Prisma.IntFilter<"UserPointRecord"> | number
   beforePoints?: Prisma.IntFilter<"UserPointRecord"> | number
   afterPoints?: Prisma.IntFilter<"UserPointRecord"> | number
@@ -325,6 +367,9 @@ export type UserPointRecordOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrderInput | Prisma.SortOrder
   eventId?: Prisma.SortOrderInput | Prisma.SortOrder
+  targetType?: Prisma.SortOrderInput | Prisma.SortOrder
+  targetId?: Prisma.SortOrderInput | Prisma.SortOrder
+  exchangeId?: Prisma.SortOrderInput | Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -346,6 +391,9 @@ export type UserPointRecordScalarWhereWithAggregatesInput = {
   userId?: Prisma.IntWithAggregatesFilter<"UserPointRecord"> | number
   ruleId?: Prisma.IntNullableWithAggregatesFilter<"UserPointRecord"> | number | null
   eventId?: Prisma.IntNullableWithAggregatesFilter<"UserPointRecord"> | number | null
+  targetType?: Prisma.IntNullableWithAggregatesFilter<"UserPointRecord"> | number | null
+  targetId?: Prisma.IntNullableWithAggregatesFilter<"UserPointRecord"> | number | null
+  exchangeId?: Prisma.IntNullableWithAggregatesFilter<"UserPointRecord"> | number | null
   points?: Prisma.IntWithAggregatesFilter<"UserPointRecord"> | number
   beforePoints?: Prisma.IntWithAggregatesFilter<"UserPointRecord"> | number
   afterPoints?: Prisma.IntWithAggregatesFilter<"UserPointRecord"> | number
@@ -355,6 +403,9 @@ export type UserPointRecordScalarWhereWithAggregatesInput = {
 }
 
 export type UserPointRecordCreateInput = {
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -371,6 +422,9 @@ export type UserPointRecordUncheckedCreateInput = {
   userId: number
   ruleId?: number | null
   eventId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -380,6 +434,9 @@ export type UserPointRecordUncheckedCreateInput = {
 }
 
 export type UserPointRecordUpdateInput = {
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -396,6 +453,9 @@ export type UserPointRecordUncheckedUpdateInput = {
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -409,6 +469,9 @@ export type UserPointRecordCreateManyInput = {
   userId: number
   ruleId?: number | null
   eventId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -418,6 +481,9 @@ export type UserPointRecordCreateManyInput = {
 }
 
 export type UserPointRecordUpdateManyMutationInput = {
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -431,6 +497,9 @@ export type UserPointRecordUncheckedUpdateManyInput = {
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -454,6 +523,9 @@ export type UserPointRecordCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
   eventId?: Prisma.SortOrder
+  targetType?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
+  exchangeId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -467,6 +539,9 @@ export type UserPointRecordAvgOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
   eventId?: Prisma.SortOrder
+  targetType?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
+  exchangeId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -477,6 +552,9 @@ export type UserPointRecordMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
   eventId?: Prisma.SortOrder
+  targetType?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
+  exchangeId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -490,6 +568,9 @@ export type UserPointRecordMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
   eventId?: Prisma.SortOrder
+  targetType?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
+  exchangeId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -503,6 +584,9 @@ export type UserPointRecordSumOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
   eventId?: Prisma.SortOrder
+  targetType?: Prisma.SortOrder
+  targetId?: Prisma.SortOrder
+  exchangeId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -635,6 +719,9 @@ export type UserPointRecordUncheckedUpdateManyWithoutRuleNestedInput = {
 }
 
 export type UserPointRecordCreateWithoutUserInput = {
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -649,6 +736,9 @@ export type UserPointRecordUncheckedCreateWithoutUserInput = {
   id?: number
   ruleId?: number | null
   eventId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -691,6 +781,9 @@ export type UserPointRecordScalarWhereInput = {
   userId?: Prisma.IntFilter<"UserPointRecord"> | number
   ruleId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   eventId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  targetType?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  targetId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  exchangeId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   points?: Prisma.IntFilter<"UserPointRecord"> | number
   beforePoints?: Prisma.IntFilter<"UserPointRecord"> | number
   afterPoints?: Prisma.IntFilter<"UserPointRecord"> | number
@@ -700,6 +793,9 @@ export type UserPointRecordScalarWhereInput = {
 }
 
 export type UserPointRecordCreateWithoutEventInput = {
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -714,6 +810,9 @@ export type UserPointRecordUncheckedCreateWithoutEventInput = {
   id?: number
   userId: number
   ruleId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -749,6 +848,9 @@ export type UserPointRecordUpdateManyWithWhereWithoutEventInput = {
 }
 
 export type UserPointRecordCreateWithoutRuleInput = {
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -763,6 +865,9 @@ export type UserPointRecordUncheckedCreateWithoutRuleInput = {
   id?: number
   userId: number
   eventId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -801,6 +906,9 @@ export type UserPointRecordCreateManyUserInput = {
   id?: number
   ruleId?: number | null
   eventId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -810,6 +918,9 @@ export type UserPointRecordCreateManyUserInput = {
 }
 
 export type UserPointRecordUpdateWithoutUserInput = {
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -824,6 +935,9 @@ export type UserPointRecordUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -836,6 +950,9 @@ export type UserPointRecordUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -848,6 +965,9 @@ export type UserPointRecordCreateManyEventInput = {
   id?: number
   userId: number
   ruleId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -857,6 +977,9 @@ export type UserPointRecordCreateManyEventInput = {
 }
 
 export type UserPointRecordUpdateWithoutEventInput = {
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -871,6 +994,9 @@ export type UserPointRecordUncheckedUpdateWithoutEventInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -883,6 +1009,9 @@ export type UserPointRecordUncheckedUpdateManyWithoutEventInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -895,6 +1024,9 @@ export type UserPointRecordCreateManyRuleInput = {
   id?: number
   userId: number
   eventId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -904,6 +1036,9 @@ export type UserPointRecordCreateManyRuleInput = {
 }
 
 export type UserPointRecordUpdateWithoutRuleInput = {
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -918,6 +1053,9 @@ export type UserPointRecordUncheckedUpdateWithoutRuleInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -930,6 +1068,9 @@ export type UserPointRecordUncheckedUpdateManyWithoutRuleInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -945,6 +1086,9 @@ export type UserPointRecordSelect<ExtArgs extends runtime.Types.Extensions.Inter
   userId?: boolean
   ruleId?: boolean
   eventId?: boolean
+  targetType?: boolean
+  targetId?: boolean
+  exchangeId?: boolean
   points?: boolean
   beforePoints?: boolean
   afterPoints?: boolean
@@ -961,6 +1105,9 @@ export type UserPointRecordSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   userId?: boolean
   ruleId?: boolean
   eventId?: boolean
+  targetType?: boolean
+  targetId?: boolean
+  exchangeId?: boolean
   points?: boolean
   beforePoints?: boolean
   afterPoints?: boolean
@@ -977,6 +1124,9 @@ export type UserPointRecordSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   userId?: boolean
   ruleId?: boolean
   eventId?: boolean
+  targetType?: boolean
+  targetId?: boolean
+  exchangeId?: boolean
   points?: boolean
   beforePoints?: boolean
   afterPoints?: boolean
@@ -993,6 +1143,9 @@ export type UserPointRecordSelectScalar = {
   userId?: boolean
   ruleId?: boolean
   eventId?: boolean
+  targetType?: boolean
+  targetId?: boolean
+  exchangeId?: boolean
   points?: boolean
   beforePoints?: boolean
   afterPoints?: boolean
@@ -1001,7 +1154,7 @@ export type UserPointRecordSelectScalar = {
   createdAt?: boolean
 }
 
-export type UserPointRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "ruleId" | "eventId" | "points" | "beforePoints" | "afterPoints" | "eventKey" | "remark" | "createdAt", ExtArgs["result"]["userPointRecord"]>
+export type UserPointRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "ruleId" | "eventId" | "targetType" | "targetId" | "exchangeId" | "points" | "beforePoints" | "afterPoints" | "eventKey" | "remark" | "createdAt", ExtArgs["result"]["userPointRecord"]>
 export type UserPointRecordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rule?: boolean | Prisma.UserPointRecord$ruleArgs<ExtArgs>
   event?: boolean | Prisma.UserPointRecord$eventArgs<ExtArgs>
@@ -1051,6 +1204,9 @@ export type $UserPointRecordPayload<ExtArgs extends runtime.Types.Extensions.Int
      * 关联的事件ID
      */
     eventId: number | null
+    targetType: number | null
+    targetId: number | null
+    exchangeId: number | null
     /**
      * 积分变化（正数为获得，负数为消费）
      */
@@ -1505,6 +1661,9 @@ export interface UserPointRecordFieldRefs {
   readonly userId: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly ruleId: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly eventId: Prisma.FieldRef<"UserPointRecord", 'Int'>
+  readonly targetType: Prisma.FieldRef<"UserPointRecord", 'Int'>
+  readonly targetId: Prisma.FieldRef<"UserPointRecord", 'Int'>
+  readonly exchangeId: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly points: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly beforePoints: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly afterPoints: Prisma.FieldRef<"UserPointRecord", 'Int'>

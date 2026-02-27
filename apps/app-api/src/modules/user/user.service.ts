@@ -1,7 +1,10 @@
 import type { QueryUserBadgeDto } from '@libs/user/badge'
+import type { QueryMyPointRecordDto } from './dto/user-point.dto'
 import { BaseService } from '@libs/base/database'
 import { UserBadgeService } from '@libs/user/badge'
+import { QueryUserBalanceRecordDto, UserBalanceService } from '@libs/user/balance'
 import { UserLevelRuleService } from '@libs/user/level-rule'
+import { UserPointService } from '@libs/user/point'
 import { Injectable } from '@nestjs/common'
 
 /**
@@ -13,6 +16,8 @@ export class UserService extends BaseService {
   constructor(
     private readonly userLevelRuleService: UserLevelRuleService,
     private readonly userBadgeService: UserBadgeService,
+    private readonly userBalanceService: UserBalanceService,
+    private readonly userPointService: UserPointService,
   ) {
     super()
   }
@@ -69,6 +74,50 @@ export class UserService extends BaseService {
       levelInfo,
       badges,
     }
+  }
+
+  async getUserBalance(userId: number) {
+    const user = await this.prisma.appUser.findUnique({
+      where: { id: userId },
+      select: {
+        balance: true,
+      },
+    })
+
+    if (!user) {
+      throw new Error('用户不存在')
+    }
+
+    return user
+  }
+
+  async getUserBalanceRecords(userId: number, query: QueryUserBalanceRecordDto) {
+    return this.userBalanceService.getUserBalanceRecordPage({
+      ...query,
+      userId,
+    })
+  }
+
+  async getUserPoints(userId: number) {
+    const user = await this.prisma.appUser.findUnique({
+      where: { id: userId },
+      select: {
+        points: true,
+      },
+    })
+
+    if (!user) {
+      throw new Error('用户不存在')
+    }
+
+    return user
+  }
+
+  async getUserPointRecords(userId: number, query: QueryMyPointRecordDto) {
+    return this.userPointService.getPointRecordPage({
+      ...query,
+      userId,
+    })
   }
 
   private sanitizeUser(user: any) {

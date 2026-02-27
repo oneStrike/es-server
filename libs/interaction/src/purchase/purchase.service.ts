@@ -1,4 +1,6 @@
+import { WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
+import { UserPermissionService } from '@libs/user/permission'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   PurchaseTargetDto,
@@ -16,7 +18,7 @@ import {
  * 用于统一处理作品和章节的购买权限校验
  */
 interface PurchasePermissionConfig {
-  /** 购买规则：0=禁止, 1=所有人, 2=会员, 3=积分购买 */
+  /** 购买规则：0=所有人, 1=登录用户, 2=会员, 3=购买 */
   purchaseRule: number
   /** 购买所需价格 */
   price: number | null
@@ -32,7 +34,7 @@ interface PurchasePermissionConfig {
  */
 @Injectable()
 export class PurchaseService extends BaseService {
-  constructor() {
+  constructor(private readonly userPermissionService: UserPermissionService) {
     super()
   }
 
@@ -58,25 +60,27 @@ export class PurchaseService extends BaseService {
 
   /**
    * 购买目标（作品或章节）
-   * @param dto 购买记录DTO，包含 targetType（目标类型）、targetId（目标ID）、userId（用户ID）、price（价格）、paymentMethod（支付方式）
+   * @param dto 购买记录DTO，包含 targetType（目标类型）、targetId（目标ID）、userId（用户ID）、paymentMethod（支付方式）
    * @returns 购买记录
    * @throws BadRequestException 当目标不存在、禁止购买、已购买或支付失败时抛出
    */
   async purchaseTarget(dto: PurchaseTargetDto) {
-    const { targetType, targetId, userId, price, paymentMethod, outTradeNo } =
-      dto
+    const { targetType, targetId, userId, paymentMethod, outTradeNo } = dto
 
-    // 根据目标类型校验购买权限
+    // 根据目标类型校验购买权限，并获取价格
+    let price: number
     if (
       targetType === PurchaseTargetTypeEnum.COMIC_CHAPTER ||
       targetType === PurchaseTargetTypeEnum.NOVEL_CHAPTER
     ) {
-      await this.validateChapterPurchasePermission(targetId, userId)
+      price = await this.validateChapterPurchasePermission(targetId, userId)
     } else if (
       targetType === PurchaseTargetTypeEnum.COMIC ||
       targetType === PurchaseTargetTypeEnum.NOVEL
     ) {
-      await this.validateWorkPurchasePermission(targetId, userId)
+      price = await this.validateWorkPurchasePermission(targetId, userId)
+    } else {
+      throw new BadRequestException('不支持的目标类型')
     }
 
     // 检查是否已购买（幂等性保证）
@@ -121,6 +125,7 @@ export class PurchaseService extends BaseService {
    * 校验章节购买权限
    * @param chapterId 章节ID
    * @param userId 用户ID
+   * @returns 章节价格
    * @throws BadRequestException 当章节不存在或权限不足时抛出
    */
   private async validateChapterPurchasePermission(
@@ -130,7 +135,7 @@ export class PurchaseService extends BaseService {
     const chapter = await this.workChapter.findUnique({
       where: { id: chapterId },
       include: {
-        requiredReadLevel: true,
+        requiredViewLevel: true,
       },
     })
 
@@ -138,27 +143,66 @@ export class PurchaseService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
+    if (!chapter.isPublished) {
+      throw new BadRequestException('该章节暂未发布')
+    }
+
+    if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
+      const work = await this.work.findUnique({
+        where: { id: chapter.workId },
+        include: {
+          requiredViewLevel: true,
+        },
+      })
+
+      if (!work) {
+        throw new BadRequestException('作品不存在')
+      }
+
+      await this.validatePurchasePermission(
+        {
+          purchaseRule: work.viewRule,
+          price: work.chapterPrice,
+          requiredPurchaseLevelId: work.requiredViewLevelId,
+          requiredPurchaseLevel: work.requiredViewLevel,
+        },
+        userId,
+        '章节',
+      )
+
+      return work.chapterPrice
+    }
+
     await this.validatePurchasePermission(
       {
-        purchaseRule: chapter.readRule,
+        purchaseRule: chapter.viewRule,
         price: chapter.price,
-        requiredPurchaseLevelId: chapter.requiredReadLevelId,
-        requiredPurchaseLevel: chapter.requiredReadLevel,
+        requiredPurchaseLevelId: chapter.requiredViewLevelId,
+        requiredPurchaseLevel: chapter.requiredViewLevel,
       },
       userId,
       '章节',
     )
+
+    return chapter.price
   }
 
   /**
    * 校验作品购买权限
    * @param workId 作品ID
    * @param userId 用户ID
+   * @returns 作品价格
    * @throws BadRequestException 当作品不存在、不支持购买或用户不存在时抛出
    */
-  private async validateWorkPurchasePermission(workId: number, userId: number) {
+  private async validateWorkPurchasePermission(
+    workId: number,
+    userId: number,
+  ): Promise<number> {
     const work = await this.work.findUnique({
       where: { id: workId },
+      include: {
+        requiredViewLevel: true,
+      },
     })
 
     if (!work) {
@@ -170,19 +214,18 @@ export class PurchaseService extends BaseService {
       throw new BadRequestException('该作品暂未发布')
     }
 
-    // 检查价格是否有效
-    if (!work.price || work.price <= 0) {
-      throw new BadRequestException('该作品暂不支持购买')
-    }
+    await this.validatePurchasePermission(
+      {
+        purchaseRule: work.viewRule,
+        price: work.price,
+        requiredPurchaseLevelId: work.requiredViewLevelId,
+        requiredPurchaseLevel: work.requiredViewLevel,
+      },
+      userId,
+      '作品',
+    )
 
-    // 校验用户是否存在
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-    })
-
-    if (!user) {
-      throw new BadRequestException('用户不存在')
-    }
+    return work.price
   }
 
   /**
@@ -198,18 +241,25 @@ export class PurchaseService extends BaseService {
     userId: number,
     targetName: string,
   ) {
-    // 检查价格是否有效
+    if (config.purchaseRule !== WorkViewPermissionEnum.POINTS) {
+      throw new BadRequestException(`该${targetName}暂不支持购买`)
+    }
+
     if (!config.price || config.price <= 0) {
       throw new BadRequestException(`该${targetName}暂不支持购买`)
     }
 
-    // 查询用户是否存在
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-    })
+    await this.userPermissionService.validateViewPermission(
+      WorkViewPermissionEnum.LOGGED_IN,
+      userId,
+    )
 
-    if (!user) {
-      throw new BadRequestException('用户不存在')
+    if (config.requiredPurchaseLevelId) {
+      await this.userPermissionService.validateViewPermission(
+        WorkViewPermissionEnum.MEMBER,
+        userId,
+        config.requiredPurchaseLevelId,
+      )
     }
   }
 
@@ -228,19 +278,8 @@ export class PurchaseService extends BaseService {
     price: number,
     paymentMethod: PaymentMethodEnum,
   ) {
-    // 积分支付
     if (paymentMethod === PaymentMethodEnum.POINTS) {
-      const user = await tx.appUser.findUnique({
-        where: { id: userId },
-        select: { points: true },
-      })
-      if (!user || user.points < price) {
-        throw new BadRequestException('积分不足')
-      }
-      await tx.appUser.update({
-        where: { id: userId },
-        data: { points: { decrement: price } },
-      })
+      throw new BadRequestException('暂不支持积分购买')
     }
 
     // 余额支付

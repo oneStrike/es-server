@@ -5,13 +5,13 @@ import {
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
-import { ForumReviewPolicyEnum } from '../forum-section.constant'
 import {
   IntersectionType,
   OmitType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { ForumReviewPolicyEnum } from '../forum-section.constant'
 
 /**
  * 论坛板块基础DTO

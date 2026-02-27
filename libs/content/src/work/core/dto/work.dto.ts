@@ -1,4 +1,4 @@
-import { WorkTypeEnum } from '@libs/base/constant'
+import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -229,6 +229,54 @@ export class BaseWorkDto extends BaseDto {
     validation: false,
   })
   lastUpdated?: Date
+
+  @EnumProperty({
+    description: '查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
+    example: WorkViewPermissionEnum.ALL,
+    required: true,
+    enum: WorkViewPermissionEnum,
+    default: WorkViewPermissionEnum.ALL,
+  })
+  viewRule!: WorkViewPermissionEnum
+
+  @NumberProperty({
+    description: '阅读所需会员等级ID',
+    example: 1,
+    required: false,
+  })
+  requiredViewLevelId?: number
+
+  @NumberProperty({
+    description: '作品购买价格（余额）',
+    example: 0,
+    required: true,
+    default: 0,
+  })
+  price!: number
+
+  @NumberProperty({
+    description: '章节默认购买价格（余额）',
+    example: 0,
+    required: true,
+    default: 0,
+  })
+  chapterPrice!: number
+
+  @NumberProperty({
+    description: '章节默认兑换积分',
+    example: 0,
+    required: true,
+    default: 0,
+  })
+  chapterExchangePoints!: number
+
+  @BooleanProperty({
+    description: '是否允许兑换',
+    example: false,
+    required: true,
+    default: false,
+  })
+  canExchange!: boolean
 
   @NumberProperty({
     description: '浏览量',

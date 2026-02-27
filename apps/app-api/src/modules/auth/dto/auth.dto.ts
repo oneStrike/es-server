@@ -122,6 +122,14 @@ export class BaseAppUserDto extends BaseDto {
   points!: number
 
   @NumberProperty({
+    description: '余额',
+    default: 0,
+    example: 100,
+    validation: false,
+  })
+  balance!: number
+
+  @NumberProperty({
     description: '经验值',
     default: 0,
     example: 1000,

@@ -21,17 +21,12 @@ export * from './comment/dto/comment.dto'
 export * from './counter/counter.module'
 
 export * from './counter/counter.service'
+export * from './download/download.constant'
 // 下载模块
 export * from './download/download.module'
 export * from './download/download.service'
-export * from './download/download.constant'
 
 export * from './download/dto/download.dto'
-// 购买模块
-export * from './purchase/purchase.module'
-export * from './purchase/purchase.service'
-
-export * from './purchase/dto/purchase.dto'
 // DTO
 export * from './dto/base-interaction.dto'
 export * from './favorite/dto/favorite.dto'
@@ -52,6 +47,11 @@ export * from './like/dto/like.dto'
 // 点赞模块
 export * from './like/like.module'
 export * from './like/like.service'
+
+export * from './purchase/dto/purchase.dto'
+// 购买模块
+export * from './purchase/purchase.module'
+export * from './purchase/purchase.service'
 
 export * from './validator/target-validator.registry'
 // 目标校验器

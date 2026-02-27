@@ -66,6 +66,7 @@ export const ModelName = {
   Task: 'Task',
   UserBadgeAssignment: 'UserBadgeAssignment',
   UserBadge: 'UserBadge',
+  UserBalanceRecord: 'UserBalanceRecord',
   UserCommentLike: 'UserCommentLike',
   UserCommentReport: 'UserCommentReport',
   UserComment: 'UserComment',
@@ -411,6 +412,20 @@ export const UserBadgeScalarFieldEnum = {
 export type UserBadgeScalarFieldEnum = (typeof UserBadgeScalarFieldEnum)[keyof typeof UserBadgeScalarFieldEnum]
 
 
+export const UserBalanceRecordScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  amount: 'amount',
+  beforeBalance: 'beforeBalance',
+  afterBalance: 'afterBalance',
+  type: 'type',
+  remark: 'remark',
+  createdAt: 'createdAt'
+} as const
+
+export type UserBalanceRecordScalarFieldEnum = (typeof UserBalanceRecordScalarFieldEnum)[keyof typeof UserBalanceRecordScalarFieldEnum]
+
+
 export const UserCommentLikeScalarFieldEnum = {
   id: 'id',
   commentId: 'commentId',
@@ -609,6 +624,9 @@ export const UserPointRecordScalarFieldEnum = {
   userId: 'userId',
   ruleId: 'ruleId',
   eventId: 'eventId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  exchangeId: 'exchangeId',
   points: 'points',
   beforePoints: 'beforePoints',
   afterPoints: 'afterPoints',
@@ -1172,12 +1190,12 @@ export const WorkChapterScalarFieldEnum = {
   cover: 'cover',
   description: 'description',
   sortOrder: 'sortOrder',
-  readRule: 'readRule',
-  downloadRule: 'downloadRule',
+  viewRule: 'viewRule',
+  canDownload: 'canDownload',
   price: 'price',
-  downloadPoints: 'downloadPoints',
-  requiredReadLevelId: 'requiredReadLevelId',
-  requiredDownloadLevelId: 'requiredDownloadLevelId',
+  requiredViewLevelId: 'requiredViewLevelId',
+  exchangePoints: 'exchangePoints',
+  canExchange: 'canExchange',
   isPublished: 'isPublished',
   isPreview: 'isPreview',
   canComment: 'canComment',
@@ -1292,6 +1310,11 @@ export const WorkScalarFieldEnum = {
   downloadCount: 'downloadCount',
   purchaseCount: 'purchaseCount',
   price: 'price',
+  viewRule: 'viewRule',
+  requiredViewLevelId: 'requiredViewLevelId',
+  chapterPrice: 'chapterPrice',
+  chapterExchangePoints: 'chapterExchangePoints',
+  canExchange: 'canExchange',
   downloadRule: 'downloadRule',
   downloadPoints: 'downloadPoints',
   requiredDownloadLevelId: 'requiredDownloadLevelId',

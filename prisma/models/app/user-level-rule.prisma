@@ -54,12 +54,9 @@ model UserLevelRule {
   users                   AppUser[]
   /// 版块关联 - 每个等级规则对应多个版块
   sections                ForumSection[]
-  /// 关联章节下载权限
-  chaptersAsDownloadLevel WorkChapter[]  @relation("ChapterDownloadLevel")
   /// 关联章节阅读权限
   chaptersAsReadLevel     WorkChapter[]  @relation("ChapterReadLevel")
-  /// 关联作品下载权限
-  worksAsDownloadLevel    Work[]         @relation("WorkDownloadLevel")
+  worksAsViewLevel        Work[]         @relation("WorkViewLevel")
 
   /// 启用与排序索引
   @@index([isEnabled, sortOrder])

@@ -23,6 +23,27 @@ export class BaseUserPointRecordDto extends BaseDto {
   ruleId?: number
 
   @NumberProperty({
+    description: '关联目标类型',
+    example: 3,
+    required: false,
+  })
+  targetType?: number
+
+  @NumberProperty({
+    description: '关联目标ID',
+    example: 1,
+    required: false,
+  })
+  targetId?: number
+
+  @NumberProperty({
+    description: '关联兑换ID',
+    example: 1,
+    required: false,
+  })
+  exchangeId?: number
+
+  @NumberProperty({
     description: '积分变化（正数为获得，负数为消费）',
     example: 5,
     required: true,
@@ -103,6 +124,27 @@ export class ConsumeUserPointsDto {
     required: true,
   })
   points!: number
+
+  @NumberProperty({
+    description: '关联目标类型',
+    example: 3,
+    required: false,
+  })
+  targetType?: number
+
+  @NumberProperty({
+    description: '关联目标ID',
+    example: 1,
+    required: false,
+  })
+  targetId?: number
+
+  @NumberProperty({
+    description: '关联兑换ID',
+    example: 1,
+    required: false,
+  })
+  exchangeId?: number
 
   @StringProperty({
     description: '备注',

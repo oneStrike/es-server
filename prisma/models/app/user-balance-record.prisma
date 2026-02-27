@@ -1,0 +1,17 @@
+model UserBalanceRecord {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  amount        Int
+  beforeBalance Int      @map("before_balance")
+  afterBalance  Int      @map("after_balance")
+  type          Int      @db.SmallInt
+  remark        String?  @db.VarChar(500)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type])
+  @@map("user_balance_record")
+}

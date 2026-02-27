@@ -35,7 +35,6 @@ export class UserDownloadRecordKeyDto extends PickType(
   ['targetType', 'targetId', 'userId'],
 ) {}
 
-
 export class QueryUserDownloadRecordDto extends IntersectionType(
   IntersectionType(
     PageDto,

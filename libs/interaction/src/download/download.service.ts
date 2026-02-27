@@ -1,4 +1,3 @@
-import { WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { DownloadTargetTypeEnum } from './download.constant'
@@ -8,19 +7,13 @@ import {
 } from './dto/download.dto'
 
 /**
- * `
  * 下载权限配置接口
  * 用于统一处理作品和章节的下载权限校验
  */
 interface DownloadPermissionConfig {
-  /** 下载规则：0=禁止, 1=所有人, 2=会员, 3=积分 */
-  downloadRule: number
-  /** 下载所需积分（积分下载时使用） */
-  downloadPoints: number | null
-  /** 要求的会员等级ID */
-  requiredDownloadLevelId: number | null
-  /** 要求的会员等级信息 */
-  requiredDownloadLevel: { requiredExperience: number } | null
+  /** 是否允许下载 */
+  canDownload?: boolean
+  downloadRule?: number
 }
 
 /**
@@ -60,19 +53,19 @@ export class DownloadService extends BaseService {
    * @throws BadRequestException 当目标不存在、禁止下载或权限不足时抛出
    */
   async downloadTarget(dto: UserDownloadRecordKeyDto) {
-    const { targetType, targetId, userId } = dto
+    const { targetType, targetId } = dto
 
     // 根据目标类型校验下载权限
     if (
       targetType === DownloadTargetTypeEnum.COMIC_CHAPTER ||
       targetType === DownloadTargetTypeEnum.NOVEL_CHAPTER
     ) {
-      await this.validateChapterDownloadPermission(targetId, userId)
+      await this.validateChapterDownloadPermission(targetId)
     } else if (
       targetType === DownloadTargetTypeEnum.COMIC ||
       targetType === DownloadTargetTypeEnum.NOVEL
     ) {
-      await this.validateWorkDownloadPermission(targetId, userId)
+      await this.validateWorkDownloadPermission(targetId)
     }
 
     // 使用事务保证一致性：创建下载记录 + 增加下载次数
@@ -106,18 +99,11 @@ export class DownloadService extends BaseService {
   /**
    * 校验章节下载权限
    * @param chapterId 章节ID
-   * @param userId 用户ID
-   * @throws BadRequestException 当章节不存在或权限不足时抛出
+   * @throws BadRequestException 当章节不存在或禁止下载时抛出
    */
-  private async validateChapterDownloadPermission(
-    chapterId: number,
-    userId: number,
-  ) {
+  private async validateChapterDownloadPermission(chapterId: number) {
     const chapter = await this.workChapter.findUnique({
       where: { id: chapterId },
-      include: {
-        requiredDownloadLevel: true,
-      },
     })
 
     if (!chapter) {
@@ -126,12 +112,8 @@ export class DownloadService extends BaseService {
 
     await this.validateDownloadPermission(
       {
-        downloadRule: chapter.downloadRule,
-        downloadPoints: chapter.downloadPoints,
-        requiredDownloadLevelId: chapter.requiredDownloadLevelId,
-        requiredDownloadLevel: chapter.requiredDownloadLevel,
+        canDownload: chapter.canDownload,
       },
-      userId,
       '章节',
     )
   }
@@ -139,15 +121,11 @@ export class DownloadService extends BaseService {
   /**
    * 校验作品下载权限
    * @param workId 作品ID
-   * @param userId 用户ID
-   * @throws BadRequestException 当作品不存在或权限不足时抛出
+   * @throws BadRequestException 当作品不存在或禁止下载时抛出
    */
-  private async validateWorkDownloadPermission(workId: number, userId: number) {
+  private async validateWorkDownloadPermission(workId: number) {
     const work = await this.work.findUnique({
       where: { id: workId },
-      include: {
-        requiredDownloadLevel: true,
-      },
     })
 
     if (!work) {
@@ -157,78 +135,29 @@ export class DownloadService extends BaseService {
     await this.validateDownloadPermission(
       {
         downloadRule: work.downloadRule,
-        downloadPoints: work.downloadPoints,
-        requiredDownloadLevelId: work.requiredDownloadLevelId,
-        requiredDownloadLevel: work.requiredDownloadLevel,
       },
-      userId,
       '作品',
     )
   }
 
   /**
    * 校验下载权限（通用方法）
-   * 支持三种权限模式：
-   * - 所有人可下载（downloadRule = 1）
-   * - 会员可下载（downloadRule = 2），支持指定会员等级
-   * - 积分可下载（downloadRule = 3），积分为0时允许下载
+   * 仅检查是否允许下载
    * @param config 下载权限配置
-   * @param userId 用户ID
    * @param targetName 目标名称（用于错误提示）
-   * @throws BadRequestException 当禁止下载或权限不足时抛出
+   * @throws BadRequestException 当禁止下载时抛出
    */
   private async validateDownloadPermission(
     config: DownloadPermissionConfig,
-    userId: number,
     targetName: string,
   ) {
     // 检查是否禁止下载
-    if (config.downloadRule === 0) {
+    if (config.canDownload === false) {
       throw new BadRequestException(`该${targetName}禁止下载`)
     }
 
-    // 所有人可下载，无需额外校验
-    if (config.downloadRule === WorkViewPermissionEnum.ALL) {
-      return
-    }
-
-    // 查询用户信息（包含会员等级）
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-      include: {
-        level: true,
-      },
-    })
-
-    if (!user) {
-      throw new BadRequestException('用户不存在')
-    }
-
-    // 会员权限校验
-    if (config.downloadRule === WorkViewPermissionEnum.MEMBER) {
-      // 检查用户是否有会员等级
-      if (!user.levelId || !user.level) {
-        throw new BadRequestException('会员等级不足')
-      }
-
-      // 检查用户等级是否满足要求
-      if (config.requiredDownloadLevelId && config.requiredDownloadLevel) {
-        if (
-          user.level.requiredExperience <
-            config.requiredDownloadLevel.requiredExperience
-        ) {
-          throw new BadRequestException('会员等级不足')
-        }
-      }
-    }
-
-    // 积分权限校验
-    if (config.downloadRule === WorkViewPermissionEnum.POINTS) {
-      const requiredPoints = config.downloadPoints ?? 0
-      // 积分为0时允许下载，大于0时校验用户积分
-      if (requiredPoints > 0 && user.points < requiredPoints) {
-        throw new BadRequestException('积分不足')
-      }
+    if (config.downloadRule === 0) {
+      throw new BadRequestException(`该${targetName}禁止下载`)
     }
   }
 
@@ -280,6 +209,10 @@ export class DownloadService extends BaseService {
     return result
   }
 
+  async getUserDownloads(dto: QueryUserDownloadRecordDto) {
+    return this.queryUserDownloadRecords(dto)
+  }
+
   /**
    * 创建下载记录
    * @param dto 下载记录DTO
@@ -297,21 +230,29 @@ export class DownloadService extends BaseService {
    * @param id 下载记录ID
    * @returns 被删除的记录
    */
-  protected async deleteDownloadRecord(id: number) {
-    return this.prisma.userDownloadRecord.delete({
+  async deleteDownloadRecord(id: number) {
+    return this.userDownloadRecord.delete({
       where: { id },
     })
   }
 
   /**
-   * 获取用户下载列表（DTO方式）
-   * @param dto 查询DTO
-   * @returns 分页下载记录列表
+   * 查询用户的下载记录列表
+   * @param dto 查询下载记录DTO
+   * @returns 下载记录分页列表
    */
-  async getUserDownloads(dto: QueryUserDownloadRecordDto) {
-    // DTO方式调用
-    return this.prisma.userDownloadRecord.findPagination({
-      where: dto,
+  async queryUserDownloadRecords(dto: QueryUserDownloadRecordDto) {
+    const { userId, targetType, ...restDto } = dto
+
+    return this.userDownloadRecord.findPagination({
+      where: {
+        ...restDto,
+        userId,
+        ...(targetType && { targetType }),
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
     })
   }
 }

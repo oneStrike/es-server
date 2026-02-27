@@ -46,6 +46,11 @@ model Work {
   purchaseCount           Int       @default(0) @map("purchase_count")
   /// 价格
   price                   Int       @default(0) @map("price")
+  viewRule                Int       @default(0) @map("view_rule") @db.SmallInt
+  requiredViewLevelId     Int?      @map("required_view_level_id")
+  chapterPrice            Int       @default(0) @map("chapter_price")
+  chapterExchangePoints   Int       @default(0) @map("chapter_exchange_points")
+  canExchange             Boolean   @default(false) @map("can_exchange")
   /// 是否允许下载（0=禁止, 1=允许, 2=VIP可下载, 3=积分可下载）
   downloadRule            Int       @default(1) @map("download_rule") @db.SmallInt
   /// 下载所需要的积分（积分可下载时必填）
@@ -73,8 +78,6 @@ model Work {
   /// 软删除时间（用于数据恢复或归档）
   deletedAt               DateTime? @db.Timestamptz(6)
 
-  /// 关联下载权限等级
-  requiredDownloadLevel UserLevelRule?         @relation("WorkDownloadLevel", fields: [requiredDownloadLevelId], references: [id])
   /// 漫画扩展信息
   comic                 WorkComic?
   /// 小说扩展信息
@@ -89,6 +92,7 @@ model Work {
   chapters              WorkChapter[]
   /// 评论关联
   comments              WorkComment[]
+  requiredViewLevel      UserLevelRule? @relation("WorkViewLevel", fields: [requiredViewLevelId], references: [id])
 
   /// 发布状态与发布时间索引
   @@index([isPublished, publishAt])
@@ -110,7 +114,7 @@ model Work {
   @@index([type])
   /// 价格索引
   @@index([price])
-  /// 下载权限等级索引
-  @@index([requiredDownloadLevelId])
+  @@index([viewRule])
+  @@index([requiredViewLevelId])
   @@map("work")
 }

@@ -4,12 +4,12 @@ import {
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ForumReportReasonEnum,
   ForumReportStatusEnum,
   ForumReportTypeEnum,
 } from '../forum-report.constant'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 export class BaseForumReportDto extends BaseDto {
   @NumberProperty({

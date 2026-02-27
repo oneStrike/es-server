@@ -382,6 +382,7 @@ export type AppUserWhereInput = {
   noticeReads?: Prisma.AppNoticeReadListRelationFilter
   tokens?: Prisma.AppUserTokenListRelationFilter
   pointRecords?: Prisma.UserPointRecordListRelationFilter
+  userBalanceRecords?: Prisma.UserBalanceRecordListRelationFilter
   experienceRecords?: Prisma.UserExperienceRecordListRelationFilter
   forumTopics?: Prisma.ForumTopicListRelationFilter
   lastReplyTopics?: Prisma.ForumTopicListRelationFilter
@@ -445,6 +446,7 @@ export type AppUserOrderByWithRelationInput = {
   noticeReads?: Prisma.AppNoticeReadOrderByRelationAggregateInput
   tokens?: Prisma.AppUserTokenOrderByRelationAggregateInput
   pointRecords?: Prisma.UserPointRecordOrderByRelationAggregateInput
+  userBalanceRecords?: Prisma.UserBalanceRecordOrderByRelationAggregateInput
   experienceRecords?: Prisma.UserExperienceRecordOrderByRelationAggregateInput
   forumTopics?: Prisma.ForumTopicOrderByRelationAggregateInput
   lastReplyTopics?: Prisma.ForumTopicOrderByRelationAggregateInput
@@ -511,6 +513,7 @@ export type AppUserWhereUniqueInput = Prisma.AtLeast<{
   noticeReads?: Prisma.AppNoticeReadListRelationFilter
   tokens?: Prisma.AppUserTokenListRelationFilter
   pointRecords?: Prisma.UserPointRecordListRelationFilter
+  userBalanceRecords?: Prisma.UserBalanceRecordListRelationFilter
   experienceRecords?: Prisma.UserExperienceRecordListRelationFilter
   forumTopics?: Prisma.ForumTopicListRelationFilter
   lastReplyTopics?: Prisma.ForumTopicListRelationFilter
@@ -630,6 +633,7 @@ export type AppUserCreateInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -692,6 +696,7 @@ export type AppUserUncheckedCreateInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -753,6 +758,7 @@ export type AppUserUpdateInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -815,6 +821,7 @@ export type AppUserUncheckedUpdateInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -1119,6 +1126,20 @@ export type AppUserUpdateOneRequiredWithoutUserBadgesNestedInput = {
   upsert?: Prisma.AppUserUpsertWithoutUserBadgesInput
   connect?: Prisma.AppUserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutUserBadgesInput, Prisma.AppUserUpdateWithoutUserBadgesInput>, Prisma.AppUserUncheckedUpdateWithoutUserBadgesInput>
+}
+
+export type AppUserCreateNestedOneWithoutUserBalanceRecordsInput = {
+  create?: Prisma.XOR<Prisma.AppUserCreateWithoutUserBalanceRecordsInput, Prisma.AppUserUncheckedCreateWithoutUserBalanceRecordsInput>
+  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutUserBalanceRecordsInput
+  connect?: Prisma.AppUserWhereUniqueInput
+}
+
+export type AppUserUpdateOneRequiredWithoutUserBalanceRecordsNestedInput = {
+  create?: Prisma.XOR<Prisma.AppUserCreateWithoutUserBalanceRecordsInput, Prisma.AppUserUncheckedCreateWithoutUserBalanceRecordsInput>
+  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutUserBalanceRecordsInput
+  upsert?: Prisma.AppUserUpsertWithoutUserBalanceRecordsInput
+  connect?: Prisma.AppUserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutUserBalanceRecordsInput, Prisma.AppUserUpdateWithoutUserBalanceRecordsInput>, Prisma.AppUserUncheckedUpdateWithoutUserBalanceRecordsInput>
 }
 
 export type AppUserCreateNestedOneWithoutUserCommentLikesInput = {
@@ -1639,6 +1660,7 @@ export type AppUserCreateWithoutAgreementLogsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -1700,6 +1722,7 @@ export type AppUserUncheckedCreateWithoutAgreementLogsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -1776,6 +1799,7 @@ export type AppUserUpdateWithoutAgreementLogsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -1837,6 +1861,7 @@ export type AppUserUncheckedUpdateWithoutAgreementLogsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -1897,6 +1922,7 @@ export type AppUserCreateWithoutNoticeReadsInput = {
   forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -1958,6 +1984,7 @@ export type AppUserUncheckedCreateWithoutNoticeReadsInput = {
   forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -2034,6 +2061,7 @@ export type AppUserUpdateWithoutNoticeReadsInput = {
   forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -2095,6 +2123,7 @@ export type AppUserUncheckedUpdateWithoutNoticeReadsInput = {
   forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -2155,6 +2184,7 @@ export type AppUserCreateWithoutTokensInput = {
   forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -2216,6 +2246,7 @@ export type AppUserUncheckedCreateWithoutTokensInput = {
   forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -2292,6 +2323,7 @@ export type AppUserUpdateWithoutTokensInput = {
   forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -2353,6 +2385,7 @@ export type AppUserUncheckedUpdateWithoutTokensInput = {
   forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -2414,6 +2447,7 @@ export type AppUserCreateWithoutTaskAssignmentsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -2475,6 +2509,7 @@ export type AppUserUncheckedCreateWithoutTaskAssignmentsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -2551,6 +2586,7 @@ export type AppUserUpdateWithoutTaskAssignmentsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -2612,6 +2648,7 @@ export type AppUserUncheckedUpdateWithoutTaskAssignmentsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -2672,6 +2709,7 @@ export type AppUserCreateWithoutTaskProgressLogsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -2733,6 +2771,7 @@ export type AppUserUncheckedCreateWithoutTaskProgressLogsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -2809,6 +2848,7 @@ export type AppUserUpdateWithoutTaskProgressLogsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -2870,6 +2910,7 @@ export type AppUserUncheckedUpdateWithoutTaskProgressLogsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -2930,6 +2971,7 @@ export type AppUserCreateWithoutUserBadgesInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -2991,6 +3033,7 @@ export type AppUserUncheckedCreateWithoutUserBadgesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -3067,6 +3110,7 @@ export type AppUserUpdateWithoutUserBadgesInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -3128,6 +3172,7 @@ export type AppUserUncheckedUpdateWithoutUserBadgesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -3144,6 +3189,268 @@ export type AppUserUncheckedUpdateWithoutUserBadgesInput = {
   auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
   forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
+  userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
+  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
+  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
+  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
+  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
+  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
+  userCommentLikes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutUserNestedInput
+  userCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledUserCommentReports?: Prisma.UserCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
+  userDownloadRecords?: Prisma.UserDownloadRecordUncheckedUpdateManyWithoutUserNestedInput
+  userPurchaseRecords?: Prisma.UserPurchaseRecordUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type AppUserCreateWithoutUserBalanceRecordsInput = {
+  account: string
+  phone?: string | null
+  email?: string | null
+  nickname: string
+  password: string
+  avatar?: string | null
+  isEnabled?: boolean
+  gender?: number
+  birthDate?: Date | string | null
+  points?: number
+  balance?: number
+  experience?: number
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
+  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
+  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
+  noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
+  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
+  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
+  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
+  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
+  chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
+  workComments?: Prisma.WorkCommentCreateNestedManyWithoutUserInput
+  workCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutReporterInput
+  handledWorkCommentReports?: Prisma.WorkCommentReportCreateNestedManyWithoutHandlerInput
+  forumReplies?: Prisma.ForumReplyCreateNestedManyWithoutUserInput
+  replyLikes?: Prisma.ForumReplyLikeCreateNestedManyWithoutUserInput
+  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
+  forumReports?: Prisma.ForumReportCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportCreateNestedManyWithoutHandlerInput
+  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
+  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
+  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
+  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
+  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
+  userGrowthEvents?: Prisma.UserGrowthEventCreateNestedManyWithoutUserInput
+  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
+  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
+  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
+  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
+  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
+  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
+  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
+  userCommentLikes?: Prisma.UserCommentLikeCreateNestedManyWithoutUserInput
+  userCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutReporterInput
+  handledUserCommentReports?: Prisma.UserCommentReportCreateNestedManyWithoutHandlerInput
+  userDownloadRecords?: Prisma.UserDownloadRecordCreateNestedManyWithoutUserInput
+  userPurchaseRecords?: Prisma.UserPurchaseRecordCreateNestedManyWithoutUserInput
+}
+
+export type AppUserUncheckedCreateWithoutUserBalanceRecordsInput = {
+  id?: number
+  account: string
+  phone?: string | null
+  email?: string | null
+  levelId?: number | null
+  nickname: string
+  password: string
+  avatar?: string | null
+  isEnabled?: boolean
+  gender?: number
+  birthDate?: Date | string | null
+  points?: number
+  balance?: number
+  experience?: number
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
+  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
+  noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
+  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
+  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
+  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
+  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
+  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
+  workComments?: Prisma.WorkCommentUncheckedCreateNestedManyWithoutUserInput
+  workCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutReporterInput
+  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedCreateNestedManyWithoutHandlerInput
+  forumReplies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutUserInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedCreateNestedManyWithoutUserInput
+  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
+  forumReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutReporterInput
+  handledReports?: Prisma.ForumReportUncheckedCreateNestedManyWithoutHandlerInput
+  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
+  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
+  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
+  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
+  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
+  userGrowthEvents?: Prisma.UserGrowthEventUncheckedCreateNestedManyWithoutUserInput
+  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
+  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
+  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
+  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
+  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
+  userCommentLikes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutUserInput
+  userCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutReporterInput
+  handledUserCommentReports?: Prisma.UserCommentReportUncheckedCreateNestedManyWithoutHandlerInput
+  userDownloadRecords?: Prisma.UserDownloadRecordUncheckedCreateNestedManyWithoutUserInput
+  userPurchaseRecords?: Prisma.UserPurchaseRecordUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type AppUserCreateOrConnectWithoutUserBalanceRecordsInput = {
+  where: Prisma.AppUserWhereUniqueInput
+  create: Prisma.XOR<Prisma.AppUserCreateWithoutUserBalanceRecordsInput, Prisma.AppUserUncheckedCreateWithoutUserBalanceRecordsInput>
+}
+
+export type AppUserUpsertWithoutUserBalanceRecordsInput = {
+  update: Prisma.XOR<Prisma.AppUserUpdateWithoutUserBalanceRecordsInput, Prisma.AppUserUncheckedUpdateWithoutUserBalanceRecordsInput>
+  create: Prisma.XOR<Prisma.AppUserCreateWithoutUserBalanceRecordsInput, Prisma.AppUserUncheckedCreateWithoutUserBalanceRecordsInput>
+  where?: Prisma.AppUserWhereInput
+}
+
+export type AppUserUpdateToOneWithWhereWithoutUserBalanceRecordsInput = {
+  where?: Prisma.AppUserWhereInput
+  data: Prisma.XOR<Prisma.AppUserUpdateWithoutUserBalanceRecordsInput, Prisma.AppUserUncheckedUpdateWithoutUserBalanceRecordsInput>
+}
+
+export type AppUserUpdateWithoutUserBalanceRecordsInput = {
+  account?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  gender?: Prisma.IntFieldUpdateOperationsInput | number
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
+  experience?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
+  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
+  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
+  noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
+  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
+  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
+  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
+  chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
+  workComments?: Prisma.WorkCommentUpdateManyWithoutUserNestedInput
+  workCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutReporterNestedInput
+  handledWorkCommentReports?: Prisma.WorkCommentReportUpdateManyWithoutHandlerNestedInput
+  forumReplies?: Prisma.ForumReplyUpdateManyWithoutUserNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUpdateManyWithoutUserNestedInput
+  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
+  forumReports?: Prisma.ForumReportUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUpdateManyWithoutHandlerNestedInput
+  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
+  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
+  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
+  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
+  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
+  userGrowthEvents?: Prisma.UserGrowthEventUpdateManyWithoutUserNestedInput
+  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
+  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
+  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
+  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
+  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
+  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
+  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
+  userCommentLikes?: Prisma.UserCommentLikeUpdateManyWithoutUserNestedInput
+  userCommentReports?: Prisma.UserCommentReportUpdateManyWithoutReporterNestedInput
+  handledUserCommentReports?: Prisma.UserCommentReportUpdateManyWithoutHandlerNestedInput
+  userDownloadRecords?: Prisma.UserDownloadRecordUpdateManyWithoutUserNestedInput
+  userPurchaseRecords?: Prisma.UserPurchaseRecordUpdateManyWithoutUserNestedInput
+}
+
+export type AppUserUncheckedUpdateWithoutUserBalanceRecordsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  account?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  gender?: Prisma.IntFieldUpdateOperationsInput | number
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  balance?: Prisma.IntFieldUpdateOperationsInput | number
+  experience?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
+  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
+  noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
+  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
+  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
+  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
+  chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
+  workComments?: Prisma.WorkCommentUncheckedUpdateManyWithoutUserNestedInput
+  workCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledWorkCommentReports?: Prisma.WorkCommentReportUncheckedUpdateManyWithoutHandlerNestedInput
+  forumReplies?: Prisma.ForumReplyUncheckedUpdateManyWithoutUserNestedInput
+  replyLikes?: Prisma.ForumReplyLikeUncheckedUpdateManyWithoutUserNestedInput
+  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
+  forumReports?: Prisma.ForumReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledReports?: Prisma.ForumReportUncheckedUpdateManyWithoutHandlerNestedInput
+  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
+  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
+  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
+  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
+  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
   userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
   taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
@@ -3188,6 +3495,7 @@ export type AppUserCreateWithoutUserCommentLikesInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -3249,6 +3557,7 @@ export type AppUserUncheckedCreateWithoutUserCommentLikesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -3325,6 +3634,7 @@ export type AppUserUpdateWithoutUserCommentLikesInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -3386,6 +3696,7 @@ export type AppUserUncheckedUpdateWithoutUserCommentLikesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -3446,6 +3757,7 @@ export type AppUserCreateWithoutUserCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -3507,6 +3819,7 @@ export type AppUserUncheckedCreateWithoutUserCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -3572,6 +3885,7 @@ export type AppUserCreateWithoutHandledUserCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -3633,6 +3947,7 @@ export type AppUserUncheckedCreateWithoutHandledUserCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -3709,6 +4024,7 @@ export type AppUserUpdateWithoutUserCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -3770,6 +4086,7 @@ export type AppUserUncheckedUpdateWithoutUserCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -3841,6 +4158,7 @@ export type AppUserUpdateWithoutHandledUserCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -3902,6 +4220,7 @@ export type AppUserUncheckedUpdateWithoutHandledUserCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -3962,6 +4281,7 @@ export type AppUserCreateWithoutUserCommentsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -4023,6 +4343,7 @@ export type AppUserUncheckedCreateWithoutUserCommentsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -4099,6 +4420,7 @@ export type AppUserUpdateWithoutUserCommentsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -4160,6 +4482,7 @@ export type AppUserUncheckedUpdateWithoutUserCommentsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -4220,6 +4543,7 @@ export type AppUserCreateWithoutUserDownloadRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -4281,6 +4605,7 @@ export type AppUserUncheckedCreateWithoutUserDownloadRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -4357,6 +4682,7 @@ export type AppUserUpdateWithoutUserDownloadRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -4418,6 +4744,7 @@ export type AppUserUncheckedUpdateWithoutUserDownloadRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -4478,6 +4805,7 @@ export type AppUserCreateWithoutExperienceRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
@@ -4539,6 +4867,7 @@ export type AppUserUncheckedCreateWithoutExperienceRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
@@ -4615,6 +4944,7 @@ export type AppUserUpdateWithoutExperienceRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
@@ -4676,6 +5006,7 @@ export type AppUserUncheckedUpdateWithoutExperienceRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
@@ -4736,6 +5067,7 @@ export type AppUserCreateWithoutUserFavoritesInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -4797,6 +5129,7 @@ export type AppUserUncheckedCreateWithoutUserFavoritesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -4873,6 +5206,7 @@ export type AppUserUpdateWithoutUserFavoritesInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -4934,6 +5268,7 @@ export type AppUserUncheckedUpdateWithoutUserFavoritesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -4994,6 +5329,7 @@ export type AppUserCreateWithoutUserGrowthEventsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -5055,6 +5391,7 @@ export type AppUserUncheckedCreateWithoutUserGrowthEventsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -5131,6 +5468,7 @@ export type AppUserUpdateWithoutUserGrowthEventsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -5192,6 +5530,7 @@ export type AppUserUncheckedUpdateWithoutUserGrowthEventsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -5251,6 +5590,7 @@ export type AppUserCreateWithoutLevelInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -5312,6 +5652,7 @@ export type AppUserUncheckedCreateWithoutLevelInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -5427,6 +5768,7 @@ export type AppUserCreateWithoutUserLikesInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -5488,6 +5830,7 @@ export type AppUserUncheckedCreateWithoutUserLikesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -5564,6 +5907,7 @@ export type AppUserUpdateWithoutUserLikesInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -5625,6 +5969,7 @@ export type AppUserUncheckedUpdateWithoutUserLikesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -5684,6 +6029,7 @@ export type AppUserCreateWithoutPointRecordsInput = {
   forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -5745,6 +6091,7 @@ export type AppUserUncheckedCreateWithoutPointRecordsInput = {
   forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -5821,6 +6168,7 @@ export type AppUserUpdateWithoutPointRecordsInput = {
   forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -5882,6 +6230,7 @@ export type AppUserUncheckedUpdateWithoutPointRecordsInput = {
   forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -5943,6 +6292,7 @@ export type AppUserCreateWithoutUserPurchaseRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -6004,6 +6354,7 @@ export type AppUserUncheckedCreateWithoutUserPurchaseRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -6080,6 +6431,7 @@ export type AppUserUpdateWithoutUserPurchaseRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -6141,6 +6493,7 @@ export type AppUserUncheckedUpdateWithoutUserPurchaseRecordsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -6201,6 +6554,7 @@ export type AppUserCreateWithoutUserViewsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -6262,6 +6616,7 @@ export type AppUserUncheckedCreateWithoutUserViewsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -6338,6 +6693,7 @@ export type AppUserUpdateWithoutUserViewsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -6399,6 +6755,7 @@ export type AppUserUncheckedUpdateWithoutUserViewsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -6459,6 +6816,7 @@ export type AppUserCreateWithoutOperatedConfigHistoriesInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -6520,6 +6878,7 @@ export type AppUserUncheckedCreateWithoutOperatedConfigHistoriesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -6596,6 +6955,7 @@ export type AppUserUpdateWithoutOperatedConfigHistoriesInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -6657,6 +7017,7 @@ export type AppUserUncheckedUpdateWithoutOperatedConfigHistoriesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -6717,6 +7078,7 @@ export type AppUserCreateWithoutUpdatedConfigsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -6778,6 +7140,7 @@ export type AppUserUncheckedCreateWithoutUpdatedConfigsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -6854,6 +7217,7 @@ export type AppUserUpdateWithoutUpdatedConfigsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -6915,6 +7279,7 @@ export type AppUserUncheckedUpdateWithoutUpdatedConfigsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -6975,6 +7340,7 @@ export type AppUserCreateWithoutModeratorApplicationsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -7036,6 +7402,7 @@ export type AppUserUncheckedCreateWithoutModeratorApplicationsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -7101,6 +7468,7 @@ export type AppUserCreateWithoutAuditedApplicationsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -7162,6 +7530,7 @@ export type AppUserUncheckedCreateWithoutAuditedApplicationsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -7238,6 +7607,7 @@ export type AppUserUpdateWithoutModeratorApplicationsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -7299,6 +7669,7 @@ export type AppUserUncheckedUpdateWithoutModeratorApplicationsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -7370,6 +7741,7 @@ export type AppUserUpdateWithoutAuditedApplicationsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -7431,6 +7803,7 @@ export type AppUserUncheckedUpdateWithoutAuditedApplicationsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -7491,6 +7864,7 @@ export type AppUserCreateWithoutModeratorInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -7552,6 +7926,7 @@ export type AppUserUncheckedCreateWithoutModeratorInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -7628,6 +8003,7 @@ export type AppUserUpdateWithoutModeratorInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -7689,6 +8065,7 @@ export type AppUserUncheckedUpdateWithoutModeratorInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -7749,6 +8126,7 @@ export type AppUserCreateWithoutForumNotificationsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -7810,6 +8188,7 @@ export type AppUserUncheckedCreateWithoutForumNotificationsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -7886,6 +8265,7 @@ export type AppUserUpdateWithoutForumNotificationsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -7947,6 +8327,7 @@ export type AppUserUncheckedUpdateWithoutForumNotificationsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -8006,6 +8387,7 @@ export type AppUserCreateWithoutForumProfileInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -8067,6 +8449,7 @@ export type AppUserUncheckedCreateWithoutForumProfileInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -8143,6 +8526,7 @@ export type AppUserUpdateWithoutForumProfileInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -8204,6 +8588,7 @@ export type AppUserUncheckedUpdateWithoutForumProfileInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -8265,6 +8650,7 @@ export type AppUserCreateWithoutReplyLikesInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -8326,6 +8712,7 @@ export type AppUserUncheckedCreateWithoutReplyLikesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -8402,6 +8789,7 @@ export type AppUserUpdateWithoutReplyLikesInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -8463,6 +8851,7 @@ export type AppUserUncheckedUpdateWithoutReplyLikesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -8523,6 +8912,7 @@ export type AppUserCreateWithoutForumRepliesInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -8584,6 +8974,7 @@ export type AppUserUncheckedCreateWithoutForumRepliesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -8660,6 +9051,7 @@ export type AppUserUpdateWithoutForumRepliesInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -8721,6 +9113,7 @@ export type AppUserUncheckedUpdateWithoutForumRepliesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -8781,6 +9174,7 @@ export type AppUserCreateWithoutForumReportsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -8842,6 +9236,7 @@ export type AppUserUncheckedCreateWithoutForumReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -8907,6 +9302,7 @@ export type AppUserCreateWithoutHandledReportsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -8968,6 +9364,7 @@ export type AppUserUncheckedCreateWithoutHandledReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -9044,6 +9441,7 @@ export type AppUserUpdateWithoutForumReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -9105,6 +9503,7 @@ export type AppUserUncheckedUpdateWithoutForumReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -9176,6 +9575,7 @@ export type AppUserUpdateWithoutHandledReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -9237,6 +9637,7 @@ export type AppUserUncheckedUpdateWithoutHandledReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -9297,6 +9698,7 @@ export type AppUserCreateWithoutForumTopicsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
@@ -9358,6 +9760,7 @@ export type AppUserUncheckedCreateWithoutForumTopicsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
@@ -9423,6 +9826,7 @@ export type AppUserCreateWithoutLastReplyTopicsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseCreateNestedManyWithoutUserInput
@@ -9484,6 +9888,7 @@ export type AppUserUncheckedCreateWithoutLastReplyTopicsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedCreateNestedManyWithoutUserInput
@@ -9560,6 +9965,7 @@ export type AppUserUpdateWithoutForumTopicsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
@@ -9621,6 +10027,7 @@ export type AppUserUncheckedUpdateWithoutForumTopicsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
@@ -9692,6 +10099,7 @@ export type AppUserUpdateWithoutLastReplyTopicsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUpdateManyWithoutUserNestedInput
@@ -9753,6 +10161,7 @@ export type AppUserUncheckedUpdateWithoutLastReplyTopicsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   chapterPurchases?: Prisma.WorkChapterPurchaseUncheckedUpdateManyWithoutUserNestedInput
@@ -9813,6 +10222,7 @@ export type AppUserCreateWithoutForumActionLogsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -9874,6 +10284,7 @@ export type AppUserUncheckedCreateWithoutForumActionLogsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -9950,6 +10361,7 @@ export type AppUserUpdateWithoutForumActionLogsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -10011,6 +10423,7 @@ export type AppUserUncheckedUpdateWithoutForumActionLogsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -10071,6 +10484,7 @@ export type AppUserCreateWithoutUpdatedSystemConfigsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -10132,6 +10546,7 @@ export type AppUserUncheckedCreateWithoutUpdatedSystemConfigsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -10208,6 +10623,7 @@ export type AppUserUpdateWithoutUpdatedSystemConfigsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -10269,6 +10685,7 @@ export type AppUserUncheckedUpdateWithoutUpdatedSystemConfigsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -10329,6 +10746,7 @@ export type AppUserCreateWithoutChapterPurchasesInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -10390,6 +10808,7 @@ export type AppUserUncheckedCreateWithoutChapterPurchasesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -10466,6 +10885,7 @@ export type AppUserUpdateWithoutChapterPurchasesInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -10527,6 +10947,7 @@ export type AppUserUncheckedUpdateWithoutChapterPurchasesInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -10587,6 +11008,7 @@ export type AppUserCreateWithoutWorkCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -10648,6 +11070,7 @@ export type AppUserUncheckedCreateWithoutWorkCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -10713,6 +11136,7 @@ export type AppUserCreateWithoutHandledWorkCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -10774,6 +11198,7 @@ export type AppUserUncheckedCreateWithoutHandledWorkCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -10850,6 +11275,7 @@ export type AppUserUpdateWithoutWorkCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -10911,6 +11337,7 @@ export type AppUserUncheckedUpdateWithoutWorkCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -10982,6 +11409,7 @@ export type AppUserUpdateWithoutHandledWorkCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -11043,6 +11471,7 @@ export type AppUserUncheckedUpdateWithoutHandledWorkCommentReportsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -11103,6 +11532,7 @@ export type AppUserCreateWithoutWorkCommentsInput = {
   noticeReads?: Prisma.AppNoticeReadCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
@@ -11164,6 +11594,7 @@ export type AppUserUncheckedCreateWithoutWorkCommentsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedCreateNestedManyWithoutUserInput
   tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
   pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedCreateNestedManyWithoutUserInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
   forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
@@ -11240,6 +11671,7 @@ export type AppUserUpdateWithoutWorkCommentsInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -11301,6 +11733,7 @@ export type AppUserUncheckedUpdateWithoutWorkCommentsInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -11384,6 +11817,7 @@ export type AppUserUpdateWithoutLevelInput = {
   noticeReads?: Prisma.AppNoticeReadUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
@@ -11445,6 +11879,7 @@ export type AppUserUncheckedUpdateWithoutLevelInput = {
   noticeReads?: Prisma.AppNoticeReadUncheckedUpdateManyWithoutUserNestedInput
   tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
   pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
+  userBalanceRecords?: Prisma.UserBalanceRecordUncheckedUpdateManyWithoutUserNestedInput
   experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
   forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
   lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
@@ -11513,6 +11948,7 @@ export type AppUserCountOutputType = {
   noticeReads: number
   tokens: number
   pointRecords: number
+  userBalanceRecords: number
   experienceRecords: number
   forumTopics: number
   lastReplyTopics: number
@@ -11551,6 +11987,7 @@ export type AppUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   noticeReads?: boolean | AppUserCountOutputTypeCountNoticeReadsArgs
   tokens?: boolean | AppUserCountOutputTypeCountTokensArgs
   pointRecords?: boolean | AppUserCountOutputTypeCountPointRecordsArgs
+  userBalanceRecords?: boolean | AppUserCountOutputTypeCountUserBalanceRecordsArgs
   experienceRecords?: boolean | AppUserCountOutputTypeCountExperienceRecordsArgs
   forumTopics?: boolean | AppUserCountOutputTypeCountForumTopicsArgs
   lastReplyTopics?: boolean | AppUserCountOutputTypeCountLastReplyTopicsArgs
@@ -11620,6 +12057,13 @@ export type AppUserCountOutputTypeCountTokensArgs<ExtArgs extends runtime.Types.
  */
 export type AppUserCountOutputTypeCountPointRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.UserPointRecordWhereInput
+}
+
+/**
+ * AppUserCountOutputType without action
+ */
+export type AppUserCountOutputTypeCountUserBalanceRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserBalanceRecordWhereInput
 }
 
 /**
@@ -11869,6 +12313,7 @@ export type AppUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   noticeReads?: boolean | Prisma.AppUser$noticeReadsArgs<ExtArgs>
   tokens?: boolean | Prisma.AppUser$tokensArgs<ExtArgs>
   pointRecords?: boolean | Prisma.AppUser$pointRecordsArgs<ExtArgs>
+  userBalanceRecords?: boolean | Prisma.AppUser$userBalanceRecordsArgs<ExtArgs>
   experienceRecords?: boolean | Prisma.AppUser$experienceRecordsArgs<ExtArgs>
   forumTopics?: boolean | Prisma.AppUser$forumTopicsArgs<ExtArgs>
   lastReplyTopics?: boolean | Prisma.AppUser$lastReplyTopicsArgs<ExtArgs>
@@ -11989,6 +12434,7 @@ export type AppUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   noticeReads?: boolean | Prisma.AppUser$noticeReadsArgs<ExtArgs>
   tokens?: boolean | Prisma.AppUser$tokensArgs<ExtArgs>
   pointRecords?: boolean | Prisma.AppUser$pointRecordsArgs<ExtArgs>
+  userBalanceRecords?: boolean | Prisma.AppUser$userBalanceRecordsArgs<ExtArgs>
   experienceRecords?: boolean | Prisma.AppUser$experienceRecordsArgs<ExtArgs>
   forumTopics?: boolean | Prisma.AppUser$forumTopicsArgs<ExtArgs>
   lastReplyTopics?: boolean | Prisma.AppUser$lastReplyTopicsArgs<ExtArgs>
@@ -12057,6 +12503,7 @@ export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      * 积分记录关联
      */
     pointRecords: Prisma.$UserPointRecordPayload<ExtArgs>[]
+    userBalanceRecords: Prisma.$UserBalanceRecordPayload<ExtArgs>[]
     /**
      * 经验记录关联
      */
@@ -12675,6 +13122,7 @@ export interface Prisma__AppUserClient<T, Null = never, ExtArgs extends runtime.
   noticeReads<T extends Prisma.AppUser$noticeReadsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$noticeReadsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppNoticeReadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tokens<T extends Prisma.AppUser$tokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$tokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppUserTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   pointRecords<T extends Prisma.AppUser$pointRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$pointRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPointRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  userBalanceRecords<T extends Prisma.AppUser$userBalanceRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$userBalanceRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserBalanceRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   experienceRecords<T extends Prisma.AppUser$experienceRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$experienceRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserExperienceRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   forumTopics<T extends Prisma.AppUser$forumTopicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$forumTopicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lastReplyTopics<T extends Prisma.AppUser$lastReplyTopicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$lastReplyTopicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -13294,6 +13742,30 @@ export type AppUser$pointRecordsArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.UserPointRecordScalarFieldEnum | Prisma.UserPointRecordScalarFieldEnum[]
+}
+
+/**
+ * AppUser.userBalanceRecords
+ */
+export type AppUser$userBalanceRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserBalanceRecord
+   */
+  select?: Prisma.UserBalanceRecordSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserBalanceRecord
+   */
+  omit?: Prisma.UserBalanceRecordOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserBalanceRecordInclude<ExtArgs> | null
+  where?: Prisma.UserBalanceRecordWhereInput
+  orderBy?: Prisma.UserBalanceRecordOrderByWithRelationInput | Prisma.UserBalanceRecordOrderByWithRelationInput[]
+  cursor?: Prisma.UserBalanceRecordWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserBalanceRecordScalarFieldEnum | Prisma.UserBalanceRecordScalarFieldEnum[]
 }
 
 /**

@@ -5,12 +5,12 @@ import {
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import {
   ForumAuditStatusEnum,
   ForumReplySortFieldEnum,
   ForumReplySortOrderEnum,
 } from '../forum-reply.constant'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 
 /**
  * 论坛回复基础DTO

@@ -16,6 +16,7 @@ export enum UserPointRuleTypeEnum {
   COMIC_CHAPTER_LIKE = 112,
   COMIC_CHAPTER_PURCHASE = 113,
   COMIC_CHAPTER_DOWNLOAD = 114,
+  COMIC_CHAPTER_EXCHANGE = 115,
 }
 
 export const USER_POINT_RULE_TYPE_NAMES: Record<UserPointRuleTypeEnum, string> = {
@@ -35,6 +36,7 @@ export const USER_POINT_RULE_TYPE_NAMES: Record<UserPointRuleTypeEnum, string> =
   [UserPointRuleTypeEnum.COMIC_CHAPTER_LIKE]: '章节点赞',
   [UserPointRuleTypeEnum.COMIC_CHAPTER_PURCHASE]: '章节购买',
   [UserPointRuleTypeEnum.COMIC_CHAPTER_DOWNLOAD]: '章节下载',
+  [UserPointRuleTypeEnum.COMIC_CHAPTER_EXCHANGE]: '章节兑换',
 }
 
 export function getPointRuleTypeName(type: UserPointRuleTypeEnum): string {
