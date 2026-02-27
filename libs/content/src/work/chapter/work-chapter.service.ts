@@ -74,6 +74,7 @@ export class WorkChapterService extends BaseService {
     private readonly userPermissionService: UserPermissionService,
     private readonly userPointService: UserPointService,
     private readonly userBalanceService: UserBalanceService,
+    private readonly contentPermissionService: ContentPermissionService,
   ) {
     super()
   }
@@ -133,51 +134,6 @@ export class WorkChapterService extends BaseService {
       : DownloadTargetTypeEnum.NOVEL_CHAPTER
   }
 
-  private async resolveChapterPermission(
-    chapter: {
-      workId: number
-      viewRule: WorkViewPermissionEnum
-      requiredViewLevelId?: number | null
-      price: number
-      exchangePoints: number
-      canExchange: boolean
-    },
-    work?: {
-      viewRule: WorkViewPermissionEnum
-      requiredViewLevelId?: number | null
-      chapterPrice: number
-      chapterExchangePoints: number
-      canExchange: boolean
-    } | null,
-  ) {
-    if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
-      const currentWork =
-        work ??
-        (await this.work.findUnique({
-          where: { id: chapter.workId },
-        }))
-
-      if (!currentWork) {
-        throw new BadRequestException('作品不存在')
-      }
-
-      return {
-        viewRule: currentWork.viewRule as WorkViewPermissionEnum,
-        requiredViewLevelId: currentWork.requiredViewLevelId,
-        price: currentWork.chapterPrice,
-        exchangePoints: currentWork.chapterExchangePoints,
-        canExchange: currentWork.canExchange,
-      }
-    }
-
-    return {
-      viewRule: chapter.viewRule,
-      requiredViewLevelId: chapter.requiredViewLevelId ?? null,
-      price: chapter.price,
-      exchangePoints: chapter.exchangePoints,
-      canExchange: chapter.canExchange,
-    }
-  }
 
   /**
    * 创建新章节
@@ -416,23 +372,14 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    const effectivePermission = await this.resolveChapterPermission(chapter)
-    await this.userPermissionService.validateViewPermission(
-      effectivePermission.viewRule,
+    const effectivePermission =
+      await this.contentPermissionService.resolveChapterPermission(chapter)
+    await this.contentPermissionService.checkAccess(
       userId,
-      effectivePermission.requiredViewLevelId,
+      id,
+      effectivePermission,
+      'view',
     )
-
-    if (effectivePermission.viewRule === WorkViewPermissionEnum.POINTS) {
-      const purchased = await this.workChapterPurchase.exists({
-        chapterId: id,
-        userId,
-      })
-
-      if (!purchased) {
-        throw new BadRequestException('请先购买或兑换该章节')
-      }
-    }
 
     // 增加浏览次数
     await this.workChapter.update({
@@ -532,7 +479,8 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('已购买该章节')
     }
 
-    const effectivePermission = await this.resolveChapterPermission(chapter)
+    const effectivePermission =
+      await this.contentPermissionService.resolveChapterPermission(chapter)
     await this.userPermissionService.validateViewPermission(
       effectivePermission.viewRule,
       userId,
@@ -617,7 +565,8 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('已获取该章节')
     }
 
-    const effectivePermission = await this.resolveChapterPermission(chapter)
+    const effectivePermission =
+      await this.contentPermissionService.resolveChapterPermission(chapter)
     await this.userPermissionService.validateViewPermission(
       effectivePermission.viewRule,
       userId,
@@ -718,42 +667,19 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('已下载该章节')
     }
 
-    if (!chapter.canDownload) {
-      throw new BadRequestException('该章节禁止下载')
-    }
+    // 获取有效权限并校验
+    const effectivePermission =
+      await this.contentPermissionService.resolveChapterPermission(
+        chapter,
+        work,
+      )
 
-    if (work.downloadRule === 0) {
-      throw new BadRequestException('该作品禁止下载')
-    }
-
-    await this.userPermissionService.validateViewPermission(
-      work.downloadRule as WorkViewPermissionEnum,
+    await this.contentPermissionService.checkAccess(
       userId,
-      work.requiredDownloadLevelId,
+      id,
+      effectivePermission,
+      'download',
     )
-
-    if (work.downloadRule === WorkViewPermissionEnum.POINTS) {
-      const requiredPoints = work.downloadPoints ?? 0
-      if (requiredPoints <= 0) {
-        throw new BadRequestException('作品未配置下载积分')
-      }
-      await this.userPermissionService.validatePoints(userId, requiredPoints)
-    }
-
-    const effectivePermission = await this.resolveChapterPermission(
-      chapter,
-      work,
-    )
-    if (effectivePermission.viewRule === WorkViewPermissionEnum.POINTS) {
-      const purchased = await this.workChapterPurchase.exists({
-        chapterId: id,
-        userId,
-      })
-
-      if (!purchased) {
-        throw new BadRequestException('请先购买或兑换该章节')
-      }
-    }
 
     // 记录下载
     await this.downloadService.recordDownload({

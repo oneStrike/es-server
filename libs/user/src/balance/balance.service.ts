@@ -59,8 +59,33 @@ export class UserBalanceService extends BaseService {
     }
 
     return this.prisma.$transaction(async (transaction) => {
-      const beforeBalance = user.balance
-      const afterBalance = beforeBalance + amount
+      // 构造更新条件：如果是扣除操作（amount < 0），需要确保余额充足
+      const whereCondition: any = { id: userId }
+      if (amount < 0) {
+        whereCondition.balance = { gte: Math.abs(amount) }
+      }
+
+      // 使用 updateMany 带条件作为乐观锁变种，确保余额充足且原子更新
+      const updateResult = await transaction.appUser.updateMany({
+        where: whereCondition,
+        data: {
+          balance: {
+            increment: amount, // amount 为负数时即为扣除
+          },
+        },
+      })
+
+      if (updateResult.count === 0) {
+        throw new BadRequestException('余额不足或用户不存在')
+      }
+
+      // 获取更新后的余额用于记录
+      const user = await transaction.appUser.findUniqueOrThrow({
+        where: { id: userId },
+      })
+
+      const afterBalance = user.balance
+      const beforeBalance = afterBalance - amount
 
       const record = await transaction.userBalanceRecord.create({
         data: {
@@ -70,13 +95,6 @@ export class UserBalanceService extends BaseService {
           afterBalance,
           type,
           remark,
-        },
-      })
-
-      await transaction.appUser.update({
-        where: { id: userId },
-        data: {
-          balance: afterBalance,
         },
       })
 

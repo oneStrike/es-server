@@ -1,3 +1,4 @@
+import { ContentPermissionModule } from '@libs/content/permission'
 import { InteractionModule } from '@libs/interaction'
 import { UserBalanceModule } from '@libs/user/balance'
 import { UserGrowthEventModule } from '@libs/user/growth-event'
@@ -8,6 +9,7 @@ import { WorkChapterService } from './work-chapter.service'
 
 @Module({
   imports: [
+    ContentPermissionModule,
     InteractionModule,
     UserGrowthEventModule,
     UserPermissionModule,

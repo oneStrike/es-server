@@ -222,8 +222,32 @@ export class UserPointService extends BaseService {
     }
 
     return this.prisma.$transaction(async (transaction) => {
-      const beforePoints = user.points
-      const afterPoints = beforePoints - points
+      // 检查余额并扣除
+      const updateResult = await transaction.appUser.updateMany({
+        where: {
+          id: userId,
+          points: {
+            gte: points, // 确保积分足够
+          },
+        },
+        data: {
+          points: {
+            decrement: points,
+          },
+        },
+      })
+
+      if (updateResult.count === 0) {
+        throw new BadRequestException('积分不足或用户不存在')
+      }
+
+      // 获取更新后的积分用于记录
+      const user = await transaction.appUser.findUniqueOrThrow({
+        where: { id: userId },
+      })
+
+      const afterPoints = user.points
+      const beforePoints = afterPoints + points
 
       const record = await transaction.userPointRecord.create({
         data: {
@@ -235,13 +259,6 @@ export class UserPointService extends BaseService {
           targetType,
           targetId,
           exchangeId,
-        },
-      })
-
-      await transaction.appUser.update({
-        where: { id: userId },
-        data: {
-          points: afterPoints,
         },
       })
 
