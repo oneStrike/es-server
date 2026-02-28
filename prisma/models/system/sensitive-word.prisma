@@ -14,25 +14,20 @@ model SensitiveWord {
   type      Int @default(5) @db.SmallInt
   /// 匹配模式（1=精确匹配, 2=模糊匹配, 3=正则匹配）
   matchMode Int @default(1) @map("match_mode") @db.SmallInt
-
   /// 是否启用
   isEnabled Boolean @default(true) @map("is_enabled")
-
-  /// 命中次数
-  hitCount  Int       @default(0) @map("hit_count")
-  /// 最后命中时间
-  lastHitAt DateTime? @map("last_hit_at") @db.Timestamptz(6)
-
   /// 版本号（用于乐观锁）
   version Int @default(0)
-
   /// 备注
   remark String? @db.VarChar(500)
-
   /// 创建人ID
   createdBy Int? @map("created_by")
   /// 更新人ID
   updatedBy Int? @map("updated_by")
+  /// 命中次数
+  hitCount  Int       @default(0) @map("hit_count")
+  /// 最后命中时间
+  lastHitAt DateTime? @map("last_hit_at") @db.Timestamptz(6)
 
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)

@@ -12,12 +12,12 @@ model ForumNotification {
 
   /// 通知类型（1=回复, 2=点赞, 3=收藏, 4=系统通知）
   type      Int       @db.SmallInt
+  /// 通知优先级（1=普通, 2=重要）
+  priority  Int       @default(1) @db.SmallInt
   /// 通知标题
   title     String    @db.VarChar(200)
   /// 通知内容
   content   String    @db.VarChar(1000)
-  /// 通知优先级（1=普通, 2=重要）
-  priority  Int       @default(1) @db.SmallInt
   /// 是否已读
   isRead    Boolean   @default(false) @map("is_read")
   /// 已读时间

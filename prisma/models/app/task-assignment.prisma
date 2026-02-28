@@ -16,19 +16,18 @@ model TaskAssignment {
   progress    Int       @default(0)
   /// 目标次数
   target      Int       @default(1)
-  /// 领取时间
-  claimedAt   DateTime? @map("claimed_at") @db.Timestamptz(6)
-  /// 完成时间
-  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
-  /// 过期时间
-  expiredAt   DateTime? @map("expired_at") @db.Timestamptz(6)
-
   /// 任务快照
   taskSnapshot Json? @map("task_snapshot")
   /// 任务上下文
   context      Json?
   /// 版本号
   version      Int   @default(0)
+  /// 领取时间
+  claimedAt   DateTime? @map("claimed_at") @db.Timestamptz(6)
+  /// 完成时间
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  /// 过期时间
+  expiredAt   DateTime? @map("expired_at") @db.Timestamptz(6)
 
   /// 创建时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

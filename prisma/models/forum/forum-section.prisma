@@ -24,6 +24,8 @@ model ForumSection {
   isEnabled         Boolean @default(true) @map("is_enabled")
   /// 主题审核策略 （0：无需审核，1：触发严重敏感词时审核，2：触一般敏感词时审核，3：触发轻微敏感词时审核，4：强制人工审核）
   topicReviewPolicy Int     @default(1) @map("topic_review_policy")
+  /// 备注信息
+  remark String? @db.VarChar(500)
 
   /// 主题数
   topicCount Int       @default(0) @map("topic_count")
@@ -31,9 +33,6 @@ model ForumSection {
   replyCount Int       @default(0) @map("reply_count")
   /// 最后发表时间
   lastPostAt DateTime? @map("last_post_at") @db.Timestamptz(6)
-
-  /// 备注信息
-  remark String? @db.VarChar(500)
 
   /// 创建时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

@@ -83,6 +83,7 @@ export type WorkMinAggregateOutputType = {
   originalSource: string | null
   copyright: string | null
   disclaimer: string | null
+  remark: string | null
   isPublished: boolean | null
   publishAt: Date | null
   lastUpdated: Date | null
@@ -127,6 +128,7 @@ export type WorkMaxAggregateOutputType = {
   originalSource: string | null
   copyright: string | null
   disclaimer: string | null
+  remark: string | null
   isPublished: boolean | null
   publishAt: Date | null
   lastUpdated: Date | null
@@ -171,6 +173,7 @@ export type WorkCountAggregateOutputType = {
   originalSource: number
   copyright: number
   disclaimer: number
+  remark: number
   isPublished: number
   publishAt: number
   lastUpdated: number
@@ -259,6 +262,7 @@ export type WorkMinAggregateInputType = {
   originalSource?: true
   copyright?: true
   disclaimer?: true
+  remark?: true
   isPublished?: true
   publishAt?: true
   lastUpdated?: true
@@ -303,6 +307,7 @@ export type WorkMaxAggregateInputType = {
   originalSource?: true
   copyright?: true
   disclaimer?: true
+  remark?: true
   isPublished?: true
   publishAt?: true
   lastUpdated?: true
@@ -347,6 +352,7 @@ export type WorkCountAggregateInputType = {
   originalSource?: true
   copyright?: true
   disclaimer?: true
+  remark?: true
   isPublished?: true
   publishAt?: true
   lastUpdated?: true
@@ -478,6 +484,7 @@ export type WorkGroupByOutputType = {
   originalSource: string | null
   copyright: string | null
   disclaimer: string | null
+  remark: string | null
   isPublished: boolean
   publishAt: Date | null
   lastUpdated: Date | null
@@ -545,6 +552,7 @@ export type WorkWhereInput = {
   originalSource?: Prisma.StringNullableFilter<"Work"> | string | null
   copyright?: Prisma.StringNullableFilter<"Work"> | string | null
   disclaimer?: Prisma.StringNullableFilter<"Work"> | string | null
+  remark?: Prisma.StringNullableFilter<"Work"> | string | null
   isPublished?: Prisma.BoolFilter<"Work"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
@@ -597,6 +605,7 @@ export type WorkOrderByWithRelationInput = {
   originalSource?: Prisma.SortOrderInput | Prisma.SortOrder
   copyright?: Prisma.SortOrderInput | Prisma.SortOrder
   disclaimer?: Prisma.SortOrderInput | Prisma.SortOrder
+  remark?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -652,6 +661,7 @@ export type WorkWhereUniqueInput = Prisma.AtLeast<{
   originalSource?: Prisma.StringNullableFilter<"Work"> | string | null
   copyright?: Prisma.StringNullableFilter<"Work"> | string | null
   disclaimer?: Prisma.StringNullableFilter<"Work"> | string | null
+  remark?: Prisma.StringNullableFilter<"Work"> | string | null
   isPublished?: Prisma.BoolFilter<"Work"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
@@ -704,6 +714,7 @@ export type WorkOrderByWithAggregationInput = {
   originalSource?: Prisma.SortOrderInput | Prisma.SortOrder
   copyright?: Prisma.SortOrderInput | Prisma.SortOrder
   disclaimer?: Prisma.SortOrderInput | Prisma.SortOrder
+  remark?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -756,6 +767,7 @@ export type WorkScalarWhereWithAggregatesInput = {
   originalSource?: Prisma.StringNullableWithAggregatesFilter<"Work"> | string | null
   copyright?: Prisma.StringNullableWithAggregatesFilter<"Work"> | string | null
   disclaimer?: Prisma.StringNullableWithAggregatesFilter<"Work"> | string | null
+  remark?: Prisma.StringNullableWithAggregatesFilter<"Work"> | string | null
   isPublished?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
   publishAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Work"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableWithAggregatesFilter<"Work"> | Date | string | null
@@ -799,6 +811,7 @@ export type WorkCreateInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -850,6 +863,7 @@ export type WorkUncheckedCreateInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -900,6 +914,7 @@ export type WorkUpdateInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -951,6 +966,7 @@ export type WorkUncheckedUpdateInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1002,6 +1018,7 @@ export type WorkCreateManyInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -1045,6 +1062,7 @@ export type WorkUpdateManyMutationInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1088,6 +1106,7 @@ export type WorkUncheckedUpdateManyInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1152,6 +1171,7 @@ export type WorkCountOrderByAggregateInput = {
   originalSource?: Prisma.SortOrder
   copyright?: Prisma.SortOrder
   disclaimer?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   lastUpdated?: Prisma.SortOrder
@@ -1217,6 +1237,7 @@ export type WorkMaxOrderByAggregateInput = {
   originalSource?: Prisma.SortOrder
   copyright?: Prisma.SortOrder
   disclaimer?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   lastUpdated?: Prisma.SortOrder
@@ -1261,6 +1282,7 @@ export type WorkMinOrderByAggregateInput = {
   originalSource?: Prisma.SortOrder
   copyright?: Prisma.SortOrder
   disclaimer?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   lastUpdated?: Prisma.SortOrder
@@ -1483,6 +1505,7 @@ export type WorkCreateWithoutRequiredViewLevelInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -1533,6 +1556,7 @@ export type WorkUncheckedCreateWithoutRequiredViewLevelInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -1612,6 +1636,7 @@ export type WorkScalarWhereInput = {
   originalSource?: Prisma.StringNullableFilter<"Work"> | string | null
   copyright?: Prisma.StringNullableFilter<"Work"> | string | null
   disclaimer?: Prisma.StringNullableFilter<"Work"> | string | null
+  remark?: Prisma.StringNullableFilter<"Work"> | string | null
   isPublished?: Prisma.BoolFilter<"Work"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
@@ -1655,6 +1680,7 @@ export type WorkCreateWithoutComicInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -1705,6 +1731,7 @@ export type WorkUncheckedCreateWithoutComicInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -1770,6 +1797,7 @@ export type WorkUpdateWithoutComicInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1820,6 +1848,7 @@ export type WorkUncheckedUpdateWithoutComicInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1869,6 +1898,7 @@ export type WorkCreateWithoutNovelInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -1919,6 +1949,7 @@ export type WorkUncheckedCreateWithoutNovelInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -1984,6 +2015,7 @@ export type WorkUpdateWithoutNovelInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2034,6 +2066,7 @@ export type WorkUncheckedUpdateWithoutNovelInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2083,6 +2116,7 @@ export type WorkCreateWithoutAuthorsInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -2133,6 +2167,7 @@ export type WorkUncheckedCreateWithoutAuthorsInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -2198,6 +2233,7 @@ export type WorkUpdateWithoutAuthorsInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2248,6 +2284,7 @@ export type WorkUncheckedUpdateWithoutAuthorsInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2297,6 +2334,7 @@ export type WorkCreateWithoutCategoriesInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -2347,6 +2385,7 @@ export type WorkUncheckedCreateWithoutCategoriesInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -2412,6 +2451,7 @@ export type WorkUpdateWithoutCategoriesInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2462,6 +2502,7 @@ export type WorkUncheckedUpdateWithoutCategoriesInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2511,6 +2552,7 @@ export type WorkCreateWithoutChaptersInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -2561,6 +2603,7 @@ export type WorkUncheckedCreateWithoutChaptersInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -2626,6 +2669,7 @@ export type WorkUpdateWithoutChaptersInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2676,6 +2720,7 @@ export type WorkUncheckedUpdateWithoutChaptersInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2725,6 +2770,7 @@ export type WorkCreateWithoutCommentsInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -2775,6 +2821,7 @@ export type WorkUncheckedCreateWithoutCommentsInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -2840,6 +2887,7 @@ export type WorkUpdateWithoutCommentsInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2890,6 +2938,7 @@ export type WorkUncheckedUpdateWithoutCommentsInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2939,6 +2988,7 @@ export type WorkCreateWithoutTagsInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -2989,6 +3039,7 @@ export type WorkUncheckedCreateWithoutTagsInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -3054,6 +3105,7 @@ export type WorkUpdateWithoutTagsInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3104,6 +3156,7 @@ export type WorkUncheckedUpdateWithoutTagsInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3154,6 +3207,7 @@ export type WorkCreateManyRequiredViewLevelInput = {
   originalSource?: string | null
   copyright?: string | null
   disclaimer?: string | null
+  remark?: string | null
   isPublished?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
@@ -3196,6 +3250,7 @@ export type WorkUpdateWithoutRequiredViewLevelInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3246,6 +3301,7 @@ export type WorkUncheckedUpdateWithoutRequiredViewLevelInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3296,6 +3352,7 @@ export type WorkUncheckedUpdateManyWithoutRequiredViewLevelInput = {
   originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3406,6 +3463,7 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   originalSource?: boolean
   copyright?: boolean
   disclaimer?: boolean
+  remark?: boolean
   isPublished?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
@@ -3459,6 +3517,7 @@ export type WorkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   originalSource?: boolean
   copyright?: boolean
   disclaimer?: boolean
+  remark?: boolean
   isPublished?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
@@ -3504,6 +3563,7 @@ export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   originalSource?: boolean
   copyright?: boolean
   disclaimer?: boolean
+  remark?: boolean
   isPublished?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
@@ -3549,6 +3609,7 @@ export type WorkSelectScalar = {
   originalSource?: boolean
   copyright?: boolean
   disclaimer?: boolean
+  remark?: boolean
   isPublished?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
@@ -3578,7 +3639,7 @@ export type WorkSelectScalar = {
   deletedAt?: boolean
 }
 
-export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "isPublished" | "publishAt" | "lastUpdated" | "viewCount" | "favoriteCount" | "likeCount" | "downloadCount" | "purchaseCount" | "price" | "viewRule" | "requiredViewLevelId" | "chapterPrice" | "chapterExchangePoints" | "canComment" | "canExchange" | "exchangePoints" | "canDownload" | "rating" | "ratingCount" | "popularity" | "isRecommended" | "isHot" | "isNew" | "recommendWeight" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
+export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "remark" | "isPublished" | "publishAt" | "lastUpdated" | "viewCount" | "favoriteCount" | "likeCount" | "downloadCount" | "purchaseCount" | "price" | "viewRule" | "requiredViewLevelId" | "chapterPrice" | "chapterExchangePoints" | "canComment" | "canExchange" | "exchangePoints" | "canDownload" | "rating" | "ratingCount" | "popularity" | "isRecommended" | "isHot" | "isNew" | "recommendWeight" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
 export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comic?: boolean | Prisma.Work$comicArgs<ExtArgs>
   novel?: boolean | Prisma.Work$novelArgs<ExtArgs>
@@ -3690,6 +3751,10 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 免责声明
      */
     disclaimer: string | null
+    /**
+     * 备注
+     */
+    remark: string | null
     /**
      * 发布状态
      */
@@ -4243,6 +4308,7 @@ export interface WorkFieldRefs {
   readonly originalSource: Prisma.FieldRef<"Work", 'String'>
   readonly copyright: Prisma.FieldRef<"Work", 'String'>
   readonly disclaimer: Prisma.FieldRef<"Work", 'String'>
+  readonly remark: Prisma.FieldRef<"Work", 'String'>
   readonly isPublished: Prisma.FieldRef<"Work", 'Boolean'>
   readonly publishAt: Prisma.FieldRef<"Work", 'DateTime'>
   readonly lastUpdated: Prisma.FieldRef<"Work", 'DateTime'>

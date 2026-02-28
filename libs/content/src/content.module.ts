@@ -4,18 +4,14 @@ import { WorkAuthorModule } from './author/author.module'
 import { WorkCategoryModule } from './category/category.module'
 import { ContentInteractionModule } from './interaction'
 import { WorkTagModule } from './tag/tag.module'
-import { WorkChapterModule } from './work/chapter/work-chapter.module'
 import { WorkCommentModule } from './work/comment/work-comment.module'
-import { ContentModule as WorkContentModule } from './work/content/content.module'
-import { WorkModule } from './work/core/work.module'
+import { WorkModule } from './work/work.module'
 
 @Module({
   imports: [
     InteractionModule,
     ContentInteractionModule,
     WorkModule,
-    WorkChapterModule,
-    WorkContentModule,
     WorkAuthorModule,
     WorkCategoryModule,
     WorkTagModule,
@@ -24,8 +20,6 @@ import { WorkModule } from './work/core/work.module'
   exports: [
     InteractionModule,
     WorkModule,
-    WorkChapterModule,
-    WorkContentModule,
     WorkAuthorModule,
     WorkCategoryModule,
     WorkTagModule,

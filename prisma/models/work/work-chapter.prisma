@@ -16,26 +16,30 @@ model WorkChapter {
   description             String?               @db.VarChar(1000)
   /// 章节序号（用于排序）
   sortOrder               Int                   @default(0) @map("sort_order")
-  /// 查看规则（-1=继承作品权限 0=所有人, 1=登录用户, 2=会员, 3=购买）
-  viewRule                Int                   @default(-1) @map("read_rule") @db.SmallInt
-  /// 是否允许下载
-  canDownload             Boolean               @default(true) @map("can_download")
-  /// 价格（单位：分）
-  price                   Int                   @default(0) @map("price")
-  /// 允许查看的会员等级ID
-  requiredViewLevelId     Int?                  @map("required_read_level_id")
-  /// 兑换所需积分
-  exchangePoints          Int                   @default(0) @map("exchange_points")
-  /// 是否允许积分兑换
-  canExchange             Boolean               @default(false) @map("can_exchange")
   /// 发布状态
   isPublished             Boolean               @default(false) @map("is_published")
   /// 是否为试读章节
   isPreview               Boolean               @default(false) @map("is_preview")
-  /// 是否允许评论
-  canComment              Boolean               @default(true) @map("can_comment")
   /// 发布时间
   publishAt               DateTime?             @map("publish_at") @db.Timestamptz(6)
+  /// 查看规则（-1=继承作品权限 0=所有人, 1=登录用户, 2=会员, 3=购买）
+  viewRule                Int                   @default(-1) @map("read_rule") @db.SmallInt
+  /// 允许查看的会员等级ID
+  requiredViewLevelId     Int?                  @map("required_read_level_id")
+  /// 价格（单位：分）
+  price                   Int                   @default(0) @map("price")
+  /// 兑换所需积分
+  exchangePoints          Int                   @default(0) @map("exchange_points")
+  /// 是否允许积分兑换
+  canExchange             Boolean               @default(false) @map("can_exchange")
+  /// 是否允许下载
+  canDownload             Boolean               @default(true) @map("can_download")
+  /// 是否允许评论
+  canComment              Boolean               @default(true) @map("can_comment")
+  /// 内容存储路径（文件路径）
+  content                 String?               @map("content_path")
+  /// 字数（小说章节）
+  wordCount               Int                   @default(0) @map("word_count")
   /// 阅读次数
   viewCount               Int                   @default(0) @map("view_count")
   /// 点赞数
@@ -46,10 +50,6 @@ model WorkChapter {
   purchaseCount           Int                   @default(0) @map("purchase_count")
   /// 下载次数
   downloadCount           Int                   @default(0) @map("download_count")
-  /// 字数（小说章节）
-  wordCount               Int                   @default(0) @map("word_count")
-  /// 内容存储路径（文件路径）
-  content                 String?               @map("content_path")
   /// 备注
   remark                  String?               @db.VarChar(1000)
   /// 创建时间

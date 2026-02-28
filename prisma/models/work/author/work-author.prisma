@@ -15,19 +15,16 @@ model WorkAuthor {
   gender      Int     @default(0) @db.SmallInt
   /// 作者类型（1: 漫画家, 2: 轻小说作者）
   type        Int[]   @db.SmallInt
-
   /// 启用状态（true: 启用, false: 禁用）
   isEnabled     Boolean @default(true) @map("is_enabled")
   /// 是否为推荐作者（用于前台推荐展示）
   isRecommended Boolean @default(false) @map("is_recommended")
-
+  /// 管理员备注
+  remark String? @db.VarChar(1000)
   /// 作品数量（冗余字段，用于提升查询性能）
   worksCount     Int @default(0) @map("works_count")
   /// 粉丝数量（冗余字段，用于前台展示）
   followersCount Int @default(0) @map("followers_count")
-
-  /// 管理员备注
-  remark String? @db.VarChar(1000)
 
   /// 创建时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

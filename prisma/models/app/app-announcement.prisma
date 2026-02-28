@@ -17,23 +17,20 @@ model AppAnnouncement {
   announcementType Int @default(0) @map("announcement_type") @db.SmallInt
   /// 优先级（数值越大越重要）
   priorityLevel    Int @default(1) @map("priority_level") @db.SmallInt
-
-  /// 发布开始时间
-  publishStartTime DateTime? @map("publish_start_time") @db.Timestamptz(6)
-  /// 发布结束时间
-  publishEndTime   DateTime? @map("publish_end_time") @db.Timestamptz(6)
-
-  /// 弹窗背景图片URL
-  popupBackgroundImage String? @map("popup_background_image") @db.VarChar(200)
-
   /// 是否已发布
   isPublished    Boolean @default(false) @map("is_published")
   /// 是否置顶
   isPinned       Boolean @default(false) @map("is_pinned")
   /// 是否以弹窗形式显示
   showAsPopup    Boolean @default(false) @map("show_as_popup")
+  /// 弹窗背景图片URL
+  popupBackgroundImage String? @map("popup_background_image") @db.VarChar(200)
   /// 启用的平台列表
   enablePlatform Int[]   @map("enable_platform")
+  /// 发布开始时间
+  publishStartTime DateTime? @map("publish_start_time") @db.Timestamptz(6)
+  /// 发布结束时间
+  publishEndTime   DateTime? @map("publish_end_time") @db.Timestamptz(6)
   /// 浏览次数
   viewCount      Int     @default(0) @map("view_count")
 

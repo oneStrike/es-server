@@ -14,14 +14,12 @@ model ForumModeratorApplication {
   status      Int   @default(0) @map("status") @db.SmallInt
   /// 申请的权限数组（1=置顶, 2=加精, 3=锁定, 4=删除, 5=审核, 6=移动）
   permissions Int[] @default([]) @map("permissions")
-
   /// 申请理由
   reason      String  @db.VarChar(500)
   /// 审核原因（通过或拒绝的原因）
   auditReason String? @map("audit_reason") @db.VarChar(500)
   /// 备注
   remark      String? @db.VarChar(500)
-
   /// 审核时间
   auditAt   DateTime? @map("audit_at") @db.Timestamptz(6)
   /// 创建时间

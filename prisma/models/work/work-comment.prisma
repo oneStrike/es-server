@@ -26,15 +26,14 @@ model WorkComment {
   isHidden    Boolean   @default(false) @map("is_hidden")
   /// 审核状态：0=待审核, 1=已通过, 2=已拒绝
   auditStatus Int       @default(1) @map("audit_status")
-  /// 审核拒绝原因
-  auditReason String?   @map("audit_reason")
-  /// 审核时间
-  auditAt     DateTime? @map("audit_at") @db.Timestamptz(6)
   /// 审核人ID
   auditById   Int?      @map("audit_by_id")
   /// 审核人角色：0=版主, 1=管理员
   auditRole   Int?      @map("audit_role") @db.SmallInt
-
+  /// 审核拒绝原因
+  auditReason String?   @map("audit_reason")
+  /// 审核时间
+  auditAt     DateTime? @map("audit_at") @db.Timestamptz(6)
   /// 点赞数
   likeCount         Int   @default(0) @map("like_count")
   /// 敏感词命中记录

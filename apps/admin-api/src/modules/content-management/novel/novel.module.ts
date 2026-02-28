@@ -1,4 +1,4 @@
-import { ContentModule, WorkChapterModule, WorkCommentModule, WorkModule } from '@libs/content/work'
+import { WorkCommentModule, WorkModule } from '@libs/content/work'
 import { Module } from '@nestjs/common'
 import { NovelChapterCommentController } from './novel-chapter-comment.controller'
 import { NovelChapterController } from './novel-chapter.controller'
@@ -6,7 +6,7 @@ import { NovelContentController } from './novel-content.controller'
 import { NovelController } from './novel.controller'
 
 @Module({
-  imports: [WorkModule, WorkChapterModule, WorkCommentModule, ContentModule],
+  imports: [WorkModule, WorkCommentModule],
   controllers: [
     NovelController,
     NovelChapterController,
@@ -14,6 +14,6 @@ import { NovelController } from './novel.controller'
     NovelContentController,
   ],
   providers: [],
-  exports: [WorkModule, WorkChapterModule, WorkCommentModule, ContentModule],
+  exports: [],
 })
 export class NovelModule {}

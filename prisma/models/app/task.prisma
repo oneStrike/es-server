@@ -16,10 +16,10 @@ model Task {
   type      Int     @db.SmallInt
   /// 任务状态
   status    Int     @db.SmallInt
-  /// 任务优先级
-  priority  Int     @default(0) @db.SmallInt
   /// 是否启用
   isEnabled Boolean @default(true) @map("is_enabled")
+  /// 任务优先级
+  priority  Int     @default(0) @db.SmallInt
 
   /// 领取方式
   claimMode    Int @map("claim_mode") @db.SmallInt
@@ -27,15 +27,14 @@ model Task {
   completeMode Int @map("complete_mode") @db.SmallInt
   /// 目标次数
   targetCount  Int @default(1) @map("target_count")
-
   /// 奖励配置
   rewardConfig   Json?     @map("reward_config")
+  /// 重复规则
+  repeatRule     Json?     @map("repeat_rule")
   /// 发布开始时间
   publishStartAt DateTime? @map("publish_start_at") @db.Timestamptz(6)
   /// 发布结束时间
   publishEndAt   DateTime? @map("publish_end_at") @db.Timestamptz(6)
-  /// 重复规则
-  repeatRule     Json?     @map("repeat_rule")
 
   /// 创建人ID
   createdById Int? @map("created_by_id")

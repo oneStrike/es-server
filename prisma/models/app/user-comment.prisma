@@ -50,14 +50,6 @@ model UserComment {
   /// 配合敏感词检测系统自动设置
   auditStatus Int @default(0) @map("audit_status") @db.SmallInt
 
-  /// 审核原因
-  /// 审核拒绝时的原因说明
-  auditReason String? @map("audit_reason") @db.VarChar(500)
-
-  /// 审核时间
-  /// 执行审核操作的时间
-  auditAt DateTime? @map("audit_at") @db.Timestamptz(6)
-
   /// 审核人ID（关联 app_user.id）
   /// 执行审核操作的用户ID
   auditById Int? @map("audit_by_id")
@@ -65,6 +57,14 @@ model UserComment {
   /// 审核人角色（0=版主, 1=管理员）
   /// 标识审核人的角色类型
   auditRole Int? @map("audit_role") @db.SmallInt
+
+  /// 审核原因
+  /// 审核拒绝时的原因说明
+  auditReason String? @map("audit_reason") @db.VarChar(500)
+
+  /// 审核时间
+  /// 执行审核操作的时间
+  auditAt DateTime? @map("audit_at") @db.Timestamptz(6)
 
   /// 点赞数
   /// 该评论被点赞的次数，用于热度排序

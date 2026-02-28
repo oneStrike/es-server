@@ -20,7 +20,9 @@ import {
 } from '@nestjs/swagger'
 import { WorkSerialStatusEnum } from '../work.constant'
 
-/// 作者信息DTO
+/**
+ * 作者信息DTO
+ */
 class AuthorInfoDto extends PickType(BaseAuthorDto, [
   'id',
   'name',
@@ -28,7 +30,9 @@ class AuthorInfoDto extends PickType(BaseAuthorDto, [
   'avatar',
 ]) {}
 
-/// 作品作者关联DTO
+/**
+ * 作品作者关联DTO
+ */
 export class WorkAuthorRelationDto {
   @NestedProperty({
     description: '作者信息',
@@ -52,14 +56,18 @@ export class WorkAuthorRelationDto {
   sortOrder?: number
 }
 
-/// 分类信息DTO
+/**
+ * 分类信息DTO
+ */
 class CategoryInfoDto extends PickType(BaseCategoryDto, [
   'id',
   'name',
   'icon',
 ]) {}
 
-/// 作品分类关联DTO
+/**
+ * 作品分类关联DTO
+ */
 export class WorkCategoryRelationDto {
   @NestedProperty({
     description: '分类信息',
@@ -79,10 +87,14 @@ export class WorkCategoryRelationDto {
   sortOrder?: number
 }
 
-/// 标签信息DTO
+/**
+ * 标签信息DTO
+ */
 class TagInfoDto extends PickType(BaseTagDto, ['id', 'name', 'icon']) {}
 
-/// 作品标签关联DTO
+/**
+ * 作品标签关联DTO
+ */
 export class WorkTagRelationDto {
   @NestedProperty({
     description: '标签信息',
@@ -102,8 +114,11 @@ export class WorkTagRelationDto {
   sortOrder?: number
 }
 
-// 作品基础DTO
+/**
+ * 作品基础DTO
+ */
 export class BaseWorkDto extends BaseDto {
+  // ==================== 基础信息 ====================
   @EnumProperty({
     description: '作品类型（1=漫画, 2=小说）',
     example: WorkTypeEnum.COMIC,
@@ -143,6 +158,7 @@ export class BaseWorkDto extends BaseDto {
   })
   description!: string
 
+  // ==================== 元数据 ====================
   @StringProperty({
     description: '语言代码',
     example: 'en',
@@ -192,6 +208,7 @@ export class BaseWorkDto extends BaseDto {
   })
   originalSource?: string
 
+  // ==================== 版权与备注 ====================
   @StringProperty({
     description: '版权信息',
     example: '© 2024 作者名',
@@ -207,6 +224,15 @@ export class BaseWorkDto extends BaseDto {
   })
   disclaimer?: string
 
+  @StringProperty({
+    description: '备注',
+    example: '管理员备注',
+    required: false,
+    maxLength: 1000,
+  })
+  remark?: string
+
+  // ==================== 发布状态 ====================
   @BooleanProperty({
     description: '发布状态',
     example: true,
@@ -230,6 +256,7 @@ export class BaseWorkDto extends BaseDto {
   })
   lastUpdated?: Date
 
+  // ==================== 权限控制 ====================
   @EnumProperty({
     description: '查看规则（0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
     example: WorkViewPermissionEnum.ALL,
@@ -246,6 +273,7 @@ export class BaseWorkDto extends BaseDto {
   })
   requiredViewLevelId?: number
 
+  // ==================== 价格设置 ====================
   @NumberProperty({
     description: '作品购买价格（余额）',
     example: 0,
@@ -270,24 +298,6 @@ export class BaseWorkDto extends BaseDto {
   })
   chapterExchangePoints!: number
 
-  @BooleanProperty({
-    description: '是否允许评论',
-    example: true,
-    required: true,
-    default: true,
-  })
-  canComment!: boolean
-
-  @NumberProperty({
-    description: '购买数',
-    example: 0,
-    required: true,
-    min: 0,
-    default: 0,
-    validation: false,
-  })
-  purchaseCount!: number
-
   @NumberProperty({
     description: '兑换所需积分',
     example: 0,
@@ -295,6 +305,15 @@ export class BaseWorkDto extends BaseDto {
     default: 0,
   })
   exchangePoints!: number
+
+  // ==================== 功能开关 ====================
+  @BooleanProperty({
+    description: '是否允许评论',
+    example: true,
+    required: true,
+    default: true,
+  })
+  canComment!: boolean
 
   @BooleanProperty({
     description: '是否允许兑换',
@@ -312,6 +331,7 @@ export class BaseWorkDto extends BaseDto {
   })
   canDownload!: boolean
 
+  // ==================== 统计数据 ====================
   @NumberProperty({
     description: '浏览量',
     example: 1000,
@@ -353,6 +373,16 @@ export class BaseWorkDto extends BaseDto {
   likeCount!: number
 
   @NumberProperty({
+    description: '购买数',
+    example: 0,
+    required: true,
+    min: 0,
+    default: 0,
+    validation: false,
+  })
+  purchaseCount!: number
+
+  @NumberProperty({
     description: '评分（1-10分，保留1位小数）',
     example: 8.5,
     required: false,
@@ -381,6 +411,7 @@ export class BaseWorkDto extends BaseDto {
   })
   popularity!: number
 
+  // ==================== 推荐标记 ====================
   @BooleanProperty({
     description: '是否推荐',
     example: false,
@@ -414,6 +445,7 @@ export class BaseWorkDto extends BaseDto {
   })
   recommendWeight?: number
 
+  // ==================== 关联数据 ====================
   @ArrayProperty({
     description: '作品作者',
     example: [
@@ -465,7 +497,9 @@ export class BaseWorkDto extends BaseDto {
   tags!: WorkTagRelationDto[]
 }
 
-// 分页返回作品DTO
+/**
+ * 分页返回作品DTO
+ */
 export class PageWorkDto extends PickType(BaseWorkDto, [
   'id',
   'name',
@@ -479,7 +513,9 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
   'tags',
 ]) {}
 
-/// 创建作品DTO
+/**
+ * 创建作品DTO
+ */
 export class CreateWorkDto extends OmitType(BaseWorkDto, [
   ...OMIT_BASE_FIELDS,
   'popularity',
@@ -518,28 +554,29 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
   tagIds!: number[]
 }
 
-/// 更新作品DTO
+/**
+ * 更新作品DTO
+ */
 export class UpdateWorkDto extends IntersectionType(CreateWorkDto, IdDto) {}
 
-// 查询作品DTO
+/**
+ * 查询作品DTO
+ */
 export class QueryWorkDto extends IntersectionType(
   PageDto,
-  IntersectionType(
-    PartialType(
-      PickType(BaseWorkDto, [
-        'name',
-        'publisher',
-        'isPublished',
-        'serialStatus',
-        'language',
-        'region',
-        'ageRating',
-        'isRecommended',
-        'isHot',
-        'isNew',
-      ]),
-    ),
-    PartialType(PickType(CreateWorkDto, ['tagIds', 'categoryIds'])),
+  PartialType(
+    PickType(BaseWorkDto, [
+      'name',
+      'publisher',
+      'isPublished',
+      'serialStatus',
+      'language',
+      'region',
+      'ageRating',
+      'isRecommended',
+      'isHot',
+      'isNew',
+    ]),
   ),
 ) {
   @StringProperty({
@@ -556,15 +593,35 @@ export class QueryWorkDto extends IntersectionType(
     enum: WorkTypeEnum,
   })
   type!: WorkTypeEnum
+
+  @ArrayProperty({
+    description: '分类ID列表',
+    itemType: 'number',
+    example: [1, 2],
+    required: false,
+  })
+  categoryIds?: number[]
+
+  @ArrayProperty({
+    description: '标签ID列表',
+    itemType: 'number',
+    example: [1, 2],
+    required: false,
+  })
+  tagIds?: number[]
 }
 
-// 根据类型查询作品
+/**
+ * 根据类型查询作品
+ */
 export class QueryWorkTypeDto extends IntersectionType(
   PageDto,
   PickType(QueryWorkDto, ['type']),
 ) {}
 
-/// 作品用户状态字段DTO
+/**
+ * 作品用户状态字段DTO
+ */
 export class WorkUserStatusFieldsDto {
   @BooleanProperty({
     description: '是否已点赞',
@@ -583,40 +640,49 @@ export class WorkUserStatusFieldsDto {
   favorited!: boolean
 }
 
-/// 作品分页带用户状态DTO
-export class WorkPageWithUserStatusDto extends IntersectionType(
+/**
+ * 作品带用户状态DTO（分页和详情通用）
+ */
+export class WorkWithUserStatusDto extends IntersectionType(
   BaseWorkDto,
   WorkUserStatusFieldsDto,
 ) {}
 
-/// 作品详情带用户状态DTO
-export class WorkDetailWithUserStatusDto extends WorkPageWithUserStatusDto {}
-
-/// 作品用户状态DTO
+/**
+ * 作品用户状态DTO
+ */
 export class WorkUserStatusDto extends IntersectionType(
   IdDto,
   WorkUserStatusFieldsDto,
 ) {}
 
-/// 更新作品推荐状态DTO
+/**
+ * 更新作品推荐状态DTO
+ */
 export class UpdateWorkRecommendedDto extends IntersectionType(
   IdDto,
   PickType(BaseWorkDto, ['isRecommended']),
 ) {}
 
-/// 更新作品发布状态DTO
+/**
+ * 更新作品发布状态DTO
+ */
 export class UpdateWorkStatusDto extends IntersectionType(
   IdDto,
   PickType(BaseWorkDto, ['isPublished']),
 ) {}
 
-/// 更新作品热门状态DTO
+/**
+ * 更新作品热门状态DTO
+ */
 export class UpdateWorkHotDto extends IntersectionType(
   IdDto,
   PickType(BaseWorkDto, ['isHot']),
 ) {}
 
-/// 更新作品新作状态DTO
+/**
+ * 更新作品新作状态DTO
+ */
 export class UpdateWorkNewDto extends IntersectionType(
   IdDto,
   PickType(BaseWorkDto, ['isNew']),

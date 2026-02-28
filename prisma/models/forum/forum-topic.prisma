@@ -25,16 +25,18 @@ model ForumTopic {
   isLocked   Boolean @default(false) @map("is_locked")
   /// 是否隐藏（待审核）
   isHidden   Boolean @default(false) @map("is_hidden")
-
   /// 审核状态（0=待审核, 1=已通过, 2=已拒绝）
   auditStatus Int       @default(1) @map("audit_status") @db.SmallInt
+  /// 审核人角色（0=版主, 1=管理员）
+  auditRole   Int?      @map("audit_role") @db.SmallInt
   /// 审核原因
   auditReason String?   @map("audit_reason") @db.VarChar(500)
   /// 审核时间
   auditAt     DateTime? @map("audit_at") @db.Timestamptz(6)
-  /// 审核人角色（0=版主, 1=管理员）
-  auditRole   Int?      @map("audit_role") @db.SmallInt
-
+  /// 版本号（用于乐观锁）
+  version           Int   @default(0)
+  /// 敏感词命中记录
+  sensitiveWordHits Json? @map("sensitive_word_hits") @db.JsonB
   /// 浏览量
   viewCount     Int       @default(0) @map("view_count")
   /// 回复数
@@ -45,11 +47,6 @@ model ForumTopic {
   favoriteCount Int       @default(0) @map("favorite_count")
   /// 最后回复时间
   lastReplyAt   DateTime? @map("last_reply_at") @db.Timestamptz(6)
-
-  /// 版本号（用于乐观锁）
-  version           Int   @default(0)
-  /// 敏感词命中记录
-  sensitiveWordHits Json? @map("sensitive_word_hits") @db.JsonB
 
   /// 创建时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

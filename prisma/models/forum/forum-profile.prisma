@@ -14,7 +14,6 @@ model ForumProfile {
   likeCount     Int @default(0) @map("like_count")
   /// 获得收藏数
   favoriteCount Int @default(0) @map("favorite_count")
-
   /// 签名
   signature String? @db.VarChar(200)
   /// 个人简介

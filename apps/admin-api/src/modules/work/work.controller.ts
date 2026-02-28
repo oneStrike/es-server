@@ -1,7 +1,9 @@
+import { WorkTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
 import {
   BaseWorkDto,
+  CreateWorkDto,
   QueryWorkDto,
   UpdateWorkDto,
   UpdateWorkHotDto,
@@ -14,9 +16,18 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @Controller('/admin/work')
-@ApiTags('作品管理')
+@ApiTags('内容管理/作品管理')
 export class WorkController {
   constructor(private readonly workService: WorkService) {}
+
+  @Post('/create')
+  @ApiDoc({
+    summary: '创建漫画',
+    model: IdDto,
+  })
+  async create(@Body() body: CreateWorkDto) {
+    return this.workService.createWork({ ...body, type: WorkTypeEnum.COMIC })
+  }
 
   @Get('page')
   @ApiPageDoc({
@@ -28,7 +39,7 @@ export class WorkController {
   }
 
   @Get('detail')
-  @ApiPageDoc({
+  @ApiDoc({
     summary: '获取作品详情',
     model: BaseWorkDto,
   })

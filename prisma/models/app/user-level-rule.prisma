@@ -10,7 +10,6 @@ model UserLevelRule {
   requiredExperience Int @map("required_experience")
   /// 所需登录天数
   loginDays          Int @default(0) @map("login_days") @db.SmallInt
-
   /// 等级描述
   description String? @db.VarChar(200)
   /// 等级图标URL
@@ -19,14 +18,12 @@ model UserLevelRule {
   badge       String? @map("badge") @db.VarChar(255)
   /// 等级专属颜色（十六进制）
   color       String? @map("color") @db.VarChar(20)
-
   /// 排序值（数值越小越靠前）
   sortOrder Int     @default(0) @db.SmallInt
   /// 是否启用
   isEnabled Boolean @default(true) @map("is_enabled")
   /// 业务域标识（可选）
   business  String? @db.VarChar(20)
-
   /// 每日发帖数量上限，0表示无限制
   dailyTopicLimit        Int @default(0) @map("daily_topic_limit") @db.SmallInt
   /// 每日回复和评论数量上限，0表示无限制
@@ -37,7 +34,6 @@ model UserLevelRule {
   dailyLikeLimit         Int @default(0) @map("daily_like_limit") @db.SmallInt
   /// 每日收藏次数上限，0表示无限制
   dailyFavoriteLimit     Int @default(0) @map("daily_favorite_limit") @db.SmallInt
-
   /// 黑名单上限
   blacklistLimit      Int     @default(10) @map("blacklist_limit") @db.SmallInt
   /// 作品收藏上限

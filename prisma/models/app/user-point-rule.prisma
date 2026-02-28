@@ -10,18 +10,16 @@ model UserPointRule {
   points          Int
   /// 每日上限（0=无限制）
   dailyLimit      Int     @default(0) @map("daily_limit")
+  /// 总上限（0=无限制）
+  totalLimit      Int     @default(0) @map("total_limit")
+  /// 冷却秒数（0=无限制）
+  cooldownSeconds Int     @default(0) @map("cooldown_seconds")
   /// 业务域标识（如 forum/comic）
   business        String? @db.VarChar(20)
   /// 事件键（如 forum.topic.create）
   eventKey        String? @map("event_key") @db.VarChar(50)
-  /// 冷却秒数（0=无限制）
-  cooldownSeconds Int     @default(0) @map("cooldown_seconds")
-  /// 总上限（0=无限制）
-  totalLimit      Int     @default(0) @map("total_limit")
-
   /// 是否启用
   isEnabled Boolean @default(true) @map("is_enabled")
-
   /// 备注
   remark String? @db.VarChar(500)
 

@@ -6560,6 +6560,7 @@ export const WorkScalarFieldEnum = {
   originalSource: 'originalSource',
   copyright: 'copyright',
   disclaimer: 'disclaimer',
+  remark: 'remark',
   isPublished: 'isPublished',
   publishAt: 'publishAt',
   lastUpdated: 'lastUpdated',

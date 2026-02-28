@@ -19,7 +19,6 @@ model UserGrowthEventArchive {
   deviceId   String?  @map("device_id") @db.VarChar(100)
   /// 发生时间
   occurredAt DateTime @map("occurred_at") @db.Timestamptz(6)
-
   /// 事件状态
   status                 String @db.VarChar(30)
   /// 规则引用集合
@@ -32,7 +31,6 @@ model UserGrowthEventArchive {
   badgeAssigned          Json?  @map("badge_assigned")
   /// 事件上下文
   context                Json?  @map("context")
-
   /// 创建时间
   createdAt  DateTime @map("created_at") @db.Timestamptz(6)
   /// 更新时间

@@ -9,17 +9,18 @@ model UserPointRecord {
   ruleId  Int? @map("rule_id")
   /// 关联的事件ID
   eventId Int? @map("event_id")
+  /// 目标类型
   targetType Int? @map("target_type") @db.SmallInt
+  /// 目标ID
   targetId   Int? @map("target_id")
+  /// 兑换ID
   exchangeId Int? @map("exchange_id")
-
   /// 积分变化（正数为获得，负数为消费）
   points       Int
   /// 变化前积分
   beforePoints Int @map("before_points")
   /// 变化后积分
   afterPoints  Int @map("after_points")
-
   /// 事件键
   eventKey String? @map("event_key") @db.VarChar(50)
   /// 备注

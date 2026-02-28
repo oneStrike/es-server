@@ -28,12 +28,40 @@ model Work {
   copyright               String?   @db.VarChar(500)
   /// 免责声明
   disclaimer              String?
+  /// 备注
+  remark                  String?   @db.VarChar(1000)
   /// 发布状态
   isPublished             Boolean   @default(true)
+  /// 是否推荐到首页
+  isRecommended           Boolean   @default(false)
+  /// 是否热门
+  isHot                   Boolean   @default(false)
+  /// 是否新作
+  isNew                   Boolean   @default(false)
   /// 发布日期
   publishAt               DateTime? @db.Date
   /// 最后更新时间（内容更新时间）
   lastUpdated             DateTime? @db.Timestamptz(6)
+  /// 阅读权限规则（0=所有人, 1=登录, 2=会员, 3=购买）
+  viewRule                Int       @default(0) @map("view_rule") @db.SmallInt
+  /// 阅读所需的会员等级ID
+  requiredViewLevelId     Int?      @map("required_view_level_id")
+  /// 价格（单位：分）
+  price                   Int       @default(0) @map("price")
+  /// 章节价格（单位：分）
+  chapterPrice            Int       @default(0) @map("chapter_price")
+  /// 章节兑换所需积分
+  chapterExchangePoints   Int       @default(0) @map("chapter_exchange_points")
+  /// 对换所需要的积分
+  exchangePoints          Int       @default(0) @map("exchange_points")
+  /// 是否允许评论
+  canComment              Boolean   @default(true) @map("can_comment")
+  /// 是否允许积分兑换
+  canExchange             Boolean   @default(false) @map("can_exchange")
+  /// 是否允许下载
+  canDownload             Boolean   @default(false) @map("can_download")
+  /// 推荐权重（影响推荐排序）
+  recommendWeight         Float     @default(1.0)
   /// 浏览量
   viewCount               Int       @default(0)
   /// 收藏数
@@ -44,38 +72,12 @@ model Work {
   downloadCount           Int       @default(0)
   /// 购买数
   purchaseCount           Int       @default(0) @map("purchase_count")
-  /// 价格（单位：分）
-  price                   Int       @default(0) @map("price")
-  /// 阅读权限规则（0=所有人, 1=登录, 2=会员, 3=购买）
-  viewRule                Int       @default(0) @map("view_rule") @db.SmallInt
-  /// 阅读所需的会员等级ID
-  requiredViewLevelId     Int?      @map("required_view_level_id")
-  /// 章节价格（单位：分）
-  chapterPrice            Int       @default(0) @map("chapter_price")
-  /// 章节兑换所需积分
-  chapterExchangePoints   Int       @default(0) @map("chapter_exchange_points")
-  /// 是否允许评论
-  canComment              Boolean               @default(true) @map("can_comment")
-  /// 是否允许积分兑换
-  canExchange             Boolean   @default(false) @map("can_exchange")
-  /// 对换所需要的积分
-  exchangePoints          Int       @default(0) @map("exchange_points")
-  /// 是否允许下载
-  canDownload            Boolean       @default(false) @map("can_download") 
   /// 评分（1-10分，保留一位小数）
   rating                  Float?
   /// 评分人数
   ratingCount             Int       @default(0)
   /// 热度（真实数据）
   popularity              Int       @default(0)
-  /// 是否推荐到首页
-  isRecommended           Boolean   @default(false)
-  /// 是否热门
-  isHot                   Boolean   @default(false)
-  /// 是否新作
-  isNew                   Boolean   @default(false)
-  /// 推荐权重（影响推荐排序）
-  recommendWeight         Float     @default(1.0)
   /// 创建时间
   createdAt               DateTime  @default(now()) @db.Timestamptz(6)
   /// 更新时间
@@ -92,7 +94,7 @@ model Work {
   /// 关联的分类列表
   categories            WorkCategoryRelation[]
   /// 关联的标签列表
-  tags                  WorkTagRelation[]
+  tags                  WorkTagRelation[] 
   /// 关联的章节列表
   chapters              WorkChapter[]
   /// 评论关联
