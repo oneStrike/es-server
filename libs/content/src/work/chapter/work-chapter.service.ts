@@ -1,6 +1,7 @@
 import { WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { DragReorderDto, PageDto } from '@libs/base/dto'
+import { ContentPermissionService } from '@libs/content/permission'
 import {
   DownloadService,
   DownloadTargetTypeEnum,
@@ -22,7 +23,6 @@ import {
 } from './dto/work-chapter.dto'
 import { WorkChapterGrowthEventKey } from './work-chapter.constant'
 import { PAGE_WORK_CHAPTER_SELECT } from './work-chapter.select'
-import { ContentPermissionService } from '@libs/content/permission'
 
 /**
  * 作品章节服务

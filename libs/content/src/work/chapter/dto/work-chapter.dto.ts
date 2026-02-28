@@ -71,7 +71,8 @@ export class BaseWorkChapterDto extends BaseDto {
   sortOrder!: number
 
   @EnumProperty({
-    description: '查看规则（-1=继承, 0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
+    description:
+      '查看规则（-1=继承, 0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
     example: WorkViewPermissionEnum.INHERIT,
     required: true,
     enum: WorkViewPermissionEnum,
@@ -243,6 +244,9 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'canDownload',
   'price',
   'requiredViewLevelId',
+  'publishAt',
+  'exchangePoints',
+  'canExchange',
 ]) {}
 
 /// 更新章节DTO

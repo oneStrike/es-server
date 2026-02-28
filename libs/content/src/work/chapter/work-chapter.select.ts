@@ -9,4 +9,7 @@ export const PAGE_WORK_CHAPTER_SELECT = {
   viewRule: true,
   canDownload: true,
   requiredViewLevelId: true,
+  publishAt: true,
+  exchangePoints: true,
+  canExchange: true,
 } as const

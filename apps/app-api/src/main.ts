@@ -33,9 +33,18 @@ async function bootstrap() {
 
   // 打印启动信息
   logStartupInfo(appConfig.port, appConfig.swaggerConfig.path)
+  // Webpack HMR 支持
   if (module.hot) {
     module.hot.accept()
-    module.hot.dispose(async () => app.close())
+    module.hot.dispose(async () => {
+      // 修复：添加错误处理，避免热重载卡住
+      try {
+        await app.close()
+      } catch (error) {
+        console.error('热重载关闭应用时出错:', error)
+        process.exit(0)
+      }
+    })
   }
 }
 

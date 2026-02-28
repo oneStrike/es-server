@@ -14,6 +14,7 @@ import {
   QueryWorkDto,
   QueryWorkTypeDto,
   UpdateWorkDto,
+  UpdateWorkStatusDto,
 } from './dto/work.dto'
 import { WorkGrowthEventKey } from './work.constant'
 import { PAGE_WORK_SELECT, WORK_RELATION_SELECT } from './work.select'
@@ -64,6 +65,41 @@ export class WorkService extends BaseService {
   }
 
   /**
+   * 验证作品关联的作者、分类、标签是否存在且已启用
+   * @param authorIds 作者ID列表
+   * @param categoryIds 分类ID列表
+   * @param tagIds 标签ID列表
+   */
+  private async validateWorkRelations(
+    authorIds: number[],
+    categoryIds: number[],
+    tagIds: number[],
+  ) {
+    const [existingAuthors, existingCategories, existingTags] =
+      await Promise.all([
+        this.prisma.workAuthor.findMany({
+          where: { id: { in: authorIds }, isEnabled: true },
+        }),
+        this.prisma.workCategory.findMany({
+          where: { id: { in: categoryIds }, isEnabled: true },
+        }),
+        this.prisma.workTag.findMany({
+          where: { id: { in: tagIds }, isEnabled: true },
+        }),
+      ])
+
+    if (existingAuthors.length !== authorIds.length) {
+      throw new BadRequestException('部分作者不存在或已禁用')
+    }
+    if (existingCategories.length !== categoryIds.length) {
+      throw new BadRequestException('部分分类不存在或已禁用')
+    }
+    if (existingTags.length !== tagIds.length) {
+      throw new BadRequestException('部分标签不存在或已禁用')
+    }
+  }
+
+  /**
    * 创建作品
    * @param createWorkDto 创建作品的数据
    * @returns 创建的作品信息
@@ -80,41 +116,8 @@ export class WorkService extends BaseService {
       throw new BadRequestException('同类型作品名称已存在')
     }
 
-    // 验证所有作者是否存在且已启用
-    const existingAuthors = await this.prisma.workAuthor.findMany({
-      where: {
-        id: { in: authorIds },
-        isEnabled: true,
-      },
-    })
-
-    if (existingAuthors.length !== authorIds.length) {
-      throw new BadRequestException('部分作者不存在或已禁用')
-    }
-
-    // 验证所有分类是否存在且已启用
-    const existingCategories = await this.prisma.workCategory.findMany({
-      where: {
-        id: { in: categoryIds },
-        isEnabled: true,
-      },
-    })
-
-    if (existingCategories.length !== categoryIds.length) {
-      throw new BadRequestException('部分分类不存在或已禁用')
-    }
-
-    // 验证所有标签是否存在且已启用
-    const existingTags = await this.prisma.workTag.findMany({
-      where: {
-        id: { in: tagIds },
-        isEnabled: true,
-      },
-    })
-
-    if (existingTags.length !== tagIds.length) {
-      throw new BadRequestException('部分标签不存在或已禁用')
-    }
+    // 验证关联的作者、分类、标签是否存在且已启用
+    await this.validateWorkRelations(authorIds, categoryIds, tagIds)
 
     // 创建作品并关联作者、分类、标签
     return this.work.create({
@@ -137,6 +140,117 @@ export class WorkService extends BaseService {
             tagId,
           })),
         },
+      },
+    })
+  }
+
+  /**
+   * 更新作品
+   * @param updateWorkDto 更新作品的数据
+   * @returns 更新后的作品信息
+   */
+  async updateWork(updateWorkDto: UpdateWorkDto) {
+    const { id, authorIds, categoryIds, tagIds, ...updateData } = updateWorkDto
+
+    const existingWork = await this.work.findUnique({ where: { id } })
+    if (!existingWork) {
+      throw new BadRequestException('作品不存在')
+    }
+
+    // 如果更新名称，需要验证同类型下是否重名
+    if (isNotNil(updateData.name) && updateData.name !== existingWork.name) {
+      const duplicateWork = await this.work.findFirst({
+        where: {
+          name: updateData.name,
+          type: existingWork.type,
+          id: { not: id },
+        },
+      })
+      if (duplicateWork) {
+        throw new BadRequestException('同类型作品名称已存在')
+      }
+    }
+
+    // 验证关联的作者、分类、标签是否存在且已启用（仅当传入了对应ID时验证）
+    if (authorIds?.length || categoryIds?.length || tagIds?.length) {
+      await this.validateWorkRelations(
+        authorIds ?? [],
+        categoryIds ?? [],
+        tagIds ?? [],
+      )
+    }
+
+    // 使用事务更新作品信息和关联关系
+    return this.prisma.$transaction(async (tx) => {
+      const updatedWork = await tx.work.update({
+        where: { id },
+        data: updateData,
+      })
+
+      // 更新作者关联（先删除后重建）
+      if (authorIds !== undefined) {
+        await tx.workAuthorRelation.deleteMany({
+          where: { workId: id },
+        })
+
+        if (authorIds.length > 0) {
+          await tx.workAuthorRelation.createMany({
+            data: authorIds.map((authorId, index) => ({
+              workId: id,
+              authorId,
+              sortOrder: index,
+            })),
+          })
+        }
+      }
+
+      // 更新分类关联（先删除后重建）
+      if (categoryIds !== undefined) {
+        await tx.workCategoryRelation.deleteMany({
+          where: { workId: id },
+        })
+
+        if (categoryIds.length > 0) {
+          await tx.workCategoryRelation.createMany({
+            data: categoryIds.map((categoryId, index) => ({
+              workId: id,
+              categoryId,
+              sortOrder: categoryIds.length - index,
+            })),
+          })
+        }
+      }
+
+      // 更新标签关联（先删除后重建）
+      if (tagIds !== undefined) {
+        await tx.workTagRelation.deleteMany({
+          where: { workId: id },
+        })
+
+        if (tagIds.length > 0) {
+          await tx.workTagRelation.createMany({
+            data: tagIds.map((tagId) => ({
+              workId: id,
+              tagId,
+            })),
+          })
+        }
+      }
+
+      return updatedWork
+    })
+  }
+
+  /**
+   * 更新作品发布状态
+   * @param body 请求体
+   * @returns 更新结果
+   */
+  async updateStatus(body: UpdateWorkStatusDto) {
+    return this.work.update({
+      where: { id: body.id },
+      data: {
+        isPublished: body.isPublished,
       },
     })
   }
@@ -662,136 +776,6 @@ export class WorkService extends BaseService {
       })),
       total: comicResult.total + novelResult.total,
     }
-  }
-
-  /**
-   * 更新作品
-   * @param updateWorkDto 更新作品的数据
-   * @returns 更新后的作品信息
-   */
-  async updateWork(updateWorkDto: UpdateWorkDto) {
-    const { id, authorIds, categoryIds, tagIds, ...updateData } = updateWorkDto
-
-    const existingWork = await this.work.findUnique({ where: { id } })
-    if (!existingWork) {
-      throw new BadRequestException('作品不存在')
-    }
-
-    // 如果更新名称，需要验证同类型下是否重名
-    if (isNotNil(updateData.name) && updateData.name !== existingWork.name) {
-      const duplicateWork = await this.work.findFirst({
-        where: {
-          name: updateData.name,
-          type: existingWork.type,
-          id: { not: id },
-        },
-      })
-      if (duplicateWork) {
-        throw new BadRequestException('同类型作品名称已存在')
-      }
-    }
-
-    // 验证所有作者是否存在且已启用
-    if (authorIds && authorIds.length > 0) {
-      const existingAuthors = await this.prisma.workAuthor.findMany({
-        where: {
-          id: { in: authorIds },
-          isEnabled: true,
-        },
-      })
-
-      if (existingAuthors.length !== authorIds.length) {
-        throw new BadRequestException('部分作者不存在或已禁用')
-      }
-    }
-
-    // 验证所有分类是否存在且已启用
-    if (categoryIds && categoryIds.length > 0) {
-      const existingCategories = await this.prisma.workCategory.findMany({
-        where: {
-          id: { in: categoryIds },
-          isEnabled: true,
-        },
-      })
-
-      if (existingCategories.length !== categoryIds.length) {
-        throw new BadRequestException('部分分类不存在或已禁用')
-      }
-    }
-
-    // 验证所有标签是否存在且已启用
-    if (tagIds && tagIds.length > 0) {
-      const existingTags = await this.prisma.workTag.findMany({
-        where: {
-          id: { in: tagIds },
-          isEnabled: true,
-        },
-      })
-
-      if (existingTags.length !== tagIds.length) {
-        throw new BadRequestException('部分标签不存在或已禁用')
-      }
-    }
-
-    // 使用事务更新作品信息和关联关系
-    return this.prisma.$transaction(async (tx) => {
-      const updatedWork = await tx.work.update({
-        where: { id },
-        data: updateData,
-      })
-
-      // 更新作者关联（先删除后重建）
-      if (authorIds !== undefined) {
-        await tx.workAuthorRelation.deleteMany({
-          where: { workId: id },
-        })
-
-        if (authorIds.length > 0) {
-          await tx.workAuthorRelation.createMany({
-            data: authorIds.map((authorId, index) => ({
-              workId: id,
-              authorId,
-              sortOrder: index,
-            })),
-          })
-        }
-      }
-
-      // 更新分类关联（先删除后重建）
-      if (categoryIds !== undefined) {
-        await tx.workCategoryRelation.deleteMany({
-          where: { workId: id },
-        })
-
-        if (categoryIds.length > 0) {
-          await tx.workCategoryRelation.createMany({
-            data: categoryIds.map((categoryId, index) => ({
-              workId: id,
-              categoryId,
-              sortOrder: categoryIds.length - index,
-            })),
-          })
-        }
-      }
-
-      // 更新标签关联（先删除后重建）
-      if (tagIds !== undefined) {
-        await tx.workTagRelation.deleteMany({
-          where: { workId: id },
-        })
-
-        if (tagIds.length > 0) {
-          await tx.workTagRelation.createMany({
-            data: tagIds.map((tagId) => ({
-              workId: id,
-              tagId,
-            })),
-          })
-        }
-      }
-
-      return updatedWork
-    })
   }
 
   /**

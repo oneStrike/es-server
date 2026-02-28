@@ -25,7 +25,8 @@ module.exports = function (options, webpack) {
     /^uint8array-extras(\/.*)?$/,
   ]
   const allowlist = (request) => {
-    if (request === 'webpack/hot/poll?100') {
+    // 使用 300ms 轮询间隔，减少 CPU 占用
+    if (request === 'webpack/hot/poll?300') {
       return true
     }
     return allowlistedModules.some((re) => re.test(request))
@@ -82,22 +83,42 @@ module.exports = function (options, webpack) {
   } else {
     // 开发环境配置
     config.devtool = 'eval-cheap-module-source-map'
-    config.entry = ['webpack/hot/poll?100', options.entry]
+    config.entry = ['webpack/hot/poll?300', options.entry]
     config.externals = [
       nodeExternals({
         allowlist,
       }),
     ]
+    // 新增：配置热更新文件输出位置，避免污染 dist 目录
+    config.output = {
+      ...options.output,
+      hotUpdateChunkFilename: '.cache/hot/[id].[fullhash].hot-update.js',
+      hotUpdateMainFilename: '.cache/hot/[runtime].[fullhash].hot-update.json',
+    }
+    // 新增：优化文件监听配置
+    config.watchOptions = {
+      ignored: /node_modules/,
+      aggregateTimeout: 300, // 聚合变更，减少编译次数
+    }
     config.plugins = [
       ...options.plugins,
       new webpack.HotModuleReplacementPlugin(),
       new webpack.WatchIgnorePlugin({
-        paths: [/\.js$/, /\.d\.ts$/],
+        paths: [
+          /\.js$/,
+          /\.d\.ts$/,
+          /node_modules/,
+          /\.cache/,
+          /dist/,
+        ],
       }),
       new RunScriptWebpackPlugin({
         name: options.output.filename,
-        autoRestart: false,
-        // 5. 启用键盘控制 (输入 'rs' 回车可手动重启)
+        // 修复：启用自动重启，进程异常退出时自动恢复
+        autoRestart: true,
+        // 修复：禁用信号处理，Windows 兼容性更好
+        signal: false,
+        // 启用键盘控制 (输入 'rs' 回车可手动重启)
         keyboard: true,
       }),
     ]

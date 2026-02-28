@@ -12,6 +12,7 @@ import { UploadModule } from './system/upload/upload.module'
 import { TaskModule } from './task/task.module'
 import { UserGrowthModule } from './user-growth/user-growth.module'
 import { UserModule } from './user/user.module'
+import { WorkModule } from './work/work.module'
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UserModule } from './user/user.module'
     ForumManagementModule,
     TaskModule,
     UserGrowthModule,
+    WorkModule,
   ],
   controllers: [],
   providers: [],
