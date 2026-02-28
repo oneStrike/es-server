@@ -86,7 +86,7 @@ stash_changes() {
     fi
 }
 
-# Docker build helper function (quiet output)
+# Docker build helper function (full output)
 # Usage: docker_build <dockerfile_path> <build_args> <tags> <project_name>
 docker_build() {
     local dockerfile_path="$1"
@@ -102,7 +102,7 @@ docker_build() {
         $build_args \
         $cache_args \
         $tags \
-        . 2>&1 | tail -20; then
+        . ; then
         return 0
     else
         return 1
@@ -157,10 +157,8 @@ deploy_project() {
         fi
     fi
 
-    local VERSION="latest"
-    if [ -f "package.json" ]; then
-        VERSION=$(grep -m1 '"version":' package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
-    fi
+    # 使用 es-server 的统一版本号
+    local VERSION="${SERVER_VERSION}"
 
     export DOCKER_BUILDKIT=1
 
@@ -171,7 +169,7 @@ deploy_project() {
             # 前端预构建
             if [ -f "package.json" ]; then
                 log "执行前端构建 (bun att:ele)..."
-                if ! bun att:ele 2>&1 | tail -30; then
+                if ! bun att:ele; then
                     error "前端构建失败"
                     return 1
                 fi
@@ -183,8 +181,8 @@ deploy_project() {
                 error "找不到 Dockerfile"
                 return 1
             fi
-            local CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
-            if docker_build "$DOCKERFILE_PATH" "" "-t es/admin:$VERSION -t es/admin:latest -t es/admin:$CACHE_TAG" "es-admin"; then
+            # 匹配 docker-compose.yml: es-admin-web-ele:${SERVER_VERSION}
+            if docker_build "$DOCKERFILE_PATH" "" "-t es-admin-web-ele:$VERSION" "es-admin"; then
                 BUILD_SUCCESS=true
             else
                 error "镜像构建失败"
@@ -196,7 +194,7 @@ deploy_project() {
             # 前端预构建
             if [ -f "package.json" ]; then
                 log "执行前端构建 (bun att)..."
-                if ! bun att 2>&1 | tail -30; then
+                if ! bun att; then
                     error "前端构建失败"
                     return 1
                 fi
@@ -204,9 +202,8 @@ deploy_project() {
 
             if [ -f "Dockerfile" ]; then
                 log "构建镜像 (v$VERSION)..."
-                local IMAGE_NAME="es/${project_name,,}"
-                local CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
-                if ! docker_build "./Dockerfile" "" "-t $IMAGE_NAME:$VERSION -t $IMAGE_NAME:$CACHE_TAG" "$project_name"; then
+                # 匹配 docker-compose.yml: es-app-web:${SERVER_VERSION}
+                if ! docker_build "./Dockerfile" "" "-t es-app-web:$VERSION" "$project_name"; then
                     error "镜像构建失败"
                     return 1
                 fi
@@ -220,11 +217,12 @@ deploy_project() {
         es-server)
             log "构建镜像 (v$VERSION)..."
             BUILD_SUCCESS=true
-            if ! docker_build "./Dockerfile" "--build-arg APP_TYPE=admin" "-t es/admin/server:$VERSION -t es/admin/server:latest" "admin-api"; then
+            # 匹配 docker-compose.yml: es/admin/server:${SERVER_VERSION} 和 es/app/server:${SERVER_VERSION}
+            if ! docker_build "./Dockerfile" "--build-arg APP_TYPE=admin" "-t es/admin/server:$VERSION" "admin-api"; then
                 error "admin-api 构建失败"
                 return 1
             fi
-            if ! docker_build "./Dockerfile" "--build-arg APP_TYPE=app" "-t es/app/server:$VERSION -t es/app/server:latest" "app-api"; then
+            if ! docker_build "./Dockerfile" "--build-arg APP_TYPE=app" "-t es/app/server:$VERSION" "app-api"; then
                 error "app-api 构建失败"
                 return 1
             fi
@@ -234,8 +232,7 @@ deploy_project() {
             if [ -f "Dockerfile" ]; then
                 log "构建镜像 (v$VERSION)..."
                 local IMAGE_NAME="es/${project_name,,}"
-                local CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
-                if ! docker_build "./Dockerfile" "" "-t $IMAGE_NAME:$VERSION -t $IMAGE_NAME:$CACHE_TAG" "$project_name"; then
+                if ! docker_build "./Dockerfile" "" "-t $IMAGE_NAME:$VERSION" "$project_name"; then
                     error "镜像构建失败"
                     return 1
                 fi
@@ -294,6 +291,13 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 log "=== 多项目自动部署脚本启动 ==="
+
+# 读取 es-server 的版本号作为统一版本
+SERVER_VERSION="0.0.2"
+if [ -f "${ROOT_DIR}/es-server/package.json" ]; then
+    SERVER_VERSION=$(grep -m1 '"version":' "${ROOT_DIR}/es-server/package.json" | awk -F: '{ print $2 }' | sed 's/[", ]//g')
+fi
+log "统一版本号: v${SERVER_VERSION}"
 
 if [ -f "${ROOT_DIR}/.env" ]; then
     set -a
