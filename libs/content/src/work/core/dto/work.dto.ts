@@ -271,6 +271,32 @@ export class BaseWorkDto extends BaseDto {
   chapterExchangePoints!: number
 
   @BooleanProperty({
+    description: '是否允许评论',
+    example: true,
+    required: true,
+    default: true,
+  })
+  canComment!: boolean
+
+  @NumberProperty({
+    description: '购买数',
+    example: 0,
+    required: true,
+    min: 0,
+    default: 0,
+    validation: false,
+  })
+  purchaseCount!: number
+
+  @NumberProperty({
+    description: '兑换所需积分',
+    example: 0,
+    required: true,
+    default: 0,
+  })
+  exchangePoints!: number
+
+  @BooleanProperty({
     description: '是否允许兑换',
     example: false,
     required: true,
@@ -493,10 +519,7 @@ export class CreateWorkDto extends OmitType(BaseWorkDto, [
 }
 
 /// 更新作品DTO
-export class UpdateWorkDto extends IntersectionType(
-  PartialType(CreateWorkDto),
-  IdDto,
-) {}
+export class UpdateWorkDto extends IntersectionType(CreateWorkDto, IdDto) {}
 
 // 查询作品DTO
 export class QueryWorkDto extends IntersectionType(
