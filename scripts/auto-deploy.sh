@@ -166,15 +166,6 @@ deploy_project() {
     local BUILD_SUCCESS=false
     case "$project_name" in
         es-admin)
-            # 前端预构建
-            if [ -f "package.json" ]; then
-                log "执行前端构建 (bun att:ele)..."
-                if ! bun att:ele; then
-                    error "前端构建失败"
-                    return 1
-                fi
-            fi
-
             log "构建镜像 (v$VERSION)..."
             local DOCKERFILE_PATH="apps/web-ele/Dockerfile"
             if [ ! -f "$DOCKERFILE_PATH" ]; then
@@ -191,15 +182,6 @@ deploy_project() {
             ;;
 
         es-app-v2)
-            # 前端预构建
-            if [ -f "package.json" ]; then
-                log "执行前端构建 (bun att)..."
-                if ! bun att; then
-                    error "前端构建失败"
-                    return 1
-                fi
-            fi
-
             if [ -f "Dockerfile" ]; then
                 log "构建镜像 (v$VERSION)..."
                 # 匹配 docker-compose.yml: es-app-web:${SERVER_VERSION}
