@@ -135,8 +135,35 @@ deploy_project() {
     log "检查是否需要构建和部署..."
     export DOCKER_BUILDKIT=1
 
+    # es-admin 项目 - Dockerfile 在 apps/web-ele/ 子目录
+    if [ "$project_name" = "es-admin" ]; then
+        log "构建 es-admin 前端项目..."
+
+        DOCKERFILE_PATH="apps/web-ele/Dockerfile"
+        if [ ! -f "$DOCKERFILE_PATH" ]; then
+            error "找不到 Dockerfile: $DOCKERFILE_PATH"
+            pop_stash
+            return 1
+        fi
+
+        IMAGE_NAME="es/admin"
+        CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
+
+        log "使用 Dockerfile: $DOCKERFILE_PATH"
+        if docker build -f "$DOCKERFILE_PATH" \
+            --cache-from "$IMAGE_NAME:$CACHE_TAG" \
+            -t "$IMAGE_NAME:$VERSION" \
+            -t "$IMAGE_NAME:latest" \
+            -t "$IMAGE_NAME:$CACHE_TAG" \
+            . ; then
+            log "es-admin 镜像构建成功"
+        else
+            error "es-admin 镜像构建失败"
+            pop_stash
+            return 1
+        fi
     # es-server 项目需要构建两个独立的镜像
-    if [ "$project_name" = "es-server" ]; then
+    elif [ "$project_name" = "es-server" ]; then
         log "构建 es-server 多镜像项目..."
 
         # 使用独立的缓存标签避免缓存污染
