@@ -30,7 +30,7 @@ export class TaskController {
     return this.taskService.getAvailableTasks(query, user.sub)
   }
 
-  @Get('/my/page')
+  @Get('/my-page')
   @ApiPageDoc({
     summary: '分页查询我的任务',
     model: BaseTaskAssignmentDto,

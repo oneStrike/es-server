@@ -19,7 +19,7 @@ export class WorkController {
     private readonly workChapterService: WorkChapterService,
   ) {}
 
-  @Get('hot/page')
+  @Get('hot')
   @Public()
   @ApiPageDoc({
     summary: '分页查询热门作品',
@@ -29,7 +29,7 @@ export class WorkController {
     return this.workService.getHotWorkPage(query)
   }
 
-  @Get('new/page')
+  @Get('new')
   @Public()
   @ApiPageDoc({
     summary: '分页查询最新作品',
@@ -39,7 +39,7 @@ export class WorkController {
     return this.workService.getNewWorkPage(query)
   }
 
-  @Get('recommended/page')
+  @Get('recommended')
   @Public()
   @ApiPageDoc({
     summary: '分页查询推荐作品',

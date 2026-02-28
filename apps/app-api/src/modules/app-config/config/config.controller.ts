@@ -7,7 +7,7 @@ import { Controller, Get, } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('APP管理/应用配置')
-@Controller('app/app-config')
+@Controller('app/config')
 export class AppConfigController {
   constructor(
     private readonly appConfigService: AppConfigService,
