@@ -22,7 +22,7 @@ export class AgreementController {
   @Post('/create')
   @ApiDoc({
     summary: '创建协议',
-    model: BaseAgreementDto,
+    model: IdDto,
   })
   @Audit({
     actionType: ActionTypeEnum.CREATE,
@@ -35,7 +35,7 @@ export class AgreementController {
   @Post('/update')
   @ApiDoc({
     summary: '更新协议',
-    model: BaseAgreementDto,
+    model: IdDto,
   })
   @Audit({
     actionType: ActionTypeEnum.UPDATE,
@@ -48,7 +48,7 @@ export class AgreementController {
   @Post('/delete')
   @ApiDoc({
     summary: '删除协议',
-    model: BaseAgreementDto,
+    model: IdDto,
   })
   @Audit({
     actionType: ActionTypeEnum.DELETE,

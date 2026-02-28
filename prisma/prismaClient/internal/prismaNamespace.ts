@@ -388,9 +388,9 @@ export const ModelName = {
   AdminUser: 'AdminUser',
   AppAgreement: 'AppAgreement',
   AppAgreementLog: 'AppAgreementLog',
+  AppAnnouncementRead: 'AppAnnouncementRead',
+  AppAnnouncement: 'AppAnnouncement',
   AppConfig: 'AppConfig',
-  AppNoticeRead: 'AppNoticeRead',
-  AppNotice: 'AppNotice',
   AppPage: 'AppPage',
   AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
@@ -465,7 +465,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appConfig" | "appNoticeRead" | "appNotice" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userBalanceRecord" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownloadRecord" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userPurchaseRecord" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapterPurchase" | "workChapter" | "workCommentReport" | "workComment" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userBalanceRecord" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownloadRecord" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userPurchaseRecord" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapterPurchase" | "workChapter" | "workCommentReport" | "workComment" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -765,6 +765,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AppAnnouncementRead: {
+      payload: Prisma.$AppAnnouncementReadPayload<ExtArgs>
+      fields: Prisma.AppAnnouncementReadFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppAnnouncementReadFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppAnnouncementReadFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload>
+        }
+        findFirst: {
+          args: Prisma.AppAnnouncementReadFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppAnnouncementReadFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload>
+        }
+        findMany: {
+          args: Prisma.AppAnnouncementReadFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload>[]
+        }
+        create: {
+          args: Prisma.AppAnnouncementReadCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload>
+        }
+        createMany: {
+          args: Prisma.AppAnnouncementReadCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppAnnouncementReadCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload>[]
+        }
+        delete: {
+          args: Prisma.AppAnnouncementReadDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload>
+        }
+        update: {
+          args: Prisma.AppAnnouncementReadUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload>
+        }
+        deleteMany: {
+          args: Prisma.AppAnnouncementReadDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppAnnouncementReadUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppAnnouncementReadUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload>[]
+        }
+        upsert: {
+          args: Prisma.AppAnnouncementReadUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementReadPayload>
+        }
+        aggregate: {
+          args: Prisma.AppAnnouncementReadAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppAnnouncementRead>
+        }
+        groupBy: {
+          args: Prisma.AppAnnouncementReadGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppAnnouncementReadGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppAnnouncementReadCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppAnnouncementReadCountAggregateOutputType> | number
+        }
+      }
+    }
+    AppAnnouncement: {
+      payload: Prisma.$AppAnnouncementPayload<ExtArgs>
+      fields: Prisma.AppAnnouncementFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppAnnouncementFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppAnnouncementFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload>
+        }
+        findFirst: {
+          args: Prisma.AppAnnouncementFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppAnnouncementFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload>
+        }
+        findMany: {
+          args: Prisma.AppAnnouncementFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload>[]
+        }
+        create: {
+          args: Prisma.AppAnnouncementCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload>
+        }
+        createMany: {
+          args: Prisma.AppAnnouncementCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppAnnouncementCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload>[]
+        }
+        delete: {
+          args: Prisma.AppAnnouncementDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload>
+        }
+        update: {
+          args: Prisma.AppAnnouncementUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload>
+        }
+        deleteMany: {
+          args: Prisma.AppAnnouncementDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppAnnouncementUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppAnnouncementUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload>[]
+        }
+        upsert: {
+          args: Prisma.AppAnnouncementUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppAnnouncementPayload>
+        }
+        aggregate: {
+          args: Prisma.AppAnnouncementAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppAnnouncement>
+        }
+        groupBy: {
+          args: Prisma.AppAnnouncementGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppAnnouncementGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppAnnouncementCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppAnnouncementCountAggregateOutputType> | number
+        }
+      }
+    }
     AppConfig: {
       payload: Prisma.$AppConfigPayload<ExtArgs>
       fields: Prisma.AppConfigFieldRefs
@@ -836,154 +984,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AppConfigCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AppConfigCountAggregateOutputType> | number
-        }
-      }
-    }
-    AppNoticeRead: {
-      payload: Prisma.$AppNoticeReadPayload<ExtArgs>
-      fields: Prisma.AppNoticeReadFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.AppNoticeReadFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.AppNoticeReadFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
-        }
-        findFirst: {
-          args: Prisma.AppNoticeReadFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.AppNoticeReadFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
-        }
-        findMany: {
-          args: Prisma.AppNoticeReadFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>[]
-        }
-        create: {
-          args: Prisma.AppNoticeReadCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
-        }
-        createMany: {
-          args: Prisma.AppNoticeReadCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.AppNoticeReadCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>[]
-        }
-        delete: {
-          args: Prisma.AppNoticeReadDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
-        }
-        update: {
-          args: Prisma.AppNoticeReadUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
-        }
-        deleteMany: {
-          args: Prisma.AppNoticeReadDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.AppNoticeReadUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.AppNoticeReadUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>[]
-        }
-        upsert: {
-          args: Prisma.AppNoticeReadUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticeReadPayload>
-        }
-        aggregate: {
-          args: Prisma.AppNoticeReadAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateAppNoticeRead>
-        }
-        groupBy: {
-          args: Prisma.AppNoticeReadGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppNoticeReadGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.AppNoticeReadCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppNoticeReadCountAggregateOutputType> | number
-        }
-      }
-    }
-    AppNotice: {
-      payload: Prisma.$AppNoticePayload<ExtArgs>
-      fields: Prisma.AppNoticeFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.AppNoticeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.AppNoticeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
-        }
-        findFirst: {
-          args: Prisma.AppNoticeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.AppNoticeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
-        }
-        findMany: {
-          args: Prisma.AppNoticeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>[]
-        }
-        create: {
-          args: Prisma.AppNoticeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
-        }
-        createMany: {
-          args: Prisma.AppNoticeCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.AppNoticeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>[]
-        }
-        delete: {
-          args: Prisma.AppNoticeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
-        }
-        update: {
-          args: Prisma.AppNoticeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
-        }
-        deleteMany: {
-          args: Prisma.AppNoticeDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.AppNoticeUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.AppNoticeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>[]
-        }
-        upsert: {
-          args: Prisma.AppNoticeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppNoticePayload>
-        }
-        aggregate: {
-          args: Prisma.AppNoticeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateAppNotice>
-        }
-        groupBy: {
-          args: Prisma.AppNoticeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppNoticeGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.AppNoticeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AppNoticeCountAggregateOutputType> | number
         }
       }
     }
@@ -5464,6 +5464,39 @@ export const AppAgreementLogScalarFieldEnum = {
 export type AppAgreementLogScalarFieldEnum = (typeof AppAgreementLogScalarFieldEnum)[keyof typeof AppAgreementLogScalarFieldEnum]
 
 
+export const AppAnnouncementReadScalarFieldEnum = {
+  id: 'id',
+  announcementId: 'announcementId',
+  userId: 'userId',
+  readAt: 'readAt'
+} as const
+
+export type AppAnnouncementReadScalarFieldEnum = (typeof AppAnnouncementReadScalarFieldEnum)[keyof typeof AppAnnouncementReadScalarFieldEnum]
+
+
+export const AppAnnouncementScalarFieldEnum = {
+  id: 'id',
+  pageId: 'pageId',
+  title: 'title',
+  content: 'content',
+  summary: 'summary',
+  announcementType: 'announcementType',
+  priorityLevel: 'priorityLevel',
+  publishStartTime: 'publishStartTime',
+  publishEndTime: 'publishEndTime',
+  popupBackgroundImage: 'popupBackgroundImage',
+  isPublished: 'isPublished',
+  isPinned: 'isPinned',
+  showAsPopup: 'showAsPopup',
+  enablePlatform: 'enablePlatform',
+  viewCount: 'viewCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppAnnouncementScalarFieldEnum = (typeof AppAnnouncementScalarFieldEnum)[keyof typeof AppAnnouncementScalarFieldEnum]
+
+
 export const AppConfigScalarFieldEnum = {
   id: 'id',
   appName: 'appName',
@@ -5482,37 +5515,6 @@ export const AppConfigScalarFieldEnum = {
 } as const
 
 export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
-
-
-export const AppNoticeReadScalarFieldEnum = {
-  id: 'id',
-  noticeId: 'noticeId',
-  userId: 'userId',
-  readAt: 'readAt'
-} as const
-
-export type AppNoticeReadScalarFieldEnum = (typeof AppNoticeReadScalarFieldEnum)[keyof typeof AppNoticeReadScalarFieldEnum]
-
-
-export const AppNoticeScalarFieldEnum = {
-  id: 'id',
-  pageId: 'pageId',
-  title: 'title',
-  content: 'content',
-  noticeType: 'noticeType',
-  priorityLevel: 'priorityLevel',
-  publishStartTime: 'publishStartTime',
-  publishEndTime: 'publishEndTime',
-  popupBackgroundImage: 'popupBackgroundImage',
-  isPublished: 'isPublished',
-  isPinned: 'isPinned',
-  showAsPopup: 'showAsPopup',
-  enablePlatform: 'enablePlatform',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type AppNoticeScalarFieldEnum = (typeof AppNoticeScalarFieldEnum)[keyof typeof AppNoticeScalarFieldEnum]
 
 
 export const AppPageScalarFieldEnum = {
@@ -6847,9 +6849,9 @@ export type GlobalOmitConfig = {
   adminUser?: Prisma.AdminUserOmit
   appAgreement?: Prisma.AppAgreementOmit
   appAgreementLog?: Prisma.AppAgreementLogOmit
+  appAnnouncementRead?: Prisma.AppAnnouncementReadOmit
+  appAnnouncement?: Prisma.AppAnnouncementOmit
   appConfig?: Prisma.AppConfigOmit
-  appNoticeRead?: Prisma.AppNoticeReadOmit
-  appNotice?: Prisma.AppNoticeOmit
   appPage?: Prisma.AppPageOmit
   appUserToken?: Prisma.AppUserTokenOmit
   appUser?: Prisma.AppUserOmit

@@ -1,24 +1,24 @@
 import {
-  AppNoticeCreateInput,
-  AppNoticeWhereInput,
+  AppAnnouncementCreateInput,
+  AppAnnouncementWhereInput,
   BaseService,
 } from '@libs/base/database'
 import { assertValidTimeRange } from '@libs/base/utils/timeRange'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  CreateNoticeDto,
-  QueryNoticeDto,
-  UpdateNoticeDto,
-} from './dto/notice.dto'
+  CreateAnnouncementDto,
+  QueryAnnouncementDto,
+  UpdateAnnouncementDto,
+} from './dto/announcement.dto'
 
 /**
- * 应用通知服务
- * 负责通知公告的创建、查询与更新
+ * 系统公告服务
+ * 负责公告的创建、查询与更新
  */
 @Injectable()
-export class LibAppNoticeService extends BaseService {
-  get appNotice() {
-    return this.prisma.appNotice
+export class AppAnnouncementService extends BaseService {
+  get appAnnouncement() {
+    return this.prisma.appAnnouncement
   }
 
   get appPage() {
@@ -30,19 +30,19 @@ export class LibAppNoticeService extends BaseService {
   }
 
   /**
-   * 创建通知公告
-   * @param createNoticeDto 创建数据
-   * @returns 创建后的通知记录
+   * 创建公告
+   * @param createAnnouncementDto 创建数据
+   * @returns 创建后的公告记录
    */
-  async createNotice(createNoticeDto: CreateNoticeDto) {
+  async createAnnouncement(createAnnouncementDto: CreateAnnouncementDto) {
     assertValidTimeRange(
-      createNoticeDto.publishStartTime,
-      createNoticeDto.publishEndTime,
+      createAnnouncementDto.publishStartTime,
+      createAnnouncementDto.publishEndTime,
       '发布开始时间不能大于或等于结束时间',
     )
 
-    const { pageId, ...others } = createNoticeDto
-    const createData: AppNoticeCreateInput = {
+    const { pageId, ...others } = createAnnouncementDto
+    const createData: AppAnnouncementCreateInput = {
       ...others,
     }
     if (pageId) {
@@ -57,24 +57,24 @@ export class LibAppNoticeService extends BaseService {
       }
     }
 
-    return this.appNotice.create({ data: createData })
+    return this.appAnnouncement.create({ data: createData })
   }
 
   /**
-   * 分页查询通知公告
-   * @param queryNoticeDto 查询条件
+   * 分页查询公告
+   * @param queryAnnouncementDto 查询条件
    * @returns 分页结果
    */
-  async findNoticePage(queryNoticeDto: QueryNoticeDto) {
+  async findAnnouncementPage(queryAnnouncementDto: QueryAnnouncementDto) {
     const {
       title,
       publishStartTime,
       enablePlatform,
       publishEndTime,
       ...pageParams
-    } = queryNoticeDto
+    } = queryAnnouncementDto
 
-    const where: AppNoticeWhereInput = {}
+    const where: AppAnnouncementWhereInput = {}
 
     if (title) {
       where.title = { contains: title, mode: 'insensitive' }
@@ -95,7 +95,7 @@ export class LibAppNoticeService extends BaseService {
         : [{ publishEndTime: { gte: publishEndTime } }]
     }
 
-    return this.appNotice.findPagination({
+    return this.appAnnouncement.findPagination({
       where: {
         ...pageParams,
         ...where,
@@ -108,12 +108,12 @@ export class LibAppNoticeService extends BaseService {
   }
 
   /**
-   * 更新通知公告
-   * @param updateNoticeDto 更新数据
-   * @returns 更新后的通知记录
+   * 更新公告
+   * @param updateAnnouncementDto 更新数据
+   * @returns 更新后的公告记录
    */
-  async updateNotice(updateNoticeDto: UpdateNoticeDto) {
-    const { id, pageId, ...updateData } = updateNoticeDto
+  async updateAnnouncement(updateAnnouncementDto: UpdateAnnouncementDto) {
+    const { id, pageId, ...updateData } = updateAnnouncementDto
 
     assertValidTimeRange(
       updateData.publishStartTime,
@@ -121,17 +121,17 @@ export class LibAppNoticeService extends BaseService {
       '发布开始时间不能大于或等于结束时间',
     )
 
-    const notice = await this.appNotice.findUnique({
+    const announcement = await this.appAnnouncement.findUnique({
       where: { id },
       select: { id: true, pageId: true },
     })
-    if (!notice) {
-      throw new BadRequestException('通知不存在')
+    if (!announcement) {
+      throw new BadRequestException('公告不存在')
     }
-    const createData: AppNoticeCreateInput = {
+    const createData: AppAnnouncementCreateInput = {
       ...updateData,
     }
-    if (pageId && notice.pageId !== pageId) {
+    if (pageId && announcement.pageId !== pageId) {
       if (!(await this.appPage.exists({ id: pageId }))) {
         throw new BadRequestException('关联页面不存在')
       } else {
@@ -143,7 +143,7 @@ export class LibAppNoticeService extends BaseService {
       }
     }
 
-    return this.appNotice.update({
+    return this.appAnnouncement.update({
       where: { id },
       data: createData,
       select: { id: true },
@@ -151,12 +151,12 @@ export class LibAppNoticeService extends BaseService {
   }
 
   /**
-   * 获取通知公告详情
-   * @param id 通知ID
-   * @returns 删除结果
+   * 获取公告详情
+   * @param id 公告ID
+   * @returns 公告详情
    */
-  async findNoticeDetail(id: number) {
-    return this.appNotice.findUnique({
+  async findAnnouncementDetail(id: number) {
+    return this.appAnnouncement.findUnique({
       where: { id },
       include: {
         appPage: {
@@ -166,6 +166,21 @@ export class LibAppNoticeService extends BaseService {
             name: true,
             path: true,
           },
+        },
+      },
+    })
+  }
+
+  /**
+   * 增加浏览量
+   * @param id 公告ID
+   */
+  async incrementViewCount(id: number) {
+    return this.appAnnouncement.update({
+      where: { id },
+      data: {
+        viewCount: {
+          increment: 1,
         },
       },
     })

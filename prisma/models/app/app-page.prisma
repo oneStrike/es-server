@@ -27,8 +27,8 @@ model AppPage {
   /// 更新时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  /// 关联通知
-  notices AppNotice[] @relation("notices")
+  /// 关联公告
+  announcements AppAnnouncement[] @relation("announcements")
 
   /// 访问级别与启用状态索引
   @@index([accessLevel, isEnabled])

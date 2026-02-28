@@ -1,3 +1,4 @@
+import process from 'node:process'
 /**
  * 独立的 Prisma Client 创建模块
  * 不依赖项目中的其他文件，可在 seed 目录独立运行

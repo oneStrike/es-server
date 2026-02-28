@@ -55,6 +55,7 @@ export class AgreementService extends BaseService {
         isForce: dto.isForce ?? false,
         showInAuth: dto.showInAuth ?? false,
       },
+      select: { id: true },
     })
   }
 
@@ -81,6 +82,7 @@ export class AgreementService extends BaseService {
     return this.agreement.update({
       where: { id: dto.id },
       data,
+      select: { id: true },
     })
   }
 
@@ -91,7 +93,7 @@ export class AgreementService extends BaseService {
     if (!(await this.agreement.exists({ id }))) {
       throw new NotFoundException('协议不存在')
     }
-    return this.agreement.delete({ where: { id } })
+    return this.agreement.delete({ where: { id }, select: { id: true } })
   }
 
   /**
@@ -122,6 +124,7 @@ export class AgreementService extends BaseService {
 
     return this.agreement.findPagination({
       where: { title, ...otherDto },
+      omit: { content: true },
     })
   }
 
@@ -131,6 +134,7 @@ export class AgreementService extends BaseService {
   async getAllLatest(dto: QueryPublishedAgreementDto) {
     return this.agreement.findMany({
       where: { isPublished: true, showInAuth: dto.showInAuth },
+      omit: { content: true },
     })
   }
 }

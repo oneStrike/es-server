@@ -58,8 +58,8 @@ model AppUser {
   level                     UserLevelRule?              @relation(fields: [levelId], references: [id])
   /// 用户论坛资料
   forumProfile              ForumProfile?
-  /// 用户通知阅读记录
-  noticeReads               AppNoticeRead[]
+  /// 用户公告阅读记录
+  announcementReads         AppAnnouncementRead[]
   /// 用户令牌
   tokens                    AppUserToken[]
   /// 积分记录关联

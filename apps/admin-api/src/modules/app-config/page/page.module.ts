@@ -1,9 +1,9 @@
-import { LibAppPageModule } from '@libs/app-config/page'
+import { AppPageModule as AppPageModuleLib } from '@libs/app-config/page'
 import { Module } from '@nestjs/common'
 import { AppPageController } from './page.controller'
 
 @Module({
-  imports: [LibAppPageModule],
+  imports: [AppPageModuleLib],
   controllers: [AppPageController],
   providers: [],
   exports: [],

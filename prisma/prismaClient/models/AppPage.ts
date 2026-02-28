@@ -268,7 +268,7 @@ export type AppPageWhereInput = {
   enablePlatform?: Prisma.IntNullableListFilter<"AppPage">
   createdAt?: Prisma.DateTimeFilter<"AppPage"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppPage"> | Date | string
-  notices?: Prisma.AppNoticeListRelationFilter
+  announcements?: Prisma.AppAnnouncementListRelationFilter
 }
 
 export type AppPageOrderByWithRelationInput = {
@@ -283,7 +283,7 @@ export type AppPageOrderByWithRelationInput = {
   enablePlatform?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  notices?: Prisma.AppNoticeOrderByRelationAggregateInput
+  announcements?: Prisma.AppAnnouncementOrderByRelationAggregateInput
 }
 
 export type AppPageWhereUniqueInput = Prisma.AtLeast<{
@@ -301,7 +301,7 @@ export type AppPageWhereUniqueInput = Prisma.AtLeast<{
   enablePlatform?: Prisma.IntNullableListFilter<"AppPage">
   createdAt?: Prisma.DateTimeFilter<"AppPage"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppPage"> | Date | string
-  notices?: Prisma.AppNoticeListRelationFilter
+  announcements?: Prisma.AppAnnouncementListRelationFilter
 }, "id" | "code" | "path">
 
 export type AppPageOrderByWithAggregationInput = {
@@ -351,7 +351,7 @@ export type AppPageCreateInput = {
   enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  notices?: Prisma.AppNoticeCreateNestedManyWithoutAppPageInput
+  announcements?: Prisma.AppAnnouncementCreateNestedManyWithoutAppPageInput
 }
 
 export type AppPageUncheckedCreateInput = {
@@ -366,7 +366,7 @@ export type AppPageUncheckedCreateInput = {
   enablePlatform?: Prisma.AppPageCreateenablePlatformInput | number[]
   createdAt?: Date | string
   updatedAt?: Date | string
-  notices?: Prisma.AppNoticeUncheckedCreateNestedManyWithoutAppPageInput
+  announcements?: Prisma.AppAnnouncementUncheckedCreateNestedManyWithoutAppPageInput
 }
 
 export type AppPageUpdateInput = {
@@ -380,7 +380,7 @@ export type AppPageUpdateInput = {
   enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  notices?: Prisma.AppNoticeUpdateManyWithoutAppPageNestedInput
+  announcements?: Prisma.AppAnnouncementUpdateManyWithoutAppPageNestedInput
 }
 
 export type AppPageUncheckedUpdateInput = {
@@ -395,7 +395,7 @@ export type AppPageUncheckedUpdateInput = {
   enablePlatform?: Prisma.AppPageUpdateenablePlatformInput | number[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  notices?: Prisma.AppNoticeUncheckedUpdateManyWithoutAppPageNestedInput
+  announcements?: Prisma.AppAnnouncementUncheckedUpdateManyWithoutAppPageNestedInput
 }
 
 export type AppPageCreateManyInput = {
@@ -496,20 +496,20 @@ export type AppPageSumOrderByAggregateInput = {
   enablePlatform?: Prisma.SortOrder
 }
 
-export type AppPageCreateNestedOneWithoutNoticesInput = {
-  create?: Prisma.XOR<Prisma.AppPageCreateWithoutNoticesInput, Prisma.AppPageUncheckedCreateWithoutNoticesInput>
-  connectOrCreate?: Prisma.AppPageCreateOrConnectWithoutNoticesInput
+export type AppPageCreateNestedOneWithoutAnnouncementsInput = {
+  create?: Prisma.XOR<Prisma.AppPageCreateWithoutAnnouncementsInput, Prisma.AppPageUncheckedCreateWithoutAnnouncementsInput>
+  connectOrCreate?: Prisma.AppPageCreateOrConnectWithoutAnnouncementsInput
   connect?: Prisma.AppPageWhereUniqueInput
 }
 
-export type AppPageUpdateOneWithoutNoticesNestedInput = {
-  create?: Prisma.XOR<Prisma.AppPageCreateWithoutNoticesInput, Prisma.AppPageUncheckedCreateWithoutNoticesInput>
-  connectOrCreate?: Prisma.AppPageCreateOrConnectWithoutNoticesInput
-  upsert?: Prisma.AppPageUpsertWithoutNoticesInput
+export type AppPageUpdateOneWithoutAnnouncementsNestedInput = {
+  create?: Prisma.XOR<Prisma.AppPageCreateWithoutAnnouncementsInput, Prisma.AppPageUncheckedCreateWithoutAnnouncementsInput>
+  connectOrCreate?: Prisma.AppPageCreateOrConnectWithoutAnnouncementsInput
+  upsert?: Prisma.AppPageUpsertWithoutAnnouncementsInput
   disconnect?: Prisma.AppPageWhereInput | boolean
   delete?: Prisma.AppPageWhereInput | boolean
   connect?: Prisma.AppPageWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AppPageUpdateToOneWithWhereWithoutNoticesInput, Prisma.AppPageUpdateWithoutNoticesInput>, Prisma.AppPageUncheckedUpdateWithoutNoticesInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AppPageUpdateToOneWithWhereWithoutAnnouncementsInput, Prisma.AppPageUpdateWithoutAnnouncementsInput>, Prisma.AppPageUncheckedUpdateWithoutAnnouncementsInput>
 }
 
 export type AppPageCreateenablePlatformInput = {
@@ -521,7 +521,7 @@ export type AppPageUpdateenablePlatformInput = {
   push?: number | number[]
 }
 
-export type AppPageCreateWithoutNoticesInput = {
+export type AppPageCreateWithoutAnnouncementsInput = {
   code: string
   path: string
   name: string
@@ -534,7 +534,7 @@ export type AppPageCreateWithoutNoticesInput = {
   updatedAt?: Date | string
 }
 
-export type AppPageUncheckedCreateWithoutNoticesInput = {
+export type AppPageUncheckedCreateWithoutAnnouncementsInput = {
   id?: number
   code: string
   path: string
@@ -548,23 +548,23 @@ export type AppPageUncheckedCreateWithoutNoticesInput = {
   updatedAt?: Date | string
 }
 
-export type AppPageCreateOrConnectWithoutNoticesInput = {
+export type AppPageCreateOrConnectWithoutAnnouncementsInput = {
   where: Prisma.AppPageWhereUniqueInput
-  create: Prisma.XOR<Prisma.AppPageCreateWithoutNoticesInput, Prisma.AppPageUncheckedCreateWithoutNoticesInput>
+  create: Prisma.XOR<Prisma.AppPageCreateWithoutAnnouncementsInput, Prisma.AppPageUncheckedCreateWithoutAnnouncementsInput>
 }
 
-export type AppPageUpsertWithoutNoticesInput = {
-  update: Prisma.XOR<Prisma.AppPageUpdateWithoutNoticesInput, Prisma.AppPageUncheckedUpdateWithoutNoticesInput>
-  create: Prisma.XOR<Prisma.AppPageCreateWithoutNoticesInput, Prisma.AppPageUncheckedCreateWithoutNoticesInput>
+export type AppPageUpsertWithoutAnnouncementsInput = {
+  update: Prisma.XOR<Prisma.AppPageUpdateWithoutAnnouncementsInput, Prisma.AppPageUncheckedUpdateWithoutAnnouncementsInput>
+  create: Prisma.XOR<Prisma.AppPageCreateWithoutAnnouncementsInput, Prisma.AppPageUncheckedCreateWithoutAnnouncementsInput>
   where?: Prisma.AppPageWhereInput
 }
 
-export type AppPageUpdateToOneWithWhereWithoutNoticesInput = {
+export type AppPageUpdateToOneWithWhereWithoutAnnouncementsInput = {
   where?: Prisma.AppPageWhereInput
-  data: Prisma.XOR<Prisma.AppPageUpdateWithoutNoticesInput, Prisma.AppPageUncheckedUpdateWithoutNoticesInput>
+  data: Prisma.XOR<Prisma.AppPageUpdateWithoutAnnouncementsInput, Prisma.AppPageUncheckedUpdateWithoutAnnouncementsInput>
 }
 
-export type AppPageUpdateWithoutNoticesInput = {
+export type AppPageUpdateWithoutAnnouncementsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   path?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
@@ -577,7 +577,7 @@ export type AppPageUpdateWithoutNoticesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type AppPageUncheckedUpdateWithoutNoticesInput = {
+export type AppPageUncheckedUpdateWithoutAnnouncementsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   code?: Prisma.StringFieldUpdateOperationsInput | string
   path?: Prisma.StringFieldUpdateOperationsInput | string
@@ -597,11 +597,11 @@ export type AppPageUncheckedUpdateWithoutNoticesInput = {
  */
 
 export type AppPageCountOutputType = {
-  notices: number
+  announcements: number
 }
 
 export type AppPageCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  notices?: boolean | AppPageCountOutputTypeCountNoticesArgs
+  announcements?: boolean | AppPageCountOutputTypeCountAnnouncementsArgs
 }
 
 /**
@@ -617,8 +617,8 @@ export type AppPageCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Exte
 /**
  * AppPageCountOutputType without action
  */
-export type AppPageCountOutputTypeCountNoticesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.AppNoticeWhereInput
+export type AppPageCountOutputTypeCountAnnouncementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AppAnnouncementWhereInput
 }
 
 
@@ -634,7 +634,7 @@ export type AppPageSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   enablePlatform?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  notices?: boolean | Prisma.AppPage$noticesArgs<ExtArgs>
+  announcements?: boolean | Prisma.AppPage$announcementsArgs<ExtArgs>
   _count?: boolean | Prisma.AppPageCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["appPage"]>
 
@@ -682,7 +682,7 @@ export type AppPageSelectScalar = {
 
 export type AppPageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "path" | "name" | "title" | "description" | "accessLevel" | "isEnabled" | "enablePlatform" | "createdAt" | "updatedAt", ExtArgs["result"]["appPage"]>
 export type AppPageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  notices?: boolean | Prisma.AppPage$noticesArgs<ExtArgs>
+  announcements?: boolean | Prisma.AppPage$announcementsArgs<ExtArgs>
   _count?: boolean | Prisma.AppPageCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AppPageIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -692,9 +692,9 @@ export type $AppPagePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "AppPage"
   objects: {
     /**
-     * 关联通知
+     * 关联公告
      */
-    notices: Prisma.$AppNoticePayload<ExtArgs>[]
+    announcements: Prisma.$AppAnnouncementPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1135,7 +1135,7 @@ readonly fields: AppPageFieldRefs;
  */
 export interface Prisma__AppPageClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  notices<T extends Prisma.AppPage$noticesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppPage$noticesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppNoticePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  announcements<T extends Prisma.AppPage$announcementsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppPage$announcementsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppAnnouncementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1573,27 +1573,27 @@ export type AppPageDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
 }
 
 /**
- * AppPage.notices
+ * AppPage.announcements
  */
-export type AppPage$noticesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type AppPage$announcementsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the AppNotice
+   * Select specific fields to fetch from the AppAnnouncement
    */
-  select?: Prisma.AppNoticeSelect<ExtArgs> | null
+  select?: Prisma.AppAnnouncementSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the AppNotice
+   * Omit specific fields from the AppAnnouncement
    */
-  omit?: Prisma.AppNoticeOmit<ExtArgs> | null
+  omit?: Prisma.AppAnnouncementOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.AppNoticeInclude<ExtArgs> | null
-  where?: Prisma.AppNoticeWhereInput
-  orderBy?: Prisma.AppNoticeOrderByWithRelationInput | Prisma.AppNoticeOrderByWithRelationInput[]
-  cursor?: Prisma.AppNoticeWhereUniqueInput
+  include?: Prisma.AppAnnouncementInclude<ExtArgs> | null
+  where?: Prisma.AppAnnouncementWhereInput
+  orderBy?: Prisma.AppAnnouncementOrderByWithRelationInput | Prisma.AppAnnouncementOrderByWithRelationInput[]
+  cursor?: Prisma.AppAnnouncementWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.AppNoticeScalarFieldEnum | Prisma.AppNoticeScalarFieldEnum[]
+  distinct?: Prisma.AppAnnouncementScalarFieldEnum | Prisma.AppAnnouncementScalarFieldEnum[]
 }
 
 /**

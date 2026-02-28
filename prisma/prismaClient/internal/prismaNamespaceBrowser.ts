@@ -55,9 +55,9 @@ export const ModelName = {
   AdminUser: 'AdminUser',
   AppAgreement: 'AppAgreement',
   AppAgreementLog: 'AppAgreementLog',
+  AppAnnouncementRead: 'AppAnnouncementRead',
+  AppAnnouncement: 'AppAnnouncement',
   AppConfig: 'AppConfig',
-  AppNoticeRead: 'AppNoticeRead',
-  AppNotice: 'AppNotice',
   AppPage: 'AppPage',
   AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
@@ -207,6 +207,39 @@ export const AppAgreementLogScalarFieldEnum = {
 export type AppAgreementLogScalarFieldEnum = (typeof AppAgreementLogScalarFieldEnum)[keyof typeof AppAgreementLogScalarFieldEnum]
 
 
+export const AppAnnouncementReadScalarFieldEnum = {
+  id: 'id',
+  announcementId: 'announcementId',
+  userId: 'userId',
+  readAt: 'readAt'
+} as const
+
+export type AppAnnouncementReadScalarFieldEnum = (typeof AppAnnouncementReadScalarFieldEnum)[keyof typeof AppAnnouncementReadScalarFieldEnum]
+
+
+export const AppAnnouncementScalarFieldEnum = {
+  id: 'id',
+  pageId: 'pageId',
+  title: 'title',
+  content: 'content',
+  summary: 'summary',
+  announcementType: 'announcementType',
+  priorityLevel: 'priorityLevel',
+  publishStartTime: 'publishStartTime',
+  publishEndTime: 'publishEndTime',
+  popupBackgroundImage: 'popupBackgroundImage',
+  isPublished: 'isPublished',
+  isPinned: 'isPinned',
+  showAsPopup: 'showAsPopup',
+  enablePlatform: 'enablePlatform',
+  viewCount: 'viewCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppAnnouncementScalarFieldEnum = (typeof AppAnnouncementScalarFieldEnum)[keyof typeof AppAnnouncementScalarFieldEnum]
+
+
 export const AppConfigScalarFieldEnum = {
   id: 'id',
   appName: 'appName',
@@ -225,37 +258,6 @@ export const AppConfigScalarFieldEnum = {
 } as const
 
 export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
-
-
-export const AppNoticeReadScalarFieldEnum = {
-  id: 'id',
-  noticeId: 'noticeId',
-  userId: 'userId',
-  readAt: 'readAt'
-} as const
-
-export type AppNoticeReadScalarFieldEnum = (typeof AppNoticeReadScalarFieldEnum)[keyof typeof AppNoticeReadScalarFieldEnum]
-
-
-export const AppNoticeScalarFieldEnum = {
-  id: 'id',
-  pageId: 'pageId',
-  title: 'title',
-  content: 'content',
-  noticeType: 'noticeType',
-  priorityLevel: 'priorityLevel',
-  publishStartTime: 'publishStartTime',
-  publishEndTime: 'publishEndTime',
-  popupBackgroundImage: 'popupBackgroundImage',
-  isPublished: 'isPublished',
-  isPinned: 'isPinned',
-  showAsPopup: 'showAsPopup',
-  enablePlatform: 'enablePlatform',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type AppNoticeScalarFieldEnum = (typeof AppNoticeScalarFieldEnum)[keyof typeof AppNoticeScalarFieldEnum]
 
 
 export const AppPageScalarFieldEnum = {

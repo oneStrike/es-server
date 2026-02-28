@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 import { AgreementModule } from './app-config/agreement/agreement.module'
+import { AdminAnnouncementModule } from './app-config/announcement/announcement.module'
 import { AppConfigModule } from './app-config/config/config.module'
-import { AppNoticeModule } from './app-config/notice/notice.module'
 import { AppPageModule } from './app-config/page/page.module'
 import { AuthModule } from './auth/auth.module'
 import { ContentModule } from './content-management/content.module'
@@ -24,7 +24,7 @@ import { WorkModule } from './work/work.module'
     AppConfigModule,
     AgreementModule,
     DictionaryModule,
-    AppNoticeModule,
+    AdminAnnouncementModule,
     ContentModule,
     ForumManagementModule,
     TaskModule,

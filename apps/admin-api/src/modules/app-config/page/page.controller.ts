@@ -1,7 +1,7 @@
 import {
   AppPageResponseDto,
+  AppPageService,
   BaseAppPageDto,
-  LibAppPageService,
   QueryAppPageDto,
   UpdateAppPageDto,
 } from '@libs/app-config/page'
@@ -22,7 +22,7 @@ import { ActionTypeEnum } from '../../system/audit/audit.constant'
 @ApiTags('APP管理/页面管理')
 @Controller('admin/app-page')
 export class AppPageController {
-  constructor(private readonly libAppPageService: LibAppPageService) {}
+  constructor(private readonly libAppPageService: AppPageService) {}
 
   @Post('/create')
   @ApiDoc({

@@ -13,7 +13,7 @@ import {
  * 负责页面配置的创建、查询与更新
  */
 @Injectable()
-export class LibAppPageService extends BaseService {
+export class AppPageService extends BaseService {
   get appPage() {
     return this.prisma.appPage
   }
@@ -86,30 +86,11 @@ export class LibAppPageService extends BaseService {
 
   /**
    * 获取启用状态的页面列表
-   * @param accessLevel 访问级别
    * @returns 页面列表
    */
-  async findActivePages(accessLevel?: string) {
-    const where: AppPageWhereInput = {
-      isEnabled: true,
-    }
-
-    if (accessLevel) {
-      where.accessLevel = accessLevel as any
-    }
-
+  async findActivePages() {
     return this.appPage.findMany({
-      where,
-      orderBy: [{ name: 'asc' }],
-      select: {
-        id: true,
-        code: true,
-        path: true,
-        name: true,
-        title: true,
-        accessLevel: true,
-        description: true,
-      },
+      where: { isEnabled: true },
     })
   }
 

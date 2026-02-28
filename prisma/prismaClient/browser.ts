@@ -38,20 +38,20 @@ export type AppAgreement = Prisma.AppAgreementModel
  */
 export type AppAgreementLog = Prisma.AppAgreementLogModel
 /**
+ * Model AppAnnouncementRead
+ * 系统公告阅读记录表 - 记录用户已读的公告
+ */
+export type AppAnnouncementRead = Prisma.AppAnnouncementReadModel
+/**
+ * Model AppAnnouncement
+ * 系统公告表 - 存储平台公告、活动公告、维护公告等信息
+ */
+export type AppAnnouncement = Prisma.AppAnnouncementModel
+/**
  * Model AppConfig
  * 应用配置表 - 存储应用的基础配置信息
  */
 export type AppConfig = Prisma.AppConfigModel
-/**
- * Model AppNoticeRead
- * 应用通知阅读记录表 - 记录用户已读的通知
- */
-export type AppNoticeRead = Prisma.AppNoticeReadModel
-/**
- * Model AppNotice
- * 应用通知表 - 存储系统通知、公告等信息
- */
-export type AppNotice = Prisma.AppNoticeModel
 /**
  * Model AppPage
  * 应用页面表 - 管理应用内的页面配置和路由

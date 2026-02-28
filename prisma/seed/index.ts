@@ -1,10 +1,9 @@
 import process from 'node:process'
-import { makePrismaClient, getDatabaseUrl } from './prisma-client'
-
 import { createInitialAdminAccount } from './modules/admin'
+
 import {
+  createInitialAppAnnouncement,
   createInitialAppConfig,
-  createInitialAppNotice,
   createInitialAppPage,
   createInitialAppUser,
 } from './modules/app'
@@ -20,6 +19,7 @@ import {
   createInitialForumSensitiveWords,
   createInitialForumTags,
 } from './modules/forum'
+import { createInitialInteractionData } from './modules/interaction'
 import { createInitialDataDictionary } from './modules/system'
 import {
   createInitialAuthors,
@@ -27,15 +27,15 @@ import {
   createInitialWorkCategory,
   createInitialWorkCategoryRelations,
   createInitialWorkChapters,
-  createInitialWorkComments,
   createInitialWorkComics,
+  createInitialWorkComments,
   createInitialWorkGrowthRules,
   createInitialWorkNovels,
   createInitialWorks,
   createInitialWorkTag,
   createInitialWorkTagRelations,
 } from './modules/work'
-import { createInitialInteractionData } from './modules/interaction'
+import { getDatabaseUrl, makePrismaClient } from './prisma-client'
 
 const connectUrl = getDatabaseUrl()
 const prisma = makePrismaClient(connectUrl)
@@ -76,7 +76,7 @@ async function runSeeds() {
   await createInitialWorkTagRelations(prisma)
   await createInitialWorkChapters(prisma)
   await createInitialWorkComments(prisma)
-  await createInitialAppNotice(prisma)
+  await createInitialAppAnnouncement(prisma)
   await createInitialAppUser(prisma)
   await createInitialForumProfile(prisma)
 

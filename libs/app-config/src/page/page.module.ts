@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common'
-import { LibAppPageService } from './page.service'
+import { AppPageService } from './page.service'
 
 @Module({
-  providers: [LibAppPageService],
-  exports: [LibAppPageService],
+  providers: [AppPageService],
+  exports: [AppPageService],
 })
-export class LibAppPageModule {}
+export class AppPageModule {}

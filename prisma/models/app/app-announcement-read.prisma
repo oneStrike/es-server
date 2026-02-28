@@ -1,0 +1,26 @@
+/// 系统公告阅读记录表 - 记录用户已读的公告
+model AppAnnouncementRead {
+  /// 主键ID
+  id              Int      @id @default(autoincrement())
+  /// 关联的公告ID
+  announcementId  Int      @map("announcement_id")
+  /// 关联的用户ID
+  userId          Int      @map("user_id")
+  /// 阅读时间
+  readAt          DateTime @default(now()) @map("read_at") @db.Timestamptz(6)
+
+  /// 关联公告
+  announcement AppAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  /// 关联用户
+  user         AppUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 公告与用户唯一约束
+  @@unique([announcementId, userId])
+  /// 公告索引
+  @@index([announcementId])
+  /// 用户索引
+  @@index([userId])
+  /// 阅读时间索引
+  @@index([readAt])
+  @@map("app_announcement_read")
+}

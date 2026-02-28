@@ -17,43 +17,54 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { NoticePriorityEnum, NoticeTypeEnum } from '../notice.constant'
+import {
+  AnnouncementPriorityEnum,
+  AnnouncementTypeEnum,
+} from '../announcement.constant'
 
 /**
- * 通知基础DTO
+ * 公告基础DTO
  */
-export class BaseNoticeDto extends BaseDto {
+export class BaseAnnouncementDto extends BaseDto {
   @StringProperty({
-    description: '通知标题',
-    example: '系统维护通知',
+    description: '公告标题',
+    example: '系统维护公告',
     required: true,
   })
   title!: string
 
   @StringProperty({
-    description: '通知内容详情',
+    description: '公告内容详情',
     example: '系统将于今晚进行维护升级...',
     required: true,
   })
   content!: string
 
-  @EnumProperty({
-    description: '通知类型',
-    example: NoticeTypeEnum.SYSTEM,
-    required: true,
-    enum: NoticeTypeEnum,
-    default: NoticeTypeEnum.SYSTEM,
+  @StringProperty({
+    description: '公告摘要',
+    example: '系统维护通知，预计维护时间2小时',
+    required: false,
+    maxLength: 500,
   })
-  noticeType!: NoticeTypeEnum
+  summary?: string
+
+  @EnumProperty({
+    description: '公告类型',
+    example: AnnouncementTypeEnum.PLATFORM,
+    required: true,
+    enum: AnnouncementTypeEnum,
+    default: AnnouncementTypeEnum.PLATFORM,
+  })
+  announcementType!: AnnouncementTypeEnum
 
   @EnumProperty({
     description: '优先级',
-    example: NoticePriorityEnum.MEDIUM,
+    example: AnnouncementPriorityEnum.MEDIUM,
     required: true,
-    enum: NoticePriorityEnum,
-    default: NoticePriorityEnum.MEDIUM,
+    enum: AnnouncementPriorityEnum,
+    default: AnnouncementPriorityEnum.MEDIUM,
   })
-  priorityLevel!: NoticePriorityEnum
+  priorityLevel!: AnnouncementPriorityEnum
 
   @DateProperty({
     description: '发布开始时间',
@@ -77,7 +88,7 @@ export class BaseNoticeDto extends BaseDto {
   pageId?: number
 
   @StringProperty({
-    description: '通知弹窗背景图片URL',
+    description: '公告弹窗背景图片URL',
     example: 'https://example.com/bg.jpg',
     required: false,
   })
@@ -116,13 +127,13 @@ export class BaseNoticeDto extends BaseDto {
   showAsPopup?: boolean
 
   @NumberProperty({
-    description: '阅读次数',
+    description: '浏览次数',
     example: 0,
     required: false,
     min: 0,
     default: 0,
   })
-  readCount?: number
+  viewCount?: number
 }
 
 /**
@@ -137,11 +148,11 @@ export class RelatedPageDto extends PickType(BaseAppPageDto, [
 ]) {}
 
 /**
- * 通知详情DTO
+ * 公告详情DTO
  */
-export class NoticeDetailDto extends BaseNoticeDto {
+export class AnnouncementDetailDto extends BaseAnnouncementDto {
   @NestedProperty({
-    description: '通知详情',
+    description: '公告详情',
     example: {
       id: 1,
       name: '首页',
@@ -156,28 +167,31 @@ export class NoticeDetailDto extends BaseNoticeDto {
 }
 
 /**
- * 创建通知DTO
+ * 创建公告DTO
  */
-export class CreateNoticeDto extends OmitType(BaseNoticeDto, [
+export class CreateAnnouncementDto extends OmitType(BaseAnnouncementDto, [
   ...OMIT_BASE_FIELDS,
   'isPublished',
-  'readCount',
+  'viewCount',
 ]) {}
 
 /**
- * 更新通知DTO
+ * 更新公告DTO
  */
-export class UpdateNoticeDto extends IntersectionType(CreateNoticeDto, IdDto) {}
+export class UpdateAnnouncementDto extends IntersectionType(
+  CreateAnnouncementDto,
+  IdDto,
+) {}
 
 /**
- * 通知查询DTO
+ * 公告查询DTO
  */
-export class QueryNoticeDto extends IntersectionType(
+export class QueryAnnouncementDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseNoticeDto, [
+    PickType(BaseAnnouncementDto, [
       'title',
-      'noticeType',
+      'announcementType',
       'priorityLevel',
       'isPublished',
       'isPinned',
@@ -197,9 +211,9 @@ export class QueryNoticeDto extends IntersectionType(
 }
 
 /**
- * 通知状态更新DTO
+ * 公告状态更新DTO
  */
-export class UpdateNoticeStatusDto extends PickType(BaseNoticeDto, [
+export class UpdateAnnouncementStatusDto extends PickType(BaseAnnouncementDto, [
   'isPublished',
   'id',
 ]) {}
@@ -208,7 +222,7 @@ export class UpdateNoticeStatusDto extends PickType(BaseNoticeDto, [
  * 分页接口返回DTO
  */
 
-export class NoticePageResponseDto extends OmitType(BaseNoticeDto, [
+export class AnnouncementPageResponseDto extends OmitType(BaseAnnouncementDto, [
   'content',
   'popupBackgroundImage',
 ]) {}
