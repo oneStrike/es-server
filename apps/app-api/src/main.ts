@@ -7,7 +7,7 @@ import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { AppModule } from './app.module'
 
-// 为 Webpack HMR 声明模块类型，并在入口持有应用引用
+// Webpack HMR 声明模块类型
 declare const module: any
 
 async function bootstrap() {

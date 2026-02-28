@@ -133,10 +133,49 @@ deploy_project() {
     log "项目版本: ${VERSION}"
 
     log "检查是否需要构建和部署..."
-    if [ -f "Dockerfile" ]; then
+    export DOCKER_BUILDKIT=1
+
+    # es-server 项目需要构建两个独立的镜像
+    if [ "$project_name" = "es-server" ]; then
+        log "构建 es-server 多镜像项目..."
+
+        # 使用独立的缓存标签避免缓存污染
+        ADMIN_CACHE_TAG="es_admin_server:cache"
+        APP_CACHE_TAG="es_app_server:cache"
+
+        # 构建 admin-api 镜像
+        log "构建 admin-api 镜像..."
+        if docker build -f "./Dockerfile" \
+            --build-arg APP_TYPE=admin \
+            --cache-from "$ADMIN_CACHE_TAG" \
+            -t "es/admin/server:$VERSION" \
+            -t "es/admin/server:latest" \
+            . ; then
+            log "admin-api 镜像构建成功"
+        else
+            error "admin-api 镜像构建失败"
+            pop_stash
+            return 1
+        fi
+
+        # 构建 app-api 镜像
+        log "构建 app-api 镜像..."
+        if docker build -f "./Dockerfile" \
+            --build-arg APP_TYPE=app \
+            --cache-from "$APP_CACHE_TAG" \
+            -t "es/app/server:$VERSION" \
+            -t "es/app/server:latest" \
+            . ; then
+            log "app-api 镜像构建成功"
+        else
+            error "app-api 镜像构建失败"
+            pop_stash
+            return 1
+        fi
+    elif [ -f "Dockerfile" ]; then
+        # 其他项目使用默认构建方式
         log "找到 Dockerfile，开始构建镜像..."
         IMAGE_NAME="es/${project_name,,}"
-        export DOCKER_BUILDKIT=1
         CACHE_TAG="${AUTO_DEPLOY_CACHE_TAG:-buildcache}"
 
         if docker build -f "./Dockerfile" \
