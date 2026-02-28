@@ -108,6 +108,10 @@ export class AppAnnouncementService extends BaseService {
   }
 
   /**
+   * 查询已发布的所有公告
+   */
+
+  /**
    * 更新公告
    * @param updateAnnouncementDto 更新数据
    * @returns 更新后的公告记录

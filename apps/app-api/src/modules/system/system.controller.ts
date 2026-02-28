@@ -41,6 +41,7 @@ export class SystemController {
     summary: 'APP页面配置',
     model: AppPageResponseDto,
   })
+  @Public()
   async findPage() {
     return this.appPageService.findActivePages()
   }
@@ -61,6 +62,7 @@ export class SystemController {
     model: ListOrPageAgreementResponseDto,
     isArray: true,
   })
+  @Public()
   async getAllLatest(@Query() query: QueryPublishedAgreementDto) {
     return this.agreementService.getAllLatest(query)
   }
@@ -70,6 +72,7 @@ export class SystemController {
     summary: '协议详情',
     model: BaseAgreementDto,
   })
+  @Public()
   async findOne(@Query() query: IdDto) {
     return this.agreementService.findOne(query)
   }

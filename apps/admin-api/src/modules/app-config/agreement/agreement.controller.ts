@@ -7,7 +7,7 @@ import {
   UpdateAgreementDto,
 } from '@libs/app-config/agreement'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/base/dto'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -43,6 +43,19 @@ export class AgreementController {
   })
   async update(@Body() dto: UpdateAgreementDto) {
     return this.agreementService.update(dto)
+  }
+
+  @Post('/update-status')
+  @ApiDoc({
+    summary: '更新协议状态',
+    model: IdDto,
+  })
+  @Audit({
+    actionType: ActionTypeEnum.UPDATE,
+    content: '更新协议状态',
+  })
+  async updateStatus(@Body() dto: UpdatePublishedStatusDto) {
+    return this.agreementService.updatePublishStatus(dto)
   }
 
   @Post('/delete')

@@ -4,7 +4,7 @@ import {
   BaseService,
 } from '@libs/base/database'
 
-import { IdDto } from '@libs/base/dto'
+import { IdDto, UpdatePublishedStatusDto } from '@libs/base/dto'
 import {
   BadRequestException,
   Injectable,
@@ -63,10 +63,7 @@ export class AgreementService extends BaseService {
    * 更新协议
    */
   async update(dto: UpdateAgreementDto) {
-    const agreement = await this.agreement.findUnique({
-      where: { id: dto.id },
-    })
-    if (!agreement) {
+    if (!(await this.agreement.exists({ id: dto.id }))) {
       throw new NotFoundException('协议不存在')
     }
 
@@ -82,6 +79,21 @@ export class AgreementService extends BaseService {
     return this.agreement.update({
       where: { id: dto.id },
       data,
+      select: { id: true },
+    })
+  }
+
+  /**
+   * 更新协议状态
+   */
+  async updatePublishStatus(dto: UpdatePublishedStatusDto) {
+    if (!(await this.agreement.exists({ id: dto.id }))) {
+      throw new NotFoundException('协议不存在')
+    }
+
+    return this.agreement.update({
+      where: { id: dto.id },
+      data: { isPublished: dto.isPublished },
       select: { id: true },
     })
   }
