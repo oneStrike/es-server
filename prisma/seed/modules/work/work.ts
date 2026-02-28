@@ -1,4 +1,13 @@
-import { WorkTypeEnum } from '@libs/base/constant'
+/**
+ * 作品类型枚举
+ * 内联定义，不依赖项目中的其他文件
+ */
+enum WorkTypeEnum {
+  /** 漫画 */
+  COMIC = 1,
+  /** 小说 */
+  NOVEL = 2,
+}
 
 interface IWorkData {
   name: string

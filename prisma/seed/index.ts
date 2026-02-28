@@ -1,7 +1,5 @@
 import process from 'node:process'
-import { makePrismaClient } from '../../libs/base/src/database'
-import { isProduction } from '../../libs/base/src/utils'
-import { DbConfig } from '../../libs/base/src/config'
+import { makePrismaClient, getDatabaseUrl } from './prisma-client'
 
 import { createInitialAdminAccount } from './modules/admin'
 import {
@@ -39,9 +37,7 @@ import {
 } from './modules/work'
 import { createInitialInteractionData } from './modules/interaction'
 
-const connectUrl = isProduction()
-  ? DbConfig.connection.url
-  : 'postgresql://postgres:259158@localhost:5432/foo'
+const connectUrl = getDatabaseUrl()
 const prisma = makePrismaClient(connectUrl)
 
 async function runSeeds() {
