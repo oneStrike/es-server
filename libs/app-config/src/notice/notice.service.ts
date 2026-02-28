@@ -68,15 +68,9 @@ export class LibAppNoticeService extends BaseService {
   async findNoticePage(queryNoticeDto: QueryNoticeDto) {
     const {
       title,
-      noticeType,
-      priorityLevel,
-      isPinned,
-      isPublished,
-      showAsPopup,
-      pageId,
       publishStartTime,
-      publishEndTime,
       enablePlatform,
+      publishEndTime,
       ...pageParams
     } = queryNoticeDto
 
@@ -84,24 +78,6 @@ export class LibAppNoticeService extends BaseService {
 
     if (title) {
       where.title = { contains: title, mode: 'insensitive' }
-    }
-    if (noticeType !== undefined) {
-      where.noticeType = noticeType
-    }
-    if (priorityLevel !== undefined) {
-      where.priorityLevel = priorityLevel
-    }
-    if (isPublished !== undefined) {
-      where.isPublished = isPublished
-    }
-    if (isPinned !== undefined) {
-      where.isPinned = isPinned
-    }
-    if (showAsPopup !== undefined) {
-      where.showAsPopup = showAsPopup
-    }
-    if (pageId !== undefined) {
-      where.pageId = pageId
     }
     if (publishStartTime) {
       where.AND = [{ publishStartTime: { lte: publishStartTime } }]
@@ -171,6 +147,27 @@ export class LibAppNoticeService extends BaseService {
       where: { id },
       data: createData,
       select: { id: true },
+    })
+  }
+
+  /**
+   * 获取通知公告详情
+   * @param id 通知ID
+   * @returns 删除结果
+   */
+  async findNoticeDetail(id: number) {
+    return this.appNotice.findUnique({
+      where: { id },
+      include: {
+        appPage: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            path: true,
+          },
+        },
+      },
     })
   }
 }

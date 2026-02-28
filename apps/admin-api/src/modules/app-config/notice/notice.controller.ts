@@ -1,7 +1,7 @@
 import {
-  BaseNoticeDto,
   CreateNoticeDto,
   LibAppNoticeService,
+  NoticeDetailDto,
   NoticePageResponseDto,
   QueryNoticeDto,
   UpdateNoticeDto,
@@ -15,9 +15,7 @@ import { ApiTags } from '@nestjs/swagger'
 @ApiTags('APP管理/通知公告')
 @Controller('admin/notice')
 export class AppNoticeController {
-  constructor(
-    private readonly libAppNoticeService: LibAppNoticeService,
-  ) {}
+  constructor(private readonly libAppNoticeService: LibAppNoticeService) {}
 
   @Post('/create')
   @ApiDoc({
@@ -40,23 +38,11 @@ export class AppNoticeController {
 
   @Get('/detail')
   @ApiDoc({
-    summary: '根据ID查询通知详情',
-    model: BaseNoticeDto,
+    summary: '通知详情',
+    model: NoticeDetailDto,
   })
   async findOne(@Query() query: IdDto) {
-    return this.libAppNoticeService.appNotice.findUnique({
-      where: query,
-      include: {
-        appPage: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-            path: true,
-          },
-        },
-      },
-    })
+    return this.libAppNoticeService.findNoticeDetail(query.id)
   }
 
   @Post('/update')

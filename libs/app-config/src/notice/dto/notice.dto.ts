@@ -1,3 +1,4 @@
+import { BaseAppPageDto } from '@libs/app-config/page'
 import { EnablePlatformEnum } from '@libs/base/constant'
 import {
   ArrayProperty,
@@ -5,6 +6,7 @@ import {
   DateProperty,
   EnumProperty,
   JsonProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
@@ -124,6 +126,36 @@ export class BaseNoticeDto extends BaseDto {
 }
 
 /**
+ * 关联的页面DTO
+ */
+
+export class RelatedPageDto extends PickType(BaseAppPageDto, [
+  'id',
+  'name',
+  'code',
+  'path',
+]) {}
+
+/**
+ * 通知详情DTO
+ */
+export class NoticeDetailDto extends BaseNoticeDto {
+  @NestedProperty({
+    description: '通知详情',
+    example: {
+      id: 1,
+      name: '首页',
+      code: 'home',
+      path: '/home',
+    },
+    required: true,
+    type: RelatedPageDto,
+    validation: false,
+  })
+  appPage!: RelatedPageDto
+}
+
+/**
  * 创建通知DTO
  */
 export class CreateNoticeDto extends OmitType(BaseNoticeDto, [
@@ -167,10 +199,10 @@ export class QueryNoticeDto extends IntersectionType(
 /**
  * 通知状态更新DTO
  */
-export class UpdateNoticeStatusDto extends IntersectionType(
-  PickType(BaseNoticeDto, ['isPublished']),
-  IdDto,
-) {}
+export class UpdateNoticeStatusDto extends PickType(BaseNoticeDto, [
+  'isPublished',
+  'id',
+]) {}
 
 /**
  * 分页接口返回DTO
@@ -178,4 +210,5 @@ export class UpdateNoticeStatusDto extends IntersectionType(
 
 export class NoticePageResponseDto extends OmitType(BaseNoticeDto, [
   'content',
+  'popupBackgroundImage',
 ]) {}
