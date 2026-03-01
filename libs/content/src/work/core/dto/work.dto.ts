@@ -509,6 +509,12 @@ export class PageWorkDto extends PickType(BaseWorkDto, [
   'isRecommended',
   'isHot',
   'isNew',
+  'serialStatus',
+  'publisher',
+  'language',
+  'region',
+  'ageRating',
+  'authors',
   'categories',
   'tags',
 ]) {}

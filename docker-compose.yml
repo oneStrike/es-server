@@ -54,8 +54,7 @@ services:
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
       - /tmp # 使用匿名卷挂载临时目录，避免写入容器层
     networks:
-      - app-network # 保留原有内部网络
-      - 1panel-network # 新增：加入 1Panel 数据库网络（已对应真实网络）
+      - 1panel-network # 使用外部网络，确保 DNS 解析稳定
 
   # 数据库迁移服务
   migrator:
@@ -129,8 +128,7 @@ services:
       - ${HOST_LOGS_DIR:-es-server-logs}:/app/logs
       - /tmp
     networks:
-      - app-network # 保留原有内部网络
-      - 1panel-network # 新增：加入 1Panel 数据库网络（已对应真实网络）
+      - 1panel-network # 使用外部网络，确保 DNS 解析稳定
 
   # Web 前端服务
   admin:
@@ -155,7 +153,7 @@ services:
       # 使用环境变量控制端口映射，默认 8082
       - '${ADMIN_PORT}:8080'
     networks:
-      - app-network # 前端无需访问数据库，仅保留内部网络即可
+      - 1panel-network # 使用外部网络，确保能稳定解析 admin-server 服务名
 
   # Web App服务
   app:
@@ -180,12 +178,10 @@ services:
       # 使用环境变量控制端口映射，默认 8082
       - '${APP_WEB_PORT}:8080'
     networks:
-      - app-network # 前端无需访问数据库，仅保留内部网络即可
+      - 1panel-network # 使用外部网络，保持网络配置一致
 
 networks:
-  app-network:
-    driver: bridge
-  # 新增：1Panel 外部网络（已替换为 1Panel 默认真实网络名称 1panel-network）
+  # 使用 1Panel 外部网络，所有服务在同一网络中，DNS 解析更稳定
   1panel-network:
     external: true
     name: 1panel-network # 若你的 1Panel 网络名称不是这个，替换为自己查到的

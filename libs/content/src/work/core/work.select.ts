@@ -48,6 +48,12 @@ export const PAGE_WORK_SELECT = {
   isRecommended: true,
   isHot: true,
   isNew: true,
+  serialStatus: true,
+  publisher: true,
+  language: true,
+  region: true,
+  ageRating: true,
+  authors: WORK_RELATION_SELECT.authors,
   categories: WORK_RELATION_SELECT.categories,
   tags: WORK_RELATION_SELECT.tags,
 } as const

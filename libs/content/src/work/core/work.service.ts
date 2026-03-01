@@ -247,6 +247,9 @@ export class WorkService extends BaseService {
    * @returns 更新结果
    */
   async updateStatus(body: UpdateWorkStatusDto) {
+    if (!(await this.work.exists({ id: body.id }))) {
+      throw new BadRequestException('作品不存在')
+    }
     return this.work.update({
       where: { id: body.id },
       data: {

@@ -1,4 +1,3 @@
-import { WorkTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
 import {
@@ -22,11 +21,11 @@ export class WorkController {
 
   @Post('/create')
   @ApiDoc({
-    summary: '创建漫画',
+    summary: '创建作品',
     model: IdDto,
   })
   async create(@Body() body: CreateWorkDto) {
-    return this.workService.createWork({ ...body, type: WorkTypeEnum.COMIC })
+    return this.workService.createWork({ ...body })
   }
 
   @Get('page')

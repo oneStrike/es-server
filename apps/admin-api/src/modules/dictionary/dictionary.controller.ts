@@ -1,10 +1,8 @@
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import {
   BatchOperationResponseDto,
-  BatchUpdateEnabledStatusDto,
   DragReorderDto,
   IdDto,
-  IdsDto,
   UpdateEnabledStatusDto,
 } from '@libs/base/dto'
 import {
@@ -50,9 +48,7 @@ export class DictionaryController {
     model: IdDto,
   })
   async create(@Body() createDictionaryDto: CreateDictionaryDto) {
-    return this.libDictionaryService.dictionary.create({
-      data: createDictionaryDto,
-    })
+    return this.libDictionaryService.createDictionary(createDictionaryDto)
   }
 
   @Post('update')
@@ -61,33 +57,25 @@ export class DictionaryController {
     model: IdDto,
   })
   async update(@Body() updateDictionaryDto: UpdateDictionaryDto) {
-    return this.libDictionaryService.dictionary.update({
-      where: updateDictionaryDto,
-      data: updateDictionaryDto,
-    })
+    return this.libDictionaryService.updateDictionary(updateDictionaryDto)
   }
 
   @Post('delete')
   @ApiDoc({
     summary: '删除字典',
-    model: IdsDto,
+    model: IdDto,
   })
-  async delete(@Body() query: IdsDto) {
-    return this.libDictionaryService.dictionary.deleteMany({
-      where: { id: { in: query.ids } },
-    })
+  async delete(@Body() query: IdDto) {
+    return this.libDictionaryService.deleteDictionary(query.id)
   }
 
-  @Post('batch-update-status')
+  @Post('update-status')
   @ApiDoc({
-    summary: '批量启用禁用字典',
-    model: BatchOperationResponseDto,
+    summary: '更新字典状态',
+    model: IdDto,
   })
-  async enable(@Body() query: BatchUpdateEnabledStatusDto) {
-    return this.libDictionaryService.dictionary.updateMany({
-      where: { id: { in: query.ids } },
-      data: { isEnabled: query.isEnabled },
-    })
+  async updateStatus(@Body() query: UpdateEnabledStatusDto) {
+    return this.libDictionaryService.updateDictionaryStatus(query)
   }
 
   @Get('items')
@@ -116,19 +104,9 @@ export class DictionaryController {
     model: IdDto,
   })
   async updateItem(@Body() updateDictionaryItemDto: UpdateDictionaryItemDto) {
-    return this.libDictionaryService.updateDictionaryItem({
-      ids: [updateDictionaryItemDto.id],
-      ...updateDictionaryItemDto,
-    })
-  }
-
-  @Post('delete-item')
-  @ApiDoc({
-    summary: '删除字典项',
-    model: BatchOperationResponseDto,
-  })
-  async deleteItem(@Body() query: IdsDto) {
-    return this.libDictionaryService.deleteDictionaryItem(query.ids)
+    return this.libDictionaryService.updateDictionaryItem(
+      updateDictionaryItemDto,
+    )
   }
 
   @Post('update-item-status')
@@ -137,7 +115,16 @@ export class DictionaryController {
     model: BatchOperationResponseDto,
   })
   async enableItem(@Body() query: UpdateEnabledStatusDto) {
-    return this.libDictionaryService.updateDictionaryItem(query)
+    return this.libDictionaryService.updateDictionaryItemStatus(query)
+  }
+
+  @Post('delete-item')
+  @ApiDoc({
+    summary: '删除字典项',
+    model: IdDto,
+  })
+  async deleteItem(@Body() query: IdDto) {
+    return this.libDictionaryService.deleteDictionaryItem(query.id)
   }
 
   /**
@@ -145,10 +132,10 @@ export class DictionaryController {
    */
   @Post('/item-order')
   @ApiDoc({
-    summary: '分类拖拽排序',
+    summary: '字典项拖拽排序',
     model: DragReorderDto,
   })
-  async categoryOrder(@Body() body: DragReorderDto) {
+  async itemOrder(@Body() body: DragReorderDto) {
     return this.libDictionaryService.updateDictionaryItemSort(body)
   }
 }
