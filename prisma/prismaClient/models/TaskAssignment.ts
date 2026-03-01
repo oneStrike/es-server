@@ -54,10 +54,10 @@ export type TaskAssignmentMinAggregateOutputType = {
   status: number | null
   progress: number | null
   target: number | null
+  version: number | null
   claimedAt: Date | null
   completedAt: Date | null
   expiredAt: Date | null
-  version: number | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -71,10 +71,10 @@ export type TaskAssignmentMaxAggregateOutputType = {
   status: number | null
   progress: number | null
   target: number | null
+  version: number | null
   claimedAt: Date | null
   completedAt: Date | null
   expiredAt: Date | null
-  version: number | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -88,12 +88,12 @@ export type TaskAssignmentCountAggregateOutputType = {
   status: number
   progress: number
   target: number
-  claimedAt: number
-  completedAt: number
-  expiredAt: number
   taskSnapshot: number
   context: number
   version: number
+  claimedAt: number
+  completedAt: number
+  expiredAt: number
   createdAt: number
   updatedAt: number
   deletedAt: number
@@ -129,10 +129,10 @@ export type TaskAssignmentMinAggregateInputType = {
   status?: true
   progress?: true
   target?: true
+  version?: true
   claimedAt?: true
   completedAt?: true
   expiredAt?: true
-  version?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -146,10 +146,10 @@ export type TaskAssignmentMaxAggregateInputType = {
   status?: true
   progress?: true
   target?: true
+  version?: true
   claimedAt?: true
   completedAt?: true
   expiredAt?: true
-  version?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -163,12 +163,12 @@ export type TaskAssignmentCountAggregateInputType = {
   status?: true
   progress?: true
   target?: true
-  claimedAt?: true
-  completedAt?: true
-  expiredAt?: true
   taskSnapshot?: true
   context?: true
   version?: true
+  claimedAt?: true
+  completedAt?: true
+  expiredAt?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -269,12 +269,12 @@ export type TaskAssignmentGroupByOutputType = {
   status: number
   progress: number
   target: number
-  claimedAt: Date | null
-  completedAt: Date | null
-  expiredAt: Date | null
   taskSnapshot: runtime.JsonValue | null
   context: runtime.JsonValue | null
   version: number
+  claimedAt: Date | null
+  completedAt: Date | null
+  expiredAt: Date | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -311,12 +311,12 @@ export type TaskAssignmentWhereInput = {
   status?: Prisma.IntFilter<"TaskAssignment"> | number
   progress?: Prisma.IntFilter<"TaskAssignment"> | number
   target?: Prisma.IntFilter<"TaskAssignment"> | number
-  claimedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
-  completedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
-  expiredAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
   taskSnapshot?: Prisma.JsonNullableFilter<"TaskAssignment">
   context?: Prisma.JsonNullableFilter<"TaskAssignment">
   version?: Prisma.IntFilter<"TaskAssignment"> | number
+  claimedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
+  completedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
+  expiredAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"TaskAssignment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TaskAssignment"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
@@ -333,12 +333,12 @@ export type TaskAssignmentOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   progress?: Prisma.SortOrder
   target?: Prisma.SortOrder
-  claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  expiredAt?: Prisma.SortOrderInput | Prisma.SortOrder
   taskSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   context?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrder
+  claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  expiredAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -359,12 +359,12 @@ export type TaskAssignmentWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.IntFilter<"TaskAssignment"> | number
   progress?: Prisma.IntFilter<"TaskAssignment"> | number
   target?: Prisma.IntFilter<"TaskAssignment"> | number
-  claimedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
-  completedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
-  expiredAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
   taskSnapshot?: Prisma.JsonNullableFilter<"TaskAssignment">
   context?: Prisma.JsonNullableFilter<"TaskAssignment">
   version?: Prisma.IntFilter<"TaskAssignment"> | number
+  claimedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
+  completedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
+  expiredAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"TaskAssignment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TaskAssignment"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
@@ -381,12 +381,12 @@ export type TaskAssignmentOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   progress?: Prisma.SortOrder
   target?: Prisma.SortOrder
-  claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  expiredAt?: Prisma.SortOrderInput | Prisma.SortOrder
   taskSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   context?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrder
+  claimedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  expiredAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -408,12 +408,12 @@ export type TaskAssignmentScalarWhereWithAggregatesInput = {
   status?: Prisma.IntWithAggregatesFilter<"TaskAssignment"> | number
   progress?: Prisma.IntWithAggregatesFilter<"TaskAssignment"> | number
   target?: Prisma.IntWithAggregatesFilter<"TaskAssignment"> | number
-  claimedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TaskAssignment"> | Date | string | null
-  completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TaskAssignment"> | Date | string | null
-  expiredAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TaskAssignment"> | Date | string | null
   taskSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"TaskAssignment">
   context?: Prisma.JsonNullableWithAggregatesFilter<"TaskAssignment">
   version?: Prisma.IntWithAggregatesFilter<"TaskAssignment"> | number
+  claimedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TaskAssignment"> | Date | string | null
+  completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TaskAssignment"> | Date | string | null
+  expiredAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TaskAssignment"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TaskAssignment"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"TaskAssignment"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TaskAssignment"> | Date | string | null
@@ -424,12 +424,12 @@ export type TaskAssignmentCreateInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -446,12 +446,12 @@ export type TaskAssignmentUncheckedCreateInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -463,12 +463,12 @@ export type TaskAssignmentUpdateInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -485,12 +485,12 @@ export type TaskAssignmentUncheckedUpdateInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -505,12 +505,12 @@ export type TaskAssignmentCreateManyInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -521,12 +521,12 @@ export type TaskAssignmentUpdateManyMutationInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -540,12 +540,12 @@ export type TaskAssignmentUncheckedUpdateManyInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -575,12 +575,12 @@ export type TaskAssignmentCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   progress?: Prisma.SortOrder
   target?: Prisma.SortOrder
-  claimedAt?: Prisma.SortOrder
-  completedAt?: Prisma.SortOrder
-  expiredAt?: Prisma.SortOrder
   taskSnapshot?: Prisma.SortOrder
   context?: Prisma.SortOrder
   version?: Prisma.SortOrder
+  claimedAt?: Prisma.SortOrder
+  completedAt?: Prisma.SortOrder
+  expiredAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -604,10 +604,10 @@ export type TaskAssignmentMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   progress?: Prisma.SortOrder
   target?: Prisma.SortOrder
+  version?: Prisma.SortOrder
   claimedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   expiredAt?: Prisma.SortOrder
-  version?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -621,10 +621,10 @@ export type TaskAssignmentMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   progress?: Prisma.SortOrder
   target?: Prisma.SortOrder
+  version?: Prisma.SortOrder
   claimedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   expiredAt?: Prisma.SortOrder
-  version?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -748,12 +748,12 @@ export type TaskAssignmentCreateWithoutUserInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -768,12 +768,12 @@ export type TaskAssignmentUncheckedCreateWithoutUserInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -817,12 +817,12 @@ export type TaskAssignmentScalarWhereInput = {
   status?: Prisma.IntFilter<"TaskAssignment"> | number
   progress?: Prisma.IntFilter<"TaskAssignment"> | number
   target?: Prisma.IntFilter<"TaskAssignment"> | number
-  claimedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
-  completedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
-  expiredAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
   taskSnapshot?: Prisma.JsonNullableFilter<"TaskAssignment">
   context?: Prisma.JsonNullableFilter<"TaskAssignment">
   version?: Prisma.IntFilter<"TaskAssignment"> | number
+  claimedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
+  completedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
+  expiredAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"TaskAssignment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"TaskAssignment"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"TaskAssignment"> | Date | string | null
@@ -833,12 +833,12 @@ export type TaskAssignmentCreateWithoutProgressLogsInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -854,12 +854,12 @@ export type TaskAssignmentUncheckedCreateWithoutProgressLogsInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -886,12 +886,12 @@ export type TaskAssignmentUpdateWithoutProgressLogsInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -907,12 +907,12 @@ export type TaskAssignmentUncheckedUpdateWithoutProgressLogsInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -923,12 +923,12 @@ export type TaskAssignmentCreateWithoutTaskInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -943,12 +943,12 @@ export type TaskAssignmentUncheckedCreateWithoutTaskInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -988,12 +988,12 @@ export type TaskAssignmentCreateManyUserInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1004,12 +1004,12 @@ export type TaskAssignmentUpdateWithoutUserInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1024,12 +1024,12 @@ export type TaskAssignmentUncheckedUpdateWithoutUserInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1043,12 +1043,12 @@ export type TaskAssignmentUncheckedUpdateManyWithoutUserInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1061,12 +1061,12 @@ export type TaskAssignmentCreateManyTaskInput = {
   status: number
   progress?: number
   target?: number
-  claimedAt?: Date | string | null
-  completedAt?: Date | string | null
-  expiredAt?: Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: number
+  claimedAt?: Date | string | null
+  completedAt?: Date | string | null
+  expiredAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1077,12 +1077,12 @@ export type TaskAssignmentUpdateWithoutTaskInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1097,12 +1097,12 @@ export type TaskAssignmentUncheckedUpdateWithoutTaskInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1116,12 +1116,12 @@ export type TaskAssignmentUncheckedUpdateManyWithoutTaskInput = {
   status?: Prisma.IntFieldUpdateOperationsInput | number
   progress?: Prisma.IntFieldUpdateOperationsInput | number
   target?: Prisma.IntFieldUpdateOperationsInput | number
-  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   taskSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  claimedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1166,12 +1166,12 @@ export type TaskAssignmentSelect<ExtArgs extends runtime.Types.Extensions.Intern
   status?: boolean
   progress?: boolean
   target?: boolean
-  claimedAt?: boolean
-  completedAt?: boolean
-  expiredAt?: boolean
   taskSnapshot?: boolean
   context?: boolean
   version?: boolean
+  claimedAt?: boolean
+  completedAt?: boolean
+  expiredAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -1189,12 +1189,12 @@ export type TaskAssignmentSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   status?: boolean
   progress?: boolean
   target?: boolean
-  claimedAt?: boolean
-  completedAt?: boolean
-  expiredAt?: boolean
   taskSnapshot?: boolean
   context?: boolean
   version?: boolean
+  claimedAt?: boolean
+  completedAt?: boolean
+  expiredAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -1210,12 +1210,12 @@ export type TaskAssignmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   status?: boolean
   progress?: boolean
   target?: boolean
-  claimedAt?: boolean
-  completedAt?: boolean
-  expiredAt?: boolean
   taskSnapshot?: boolean
   context?: boolean
   version?: boolean
+  claimedAt?: boolean
+  completedAt?: boolean
+  expiredAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -1231,18 +1231,18 @@ export type TaskAssignmentSelectScalar = {
   status?: boolean
   progress?: boolean
   target?: boolean
-  claimedAt?: boolean
-  completedAt?: boolean
-  expiredAt?: boolean
   taskSnapshot?: boolean
   context?: boolean
   version?: boolean
+  claimedAt?: boolean
+  completedAt?: boolean
+  expiredAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type TaskAssignmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "userId" | "cycleKey" | "status" | "progress" | "target" | "claimedAt" | "completedAt" | "expiredAt" | "taskSnapshot" | "context" | "version" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["taskAssignment"]>
+export type TaskAssignmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "taskId" | "userId" | "cycleKey" | "status" | "progress" | "target" | "taskSnapshot" | "context" | "version" | "claimedAt" | "completedAt" | "expiredAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["taskAssignment"]>
 export type TaskAssignmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   task?: boolean | Prisma.TaskDefaultArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -1304,18 +1304,6 @@ export type $TaskAssignmentPayload<ExtArgs extends runtime.Types.Extensions.Inte
      */
     target: number
     /**
-     * 领取时间
-     */
-    claimedAt: Date | null
-    /**
-     * 完成时间
-     */
-    completedAt: Date | null
-    /**
-     * 过期时间
-     */
-    expiredAt: Date | null
-    /**
      * 任务快照
      */
     taskSnapshot: runtime.JsonValue | null
@@ -1327,6 +1315,18 @@ export type $TaskAssignmentPayload<ExtArgs extends runtime.Types.Extensions.Inte
      * 版本号
      */
     version: number
+    /**
+     * 领取时间
+     */
+    claimedAt: Date | null
+    /**
+     * 完成时间
+     */
+    completedAt: Date | null
+    /**
+     * 过期时间
+     */
+    expiredAt: Date | null
     /**
      * 创建时间
      */
@@ -1772,12 +1772,12 @@ export interface TaskAssignmentFieldRefs {
   readonly status: Prisma.FieldRef<"TaskAssignment", 'Int'>
   readonly progress: Prisma.FieldRef<"TaskAssignment", 'Int'>
   readonly target: Prisma.FieldRef<"TaskAssignment", 'Int'>
-  readonly claimedAt: Prisma.FieldRef<"TaskAssignment", 'DateTime'>
-  readonly completedAt: Prisma.FieldRef<"TaskAssignment", 'DateTime'>
-  readonly expiredAt: Prisma.FieldRef<"TaskAssignment", 'DateTime'>
   readonly taskSnapshot: Prisma.FieldRef<"TaskAssignment", 'Json'>
   readonly context: Prisma.FieldRef<"TaskAssignment", 'Json'>
   readonly version: Prisma.FieldRef<"TaskAssignment", 'Int'>
+  readonly claimedAt: Prisma.FieldRef<"TaskAssignment", 'DateTime'>
+  readonly completedAt: Prisma.FieldRef<"TaskAssignment", 'DateTime'>
+  readonly expiredAt: Prisma.FieldRef<"TaskAssignment", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"TaskAssignment", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"TaskAssignment", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"TaskAssignment", 'DateTime'>

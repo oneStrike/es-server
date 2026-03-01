@@ -59,10 +59,10 @@ export type ForumSectionMinAggregateOutputType = {
   sortOrder: number | null
   isEnabled: boolean | null
   topicReviewPolicy: number | null
+  remark: string | null
   topicCount: number | null
   replyCount: number | null
   lastPostAt: Date | null
-  remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -79,10 +79,10 @@ export type ForumSectionMaxAggregateOutputType = {
   sortOrder: number | null
   isEnabled: boolean | null
   topicReviewPolicy: number | null
+  remark: string | null
   topicCount: number | null
   replyCount: number | null
   lastPostAt: Date | null
-  remark: string | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -99,10 +99,10 @@ export type ForumSectionCountAggregateOutputType = {
   sortOrder: number
   isEnabled: number
   topicReviewPolicy: number
+  remark: number
   topicCount: number
   replyCount: number
   lastPostAt: number
-  remark: number
   createdAt: number
   updatedAt: number
   deletedAt: number
@@ -143,10 +143,10 @@ export type ForumSectionMinAggregateInputType = {
   sortOrder?: true
   isEnabled?: true
   topicReviewPolicy?: true
+  remark?: true
   topicCount?: true
   replyCount?: true
   lastPostAt?: true
-  remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -163,10 +163,10 @@ export type ForumSectionMaxAggregateInputType = {
   sortOrder?: true
   isEnabled?: true
   topicReviewPolicy?: true
+  remark?: true
   topicCount?: true
   replyCount?: true
   lastPostAt?: true
-  remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -183,10 +183,10 @@ export type ForumSectionCountAggregateInputType = {
   sortOrder?: true
   isEnabled?: true
   topicReviewPolicy?: true
+  remark?: true
   topicCount?: true
   replyCount?: true
   lastPostAt?: true
-  remark?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -290,10 +290,10 @@ export type ForumSectionGroupByOutputType = {
   sortOrder: number
   isEnabled: boolean
   topicReviewPolicy: number
+  remark: string | null
   topicCount: number
   replyCount: number
   lastPostAt: Date | null
-  remark: string | null
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -333,10 +333,10 @@ export type ForumSectionWhereInput = {
   sortOrder?: Prisma.IntFilter<"ForumSection"> | number
   isEnabled?: Prisma.BoolFilter<"ForumSection"> | boolean
   topicReviewPolicy?: Prisma.IntFilter<"ForumSection"> | number
+  remark?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   topicCount?: Prisma.IntFilter<"ForumSection"> | number
   replyCount?: Prisma.IntFilter<"ForumSection"> | number
   lastPostAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
-  remark?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
@@ -359,10 +359,10 @@ export type ForumSectionOrderByWithRelationInput = {
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   topicReviewPolicy?: Prisma.SortOrder
+  remark?: Prisma.SortOrderInput | Prisma.SortOrder
   topicCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   lastPostAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -388,10 +388,10 @@ export type ForumSectionWhereUniqueInput = Prisma.AtLeast<{
   sortOrder?: Prisma.IntFilter<"ForumSection"> | number
   isEnabled?: Prisma.BoolFilter<"ForumSection"> | boolean
   topicReviewPolicy?: Prisma.IntFilter<"ForumSection"> | number
+  remark?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   topicCount?: Prisma.IntFilter<"ForumSection"> | number
   replyCount?: Prisma.IntFilter<"ForumSection"> | number
   lastPostAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
-  remark?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
@@ -414,10 +414,10 @@ export type ForumSectionOrderByWithAggregationInput = {
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   topicReviewPolicy?: Prisma.SortOrder
+  remark?: Prisma.SortOrderInput | Prisma.SortOrder
   topicCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   lastPostAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -442,10 +442,10 @@ export type ForumSectionScalarWhereWithAggregatesInput = {
   sortOrder?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ForumSection"> | boolean
   topicReviewPolicy?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
+  remark?: Prisma.StringNullableWithAggregatesFilter<"ForumSection"> | string | null
   topicCount?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
   replyCount?: Prisma.IntWithAggregatesFilter<"ForumSection"> | number
   lastPostAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumSection"> | Date | string | null
-  remark?: Prisma.StringNullableWithAggregatesFilter<"ForumSection"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumSection"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumSection"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumSection"> | Date | string | null
@@ -458,10 +458,10 @@ export type ForumSectionCreateInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -484,10 +484,10 @@ export type ForumSectionUncheckedCreateInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -503,10 +503,10 @@ export type ForumSectionUpdateInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -529,10 +529,10 @@ export type ForumSectionUncheckedUpdateInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -552,10 +552,10 @@ export type ForumSectionCreateManyInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -568,10 +568,10 @@ export type ForumSectionUpdateManyMutationInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -588,10 +588,10 @@ export type ForumSectionUncheckedUpdateManyInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -623,10 +623,10 @@ export type ForumSectionCountOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   topicReviewPolicy?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
   topicCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   lastPostAt?: Prisma.SortOrder
-  remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -654,10 +654,10 @@ export type ForumSectionMaxOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   topicReviewPolicy?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
   topicCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   lastPostAt?: Prisma.SortOrder
-  remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -674,10 +674,10 @@ export type ForumSectionMinOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   topicReviewPolicy?: Prisma.SortOrder
+  remark?: Prisma.SortOrder
   topicCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   lastPostAt?: Prisma.SortOrder
-  remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -869,10 +869,10 @@ export type ForumSectionCreateWithoutUserLevelRuleInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -893,10 +893,10 @@ export type ForumSectionUncheckedCreateWithoutUserLevelRuleInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -945,10 +945,10 @@ export type ForumSectionScalarWhereInput = {
   sortOrder?: Prisma.IntFilter<"ForumSection"> | number
   isEnabled?: Prisma.BoolFilter<"ForumSection"> | boolean
   topicReviewPolicy?: Prisma.IntFilter<"ForumSection"> | number
+  remark?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   topicCount?: Prisma.IntFilter<"ForumSection"> | number
   replyCount?: Prisma.IntFilter<"ForumSection"> | number
   lastPostAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
-  remark?: Prisma.StringNullableFilter<"ForumSection"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumSection"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"ForumSection"> | Date | string | null
@@ -961,10 +961,10 @@ export type ForumSectionCreateWithoutApplicationsInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -986,10 +986,10 @@ export type ForumSectionUncheckedCreateWithoutApplicationsInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1020,10 +1020,10 @@ export type ForumSectionUpdateWithoutApplicationsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1045,10 +1045,10 @@ export type ForumSectionUncheckedUpdateWithoutApplicationsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1063,10 +1063,10 @@ export type ForumSectionCreateWithoutModeratorSectionsInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1088,10 +1088,10 @@ export type ForumSectionUncheckedCreateWithoutModeratorSectionsInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1122,10 +1122,10 @@ export type ForumSectionUpdateWithoutModeratorSectionsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1147,10 +1147,10 @@ export type ForumSectionUncheckedUpdateWithoutModeratorSectionsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1165,10 +1165,10 @@ export type ForumSectionCreateWithoutGroupInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1189,10 +1189,10 @@ export type ForumSectionUncheckedCreateWithoutGroupInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1234,10 +1234,10 @@ export type ForumSectionCreateWithoutTopicsInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1259,10 +1259,10 @@ export type ForumSectionUncheckedCreateWithoutTopicsInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1282,10 +1282,10 @@ export type ForumSectionCreateWithoutLastTopicInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1306,10 +1306,10 @@ export type ForumSectionUncheckedCreateWithoutLastTopicInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1346,10 +1346,10 @@ export type ForumSectionUpdateWithoutTopicsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1371,10 +1371,10 @@ export type ForumSectionUncheckedUpdateWithoutTopicsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1408,10 +1408,10 @@ export type ForumSectionCreateManyUserLevelRuleInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1424,10 +1424,10 @@ export type ForumSectionUpdateWithoutUserLevelRuleInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1448,10 +1448,10 @@ export type ForumSectionUncheckedUpdateWithoutUserLevelRuleInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1470,10 +1470,10 @@ export type ForumSectionUncheckedUpdateManyWithoutUserLevelRuleInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1489,10 +1489,10 @@ export type ForumSectionCreateManyGroupInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1505,10 +1505,10 @@ export type ForumSectionUpdateWithoutGroupInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1529,10 +1529,10 @@ export type ForumSectionUncheckedUpdateWithoutGroupInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1551,10 +1551,10 @@ export type ForumSectionUncheckedUpdateManyWithoutGroupInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1570,10 +1570,10 @@ export type ForumSectionCreateManyLastTopicInput = {
   sortOrder?: number
   isEnabled?: boolean
   topicReviewPolicy?: number
+  remark?: string | null
   topicCount?: number
   replyCount?: number
   lastPostAt?: Date | string | null
-  remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1586,10 +1586,10 @@ export type ForumSectionUpdateWithoutLastTopicInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1610,10 +1610,10 @@ export type ForumSectionUncheckedUpdateWithoutLastTopicInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1632,10 +1632,10 @@ export type ForumSectionUncheckedUpdateManyWithoutLastTopicInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   topicReviewPolicy?: Prisma.IntFieldUpdateOperationsInput | number
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastPostAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1701,10 +1701,10 @@ export type ForumSectionSelect<ExtArgs extends runtime.Types.Extensions.Internal
   sortOrder?: boolean
   isEnabled?: boolean
   topicReviewPolicy?: boolean
+  remark?: boolean
   topicCount?: boolean
   replyCount?: boolean
   lastPostAt?: boolean
-  remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -1728,10 +1728,10 @@ export type ForumSectionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   sortOrder?: boolean
   isEnabled?: boolean
   topicReviewPolicy?: boolean
+  remark?: boolean
   topicCount?: boolean
   replyCount?: boolean
   lastPostAt?: boolean
-  remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -1751,10 +1751,10 @@ export type ForumSectionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   sortOrder?: boolean
   isEnabled?: boolean
   topicReviewPolicy?: boolean
+  remark?: boolean
   topicCount?: boolean
   replyCount?: boolean
   lastPostAt?: boolean
-  remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -1774,16 +1774,16 @@ export type ForumSectionSelectScalar = {
   sortOrder?: boolean
   isEnabled?: boolean
   topicReviewPolicy?: boolean
+  remark?: boolean
   topicCount?: boolean
   replyCount?: boolean
   lastPostAt?: boolean
-  remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type ForumSectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "groupId" | "userLevelRuleId" | "lastTopicId" | "name" | "description" | "icon" | "sortOrder" | "isEnabled" | "topicReviewPolicy" | "topicCount" | "replyCount" | "lastPostAt" | "remark" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumSection"]>
+export type ForumSectionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "groupId" | "userLevelRuleId" | "lastTopicId" | "name" | "description" | "icon" | "sortOrder" | "isEnabled" | "topicReviewPolicy" | "remark" | "topicCount" | "replyCount" | "lastPostAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumSection"]>
 export type ForumSectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   group?: boolean | Prisma.ForumSection$groupArgs<ExtArgs>
   userLevelRule?: boolean | Prisma.ForumSection$userLevelRuleArgs<ExtArgs>
@@ -1874,6 +1874,10 @@ export type $ForumSectionPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     topicReviewPolicy: number
     /**
+     * 备注信息
+     */
+    remark: string | null
+    /**
      * 主题数
      */
     topicCount: number
@@ -1885,10 +1889,6 @@ export type $ForumSectionPayload<ExtArgs extends runtime.Types.Extensions.Intern
      * 最后发表时间
      */
     lastPostAt: Date | null
-    /**
-     * 备注信息
-     */
-    remark: string | null
     /**
      * 创建时间
      */
@@ -2340,10 +2340,10 @@ export interface ForumSectionFieldRefs {
   readonly sortOrder: Prisma.FieldRef<"ForumSection", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"ForumSection", 'Boolean'>
   readonly topicReviewPolicy: Prisma.FieldRef<"ForumSection", 'Int'>
+  readonly remark: Prisma.FieldRef<"ForumSection", 'String'>
   readonly topicCount: Prisma.FieldRef<"ForumSection", 'Int'>
   readonly replyCount: Prisma.FieldRef<"ForumSection", 'Int'>
   readonly lastPostAt: Prisma.FieldRef<"ForumSection", 'DateTime'>
-  readonly remark: Prisma.FieldRef<"ForumSection", 'String'>
   readonly createdAt: Prisma.FieldRef<"ForumSection", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumSection", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"ForumSection", 'DateTime'>

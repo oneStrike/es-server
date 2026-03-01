@@ -1204,8 +1204,17 @@ export type $UserPointRecordPayload<ExtArgs extends runtime.Types.Extensions.Int
      * 关联的事件ID
      */
     eventId: number | null
+    /**
+     * 目标类型
+     */
     targetType: number | null
+    /**
+     * 目标ID
+     */
     targetId: number | null
+    /**
+     * 兑换ID
+     */
     exchangeId: number | null
     /**
      * 积分变化（正数为获得，负数为消费）

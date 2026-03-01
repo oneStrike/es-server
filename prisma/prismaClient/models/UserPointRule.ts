@@ -31,8 +31,8 @@ export type UserPointRuleAvgAggregateOutputType = {
   type: number | null
   points: number | null
   dailyLimit: number | null
-  cooldownSeconds: number | null
   totalLimit: number | null
+  cooldownSeconds: number | null
 }
 
 export type UserPointRuleSumAggregateOutputType = {
@@ -40,8 +40,8 @@ export type UserPointRuleSumAggregateOutputType = {
   type: number | null
   points: number | null
   dailyLimit: number | null
-  cooldownSeconds: number | null
   totalLimit: number | null
+  cooldownSeconds: number | null
 }
 
 export type UserPointRuleMinAggregateOutputType = {
@@ -49,10 +49,10 @@ export type UserPointRuleMinAggregateOutputType = {
   type: number | null
   points: number | null
   dailyLimit: number | null
+  totalLimit: number | null
+  cooldownSeconds: number | null
   business: string | null
   eventKey: string | null
-  cooldownSeconds: number | null
-  totalLimit: number | null
   isEnabled: boolean | null
   remark: string | null
   createdAt: Date | null
@@ -64,10 +64,10 @@ export type UserPointRuleMaxAggregateOutputType = {
   type: number | null
   points: number | null
   dailyLimit: number | null
+  totalLimit: number | null
+  cooldownSeconds: number | null
   business: string | null
   eventKey: string | null
-  cooldownSeconds: number | null
-  totalLimit: number | null
   isEnabled: boolean | null
   remark: string | null
   createdAt: Date | null
@@ -79,10 +79,10 @@ export type UserPointRuleCountAggregateOutputType = {
   type: number
   points: number
   dailyLimit: number
+  totalLimit: number
+  cooldownSeconds: number
   business: number
   eventKey: number
-  cooldownSeconds: number
-  totalLimit: number
   isEnabled: number
   remark: number
   createdAt: number
@@ -96,8 +96,8 @@ export type UserPointRuleAvgAggregateInputType = {
   type?: true
   points?: true
   dailyLimit?: true
-  cooldownSeconds?: true
   totalLimit?: true
+  cooldownSeconds?: true
 }
 
 export type UserPointRuleSumAggregateInputType = {
@@ -105,8 +105,8 @@ export type UserPointRuleSumAggregateInputType = {
   type?: true
   points?: true
   dailyLimit?: true
-  cooldownSeconds?: true
   totalLimit?: true
+  cooldownSeconds?: true
 }
 
 export type UserPointRuleMinAggregateInputType = {
@@ -114,10 +114,10 @@ export type UserPointRuleMinAggregateInputType = {
   type?: true
   points?: true
   dailyLimit?: true
+  totalLimit?: true
+  cooldownSeconds?: true
   business?: true
   eventKey?: true
-  cooldownSeconds?: true
-  totalLimit?: true
   isEnabled?: true
   remark?: true
   createdAt?: true
@@ -129,10 +129,10 @@ export type UserPointRuleMaxAggregateInputType = {
   type?: true
   points?: true
   dailyLimit?: true
+  totalLimit?: true
+  cooldownSeconds?: true
   business?: true
   eventKey?: true
-  cooldownSeconds?: true
-  totalLimit?: true
   isEnabled?: true
   remark?: true
   createdAt?: true
@@ -144,10 +144,10 @@ export type UserPointRuleCountAggregateInputType = {
   type?: true
   points?: true
   dailyLimit?: true
+  totalLimit?: true
+  cooldownSeconds?: true
   business?: true
   eventKey?: true
-  cooldownSeconds?: true
-  totalLimit?: true
   isEnabled?: true
   remark?: true
   createdAt?: true
@@ -246,10 +246,10 @@ export type UserPointRuleGroupByOutputType = {
   type: number
   points: number
   dailyLimit: number
+  totalLimit: number
+  cooldownSeconds: number
   business: string | null
   eventKey: string | null
-  cooldownSeconds: number
-  totalLimit: number
   isEnabled: boolean
   remark: string | null
   createdAt: Date
@@ -284,10 +284,10 @@ export type UserPointRuleWhereInput = {
   type?: Prisma.IntFilter<"UserPointRule"> | number
   points?: Prisma.IntFilter<"UserPointRule"> | number
   dailyLimit?: Prisma.IntFilter<"UserPointRule"> | number
+  totalLimit?: Prisma.IntFilter<"UserPointRule"> | number
+  cooldownSeconds?: Prisma.IntFilter<"UserPointRule"> | number
   business?: Prisma.StringNullableFilter<"UserPointRule"> | string | null
   eventKey?: Prisma.StringNullableFilter<"UserPointRule"> | string | null
-  cooldownSeconds?: Prisma.IntFilter<"UserPointRule"> | number
-  totalLimit?: Prisma.IntFilter<"UserPointRule"> | number
   isEnabled?: Prisma.BoolFilter<"UserPointRule"> | boolean
   remark?: Prisma.StringNullableFilter<"UserPointRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserPointRule"> | Date | string
@@ -300,10 +300,10 @@ export type UserPointRuleOrderByWithRelationInput = {
   type?: Prisma.SortOrder
   points?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
+  totalLimit?: Prisma.SortOrder
+  cooldownSeconds?: Prisma.SortOrder
   business?: Prisma.SortOrderInput | Prisma.SortOrder
   eventKey?: Prisma.SortOrderInput | Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  totalLimit?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -319,10 +319,10 @@ export type UserPointRuleWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserPointRuleWhereInput | Prisma.UserPointRuleWhereInput[]
   points?: Prisma.IntFilter<"UserPointRule"> | number
   dailyLimit?: Prisma.IntFilter<"UserPointRule"> | number
+  totalLimit?: Prisma.IntFilter<"UserPointRule"> | number
+  cooldownSeconds?: Prisma.IntFilter<"UserPointRule"> | number
   business?: Prisma.StringNullableFilter<"UserPointRule"> | string | null
   eventKey?: Prisma.StringNullableFilter<"UserPointRule"> | string | null
-  cooldownSeconds?: Prisma.IntFilter<"UserPointRule"> | number
-  totalLimit?: Prisma.IntFilter<"UserPointRule"> | number
   isEnabled?: Prisma.BoolFilter<"UserPointRule"> | boolean
   remark?: Prisma.StringNullableFilter<"UserPointRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserPointRule"> | Date | string
@@ -335,10 +335,10 @@ export type UserPointRuleOrderByWithAggregationInput = {
   type?: Prisma.SortOrder
   points?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
+  totalLimit?: Prisma.SortOrder
+  cooldownSeconds?: Prisma.SortOrder
   business?: Prisma.SortOrderInput | Prisma.SortOrder
   eventKey?: Prisma.SortOrderInput | Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  totalLimit?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -358,10 +358,10 @@ export type UserPointRuleScalarWhereWithAggregatesInput = {
   type?: Prisma.IntWithAggregatesFilter<"UserPointRule"> | number
   points?: Prisma.IntWithAggregatesFilter<"UserPointRule"> | number
   dailyLimit?: Prisma.IntWithAggregatesFilter<"UserPointRule"> | number
+  totalLimit?: Prisma.IntWithAggregatesFilter<"UserPointRule"> | number
+  cooldownSeconds?: Prisma.IntWithAggregatesFilter<"UserPointRule"> | number
   business?: Prisma.StringNullableWithAggregatesFilter<"UserPointRule"> | string | null
   eventKey?: Prisma.StringNullableWithAggregatesFilter<"UserPointRule"> | string | null
-  cooldownSeconds?: Prisma.IntWithAggregatesFilter<"UserPointRule"> | number
-  totalLimit?: Prisma.IntWithAggregatesFilter<"UserPointRule"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"UserPointRule"> | boolean
   remark?: Prisma.StringNullableWithAggregatesFilter<"UserPointRule"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserPointRule"> | Date | string
@@ -372,10 +372,10 @@ export type UserPointRuleCreateInput = {
   type: number
   points: number
   dailyLimit?: number
+  totalLimit?: number
+  cooldownSeconds?: number
   business?: string | null
   eventKey?: string | null
-  cooldownSeconds?: number
-  totalLimit?: number
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -388,10 +388,10 @@ export type UserPointRuleUncheckedCreateInput = {
   type: number
   points: number
   dailyLimit?: number
+  totalLimit?: number
+  cooldownSeconds?: number
   business?: string | null
   eventKey?: string | null
-  cooldownSeconds?: number
-  totalLimit?: number
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -403,10 +403,10 @@ export type UserPointRuleUpdateInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -419,10 +419,10 @@ export type UserPointRuleUncheckedUpdateInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -435,10 +435,10 @@ export type UserPointRuleCreateManyInput = {
   type: number
   points: number
   dailyLimit?: number
+  totalLimit?: number
+  cooldownSeconds?: number
   business?: string | null
   eventKey?: string | null
-  cooldownSeconds?: number
-  totalLimit?: number
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -449,10 +449,10 @@ export type UserPointRuleUpdateManyMutationInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -464,10 +464,10 @@ export type UserPointRuleUncheckedUpdateManyInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -484,10 +484,10 @@ export type UserPointRuleCountOrderByAggregateInput = {
   type?: Prisma.SortOrder
   points?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
+  totalLimit?: Prisma.SortOrder
+  cooldownSeconds?: Prisma.SortOrder
   business?: Prisma.SortOrder
   eventKey?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  totalLimit?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -499,8 +499,8 @@ export type UserPointRuleAvgOrderByAggregateInput = {
   type?: Prisma.SortOrder
   points?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
   totalLimit?: Prisma.SortOrder
+  cooldownSeconds?: Prisma.SortOrder
 }
 
 export type UserPointRuleMaxOrderByAggregateInput = {
@@ -508,10 +508,10 @@ export type UserPointRuleMaxOrderByAggregateInput = {
   type?: Prisma.SortOrder
   points?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
+  totalLimit?: Prisma.SortOrder
+  cooldownSeconds?: Prisma.SortOrder
   business?: Prisma.SortOrder
   eventKey?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  totalLimit?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -523,10 +523,10 @@ export type UserPointRuleMinOrderByAggregateInput = {
   type?: Prisma.SortOrder
   points?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
+  totalLimit?: Prisma.SortOrder
+  cooldownSeconds?: Prisma.SortOrder
   business?: Prisma.SortOrder
   eventKey?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  totalLimit?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -538,8 +538,8 @@ export type UserPointRuleSumOrderByAggregateInput = {
   type?: Prisma.SortOrder
   points?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
   totalLimit?: Prisma.SortOrder
+  cooldownSeconds?: Prisma.SortOrder
 }
 
 export type UserPointRuleCreateNestedOneWithoutRecordsInput = {
@@ -562,10 +562,10 @@ export type UserPointRuleCreateWithoutRecordsInput = {
   type: number
   points: number
   dailyLimit?: number
+  totalLimit?: number
+  cooldownSeconds?: number
   business?: string | null
   eventKey?: string | null
-  cooldownSeconds?: number
-  totalLimit?: number
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -577,10 +577,10 @@ export type UserPointRuleUncheckedCreateWithoutRecordsInput = {
   type: number
   points: number
   dailyLimit?: number
+  totalLimit?: number
+  cooldownSeconds?: number
   business?: string | null
   eventKey?: string | null
-  cooldownSeconds?: number
-  totalLimit?: number
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -607,10 +607,10 @@ export type UserPointRuleUpdateWithoutRecordsInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -622,10 +622,10 @@ export type UserPointRuleUncheckedUpdateWithoutRecordsInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   points?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
+  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
   business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -668,10 +668,10 @@ export type UserPointRuleSelect<ExtArgs extends runtime.Types.Extensions.Interna
   type?: boolean
   points?: boolean
   dailyLimit?: boolean
+  totalLimit?: boolean
+  cooldownSeconds?: boolean
   business?: boolean
   eventKey?: boolean
-  cooldownSeconds?: boolean
-  totalLimit?: boolean
   isEnabled?: boolean
   remark?: boolean
   createdAt?: boolean
@@ -685,10 +685,10 @@ export type UserPointRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   type?: boolean
   points?: boolean
   dailyLimit?: boolean
+  totalLimit?: boolean
+  cooldownSeconds?: boolean
   business?: boolean
   eventKey?: boolean
-  cooldownSeconds?: boolean
-  totalLimit?: boolean
   isEnabled?: boolean
   remark?: boolean
   createdAt?: boolean
@@ -700,10 +700,10 @@ export type UserPointRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   type?: boolean
   points?: boolean
   dailyLimit?: boolean
+  totalLimit?: boolean
+  cooldownSeconds?: boolean
   business?: boolean
   eventKey?: boolean
-  cooldownSeconds?: boolean
-  totalLimit?: boolean
   isEnabled?: boolean
   remark?: boolean
   createdAt?: boolean
@@ -715,17 +715,17 @@ export type UserPointRuleSelectScalar = {
   type?: boolean
   points?: boolean
   dailyLimit?: boolean
+  totalLimit?: boolean
+  cooldownSeconds?: boolean
   business?: boolean
   eventKey?: boolean
-  cooldownSeconds?: boolean
-  totalLimit?: boolean
   isEnabled?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserPointRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "points" | "dailyLimit" | "business" | "eventKey" | "cooldownSeconds" | "totalLimit" | "isEnabled" | "remark" | "createdAt" | "updatedAt", ExtArgs["result"]["userPointRule"]>
+export type UserPointRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "points" | "dailyLimit" | "totalLimit" | "cooldownSeconds" | "business" | "eventKey" | "isEnabled" | "remark" | "createdAt" | "updatedAt", ExtArgs["result"]["userPointRule"]>
 export type UserPointRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   records?: boolean | Prisma.UserPointRule$recordsArgs<ExtArgs>
   _count?: boolean | Prisma.UserPointRuleCountOutputTypeDefaultArgs<ExtArgs>
@@ -759,6 +759,14 @@ export type $UserPointRulePayload<ExtArgs extends runtime.Types.Extensions.Inter
      */
     dailyLimit: number
     /**
+     * 总上限（0=无限制）
+     */
+    totalLimit: number
+    /**
+     * 冷却秒数（0=无限制）
+     */
+    cooldownSeconds: number
+    /**
      * 业务域标识（如 forum/comic）
      */
     business: string | null
@@ -766,14 +774,6 @@ export type $UserPointRulePayload<ExtArgs extends runtime.Types.Extensions.Inter
      * 事件键（如 forum.topic.create）
      */
     eventKey: string | null
-    /**
-     * 冷却秒数（0=无限制）
-     */
-    cooldownSeconds: number
-    /**
-     * 总上限（0=无限制）
-     */
-    totalLimit: number
     /**
      * 是否启用
      */
@@ -1218,10 +1218,10 @@ export interface UserPointRuleFieldRefs {
   readonly type: Prisma.FieldRef<"UserPointRule", 'Int'>
   readonly points: Prisma.FieldRef<"UserPointRule", 'Int'>
   readonly dailyLimit: Prisma.FieldRef<"UserPointRule", 'Int'>
+  readonly totalLimit: Prisma.FieldRef<"UserPointRule", 'Int'>
+  readonly cooldownSeconds: Prisma.FieldRef<"UserPointRule", 'Int'>
   readonly business: Prisma.FieldRef<"UserPointRule", 'String'>
   readonly eventKey: Prisma.FieldRef<"UserPointRule", 'String'>
-  readonly cooldownSeconds: Prisma.FieldRef<"UserPointRule", 'Int'>
-  readonly totalLimit: Prisma.FieldRef<"UserPointRule", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"UserPointRule", 'Boolean'>
   readonly remark: Prisma.FieldRef<"UserPointRule", 'String'>
   readonly createdAt: Prisma.FieldRef<"UserPointRule", 'DateTime'>

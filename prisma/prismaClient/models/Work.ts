@@ -30,42 +30,42 @@ export type WorkAvgAggregateOutputType = {
   id: number | null
   type: number | null
   serialStatus: number | null
+  viewRule: number | null
+  requiredViewLevelId: number | null
+  price: number | null
+  chapterPrice: number | null
+  chapterExchangePoints: number | null
+  exchangePoints: number | null
+  recommendWeight: number | null
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
   downloadCount: number | null
   purchaseCount: number | null
-  price: number | null
-  viewRule: number | null
-  requiredViewLevelId: number | null
-  chapterPrice: number | null
-  chapterExchangePoints: number | null
-  exchangePoints: number | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
-  recommendWeight: number | null
 }
 
 export type WorkSumAggregateOutputType = {
   id: number | null
   type: number | null
   serialStatus: number | null
+  viewRule: number | null
+  requiredViewLevelId: number | null
+  price: number | null
+  chapterPrice: number | null
+  chapterExchangePoints: number | null
+  exchangePoints: number | null
+  recommendWeight: number | null
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
   downloadCount: number | null
   purchaseCount: number | null
-  price: number | null
-  viewRule: number | null
-  requiredViewLevelId: number | null
-  chapterPrice: number | null
-  chapterExchangePoints: number | null
-  exchangePoints: number | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
-  recommendWeight: number | null
 }
 
 export type WorkMinAggregateOutputType = {
@@ -85,29 +85,29 @@ export type WorkMinAggregateOutputType = {
   disclaimer: string | null
   remark: string | null
   isPublished: boolean | null
+  isRecommended: boolean | null
+  isHot: boolean | null
+  isNew: boolean | null
   publishAt: Date | null
   lastUpdated: Date | null
+  viewRule: number | null
+  requiredViewLevelId: number | null
+  price: number | null
+  chapterPrice: number | null
+  chapterExchangePoints: number | null
+  exchangePoints: number | null
+  canComment: boolean | null
+  canExchange: boolean | null
+  canDownload: boolean | null
+  recommendWeight: number | null
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
   downloadCount: number | null
   purchaseCount: number | null
-  price: number | null
-  viewRule: number | null
-  requiredViewLevelId: number | null
-  chapterPrice: number | null
-  chapterExchangePoints: number | null
-  canComment: boolean | null
-  canExchange: boolean | null
-  exchangePoints: number | null
-  canDownload: boolean | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
-  isRecommended: boolean | null
-  isHot: boolean | null
-  isNew: boolean | null
-  recommendWeight: number | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -130,29 +130,29 @@ export type WorkMaxAggregateOutputType = {
   disclaimer: string | null
   remark: string | null
   isPublished: boolean | null
+  isRecommended: boolean | null
+  isHot: boolean | null
+  isNew: boolean | null
   publishAt: Date | null
   lastUpdated: Date | null
+  viewRule: number | null
+  requiredViewLevelId: number | null
+  price: number | null
+  chapterPrice: number | null
+  chapterExchangePoints: number | null
+  exchangePoints: number | null
+  canComment: boolean | null
+  canExchange: boolean | null
+  canDownload: boolean | null
+  recommendWeight: number | null
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
   downloadCount: number | null
   purchaseCount: number | null
-  price: number | null
-  viewRule: number | null
-  requiredViewLevelId: number | null
-  chapterPrice: number | null
-  chapterExchangePoints: number | null
-  canComment: boolean | null
-  canExchange: boolean | null
-  exchangePoints: number | null
-  canDownload: boolean | null
   rating: number | null
   ratingCount: number | null
   popularity: number | null
-  isRecommended: boolean | null
-  isHot: boolean | null
-  isNew: boolean | null
-  recommendWeight: number | null
   createdAt: Date | null
   updatedAt: Date | null
   deletedAt: Date | null
@@ -175,29 +175,29 @@ export type WorkCountAggregateOutputType = {
   disclaimer: number
   remark: number
   isPublished: number
+  isRecommended: number
+  isHot: number
+  isNew: number
   publishAt: number
   lastUpdated: number
+  viewRule: number
+  requiredViewLevelId: number
+  price: number
+  chapterPrice: number
+  chapterExchangePoints: number
+  exchangePoints: number
+  canComment: number
+  canExchange: number
+  canDownload: number
+  recommendWeight: number
   viewCount: number
   favoriteCount: number
   likeCount: number
   downloadCount: number
   purchaseCount: number
-  price: number
-  viewRule: number
-  requiredViewLevelId: number
-  chapterPrice: number
-  chapterExchangePoints: number
-  canComment: number
-  canExchange: number
-  exchangePoints: number
-  canDownload: number
   rating: number
   ratingCount: number
   popularity: number
-  isRecommended: number
-  isHot: number
-  isNew: number
-  recommendWeight: number
   createdAt: number
   updatedAt: number
   deletedAt: number
@@ -209,42 +209,42 @@ export type WorkAvgAggregateInputType = {
   id?: true
   type?: true
   serialStatus?: true
+  viewRule?: true
+  requiredViewLevelId?: true
+  price?: true
+  chapterPrice?: true
+  chapterExchangePoints?: true
+  exchangePoints?: true
+  recommendWeight?: true
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
   downloadCount?: true
   purchaseCount?: true
-  price?: true
-  viewRule?: true
-  requiredViewLevelId?: true
-  chapterPrice?: true
-  chapterExchangePoints?: true
-  exchangePoints?: true
   rating?: true
   ratingCount?: true
   popularity?: true
-  recommendWeight?: true
 }
 
 export type WorkSumAggregateInputType = {
   id?: true
   type?: true
   serialStatus?: true
+  viewRule?: true
+  requiredViewLevelId?: true
+  price?: true
+  chapterPrice?: true
+  chapterExchangePoints?: true
+  exchangePoints?: true
+  recommendWeight?: true
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
   downloadCount?: true
   purchaseCount?: true
-  price?: true
-  viewRule?: true
-  requiredViewLevelId?: true
-  chapterPrice?: true
-  chapterExchangePoints?: true
-  exchangePoints?: true
   rating?: true
   ratingCount?: true
   popularity?: true
-  recommendWeight?: true
 }
 
 export type WorkMinAggregateInputType = {
@@ -264,29 +264,29 @@ export type WorkMinAggregateInputType = {
   disclaimer?: true
   remark?: true
   isPublished?: true
+  isRecommended?: true
+  isHot?: true
+  isNew?: true
   publishAt?: true
   lastUpdated?: true
+  viewRule?: true
+  requiredViewLevelId?: true
+  price?: true
+  chapterPrice?: true
+  chapterExchangePoints?: true
+  exchangePoints?: true
+  canComment?: true
+  canExchange?: true
+  canDownload?: true
+  recommendWeight?: true
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
   downloadCount?: true
   purchaseCount?: true
-  price?: true
-  viewRule?: true
-  requiredViewLevelId?: true
-  chapterPrice?: true
-  chapterExchangePoints?: true
-  canComment?: true
-  canExchange?: true
-  exchangePoints?: true
-  canDownload?: true
   rating?: true
   ratingCount?: true
   popularity?: true
-  isRecommended?: true
-  isHot?: true
-  isNew?: true
-  recommendWeight?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -309,29 +309,29 @@ export type WorkMaxAggregateInputType = {
   disclaimer?: true
   remark?: true
   isPublished?: true
+  isRecommended?: true
+  isHot?: true
+  isNew?: true
   publishAt?: true
   lastUpdated?: true
+  viewRule?: true
+  requiredViewLevelId?: true
+  price?: true
+  chapterPrice?: true
+  chapterExchangePoints?: true
+  exchangePoints?: true
+  canComment?: true
+  canExchange?: true
+  canDownload?: true
+  recommendWeight?: true
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
   downloadCount?: true
   purchaseCount?: true
-  price?: true
-  viewRule?: true
-  requiredViewLevelId?: true
-  chapterPrice?: true
-  chapterExchangePoints?: true
-  canComment?: true
-  canExchange?: true
-  exchangePoints?: true
-  canDownload?: true
   rating?: true
   ratingCount?: true
   popularity?: true
-  isRecommended?: true
-  isHot?: true
-  isNew?: true
-  recommendWeight?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -354,29 +354,29 @@ export type WorkCountAggregateInputType = {
   disclaimer?: true
   remark?: true
   isPublished?: true
+  isRecommended?: true
+  isHot?: true
+  isNew?: true
   publishAt?: true
   lastUpdated?: true
+  viewRule?: true
+  requiredViewLevelId?: true
+  price?: true
+  chapterPrice?: true
+  chapterExchangePoints?: true
+  exchangePoints?: true
+  canComment?: true
+  canExchange?: true
+  canDownload?: true
+  recommendWeight?: true
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
   downloadCount?: true
   purchaseCount?: true
-  price?: true
-  viewRule?: true
-  requiredViewLevelId?: true
-  chapterPrice?: true
-  chapterExchangePoints?: true
-  canComment?: true
-  canExchange?: true
-  exchangePoints?: true
-  canDownload?: true
   rating?: true
   ratingCount?: true
   popularity?: true
-  isRecommended?: true
-  isHot?: true
-  isNew?: true
-  recommendWeight?: true
   createdAt?: true
   updatedAt?: true
   deletedAt?: true
@@ -486,29 +486,29 @@ export type WorkGroupByOutputType = {
   disclaimer: string | null
   remark: string | null
   isPublished: boolean
+  isRecommended: boolean
+  isHot: boolean
+  isNew: boolean
   publishAt: Date | null
   lastUpdated: Date | null
+  viewRule: number
+  requiredViewLevelId: number | null
+  price: number
+  chapterPrice: number
+  chapterExchangePoints: number
+  exchangePoints: number
+  canComment: boolean
+  canExchange: boolean
+  canDownload: boolean
+  recommendWeight: number
   viewCount: number
   favoriteCount: number
   likeCount: number
   downloadCount: number
   purchaseCount: number
-  price: number
-  viewRule: number
-  requiredViewLevelId: number | null
-  chapterPrice: number
-  chapterExchangePoints: number
-  canComment: boolean
-  canExchange: boolean
-  exchangePoints: number
-  canDownload: boolean
   rating: number | null
   ratingCount: number
   popularity: number
-  isRecommended: boolean
-  isHot: boolean
-  isNew: boolean
-  recommendWeight: number
   createdAt: Date
   updatedAt: Date
   deletedAt: Date | null
@@ -554,29 +554,29 @@ export type WorkWhereInput = {
   disclaimer?: Prisma.StringNullableFilter<"Work"> | string | null
   remark?: Prisma.StringNullableFilter<"Work"> | string | null
   isPublished?: Prisma.BoolFilter<"Work"> | boolean
+  isRecommended?: Prisma.BoolFilter<"Work"> | boolean
+  isHot?: Prisma.BoolFilter<"Work"> | boolean
+  isNew?: Prisma.BoolFilter<"Work"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
+  viewRule?: Prisma.IntFilter<"Work"> | number
+  requiredViewLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
+  price?: Prisma.IntFilter<"Work"> | number
+  chapterPrice?: Prisma.IntFilter<"Work"> | number
+  chapterExchangePoints?: Prisma.IntFilter<"Work"> | number
+  exchangePoints?: Prisma.IntFilter<"Work"> | number
+  canComment?: Prisma.BoolFilter<"Work"> | boolean
+  canExchange?: Prisma.BoolFilter<"Work"> | boolean
+  canDownload?: Prisma.BoolFilter<"Work"> | boolean
+  recommendWeight?: Prisma.FloatFilter<"Work"> | number
   viewCount?: Prisma.IntFilter<"Work"> | number
   favoriteCount?: Prisma.IntFilter<"Work"> | number
   likeCount?: Prisma.IntFilter<"Work"> | number
   downloadCount?: Prisma.IntFilter<"Work"> | number
   purchaseCount?: Prisma.IntFilter<"Work"> | number
-  price?: Prisma.IntFilter<"Work"> | number
-  viewRule?: Prisma.IntFilter<"Work"> | number
-  requiredViewLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
-  chapterPrice?: Prisma.IntFilter<"Work"> | number
-  chapterExchangePoints?: Prisma.IntFilter<"Work"> | number
-  canComment?: Prisma.BoolFilter<"Work"> | boolean
-  canExchange?: Prisma.BoolFilter<"Work"> | boolean
-  exchangePoints?: Prisma.IntFilter<"Work"> | number
-  canDownload?: Prisma.BoolFilter<"Work"> | boolean
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
   popularity?: Prisma.IntFilter<"Work"> | number
-  isRecommended?: Prisma.BoolFilter<"Work"> | boolean
-  isHot?: Prisma.BoolFilter<"Work"> | boolean
-  isNew?: Prisma.BoolFilter<"Work"> | boolean
-  recommendWeight?: Prisma.FloatFilter<"Work"> | number
   createdAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
@@ -607,29 +607,29 @@ export type WorkOrderByWithRelationInput = {
   disclaimer?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
+  isHot?: Prisma.SortOrder
+  isNew?: Prisma.SortOrder
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder
+  viewRule?: Prisma.SortOrder
+  requiredViewLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  price?: Prisma.SortOrder
+  chapterPrice?: Prisma.SortOrder
+  chapterExchangePoints?: Prisma.SortOrder
+  exchangePoints?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
+  canExchange?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
+  recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
-  price?: Prisma.SortOrder
-  viewRule?: Prisma.SortOrder
-  requiredViewLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
-  chapterPrice?: Prisma.SortOrder
-  chapterExchangePoints?: Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  canExchange?: Prisma.SortOrder
-  exchangePoints?: Prisma.SortOrder
-  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
-  isHot?: Prisma.SortOrder
-  isNew?: Prisma.SortOrder
-  recommendWeight?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -663,29 +663,29 @@ export type WorkWhereUniqueInput = Prisma.AtLeast<{
   disclaimer?: Prisma.StringNullableFilter<"Work"> | string | null
   remark?: Prisma.StringNullableFilter<"Work"> | string | null
   isPublished?: Prisma.BoolFilter<"Work"> | boolean
+  isRecommended?: Prisma.BoolFilter<"Work"> | boolean
+  isHot?: Prisma.BoolFilter<"Work"> | boolean
+  isNew?: Prisma.BoolFilter<"Work"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
+  viewRule?: Prisma.IntFilter<"Work"> | number
+  requiredViewLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
+  price?: Prisma.IntFilter<"Work"> | number
+  chapterPrice?: Prisma.IntFilter<"Work"> | number
+  chapterExchangePoints?: Prisma.IntFilter<"Work"> | number
+  exchangePoints?: Prisma.IntFilter<"Work"> | number
+  canComment?: Prisma.BoolFilter<"Work"> | boolean
+  canExchange?: Prisma.BoolFilter<"Work"> | boolean
+  canDownload?: Prisma.BoolFilter<"Work"> | boolean
+  recommendWeight?: Prisma.FloatFilter<"Work"> | number
   viewCount?: Prisma.IntFilter<"Work"> | number
   favoriteCount?: Prisma.IntFilter<"Work"> | number
   likeCount?: Prisma.IntFilter<"Work"> | number
   downloadCount?: Prisma.IntFilter<"Work"> | number
   purchaseCount?: Prisma.IntFilter<"Work"> | number
-  price?: Prisma.IntFilter<"Work"> | number
-  viewRule?: Prisma.IntFilter<"Work"> | number
-  requiredViewLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
-  chapterPrice?: Prisma.IntFilter<"Work"> | number
-  chapterExchangePoints?: Prisma.IntFilter<"Work"> | number
-  canComment?: Prisma.BoolFilter<"Work"> | boolean
-  canExchange?: Prisma.BoolFilter<"Work"> | boolean
-  exchangePoints?: Prisma.IntFilter<"Work"> | number
-  canDownload?: Prisma.BoolFilter<"Work"> | boolean
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
   popularity?: Prisma.IntFilter<"Work"> | number
-  isRecommended?: Prisma.BoolFilter<"Work"> | boolean
-  isHot?: Prisma.BoolFilter<"Work"> | boolean
-  isNew?: Prisma.BoolFilter<"Work"> | boolean
-  recommendWeight?: Prisma.FloatFilter<"Work"> | number
   createdAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
@@ -716,29 +716,29 @@ export type WorkOrderByWithAggregationInput = {
   disclaimer?: Prisma.SortOrderInput | Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
+  isHot?: Prisma.SortOrder
+  isNew?: Prisma.SortOrder
   publishAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastUpdated?: Prisma.SortOrderInput | Prisma.SortOrder
+  viewRule?: Prisma.SortOrder
+  requiredViewLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
+  price?: Prisma.SortOrder
+  chapterPrice?: Prisma.SortOrder
+  chapterExchangePoints?: Prisma.SortOrder
+  exchangePoints?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
+  canExchange?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
+  recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
-  price?: Prisma.SortOrder
-  viewRule?: Prisma.SortOrder
-  requiredViewLevelId?: Prisma.SortOrderInput | Prisma.SortOrder
-  chapterPrice?: Prisma.SortOrder
-  chapterExchangePoints?: Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  canExchange?: Prisma.SortOrder
-  exchangePoints?: Prisma.SortOrder
-  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
-  isHot?: Prisma.SortOrder
-  isNew?: Prisma.SortOrder
-  recommendWeight?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -769,29 +769,29 @@ export type WorkScalarWhereWithAggregatesInput = {
   disclaimer?: Prisma.StringNullableWithAggregatesFilter<"Work"> | string | null
   remark?: Prisma.StringNullableWithAggregatesFilter<"Work"> | string | null
   isPublished?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
+  isRecommended?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
+  isHot?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
+  isNew?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
   publishAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Work"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableWithAggregatesFilter<"Work"> | Date | string | null
+  viewRule?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  requiredViewLevelId?: Prisma.IntNullableWithAggregatesFilter<"Work"> | number | null
+  price?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  chapterPrice?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  chapterExchangePoints?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  exchangePoints?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  canComment?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
+  canExchange?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
+  canDownload?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
+  recommendWeight?: Prisma.FloatWithAggregatesFilter<"Work"> | number
   viewCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   favoriteCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   likeCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   downloadCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   purchaseCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
-  price?: Prisma.IntWithAggregatesFilter<"Work"> | number
-  viewRule?: Prisma.IntWithAggregatesFilter<"Work"> | number
-  requiredViewLevelId?: Prisma.IntNullableWithAggregatesFilter<"Work"> | number | null
-  chapterPrice?: Prisma.IntWithAggregatesFilter<"Work"> | number
-  chapterExchangePoints?: Prisma.IntWithAggregatesFilter<"Work"> | number
-  canComment?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
-  canExchange?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
-  exchangePoints?: Prisma.IntWithAggregatesFilter<"Work"> | number
-  canDownload?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
   rating?: Prisma.FloatNullableWithAggregatesFilter<"Work"> | number | null
   ratingCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   popularity?: Prisma.IntWithAggregatesFilter<"Work"> | number
-  isRecommended?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
-  isHot?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
-  isNew?: Prisma.BoolWithAggregatesFilter<"Work"> | boolean
-  recommendWeight?: Prisma.FloatWithAggregatesFilter<"Work"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Work"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Work"> | Date | string
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Work"> | Date | string | null
@@ -813,28 +813,28 @@ export type WorkCreateInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -865,29 +865,29 @@ export type WorkUncheckedCreateInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  requiredViewLevelId?: number | null
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -916,28 +916,28 @@ export type WorkUpdateInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -968,29 +968,29 @@ export type WorkUncheckedUpdateInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1020,29 +1020,29 @@ export type WorkCreateManyInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  requiredViewLevelId?: number | null
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1064,28 +1064,28 @@ export type WorkUpdateManyMutationInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1108,29 +1108,29 @@ export type WorkUncheckedUpdateManyInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1173,29 +1173,29 @@ export type WorkCountOrderByAggregateInput = {
   disclaimer?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
+  isHot?: Prisma.SortOrder
+  isNew?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   lastUpdated?: Prisma.SortOrder
+  viewRule?: Prisma.SortOrder
+  requiredViewLevelId?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  chapterPrice?: Prisma.SortOrder
+  chapterExchangePoints?: Prisma.SortOrder
+  exchangePoints?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
+  canExchange?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
+  recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
-  price?: Prisma.SortOrder
-  viewRule?: Prisma.SortOrder
-  requiredViewLevelId?: Prisma.SortOrder
-  chapterPrice?: Prisma.SortOrder
-  chapterExchangePoints?: Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  canExchange?: Prisma.SortOrder
-  exchangePoints?: Prisma.SortOrder
-  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
-  isHot?: Prisma.SortOrder
-  isNew?: Prisma.SortOrder
-  recommendWeight?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -1205,21 +1205,21 @@ export type WorkAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   serialStatus?: Prisma.SortOrder
+  viewRule?: Prisma.SortOrder
+  requiredViewLevelId?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  chapterPrice?: Prisma.SortOrder
+  chapterExchangePoints?: Prisma.SortOrder
+  exchangePoints?: Prisma.SortOrder
+  recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
-  price?: Prisma.SortOrder
-  viewRule?: Prisma.SortOrder
-  requiredViewLevelId?: Prisma.SortOrder
-  chapterPrice?: Prisma.SortOrder
-  chapterExchangePoints?: Prisma.SortOrder
-  exchangePoints?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  recommendWeight?: Prisma.SortOrder
 }
 
 export type WorkMaxOrderByAggregateInput = {
@@ -1239,29 +1239,29 @@ export type WorkMaxOrderByAggregateInput = {
   disclaimer?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
+  isHot?: Prisma.SortOrder
+  isNew?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   lastUpdated?: Prisma.SortOrder
+  viewRule?: Prisma.SortOrder
+  requiredViewLevelId?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  chapterPrice?: Prisma.SortOrder
+  chapterExchangePoints?: Prisma.SortOrder
+  exchangePoints?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
+  canExchange?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
+  recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
-  price?: Prisma.SortOrder
-  viewRule?: Prisma.SortOrder
-  requiredViewLevelId?: Prisma.SortOrder
-  chapterPrice?: Prisma.SortOrder
-  chapterExchangePoints?: Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  canExchange?: Prisma.SortOrder
-  exchangePoints?: Prisma.SortOrder
-  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
-  isHot?: Prisma.SortOrder
-  isNew?: Prisma.SortOrder
-  recommendWeight?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -1284,29 +1284,29 @@ export type WorkMinOrderByAggregateInput = {
   disclaimer?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
+  isRecommended?: Prisma.SortOrder
+  isHot?: Prisma.SortOrder
+  isNew?: Prisma.SortOrder
   publishAt?: Prisma.SortOrder
   lastUpdated?: Prisma.SortOrder
+  viewRule?: Prisma.SortOrder
+  requiredViewLevelId?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  chapterPrice?: Prisma.SortOrder
+  chapterExchangePoints?: Prisma.SortOrder
+  exchangePoints?: Prisma.SortOrder
+  canComment?: Prisma.SortOrder
+  canExchange?: Prisma.SortOrder
+  canDownload?: Prisma.SortOrder
+  recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
-  price?: Prisma.SortOrder
-  viewRule?: Prisma.SortOrder
-  requiredViewLevelId?: Prisma.SortOrder
-  chapterPrice?: Prisma.SortOrder
-  chapterExchangePoints?: Prisma.SortOrder
-  canComment?: Prisma.SortOrder
-  canExchange?: Prisma.SortOrder
-  exchangePoints?: Prisma.SortOrder
-  canDownload?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  isRecommended?: Prisma.SortOrder
-  isHot?: Prisma.SortOrder
-  isNew?: Prisma.SortOrder
-  recommendWeight?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -1316,21 +1316,21 @@ export type WorkSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   type?: Prisma.SortOrder
   serialStatus?: Prisma.SortOrder
+  viewRule?: Prisma.SortOrder
+  requiredViewLevelId?: Prisma.SortOrder
+  price?: Prisma.SortOrder
+  chapterPrice?: Prisma.SortOrder
+  chapterExchangePoints?: Prisma.SortOrder
+  exchangePoints?: Prisma.SortOrder
+  recommendWeight?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   purchaseCount?: Prisma.SortOrder
-  price?: Prisma.SortOrder
-  viewRule?: Prisma.SortOrder
-  requiredViewLevelId?: Prisma.SortOrder
-  chapterPrice?: Prisma.SortOrder
-  chapterExchangePoints?: Prisma.SortOrder
-  exchangePoints?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
-  recommendWeight?: Prisma.SortOrder
 }
 
 export type WorkCreateNestedManyWithoutRequiredViewLevelInput = {
@@ -1475,16 +1475,16 @@ export type WorkUpdateOneRequiredWithoutTagsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkUpdateToOneWithWhereWithoutTagsInput, Prisma.WorkUpdateWithoutTagsInput>, Prisma.WorkUncheckedUpdateWithoutTagsInput>
 }
 
-export type NullableFloatFieldUpdateOperationsInput = {
-  set?: number | null
+export type FloatFieldUpdateOperationsInput = {
+  set?: number
   increment?: number
   decrement?: number
   multiply?: number
   divide?: number
 }
 
-export type FloatFieldUpdateOperationsInput = {
-  set?: number
+export type NullableFloatFieldUpdateOperationsInput = {
+  set?: number | null
   increment?: number
   decrement?: number
   multiply?: number
@@ -1507,28 +1507,28 @@ export type WorkCreateWithoutRequiredViewLevelInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1558,28 +1558,28 @@ export type WorkUncheckedCreateWithoutRequiredViewLevelInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1638,29 +1638,29 @@ export type WorkScalarWhereInput = {
   disclaimer?: Prisma.StringNullableFilter<"Work"> | string | null
   remark?: Prisma.StringNullableFilter<"Work"> | string | null
   isPublished?: Prisma.BoolFilter<"Work"> | boolean
+  isRecommended?: Prisma.BoolFilter<"Work"> | boolean
+  isHot?: Prisma.BoolFilter<"Work"> | boolean
+  isNew?: Prisma.BoolFilter<"Work"> | boolean
   publishAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
   lastUpdated?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
+  viewRule?: Prisma.IntFilter<"Work"> | number
+  requiredViewLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
+  price?: Prisma.IntFilter<"Work"> | number
+  chapterPrice?: Prisma.IntFilter<"Work"> | number
+  chapterExchangePoints?: Prisma.IntFilter<"Work"> | number
+  exchangePoints?: Prisma.IntFilter<"Work"> | number
+  canComment?: Prisma.BoolFilter<"Work"> | boolean
+  canExchange?: Prisma.BoolFilter<"Work"> | boolean
+  canDownload?: Prisma.BoolFilter<"Work"> | boolean
+  recommendWeight?: Prisma.FloatFilter<"Work"> | number
   viewCount?: Prisma.IntFilter<"Work"> | number
   favoriteCount?: Prisma.IntFilter<"Work"> | number
   likeCount?: Prisma.IntFilter<"Work"> | number
   downloadCount?: Prisma.IntFilter<"Work"> | number
   purchaseCount?: Prisma.IntFilter<"Work"> | number
-  price?: Prisma.IntFilter<"Work"> | number
-  viewRule?: Prisma.IntFilter<"Work"> | number
-  requiredViewLevelId?: Prisma.IntNullableFilter<"Work"> | number | null
-  chapterPrice?: Prisma.IntFilter<"Work"> | number
-  chapterExchangePoints?: Prisma.IntFilter<"Work"> | number
-  canComment?: Prisma.BoolFilter<"Work"> | boolean
-  canExchange?: Prisma.BoolFilter<"Work"> | boolean
-  exchangePoints?: Prisma.IntFilter<"Work"> | number
-  canDownload?: Prisma.BoolFilter<"Work"> | boolean
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
   popularity?: Prisma.IntFilter<"Work"> | number
-  isRecommended?: Prisma.BoolFilter<"Work"> | boolean
-  isHot?: Prisma.BoolFilter<"Work"> | boolean
-  isNew?: Prisma.BoolFilter<"Work"> | boolean
-  recommendWeight?: Prisma.FloatFilter<"Work"> | number
   createdAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Work"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
@@ -1682,28 +1682,28 @@ export type WorkCreateWithoutComicInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1733,29 +1733,29 @@ export type WorkUncheckedCreateWithoutComicInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  requiredViewLevelId?: number | null
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1799,28 +1799,28 @@ export type WorkUpdateWithoutComicInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1850,29 +1850,29 @@ export type WorkUncheckedUpdateWithoutComicInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1900,28 +1900,28 @@ export type WorkCreateWithoutNovelInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1951,29 +1951,29 @@ export type WorkUncheckedCreateWithoutNovelInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  requiredViewLevelId?: number | null
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -2017,28 +2017,28 @@ export type WorkUpdateWithoutNovelInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2068,29 +2068,29 @@ export type WorkUncheckedUpdateWithoutNovelInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2118,28 +2118,28 @@ export type WorkCreateWithoutAuthorsInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -2169,29 +2169,29 @@ export type WorkUncheckedCreateWithoutAuthorsInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  requiredViewLevelId?: number | null
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -2235,28 +2235,28 @@ export type WorkUpdateWithoutAuthorsInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2286,29 +2286,29 @@ export type WorkUncheckedUpdateWithoutAuthorsInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2336,28 +2336,28 @@ export type WorkCreateWithoutCategoriesInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -2387,29 +2387,29 @@ export type WorkUncheckedCreateWithoutCategoriesInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  requiredViewLevelId?: number | null
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -2453,28 +2453,28 @@ export type WorkUpdateWithoutCategoriesInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2504,29 +2504,29 @@ export type WorkUncheckedUpdateWithoutCategoriesInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2554,28 +2554,28 @@ export type WorkCreateWithoutChaptersInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -2605,29 +2605,29 @@ export type WorkUncheckedCreateWithoutChaptersInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  requiredViewLevelId?: number | null
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -2671,28 +2671,28 @@ export type WorkUpdateWithoutChaptersInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2722,29 +2722,29 @@ export type WorkUncheckedUpdateWithoutChaptersInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2772,28 +2772,28 @@ export type WorkCreateWithoutCommentsInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -2823,29 +2823,29 @@ export type WorkUncheckedCreateWithoutCommentsInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  requiredViewLevelId?: number | null
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -2889,28 +2889,28 @@ export type WorkUpdateWithoutCommentsInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2940,29 +2940,29 @@ export type WorkUncheckedUpdateWithoutCommentsInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2990,28 +2990,28 @@ export type WorkCreateWithoutTagsInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -3041,29 +3041,29 @@ export type WorkUncheckedCreateWithoutTagsInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  requiredViewLevelId?: number | null
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -3107,28 +3107,28 @@ export type WorkUpdateWithoutTagsInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3158,29 +3158,29 @@ export type WorkUncheckedUpdateWithoutTagsInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3209,28 +3209,28 @@ export type WorkCreateManyRequiredViewLevelInput = {
   disclaimer?: string | null
   remark?: string | null
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: Date | string | null
   lastUpdated?: Date | string | null
+  viewRule?: number
+  price?: number
+  chapterPrice?: number
+  chapterExchangePoints?: number
+  exchangePoints?: number
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: number
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
   downloadCount?: number
   purchaseCount?: number
-  price?: number
-  viewRule?: number
-  chapterPrice?: number
-  chapterExchangePoints?: number
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: number
-  canDownload?: boolean
   rating?: number | null
   ratingCount?: number
   popularity?: number
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -3252,28 +3252,28 @@ export type WorkUpdateWithoutRequiredViewLevelInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3303,28 +3303,28 @@ export type WorkUncheckedUpdateWithoutRequiredViewLevelInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3354,28 +3354,28 @@ export type WorkUncheckedUpdateManyWithoutRequiredViewLevelInput = {
   disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
   publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   purchaseCount?: Prisma.IntFieldUpdateOperationsInput | number
-  price?: Prisma.IntFieldUpdateOperationsInput | number
-  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
-  chapterExchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  canExchange?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  exchangePoints?: Prisma.IntFieldUpdateOperationsInput | number
-  canDownload?: Prisma.BoolFieldUpdateOperationsInput | boolean
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
-  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3465,29 +3465,29 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   disclaimer?: boolean
   remark?: boolean
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
+  viewRule?: boolean
+  requiredViewLevelId?: boolean
+  price?: boolean
+  chapterPrice?: boolean
+  chapterExchangePoints?: boolean
+  exchangePoints?: boolean
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: boolean
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
   downloadCount?: boolean
   purchaseCount?: boolean
-  price?: boolean
-  viewRule?: boolean
-  requiredViewLevelId?: boolean
-  chapterPrice?: boolean
-  chapterExchangePoints?: boolean
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: boolean
-  canDownload?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -3519,29 +3519,29 @@ export type WorkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   disclaimer?: boolean
   remark?: boolean
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
+  viewRule?: boolean
+  requiredViewLevelId?: boolean
+  price?: boolean
+  chapterPrice?: boolean
+  chapterExchangePoints?: boolean
+  exchangePoints?: boolean
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: boolean
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
   downloadCount?: boolean
   purchaseCount?: boolean
-  price?: boolean
-  viewRule?: boolean
-  requiredViewLevelId?: boolean
-  chapterPrice?: boolean
-  chapterExchangePoints?: boolean
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: boolean
-  canDownload?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -3565,29 +3565,29 @@ export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   disclaimer?: boolean
   remark?: boolean
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
+  viewRule?: boolean
+  requiredViewLevelId?: boolean
+  price?: boolean
+  chapterPrice?: boolean
+  chapterExchangePoints?: boolean
+  exchangePoints?: boolean
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: boolean
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
   downloadCount?: boolean
   purchaseCount?: boolean
-  price?: boolean
-  viewRule?: boolean
-  requiredViewLevelId?: boolean
-  chapterPrice?: boolean
-  chapterExchangePoints?: boolean
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: boolean
-  canDownload?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
@@ -3611,35 +3611,35 @@ export type WorkSelectScalar = {
   disclaimer?: boolean
   remark?: boolean
   isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
   publishAt?: boolean
   lastUpdated?: boolean
+  viewRule?: boolean
+  requiredViewLevelId?: boolean
+  price?: boolean
+  chapterPrice?: boolean
+  chapterExchangePoints?: boolean
+  exchangePoints?: boolean
+  canComment?: boolean
+  canExchange?: boolean
+  canDownload?: boolean
+  recommendWeight?: boolean
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
   downloadCount?: boolean
   purchaseCount?: boolean
-  price?: boolean
-  viewRule?: boolean
-  requiredViewLevelId?: boolean
-  chapterPrice?: boolean
-  chapterExchangePoints?: boolean
-  canComment?: boolean
-  canExchange?: boolean
-  exchangePoints?: boolean
-  canDownload?: boolean
   rating?: boolean
   ratingCount?: boolean
   popularity?: boolean
-  isRecommended?: boolean
-  isHot?: boolean
-  isNew?: boolean
-  recommendWeight?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "remark" | "isPublished" | "publishAt" | "lastUpdated" | "viewCount" | "favoriteCount" | "likeCount" | "downloadCount" | "purchaseCount" | "price" | "viewRule" | "requiredViewLevelId" | "chapterPrice" | "chapterExchangePoints" | "canComment" | "canExchange" | "exchangePoints" | "canDownload" | "rating" | "ratingCount" | "popularity" | "isRecommended" | "isHot" | "isNew" | "recommendWeight" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
+export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "remark" | "isPublished" | "isRecommended" | "isHot" | "isNew" | "publishAt" | "lastUpdated" | "viewRule" | "requiredViewLevelId" | "price" | "chapterPrice" | "chapterExchangePoints" | "exchangePoints" | "canComment" | "canExchange" | "canDownload" | "recommendWeight" | "viewCount" | "favoriteCount" | "likeCount" | "downloadCount" | "purchaseCount" | "rating" | "ratingCount" | "popularity" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
 export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comic?: boolean | Prisma.Work$comicArgs<ExtArgs>
   novel?: boolean | Prisma.Work$novelArgs<ExtArgs>
@@ -3760,6 +3760,18 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      */
     isPublished: boolean
     /**
+     * 是否推荐到首页
+     */
+    isRecommended: boolean
+    /**
+     * 是否热门
+     */
+    isHot: boolean
+    /**
+     * 是否新作
+     */
+    isNew: boolean
+    /**
      * 发布日期
      */
     publishAt: Date | null
@@ -3767,6 +3779,46 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 最后更新时间（内容更新时间）
      */
     lastUpdated: Date | null
+    /**
+     * 阅读权限规则（0=所有人, 1=登录, 2=会员, 3=购买）
+     */
+    viewRule: number
+    /**
+     * 阅读所需的会员等级ID
+     */
+    requiredViewLevelId: number | null
+    /**
+     * 价格（单位：分）
+     */
+    price: number
+    /**
+     * 章节价格（单位：分）
+     */
+    chapterPrice: number
+    /**
+     * 章节兑换所需积分
+     */
+    chapterExchangePoints: number
+    /**
+     * 对换所需要的积分
+     */
+    exchangePoints: number
+    /**
+     * 是否允许评论
+     */
+    canComment: boolean
+    /**
+     * 是否允许积分兑换
+     */
+    canExchange: boolean
+    /**
+     * 是否允许下载
+     */
+    canDownload: boolean
+    /**
+     * 推荐权重（影响推荐排序）
+     */
+    recommendWeight: number
     /**
      * 浏览量
      */
@@ -3788,42 +3840,6 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      */
     purchaseCount: number
     /**
-     * 价格（单位：分）
-     */
-    price: number
-    /**
-     * 阅读权限规则（0=所有人, 1=登录, 2=会员, 3=购买）
-     */
-    viewRule: number
-    /**
-     * 阅读所需的会员等级ID
-     */
-    requiredViewLevelId: number | null
-    /**
-     * 章节价格（单位：分）
-     */
-    chapterPrice: number
-    /**
-     * 章节兑换所需积分
-     */
-    chapterExchangePoints: number
-    /**
-     * 是否允许评论
-     */
-    canComment: boolean
-    /**
-     * 是否允许积分兑换
-     */
-    canExchange: boolean
-    /**
-     * 对换所需要的积分
-     */
-    exchangePoints: number
-    /**
-     * 是否允许下载
-     */
-    canDownload: boolean
-    /**
      * 评分（1-10分，保留一位小数）
      */
     rating: number | null
@@ -3835,22 +3851,6 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 热度（真实数据）
      */
     popularity: number
-    /**
-     * 是否推荐到首页
-     */
-    isRecommended: boolean
-    /**
-     * 是否热门
-     */
-    isHot: boolean
-    /**
-     * 是否新作
-     */
-    isNew: boolean
-    /**
-     * 推荐权重（影响推荐排序）
-     */
-    recommendWeight: number
     /**
      * 创建时间
      */
@@ -4310,29 +4310,29 @@ export interface WorkFieldRefs {
   readonly disclaimer: Prisma.FieldRef<"Work", 'String'>
   readonly remark: Prisma.FieldRef<"Work", 'String'>
   readonly isPublished: Prisma.FieldRef<"Work", 'Boolean'>
+  readonly isRecommended: Prisma.FieldRef<"Work", 'Boolean'>
+  readonly isHot: Prisma.FieldRef<"Work", 'Boolean'>
+  readonly isNew: Prisma.FieldRef<"Work", 'Boolean'>
   readonly publishAt: Prisma.FieldRef<"Work", 'DateTime'>
   readonly lastUpdated: Prisma.FieldRef<"Work", 'DateTime'>
+  readonly viewRule: Prisma.FieldRef<"Work", 'Int'>
+  readonly requiredViewLevelId: Prisma.FieldRef<"Work", 'Int'>
+  readonly price: Prisma.FieldRef<"Work", 'Int'>
+  readonly chapterPrice: Prisma.FieldRef<"Work", 'Int'>
+  readonly chapterExchangePoints: Prisma.FieldRef<"Work", 'Int'>
+  readonly exchangePoints: Prisma.FieldRef<"Work", 'Int'>
+  readonly canComment: Prisma.FieldRef<"Work", 'Boolean'>
+  readonly canExchange: Prisma.FieldRef<"Work", 'Boolean'>
+  readonly canDownload: Prisma.FieldRef<"Work", 'Boolean'>
+  readonly recommendWeight: Prisma.FieldRef<"Work", 'Float'>
   readonly viewCount: Prisma.FieldRef<"Work", 'Int'>
   readonly favoriteCount: Prisma.FieldRef<"Work", 'Int'>
   readonly likeCount: Prisma.FieldRef<"Work", 'Int'>
   readonly downloadCount: Prisma.FieldRef<"Work", 'Int'>
   readonly purchaseCount: Prisma.FieldRef<"Work", 'Int'>
-  readonly price: Prisma.FieldRef<"Work", 'Int'>
-  readonly viewRule: Prisma.FieldRef<"Work", 'Int'>
-  readonly requiredViewLevelId: Prisma.FieldRef<"Work", 'Int'>
-  readonly chapterPrice: Prisma.FieldRef<"Work", 'Int'>
-  readonly chapterExchangePoints: Prisma.FieldRef<"Work", 'Int'>
-  readonly canComment: Prisma.FieldRef<"Work", 'Boolean'>
-  readonly canExchange: Prisma.FieldRef<"Work", 'Boolean'>
-  readonly exchangePoints: Prisma.FieldRef<"Work", 'Int'>
-  readonly canDownload: Prisma.FieldRef<"Work", 'Boolean'>
   readonly rating: Prisma.FieldRef<"Work", 'Float'>
   readonly ratingCount: Prisma.FieldRef<"Work", 'Int'>
   readonly popularity: Prisma.FieldRef<"Work", 'Int'>
-  readonly isRecommended: Prisma.FieldRef<"Work", 'Boolean'>
-  readonly isHot: Prisma.FieldRef<"Work", 'Boolean'>
-  readonly isNew: Prisma.FieldRef<"Work", 'Boolean'>
-  readonly recommendWeight: Prisma.FieldRef<"Work", 'Float'>
   readonly createdAt: Prisma.FieldRef<"Work", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Work", 'DateTime'>
   readonly deletedAt: Prisma.FieldRef<"Work", 'DateTime'>

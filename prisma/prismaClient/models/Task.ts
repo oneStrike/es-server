@@ -58,8 +58,8 @@ export type TaskMinAggregateOutputType = {
   cover: string | null
   type: number | null
   status: number | null
-  priority: number | null
   isEnabled: boolean | null
+  priority: number | null
   claimMode: number | null
   completeMode: number | null
   targetCount: number | null
@@ -80,8 +80,8 @@ export type TaskMaxAggregateOutputType = {
   cover: string | null
   type: number | null
   status: number | null
-  priority: number | null
   isEnabled: boolean | null
+  priority: number | null
   claimMode: number | null
   completeMode: number | null
   targetCount: number | null
@@ -102,15 +102,15 @@ export type TaskCountAggregateOutputType = {
   cover: number
   type: number
   status: number
-  priority: number
   isEnabled: number
+  priority: number
   claimMode: number
   completeMode: number
   targetCount: number
   rewardConfig: number
+  repeatRule: number
   publishStartAt: number
   publishEndAt: number
-  repeatRule: number
   createdById: number
   updatedById: number
   createdAt: number
@@ -152,8 +152,8 @@ export type TaskMinAggregateInputType = {
   cover?: true
   type?: true
   status?: true
-  priority?: true
   isEnabled?: true
+  priority?: true
   claimMode?: true
   completeMode?: true
   targetCount?: true
@@ -174,8 +174,8 @@ export type TaskMaxAggregateInputType = {
   cover?: true
   type?: true
   status?: true
-  priority?: true
   isEnabled?: true
+  priority?: true
   claimMode?: true
   completeMode?: true
   targetCount?: true
@@ -196,15 +196,15 @@ export type TaskCountAggregateInputType = {
   cover?: true
   type?: true
   status?: true
-  priority?: true
   isEnabled?: true
+  priority?: true
   claimMode?: true
   completeMode?: true
   targetCount?: true
   rewardConfig?: true
+  repeatRule?: true
   publishStartAt?: true
   publishEndAt?: true
-  repeatRule?: true
   createdById?: true
   updatedById?: true
   createdAt?: true
@@ -307,15 +307,15 @@ export type TaskGroupByOutputType = {
   cover: string | null
   type: number
   status: number
-  priority: number
   isEnabled: boolean
+  priority: number
   claimMode: number
   completeMode: number
   targetCount: number
   rewardConfig: runtime.JsonValue | null
+  repeatRule: runtime.JsonValue | null
   publishStartAt: Date | null
   publishEndAt: Date | null
-  repeatRule: runtime.JsonValue | null
   createdById: number | null
   updatedById: number | null
   createdAt: Date
@@ -354,15 +354,15 @@ export type TaskWhereInput = {
   cover?: Prisma.StringNullableFilter<"Task"> | string | null
   type?: Prisma.IntFilter<"Task"> | number
   status?: Prisma.IntFilter<"Task"> | number
-  priority?: Prisma.IntFilter<"Task"> | number
   isEnabled?: Prisma.BoolFilter<"Task"> | boolean
+  priority?: Prisma.IntFilter<"Task"> | number
   claimMode?: Prisma.IntFilter<"Task"> | number
   completeMode?: Prisma.IntFilter<"Task"> | number
   targetCount?: Prisma.IntFilter<"Task"> | number
   rewardConfig?: Prisma.JsonNullableFilter<"Task">
+  repeatRule?: Prisma.JsonNullableFilter<"Task">
   publishStartAt?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   publishEndAt?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
-  repeatRule?: Prisma.JsonNullableFilter<"Task">
   createdById?: Prisma.IntNullableFilter<"Task"> | number | null
   updatedById?: Prisma.IntNullableFilter<"Task"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Task"> | Date | string
@@ -381,15 +381,15 @@ export type TaskOrderByWithRelationInput = {
   cover?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
   claimMode?: Prisma.SortOrder
   completeMode?: Prisma.SortOrder
   targetCount?: Prisma.SortOrder
   rewardConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  repeatRule?: Prisma.SortOrderInput | Prisma.SortOrder
   publishStartAt?: Prisma.SortOrderInput | Prisma.SortOrder
   publishEndAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  repeatRule?: Prisma.SortOrderInput | Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -411,15 +411,15 @@ export type TaskWhereUniqueInput = Prisma.AtLeast<{
   cover?: Prisma.StringNullableFilter<"Task"> | string | null
   type?: Prisma.IntFilter<"Task"> | number
   status?: Prisma.IntFilter<"Task"> | number
-  priority?: Prisma.IntFilter<"Task"> | number
   isEnabled?: Prisma.BoolFilter<"Task"> | boolean
+  priority?: Prisma.IntFilter<"Task"> | number
   claimMode?: Prisma.IntFilter<"Task"> | number
   completeMode?: Prisma.IntFilter<"Task"> | number
   targetCount?: Prisma.IntFilter<"Task"> | number
   rewardConfig?: Prisma.JsonNullableFilter<"Task">
+  repeatRule?: Prisma.JsonNullableFilter<"Task">
   publishStartAt?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   publishEndAt?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
-  repeatRule?: Prisma.JsonNullableFilter<"Task">
   createdById?: Prisma.IntNullableFilter<"Task"> | number | null
   updatedById?: Prisma.IntNullableFilter<"Task"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Task"> | Date | string
@@ -438,15 +438,15 @@ export type TaskOrderByWithAggregationInput = {
   cover?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
   claimMode?: Prisma.SortOrder
   completeMode?: Prisma.SortOrder
   targetCount?: Prisma.SortOrder
   rewardConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  repeatRule?: Prisma.SortOrderInput | Prisma.SortOrder
   publishStartAt?: Prisma.SortOrderInput | Prisma.SortOrder
   publishEndAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  repeatRule?: Prisma.SortOrderInput | Prisma.SortOrder
   createdById?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -470,15 +470,15 @@ export type TaskScalarWhereWithAggregatesInput = {
   cover?: Prisma.StringNullableWithAggregatesFilter<"Task"> | string | null
   type?: Prisma.IntWithAggregatesFilter<"Task"> | number
   status?: Prisma.IntWithAggregatesFilter<"Task"> | number
-  priority?: Prisma.IntWithAggregatesFilter<"Task"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"Task"> | boolean
+  priority?: Prisma.IntWithAggregatesFilter<"Task"> | number
   claimMode?: Prisma.IntWithAggregatesFilter<"Task"> | number
   completeMode?: Prisma.IntWithAggregatesFilter<"Task"> | number
   targetCount?: Prisma.IntWithAggregatesFilter<"Task"> | number
   rewardConfig?: Prisma.JsonNullableWithAggregatesFilter<"Task">
+  repeatRule?: Prisma.JsonNullableWithAggregatesFilter<"Task">
   publishStartAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Task"> | Date | string | null
   publishEndAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Task"> | Date | string | null
-  repeatRule?: Prisma.JsonNullableWithAggregatesFilter<"Task">
   createdById?: Prisma.IntNullableWithAggregatesFilter<"Task"> | number | null
   updatedById?: Prisma.IntNullableWithAggregatesFilter<"Task"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Task"> | Date | string
@@ -493,15 +493,15 @@ export type TaskCreateInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -518,15 +518,15 @@ export type TaskUncheckedCreateInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: number | null
   updatedById?: number | null
   createdAt?: Date | string
@@ -542,15 +542,15 @@ export type TaskUpdateInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -567,15 +567,15 @@ export type TaskUncheckedUpdateInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -592,15 +592,15 @@ export type TaskCreateManyInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: number | null
   updatedById?: number | null
   createdAt?: Date | string
@@ -615,15 +615,15 @@ export type TaskUpdateManyMutationInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -637,15 +637,15 @@ export type TaskUncheckedUpdateManyInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -676,15 +676,15 @@ export type TaskCountOrderByAggregateInput = {
   cover?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
   claimMode?: Prisma.SortOrder
   completeMode?: Prisma.SortOrder
   targetCount?: Prisma.SortOrder
   rewardConfig?: Prisma.SortOrder
+  repeatRule?: Prisma.SortOrder
   publishStartAt?: Prisma.SortOrder
   publishEndAt?: Prisma.SortOrder
-  repeatRule?: Prisma.SortOrder
   createdById?: Prisma.SortOrder
   updatedById?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -712,8 +712,8 @@ export type TaskMaxOrderByAggregateInput = {
   cover?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
   claimMode?: Prisma.SortOrder
   completeMode?: Prisma.SortOrder
   targetCount?: Prisma.SortOrder
@@ -734,8 +734,8 @@ export type TaskMinOrderByAggregateInput = {
   cover?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  priority?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
+  priority?: Prisma.SortOrder
   claimMode?: Prisma.SortOrder
   completeMode?: Prisma.SortOrder
   targetCount?: Prisma.SortOrder
@@ -865,15 +865,15 @@ export type TaskCreateWithoutCreatedByInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -889,15 +889,15 @@ export type TaskUncheckedCreateWithoutCreatedByInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -922,15 +922,15 @@ export type TaskCreateWithoutUpdatedByInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -946,15 +946,15 @@ export type TaskUncheckedCreateWithoutUpdatedByInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -999,15 +999,15 @@ export type TaskScalarWhereInput = {
   cover?: Prisma.StringNullableFilter<"Task"> | string | null
   type?: Prisma.IntFilter<"Task"> | number
   status?: Prisma.IntFilter<"Task"> | number
-  priority?: Prisma.IntFilter<"Task"> | number
   isEnabled?: Prisma.BoolFilter<"Task"> | boolean
+  priority?: Prisma.IntFilter<"Task"> | number
   claimMode?: Prisma.IntFilter<"Task"> | number
   completeMode?: Prisma.IntFilter<"Task"> | number
   targetCount?: Prisma.IntFilter<"Task"> | number
   rewardConfig?: Prisma.JsonNullableFilter<"Task">
+  repeatRule?: Prisma.JsonNullableFilter<"Task">
   publishStartAt?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   publishEndAt?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
-  repeatRule?: Prisma.JsonNullableFilter<"Task">
   createdById?: Prisma.IntNullableFilter<"Task"> | number | null
   updatedById?: Prisma.IntNullableFilter<"Task"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Task"> | Date | string
@@ -1038,15 +1038,15 @@ export type TaskCreateWithoutAssignmentsInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
@@ -1062,15 +1062,15 @@ export type TaskUncheckedCreateWithoutAssignmentsInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: number | null
   updatedById?: number | null
   createdAt?: Date | string
@@ -1101,15 +1101,15 @@ export type TaskUpdateWithoutAssignmentsInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1125,15 +1125,15 @@ export type TaskUncheckedUpdateWithoutAssignmentsInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1149,15 +1149,15 @@ export type TaskCreateManyCreatedByInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1172,15 +1172,15 @@ export type TaskCreateManyUpdatedByInput = {
   cover?: string | null
   type: number
   status: number
-  priority?: number
   isEnabled?: boolean
+  priority?: number
   claimMode: number
   completeMode: number
   targetCount?: number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Date | string | null
   publishEndAt?: Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -1194,15 +1194,15 @@ export type TaskUpdateWithoutCreatedByInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1218,15 +1218,15 @@ export type TaskUncheckedUpdateWithoutCreatedByInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1242,15 +1242,15 @@ export type TaskUncheckedUpdateManyWithoutCreatedByInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1264,15 +1264,15 @@ export type TaskUpdateWithoutUpdatedByInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1288,15 +1288,15 @@ export type TaskUncheckedUpdateWithoutUpdatedByInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1312,15 +1312,15 @@ export type TaskUncheckedUpdateManyWithoutUpdatedByInput = {
   cover?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.IntFieldUpdateOperationsInput | number
   status?: Prisma.IntFieldUpdateOperationsInput | number
-  priority?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  priority?: Prisma.IntFieldUpdateOperationsInput | number
   claimMode?: Prisma.IntFieldUpdateOperationsInput | number
   completeMode?: Prisma.IntFieldUpdateOperationsInput | number
   targetCount?: Prisma.IntFieldUpdateOperationsInput | number
   rewardConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   publishStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishEndAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  repeatRule?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1366,15 +1366,15 @@ export type TaskSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   cover?: boolean
   type?: boolean
   status?: boolean
-  priority?: boolean
   isEnabled?: boolean
+  priority?: boolean
   claimMode?: boolean
   completeMode?: boolean
   targetCount?: boolean
   rewardConfig?: boolean
+  repeatRule?: boolean
   publishStartAt?: boolean
   publishEndAt?: boolean
-  repeatRule?: boolean
   createdById?: boolean
   updatedById?: boolean
   createdAt?: boolean
@@ -1394,15 +1394,15 @@ export type TaskSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   cover?: boolean
   type?: boolean
   status?: boolean
-  priority?: boolean
   isEnabled?: boolean
+  priority?: boolean
   claimMode?: boolean
   completeMode?: boolean
   targetCount?: boolean
   rewardConfig?: boolean
+  repeatRule?: boolean
   publishStartAt?: boolean
   publishEndAt?: boolean
-  repeatRule?: boolean
   createdById?: boolean
   updatedById?: boolean
   createdAt?: boolean
@@ -1420,15 +1420,15 @@ export type TaskSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   cover?: boolean
   type?: boolean
   status?: boolean
-  priority?: boolean
   isEnabled?: boolean
+  priority?: boolean
   claimMode?: boolean
   completeMode?: boolean
   targetCount?: boolean
   rewardConfig?: boolean
+  repeatRule?: boolean
   publishStartAt?: boolean
   publishEndAt?: boolean
-  repeatRule?: boolean
   createdById?: boolean
   updatedById?: boolean
   createdAt?: boolean
@@ -1446,15 +1446,15 @@ export type TaskSelectScalar = {
   cover?: boolean
   type?: boolean
   status?: boolean
-  priority?: boolean
   isEnabled?: boolean
+  priority?: boolean
   claimMode?: boolean
   completeMode?: boolean
   targetCount?: boolean
   rewardConfig?: boolean
+  repeatRule?: boolean
   publishStartAt?: boolean
   publishEndAt?: boolean
-  repeatRule?: boolean
   createdById?: boolean
   updatedById?: boolean
   createdAt?: boolean
@@ -1462,7 +1462,7 @@ export type TaskSelectScalar = {
   deletedAt?: boolean
 }
 
-export type TaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "title" | "description" | "cover" | "type" | "status" | "priority" | "isEnabled" | "claimMode" | "completeMode" | "targetCount" | "rewardConfig" | "publishStartAt" | "publishEndAt" | "repeatRule" | "createdById" | "updatedById" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["task"]>
+export type TaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "title" | "description" | "cover" | "type" | "status" | "isEnabled" | "priority" | "claimMode" | "completeMode" | "targetCount" | "rewardConfig" | "repeatRule" | "publishStartAt" | "publishEndAt" | "createdById" | "updatedById" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["task"]>
 export type TaskInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   assignments?: boolean | Prisma.Task$assignmentsArgs<ExtArgs>
   createdBy?: boolean | Prisma.Task$createdByArgs<ExtArgs>
@@ -1524,13 +1524,13 @@ export type $TaskPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      */
     status: number
     /**
-     * 任务优先级
-     */
-    priority: number
-    /**
      * 是否启用
      */
     isEnabled: boolean
+    /**
+     * 任务优先级
+     */
+    priority: number
     /**
      * 领取方式
      */
@@ -1548,6 +1548,10 @@ export type $TaskPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      */
     rewardConfig: runtime.JsonValue | null
     /**
+     * 重复规则
+     */
+    repeatRule: runtime.JsonValue | null
+    /**
      * 发布开始时间
      */
     publishStartAt: Date | null
@@ -1555,10 +1559,6 @@ export type $TaskPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 发布结束时间
      */
     publishEndAt: Date | null
-    /**
-     * 重复规则
-     */
-    repeatRule: runtime.JsonValue | null
     /**
      * 创建人ID
      */
@@ -2012,15 +2012,15 @@ export interface TaskFieldRefs {
   readonly cover: Prisma.FieldRef<"Task", 'String'>
   readonly type: Prisma.FieldRef<"Task", 'Int'>
   readonly status: Prisma.FieldRef<"Task", 'Int'>
-  readonly priority: Prisma.FieldRef<"Task", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"Task", 'Boolean'>
+  readonly priority: Prisma.FieldRef<"Task", 'Int'>
   readonly claimMode: Prisma.FieldRef<"Task", 'Int'>
   readonly completeMode: Prisma.FieldRef<"Task", 'Int'>
   readonly targetCount: Prisma.FieldRef<"Task", 'Int'>
   readonly rewardConfig: Prisma.FieldRef<"Task", 'Json'>
+  readonly repeatRule: Prisma.FieldRef<"Task", 'Json'>
   readonly publishStartAt: Prisma.FieldRef<"Task", 'DateTime'>
   readonly publishEndAt: Prisma.FieldRef<"Task", 'DateTime'>
-  readonly repeatRule: Prisma.FieldRef<"Task", 'Json'>
   readonly createdById: Prisma.FieldRef<"Task", 'Int'>
   readonly updatedById: Prisma.FieldRef<"Task", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Task", 'DateTime'>

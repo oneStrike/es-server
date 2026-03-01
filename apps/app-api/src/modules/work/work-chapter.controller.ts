@@ -44,6 +44,7 @@ export class WorkChapterController {
   @ApiDoc({
     summary: '查询漫画章节内容',
     model: String,
+    isArray: true,
   })
   async getComicChapterContent(@Query() query: IdDto) {
     return this.workChapterContentService.getContent(

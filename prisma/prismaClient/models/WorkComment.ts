@@ -68,10 +68,10 @@ export type WorkCommentMinAggregateOutputType = {
   actualReplyToId: number | null
   isHidden: boolean | null
   auditStatus: number | null
-  auditReason: string | null
-  auditAt: Date | null
   auditById: number | null
   auditRole: number | null
+  auditReason: string | null
+  auditAt: Date | null
   likeCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -90,10 +90,10 @@ export type WorkCommentMaxAggregateOutputType = {
   actualReplyToId: number | null
   isHidden: boolean | null
   auditStatus: number | null
-  auditReason: string | null
-  auditAt: Date | null
   auditById: number | null
   auditRole: number | null
+  auditReason: string | null
+  auditAt: Date | null
   likeCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -112,10 +112,10 @@ export type WorkCommentCountAggregateOutputType = {
   actualReplyToId: number
   isHidden: number
   auditStatus: number
-  auditReason: number
-  auditAt: number
   auditById: number
   auditRole: number
+  auditReason: number
+  auditAt: number
   likeCount: number
   sensitiveWordHits: number
   createdAt: number
@@ -167,10 +167,10 @@ export type WorkCommentMinAggregateInputType = {
   actualReplyToId?: true
   isHidden?: true
   auditStatus?: true
-  auditReason?: true
-  auditAt?: true
   auditById?: true
   auditRole?: true
+  auditReason?: true
+  auditAt?: true
   likeCount?: true
   createdAt?: true
   updatedAt?: true
@@ -189,10 +189,10 @@ export type WorkCommentMaxAggregateInputType = {
   actualReplyToId?: true
   isHidden?: true
   auditStatus?: true
-  auditReason?: true
-  auditAt?: true
   auditById?: true
   auditRole?: true
+  auditReason?: true
+  auditAt?: true
   likeCount?: true
   createdAt?: true
   updatedAt?: true
@@ -211,10 +211,10 @@ export type WorkCommentCountAggregateInputType = {
   actualReplyToId?: true
   isHidden?: true
   auditStatus?: true
-  auditReason?: true
-  auditAt?: true
   auditById?: true
   auditRole?: true
+  auditReason?: true
+  auditAt?: true
   likeCount?: true
   sensitiveWordHits?: true
   createdAt?: true
@@ -321,10 +321,10 @@ export type WorkCommentGroupByOutputType = {
   actualReplyToId: number | null
   isHidden: boolean
   auditStatus: number
-  auditReason: string | null
-  auditAt: Date | null
   auditById: number | null
   auditRole: number | null
+  auditReason: string | null
+  auditAt: Date | null
   likeCount: number
   sensitiveWordHits: runtime.JsonValue | null
   createdAt: Date
@@ -367,10 +367,10 @@ export type WorkCommentWhereInput = {
   actualReplyToId?: Prisma.IntNullableFilter<"WorkComment"> | number | null
   isHidden?: Prisma.BoolFilter<"WorkComment"> | boolean
   auditStatus?: Prisma.IntFilter<"WorkComment"> | number
-  auditReason?: Prisma.StringNullableFilter<"WorkComment"> | string | null
-  auditAt?: Prisma.DateTimeNullableFilter<"WorkComment"> | Date | string | null
   auditById?: Prisma.IntNullableFilter<"WorkComment"> | number | null
   auditRole?: Prisma.IntNullableFilter<"WorkComment"> | number | null
+  auditReason?: Prisma.StringNullableFilter<"WorkComment"> | string | null
+  auditAt?: Prisma.DateTimeNullableFilter<"WorkComment"> | Date | string | null
   likeCount?: Prisma.IntFilter<"WorkComment"> | number
   sensitiveWordHits?: Prisma.JsonNullableFilter<"WorkComment">
   createdAt?: Prisma.DateTimeFilter<"WorkComment"> | Date | string
@@ -398,10 +398,10 @@ export type WorkCommentOrderByWithRelationInput = {
   actualReplyToId?: Prisma.SortOrderInput | Prisma.SortOrder
   isHidden?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
-  auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
-  auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   auditById?: Prisma.SortOrderInput | Prisma.SortOrder
   auditRole?: Prisma.SortOrderInput | Prisma.SortOrder
+  auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   sensitiveWordHits?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -432,10 +432,10 @@ export type WorkCommentWhereUniqueInput = Prisma.AtLeast<{
   actualReplyToId?: Prisma.IntNullableFilter<"WorkComment"> | number | null
   isHidden?: Prisma.BoolFilter<"WorkComment"> | boolean
   auditStatus?: Prisma.IntFilter<"WorkComment"> | number
-  auditReason?: Prisma.StringNullableFilter<"WorkComment"> | string | null
-  auditAt?: Prisma.DateTimeNullableFilter<"WorkComment"> | Date | string | null
   auditById?: Prisma.IntNullableFilter<"WorkComment"> | number | null
   auditRole?: Prisma.IntNullableFilter<"WorkComment"> | number | null
+  auditReason?: Prisma.StringNullableFilter<"WorkComment"> | string | null
+  auditAt?: Prisma.DateTimeNullableFilter<"WorkComment"> | Date | string | null
   likeCount?: Prisma.IntFilter<"WorkComment"> | number
   sensitiveWordHits?: Prisma.JsonNullableFilter<"WorkComment">
   createdAt?: Prisma.DateTimeFilter<"WorkComment"> | Date | string
@@ -463,10 +463,10 @@ export type WorkCommentOrderByWithAggregationInput = {
   actualReplyToId?: Prisma.SortOrderInput | Prisma.SortOrder
   isHidden?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
-  auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
-  auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   auditById?: Prisma.SortOrderInput | Prisma.SortOrder
   auditRole?: Prisma.SortOrderInput | Prisma.SortOrder
+  auditReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  auditAt?: Prisma.SortOrderInput | Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   sensitiveWordHits?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -494,10 +494,10 @@ export type WorkCommentScalarWhereWithAggregatesInput = {
   actualReplyToId?: Prisma.IntNullableWithAggregatesFilter<"WorkComment"> | number | null
   isHidden?: Prisma.BoolWithAggregatesFilter<"WorkComment"> | boolean
   auditStatus?: Prisma.IntWithAggregatesFilter<"WorkComment"> | number
-  auditReason?: Prisma.StringNullableWithAggregatesFilter<"WorkComment"> | string | null
-  auditAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkComment"> | Date | string | null
   auditById?: Prisma.IntNullableWithAggregatesFilter<"WorkComment"> | number | null
   auditRole?: Prisma.IntNullableWithAggregatesFilter<"WorkComment"> | number | null
+  auditReason?: Prisma.StringNullableWithAggregatesFilter<"WorkComment"> | string | null
+  auditAt?: Prisma.DateTimeNullableWithAggregatesFilter<"WorkComment"> | Date | string | null
   likeCount?: Prisma.IntWithAggregatesFilter<"WorkComment"> | number
   sensitiveWordHits?: Prisma.JsonNullableWithAggregatesFilter<"WorkComment">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkComment"> | Date | string
@@ -511,10 +511,10 @@ export type WorkCommentCreateInput = {
   floor?: number
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -542,10 +542,10 @@ export type WorkCommentUncheckedCreateInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -562,10 +562,10 @@ export type WorkCommentUpdateInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -593,10 +593,10 @@ export type WorkCommentUncheckedUpdateInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -619,10 +619,10 @@ export type WorkCommentCreateManyInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -636,10 +636,10 @@ export type WorkCommentUpdateManyMutationInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -659,10 +659,10 @@ export type WorkCommentUncheckedUpdateManyInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -702,10 +702,10 @@ export type WorkCommentCountOrderByAggregateInput = {
   actualReplyToId?: Prisma.SortOrder
   isHidden?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
-  auditReason?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
   auditById?: Prisma.SortOrder
   auditRole?: Prisma.SortOrder
+  auditReason?: Prisma.SortOrder
+  auditAt?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   sensitiveWordHits?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -740,10 +740,10 @@ export type WorkCommentMaxOrderByAggregateInput = {
   actualReplyToId?: Prisma.SortOrder
   isHidden?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
-  auditReason?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
   auditById?: Prisma.SortOrder
   auditRole?: Prisma.SortOrder
+  auditReason?: Prisma.SortOrder
+  auditAt?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -762,10 +762,10 @@ export type WorkCommentMinOrderByAggregateInput = {
   actualReplyToId?: Prisma.SortOrder
   isHidden?: Prisma.SortOrder
   auditStatus?: Prisma.SortOrder
-  auditReason?: Prisma.SortOrder
-  auditAt?: Prisma.SortOrder
   auditById?: Prisma.SortOrder
   auditRole?: Prisma.SortOrder
+  auditReason?: Prisma.SortOrder
+  auditAt?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -1049,10 +1049,10 @@ export type WorkCommentCreateWithoutUserInput = {
   floor?: number
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1078,10 +1078,10 @@ export type WorkCommentUncheckedCreateWithoutUserInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1133,10 +1133,10 @@ export type WorkCommentScalarWhereInput = {
   actualReplyToId?: Prisma.IntNullableFilter<"WorkComment"> | number | null
   isHidden?: Prisma.BoolFilter<"WorkComment"> | boolean
   auditStatus?: Prisma.IntFilter<"WorkComment"> | number
-  auditReason?: Prisma.StringNullableFilter<"WorkComment"> | string | null
-  auditAt?: Prisma.DateTimeNullableFilter<"WorkComment"> | Date | string | null
   auditById?: Prisma.IntNullableFilter<"WorkComment"> | number | null
   auditRole?: Prisma.IntNullableFilter<"WorkComment"> | number | null
+  auditReason?: Prisma.StringNullableFilter<"WorkComment"> | string | null
+  auditAt?: Prisma.DateTimeNullableFilter<"WorkComment"> | Date | string | null
   likeCount?: Prisma.IntFilter<"WorkComment"> | number
   sensitiveWordHits?: Prisma.JsonNullableFilter<"WorkComment">
   createdAt?: Prisma.DateTimeFilter<"WorkComment"> | Date | string
@@ -1150,10 +1150,10 @@ export type WorkCommentCreateWithoutChapterInput = {
   floor?: number
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1179,10 +1179,10 @@ export type WorkCommentUncheckedCreateWithoutChapterInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1225,10 +1225,10 @@ export type WorkCommentCreateWithoutReportsInput = {
   floor?: number
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1255,10 +1255,10 @@ export type WorkCommentUncheckedCreateWithoutReportsInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1290,10 +1290,10 @@ export type WorkCommentUpdateWithoutReportsInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1320,10 +1320,10 @@ export type WorkCommentUncheckedUpdateWithoutReportsInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1339,10 +1339,10 @@ export type WorkCommentCreateWithoutRepliesInput = {
   floor?: number
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1369,10 +1369,10 @@ export type WorkCommentUncheckedCreateWithoutRepliesInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1393,10 +1393,10 @@ export type WorkCommentCreateWithoutReplyToInput = {
   floor?: number
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1422,10 +1422,10 @@ export type WorkCommentUncheckedCreateWithoutReplyToInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1452,10 +1452,10 @@ export type WorkCommentCreateWithoutActualRepliesInput = {
   floor?: number
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1482,10 +1482,10 @@ export type WorkCommentUncheckedCreateWithoutActualRepliesInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1506,10 +1506,10 @@ export type WorkCommentCreateWithoutActualReplyToInput = {
   floor?: number
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1535,10 +1535,10 @@ export type WorkCommentUncheckedCreateWithoutActualReplyToInput = {
   replyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1576,10 +1576,10 @@ export type WorkCommentUpdateWithoutRepliesInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1606,10 +1606,10 @@ export type WorkCommentUncheckedUpdateWithoutRepliesInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1652,10 +1652,10 @@ export type WorkCommentUpdateWithoutActualRepliesInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1682,10 +1682,10 @@ export type WorkCommentUncheckedUpdateWithoutActualRepliesInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1717,10 +1717,10 @@ export type WorkCommentCreateWithoutWorkInput = {
   floor?: number
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1746,10 +1746,10 @@ export type WorkCommentUncheckedCreateWithoutWorkInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1797,10 +1797,10 @@ export type WorkCommentCreateManyUserInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1814,10 +1814,10 @@ export type WorkCommentUpdateWithoutUserInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1843,10 +1843,10 @@ export type WorkCommentUncheckedUpdateWithoutUserInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1868,10 +1868,10 @@ export type WorkCommentUncheckedUpdateManyWithoutUserInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1890,10 +1890,10 @@ export type WorkCommentCreateManyChapterInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -1907,10 +1907,10 @@ export type WorkCommentUpdateWithoutChapterInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1936,10 +1936,10 @@ export type WorkCommentUncheckedUpdateWithoutChapterInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1961,10 +1961,10 @@ export type WorkCommentUncheckedUpdateManyWithoutChapterInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1983,10 +1983,10 @@ export type WorkCommentCreateManyReplyToInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -2005,10 +2005,10 @@ export type WorkCommentCreateManyActualReplyToInput = {
   replyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -2022,10 +2022,10 @@ export type WorkCommentUpdateWithoutReplyToInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2051,10 +2051,10 @@ export type WorkCommentUncheckedUpdateWithoutReplyToInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2076,10 +2076,10 @@ export type WorkCommentUncheckedUpdateManyWithoutReplyToInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2093,10 +2093,10 @@ export type WorkCommentUpdateWithoutActualReplyToInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2122,10 +2122,10 @@ export type WorkCommentUncheckedUpdateWithoutActualReplyToInput = {
   replyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2147,10 +2147,10 @@ export type WorkCommentUncheckedUpdateManyWithoutActualReplyToInput = {
   replyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2169,10 +2169,10 @@ export type WorkCommentCreateManyWorkInput = {
   actualReplyToId?: number | null
   isHidden?: boolean
   auditStatus?: number
-  auditReason?: string | null
-  auditAt?: Date | string | null
   auditById?: number | null
   auditRole?: number | null
+  auditReason?: string | null
+  auditAt?: Date | string | null
   likeCount?: number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -2186,10 +2186,10 @@ export type WorkCommentUpdateWithoutWorkInput = {
   floor?: Prisma.IntFieldUpdateOperationsInput | number
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2215,10 +2215,10 @@ export type WorkCommentUncheckedUpdateWithoutWorkInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2240,10 +2240,10 @@ export type WorkCommentUncheckedUpdateManyWithoutWorkInput = {
   actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
   auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
   sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2312,10 +2312,10 @@ export type WorkCommentSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   actualReplyToId?: boolean
   isHidden?: boolean
   auditStatus?: boolean
-  auditReason?: boolean
-  auditAt?: boolean
   auditById?: boolean
   auditRole?: boolean
+  auditReason?: boolean
+  auditAt?: boolean
   likeCount?: boolean
   sensitiveWordHits?: boolean
   createdAt?: boolean
@@ -2344,10 +2344,10 @@ export type WorkCommentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   actualReplyToId?: boolean
   isHidden?: boolean
   auditStatus?: boolean
-  auditReason?: boolean
-  auditAt?: boolean
   auditById?: boolean
   auditRole?: boolean
+  auditReason?: boolean
+  auditAt?: boolean
   likeCount?: boolean
   sensitiveWordHits?: boolean
   createdAt?: boolean
@@ -2372,10 +2372,10 @@ export type WorkCommentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   actualReplyToId?: boolean
   isHidden?: boolean
   auditStatus?: boolean
-  auditReason?: boolean
-  auditAt?: boolean
   auditById?: boolean
   auditRole?: boolean
+  auditReason?: boolean
+  auditAt?: boolean
   likeCount?: boolean
   sensitiveWordHits?: boolean
   createdAt?: boolean
@@ -2400,10 +2400,10 @@ export type WorkCommentSelectScalar = {
   actualReplyToId?: boolean
   isHidden?: boolean
   auditStatus?: boolean
-  auditReason?: boolean
-  auditAt?: boolean
   auditById?: boolean
   auditRole?: boolean
+  auditReason?: boolean
+  auditAt?: boolean
   likeCount?: boolean
   sensitiveWordHits?: boolean
   createdAt?: boolean
@@ -2411,7 +2411,7 @@ export type WorkCommentSelectScalar = {
   deletedAt?: boolean
 }
 
-export type WorkCommentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "workType" | "chapterId" | "userId" | "content" | "floor" | "replyToId" | "actualReplyToId" | "isHidden" | "auditStatus" | "auditReason" | "auditAt" | "auditById" | "auditRole" | "likeCount" | "sensitiveWordHits" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workComment"]>
+export type WorkCommentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "workId" | "workType" | "chapterId" | "userId" | "content" | "floor" | "replyToId" | "actualReplyToId" | "isHidden" | "auditStatus" | "auditById" | "auditRole" | "auditReason" | "auditAt" | "likeCount" | "sensitiveWordHits" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workComment"]>
 export type WorkCommentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   work?: boolean | Prisma.WorkComment$workArgs<ExtArgs>
   chapter?: boolean | Prisma.WorkComment$chapterArgs<ExtArgs>
@@ -2520,14 +2520,6 @@ export type $WorkCommentPayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     auditStatus: number
     /**
-     * 审核拒绝原因
-     */
-    auditReason: string | null
-    /**
-     * 审核时间
-     */
-    auditAt: Date | null
-    /**
      * 审核人ID
      */
     auditById: number | null
@@ -2535,6 +2527,14 @@ export type $WorkCommentPayload<ExtArgs extends runtime.Types.Extensions.Interna
      * 审核人角色：0=版主, 1=管理员
      */
     auditRole: number | null
+    /**
+     * 审核拒绝原因
+     */
+    auditReason: string | null
+    /**
+     * 审核时间
+     */
+    auditAt: Date | null
     /**
      * 点赞数
      */
@@ -2997,10 +2997,10 @@ export interface WorkCommentFieldRefs {
   readonly actualReplyToId: Prisma.FieldRef<"WorkComment", 'Int'>
   readonly isHidden: Prisma.FieldRef<"WorkComment", 'Boolean'>
   readonly auditStatus: Prisma.FieldRef<"WorkComment", 'Int'>
-  readonly auditReason: Prisma.FieldRef<"WorkComment", 'String'>
-  readonly auditAt: Prisma.FieldRef<"WorkComment", 'DateTime'>
   readonly auditById: Prisma.FieldRef<"WorkComment", 'Int'>
   readonly auditRole: Prisma.FieldRef<"WorkComment", 'Int'>
+  readonly auditReason: Prisma.FieldRef<"WorkComment", 'String'>
+  readonly auditAt: Prisma.FieldRef<"WorkComment", 'DateTime'>
   readonly likeCount: Prisma.FieldRef<"WorkComment", 'Int'>
   readonly sensitiveWordHits: Prisma.FieldRef<"WorkComment", 'Json'>
   readonly createdAt: Prisma.FieldRef<"WorkComment", 'DateTime'>

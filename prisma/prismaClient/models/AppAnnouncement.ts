@@ -52,12 +52,12 @@ export type AppAnnouncementMinAggregateOutputType = {
   summary: string | null
   announcementType: number | null
   priorityLevel: number | null
-  publishStartTime: Date | null
-  publishEndTime: Date | null
-  popupBackgroundImage: string | null
   isPublished: boolean | null
   isPinned: boolean | null
   showAsPopup: boolean | null
+  popupBackgroundImage: string | null
+  publishStartTime: Date | null
+  publishEndTime: Date | null
   viewCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -71,12 +71,12 @@ export type AppAnnouncementMaxAggregateOutputType = {
   summary: string | null
   announcementType: number | null
   priorityLevel: number | null
-  publishStartTime: Date | null
-  publishEndTime: Date | null
-  popupBackgroundImage: string | null
   isPublished: boolean | null
   isPinned: boolean | null
   showAsPopup: boolean | null
+  popupBackgroundImage: string | null
+  publishStartTime: Date | null
+  publishEndTime: Date | null
   viewCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -90,13 +90,13 @@ export type AppAnnouncementCountAggregateOutputType = {
   summary: number
   announcementType: number
   priorityLevel: number
-  publishStartTime: number
-  publishEndTime: number
-  popupBackgroundImage: number
   isPublished: number
   isPinned: number
   showAsPopup: number
+  popupBackgroundImage: number
   enablePlatform: number
+  publishStartTime: number
+  publishEndTime: number
   viewCount: number
   createdAt: number
   updatedAt: number
@@ -130,12 +130,12 @@ export type AppAnnouncementMinAggregateInputType = {
   summary?: true
   announcementType?: true
   priorityLevel?: true
-  publishStartTime?: true
-  publishEndTime?: true
-  popupBackgroundImage?: true
   isPublished?: true
   isPinned?: true
   showAsPopup?: true
+  popupBackgroundImage?: true
+  publishStartTime?: true
+  publishEndTime?: true
   viewCount?: true
   createdAt?: true
   updatedAt?: true
@@ -149,12 +149,12 @@ export type AppAnnouncementMaxAggregateInputType = {
   summary?: true
   announcementType?: true
   priorityLevel?: true
-  publishStartTime?: true
-  publishEndTime?: true
-  popupBackgroundImage?: true
   isPublished?: true
   isPinned?: true
   showAsPopup?: true
+  popupBackgroundImage?: true
+  publishStartTime?: true
+  publishEndTime?: true
   viewCount?: true
   createdAt?: true
   updatedAt?: true
@@ -168,13 +168,13 @@ export type AppAnnouncementCountAggregateInputType = {
   summary?: true
   announcementType?: true
   priorityLevel?: true
-  publishStartTime?: true
-  publishEndTime?: true
-  popupBackgroundImage?: true
   isPublished?: true
   isPinned?: true
   showAsPopup?: true
+  popupBackgroundImage?: true
   enablePlatform?: true
+  publishStartTime?: true
+  publishEndTime?: true
   viewCount?: true
   createdAt?: true
   updatedAt?: true
@@ -275,13 +275,13 @@ export type AppAnnouncementGroupByOutputType = {
   summary: string | null
   announcementType: number
   priorityLevel: number
-  publishStartTime: Date | null
-  publishEndTime: Date | null
-  popupBackgroundImage: string | null
   isPublished: boolean
   isPinned: boolean
   showAsPopup: boolean
+  popupBackgroundImage: string | null
   enablePlatform: number[]
+  publishStartTime: Date | null
+  publishEndTime: Date | null
   viewCount: number
   createdAt: Date
   updatedAt: Date
@@ -318,13 +318,13 @@ export type AppAnnouncementWhereInput = {
   summary?: Prisma.StringNullableFilter<"AppAnnouncement"> | string | null
   announcementType?: Prisma.IntFilter<"AppAnnouncement"> | number
   priorityLevel?: Prisma.IntFilter<"AppAnnouncement"> | number
-  publishStartTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
-  publishEndTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
-  popupBackgroundImage?: Prisma.StringNullableFilter<"AppAnnouncement"> | string | null
   isPublished?: Prisma.BoolFilter<"AppAnnouncement"> | boolean
   isPinned?: Prisma.BoolFilter<"AppAnnouncement"> | boolean
   showAsPopup?: Prisma.BoolFilter<"AppAnnouncement"> | boolean
+  popupBackgroundImage?: Prisma.StringNullableFilter<"AppAnnouncement"> | string | null
   enablePlatform?: Prisma.IntNullableListFilter<"AppAnnouncement">
+  publishStartTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
+  publishEndTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
   viewCount?: Prisma.IntFilter<"AppAnnouncement"> | number
   createdAt?: Prisma.DateTimeFilter<"AppAnnouncement"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppAnnouncement"> | Date | string
@@ -340,13 +340,13 @@ export type AppAnnouncementOrderByWithRelationInput = {
   summary?: Prisma.SortOrderInput | Prisma.SortOrder
   announcementType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
-  publishStartTime?: Prisma.SortOrderInput | Prisma.SortOrder
-  publishEndTime?: Prisma.SortOrderInput | Prisma.SortOrder
-  popupBackgroundImage?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
+  popupBackgroundImage?: Prisma.SortOrderInput | Prisma.SortOrder
   enablePlatform?: Prisma.SortOrder
+  publishStartTime?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishEndTime?: Prisma.SortOrderInput | Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -365,13 +365,13 @@ export type AppAnnouncementWhereUniqueInput = Prisma.AtLeast<{
   summary?: Prisma.StringNullableFilter<"AppAnnouncement"> | string | null
   announcementType?: Prisma.IntFilter<"AppAnnouncement"> | number
   priorityLevel?: Prisma.IntFilter<"AppAnnouncement"> | number
-  publishStartTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
-  publishEndTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
-  popupBackgroundImage?: Prisma.StringNullableFilter<"AppAnnouncement"> | string | null
   isPublished?: Prisma.BoolFilter<"AppAnnouncement"> | boolean
   isPinned?: Prisma.BoolFilter<"AppAnnouncement"> | boolean
   showAsPopup?: Prisma.BoolFilter<"AppAnnouncement"> | boolean
+  popupBackgroundImage?: Prisma.StringNullableFilter<"AppAnnouncement"> | string | null
   enablePlatform?: Prisma.IntNullableListFilter<"AppAnnouncement">
+  publishStartTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
+  publishEndTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
   viewCount?: Prisma.IntFilter<"AppAnnouncement"> | number
   createdAt?: Prisma.DateTimeFilter<"AppAnnouncement"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppAnnouncement"> | Date | string
@@ -387,13 +387,13 @@ export type AppAnnouncementOrderByWithAggregationInput = {
   summary?: Prisma.SortOrderInput | Prisma.SortOrder
   announcementType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
-  publishStartTime?: Prisma.SortOrderInput | Prisma.SortOrder
-  publishEndTime?: Prisma.SortOrderInput | Prisma.SortOrder
-  popupBackgroundImage?: Prisma.SortOrderInput | Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
+  popupBackgroundImage?: Prisma.SortOrderInput | Prisma.SortOrder
   enablePlatform?: Prisma.SortOrder
+  publishStartTime?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishEndTime?: Prisma.SortOrderInput | Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -415,13 +415,13 @@ export type AppAnnouncementScalarWhereWithAggregatesInput = {
   summary?: Prisma.StringNullableWithAggregatesFilter<"AppAnnouncement"> | string | null
   announcementType?: Prisma.IntWithAggregatesFilter<"AppAnnouncement"> | number
   priorityLevel?: Prisma.IntWithAggregatesFilter<"AppAnnouncement"> | number
-  publishStartTime?: Prisma.DateTimeNullableWithAggregatesFilter<"AppAnnouncement"> | Date | string | null
-  publishEndTime?: Prisma.DateTimeNullableWithAggregatesFilter<"AppAnnouncement"> | Date | string | null
-  popupBackgroundImage?: Prisma.StringNullableWithAggregatesFilter<"AppAnnouncement"> | string | null
   isPublished?: Prisma.BoolWithAggregatesFilter<"AppAnnouncement"> | boolean
   isPinned?: Prisma.BoolWithAggregatesFilter<"AppAnnouncement"> | boolean
   showAsPopup?: Prisma.BoolWithAggregatesFilter<"AppAnnouncement"> | boolean
+  popupBackgroundImage?: Prisma.StringNullableWithAggregatesFilter<"AppAnnouncement"> | string | null
   enablePlatform?: Prisma.IntNullableListFilter<"AppAnnouncement">
+  publishStartTime?: Prisma.DateTimeNullableWithAggregatesFilter<"AppAnnouncement"> | Date | string | null
+  publishEndTime?: Prisma.DateTimeNullableWithAggregatesFilter<"AppAnnouncement"> | Date | string | null
   viewCount?: Prisma.IntWithAggregatesFilter<"AppAnnouncement"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AppAnnouncement"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"AppAnnouncement"> | Date | string
@@ -433,13 +433,13 @@ export type AppAnnouncementCreateInput = {
   summary?: string | null
   announcementType?: number
   priorityLevel?: number
-  publishStartTime?: Date | string | null
-  publishEndTime?: Date | string | null
-  popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: string | null
   enablePlatform?: Prisma.AppAnnouncementCreateenablePlatformInput | number[]
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
   viewCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -455,13 +455,13 @@ export type AppAnnouncementUncheckedCreateInput = {
   summary?: string | null
   announcementType?: number
   priorityLevel?: number
-  publishStartTime?: Date | string | null
-  publishEndTime?: Date | string | null
-  popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: string | null
   enablePlatform?: Prisma.AppAnnouncementCreateenablePlatformInput | number[]
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
   viewCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -474,13 +474,13 @@ export type AppAnnouncementUpdateInput = {
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   announcementType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enablePlatform?: Prisma.AppAnnouncementUpdateenablePlatformInput | number[]
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -496,13 +496,13 @@ export type AppAnnouncementUncheckedUpdateInput = {
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   announcementType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enablePlatform?: Prisma.AppAnnouncementUpdateenablePlatformInput | number[]
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -517,13 +517,13 @@ export type AppAnnouncementCreateManyInput = {
   summary?: string | null
   announcementType?: number
   priorityLevel?: number
-  publishStartTime?: Date | string | null
-  publishEndTime?: Date | string | null
-  popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: string | null
   enablePlatform?: Prisma.AppAnnouncementCreateenablePlatformInput | number[]
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
   viewCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -535,13 +535,13 @@ export type AppAnnouncementUpdateManyMutationInput = {
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   announcementType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enablePlatform?: Prisma.AppAnnouncementUpdateenablePlatformInput | number[]
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -555,13 +555,13 @@ export type AppAnnouncementUncheckedUpdateManyInput = {
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   announcementType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enablePlatform?: Prisma.AppAnnouncementUpdateenablePlatformInput | number[]
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -588,13 +588,13 @@ export type AppAnnouncementCountOrderByAggregateInput = {
   summary?: Prisma.SortOrder
   announcementType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
-  publishStartTime?: Prisma.SortOrder
-  publishEndTime?: Prisma.SortOrder
-  popupBackgroundImage?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
+  popupBackgroundImage?: Prisma.SortOrder
   enablePlatform?: Prisma.SortOrder
+  publishStartTime?: Prisma.SortOrder
+  publishEndTime?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -617,12 +617,12 @@ export type AppAnnouncementMaxOrderByAggregateInput = {
   summary?: Prisma.SortOrder
   announcementType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
-  publishStartTime?: Prisma.SortOrder
-  publishEndTime?: Prisma.SortOrder
-  popupBackgroundImage?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
+  popupBackgroundImage?: Prisma.SortOrder
+  publishStartTime?: Prisma.SortOrder
+  publishEndTime?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -636,12 +636,12 @@ export type AppAnnouncementMinOrderByAggregateInput = {
   summary?: Prisma.SortOrder
   announcementType?: Prisma.SortOrder
   priorityLevel?: Prisma.SortOrder
-  publishStartTime?: Prisma.SortOrder
-  publishEndTime?: Prisma.SortOrder
-  popupBackgroundImage?: Prisma.SortOrder
   isPublished?: Prisma.SortOrder
   isPinned?: Prisma.SortOrder
   showAsPopup?: Prisma.SortOrder
+  popupBackgroundImage?: Prisma.SortOrder
+  publishStartTime?: Prisma.SortOrder
+  publishEndTime?: Prisma.SortOrder
   viewCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -745,13 +745,13 @@ export type AppAnnouncementCreateWithoutAnnouncementReadsInput = {
   summary?: string | null
   announcementType?: number
   priorityLevel?: number
-  publishStartTime?: Date | string | null
-  publishEndTime?: Date | string | null
-  popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: string | null
   enablePlatform?: Prisma.AppAnnouncementCreateenablePlatformInput | number[]
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
   viewCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -766,13 +766,13 @@ export type AppAnnouncementUncheckedCreateWithoutAnnouncementReadsInput = {
   summary?: string | null
   announcementType?: number
   priorityLevel?: number
-  publishStartTime?: Date | string | null
-  publishEndTime?: Date | string | null
-  popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: string | null
   enablePlatform?: Prisma.AppAnnouncementCreateenablePlatformInput | number[]
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
   viewCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -800,13 +800,13 @@ export type AppAnnouncementUpdateWithoutAnnouncementReadsInput = {
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   announcementType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enablePlatform?: Prisma.AppAnnouncementUpdateenablePlatformInput | number[]
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -821,13 +821,13 @@ export type AppAnnouncementUncheckedUpdateWithoutAnnouncementReadsInput = {
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   announcementType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enablePlatform?: Prisma.AppAnnouncementUpdateenablePlatformInput | number[]
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -839,13 +839,13 @@ export type AppAnnouncementCreateWithoutAppPageInput = {
   summary?: string | null
   announcementType?: number
   priorityLevel?: number
-  publishStartTime?: Date | string | null
-  publishEndTime?: Date | string | null
-  popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: string | null
   enablePlatform?: Prisma.AppAnnouncementCreateenablePlatformInput | number[]
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
   viewCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -859,13 +859,13 @@ export type AppAnnouncementUncheckedCreateWithoutAppPageInput = {
   summary?: string | null
   announcementType?: number
   priorityLevel?: number
-  publishStartTime?: Date | string | null
-  publishEndTime?: Date | string | null
-  popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: string | null
   enablePlatform?: Prisma.AppAnnouncementCreateenablePlatformInput | number[]
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
   viewCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -909,13 +909,13 @@ export type AppAnnouncementScalarWhereInput = {
   summary?: Prisma.StringNullableFilter<"AppAnnouncement"> | string | null
   announcementType?: Prisma.IntFilter<"AppAnnouncement"> | number
   priorityLevel?: Prisma.IntFilter<"AppAnnouncement"> | number
-  publishStartTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
-  publishEndTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
-  popupBackgroundImage?: Prisma.StringNullableFilter<"AppAnnouncement"> | string | null
   isPublished?: Prisma.BoolFilter<"AppAnnouncement"> | boolean
   isPinned?: Prisma.BoolFilter<"AppAnnouncement"> | boolean
   showAsPopup?: Prisma.BoolFilter<"AppAnnouncement"> | boolean
+  popupBackgroundImage?: Prisma.StringNullableFilter<"AppAnnouncement"> | string | null
   enablePlatform?: Prisma.IntNullableListFilter<"AppAnnouncement">
+  publishStartTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
+  publishEndTime?: Prisma.DateTimeNullableFilter<"AppAnnouncement"> | Date | string | null
   viewCount?: Prisma.IntFilter<"AppAnnouncement"> | number
   createdAt?: Prisma.DateTimeFilter<"AppAnnouncement"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppAnnouncement"> | Date | string
@@ -928,13 +928,13 @@ export type AppAnnouncementCreateManyAppPageInput = {
   summary?: string | null
   announcementType?: number
   priorityLevel?: number
-  publishStartTime?: Date | string | null
-  publishEndTime?: Date | string | null
-  popupBackgroundImage?: string | null
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: string | null
   enablePlatform?: Prisma.AppAnnouncementCreateenablePlatformInput | number[]
+  publishStartTime?: Date | string | null
+  publishEndTime?: Date | string | null
   viewCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -946,13 +946,13 @@ export type AppAnnouncementUpdateWithoutAppPageInput = {
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   announcementType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enablePlatform?: Prisma.AppAnnouncementUpdateenablePlatformInput | number[]
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -966,13 +966,13 @@ export type AppAnnouncementUncheckedUpdateWithoutAppPageInput = {
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   announcementType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enablePlatform?: Prisma.AppAnnouncementUpdateenablePlatformInput | number[]
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -986,13 +986,13 @@ export type AppAnnouncementUncheckedUpdateManyWithoutAppPageInput = {
   summary?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   announcementType?: Prisma.IntFieldUpdateOperationsInput | number
   priorityLevel?: Prisma.IntFieldUpdateOperationsInput | number
-  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
   showAsPopup?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  popupBackgroundImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   enablePlatform?: Prisma.AppAnnouncementUpdateenablePlatformInput | number[]
+  publishStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishEndTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1037,13 +1037,13 @@ export type AppAnnouncementSelect<ExtArgs extends runtime.Types.Extensions.Inter
   summary?: boolean
   announcementType?: boolean
   priorityLevel?: boolean
-  publishStartTime?: boolean
-  publishEndTime?: boolean
-  popupBackgroundImage?: boolean
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: boolean
   enablePlatform?: boolean
+  publishStartTime?: boolean
+  publishEndTime?: boolean
   viewCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1060,13 +1060,13 @@ export type AppAnnouncementSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   summary?: boolean
   announcementType?: boolean
   priorityLevel?: boolean
-  publishStartTime?: boolean
-  publishEndTime?: boolean
-  popupBackgroundImage?: boolean
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: boolean
   enablePlatform?: boolean
+  publishStartTime?: boolean
+  publishEndTime?: boolean
   viewCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1081,13 +1081,13 @@ export type AppAnnouncementSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   summary?: boolean
   announcementType?: boolean
   priorityLevel?: boolean
-  publishStartTime?: boolean
-  publishEndTime?: boolean
-  popupBackgroundImage?: boolean
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: boolean
   enablePlatform?: boolean
+  publishStartTime?: boolean
+  publishEndTime?: boolean
   viewCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1102,19 +1102,19 @@ export type AppAnnouncementSelectScalar = {
   summary?: boolean
   announcementType?: boolean
   priorityLevel?: boolean
-  publishStartTime?: boolean
-  publishEndTime?: boolean
-  popupBackgroundImage?: boolean
   isPublished?: boolean
   isPinned?: boolean
   showAsPopup?: boolean
+  popupBackgroundImage?: boolean
   enablePlatform?: boolean
+  publishStartTime?: boolean
+  publishEndTime?: boolean
   viewCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type AppAnnouncementOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "pageId" | "title" | "content" | "summary" | "announcementType" | "priorityLevel" | "publishStartTime" | "publishEndTime" | "popupBackgroundImage" | "isPublished" | "isPinned" | "showAsPopup" | "enablePlatform" | "viewCount" | "createdAt" | "updatedAt", ExtArgs["result"]["appAnnouncement"]>
+export type AppAnnouncementOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "pageId" | "title" | "content" | "summary" | "announcementType" | "priorityLevel" | "isPublished" | "isPinned" | "showAsPopup" | "popupBackgroundImage" | "enablePlatform" | "publishStartTime" | "publishEndTime" | "viewCount" | "createdAt" | "updatedAt", ExtArgs["result"]["appAnnouncement"]>
 export type AppAnnouncementInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   appPage?: boolean | Prisma.AppAnnouncement$appPageArgs<ExtArgs>
   announcementReads?: boolean | Prisma.AppAnnouncement$announcementReadsArgs<ExtArgs>
@@ -1169,18 +1169,6 @@ export type $AppAnnouncementPayload<ExtArgs extends runtime.Types.Extensions.Int
      */
     priorityLevel: number
     /**
-     * 发布开始时间
-     */
-    publishStartTime: Date | null
-    /**
-     * 发布结束时间
-     */
-    publishEndTime: Date | null
-    /**
-     * 弹窗背景图片URL
-     */
-    popupBackgroundImage: string | null
-    /**
      * 是否已发布
      */
     isPublished: boolean
@@ -1193,9 +1181,21 @@ export type $AppAnnouncementPayload<ExtArgs extends runtime.Types.Extensions.Int
      */
     showAsPopup: boolean
     /**
+     * 弹窗背景图片URL
+     */
+    popupBackgroundImage: string | null
+    /**
      * 启用的平台列表
      */
     enablePlatform: number[]
+    /**
+     * 发布开始时间
+     */
+    publishStartTime: Date | null
+    /**
+     * 发布结束时间
+     */
+    publishEndTime: Date | null
     /**
      * 浏览次数
      */
@@ -1640,13 +1640,13 @@ export interface AppAnnouncementFieldRefs {
   readonly summary: Prisma.FieldRef<"AppAnnouncement", 'String'>
   readonly announcementType: Prisma.FieldRef<"AppAnnouncement", 'Int'>
   readonly priorityLevel: Prisma.FieldRef<"AppAnnouncement", 'Int'>
-  readonly publishStartTime: Prisma.FieldRef<"AppAnnouncement", 'DateTime'>
-  readonly publishEndTime: Prisma.FieldRef<"AppAnnouncement", 'DateTime'>
-  readonly popupBackgroundImage: Prisma.FieldRef<"AppAnnouncement", 'String'>
   readonly isPublished: Prisma.FieldRef<"AppAnnouncement", 'Boolean'>
   readonly isPinned: Prisma.FieldRef<"AppAnnouncement", 'Boolean'>
   readonly showAsPopup: Prisma.FieldRef<"AppAnnouncement", 'Boolean'>
+  readonly popupBackgroundImage: Prisma.FieldRef<"AppAnnouncement", 'String'>
   readonly enablePlatform: Prisma.FieldRef<"AppAnnouncement", 'Int[]'>
+  readonly publishStartTime: Prisma.FieldRef<"AppAnnouncement", 'DateTime'>
+  readonly publishEndTime: Prisma.FieldRef<"AppAnnouncement", 'DateTime'>
   readonly viewCount: Prisma.FieldRef<"AppAnnouncement", 'Int'>
   readonly createdAt: Prisma.FieldRef<"AppAnnouncement", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"AppAnnouncement", 'DateTime'>

@@ -28,24 +28,24 @@ export type AggregateForumTag = {
 
 export type ForumTagAvgAggregateOutputType = {
   id: number | null
-  useCount: number | null
   sortOrder: number | null
+  useCount: number | null
 }
 
 export type ForumTagSumAggregateOutputType = {
   id: number | null
-  useCount: number | null
   sortOrder: number | null
+  useCount: number | null
 }
 
 export type ForumTagMinAggregateOutputType = {
   id: number | null
   name: string | null
   icon: string | null
-  useCount: number | null
+  description: string | null
   sortOrder: number | null
   isEnabled: boolean | null
-  description: string | null
+  useCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -54,10 +54,10 @@ export type ForumTagMaxAggregateOutputType = {
   id: number | null
   name: string | null
   icon: string | null
-  useCount: number | null
+  description: string | null
   sortOrder: number | null
   isEnabled: boolean | null
-  description: string | null
+  useCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -66,10 +66,10 @@ export type ForumTagCountAggregateOutputType = {
   id: number
   name: number
   icon: number
-  useCount: number
+  description: number
   sortOrder: number
   isEnabled: number
-  description: number
+  useCount: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -78,24 +78,24 @@ export type ForumTagCountAggregateOutputType = {
 
 export type ForumTagAvgAggregateInputType = {
   id?: true
-  useCount?: true
   sortOrder?: true
+  useCount?: true
 }
 
 export type ForumTagSumAggregateInputType = {
   id?: true
-  useCount?: true
   sortOrder?: true
+  useCount?: true
 }
 
 export type ForumTagMinAggregateInputType = {
   id?: true
   name?: true
   icon?: true
-  useCount?: true
+  description?: true
   sortOrder?: true
   isEnabled?: true
-  description?: true
+  useCount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -104,10 +104,10 @@ export type ForumTagMaxAggregateInputType = {
   id?: true
   name?: true
   icon?: true
-  useCount?: true
+  description?: true
   sortOrder?: true
   isEnabled?: true
-  description?: true
+  useCount?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -116,10 +116,10 @@ export type ForumTagCountAggregateInputType = {
   id?: true
   name?: true
   icon?: true
-  useCount?: true
+  description?: true
   sortOrder?: true
   isEnabled?: true
-  description?: true
+  useCount?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -215,10 +215,10 @@ export type ForumTagGroupByOutputType = {
   id: number
   name: string
   icon: string | null
-  useCount: number
+  description: string | null
   sortOrder: number
   isEnabled: boolean
-  description: string | null
+  useCount: number
   createdAt: Date
   updatedAt: Date
   _count: ForumTagCountAggregateOutputType | null
@@ -250,10 +250,10 @@ export type ForumTagWhereInput = {
   id?: Prisma.IntFilter<"ForumTag"> | number
   name?: Prisma.StringFilter<"ForumTag"> | string
   icon?: Prisma.StringNullableFilter<"ForumTag"> | string | null
-  useCount?: Prisma.IntFilter<"ForumTag"> | number
+  description?: Prisma.StringNullableFilter<"ForumTag"> | string | null
   sortOrder?: Prisma.IntFilter<"ForumTag"> | number
   isEnabled?: Prisma.BoolFilter<"ForumTag"> | boolean
-  description?: Prisma.StringNullableFilter<"ForumTag"> | string | null
+  useCount?: Prisma.IntFilter<"ForumTag"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumTag"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumTag"> | Date | string
   topicTags?: Prisma.ForumTopicTagListRelationFilter
@@ -263,10 +263,10 @@ export type ForumTagOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
-  useCount?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  useCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   topicTags?: Prisma.ForumTopicTagOrderByRelationAggregateInput
@@ -279,10 +279,10 @@ export type ForumTagWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ForumTagWhereInput[]
   NOT?: Prisma.ForumTagWhereInput | Prisma.ForumTagWhereInput[]
   icon?: Prisma.StringNullableFilter<"ForumTag"> | string | null
-  useCount?: Prisma.IntFilter<"ForumTag"> | number
+  description?: Prisma.StringNullableFilter<"ForumTag"> | string | null
   sortOrder?: Prisma.IntFilter<"ForumTag"> | number
   isEnabled?: Prisma.BoolFilter<"ForumTag"> | boolean
-  description?: Prisma.StringNullableFilter<"ForumTag"> | string | null
+  useCount?: Prisma.IntFilter<"ForumTag"> | number
   createdAt?: Prisma.DateTimeFilter<"ForumTag"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ForumTag"> | Date | string
   topicTags?: Prisma.ForumTopicTagListRelationFilter
@@ -292,10 +292,10 @@ export type ForumTagOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
-  useCount?: Prisma.SortOrder
+  description?: Prisma.SortOrderInput | Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrderInput | Prisma.SortOrder
+  useCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ForumTagCountOrderByAggregateInput
@@ -312,10 +312,10 @@ export type ForumTagScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"ForumTag"> | number
   name?: Prisma.StringWithAggregatesFilter<"ForumTag"> | string
   icon?: Prisma.StringNullableWithAggregatesFilter<"ForumTag"> | string | null
-  useCount?: Prisma.IntWithAggregatesFilter<"ForumTag"> | number
+  description?: Prisma.StringNullableWithAggregatesFilter<"ForumTag"> | string | null
   sortOrder?: Prisma.IntWithAggregatesFilter<"ForumTag"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"ForumTag"> | boolean
-  description?: Prisma.StringNullableWithAggregatesFilter<"ForumTag"> | string | null
+  useCount?: Prisma.IntWithAggregatesFilter<"ForumTag"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumTag"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ForumTag"> | Date | string
 }
@@ -323,10 +323,10 @@ export type ForumTagScalarWhereWithAggregatesInput = {
 export type ForumTagCreateInput = {
   name: string
   icon?: string | null
-  useCount?: number
+  description?: string | null
   sortOrder?: number
   isEnabled?: boolean
-  description?: string | null
+  useCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   topicTags?: Prisma.ForumTopicTagCreateNestedManyWithoutTagInput
@@ -336,10 +336,10 @@ export type ForumTagUncheckedCreateInput = {
   id?: number
   name: string
   icon?: string | null
-  useCount?: number
+  description?: string | null
   sortOrder?: number
   isEnabled?: boolean
-  description?: string | null
+  useCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
   topicTags?: Prisma.ForumTopicTagUncheckedCreateNestedManyWithoutTagInput
@@ -348,10 +348,10 @@ export type ForumTagUncheckedCreateInput = {
 export type ForumTagUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  useCount?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  useCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   topicTags?: Prisma.ForumTopicTagUpdateManyWithoutTagNestedInput
@@ -361,10 +361,10 @@ export type ForumTagUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  useCount?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  useCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   topicTags?: Prisma.ForumTopicTagUncheckedUpdateManyWithoutTagNestedInput
@@ -374,10 +374,10 @@ export type ForumTagCreateManyInput = {
   id?: number
   name: string
   icon?: string | null
-  useCount?: number
+  description?: string | null
   sortOrder?: number
   isEnabled?: boolean
-  description?: string | null
+  useCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -385,10 +385,10 @@ export type ForumTagCreateManyInput = {
 export type ForumTagUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  useCount?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  useCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -397,10 +397,10 @@ export type ForumTagUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  useCount?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  useCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -409,28 +409,28 @@ export type ForumTagCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrder
-  useCount?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrder
+  useCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type ForumTagAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  useCount?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
+  useCount?: Prisma.SortOrder
 }
 
 export type ForumTagMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrder
-  useCount?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrder
+  useCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -439,18 +439,18 @@ export type ForumTagMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   icon?: Prisma.SortOrder
-  useCount?: Prisma.SortOrder
+  description?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  description?: Prisma.SortOrder
+  useCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type ForumTagSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  useCount?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
+  useCount?: Prisma.SortOrder
 }
 
 export type ForumTagScalarRelationFilter = {
@@ -475,10 +475,10 @@ export type ForumTagUpdateOneRequiredWithoutTopicTagsNestedInput = {
 export type ForumTagCreateWithoutTopicTagsInput = {
   name: string
   icon?: string | null
-  useCount?: number
+  description?: string | null
   sortOrder?: number
   isEnabled?: boolean
-  description?: string | null
+  useCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -487,10 +487,10 @@ export type ForumTagUncheckedCreateWithoutTopicTagsInput = {
   id?: number
   name: string
   icon?: string | null
-  useCount?: number
+  description?: string | null
   sortOrder?: number
   isEnabled?: boolean
-  description?: string | null
+  useCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -514,10 +514,10 @@ export type ForumTagUpdateToOneWithWhereWithoutTopicTagsInput = {
 export type ForumTagUpdateWithoutTopicTagsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  useCount?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  useCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -526,10 +526,10 @@ export type ForumTagUncheckedUpdateWithoutTopicTagsInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  useCount?: Prisma.IntFieldUpdateOperationsInput | number
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  useCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -569,10 +569,10 @@ export type ForumTagSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   id?: boolean
   name?: boolean
   icon?: boolean
-  useCount?: boolean
+  description?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
-  description?: boolean
+  useCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   topicTags?: boolean | Prisma.ForumTag$topicTagsArgs<ExtArgs>
@@ -583,10 +583,10 @@ export type ForumTagSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   name?: boolean
   icon?: boolean
-  useCount?: boolean
+  description?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
-  description?: boolean
+  useCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["forumTag"]>
@@ -595,10 +595,10 @@ export type ForumTagSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   name?: boolean
   icon?: boolean
-  useCount?: boolean
+  description?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
-  description?: boolean
+  useCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["forumTag"]>
@@ -607,15 +607,15 @@ export type ForumTagSelectScalar = {
   id?: boolean
   name?: boolean
   icon?: boolean
-  useCount?: boolean
+  description?: boolean
   sortOrder?: boolean
   isEnabled?: boolean
-  description?: boolean
+  useCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ForumTagOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "useCount" | "sortOrder" | "isEnabled" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["forumTag"]>
+export type ForumTagOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "icon" | "description" | "sortOrder" | "isEnabled" | "useCount" | "createdAt" | "updatedAt", ExtArgs["result"]["forumTag"]>
 export type ForumTagInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   topicTags?: boolean | Prisma.ForumTag$topicTagsArgs<ExtArgs>
   _count?: boolean | Prisma.ForumTagCountOutputTypeDefaultArgs<ExtArgs>
@@ -642,9 +642,9 @@ export type $ForumTagPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
      */
     icon: string | null
     /**
-     * 使用次数
+     * 标签描述
      */
-    useCount: number
+    description: string | null
     /**
      * 排序值（数值越小越靠前）
      */
@@ -654,9 +654,9 @@ export type $ForumTagPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
      */
     isEnabled: boolean
     /**
-     * 标签描述
+     * 使用次数
      */
-    description: string | null
+    useCount: number
     /**
      * 创建时间
      */
@@ -1092,10 +1092,10 @@ export interface ForumTagFieldRefs {
   readonly id: Prisma.FieldRef<"ForumTag", 'Int'>
   readonly name: Prisma.FieldRef<"ForumTag", 'String'>
   readonly icon: Prisma.FieldRef<"ForumTag", 'String'>
-  readonly useCount: Prisma.FieldRef<"ForumTag", 'Int'>
+  readonly description: Prisma.FieldRef<"ForumTag", 'String'>
   readonly sortOrder: Prisma.FieldRef<"ForumTag", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"ForumTag", 'Boolean'>
-  readonly description: Prisma.FieldRef<"ForumTag", 'String'>
+  readonly useCount: Prisma.FieldRef<"ForumTag", 'Int'>
   readonly createdAt: Prisma.FieldRef<"ForumTag", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ForumTag", 'DateTime'>
 }

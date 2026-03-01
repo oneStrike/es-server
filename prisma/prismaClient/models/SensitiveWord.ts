@@ -31,10 +31,10 @@ export type SensitiveWordAvgAggregateOutputType = {
   level: number | null
   type: number | null
   matchMode: number | null
-  hitCount: number | null
   version: number | null
   createdBy: number | null
   updatedBy: number | null
+  hitCount: number | null
 }
 
 export type SensitiveWordSumAggregateOutputType = {
@@ -42,10 +42,10 @@ export type SensitiveWordSumAggregateOutputType = {
   level: number | null
   type: number | null
   matchMode: number | null
-  hitCount: number | null
   version: number | null
   createdBy: number | null
   updatedBy: number | null
+  hitCount: number | null
 }
 
 export type SensitiveWordMinAggregateOutputType = {
@@ -56,12 +56,12 @@ export type SensitiveWordMinAggregateOutputType = {
   type: number | null
   matchMode: number | null
   isEnabled: boolean | null
-  hitCount: number | null
-  lastHitAt: Date | null
   version: number | null
   remark: string | null
   createdBy: number | null
   updatedBy: number | null
+  hitCount: number | null
+  lastHitAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -74,12 +74,12 @@ export type SensitiveWordMaxAggregateOutputType = {
   type: number | null
   matchMode: number | null
   isEnabled: boolean | null
-  hitCount: number | null
-  lastHitAt: Date | null
   version: number | null
   remark: string | null
   createdBy: number | null
   updatedBy: number | null
+  hitCount: number | null
+  lastHitAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -92,12 +92,12 @@ export type SensitiveWordCountAggregateOutputType = {
   type: number
   matchMode: number
   isEnabled: number
-  hitCount: number
-  lastHitAt: number
   version: number
   remark: number
   createdBy: number
   updatedBy: number
+  hitCount: number
+  lastHitAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -109,10 +109,10 @@ export type SensitiveWordAvgAggregateInputType = {
   level?: true
   type?: true
   matchMode?: true
-  hitCount?: true
   version?: true
   createdBy?: true
   updatedBy?: true
+  hitCount?: true
 }
 
 export type SensitiveWordSumAggregateInputType = {
@@ -120,10 +120,10 @@ export type SensitiveWordSumAggregateInputType = {
   level?: true
   type?: true
   matchMode?: true
-  hitCount?: true
   version?: true
   createdBy?: true
   updatedBy?: true
+  hitCount?: true
 }
 
 export type SensitiveWordMinAggregateInputType = {
@@ -134,12 +134,12 @@ export type SensitiveWordMinAggregateInputType = {
   type?: true
   matchMode?: true
   isEnabled?: true
-  hitCount?: true
-  lastHitAt?: true
   version?: true
   remark?: true
   createdBy?: true
   updatedBy?: true
+  hitCount?: true
+  lastHitAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -152,12 +152,12 @@ export type SensitiveWordMaxAggregateInputType = {
   type?: true
   matchMode?: true
   isEnabled?: true
-  hitCount?: true
-  lastHitAt?: true
   version?: true
   remark?: true
   createdBy?: true
   updatedBy?: true
+  hitCount?: true
+  lastHitAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -170,12 +170,12 @@ export type SensitiveWordCountAggregateInputType = {
   type?: true
   matchMode?: true
   isEnabled?: true
-  hitCount?: true
-  lastHitAt?: true
   version?: true
   remark?: true
   createdBy?: true
   updatedBy?: true
+  hitCount?: true
+  lastHitAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -275,12 +275,12 @@ export type SensitiveWordGroupByOutputType = {
   type: number
   matchMode: number
   isEnabled: boolean
-  hitCount: number
-  lastHitAt: Date | null
   version: number
   remark: string | null
   createdBy: number | null
   updatedBy: number | null
+  hitCount: number
+  lastHitAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: SensitiveWordCountAggregateOutputType | null
@@ -316,12 +316,12 @@ export type SensitiveWordWhereInput = {
   type?: Prisma.IntFilter<"SensitiveWord"> | number
   matchMode?: Prisma.IntFilter<"SensitiveWord"> | number
   isEnabled?: Prisma.BoolFilter<"SensitiveWord"> | boolean
-  hitCount?: Prisma.IntFilter<"SensitiveWord"> | number
-  lastHitAt?: Prisma.DateTimeNullableFilter<"SensitiveWord"> | Date | string | null
   version?: Prisma.IntFilter<"SensitiveWord"> | number
   remark?: Prisma.StringNullableFilter<"SensitiveWord"> | string | null
   createdBy?: Prisma.IntNullableFilter<"SensitiveWord"> | number | null
   updatedBy?: Prisma.IntNullableFilter<"SensitiveWord"> | number | null
+  hitCount?: Prisma.IntFilter<"SensitiveWord"> | number
+  lastHitAt?: Prisma.DateTimeNullableFilter<"SensitiveWord"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"SensitiveWord"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SensitiveWord"> | Date | string
 }
@@ -334,12 +334,12 @@ export type SensitiveWordOrderByWithRelationInput = {
   type?: Prisma.SortOrder
   matchMode?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  hitCount?: Prisma.SortOrder
-  lastHitAt?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdBy?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  hitCount?: Prisma.SortOrder
+  lastHitAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -355,12 +355,12 @@ export type SensitiveWordWhereUniqueInput = Prisma.AtLeast<{
   type?: Prisma.IntFilter<"SensitiveWord"> | number
   matchMode?: Prisma.IntFilter<"SensitiveWord"> | number
   isEnabled?: Prisma.BoolFilter<"SensitiveWord"> | boolean
-  hitCount?: Prisma.IntFilter<"SensitiveWord"> | number
-  lastHitAt?: Prisma.DateTimeNullableFilter<"SensitiveWord"> | Date | string | null
   version?: Prisma.IntFilter<"SensitiveWord"> | number
   remark?: Prisma.StringNullableFilter<"SensitiveWord"> | string | null
   createdBy?: Prisma.IntNullableFilter<"SensitiveWord"> | number | null
   updatedBy?: Prisma.IntNullableFilter<"SensitiveWord"> | number | null
+  hitCount?: Prisma.IntFilter<"SensitiveWord"> | number
+  lastHitAt?: Prisma.DateTimeNullableFilter<"SensitiveWord"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"SensitiveWord"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SensitiveWord"> | Date | string
 }, "id" | "word">
@@ -373,12 +373,12 @@ export type SensitiveWordOrderByWithAggregationInput = {
   type?: Prisma.SortOrder
   matchMode?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  hitCount?: Prisma.SortOrder
-  lastHitAt?: Prisma.SortOrderInput | Prisma.SortOrder
   version?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdBy?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  hitCount?: Prisma.SortOrder
+  lastHitAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SensitiveWordCountOrderByAggregateInput
@@ -399,12 +399,12 @@ export type SensitiveWordScalarWhereWithAggregatesInput = {
   type?: Prisma.IntWithAggregatesFilter<"SensitiveWord"> | number
   matchMode?: Prisma.IntWithAggregatesFilter<"SensitiveWord"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"SensitiveWord"> | boolean
-  hitCount?: Prisma.IntWithAggregatesFilter<"SensitiveWord"> | number
-  lastHitAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SensitiveWord"> | Date | string | null
   version?: Prisma.IntWithAggregatesFilter<"SensitiveWord"> | number
   remark?: Prisma.StringNullableWithAggregatesFilter<"SensitiveWord"> | string | null
   createdBy?: Prisma.IntNullableWithAggregatesFilter<"SensitiveWord"> | number | null
   updatedBy?: Prisma.IntNullableWithAggregatesFilter<"SensitiveWord"> | number | null
+  hitCount?: Prisma.IntWithAggregatesFilter<"SensitiveWord"> | number
+  lastHitAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SensitiveWord"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"SensitiveWord"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SensitiveWord"> | Date | string
 }
@@ -416,12 +416,12 @@ export type SensitiveWordCreateInput = {
   type?: number
   matchMode?: number
   isEnabled?: boolean
-  hitCount?: number
-  lastHitAt?: Date | string | null
   version?: number
   remark?: string | null
   createdBy?: number | null
   updatedBy?: number | null
+  hitCount?: number
+  lastHitAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -434,12 +434,12 @@ export type SensitiveWordUncheckedCreateInput = {
   type?: number
   matchMode?: number
   isEnabled?: boolean
-  hitCount?: number
-  lastHitAt?: Date | string | null
   version?: number
   remark?: string | null
   createdBy?: number | null
   updatedBy?: number | null
+  hitCount?: number
+  lastHitAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -451,12 +451,12 @@ export type SensitiveWordUpdateInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   matchMode?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hitCount?: Prisma.IntFieldUpdateOperationsInput | number
-  lastHitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hitCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastHitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -469,12 +469,12 @@ export type SensitiveWordUncheckedUpdateInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   matchMode?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hitCount?: Prisma.IntFieldUpdateOperationsInput | number
-  lastHitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hitCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastHitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -487,12 +487,12 @@ export type SensitiveWordCreateManyInput = {
   type?: number
   matchMode?: number
   isEnabled?: boolean
-  hitCount?: number
-  lastHitAt?: Date | string | null
   version?: number
   remark?: string | null
   createdBy?: number | null
   updatedBy?: number | null
+  hitCount?: number
+  lastHitAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -504,12 +504,12 @@ export type SensitiveWordUpdateManyMutationInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   matchMode?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hitCount?: Prisma.IntFieldUpdateOperationsInput | number
-  lastHitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hitCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastHitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -522,12 +522,12 @@ export type SensitiveWordUncheckedUpdateManyInput = {
   type?: Prisma.IntFieldUpdateOperationsInput | number
   matchMode?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  hitCount?: Prisma.IntFieldUpdateOperationsInput | number
-  lastHitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   version?: Prisma.IntFieldUpdateOperationsInput | number
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   updatedBy?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  hitCount?: Prisma.IntFieldUpdateOperationsInput | number
+  lastHitAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -540,12 +540,12 @@ export type SensitiveWordCountOrderByAggregateInput = {
   type?: Prisma.SortOrder
   matchMode?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  hitCount?: Prisma.SortOrder
-  lastHitAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrder
+  hitCount?: Prisma.SortOrder
+  lastHitAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -555,10 +555,10 @@ export type SensitiveWordAvgOrderByAggregateInput = {
   level?: Prisma.SortOrder
   type?: Prisma.SortOrder
   matchMode?: Prisma.SortOrder
-  hitCount?: Prisma.SortOrder
   version?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrder
+  hitCount?: Prisma.SortOrder
 }
 
 export type SensitiveWordMaxOrderByAggregateInput = {
@@ -569,12 +569,12 @@ export type SensitiveWordMaxOrderByAggregateInput = {
   type?: Prisma.SortOrder
   matchMode?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  hitCount?: Prisma.SortOrder
-  lastHitAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrder
+  hitCount?: Prisma.SortOrder
+  lastHitAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -587,12 +587,12 @@ export type SensitiveWordMinOrderByAggregateInput = {
   type?: Prisma.SortOrder
   matchMode?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
-  hitCount?: Prisma.SortOrder
-  lastHitAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrder
+  hitCount?: Prisma.SortOrder
+  lastHitAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -602,10 +602,10 @@ export type SensitiveWordSumOrderByAggregateInput = {
   level?: Prisma.SortOrder
   type?: Prisma.SortOrder
   matchMode?: Prisma.SortOrder
-  hitCount?: Prisma.SortOrder
   version?: Prisma.SortOrder
   createdBy?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrder
+  hitCount?: Prisma.SortOrder
 }
 
 
@@ -618,12 +618,12 @@ export type SensitiveWordSelect<ExtArgs extends runtime.Types.Extensions.Interna
   type?: boolean
   matchMode?: boolean
   isEnabled?: boolean
-  hitCount?: boolean
-  lastHitAt?: boolean
   version?: boolean
   remark?: boolean
   createdBy?: boolean
   updatedBy?: boolean
+  hitCount?: boolean
+  lastHitAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["sensitiveWord"]>
@@ -636,12 +636,12 @@ export type SensitiveWordSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   type?: boolean
   matchMode?: boolean
   isEnabled?: boolean
-  hitCount?: boolean
-  lastHitAt?: boolean
   version?: boolean
   remark?: boolean
   createdBy?: boolean
   updatedBy?: boolean
+  hitCount?: boolean
+  lastHitAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["sensitiveWord"]>
@@ -654,12 +654,12 @@ export type SensitiveWordSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   type?: boolean
   matchMode?: boolean
   isEnabled?: boolean
-  hitCount?: boolean
-  lastHitAt?: boolean
   version?: boolean
   remark?: boolean
   createdBy?: boolean
   updatedBy?: boolean
+  hitCount?: boolean
+  lastHitAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["sensitiveWord"]>
@@ -672,17 +672,17 @@ export type SensitiveWordSelectScalar = {
   type?: boolean
   matchMode?: boolean
   isEnabled?: boolean
-  hitCount?: boolean
-  lastHitAt?: boolean
   version?: boolean
   remark?: boolean
   createdBy?: boolean
   updatedBy?: boolean
+  hitCount?: boolean
+  lastHitAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SensitiveWordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "word" | "replaceWord" | "level" | "type" | "matchMode" | "isEnabled" | "hitCount" | "lastHitAt" | "version" | "remark" | "createdBy" | "updatedBy" | "createdAt" | "updatedAt", ExtArgs["result"]["sensitiveWord"]>
+export type SensitiveWordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "word" | "replaceWord" | "level" | "type" | "matchMode" | "isEnabled" | "version" | "remark" | "createdBy" | "updatedBy" | "hitCount" | "lastHitAt" | "createdAt" | "updatedAt", ExtArgs["result"]["sensitiveWord"]>
 
 export type $SensitiveWordPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SensitiveWord"
@@ -717,14 +717,6 @@ export type $SensitiveWordPayload<ExtArgs extends runtime.Types.Extensions.Inter
      */
     isEnabled: boolean
     /**
-     * 命中次数
-     */
-    hitCount: number
-    /**
-     * 最后命中时间
-     */
-    lastHitAt: Date | null
-    /**
      * 版本号（用于乐观锁）
      */
     version: number
@@ -740,6 +732,14 @@ export type $SensitiveWordPayload<ExtArgs extends runtime.Types.Extensions.Inter
      * 更新人ID
      */
     updatedBy: number | null
+    /**
+     * 命中次数
+     */
+    hitCount: number
+    /**
+     * 最后命中时间
+     */
+    lastHitAt: Date | null
     /**
      * 创建时间
      */
@@ -1178,12 +1178,12 @@ export interface SensitiveWordFieldRefs {
   readonly type: Prisma.FieldRef<"SensitiveWord", 'Int'>
   readonly matchMode: Prisma.FieldRef<"SensitiveWord", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"SensitiveWord", 'Boolean'>
-  readonly hitCount: Prisma.FieldRef<"SensitiveWord", 'Int'>
-  readonly lastHitAt: Prisma.FieldRef<"SensitiveWord", 'DateTime'>
   readonly version: Prisma.FieldRef<"SensitiveWord", 'Int'>
   readonly remark: Prisma.FieldRef<"SensitiveWord", 'String'>
   readonly createdBy: Prisma.FieldRef<"SensitiveWord", 'Int'>
   readonly updatedBy: Prisma.FieldRef<"SensitiveWord", 'Int'>
+  readonly hitCount: Prisma.FieldRef<"SensitiveWord", 'Int'>
+  readonly lastHitAt: Prisma.FieldRef<"SensitiveWord", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"SensitiveWord", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"SensitiveWord", 'DateTime'>
 }
