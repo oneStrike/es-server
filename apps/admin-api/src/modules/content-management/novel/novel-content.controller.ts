@@ -4,7 +4,7 @@ import { IdDto } from '@libs/base/dto'
 import { FileUploadResponseDto } from '@libs/base/modules/upload'
 import {
   NovelContentService,
-  UploadChapterFileDto,
+  UploadContentDto,
 } from '@libs/content/work/content'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -28,10 +28,7 @@ export class NovelContentController {
     summary: '上传章节文件',
     model: FileUploadResponseDto,
   })
-  async upload(
-    @Req() req: FastifyRequest,
-    @Query() query: UploadChapterFileDto,
-  ) {
+  async upload(@Req() req: FastifyRequest, @Query() query: UploadContentDto) {
     return this.novelContentService.uploadChapterContent(req, query)
   }
 

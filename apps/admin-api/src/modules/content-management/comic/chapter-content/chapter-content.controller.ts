@@ -2,13 +2,7 @@ import type { FastifyRequest } from 'fastify'
 import { ApiDoc } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import { FileUploadResponseDto } from '@libs/base/modules/upload'
-import {
-  AddChapterContentDto,
-  ComicContentService,
-  DeleteChapterContentDto,
-  MoveChapterContentDto,
-  UpdateChapterContentDto,
-} from '@libs/content/work/content'
+import { ComicContentService, DeleteComicContentDto, MoveComicContentDto, UpdateComicContentDto, UploadContentDto } from '@libs/content/work/content'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -32,7 +26,7 @@ export class ChapterContentController {
     summary: '添加章节内容',
     model: FileUploadResponseDto,
   })
-  async add(@Req() req: FastifyRequest, @Query() query: AddChapterContentDto) {
+  async add(@Req() req: FastifyRequest, @Query() query: UploadContentDto) {
     return this.comicContentService.addChapterContent(req, query)
   }
 
@@ -41,7 +35,7 @@ export class ChapterContentController {
     summary: '更新章节内容',
     model: IdDto,
   })
-  async update(@Body() body: UpdateChapterContentDto) {
+  async update(@Body() body: UpdateComicContentDto) {
     return this.comicContentService.updateChapterContent(body)
   }
 
@@ -51,7 +45,7 @@ export class ChapterContentController {
     model: String,
     isArray: true,
   })
-  async delete(@Body() body: DeleteChapterContentDto) {
+  async delete(@Body() body: DeleteComicContentDto) {
     return this.comicContentService.deleteChapterContent(body)
   }
 
@@ -61,7 +55,7 @@ export class ChapterContentController {
     model: String,
     isArray: true,
   })
-  async move(@Body() body: MoveChapterContentDto) {
+  async move(@Body() body: MoveComicContentDto) {
     return this.comicContentService.moveChapterContent(body)
   }
 
