@@ -1,9 +1,11 @@
+import { ContentTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc, Public } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
   BaseWorkChapterDto,
   PageWorkChapterDto,
   QueryWorkChapterDto,
+  WorkChapterContentService,
   WorkChapterService,
 } from '@libs/content'
 import { Controller, Get, Query } from '@nestjs/common'
@@ -12,7 +14,10 @@ import { ApiTags } from '@nestjs/swagger'
 @ApiTags('作品模块/章节')
 @Controller('app/work/chapter')
 export class WorkChapterController {
-  constructor(private readonly workChapterService: WorkChapterService) {}
+  constructor(
+    private readonly workChapterService: WorkChapterService,
+    private readonly workChapterContentService: WorkChapterContentService,
+  ) {}
 
   @Get('page')
   @Public()
@@ -32,5 +37,31 @@ export class WorkChapterController {
   })
   async getWorkChapterDetail(@Query() query: IdDto) {
     return this.workChapterService.getChapterDetail(query.id)
+  }
+
+  @Get('comic-content')
+  @Public()
+  @ApiDoc({
+    summary: '查询漫画章节内容',
+    model: String,
+  })
+  async getComicChapterContent(@Query() query: IdDto) {
+    return this.workChapterContentService.getContent(
+      ContentTypeEnum.COMIC,
+      query.id,
+    )
+  }
+
+  @Get('novel-content')
+  @Public()
+  @ApiDoc({
+    summary: '查询小说章节内容',
+    model: String,
+  })
+  async getNovelChapterContent(@Query() query: IdDto) {
+    return this.workChapterContentService.getContent(
+      ContentTypeEnum.NOVEL,
+      query.id,
+    )
   }
 }
