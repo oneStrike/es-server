@@ -1,8 +1,26 @@
-import { ArrayProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
-import { IdDto } from '@libs/base/dto'
+import {
+  ArrayProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/base/decorators'
+import { IntersectionType } from '@nestjs/mapped-types'
+import { PickType } from '@nestjs/swagger'
 
-/// 添加章节内容DTO
-export class AddChapterContentDto extends IdDto {
+/// 章节ID基础DTO
+export class ChapterIdDto {
+  @NumberProperty({
+    description: '章节ID',
+    example: 1,
+    required: true,
+  })
+  chapterId!: number
+}
+
+// ==================== 通用 DTO ====================
+
+/// 上传/添加章节内容DTO - 通用
+/// Comic和Novel都使用此DTO上传/添加内容
+export class UploadContentDto extends ChapterIdDto {
   @NumberProperty({
     description: '作品ID',
     example: 1,
@@ -11,8 +29,11 @@ export class AddChapterContentDto extends IdDto {
   workId!: number
 }
 
-/// 更新章节内容DTO
-export class UpdateChapterContentDto extends IdDto {
+// ==================== Comic 特有 DTO ====================
+
+/// 更新漫画章节内容DTO
+/// 仅Comic使用：替换列表中指定索引的图片
+export class UpdateComicContentDto extends ChapterIdDto {
   @NumberProperty({
     description: '内容索引',
     example: 0,
@@ -29,8 +50,9 @@ export class UpdateChapterContentDto extends IdDto {
   content!: string
 }
 
-/// 删除章节内容DTO
-export class DeleteChapterContentDto extends IdDto {
+/// 删除漫画章节内容DTO
+/// 仅Comic使用：按索引删除列表中的图片
+export class DeleteComicContentDto extends ChapterIdDto {
   @ArrayProperty({
     description: '内容索引列表',
     itemType: 'number',
@@ -40,8 +62,9 @@ export class DeleteChapterContentDto extends IdDto {
   index!: number[]
 }
 
-/// 移动章节内容DTO
-export class MoveChapterContentDto extends IdDto {
+/// 移动漫画章节内容DTO
+/// 仅Comic使用：调整图片顺序
+export class MoveComicContentDto extends ChapterIdDto {
   @NumberProperty({
     description: '源索引',
     example: 0,
@@ -59,17 +82,9 @@ export class MoveChapterContentDto extends IdDto {
   toIndex!: number
 }
 
-/// 上传章节文件DTO
-export class UploadChapterFileDto extends IdDto {
-  @NumberProperty({
-    description: '作品ID',
-    example: 1,
-    required: true,
-  })
-  workId!: number
-}
+// ==================== 响应 DTO ====================
 
-/// 章节内容项DTO
+/// 章节内容项DTO - Comic响应
 export class ChapterContentItemDto {
   @NumberProperty({
     description: '内容索引',
@@ -86,7 +101,7 @@ export class ChapterContentItemDto {
   content!: string
 }
 
-/// 章节内容列表DTO
+/// 章节内容列表DTO - Comic响应
 export class ChapterContentListDto {
   @NumberProperty({
     description: '章节ID',

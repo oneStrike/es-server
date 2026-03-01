@@ -1,8 +1,9 @@
-import { WorkViewPermissionEnum } from '@libs/base/constant'
+import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
 import {
   BooleanProperty,
   DateProperty,
   EnumProperty,
+  NestedProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
@@ -13,6 +14,22 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
+import { BaseWorkDto } from '../../core'
+import { BaseUserLevelRuleDto } from '@libs/user'
+
+/**
+ * 作品信息DTO（简化版）
+ */
+class WorkInfoDto extends PickType(BaseWorkDto, ['id', 'name', 'type']) {}
+
+/**
+ * 会员等级规则信息DTO（简化版）
+ */
+class UserLevelRuleInfoDto extends PickType(BaseUserLevelRuleDto, [
+  'id',
+  'name',
+  'color',
+]) {}
 
 /// 章节基础DTO
 export class BaseWorkChapterDto extends BaseDto {
@@ -219,6 +236,24 @@ export class BaseWorkChapterDto extends BaseDto {
     maxLength: 1000,
   })
   remark?: string
+
+  @NestedProperty({
+    description: '关联作品信息',
+    example: { id: 1, name: '进击的巨人', type: 1 },
+    required: false,
+    type: WorkInfoDto,
+    validation: false,
+  })
+  work?: WorkInfoDto
+
+  @NestedProperty({
+    description: '阅读所需会员等级信息',
+    example: { id: 1, name: 'VIP1', color: '#FF0000' },
+    required: false,
+    type: UserLevelRuleInfoDto,
+    validation: false,
+  })
+  requiredViewLevel?: UserLevelRuleInfoDto
 }
 
 /// 创建章节DTO
@@ -230,6 +265,8 @@ export class CreateWorkChapterDto extends OmitType(BaseWorkChapterDto, [
   'purchaseCount',
   'downloadCount',
   'wordCount',
+  'work',
+  'requiredViewLevel',
 ]) {}
 
 // 分页返回的章节DTO
@@ -247,6 +284,9 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'publishAt',
   'exchangePoints',
   'canExchange',
+  'createdAt',
+  'updatedAt',
+  'isPublished',
 ]) {}
 
 /// 更新章节DTO
@@ -263,6 +303,9 @@ export class QueryWorkChapterDto extends IntersectionType(
     'isPublished',
     'isPreview',
     'viewRule',
+    'canDownload',
+    'canComment',
+    'canExchange',
   ]),
 ) {}
 

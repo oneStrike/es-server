@@ -3,7 +3,7 @@ import { BaseService } from '@libs/base/database'
 import { UploadService } from '@libs/base/modules'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import fsExtra from 'fs-extra'
-import { UploadChapterFileDto } from './dto/content.dto'
+import { UploadContentDto } from './dto/content.dto'
 
 @Injectable()
 export class NovelContentService extends BaseService {
@@ -39,18 +39,18 @@ export class NovelContentService extends BaseService {
     }
   }
 
-  async uploadChapterContent(req: FastifyRequest, query: UploadChapterFileDto) {
-    const id = query.id
+  async uploadChapterContent(req: FastifyRequest, query: UploadContentDto) {
+    const chapterId = query.chapterId
     const file = await this.uploadService.uploadFile(req, [
       'novel',
       query.workId.toString(),
       'chapter',
-      `${id}.txt`,
+      `${chapterId}.txt`,
     ])
 
     if (
       !(await this.workChapter.exists({
-        id,
+        id: chapterId,
         workId: query.workId,
       }))
     ) {
@@ -59,7 +59,7 @@ export class NovelContentService extends BaseService {
     }
 
     await this.workChapter.update({
-      where: { id },
+      where: { id: chapterId },
       data: { content: file.filePath },
     })
 

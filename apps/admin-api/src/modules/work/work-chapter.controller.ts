@@ -2,6 +2,7 @@ import { WorkTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { DragReorderDto, IdDto } from '@libs/base/dto'
 import {
+  BaseWorkChapterDto,
   CreateWorkChapterDto,
   QueryWorkChapterDto,
   UpdateWorkChapterDto,
@@ -39,7 +40,7 @@ export class WorkChapterController {
   @Get('/detail')
   @ApiDoc({
     summary: '获取作品章节详情',
-    model: IdDto,
+    model: BaseWorkChapterDto,
   })
   async getDetail(@Query() query: IdDto) {
     return this.workChapterService.getChapterDetail(query.id)

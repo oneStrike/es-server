@@ -12,4 +12,7 @@ export const PAGE_WORK_CHAPTER_SELECT = {
   publishAt: true,
   exchangePoints: true,
   canExchange: true,
+  createdAt: true,
+  updatedAt: true,
+  isPublished: true,
 } as const
