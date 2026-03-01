@@ -11,6 +11,7 @@ import {
   CreateDictionaryDto,
   CreateDictionaryItemDto,
   LibDictionaryService,
+  QueryAllDictionaryItemDto,
   QueryDictionaryDto,
   QueryDictionaryItemDto,
   UpdateDictionaryDto,
@@ -80,11 +81,22 @@ export class DictionaryController {
 
   @Get('items')
   @ApiPageDoc({
-    summary: '获取字典项',
+    summary: '分页获取字典项',
     model: BaseDictionaryItemDto,
   })
   async getItems(@Query() query: QueryDictionaryItemDto) {
     return this.libDictionaryService.findDictionaryItems(query)
+  }
+
+  @Get('all-items')
+  @ApiDoc({
+    summary: '获取所有字典项',
+    model: BaseDictionaryItemDto,
+  })
+  async getAllItems(@Query() query: QueryAllDictionaryItemDto) {
+    return this.libDictionaryService.findAllDictionaryItems(
+      query.dictionaryCode,
+    )
   }
 
   @Post('create-item')

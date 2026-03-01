@@ -67,7 +67,7 @@ export class BaseDictionaryItemDto extends BaseDto {
     description: '所属字典编码',
     example: 'user_status',
     required: true,
-    maxLength: 50,
+    maxLength: 500,
   })
   dictionaryCode!: string
 
@@ -164,3 +164,7 @@ export class QueryDictionaryItemDto extends IntersectionType(
     ]),
   ),
 ) {}
+
+export class QueryAllDictionaryItemDto extends PickType(BaseDictionaryItemDto, [
+  'dictionaryCode',
+]) {}

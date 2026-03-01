@@ -167,6 +167,15 @@ export class LibDictionaryService extends BaseService {
   }
 
   /**
+   * 获取所有的字典项
+   */
+  async findAllDictionaryItems(dictionaryCode: string) {
+    return this.dictionaryItem.findMany({
+      where: { dictionaryCode: { in: dictionaryCode.split(',') } },
+    })
+  }
+
+  /**
    * 更新字典项排序
    */
   async updateDictionaryItemSort(dto: DragReorderDto) {
