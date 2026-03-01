@@ -1,4 +1,4 @@
-import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
+import { WorkViewPermissionEnum } from '@libs/base/constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -8,6 +8,7 @@ import {
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+import { BaseUserLevelRuleDto } from '@libs/user'
 import {
   IntersectionType,
   OmitType,
@@ -15,7 +16,6 @@ import {
   PickType,
 } from '@nestjs/swagger'
 import { BaseWorkDto } from '../../core'
-import { BaseUserLevelRuleDto } from '@libs/user'
 
 /**
  * 作品信息DTO（简化版）
@@ -266,8 +266,17 @@ export class CreateWorkChapterDto extends OmitType(BaseWorkChapterDto, [
   'downloadCount',
   'wordCount',
   'work',
+  'isPublished',
   'requiredViewLevel',
-]) {}
+]) {
+  @BooleanProperty({
+    description: '发布状态',
+    example: false,
+    required: false,
+    default: false,
+  })
+  isPublished!: boolean
+}
 
 // 分页返回的章节DTO
 export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
