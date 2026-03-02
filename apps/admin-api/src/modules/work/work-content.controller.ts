@@ -1,18 +1,18 @@
 import type { FastifyRequest } from 'fastify'
 import { ApiDoc, NumberProperty } from '@libs/base/decorators'
+import { IdDto } from '@libs/base/dto'
 import { FileUploadResponseDto } from '@libs/base/modules/upload'
 import {
+  ChapterIdDto,
   ComicContentService,
-  NovelContentService,
   DeleteComicContentDto,
   MoveComicContentDto,
+  NovelContentService,
   UpdateComicContentDto,
   UploadContentDto,
-  ChapterIdDto,
 } from '@libs/content'
 import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { IdDto } from '@libs/base/dto'
 
 /// 章节ID查询DTO
 class ChapterIdQueryDto {

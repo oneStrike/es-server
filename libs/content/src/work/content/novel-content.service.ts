@@ -1,10 +1,10 @@
 import type { FastifyRequest } from 'fastify'
+import { join } from 'node:path'
 import { BaseService } from '@libs/base/database'
 import { UploadService } from '@libs/base/modules'
 import { BadRequestException, Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import fsExtra from 'fs-extra'
-import { join } from 'node:path'
 import { UploadContentDto } from './dto/content.dto'
 
 @Injectable()

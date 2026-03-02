@@ -42,7 +42,6 @@ async function bootstrap() {
         await app.close()
       } catch (error) {
         console.error('热重载关闭应用时出错:', error)
-        process.exit(0)
       }
     })
   }

@@ -3,8 +3,6 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
-import { IntersectionType } from '@nestjs/mapped-types'
-import { PickType } from '@nestjs/swagger'
 
 /// 章节ID基础DTO
 export class ChapterIdDto {

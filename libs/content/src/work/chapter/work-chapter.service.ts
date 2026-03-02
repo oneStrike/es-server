@@ -375,8 +375,6 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    const effectivePermission =
-      await this.contentPermissionService.resolveChapterPermission(chapter.id)
     await this.contentPermissionService.checkChapterAccess(userId, id)
 
     // 增加浏览次数

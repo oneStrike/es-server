@@ -1,11 +1,11 @@
 import { BaseService } from '@libs/base/database'
+import { ContentPermissionService } from '@libs/content/permission'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { DownloadTargetTypeEnum } from './download.constant'
 import {
   QueryUserDownloadRecordDto,
   UserDownloadRecordKeyDto,
 } from './dto/download.dto'
-import { ContentPermissionService } from '@libs/content/permission'
 
 /**
  * 下载服务
@@ -67,7 +67,7 @@ export class DownloadService extends BaseService {
         }
 
         return record
-      } catch (error) {
+      } catch {
         throw new BadRequestException('下载操作失败，请稍后重试')
       }
     })

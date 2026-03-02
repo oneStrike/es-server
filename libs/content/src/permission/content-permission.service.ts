@@ -1,11 +1,11 @@
 import { WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
+import { PurchaseStatusEnum } from '@libs/interaction/purchase'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
-  WORK_PERMISSION_SELECT,
   CHAPTER_PERMISSION_SELECT,
+  WORK_PERMISSION_SELECT,
 } from './content-permission.select'
-import { PurchaseStatusEnum } from '@libs/interaction/purchase'
 
 /** 用户等级信息接口 */
 interface UserWithLevel {
@@ -156,7 +156,7 @@ export class ContentPermissionService extends BaseService {
     viewRule: WorkViewPermissionEnum,
     userId: number,
     requiredViewLevelId: number | null,
-    purchaseCheck?: { targetId: number; targetType: 'work' | 'chapter' },
+    purchaseCheck?: { targetId: number, targetType: 'work' | 'chapter' },
   ) {
     // 所有人可见或继承权限时，直接放行
     if (

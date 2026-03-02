@@ -8,7 +8,6 @@ import { Module } from '@nestjs/common'
 import { ContentPermissionModule } from '../permission'
 import { WorkChapterService } from './chapter/work-chapter.service'
 import { ComicContentService } from './content/comic-content.service'
-import { WorkChapterContentService } from './content'
 import { NovelContentService } from './content/novel-content.service'
 import { WorkService } from './core/work.service'
 
@@ -30,14 +29,12 @@ import { WorkService } from './core/work.service'
     WorkChapterService,
     NovelContentService,
     ComicContentService,
-    WorkChapterContentService,
   ],
   exports: [
     WorkService,
     WorkChapterService,
     NovelContentService,
     ComicContentService,
-    WorkChapterContentService,
   ],
 })
 export class WorkModule {}

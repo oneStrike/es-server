@@ -1,11 +1,11 @@
-import { ContentTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc, Public } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
   BaseWorkChapterDto,
+  ComicContentService,
+  NovelContentService,
   PageWorkChapterDto,
   QueryWorkChapterDto,
-  WorkChapterContentService,
   WorkChapterService,
 } from '@libs/content'
 import { Controller, Get, Query } from '@nestjs/common'
@@ -16,7 +16,8 @@ import { ApiTags } from '@nestjs/swagger'
 export class WorkChapterController {
   constructor(
     private readonly workChapterService: WorkChapterService,
-    private readonly workChapterContentService: WorkChapterContentService,
+    private readonly comicContentService: ComicContentService,
+    private readonly novelContentService: NovelContentService,
   ) {}
 
   @Get('page')
@@ -47,10 +48,7 @@ export class WorkChapterController {
     isArray: true,
   })
   async getComicChapterContent(@Query() query: IdDto) {
-    return this.workChapterContentService.getContent(
-      ContentTypeEnum.COMIC,
-      query.id,
-    )
+    return this.comicContentService.getChapterContents(query.id)
   }
 
   @Get('novel-content')
@@ -60,9 +58,6 @@ export class WorkChapterController {
     model: String,
   })
   async getNovelChapterContent(@Query() query: IdDto) {
-    return this.workChapterContentService.getContent(
-      ContentTypeEnum.NOVEL,
-      query.id,
-    )
+    return this.novelContentService.getChapterContent(query.id)
   }
 }
