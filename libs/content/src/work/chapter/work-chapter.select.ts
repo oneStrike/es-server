@@ -4,7 +4,7 @@ export const PAGE_WORK_CHAPTER_SELECT = {
   isPreview: true,
   cover: true,
   title: true,
-  subTitle: true,
+  subtitle: true,
   price: true,
   canComment: true,
   sortOrder: true,

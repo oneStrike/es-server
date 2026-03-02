@@ -57,14 +57,6 @@ export class BaseWorkChapterDto extends BaseDto {
 
   @StringProperty({
     description: '章节副标题',
-    example: '巨人的来袭',
-    required: true,
-    maxLength: 100,
-  })
-  subTitle!: string
-
-  @StringProperty({
-    description: '章节副标题',
     example: '序幕',
     required: false,
     maxLength: 200,
