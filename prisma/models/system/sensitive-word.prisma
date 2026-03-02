@@ -9,21 +9,21 @@ model SensitiveWord {
   replaceWord String? @map("replace_word") @db.VarChar(100)
 
   /// 敏感词级别（1=严重, 2=一般, 3=轻微）
-  level     Int @default(2) @db.SmallInt
+  level     Int       @default(2) @db.SmallInt
   /// 敏感词类型（1=政治, 2=色情, 3=暴力, 4=广告, 5=其他）
-  type      Int @default(5) @db.SmallInt
+  type      Int       @default(5) @db.SmallInt
   /// 匹配模式（1=精确匹配, 2=模糊匹配, 3=正则匹配）
-  matchMode Int @default(1) @map("match_mode") @db.SmallInt
+  matchMode Int       @default(1) @map("match_mode") @db.SmallInt
   /// 是否启用
-  isEnabled Boolean @default(true) @map("is_enabled")
+  isEnabled Boolean   @default(true) @map("is_enabled")
   /// 版本号（用于乐观锁）
-  version Int @default(0)
+  version   Int       @default(0)
   /// 备注
-  remark String? @db.VarChar(500)
+  remark    String?   @db.VarChar(500)
   /// 创建人ID
-  createdBy Int? @map("created_by")
+  createdBy Int?      @map("created_by")
   /// 更新人ID
-  updatedBy Int? @map("updated_by")
+  updatedBy Int?      @map("updated_by")
   /// 命中次数
   hitCount  Int       @default(0) @map("hit_count")
   /// 最后命中时间

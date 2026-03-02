@@ -4,34 +4,33 @@ model WorkAuthor {
   id Int @id @default(autoincrement())
 
   /// 作者姓名
-  name        String  @unique @db.VarChar(100)
+  name           String    @unique @db.VarChar(100)
   /// 作者头像URL
-  avatar      String? @db.VarChar(500)
+  avatar         String?   @db.VarChar(500)
   /// 作者描述
-  description String? @db.VarChar(1000)
+  description    String?   @db.VarChar(1000)
   /// 国籍
-  nationality String? @db.VarChar(50)
+  nationality    String?   @db.VarChar(50)
   /// 性别（0: 未知, 1: 男性, 2: 女性, 3: 其他）
-  gender      Int     @default(0) @db.SmallInt
+  gender         Int       @default(0) @db.SmallInt
   /// 作者类型（1: 漫画家, 2: 轻小说作者）
-  type        Int[]   @db.SmallInt
+  type           Int[]     @db.SmallInt
   /// 启用状态（true: 启用, false: 禁用）
-  isEnabled     Boolean @default(true) @map("is_enabled")
+  isEnabled      Boolean   @default(true) @map("is_enabled")
   /// 是否为推荐作者（用于前台推荐展示）
-  isRecommended Boolean @default(false) @map("is_recommended")
+  isRecommended  Boolean   @default(false) @map("is_recommended")
   /// 管理员备注
-  remark String? @db.VarChar(1000)
+  remark         String?   @db.VarChar(1000)
   /// 作品数量（冗余字段，用于提升查询性能）
-  worksCount     Int @default(0) @map("works_count")
+  workCount      Int       @default(0) @map("work_count")
   /// 粉丝数量（冗余字段，用于前台展示）
-  followersCount Int @default(0) @map("followers_count")
-
+  followersCount Int       @default(0) @map("followers_count")
   /// 创建时间
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间（用于数据恢复或归档）
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   /// 关联的作品作者记录
   workAuthors WorkAuthorRelation[]
@@ -49,7 +48,7 @@ model WorkAuthor {
   /// 性别索引
   @@index([gender])
   /// 推荐与作品数索引
-  @@index([isRecommended, worksCount(sort: Desc)])
+  @@index([isRecommended, workCount(sort: Desc)])
   /// 创建时间索引
   @@index([createdAt])
   @@map("work_author")

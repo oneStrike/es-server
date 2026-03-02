@@ -1,13 +1,13 @@
 /// 系统公告阅读记录表 - 记录用户已读的公告
 model AppAnnouncementRead {
   /// 主键ID
-  id              Int      @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   /// 关联的公告ID
-  announcementId  Int      @map("announcement_id")
+  announcementId Int      @map("announcement_id")
   /// 关联的用户ID
-  userId          Int      @map("user_id")
+  userId         Int      @map("user_id")
   /// 阅读时间
-  readAt          DateTime @default(now()) @map("read_at") @db.Timestamptz(6)
+  readAt         DateTime @default(now()) @map("read_at") @db.Timestamptz(6)
 
   /// 关联公告
   announcement AppAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)

@@ -22,11 +22,11 @@ model Task {
   priority  Int     @default(0) @db.SmallInt
 
   /// 领取方式
-  claimMode    Int @map("claim_mode") @db.SmallInt
+  claimMode      Int       @map("claim_mode") @db.SmallInt
   /// 完成方式
-  completeMode Int @map("complete_mode") @db.SmallInt
+  completeMode   Int       @map("complete_mode") @db.SmallInt
   /// 目标次数
-  targetCount  Int @default(1) @map("target_count")
+  targetCount    Int       @default(1) @map("target_count")
   /// 奖励配置
   rewardConfig   Json?     @map("reward_config")
   /// 重复规则

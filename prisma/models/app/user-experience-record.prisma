@@ -4,21 +4,21 @@ model UserExperienceRecord {
   id Int @id @default(autoincrement())
 
   /// 关联的用户ID
-  userId  Int  @map("user_id")
+  userId           Int     @map("user_id")
   /// 关联的规则ID
-  ruleId  Int? @map("rule_id")
+  ruleId           Int?    @map("rule_id")
   /// 关联的事件ID
-  eventId Int? @map("event_id")
+  eventId          Int?    @map("event_id")
   /// 经验值变化
   experience       Int
   /// 变化前经验值
-  beforeExperience Int @map("before_experience")
+  beforeExperience Int     @map("before_experience")
   /// 变化后经验值
-  afterExperience  Int @map("after_experience")
+  afterExperience  Int     @map("after_experience")
   /// 事件键
-  eventKey String? @map("event_key") @db.VarChar(50)
+  eventKey         String? @map("event_key") @db.VarChar(50)
   /// 备注
-  remark   String? @db.VarChar(500)
+  remark           String? @db.VarChar(500)
 
   /// 创建时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)

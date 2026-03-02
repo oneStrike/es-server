@@ -7,17 +7,17 @@ model ForumProfile {
   userId Int @unique @map("user_id")
 
   /// 发表主题数
-  topicCount    Int @default(0) @map("topic_count")
+  topicCount    Int     @default(0) @map("topic_count")
   /// 发表回复数
-  replyCount    Int @default(0) @map("reply_count")
+  replyCount    Int     @default(0) @map("reply_count")
   /// 获得点赞数
-  likeCount     Int @default(0) @map("like_count")
+  likeCount     Int     @default(0) @map("like_count")
   /// 获得收藏数
-  favoriteCount Int @default(0) @map("favorite_count")
+  favoriteCount Int     @default(0) @map("favorite_count")
   /// 签名
-  signature String? @db.VarChar(200)
+  signature     String? @db.VarChar(200)
   /// 个人简介
-  bio       String? @db.VarChar(500)
+  bio           String? @db.VarChar(500)
 
   /// 创建时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
