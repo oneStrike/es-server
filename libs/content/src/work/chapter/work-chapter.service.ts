@@ -8,10 +8,6 @@ import {
   InteractionTargetType,
   LikeService,
 } from '@libs/interaction'
-import {
-  UserBalanceRecordTypeEnum,
-  UserBalanceService,
-} from '@libs/user/balance'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { UserPermissionService } from '@libs/user/permission'
 import { UserPointService } from '@libs/user/point'
@@ -77,7 +73,6 @@ export class WorkChapterService extends BaseService {
     private readonly downloadService: DownloadService,
     private readonly userPermissionService: UserPermissionService,
     private readonly userPointService: UserPointService,
-    private readonly userBalanceService: UserBalanceService,
     private readonly contentPermissionService: ContentPermissionService,
   ) {
     super()
@@ -90,29 +85,27 @@ export class WorkChapterService extends BaseService {
    */
   private getChapterListSelect() {
     return {
-      id: true, // 章节ID
-      title: true, // 章节标题
-      subtitle: true, // 章节副标题
-      isPublished: true, // 是否已发布
-      workId: true, // 关联作品ID
-      workType: true, // 作品类型(1=漫画, 2=小说)
-      sortOrder: true, // 排序号
-      viewRule: true, // 阅读权限规则
-      price: true, // 价格
-      exchangePoints: true, // 兑换积分
-      canExchange: true, // 是否允许兑换
-      canDownload: true, // 是否允许下载
-      canComment: true, // 是否允许评论
-      requiredViewLevelId: true, // 阅读所需会员等级ID
-      isPreview: true, // 是否为预览章节
-      publishAt: true, // 发布时间
-      purchaseCount: true, // 购买次数
-      viewCount: true, // 浏览次数
-      likeCount: true, // 点赞次数
-      commentCount: true, // 评论次数
-      wordCount: true, // 字数统计
-      createdAt: true, // 创建时间
-      updatedAt: true, // 更新时间
+      id: true,
+      title: true,
+      subtitle: true,
+      isPublished: true,
+      workId: true,
+      workType: true,
+      sortOrder: true,
+      viewRule: true,
+      price: true,
+      canDownload: true,
+      canComment: true,
+      requiredViewLevelId: true,
+      isPreview: true,
+      publishAt: true,
+      purchaseCount: true,
+      viewCount: true,
+      likeCount: true,
+      commentCount: true,
+      wordCount: true,
+      createdAt: true,
+      updatedAt: true,
     }
   }
 
@@ -309,17 +302,31 @@ export class WorkChapterService extends BaseService {
    * @throws BadRequestException 当章节不存在或不是同一作品时抛出
    */
   async swapChapterNumbers(dto: DragReorderDto) {
-    return this.workChapter.swapField(
-      { id: dto.dragId },
-      { id: dto.targetId },
-      'sortOrder',
-      (record1, record2) => {
-        // 验证是否属于同一作品
-        if (record1.workId !== record2.workId) {
-          throw new BadRequestException('只能交换同一作品下的章节号')
-        }
-      },
-    )
+    const [record1, record2] = await Promise.all([
+      this.workChapter.findUnique({ where: { id: dto.dragId } }),
+      this.workChapter.findUnique({ where: { id: dto.targetId } }),
+    ])
+
+    if (!record1 || !record2) {
+      throw new BadRequestException('章节不存在')
+    }
+
+    if (record1.workId !== record2.workId) {
+      throw new BadRequestException('只能交换同一作品下的章节号')
+    }
+
+    await Promise.all([
+      this.workChapter.update({
+        where: { id: dto.dragId },
+        data: { sortOrder: record2.sortOrder },
+      }),
+      this.workChapter.update({
+        where: { id: dto.targetId },
+        data: { sortOrder: record1.sortOrder },
+      }),
+    ])
+
+    return true
   }
 
   /**
@@ -409,102 +416,6 @@ export class WorkChapterService extends BaseService {
     return { id }
   }
 
-  /**
-   * 购买章节
-   * @param id 章节ID
-   * @param userId 用户ID
-   * @param ip 用户IP地址
-   * @param deviceId 设备ID
-   * @returns 章节ID
-   * @throws BadRequestException 当已购买、不支持购买、会员等级不足或积分不足时抛出
-   */
-  async incrementPurchaseCount(
-    id: number,
-    userId: number,
-    ip?: string,
-    deviceId?: string,
-  ) {
-    const chapter = await this.workChapter.findUnique({ where: { id } })
-
-    if (!chapter) {
-      throw new BadRequestException('章节不存在')
-    }
-
-    // 检查是否已购买
-    const existingPurchase = await this.workChapterPurchase.findUnique({
-      where: {
-        chapterId_userId: {
-          chapterId: id,
-          userId,
-        },
-      },
-    })
-
-    if (existingPurchase) {
-      throw new BadRequestException('已购买该章节')
-    }
-
-    const effectivePermission =
-      await this.contentPermissionService.resolveChapterPermission(chapter.id)
-    await this.userPermissionService.validateViewPermission(
-      effectivePermission.viewRule,
-      userId,
-      effectivePermission.requiredViewLevelId,
-    )
-
-    if (effectivePermission.viewRule !== WorkViewPermissionEnum.PURCHASE) {
-      throw new BadRequestException('该章节不支持购买')
-    }
-
-    const price = effectivePermission.price ?? 0
-    if (price <= 0) {
-      throw new BadRequestException('章节未配置购买价格')
-    }
-
-    await this.userPermissionService.validateBalance(userId, price)
-
-    // 创建购买记录并增加购买次数
-    await this.prisma.$transaction(async (tx) => {
-      await this.userBalanceService.changeBalance(
-        {
-          userId,
-          amount: -price,
-          type: UserBalanceRecordTypeEnum.CHAPTER_PURCHASE,
-          remark: '章节购买',
-        },
-        tx,
-      )
-      await tx.workChapterPurchase.create({
-        data: {
-          chapterId: id,
-          userId,
-        },
-      })
-
-      await tx.workChapter.update({
-        where: { id },
-        data: {
-          purchaseCount: {
-            increment: 1,
-          },
-        },
-      })
-    })
-
-    // 触发购买成长事件
-    await this.userGrowthEventService.handleEvent({
-      business: 'work',
-      eventKey: WorkChapterGrowthEventKey.Purchase,
-      userId,
-      targetId: id,
-      ip,
-      deviceId,
-      occurredAt: new Date(),
-    })
-
-    return { id }
-  }
-
   async exchangeChapter(
     id: number,
     userId: number,
@@ -538,16 +449,12 @@ export class WorkChapterService extends BaseService {
       effectivePermission.requiredViewLevelId,
     )
 
-    if (!effectivePermission.canExchange) {
-      throw new BadRequestException('该章节不支持兑换')
+    const price = effectivePermission.price ?? 0
+    if (price <= 0) {
+      throw new BadRequestException('章节未配置价格')
     }
 
-    const exchangePoints = effectivePermission.exchangePoints ?? 0
-    if (exchangePoints <= 0) {
-      throw new BadRequestException('章节未配置兑换积分')
-    }
-
-    await this.userPermissionService.validatePoints(userId, exchangePoints)
+    await this.userPermissionService.validatePoints(userId, price)
 
     const targetType = this.getTargetType(chapter.workType)
 
@@ -555,7 +462,7 @@ export class WorkChapterService extends BaseService {
       await this.userPointService.consumePoints(
         {
           userId,
-          points: exchangePoints,
+          points: price,
           remark: '章节兑换',
           targetType,
           targetId: id,

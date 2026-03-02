@@ -8,7 +8,7 @@ import { QueryDictionaryItemDto } from './dto/dictionary.dto'
 @ApiTags('字典管理')
 @Controller('app/dictionary')
 export class DictionaryController {
-  constructor(private readonly libDictionaryService: LibDictionaryService) {}
+  constructor(private readonly libDictionaryService: LibDictionaryService) { }
 
   @Get('items')
   @ApiDoc({
@@ -18,6 +18,7 @@ export class DictionaryController {
   })
   @Public()
   async getItems(@Query() query: QueryDictionaryItemDto) {
-    return this.libDictionaryService.findDictionaryItems(query)
+    const data = await this.libDictionaryService.findDictionaryItems({ ...query, pageSize: 500 })
+    return data.list
   }
 }

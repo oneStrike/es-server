@@ -27,8 +27,6 @@ model AppUser {
 
   /// 积分
   points     Int @default(0)
-  /// 余额
-  balance    Int @default(0)
   /// 经验值
   experience Int @default(0)
 
@@ -64,7 +62,6 @@ model AppUser {
   tokens                    AppUserToken[]
   /// 积分记录关联
   pointRecords              UserPointRecord[]           @relation("UserPointRecords")
-  userBalanceRecords        UserBalanceRecord[]
   /// 经验记录关联
   experienceRecords         UserExperienceRecord[]      @relation("UserExperienceRecords")
   /// 论坛主题关联
@@ -78,7 +75,7 @@ model AppUser {
   /// 评论举报关联（举报人）
   workCommentReports        WorkCommentReport[]         @relation("WorkCommentReportReporter")
   /// 评论举报关联（处理人）
-  handledWorkCommentReports WorkCommentReport[]         @relation("WorkCommentReportHandler")
+  handledWorkCommentReports WorkCommentReport[]         @relation("WorkCommentReportHandler") 
   /// 论坛回复关联
   forumReplies              ForumReply[]
   /// 回复点赞关联
@@ -145,8 +142,6 @@ model AppUser {
   @@index([email])
   /// 积分索引
   @@index([points])
-  /// 余额索引
-  @@index([balance])
   /// 状态索引
   @@index([status])
   /// 等级索引

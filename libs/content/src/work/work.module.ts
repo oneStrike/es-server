@@ -1,6 +1,5 @@
 import { UploadModule } from '@libs/base/modules'
 import { InteractionModule } from '@libs/interaction'
-import { UserBalanceModule } from '@libs/user/balance'
 import { UserGrowthEventModule } from '@libs/user/growth-event'
 import { UserPermissionModule } from '@libs/user/permission'
 import { UserPointModule } from '@libs/user/point'
@@ -21,7 +20,6 @@ import { WorkService } from './core/work.service'
     UserGrowthEventModule,
     UserPermissionModule,
     UserPointModule,
-    UserBalanceModule,
     UploadModule,
   ],
   providers: [

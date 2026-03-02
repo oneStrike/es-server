@@ -46,20 +46,10 @@ model Work {
   viewRule              Int       @default(0) @map("view_rule") @db.SmallInt
   /// 阅读所需的会员等级ID
   requiredViewLevelId   Int?      @map("required_view_level_id")
-  /// 价格（单位：分）
-  price                 Int       @default(0) @map("price")
-  /// 章节价格（单位：分）
+  /// 章节价格
   chapterPrice          Int       @default(0) @map("chapter_price")
-  /// 章节兑换所需积分
-  chapterExchangePoints Int       @default(0) @map("chapter_exchange_points")
-  /// 对换所需要的积分
-  exchangePoints        Int       @default(0) @map("exchange_points")
   /// 是否允许评论
   canComment            Boolean   @default(true) @map("can_comment")
-  /// 是否允许积分兑换
-  canExchange           Boolean   @default(false) @map("can_exchange")
-  /// 是否允许下载
-  canDownload           Boolean   @default(false) @map("can_download")
   /// 推荐权重（影响推荐排序）
   recommendWeight       Float     @default(1.0)
   /// 浏览量
@@ -70,8 +60,6 @@ model Work {
   likeCount             Int       @default(0)
   /// 下载数
   downloadCount         Int       @default(0)
-  /// 购买数
-  purchaseCount         Int       @default(0) @map("purchase_count")
   /// 评分（1-10分，保留一位小数）
   rating                Float?
   /// 评分人数
@@ -120,8 +108,6 @@ model Work {
   @@index([isHot, isNew])
   /// 作品类型索引
   @@index([type])
-  /// 价格索引
-  @@index([price])
   /// 阅读权限规则索引
   @@index([viewRule])
   /// 阅读所需会员等级索引

@@ -8,9 +8,7 @@ export const WORK_PERMISSION_SELECT = {
   requiredViewLevelId: true,
   // 价格相关
   chapterPrice: true,
-  chapterExchangePoints: true,
   // 功能开关
-  canExchange: true,
   canDownload: true,
   canComment: true,
   // 关联的等级信息
@@ -33,9 +31,7 @@ export const CHAPTER_PERMISSION_SELECT = {
   requiredViewLevelId: true,
   // 价格相关
   price: true,
-  exchangePoints: true,
   // 功能开关
-  canExchange: true,
   canDownload: true,
   canComment: true,
   isPreview: true,

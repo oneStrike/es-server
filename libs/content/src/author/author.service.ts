@@ -149,9 +149,9 @@ export class WorkAuthorService extends BaseService {
     if (!existingAuthor) {
       throw new BadRequestException('作者不存在')
     }
-    if (existingAuthor.worksCount && existingAuthor.worksCount > 0) {
+    if (existingAuthor.workCount && existingAuthor.workCount > 0) {
       throw new BadRequestException(
-        `该作者还有 ${existingAuthor.worksCount} 个关联作品，无法删除`,
+        `该作者还有 ${existingAuthor.workCount} 个关联作品，无法删除`,
       )
     }
 

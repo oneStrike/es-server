@@ -4,7 +4,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 
 /**
  * 用户权限服务
- * 负责处理用户相关的权限验证，包括视图权限、余额验证、积分验证等
+ * 负责处理用户相关的权限验证，包括视图权限、积分验证等
  */
 @Injectable()
 export class UserPermissionService extends BaseService {
@@ -105,29 +105,6 @@ export class UserPermissionService extends BaseService {
         }
       }
     }
-  }
-
-  /**
-   * 验证用户余额是否充足
-   * @param userId - 用户ID
-   * @param amount - 需要验证的金额
-   * @returns 用户对象
-   * @throws BadRequestException 当用户不存在或余额不足时抛出异常
-   */
-  async validateBalance(userId: number, amount: number) {
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-    })
-
-    if (!user) {
-      throw new BadRequestException('用户不存在')
-    }
-
-    if (user.balance < amount) {
-      throw new BadRequestException('余额不足')
-    }
-
-    return user
   }
 
   /**

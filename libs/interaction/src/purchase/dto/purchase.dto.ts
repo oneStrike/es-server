@@ -27,9 +27,9 @@ export class BaseUserPurchaseRecordDto extends BaseDto {
   userId!: number
 
   @EnumProperty({
-    description: '支付方式：2=余额（积分用于兑换，不用于购买）',
+    description: '支付方式：1=积分',
     enum: PaymentMethodEnum,
-    example: PaymentMethodEnum.BALANCE,
+    example: PaymentMethodEnum.POINTS,
     required: true,
   })
   paymentMethod!: PaymentMethodEnum

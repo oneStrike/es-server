@@ -1,5 +1,4 @@
 export * from './badge'
-export * from './balance'
 export * from './experience'
 export * from './growth-event'
 export * from './growth-overview'

@@ -89,7 +89,7 @@ export class BaseWorkChapterDto extends BaseDto {
 
   @EnumProperty({
     description:
-      '查看规则（-1=继承, 0=所有人, 1=登录用户, 2=会员, 3=积分购买）',
+      '查看规则（-1=继承, 0=所有人, 1=登录用户, 2=会员, 3=购买）',
     example: WorkViewPermissionEnum.INHERIT,
     required: true,
     enum: WorkViewPermissionEnum,
@@ -98,7 +98,7 @@ export class BaseWorkChapterDto extends BaseDto {
   viewRule!: WorkViewPermissionEnum
 
   @NumberProperty({
-    description: '章节价格（0=免费）',
+    description: '章节价格',
     example: 0,
     required: true,
     default: 0,
@@ -111,22 +111,6 @@ export class BaseWorkChapterDto extends BaseDto {
     required: false,
   })
   requiredViewLevelId?: number
-
-  @NumberProperty({
-    description: '兑换章节所需积分',
-    example: 0,
-    required: true,
-    default: 0,
-  })
-  exchangePoints!: number
-
-  @BooleanProperty({
-    description: '是否允许兑换',
-    example: false,
-    required: true,
-    default: false,
-  })
-  canExchange!: boolean
 
   @BooleanProperty({
     description: '是否允许下载',
@@ -291,8 +275,6 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'price',
   'requiredViewLevelId',
   'publishAt',
-  'exchangePoints',
-  'canExchange',
   'createdAt',
   'updatedAt',
   'isPublished',
@@ -314,7 +296,6 @@ export class QueryWorkChapterDto extends IntersectionType(
     'viewRule',
     'canDownload',
     'canComment',
-    'canExchange',
   ]),
 ) {}
 

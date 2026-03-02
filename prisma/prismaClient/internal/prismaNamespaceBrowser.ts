@@ -66,7 +66,6 @@ export const ModelName = {
   Task: 'Task',
   UserBadgeAssignment: 'UserBadgeAssignment',
   UserBadge: 'UserBadge',
-  UserBalanceRecord: 'UserBalanceRecord',
   UserCommentLike: 'UserCommentLike',
   UserCommentReport: 'UserCommentReport',
   UserComment: 'UserComment',
@@ -308,7 +307,6 @@ export const AppUserScalarFieldEnum = {
   gender: 'gender',
   birthDate: 'birthDate',
   points: 'points',
-  balance: 'balance',
   experience: 'experience',
   status: 'status',
   banReason: 'banReason',
@@ -412,20 +410,6 @@ export const UserBadgeScalarFieldEnum = {
 } as const
 
 export type UserBadgeScalarFieldEnum = (typeof UserBadgeScalarFieldEnum)[keyof typeof UserBadgeScalarFieldEnum]
-
-
-export const UserBalanceRecordScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  amount: 'amount',
-  beforeBalance: 'beforeBalance',
-  afterBalance: 'afterBalance',
-  type: 'type',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type UserBalanceRecordScalarFieldEnum = (typeof UserBalanceRecordScalarFieldEnum)[keyof typeof UserBalanceRecordScalarFieldEnum]
 
 
 export const UserCommentLikeScalarFieldEnum = {
@@ -1198,8 +1182,6 @@ export const WorkChapterScalarFieldEnum = {
   viewRule: 'viewRule',
   requiredViewLevelId: 'requiredViewLevelId',
   price: 'price',
-  exchangePoints: 'exchangePoints',
-  canExchange: 'canExchange',
   canDownload: 'canDownload',
   canComment: 'canComment',
   content: 'content',
@@ -1312,19 +1294,13 @@ export const WorkScalarFieldEnum = {
   lastUpdated: 'lastUpdated',
   viewRule: 'viewRule',
   requiredViewLevelId: 'requiredViewLevelId',
-  price: 'price',
   chapterPrice: 'chapterPrice',
-  chapterExchangePoints: 'chapterExchangePoints',
-  exchangePoints: 'exchangePoints',
   canComment: 'canComment',
-  canExchange: 'canExchange',
-  canDownload: 'canDownload',
   recommendWeight: 'recommendWeight',
   viewCount: 'viewCount',
   favoriteCount: 'favoriteCount',
   likeCount: 'likeCount',
   downloadCount: 'downloadCount',
-  purchaseCount: 'purchaseCount',
   rating: 'rating',
   ratingCount: 'ratingCount',
   popularity: 'popularity',

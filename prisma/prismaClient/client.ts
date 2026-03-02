@@ -113,11 +113,6 @@ export type UserBadgeAssignment = Prisma.UserBadgeAssignmentModel
  */
 export type UserBadge = Prisma.UserBadgeModel
 /**
- * Model UserBalanceRecord
- * 
- */
-export type UserBalanceRecord = Prisma.UserBalanceRecordModel
-/**
  * Model UserCommentLike
  * 评论点赞记录表
  * 记录用户对评论的点赞操作

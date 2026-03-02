@@ -275,36 +275,12 @@ export class BaseWorkDto extends BaseDto {
 
   // ==================== 价格设置 ====================
   @NumberProperty({
-    description: '作品购买价格（余额）',
-    example: 0,
-    required: true,
-    default: 0,
-  })
-  price!: number
-
-  @NumberProperty({
-    description: '章节默认购买价格（余额）',
+    description: '章节默认购买价格（积分）',
     example: 0,
     required: true,
     default: 0,
   })
   chapterPrice!: number
-
-  @NumberProperty({
-    description: '章节默认兑换积分',
-    example: 0,
-    required: true,
-    default: 0,
-  })
-  chapterExchangePoints!: number
-
-  @NumberProperty({
-    description: '兑换所需积分',
-    example: 0,
-    required: true,
-    default: 0,
-  })
-  exchangePoints!: number
 
   // ==================== 功能开关 ====================
   @BooleanProperty({
@@ -314,22 +290,6 @@ export class BaseWorkDto extends BaseDto {
     default: true,
   })
   canComment!: boolean
-
-  @BooleanProperty({
-    description: '是否允许兑换',
-    example: false,
-    required: true,
-    default: false,
-  })
-  canExchange!: boolean
-
-  @BooleanProperty({
-    description: '是否允许下载',
-    example: false,
-    required: true,
-    default: false,
-  })
-  canDownload!: boolean
 
   // ==================== 统计数据 ====================
   @NumberProperty({
@@ -371,16 +331,6 @@ export class BaseWorkDto extends BaseDto {
     validation: false,
   })
   likeCount!: number
-
-  @NumberProperty({
-    description: '购买数',
-    example: 0,
-    required: true,
-    min: 0,
-    default: 0,
-    validation: false,
-  })
-  purchaseCount!: number
 
   @NumberProperty({
     description: '评分（1-10分，保留1位小数）',

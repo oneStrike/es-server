@@ -1,9 +1,5 @@
 import type { JwtUserInfoInterface } from '@libs/base/types'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
-import {
-  BaseUserBalanceRecordDto,
-  QueryUserBalanceRecordDto,
-} from '@libs/user/balance'
 import { BaseUserPointRecordDto } from '@libs/user/point'
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -23,18 +19,6 @@ export class UserController {
   })
   async getProfile(@CurrentUser() user: JwtUserInfoInterface) {
     return this.userService.getUserProfile(user.sub)
-  }
-
-  @Get('balance/records')
-  @ApiPageDoc({
-    summary: '分页查询余额流水',
-    model: BaseUserBalanceRecordDto,
-  })
-  async getBalanceRecords(
-    @Query() query: QueryUserBalanceRecordDto,
-    @CurrentUser() user: JwtUserInfoInterface,
-  ) {
-    return this.userService.getUserBalanceRecords(user.sub, query)
   }
 
   @Get('points/records')
