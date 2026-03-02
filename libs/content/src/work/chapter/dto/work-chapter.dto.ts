@@ -49,11 +49,19 @@ export class BaseWorkChapterDto extends BaseDto {
 
   @StringProperty({
     description: '章节标题',
-    example: '第1话 巨人的来袭',
+    example: '第1话',
     required: true,
     maxLength: 100,
   })
   title!: string
+
+  @StringProperty({
+    description: '章节副标题',
+    example: '巨人的来袭',
+    required: true,
+    maxLength: 100,
+  })
+  subTitle!: string
 
   @StringProperty({
     description: '章节副标题',
@@ -268,6 +276,7 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'isPreview',
   'cover',
   'title',
+  'subTitle',
   'canComment',
   'sortOrder',
   'viewRule',
