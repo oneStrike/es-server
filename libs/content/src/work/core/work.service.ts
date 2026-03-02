@@ -1,13 +1,6 @@
 import type { WorkWhereInput } from '@libs/base/database'
 import { BaseService } from '@libs/base/database'
-import { PageDto } from '@libs/base/dto'
 import { isNotNil } from '@libs/base/utils'
-import {
-  FavoriteService,
-  InteractionTargetType,
-  LikeService,
-} from '@libs/interaction'
-import { UserGrowthEventService } from '@libs/user/growth-event'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkDto,
@@ -16,37 +9,37 @@ import {
   UpdateWorkDto,
   UpdateWorkStatusDto,
 } from './dto/work.dto'
-import { WorkGrowthEventKey } from './work.constant'
 import { PAGE_WORK_SELECT, WORK_RELATION_SELECT } from './work.select'
 
+/**
+ * 作品服务类
+ * 负责作品的全生命周期管理，包括创建、更新、查询、删除等操作
+ * 同时处理与作品相关的用户交互（点赞、收藏、浏览）
+ */
 @Injectable()
 export class WorkService extends BaseService {
   get work() {
     return this.prisma.work
   }
 
+  get workChapter() {
+    return this.prisma.workChapter
+  }
+
   get appUser() {
     return this.prisma.appUser
   }
 
-  constructor(
-    private readonly userGrowthEventService: UserGrowthEventService,
-    private readonly likeService: LikeService,
-    private readonly favoriteService: FavoriteService,
-  ) {
+  constructor() {
     super()
-  }
-
-  private getTargetType(workType: number): InteractionTargetType {
-    return workType === 1
-      ? InteractionTargetType.COMIC
-      : InteractionTargetType.NOVEL
   }
 
   /**
    * 验证作品和用户是否存在
    * @param id 作品ID
    * @param userId 用户ID
+   * @returns 包含作品和用户信息的对象
+   * @throws BadRequestException 当作品或用户不存在时抛出异常
    */
   async verifyWorkAndUserExist(id: number, userId: number) {
     const [work, user] = await Promise.all([
@@ -66,9 +59,11 @@ export class WorkService extends BaseService {
 
   /**
    * 验证作品关联的作者、分类、标签是否存在且已启用
+   * 业务规则：作品必须关联有效的作者、分类和标签，且这些关联项必须处于启用状态
    * @param authorIds 作者ID列表
    * @param categoryIds 分类ID列表
    * @param tagIds 标签ID列表
+   * @throws BadRequestException 当任何关联项不存在或已禁用时抛出异常
    */
   private async validateWorkRelations(
     authorIds: number[],
@@ -101,8 +96,18 @@ export class WorkService extends BaseService {
 
   /**
    * 创建作品
+   * 事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：
+   * 1. 创建作品基础信息
+   * 2. 创建作者、分类、标签关联
+   * 3. 更新关联作者的作品数量（+1）
+   *
+   * 业务规则：
+   * 1. 同类型下作品名称必须唯一
+   * 2. 关联的作者、分类、标签必须存在且已启用
+   * 3. 作者和分类按传入顺序设置排序权重
    * @param createWorkDto 创建作品的数据
    * @returns 创建的作品信息
+   * @throws BadRequestException 当作品名称重复或关联项无效时抛出异常
    */
   async createWork(createWorkDto: CreateWorkDto) {
     const { authorIds, categoryIds, tagIds, ...workData } = createWorkDto
@@ -119,40 +124,72 @@ export class WorkService extends BaseService {
     // 验证关联的作者、分类、标签是否存在且已启用
     await this.validateWorkRelations(authorIds, categoryIds, tagIds)
 
-    // 创建作品并关联作者、分类、标签
-    return this.work.create({
-      data: {
-        ...workData,
-        authors: {
-          create: authorIds.map((authorId, index) => ({
-            authorId,
-            sortOrder: index,
-          })),
+    // 使用事务确保作品创建和作者作品数更新的一致性
+    return this.prisma.$transaction(async (tx) => {
+      // 创建作品并关联作者、分类、标签
+      const createdWork = await tx.work.create({
+        data: {
+          ...workData,
+          authors: {
+            create: authorIds.map((authorId, index) => ({
+              authorId,
+              sortOrder: index,
+            })),
+          },
+          categories: {
+            create: categoryIds.map((categoryId, index) => ({
+              categoryId,
+              // 分类按倒序设置排序权重（越靠前的分类权重越高）
+              sortOrder: categoryIds.length - index,
+            })),
+          },
+          tags: {
+            create: tagIds.map((tagId) => ({
+              tagId,
+            })),
+          },
         },
-        categories: {
-          create: categoryIds.map((categoryId, index) => ({
-            categoryId,
-            sortOrder: categoryIds.length - index,
-          })),
-        },
-        tags: {
-          create: tagIds.map((tagId) => ({
-            tagId,
-          })),
-        },
-      },
+      })
+
+      // 更新关联作者的作品数量（+1）
+      await tx.workAuthor.updateMany({
+        where: { id: { in: authorIds } },
+        data: { workCount: { increment: 1 } },
+      })
+
+      return createdWork
     })
   }
 
   /**
    * 更新作品
+   * 事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：
+   * 1. 更新作品基础信息
+   * 2. 删除并重建作者关联（全量替换）
+   * 3. 删除并重建分类关联（全量替换）
+   * 4. 删除并重建标签关联（全量替换）
+   * 5. 更新作者作品数量（处理新增和移除的作者）
+   *
+   * 业务规则：
+   * - 同类型下作品名称必须唯一
+   * - 关联的作者、分类、标签必须存在且已启用
+   * - 采用先删除后重建的策略更新关联关系，确保数据一致性
+   *
    * @param updateWorkDto 更新作品的数据
    * @returns 更新后的作品信息
+   * @throws BadRequestException 当作品不存在、名称重复或关联项无效时抛出异常
    */
   async updateWork(updateWorkDto: UpdateWorkDto) {
     const { id, authorIds, categoryIds, tagIds, ...updateData } = updateWorkDto
 
-    const existingWork = await this.work.findUnique({ where: { id } })
+    const existingWork = await this.work.findUnique({
+      where: { id },
+      include: {
+        authors: {
+          select: { authorId: true },
+        },
+      },
+    })
     if (!existingWork) {
       throw new BadRequestException('作品不存在')
     }
@@ -180,7 +217,13 @@ export class WorkService extends BaseService {
       )
     }
 
-    // 使用事务更新作品信息和关联关系
+    // 获取原有关联的作者ID列表
+    const originalAuthorIds = existingWork.authors.map((rel) => rel.authorId)
+
+    /**
+     * 事务处理：使用 $transaction 确保所有更新操作的原子性
+     * 如果其中任何一步失败，整个事务会回滚，保证数据一致性
+     */
     return this.prisma.$transaction(async (tx) => {
       const updatedWork = await tx.work.update({
         where: { id },
@@ -200,6 +243,30 @@ export class WorkService extends BaseService {
               authorId,
               sortOrder: index,
             })),
+          })
+        }
+
+        // 计算新增和移除的作者，更新作品数量
+        const addedAuthorIds = authorIds.filter(
+          (aid) => !originalAuthorIds.includes(aid),
+        )
+        const removedAuthorIds = originalAuthorIds.filter(
+          (aid) => !authorIds.includes(aid),
+        )
+
+        // 新增作者的作品数 +1
+        if (addedAuthorIds.length > 0) {
+          await tx.workAuthor.updateMany({
+            where: { id: { in: addedAuthorIds } },
+            data: { workCount: { increment: 1 } },
+          })
+        }
+
+        // 移除作者的作品数 -1
+        if (removedAuthorIds.length > 0) {
+          await tx.workAuthor.updateMany({
+            where: { id: { in: removedAuthorIds } },
+            data: { workCount: { decrement: 1 } },
           })
         }
       }
@@ -245,6 +312,7 @@ export class WorkService extends BaseService {
    * 更新作品发布状态
    * @param body 请求体
    * @returns 更新结果
+   * @throws BadRequestException 当作品不存在时抛出异常
    */
   async updateStatus(body: UpdateWorkStatusDto) {
     if (!(await this.work.exists({ id: body.id }))) {
@@ -260,6 +328,9 @@ export class WorkService extends BaseService {
 
   /**
    * 分页查询热门作品
+   * 业务规则：仅返回标记为热门的作品
+   * @param dto 查询条件（包含类型过滤等）
+   * @returns 分页的热门作品列表
    */
   async getHotWorkPage(dto: QueryWorkTypeDto) {
     return this.work.findPagination({
@@ -273,6 +344,8 @@ export class WorkService extends BaseService {
 
   /**
    * 分页查询最新作品
+   * @param dto 查询条件（包含类型过滤等）
+   * @returns 分页的最新作品列表
    */
   async getNewWorkPage(dto: QueryWorkTypeDto) {
     return this.work.findPagination({
@@ -286,6 +359,8 @@ export class WorkService extends BaseService {
 
   /**
    * 分页查询推荐作品
+   * @param dto 查询条件（包含类型过滤等）
+   * @returns 分页的推荐作品列表
    */
   async getRecommendedWorkPage(dto: QueryWorkTypeDto) {
     return this.work.findPagination({
@@ -325,6 +400,7 @@ export class WorkService extends BaseService {
     }
 
     // 作者名称模糊查询（不区分大小写）
+    // 通过关联表查询，匹配任一关联作者的名称
     if (author?.trim()) {
       where.authors = {
         some: {
@@ -339,6 +415,7 @@ export class WorkService extends BaseService {
     }
 
     // 标签ID数组精确匹配
+    // 查询包含任一指定标签的作品
     if (Array.isArray(tagIds) && tagIds.length > 0) {
       where.tags = {
         some: {
@@ -358,7 +435,8 @@ export class WorkService extends BaseService {
   /**
    * 获取作品详情
    * @param id 作品ID
-   * @returns 作品详情信息
+   * @returns 作品详情信息（包含作者、分类、标签关联）
+   * @throws BadRequestException 当作品不存在时抛出异常
    */
   async getWorkDetail(id: number) {
     const work = await this.work.findUnique({
@@ -377,418 +455,21 @@ export class WorkService extends BaseService {
     return work
   }
 
-  async getWorkDetailWithUserStatus(id: number, userId: number) {
-    const work = await this.getWorkDetail(id)
-    const targetType = this.getTargetType(work.type)
-
-    const [liked, favorited] = await Promise.all([
-      this.likeService.checkLikeStatus(targetType, id, userId),
-      this.favoriteService.checkFavoriteStatus(targetType, id, userId),
-    ])
-
-    return {
-      ...work,
-      liked,
-      favorited,
-    }
-  }
-
-  /**
-   * 增加作品浏览次数
-   * @param id 作品ID
-   * @param userId 用户ID
-   * @param ip 用户IP地址
-   * @param deviceId 设备ID
-   * @returns 作品ID
-   */
-  async incrementViewCount(
-    id: number,
-    userId: number,
-    ip?: string,
-    deviceId?: string,
-  ) {
-    // 并行验证作品和用户是否存在
-    await this.verifyWorkAndUserExist(id, userId)
-
-    // 更新作品浏览次数
-    await this.work.update({
-      where: { id },
-      data: {
-        viewCount: {
-          increment: 1,
-        },
-      },
-    })
-
-    // 触发用户成长事件（浏览作品）
-    await this.userGrowthEventService.handleEvent({
-      business: 'work',
-      eventKey: WorkGrowthEventKey.View,
-      userId,
-      targetId: id,
-      ip,
-      deviceId,
-      occurredAt: new Date(),
-    })
-
-    return { id }
-  }
-
-  async incrementLikeCount(
-    id: number,
-    userId: number,
-    ip?: string,
-    deviceId?: string,
-  ) {
-    const { work } = await this.verifyWorkAndUserExist(id, userId)
-    const targetType = this.getTargetType(work.type)
-
-    await this.likeService.like(targetType, id, userId)
-
-    await this.userGrowthEventService.handleEvent({
-      business: 'work',
-      eventKey: WorkGrowthEventKey.Like,
-      userId,
-      targetId: id,
-      ip,
-      deviceId,
-      occurredAt: new Date(),
-    })
-
-    return { id }
-  }
-
-  async incrementFavoriteCount(
-    id: number,
-    userId: number,
-    ip?: string,
-    deviceId?: string,
-  ) {
-    const { work } = await this.verifyWorkAndUserExist(id, userId)
-    const targetType = this.getTargetType(work.type)
-
-    await this.favoriteService.favorite(targetType, id, userId)
-
-    await this.userGrowthEventService.handleEvent({
-      business: 'work',
-      eventKey: WorkGrowthEventKey.Favorite,
-      userId,
-      targetId: id,
-      ip,
-      deviceId,
-      occurredAt: new Date(),
-    })
-
-    return { id }
-  }
-
-  async checkUserLiked(workId: number, userId: number) {
-    const work = await this.work.findUnique({ where: { id: workId } })
-    if (!work) {
-      throw new BadRequestException('作品不存在')
-    }
-    const targetType = this.getTargetType(work.type)
-    const liked = await this.likeService.checkLikeStatus(
-      targetType,
-      workId,
-      userId,
-    )
-    return { liked }
-  }
-
-  async checkUserFavorited(workId: number, userId: number) {
-    const work = await this.work.findUnique({ where: { id: workId } })
-    if (!work) {
-      throw new BadRequestException('作品不存在')
-    }
-    const targetType = this.getTargetType(work.type)
-    const favorited = await this.favoriteService.checkFavoriteStatus(
-      targetType,
-      workId,
-      userId,
-    )
-    return { favorited }
-  }
-
-  async getWorkUserStatus(ids: number[], userId: number) {
-    if (ids.length === 0) {
-      return []
-    }
-
-    const works = await this.work.findMany({
-      where: { id: { in: ids } },
-      select: { id: true, type: true },
-    })
-
-    const workMap = new Map(works.map((w) => [w.id, w.type]))
-
-    const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
-    const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
-
-    const [comicLikes, novelLikes, comicFavorites, novelFavorites] =
-      await Promise.all([
-        comicIds.length > 0
-          ? this.likeService.checkStatusBatch(
-              InteractionTargetType.COMIC,
-              comicIds,
-              userId,
-            )
-          : new Map(),
-        novelIds.length > 0
-          ? this.likeService.checkStatusBatch(
-              InteractionTargetType.NOVEL,
-              novelIds,
-              userId,
-            )
-          : new Map(),
-        comicIds.length > 0
-          ? this.favoriteService.checkStatusBatch(
-              InteractionTargetType.COMIC,
-              comicIds,
-              userId,
-            )
-          : new Map(),
-        novelIds.length > 0
-          ? this.favoriteService.checkStatusBatch(
-              InteractionTargetType.NOVEL,
-              novelIds,
-              userId,
-            )
-          : new Map(),
-      ])
-
-    return ids.map((id) => {
-      const workType = workMap.get(id)
-      const isComic = workType === 1
-      return {
-        id,
-        liked: isComic
-          ? (comicLikes.get(id) ?? false)
-          : (novelLikes.get(id) ?? false),
-        favorited: isComic
-          ? (comicFavorites.get(id) ?? false)
-          : (novelFavorites.get(id) ?? false),
-      }
-    })
-  }
-
-  async getWorkPageWithUserStatus(queryWorkDto: QueryWorkDto, userId: number) {
-    const page = await this.getWorkPage(queryWorkDto)
-    const workIds = page.list.map((item) => item.id)
-
-    if (workIds.length === 0) {
-      return page
-    }
-
-    const works = page.list
-    const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
-    const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
-
-    const [comicLikes, novelLikes, comicFavorites, novelFavorites] =
-      await Promise.all([
-        comicIds.length > 0
-          ? this.likeService.checkStatusBatch(
-              InteractionTargetType.COMIC,
-              comicIds,
-              userId,
-            )
-          : new Map(),
-        novelIds.length > 0
-          ? this.likeService.checkStatusBatch(
-              InteractionTargetType.NOVEL,
-              novelIds,
-              userId,
-            )
-          : new Map(),
-        comicIds.length > 0
-          ? this.favoriteService.checkStatusBatch(
-              InteractionTargetType.COMIC,
-              comicIds,
-              userId,
-            )
-          : new Map(),
-        novelIds.length > 0
-          ? this.favoriteService.checkStatusBatch(
-              InteractionTargetType.NOVEL,
-              novelIds,
-              userId,
-            )
-          : new Map(),
-      ])
-
-    return {
-      ...page,
-      list: page.list.map((item) => {
-        const isComic = item.type === 1
-        return {
-          ...item,
-          liked: isComic
-            ? (comicLikes.get(item.id) ?? false)
-            : (novelLikes.get(item.id) ?? false),
-          favorited: isComic
-            ? (comicFavorites.get(item.id) ?? false)
-            : (novelFavorites.get(item.id) ?? false),
-        }
-      }),
-    }
-  }
-
-  async getMyFavoritePage(dto: PageDto, userId: number) {
-    const { pageIndex = 0, pageSize = 15 } = dto
-
-    const [comicResult, novelResult] = await Promise.all([
-      this.favoriteService.getUserFavorites(
-        userId,
-        InteractionTargetType.COMIC,
-        pageIndex,
-        pageSize,
-      ),
-      this.favoriteService.getUserFavorites(
-        userId,
-        InteractionTargetType.NOVEL,
-        pageIndex,
-        pageSize,
-      ),
-    ])
-
-    const allFavorites = [...comicResult.list, ...novelResult.list]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, pageSize)
-
-    const workIds = allFavorites.map((f) => f.targetId)
-    if (workIds.length === 0) {
-      return { list: [], total: comicResult.total + novelResult.total }
-    }
-
-    const works = await this.work.findMany({
-      where: { id: { in: workIds } },
-      include: {
-        authors: WORK_RELATION_SELECT.authors,
-        categories: WORK_RELATION_SELECT.categories,
-        tags: WORK_RELATION_SELECT.tags,
-      },
-    })
-
-    const workMap = new Map(works.map((item) => [item.id, item]))
-    const orderedWorks = workIds
-      .map((id) => workMap.get(id))
-      .filter((item): item is NonNullable<typeof item> => !!item)
-
-    const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
-    const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
-
-    const [comicLikes, novelLikes] = await Promise.all([
-      comicIds.length > 0
-        ? this.likeService.checkStatusBatch(
-            InteractionTargetType.COMIC,
-            comicIds,
-            userId,
-          )
-        : new Map(),
-      novelIds.length > 0
-        ? this.likeService.checkStatusBatch(
-            InteractionTargetType.NOVEL,
-            novelIds,
-            userId,
-          )
-        : new Map(),
-    ])
-
-    return {
-      list: orderedWorks.map((item) => ({
-        ...item,
-        liked:
-          item.type === 1
-            ? (comicLikes.get(item.id) ?? false)
-            : (novelLikes.get(item.id) ?? false),
-        favorited: true,
-      })),
-      total: comicResult.total + novelResult.total,
-    }
-  }
-
-  async getMyLikedPage(dto: PageDto, userId: number) {
-    const { pageIndex = 0, pageSize = 15 } = dto
-
-    const [comicResult, novelResult] = await Promise.all([
-      this.likeService.getUserLikes(
-        userId,
-        InteractionTargetType.COMIC,
-        pageIndex,
-        pageSize,
-      ),
-      this.likeService.getUserLikes(
-        userId,
-        InteractionTargetType.NOVEL,
-        pageIndex,
-        pageSize,
-      ),
-    ])
-
-    const allLikes = [...comicResult.list, ...novelResult.list]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, pageSize)
-
-    const workIds = allLikes.map((l) => l.targetId)
-    if (workIds.length === 0) {
-      return { list: [], total: comicResult.total + novelResult.total }
-    }
-
-    const works = await this.work.findMany({
-      where: { id: { in: workIds } },
-      include: {
-        authors: WORK_RELATION_SELECT.authors,
-        categories: WORK_RELATION_SELECT.categories,
-        tags: WORK_RELATION_SELECT.tags,
-      },
-    })
-
-    const workMap = new Map(works.map((item) => [item.id, item]))
-    const orderedWorks = workIds
-      .map((id) => workMap.get(id))
-      .filter((item): item is NonNullable<typeof item> => !!item)
-
-    const comicIds = works.filter((w) => w.type === 1).map((w) => w.id)
-    const novelIds = works.filter((w) => w.type === 2).map((w) => w.id)
-
-    const [comicFavorites, novelFavorites] = await Promise.all([
-      comicIds.length > 0
-        ? this.favoriteService.checkStatusBatch(
-            InteractionTargetType.COMIC,
-            comicIds,
-            userId,
-          )
-        : new Map(),
-      novelIds.length > 0
-        ? this.favoriteService.checkStatusBatch(
-            InteractionTargetType.NOVEL,
-            novelIds,
-            userId,
-          )
-        : new Map(),
-    ])
-
-    return {
-      list: orderedWorks.map((item) => ({
-        ...item,
-        liked: true,
-        favorited:
-          item.type === 1
-            ? (comicFavorites.get(item.id) ?? false)
-            : (novelFavorites.get(item.id) ?? false),
-      })),
-      total: comicResult.total + novelResult.total,
-    }
-  }
-
   /**
    * 删除作品（软删除）
+   * 事务说明：此方法使用数据库事务确保原子性，事务包含以下操作：
+   * 1. 检查作品是否存在及关联章节
+   * 2. 获取作品的关联作者列表
+   * 3. 软删除作品
+   * 4. 更新关联作者的作品数量（-1）
+   *
    * @param id 作品ID
    * @returns 删除结果
+   * @throws BadRequestException 当作品不存在或有关联章节时抛出异常
    */
   async deleteWork(id: number) {
     // 检查作品是否还有未删除的章节
-    const chapterCount = await this.prisma.workChapter.count({
+    const chapterCount = await this.workChapter.count({
       where: {
         workId: id,
         deletedAt: null,
@@ -801,6 +482,38 @@ export class WorkService extends BaseService {
       )
     }
 
-    return this.work.softDelete({ id })
+    // 获取作品信息，检查是否存在并获取关联作者
+    const work = await this.work.findUnique({
+      where: { id },
+      include: {
+        authors: {
+          select: { authorId: true },
+        },
+      },
+    })
+
+    if (!work) {
+      throw new BadRequestException('作品不存在')
+    }
+
+    // 使用事务确保作品删除和作者作品数更新的一致性
+    return this.prisma.$transaction(async (tx) => {
+      // 软删除作品
+      const deletedWork = await tx.work.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      })
+
+      // 更新关联作者的作品数量（-1）
+      const authorIds = work.authors.map((rel) => rel.authorId)
+      if (authorIds.length > 0) {
+        await tx.workAuthor.updateMany({
+          where: { id: { in: authorIds } },
+          data: { workCount: { decrement: 1 } },
+        })
+      }
+
+      return deletedWork
+    })
   }
 }

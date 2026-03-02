@@ -113,7 +113,7 @@ export class BaseWorkChapterDto extends BaseDto {
   requiredViewLevelId?: number
 
   @NumberProperty({
-    description: '章节兑换积分',
+    description: '兑换章节所需积分',
     example: 0,
     required: true,
     default: 0,

@@ -30,7 +30,7 @@ export type WorkAuthorAvgAggregateOutputType = {
   id: number | null
   gender: number | null
   type: number | null
-  worksCount: number | null
+  workCount: number | null
   followersCount: number | null
 }
 
@@ -38,7 +38,7 @@ export type WorkAuthorSumAggregateOutputType = {
   id: number | null
   gender: number | null
   type: number[]
-  worksCount: number | null
+  workCount: number | null
   followersCount: number | null
 }
 
@@ -52,7 +52,7 @@ export type WorkAuthorMinAggregateOutputType = {
   isEnabled: boolean | null
   isRecommended: boolean | null
   remark: string | null
-  worksCount: number | null
+  workCount: number | null
   followersCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -69,7 +69,7 @@ export type WorkAuthorMaxAggregateOutputType = {
   isEnabled: boolean | null
   isRecommended: boolean | null
   remark: string | null
-  worksCount: number | null
+  workCount: number | null
   followersCount: number | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -87,7 +87,7 @@ export type WorkAuthorCountAggregateOutputType = {
   isEnabled: number
   isRecommended: number
   remark: number
-  worksCount: number
+  workCount: number
   followersCount: number
   createdAt: number
   updatedAt: number
@@ -100,7 +100,7 @@ export type WorkAuthorAvgAggregateInputType = {
   id?: true
   gender?: true
   type?: true
-  worksCount?: true
+  workCount?: true
   followersCount?: true
 }
 
@@ -108,7 +108,7 @@ export type WorkAuthorSumAggregateInputType = {
   id?: true
   gender?: true
   type?: true
-  worksCount?: true
+  workCount?: true
   followersCount?: true
 }
 
@@ -122,7 +122,7 @@ export type WorkAuthorMinAggregateInputType = {
   isEnabled?: true
   isRecommended?: true
   remark?: true
-  worksCount?: true
+  workCount?: true
   followersCount?: true
   createdAt?: true
   updatedAt?: true
@@ -139,7 +139,7 @@ export type WorkAuthorMaxAggregateInputType = {
   isEnabled?: true
   isRecommended?: true
   remark?: true
-  worksCount?: true
+  workCount?: true
   followersCount?: true
   createdAt?: true
   updatedAt?: true
@@ -157,7 +157,7 @@ export type WorkAuthorCountAggregateInputType = {
   isEnabled?: true
   isRecommended?: true
   remark?: true
-  worksCount?: true
+  workCount?: true
   followersCount?: true
   createdAt?: true
   updatedAt?: true
@@ -262,7 +262,7 @@ export type WorkAuthorGroupByOutputType = {
   isEnabled: boolean
   isRecommended: boolean
   remark: string | null
-  worksCount: number
+  workCount: number
   followersCount: number
   createdAt: Date
   updatedAt: Date
@@ -303,7 +303,7 @@ export type WorkAuthorWhereInput = {
   isEnabled?: Prisma.BoolFilter<"WorkAuthor"> | boolean
   isRecommended?: Prisma.BoolFilter<"WorkAuthor"> | boolean
   remark?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
-  worksCount?: Prisma.IntFilter<"WorkAuthor"> | number
+  workCount?: Prisma.IntFilter<"WorkAuthor"> | number
   followersCount?: Prisma.IntFilter<"WorkAuthor"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
@@ -322,7 +322,7 @@ export type WorkAuthorOrderByWithRelationInput = {
   isEnabled?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
-  worksCount?: Prisma.SortOrder
+  workCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -344,7 +344,7 @@ export type WorkAuthorWhereUniqueInput = Prisma.AtLeast<{
   isEnabled?: Prisma.BoolFilter<"WorkAuthor"> | boolean
   isRecommended?: Prisma.BoolFilter<"WorkAuthor"> | boolean
   remark?: Prisma.StringNullableFilter<"WorkAuthor"> | string | null
-  worksCount?: Prisma.IntFilter<"WorkAuthor"> | number
+  workCount?: Prisma.IntFilter<"WorkAuthor"> | number
   followersCount?: Prisma.IntFilter<"WorkAuthor"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"WorkAuthor"> | Date | string
@@ -363,7 +363,7 @@ export type WorkAuthorOrderByWithAggregationInput = {
   isEnabled?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
-  worksCount?: Prisma.SortOrder
+  workCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -389,7 +389,7 @@ export type WorkAuthorScalarWhereWithAggregatesInput = {
   isEnabled?: Prisma.BoolWithAggregatesFilter<"WorkAuthor"> | boolean
   isRecommended?: Prisma.BoolWithAggregatesFilter<"WorkAuthor"> | boolean
   remark?: Prisma.StringNullableWithAggregatesFilter<"WorkAuthor"> | string | null
-  worksCount?: Prisma.IntWithAggregatesFilter<"WorkAuthor"> | number
+  workCount?: Prisma.IntWithAggregatesFilter<"WorkAuthor"> | number
   followersCount?: Prisma.IntWithAggregatesFilter<"WorkAuthor"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkAuthor"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"WorkAuthor"> | Date | string
@@ -406,7 +406,7 @@ export type WorkAuthorCreateInput = {
   isEnabled?: boolean
   isRecommended?: boolean
   remark?: string | null
-  worksCount?: number
+  workCount?: number
   followersCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -425,7 +425,7 @@ export type WorkAuthorUncheckedCreateInput = {
   isEnabled?: boolean
   isRecommended?: boolean
   remark?: string | null
-  worksCount?: number
+  workCount?: number
   followersCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -443,7 +443,7 @@ export type WorkAuthorUpdateInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  worksCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -462,7 +462,7 @@ export type WorkAuthorUncheckedUpdateInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  worksCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -481,7 +481,7 @@ export type WorkAuthorCreateManyInput = {
   isEnabled?: boolean
   isRecommended?: boolean
   remark?: string | null
-  worksCount?: number
+  workCount?: number
   followersCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -498,7 +498,7 @@ export type WorkAuthorUpdateManyMutationInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  worksCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -516,7 +516,7 @@ export type WorkAuthorUncheckedUpdateManyInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  worksCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -534,7 +534,7 @@ export type WorkAuthorCountOrderByAggregateInput = {
   isEnabled?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrder
-  worksCount?: Prisma.SortOrder
+  workCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -545,7 +545,7 @@ export type WorkAuthorAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   gender?: Prisma.SortOrder
   type?: Prisma.SortOrder
-  worksCount?: Prisma.SortOrder
+  workCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
 }
 
@@ -559,7 +559,7 @@ export type WorkAuthorMaxOrderByAggregateInput = {
   isEnabled?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrder
-  worksCount?: Prisma.SortOrder
+  workCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -576,7 +576,7 @@ export type WorkAuthorMinOrderByAggregateInput = {
   isEnabled?: Prisma.SortOrder
   isRecommended?: Prisma.SortOrder
   remark?: Prisma.SortOrder
-  worksCount?: Prisma.SortOrder
+  workCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -587,7 +587,7 @@ export type WorkAuthorSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   gender?: Prisma.SortOrder
   type?: Prisma.SortOrder
-  worksCount?: Prisma.SortOrder
+  workCount?: Prisma.SortOrder
   followersCount?: Prisma.SortOrder
 }
 
@@ -629,7 +629,7 @@ export type WorkAuthorCreateWithoutWorkAuthorsInput = {
   isEnabled?: boolean
   isRecommended?: boolean
   remark?: string | null
-  worksCount?: number
+  workCount?: number
   followersCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -647,7 +647,7 @@ export type WorkAuthorUncheckedCreateWithoutWorkAuthorsInput = {
   isEnabled?: boolean
   isRecommended?: boolean
   remark?: string | null
-  worksCount?: number
+  workCount?: number
   followersCount?: number
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -680,7 +680,7 @@ export type WorkAuthorUpdateWithoutWorkAuthorsInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  worksCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -698,7 +698,7 @@ export type WorkAuthorUncheckedUpdateWithoutWorkAuthorsInput = {
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  worksCount?: Prisma.IntFieldUpdateOperationsInput | number
+  workCount?: Prisma.IntFieldUpdateOperationsInput | number
   followersCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -747,7 +747,7 @@ export type WorkAuthorSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   isEnabled?: boolean
   isRecommended?: boolean
   remark?: boolean
-  worksCount?: boolean
+  workCount?: boolean
   followersCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -767,7 +767,7 @@ export type WorkAuthorSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   isEnabled?: boolean
   isRecommended?: boolean
   remark?: boolean
-  worksCount?: boolean
+  workCount?: boolean
   followersCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -785,7 +785,7 @@ export type WorkAuthorSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   isEnabled?: boolean
   isRecommended?: boolean
   remark?: boolean
-  worksCount?: boolean
+  workCount?: boolean
   followersCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -803,14 +803,14 @@ export type WorkAuthorSelectScalar = {
   isEnabled?: boolean
   isRecommended?: boolean
   remark?: boolean
-  worksCount?: boolean
+  workCount?: boolean
   followersCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   deletedAt?: boolean
 }
 
-export type WorkAuthorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "avatar" | "description" | "nationality" | "gender" | "type" | "isEnabled" | "isRecommended" | "remark" | "worksCount" | "followersCount" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workAuthor"]>
+export type WorkAuthorOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "avatar" | "description" | "nationality" | "gender" | "type" | "isEnabled" | "isRecommended" | "remark" | "workCount" | "followersCount" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["workAuthor"]>
 export type WorkAuthorInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workAuthors?: boolean | Prisma.WorkAuthor$workAuthorsArgs<ExtArgs>
   _count?: boolean | Prisma.WorkAuthorCountOutputTypeDefaultArgs<ExtArgs>
@@ -870,7 +870,7 @@ export type $WorkAuthorPayload<ExtArgs extends runtime.Types.Extensions.Internal
     /**
      * 作品数量（冗余字段，用于提升查询性能）
      */
-    worksCount: number
+    workCount: number
     /**
      * 粉丝数量（冗余字段，用于前台展示）
      */
@@ -1321,7 +1321,7 @@ export interface WorkAuthorFieldRefs {
   readonly isEnabled: Prisma.FieldRef<"WorkAuthor", 'Boolean'>
   readonly isRecommended: Prisma.FieldRef<"WorkAuthor", 'Boolean'>
   readonly remark: Prisma.FieldRef<"WorkAuthor", 'String'>
-  readonly worksCount: Prisma.FieldRef<"WorkAuthor", 'Int'>
+  readonly workCount: Prisma.FieldRef<"WorkAuthor", 'Int'>
   readonly followersCount: Prisma.FieldRef<"WorkAuthor", 'Int'>
   readonly createdAt: Prisma.FieldRef<"WorkAuthor", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"WorkAuthor", 'DateTime'>

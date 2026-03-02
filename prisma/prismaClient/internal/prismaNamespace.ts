@@ -6360,7 +6360,7 @@ export const WorkAuthorScalarFieldEnum = {
   isEnabled: 'isEnabled',
   isRecommended: 'isRecommended',
   remark: 'remark',
-  worksCount: 'worksCount',
+  workCount: 'workCount',
   followersCount: 'followersCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',

@@ -11,7 +11,7 @@ export async function softDelete<T>(
   const context = Prisma.getExtensionContext(this) as any
   const target = await context.findUnique({
     where,
-    select: { deletedAt: true },
+    select: { id: true, deletedAt: true },
   })
   if (!target) {
     throw new BadRequestException('删除失败：数据不存在')

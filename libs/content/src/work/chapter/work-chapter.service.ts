@@ -296,6 +296,9 @@ export class WorkChapterService extends BaseService {
    * @returns 删除的章节记录
    */
   async deleteChapter(id: number) {
+    if (!(await this.workChapter.exists({ id }))) {
+      throw new BadRequestException('章节不存在')
+    }
     return this.workChapter.delete({ where: { id } })
   }
 
@@ -306,51 +309,17 @@ export class WorkChapterService extends BaseService {
    * @throws BadRequestException 当章节不存在或不是同一作品时抛出
    */
   async swapChapterNumbers(dto: DragReorderDto) {
-    const { targetId, dragId } = dto
-
-    if (targetId === dragId) {
-      throw new BadRequestException('不能交换相同的章节')
-    }
-
-    // 查询两个章节信息
-    const [targetChapter, dragChapter] = await Promise.all([
-      this.workChapter.findUnique({ where: { id: targetId } }),
-      this.workChapter.findUnique({ where: { id: dragId } }),
-    ])
-
-    if (!targetChapter) {
-      throw new BadRequestException(`章节ID ${targetId} 不存在`)
-    }
-    if (!dragChapter) {
-      throw new BadRequestException(`章节ID ${dragId} 不存在`)
-    }
-
-    // 验证是否属于同一作品
-    if (targetChapter.workId !== dragChapter.workId) {
-      throw new BadRequestException('只能交换同一作品下的章节号')
-    }
-
-    // 使用临时值进行交换，避免唯一约束冲突
-    return this.prisma.$transaction(async (tx) => {
-      const tempChapterNumber = -Math.floor(Math.random() * 1000000) - 1
-
-      await tx.workChapter.update({
-        where: { id: dragId },
-        data: { sortOrder: tempChapterNumber },
-      })
-
-      await tx.workChapter.update({
-        where: { id: targetId },
-        data: { sortOrder: dragChapter.sortOrder },
-      })
-
-      await tx.workChapter.update({
-        where: { id: dragId },
-        data: { sortOrder: targetChapter.sortOrder },
-      })
-
-      return { targetId, dragId }
-    })
+    return this.workChapter.swapField(
+      { id: dto.dragId },
+      { id: dto.targetId },
+      'sortOrder',
+      (record1, record2) => {
+        // 验证是否属于同一作品
+        if (record1.workId !== record2.workId) {
+          throw new BadRequestException('只能交换同一作品下的章节号')
+        }
+      },
+    )
   }
 
   /**
