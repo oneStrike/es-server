@@ -1,4 +1,3 @@
-import { WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { DragReorderDto, PageDto } from '@libs/base/dto'
 import { ContentPermissionService } from '@libs/content/permission'
