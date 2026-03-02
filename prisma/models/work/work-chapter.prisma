@@ -37,7 +37,7 @@ model WorkChapter {
   /// 是否允许评论
   canComment              Boolean               @default(true) @map("can_comment")
   /// 内容存储路径（文件路径）
-  content                 String?               @map("content")
+  content                 String?               
   /// 字数（小说章节）
   wordCount               Int                   @default(0) @map("word_count")
   /// 阅读次数
