@@ -268,7 +268,7 @@ export class PageWorkChapterDto extends PickType(BaseWorkChapterDto, [
   'isPreview',
   'cover',
   'title',
-  'subTitle',
+  'subtitle',
   'canComment',
   'sortOrder',
   'viewRule',
