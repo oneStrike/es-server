@@ -1,7 +1,20 @@
-import { EnumProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { PaymentMethodEnum, PurchaseStatusEnum, PurchaseTargetTypeEnum } from '../purchase.constant'
+import {
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/base/decorators'
+import { BaseDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
+import {
+  PaymentMethodEnum,
+  PurchaseStatusEnum,
+  PurchaseTargetTypeEnum,
+} from '../purchase.constant'
 
 export class BaseUserPurchaseRecordDto extends BaseDto {
   @EnumProperty({
@@ -35,7 +48,10 @@ export class BaseUserPurchaseRecordDto extends BaseDto {
   paymentMethod!: PaymentMethodEnum
 }
 
-export class PurchaseTargetDto extends BaseUserPurchaseRecordDto {
+export class PurchaseTargetDto extends OmitType(
+  BaseUserPurchaseRecordDto,
+  OMIT_BASE_FIELDS,
+) {
   @StringProperty({
     description: '第三方支付订单号（支付宝/微信支付时使用）',
     example: '2024010123456789',

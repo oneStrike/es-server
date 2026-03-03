@@ -75,7 +75,7 @@ export class ContentPermissionService extends BaseService {
     return work
   }
 
-  private async resolveChapterPermission(chapterId: number) {
+  async resolveChapterPermission(chapterId: number) {
     const chapter = await this.workChapter.findUnique({
       where: { id: chapterId },
       select: CHAPTER_PERMISSION_SELECT,
@@ -89,6 +89,7 @@ export class ContentPermissionService extends BaseService {
       viewRule: permission.viewRule,
       requiredExperience: permission.requiredExperience,
       isPreview: permission.isPreview,
+      price: permission.price,
     }
   }
 
@@ -312,6 +313,7 @@ export class ContentPermissionService extends BaseService {
         viewRule: workPermission.viewRule as WorkViewPermissionEnum,
         isPreview: chapter.isPreview,
         canDownload: chapter.canDownload,
+        price: workPermission.chapterPrice,
         requiredExperience:
           workPermission.requiredViewLevel?.requiredExperience ?? null,
       }
@@ -321,6 +323,7 @@ export class ContentPermissionService extends BaseService {
       viewRule: chapter.viewRule as WorkViewPermissionEnum,
       isPreview: chapter.isPreview,
       canDownload: chapter.canDownload,
+      price: chapter.price,
       requiredExperience: chapter.requiredViewLevel?.requiredExperience ?? null,
     }
   }

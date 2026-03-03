@@ -1,8 +1,8 @@
 export enum PurchaseTargetTypeEnum {
   /** 漫画章节 */
-  COMIC_CHAPTER = 3,
+  COMIC_CHAPTER = 1,
   /** 小说章节 */
-  NOVEL_CHAPTER = 4,
+  NOVEL_CHAPTER = 2,
 }
 
 export enum PurchaseStatusEnum {
