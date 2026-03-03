@@ -15,6 +15,8 @@ model UserPointRecord {
   targetId     Int?    @map("target_id")
   /// 兑换ID
   exchangeId   Int?    @map("exchange_id")
+  /// 关联的购买记录ID（购买消费时关联）
+  purchaseId   Int?    @map("purchase_id")
   /// 积分变化（正数为获得，负数为消费）
   points       Int
   /// 变化前积分
@@ -34,7 +36,9 @@ model UserPointRecord {
   /// 关联事件
   event UserGrowthEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
   /// 关联用户
-  user  AppUser          @relation("UserPointRecords", fields: [userId], references: [id], onDelete: Cascade)
+  user    AppUser            @relation("UserPointRecords", fields: [userId], references: [id], onDelete: Cascade)
+  /// 关联购买记录
+  purchase UserPurchaseRecord? @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
 
   /// 用户索引
   @@index([userId])
@@ -48,5 +52,6 @@ model UserPointRecord {
   @@index([userId, createdAt])
   @@index([targetType, targetId])
   @@index([exchangeId])
+  @@index([purchaseId])
   @@map("user_point_record")
 }

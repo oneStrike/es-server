@@ -67,8 +67,7 @@ export class PurchaseService extends BaseService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      await this.processPayment(tx, userId, price, paymentMethod)
-
+      // 创建购买记录
       const record = await tx.userPurchaseRecord.create({
         data: {
           targetType,
@@ -80,6 +79,17 @@ export class PurchaseService extends BaseService {
           outTradeNo,
         },
       })
+
+      // 处理支付，积分流水通过 purchaseId 关联到购买记录
+      await this.processPayment(
+        tx,
+        userId,
+        price,
+        paymentMethod,
+        record.id,
+        targetType,
+        targetId,
+      )
 
       await tx.workChapter.update({
         where: { id: targetId },
@@ -181,7 +191,10 @@ export class PurchaseService extends BaseService {
     userId: number,
     price: number,
     paymentMethod: PaymentMethodEnum,
-  ) {
+    purchaseId: number,
+    targetType: PurchaseTargetTypeEnum,
+    targetId: number,
+  ): Promise<void> {
     if (paymentMethod === PaymentMethodEnum.POINTS) {
       const user = await tx.appUser.findUnique({
         where: { id: userId },
@@ -190,9 +203,28 @@ export class PurchaseService extends BaseService {
       if (!user || user.points < price) {
         throw new BadRequestException('积分不足')
       }
+
+      const beforePoints = user.points
+      const afterPoints = beforePoints - price
+
+      // 扣减积分
       await tx.appUser.update({
         where: { id: userId },
-        data: { points: { decrement: price } },
+        data: { points: afterPoints },
+      })
+
+      // 创建积分流水记录，通过 purchaseId 关联购买记录
+      await tx.userPointRecord.create({
+        data: {
+          userId,
+          points: -price,
+          beforePoints,
+          afterPoints,
+          purchaseId,
+          targetType,
+          targetId,
+          remark: '购买章节',
+        },
       })
     }
   }
@@ -202,11 +234,37 @@ export class PurchaseService extends BaseService {
     userId: number,
     price: number,
     paymentMethod: PaymentMethodEnum,
-  ) {
+    purchaseId: number,
+    targetType: number,
+    targetId: number,
+  ): Promise<void> {
     if (paymentMethod === PaymentMethodEnum.POINTS) {
+      const user = await tx.appUser.findUnique({
+        where: { id: userId },
+        select: { points: true },
+      })
+
+      const beforePoints = user?.points ?? 0
+      const afterPoints = beforePoints + price
+
+      // 退还积分
       await tx.appUser.update({
         where: { id: userId },
-        data: { points: { increment: price } },
+        data: { points: afterPoints },
+      })
+
+      // 创建积分流水记录，通过 purchaseId 关联购买记录
+      await tx.userPointRecord.create({
+        data: {
+          userId,
+          points: price, // 正数表示获得
+          beforePoints,
+          afterPoints,
+          purchaseId,
+          targetType,
+          targetId,
+          remark: '退款返还',
+        },
       })
     }
   }
@@ -291,11 +349,15 @@ export class PurchaseService extends BaseService {
         },
       })
 
+      // 处理退款，积分流水通过 purchaseId 关联到购买记录
       await this.processRefund(
         tx,
         userId,
         purchase.price,
         purchase.paymentMethod,
+        purchaseId,
+        purchase.targetType,
+        purchase.targetId,
       )
 
       await tx.workChapter.update({

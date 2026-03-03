@@ -283,6 +283,7 @@ export type UserPurchaseRecordWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"UserPurchaseRecord"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserPurchaseRecord"> | Date | string
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+  pointRecords?: Prisma.UserPointRecordListRelationFilter
 }
 
 export type UserPurchaseRecordOrderByWithRelationInput = {
@@ -297,6 +298,7 @@ export type UserPurchaseRecordOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.AppUserOrderByWithRelationInput
+  pointRecords?: Prisma.UserPointRecordOrderByRelationAggregateInput
 }
 
 export type UserPurchaseRecordWhereUniqueInput = Prisma.AtLeast<{
@@ -315,6 +317,7 @@ export type UserPurchaseRecordWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"UserPurchaseRecord"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserPurchaseRecord"> | Date | string
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+  pointRecords?: Prisma.UserPointRecordListRelationFilter
 }, "id" | "targetType_targetId_userId_status">
 
 export type UserPurchaseRecordOrderByWithAggregationInput = {
@@ -361,6 +364,7 @@ export type UserPurchaseRecordCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.AppUserCreateNestedOneWithoutUserPurchaseRecordsInput
+  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutPurchaseInput
 }
 
 export type UserPurchaseRecordUncheckedCreateInput = {
@@ -374,6 +378,7 @@ export type UserPurchaseRecordUncheckedCreateInput = {
   outTradeNo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutPurchaseInput
 }
 
 export type UserPurchaseRecordUpdateInput = {
@@ -386,6 +391,7 @@ export type UserPurchaseRecordUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.AppUserUpdateOneRequiredWithoutUserPurchaseRecordsNestedInput
+  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutPurchaseNestedInput
 }
 
 export type UserPurchaseRecordUncheckedUpdateInput = {
@@ -399,6 +405,7 @@ export type UserPurchaseRecordUncheckedUpdateInput = {
   outTradeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutPurchaseNestedInput
 }
 
 export type UserPurchaseRecordCreateManyInput = {
@@ -446,6 +453,11 @@ export type UserPurchaseRecordListRelationFilter = {
 
 export type UserPurchaseRecordOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type UserPurchaseRecordNullableScalarRelationFilter = {
+  is?: Prisma.UserPurchaseRecordWhereInput | null
+  isNot?: Prisma.UserPurchaseRecordWhereInput | null
 }
 
 export type UserPurchaseRecordTargetTypeTargetIdUserIdStatusCompoundUniqueInput = {
@@ -556,6 +568,22 @@ export type UserPurchaseRecordUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.UserPurchaseRecordScalarWhereInput | Prisma.UserPurchaseRecordScalarWhereInput[]
 }
 
+export type UserPurchaseRecordCreateNestedOneWithoutPointRecordsInput = {
+  create?: Prisma.XOR<Prisma.UserPurchaseRecordCreateWithoutPointRecordsInput, Prisma.UserPurchaseRecordUncheckedCreateWithoutPointRecordsInput>
+  connectOrCreate?: Prisma.UserPurchaseRecordCreateOrConnectWithoutPointRecordsInput
+  connect?: Prisma.UserPurchaseRecordWhereUniqueInput
+}
+
+export type UserPurchaseRecordUpdateOneWithoutPointRecordsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserPurchaseRecordCreateWithoutPointRecordsInput, Prisma.UserPurchaseRecordUncheckedCreateWithoutPointRecordsInput>
+  connectOrCreate?: Prisma.UserPurchaseRecordCreateOrConnectWithoutPointRecordsInput
+  upsert?: Prisma.UserPurchaseRecordUpsertWithoutPointRecordsInput
+  disconnect?: Prisma.UserPurchaseRecordWhereInput | boolean
+  delete?: Prisma.UserPurchaseRecordWhereInput | boolean
+  connect?: Prisma.UserPurchaseRecordWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserPurchaseRecordUpdateToOneWithWhereWithoutPointRecordsInput, Prisma.UserPurchaseRecordUpdateWithoutPointRecordsInput>, Prisma.UserPurchaseRecordUncheckedUpdateWithoutPointRecordsInput>
+}
+
 export type UserPurchaseRecordCreateWithoutUserInput = {
   targetType: number
   targetId: number
@@ -565,6 +593,7 @@ export type UserPurchaseRecordCreateWithoutUserInput = {
   outTradeNo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutPurchaseInput
 }
 
 export type UserPurchaseRecordUncheckedCreateWithoutUserInput = {
@@ -577,6 +606,7 @@ export type UserPurchaseRecordUncheckedCreateWithoutUserInput = {
   outTradeNo?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutPurchaseInput
 }
 
 export type UserPurchaseRecordCreateOrConnectWithoutUserInput = {
@@ -621,6 +651,72 @@ export type UserPurchaseRecordScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"UserPurchaseRecord"> | Date | string
 }
 
+export type UserPurchaseRecordCreateWithoutPointRecordsInput = {
+  targetType: number
+  targetId: number
+  price: number
+  status?: number
+  paymentMethod: number
+  outTradeNo?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.AppUserCreateNestedOneWithoutUserPurchaseRecordsInput
+}
+
+export type UserPurchaseRecordUncheckedCreateWithoutPointRecordsInput = {
+  id?: number
+  targetType: number
+  targetId: number
+  userId: number
+  price: number
+  status?: number
+  paymentMethod: number
+  outTradeNo?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type UserPurchaseRecordCreateOrConnectWithoutPointRecordsInput = {
+  where: Prisma.UserPurchaseRecordWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserPurchaseRecordCreateWithoutPointRecordsInput, Prisma.UserPurchaseRecordUncheckedCreateWithoutPointRecordsInput>
+}
+
+export type UserPurchaseRecordUpsertWithoutPointRecordsInput = {
+  update: Prisma.XOR<Prisma.UserPurchaseRecordUpdateWithoutPointRecordsInput, Prisma.UserPurchaseRecordUncheckedUpdateWithoutPointRecordsInput>
+  create: Prisma.XOR<Prisma.UserPurchaseRecordCreateWithoutPointRecordsInput, Prisma.UserPurchaseRecordUncheckedCreateWithoutPointRecordsInput>
+  where?: Prisma.UserPurchaseRecordWhereInput
+}
+
+export type UserPurchaseRecordUpdateToOneWithWhereWithoutPointRecordsInput = {
+  where?: Prisma.UserPurchaseRecordWhereInput
+  data: Prisma.XOR<Prisma.UserPurchaseRecordUpdateWithoutPointRecordsInput, Prisma.UserPurchaseRecordUncheckedUpdateWithoutPointRecordsInput>
+}
+
+export type UserPurchaseRecordUpdateWithoutPointRecordsInput = {
+  targetType?: Prisma.IntFieldUpdateOperationsInput | number
+  targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentMethod?: Prisma.IntFieldUpdateOperationsInput | number
+  outTradeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.AppUserUpdateOneRequiredWithoutUserPurchaseRecordsNestedInput
+}
+
+export type UserPurchaseRecordUncheckedUpdateWithoutPointRecordsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  targetType?: Prisma.IntFieldUpdateOperationsInput | number
+  targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  paymentMethod?: Prisma.IntFieldUpdateOperationsInput | number
+  outTradeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type UserPurchaseRecordCreateManyUserInput = {
   id?: number
   targetType: number
@@ -642,6 +738,7 @@ export type UserPurchaseRecordUpdateWithoutUserInput = {
   outTradeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutPurchaseNestedInput
 }
 
 export type UserPurchaseRecordUncheckedUpdateWithoutUserInput = {
@@ -654,6 +751,7 @@ export type UserPurchaseRecordUncheckedUpdateWithoutUserInput = {
   outTradeNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutPurchaseNestedInput
 }
 
 export type UserPurchaseRecordUncheckedUpdateManyWithoutUserInput = {
@@ -669,6 +767,35 @@ export type UserPurchaseRecordUncheckedUpdateManyWithoutUserInput = {
 }
 
 
+/**
+ * Count Type UserPurchaseRecordCountOutputType
+ */
+
+export type UserPurchaseRecordCountOutputType = {
+  pointRecords: number
+}
+
+export type UserPurchaseRecordCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  pointRecords?: boolean | UserPurchaseRecordCountOutputTypeCountPointRecordsArgs
+}
+
+/**
+ * UserPurchaseRecordCountOutputType without action
+ */
+export type UserPurchaseRecordCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserPurchaseRecordCountOutputType
+   */
+  select?: Prisma.UserPurchaseRecordCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * UserPurchaseRecordCountOutputType without action
+ */
+export type UserPurchaseRecordCountOutputTypeCountPointRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserPointRecordWhereInput
+}
+
 
 export type UserPurchaseRecordSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -682,6 +809,8 @@ export type UserPurchaseRecordSelect<ExtArgs extends runtime.Types.Extensions.In
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  pointRecords?: boolean | Prisma.UserPurchaseRecord$pointRecordsArgs<ExtArgs>
+  _count?: boolean | Prisma.UserPurchaseRecordCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userPurchaseRecord"]>
 
 export type UserPurchaseRecordSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -728,6 +857,8 @@ export type UserPurchaseRecordSelectScalar = {
 export type UserPurchaseRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "targetType" | "targetId" | "userId" | "price" | "status" | "paymentMethod" | "outTradeNo" | "createdAt" | "updatedAt", ExtArgs["result"]["userPurchaseRecord"]>
 export type UserPurchaseRecordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  pointRecords?: boolean | Prisma.UserPurchaseRecord$pointRecordsArgs<ExtArgs>
+  _count?: boolean | Prisma.UserPurchaseRecordCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserPurchaseRecordIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -743,6 +874,10 @@ export type $UserPurchaseRecordPayload<ExtArgs extends runtime.Types.Extensions.
      * 关联用户
      */
     user: Prisma.$AppUserPayload<ExtArgs>
+    /**
+     * 关联积分流水记录（一对多：购买和退款各产生一条流水）
+     */
+    pointRecords: Prisma.$UserPointRecordPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1180,6 +1315,7 @@ readonly fields: UserPurchaseRecordFieldRefs;
 export interface Prisma__UserPurchaseRecordClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  pointRecords<T extends Prisma.UserPurchaseRecord$pointRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserPurchaseRecord$pointRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPointRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1621,6 +1757,30 @@ export type UserPurchaseRecordDeleteManyArgs<ExtArgs extends runtime.Types.Exten
    * Limit how many UserPurchaseRecords to delete.
    */
   limit?: number
+}
+
+/**
+ * UserPurchaseRecord.pointRecords
+ */
+export type UserPurchaseRecord$pointRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserPointRecord
+   */
+  select?: Prisma.UserPointRecordSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserPointRecord
+   */
+  omit?: Prisma.UserPointRecordOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserPointRecordInclude<ExtArgs> | null
+  where?: Prisma.UserPointRecordWhereInput
+  orderBy?: Prisma.UserPointRecordOrderByWithRelationInput | Prisma.UserPointRecordOrderByWithRelationInput[]
+  cursor?: Prisma.UserPointRecordWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserPointRecordScalarFieldEnum | Prisma.UserPointRecordScalarFieldEnum[]
 }
 
 /**

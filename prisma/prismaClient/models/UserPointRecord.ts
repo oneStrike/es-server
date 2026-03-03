@@ -34,6 +34,7 @@ export type UserPointRecordAvgAggregateOutputType = {
   targetType: number | null
   targetId: number | null
   exchangeId: number | null
+  purchaseId: number | null
   points: number | null
   beforePoints: number | null
   afterPoints: number | null
@@ -47,6 +48,7 @@ export type UserPointRecordSumAggregateOutputType = {
   targetType: number | null
   targetId: number | null
   exchangeId: number | null
+  purchaseId: number | null
   points: number | null
   beforePoints: number | null
   afterPoints: number | null
@@ -60,6 +62,7 @@ export type UserPointRecordMinAggregateOutputType = {
   targetType: number | null
   targetId: number | null
   exchangeId: number | null
+  purchaseId: number | null
   points: number | null
   beforePoints: number | null
   afterPoints: number | null
@@ -76,6 +79,7 @@ export type UserPointRecordMaxAggregateOutputType = {
   targetType: number | null
   targetId: number | null
   exchangeId: number | null
+  purchaseId: number | null
   points: number | null
   beforePoints: number | null
   afterPoints: number | null
@@ -92,6 +96,7 @@ export type UserPointRecordCountAggregateOutputType = {
   targetType: number
   targetId: number
   exchangeId: number
+  purchaseId: number
   points: number
   beforePoints: number
   afterPoints: number
@@ -110,6 +115,7 @@ export type UserPointRecordAvgAggregateInputType = {
   targetType?: true
   targetId?: true
   exchangeId?: true
+  purchaseId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -123,6 +129,7 @@ export type UserPointRecordSumAggregateInputType = {
   targetType?: true
   targetId?: true
   exchangeId?: true
+  purchaseId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -136,6 +143,7 @@ export type UserPointRecordMinAggregateInputType = {
   targetType?: true
   targetId?: true
   exchangeId?: true
+  purchaseId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -152,6 +160,7 @@ export type UserPointRecordMaxAggregateInputType = {
   targetType?: true
   targetId?: true
   exchangeId?: true
+  purchaseId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -168,6 +177,7 @@ export type UserPointRecordCountAggregateInputType = {
   targetType?: true
   targetId?: true
   exchangeId?: true
+  purchaseId?: true
   points?: true
   beforePoints?: true
   afterPoints?: true
@@ -271,6 +281,7 @@ export type UserPointRecordGroupByOutputType = {
   targetType: number | null
   targetId: number | null
   exchangeId: number | null
+  purchaseId: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -310,6 +321,7 @@ export type UserPointRecordWhereInput = {
   targetType?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   targetId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   exchangeId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  purchaseId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   points?: Prisma.IntFilter<"UserPointRecord"> | number
   beforePoints?: Prisma.IntFilter<"UserPointRecord"> | number
   afterPoints?: Prisma.IntFilter<"UserPointRecord"> | number
@@ -319,6 +331,7 @@ export type UserPointRecordWhereInput = {
   rule?: Prisma.XOR<Prisma.UserPointRuleNullableScalarRelationFilter, Prisma.UserPointRuleWhereInput> | null
   event?: Prisma.XOR<Prisma.UserGrowthEventNullableScalarRelationFilter, Prisma.UserGrowthEventWhereInput> | null
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+  purchase?: Prisma.XOR<Prisma.UserPurchaseRecordNullableScalarRelationFilter, Prisma.UserPurchaseRecordWhereInput> | null
 }
 
 export type UserPointRecordOrderByWithRelationInput = {
@@ -329,6 +342,7 @@ export type UserPointRecordOrderByWithRelationInput = {
   targetType?: Prisma.SortOrderInput | Prisma.SortOrder
   targetId?: Prisma.SortOrderInput | Prisma.SortOrder
   exchangeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  purchaseId?: Prisma.SortOrderInput | Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -338,6 +352,7 @@ export type UserPointRecordOrderByWithRelationInput = {
   rule?: Prisma.UserPointRuleOrderByWithRelationInput
   event?: Prisma.UserGrowthEventOrderByWithRelationInput
   user?: Prisma.AppUserOrderByWithRelationInput
+  purchase?: Prisma.UserPurchaseRecordOrderByWithRelationInput
 }
 
 export type UserPointRecordWhereUniqueInput = Prisma.AtLeast<{
@@ -351,6 +366,7 @@ export type UserPointRecordWhereUniqueInput = Prisma.AtLeast<{
   targetType?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   targetId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   exchangeId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  purchaseId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   points?: Prisma.IntFilter<"UserPointRecord"> | number
   beforePoints?: Prisma.IntFilter<"UserPointRecord"> | number
   afterPoints?: Prisma.IntFilter<"UserPointRecord"> | number
@@ -360,6 +376,7 @@ export type UserPointRecordWhereUniqueInput = Prisma.AtLeast<{
   rule?: Prisma.XOR<Prisma.UserPointRuleNullableScalarRelationFilter, Prisma.UserPointRuleWhereInput> | null
   event?: Prisma.XOR<Prisma.UserGrowthEventNullableScalarRelationFilter, Prisma.UserGrowthEventWhereInput> | null
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
+  purchase?: Prisma.XOR<Prisma.UserPurchaseRecordNullableScalarRelationFilter, Prisma.UserPurchaseRecordWhereInput> | null
 }, "id">
 
 export type UserPointRecordOrderByWithAggregationInput = {
@@ -370,6 +387,7 @@ export type UserPointRecordOrderByWithAggregationInput = {
   targetType?: Prisma.SortOrderInput | Prisma.SortOrder
   targetId?: Prisma.SortOrderInput | Prisma.SortOrder
   exchangeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  purchaseId?: Prisma.SortOrderInput | Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -394,6 +412,7 @@ export type UserPointRecordScalarWhereWithAggregatesInput = {
   targetType?: Prisma.IntNullableWithAggregatesFilter<"UserPointRecord"> | number | null
   targetId?: Prisma.IntNullableWithAggregatesFilter<"UserPointRecord"> | number | null
   exchangeId?: Prisma.IntNullableWithAggregatesFilter<"UserPointRecord"> | number | null
+  purchaseId?: Prisma.IntNullableWithAggregatesFilter<"UserPointRecord"> | number | null
   points?: Prisma.IntWithAggregatesFilter<"UserPointRecord"> | number
   beforePoints?: Prisma.IntWithAggregatesFilter<"UserPointRecord"> | number
   afterPoints?: Prisma.IntWithAggregatesFilter<"UserPointRecord"> | number
@@ -415,6 +434,7 @@ export type UserPointRecordCreateInput = {
   rule?: Prisma.UserPointRuleCreateNestedOneWithoutRecordsInput
   event?: Prisma.UserGrowthEventCreateNestedOneWithoutPointRecordsInput
   user: Prisma.AppUserCreateNestedOneWithoutPointRecordsInput
+  purchase?: Prisma.UserPurchaseRecordCreateNestedOneWithoutPointRecordsInput
 }
 
 export type UserPointRecordUncheckedCreateInput = {
@@ -425,6 +445,7 @@ export type UserPointRecordUncheckedCreateInput = {
   targetType?: number | null
   targetId?: number | null
   exchangeId?: number | null
+  purchaseId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -446,6 +467,7 @@ export type UserPointRecordUpdateInput = {
   rule?: Prisma.UserPointRuleUpdateOneWithoutRecordsNestedInput
   event?: Prisma.UserGrowthEventUpdateOneWithoutPointRecordsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutPointRecordsNestedInput
+  purchase?: Prisma.UserPurchaseRecordUpdateOneWithoutPointRecordsNestedInput
 }
 
 export type UserPointRecordUncheckedUpdateInput = {
@@ -456,6 +478,7 @@ export type UserPointRecordUncheckedUpdateInput = {
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  purchaseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -472,6 +495,7 @@ export type UserPointRecordCreateManyInput = {
   targetType?: number | null
   targetId?: number | null
   exchangeId?: number | null
+  purchaseId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -500,6 +524,7 @@ export type UserPointRecordUncheckedUpdateManyInput = {
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  purchaseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -526,6 +551,7 @@ export type UserPointRecordCountOrderByAggregateInput = {
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   exchangeId?: Prisma.SortOrder
+  purchaseId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -542,6 +568,7 @@ export type UserPointRecordAvgOrderByAggregateInput = {
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   exchangeId?: Prisma.SortOrder
+  purchaseId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -555,6 +582,7 @@ export type UserPointRecordMaxOrderByAggregateInput = {
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   exchangeId?: Prisma.SortOrder
+  purchaseId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -571,6 +599,7 @@ export type UserPointRecordMinOrderByAggregateInput = {
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   exchangeId?: Prisma.SortOrder
+  purchaseId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -587,6 +616,7 @@ export type UserPointRecordSumOrderByAggregateInput = {
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
   exchangeId?: Prisma.SortOrder
+  purchaseId?: Prisma.SortOrder
   points?: Prisma.SortOrder
   beforePoints?: Prisma.SortOrder
   afterPoints?: Prisma.SortOrder
@@ -718,6 +748,48 @@ export type UserPointRecordUncheckedUpdateManyWithoutRuleNestedInput = {
   deleteMany?: Prisma.UserPointRecordScalarWhereInput | Prisma.UserPointRecordScalarWhereInput[]
 }
 
+export type UserPointRecordCreateNestedManyWithoutPurchaseInput = {
+  create?: Prisma.XOR<Prisma.UserPointRecordCreateWithoutPurchaseInput, Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput> | Prisma.UserPointRecordCreateWithoutPurchaseInput[] | Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput[]
+  connectOrCreate?: Prisma.UserPointRecordCreateOrConnectWithoutPurchaseInput | Prisma.UserPointRecordCreateOrConnectWithoutPurchaseInput[]
+  createMany?: Prisma.UserPointRecordCreateManyPurchaseInputEnvelope
+  connect?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+}
+
+export type UserPointRecordUncheckedCreateNestedManyWithoutPurchaseInput = {
+  create?: Prisma.XOR<Prisma.UserPointRecordCreateWithoutPurchaseInput, Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput> | Prisma.UserPointRecordCreateWithoutPurchaseInput[] | Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput[]
+  connectOrCreate?: Prisma.UserPointRecordCreateOrConnectWithoutPurchaseInput | Prisma.UserPointRecordCreateOrConnectWithoutPurchaseInput[]
+  createMany?: Prisma.UserPointRecordCreateManyPurchaseInputEnvelope
+  connect?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+}
+
+export type UserPointRecordUpdateManyWithoutPurchaseNestedInput = {
+  create?: Prisma.XOR<Prisma.UserPointRecordCreateWithoutPurchaseInput, Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput> | Prisma.UserPointRecordCreateWithoutPurchaseInput[] | Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput[]
+  connectOrCreate?: Prisma.UserPointRecordCreateOrConnectWithoutPurchaseInput | Prisma.UserPointRecordCreateOrConnectWithoutPurchaseInput[]
+  upsert?: Prisma.UserPointRecordUpsertWithWhereUniqueWithoutPurchaseInput | Prisma.UserPointRecordUpsertWithWhereUniqueWithoutPurchaseInput[]
+  createMany?: Prisma.UserPointRecordCreateManyPurchaseInputEnvelope
+  set?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+  disconnect?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+  delete?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+  connect?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+  update?: Prisma.UserPointRecordUpdateWithWhereUniqueWithoutPurchaseInput | Prisma.UserPointRecordUpdateWithWhereUniqueWithoutPurchaseInput[]
+  updateMany?: Prisma.UserPointRecordUpdateManyWithWhereWithoutPurchaseInput | Prisma.UserPointRecordUpdateManyWithWhereWithoutPurchaseInput[]
+  deleteMany?: Prisma.UserPointRecordScalarWhereInput | Prisma.UserPointRecordScalarWhereInput[]
+}
+
+export type UserPointRecordUncheckedUpdateManyWithoutPurchaseNestedInput = {
+  create?: Prisma.XOR<Prisma.UserPointRecordCreateWithoutPurchaseInput, Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput> | Prisma.UserPointRecordCreateWithoutPurchaseInput[] | Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput[]
+  connectOrCreate?: Prisma.UserPointRecordCreateOrConnectWithoutPurchaseInput | Prisma.UserPointRecordCreateOrConnectWithoutPurchaseInput[]
+  upsert?: Prisma.UserPointRecordUpsertWithWhereUniqueWithoutPurchaseInput | Prisma.UserPointRecordUpsertWithWhereUniqueWithoutPurchaseInput[]
+  createMany?: Prisma.UserPointRecordCreateManyPurchaseInputEnvelope
+  set?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+  disconnect?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+  delete?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+  connect?: Prisma.UserPointRecordWhereUniqueInput | Prisma.UserPointRecordWhereUniqueInput[]
+  update?: Prisma.UserPointRecordUpdateWithWhereUniqueWithoutPurchaseInput | Prisma.UserPointRecordUpdateWithWhereUniqueWithoutPurchaseInput[]
+  updateMany?: Prisma.UserPointRecordUpdateManyWithWhereWithoutPurchaseInput | Prisma.UserPointRecordUpdateManyWithWhereWithoutPurchaseInput[]
+  deleteMany?: Prisma.UserPointRecordScalarWhereInput | Prisma.UserPointRecordScalarWhereInput[]
+}
+
 export type UserPointRecordCreateWithoutUserInput = {
   targetType?: number | null
   targetId?: number | null
@@ -730,6 +802,7 @@ export type UserPointRecordCreateWithoutUserInput = {
   createdAt?: Date | string
   rule?: Prisma.UserPointRuleCreateNestedOneWithoutRecordsInput
   event?: Prisma.UserGrowthEventCreateNestedOneWithoutPointRecordsInput
+  purchase?: Prisma.UserPurchaseRecordCreateNestedOneWithoutPointRecordsInput
 }
 
 export type UserPointRecordUncheckedCreateWithoutUserInput = {
@@ -739,6 +812,7 @@ export type UserPointRecordUncheckedCreateWithoutUserInput = {
   targetType?: number | null
   targetId?: number | null
   exchangeId?: number | null
+  purchaseId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -784,6 +858,7 @@ export type UserPointRecordScalarWhereInput = {
   targetType?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   targetId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   exchangeId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
+  purchaseId?: Prisma.IntNullableFilter<"UserPointRecord"> | number | null
   points?: Prisma.IntFilter<"UserPointRecord"> | number
   beforePoints?: Prisma.IntFilter<"UserPointRecord"> | number
   afterPoints?: Prisma.IntFilter<"UserPointRecord"> | number
@@ -804,6 +879,7 @@ export type UserPointRecordCreateWithoutEventInput = {
   createdAt?: Date | string
   rule?: Prisma.UserPointRuleCreateNestedOneWithoutRecordsInput
   user: Prisma.AppUserCreateNestedOneWithoutPointRecordsInput
+  purchase?: Prisma.UserPurchaseRecordCreateNestedOneWithoutPointRecordsInput
 }
 
 export type UserPointRecordUncheckedCreateWithoutEventInput = {
@@ -813,6 +889,7 @@ export type UserPointRecordUncheckedCreateWithoutEventInput = {
   targetType?: number | null
   targetId?: number | null
   exchangeId?: number | null
+  purchaseId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -859,6 +936,7 @@ export type UserPointRecordCreateWithoutRuleInput = {
   createdAt?: Date | string
   event?: Prisma.UserGrowthEventCreateNestedOneWithoutPointRecordsInput
   user: Prisma.AppUserCreateNestedOneWithoutPointRecordsInput
+  purchase?: Prisma.UserPurchaseRecordCreateNestedOneWithoutPointRecordsInput
 }
 
 export type UserPointRecordUncheckedCreateWithoutRuleInput = {
@@ -868,6 +946,7 @@ export type UserPointRecordUncheckedCreateWithoutRuleInput = {
   targetType?: number | null
   targetId?: number | null
   exchangeId?: number | null
+  purchaseId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -902,6 +981,63 @@ export type UserPointRecordUpdateManyWithWhereWithoutRuleInput = {
   data: Prisma.XOR<Prisma.UserPointRecordUpdateManyMutationInput, Prisma.UserPointRecordUncheckedUpdateManyWithoutRuleInput>
 }
 
+export type UserPointRecordCreateWithoutPurchaseInput = {
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
+  points: number
+  beforePoints: number
+  afterPoints: number
+  eventKey?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+  rule?: Prisma.UserPointRuleCreateNestedOneWithoutRecordsInput
+  event?: Prisma.UserGrowthEventCreateNestedOneWithoutPointRecordsInput
+  user: Prisma.AppUserCreateNestedOneWithoutPointRecordsInput
+}
+
+export type UserPointRecordUncheckedCreateWithoutPurchaseInput = {
+  id?: number
+  userId: number
+  ruleId?: number | null
+  eventId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
+  points: number
+  beforePoints: number
+  afterPoints: number
+  eventKey?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+}
+
+export type UserPointRecordCreateOrConnectWithoutPurchaseInput = {
+  where: Prisma.UserPointRecordWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserPointRecordCreateWithoutPurchaseInput, Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput>
+}
+
+export type UserPointRecordCreateManyPurchaseInputEnvelope = {
+  data: Prisma.UserPointRecordCreateManyPurchaseInput | Prisma.UserPointRecordCreateManyPurchaseInput[]
+  skipDuplicates?: boolean
+}
+
+export type UserPointRecordUpsertWithWhereUniqueWithoutPurchaseInput = {
+  where: Prisma.UserPointRecordWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserPointRecordUpdateWithoutPurchaseInput, Prisma.UserPointRecordUncheckedUpdateWithoutPurchaseInput>
+  create: Prisma.XOR<Prisma.UserPointRecordCreateWithoutPurchaseInput, Prisma.UserPointRecordUncheckedCreateWithoutPurchaseInput>
+}
+
+export type UserPointRecordUpdateWithWhereUniqueWithoutPurchaseInput = {
+  where: Prisma.UserPointRecordWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserPointRecordUpdateWithoutPurchaseInput, Prisma.UserPointRecordUncheckedUpdateWithoutPurchaseInput>
+}
+
+export type UserPointRecordUpdateManyWithWhereWithoutPurchaseInput = {
+  where: Prisma.UserPointRecordScalarWhereInput
+  data: Prisma.XOR<Prisma.UserPointRecordUpdateManyMutationInput, Prisma.UserPointRecordUncheckedUpdateManyWithoutPurchaseInput>
+}
+
 export type UserPointRecordCreateManyUserInput = {
   id?: number
   ruleId?: number | null
@@ -909,6 +1045,7 @@ export type UserPointRecordCreateManyUserInput = {
   targetType?: number | null
   targetId?: number | null
   exchangeId?: number | null
+  purchaseId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -929,6 +1066,7 @@ export type UserPointRecordUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rule?: Prisma.UserPointRuleUpdateOneWithoutRecordsNestedInput
   event?: Prisma.UserGrowthEventUpdateOneWithoutPointRecordsNestedInput
+  purchase?: Prisma.UserPurchaseRecordUpdateOneWithoutPointRecordsNestedInput
 }
 
 export type UserPointRecordUncheckedUpdateWithoutUserInput = {
@@ -938,6 +1076,7 @@ export type UserPointRecordUncheckedUpdateWithoutUserInput = {
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  purchaseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -953,6 +1092,7 @@ export type UserPointRecordUncheckedUpdateManyWithoutUserInput = {
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  purchaseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -968,6 +1108,7 @@ export type UserPointRecordCreateManyEventInput = {
   targetType?: number | null
   targetId?: number | null
   exchangeId?: number | null
+  purchaseId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -988,6 +1129,7 @@ export type UserPointRecordUpdateWithoutEventInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rule?: Prisma.UserPointRuleUpdateOneWithoutRecordsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutPointRecordsNestedInput
+  purchase?: Prisma.UserPurchaseRecordUpdateOneWithoutPointRecordsNestedInput
 }
 
 export type UserPointRecordUncheckedUpdateWithoutEventInput = {
@@ -997,6 +1139,7 @@ export type UserPointRecordUncheckedUpdateWithoutEventInput = {
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  purchaseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1012,6 +1155,7 @@ export type UserPointRecordUncheckedUpdateManyWithoutEventInput = {
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  purchaseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   points?: Prisma.IntFieldUpdateOperationsInput | number
   beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
   afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1027,6 +1171,7 @@ export type UserPointRecordCreateManyRuleInput = {
   targetType?: number | null
   targetId?: number | null
   exchangeId?: number | null
+  purchaseId?: number | null
   points: number
   beforePoints: number
   afterPoints: number
@@ -1047,11 +1192,76 @@ export type UserPointRecordUpdateWithoutRuleInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   event?: Prisma.UserGrowthEventUpdateOneWithoutPointRecordsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutPointRecordsNestedInput
+  purchase?: Prisma.UserPurchaseRecordUpdateOneWithoutPointRecordsNestedInput
 }
 
 export type UserPointRecordUncheckedUpdateWithoutRuleInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  purchaseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type UserPointRecordUncheckedUpdateManyWithoutRuleInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  purchaseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type UserPointRecordCreateManyPurchaseInput = {
+  id?: number
+  userId: number
+  ruleId?: number | null
+  eventId?: number | null
+  targetType?: number | null
+  targetId?: number | null
+  exchangeId?: number | null
+  points: number
+  beforePoints: number
+  afterPoints: number
+  eventKey?: string | null
+  remark?: string | null
+  createdAt?: Date | string
+}
+
+export type UserPointRecordUpdateWithoutPurchaseInput = {
+  targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  exchangeId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  beforePoints?: Prisma.IntFieldUpdateOperationsInput | number
+  afterPoints?: Prisma.IntFieldUpdateOperationsInput | number
+  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  rule?: Prisma.UserPointRuleUpdateOneWithoutRecordsNestedInput
+  event?: Prisma.UserGrowthEventUpdateOneWithoutPointRecordsNestedInput
+  user?: Prisma.AppUserUpdateOneRequiredWithoutPointRecordsNestedInput
+}
+
+export type UserPointRecordUncheckedUpdateWithoutPurchaseInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  userId?: Prisma.IntFieldUpdateOperationsInput | number
+  ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1064,9 +1274,10 @@ export type UserPointRecordUncheckedUpdateWithoutRuleInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type UserPointRecordUncheckedUpdateManyWithoutRuleInput = {
+export type UserPointRecordUncheckedUpdateManyWithoutPurchaseInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
+  ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
@@ -1089,6 +1300,7 @@ export type UserPointRecordSelect<ExtArgs extends runtime.Types.Extensions.Inter
   targetType?: boolean
   targetId?: boolean
   exchangeId?: boolean
+  purchaseId?: boolean
   points?: boolean
   beforePoints?: boolean
   afterPoints?: boolean
@@ -1098,6 +1310,7 @@ export type UserPointRecordSelect<ExtArgs extends runtime.Types.Extensions.Inter
   rule?: boolean | Prisma.UserPointRecord$ruleArgs<ExtArgs>
   event?: boolean | Prisma.UserPointRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  purchase?: boolean | Prisma.UserPointRecord$purchaseArgs<ExtArgs>
 }, ExtArgs["result"]["userPointRecord"]>
 
 export type UserPointRecordSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1108,6 +1321,7 @@ export type UserPointRecordSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   targetType?: boolean
   targetId?: boolean
   exchangeId?: boolean
+  purchaseId?: boolean
   points?: boolean
   beforePoints?: boolean
   afterPoints?: boolean
@@ -1117,6 +1331,7 @@ export type UserPointRecordSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   rule?: boolean | Prisma.UserPointRecord$ruleArgs<ExtArgs>
   event?: boolean | Prisma.UserPointRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  purchase?: boolean | Prisma.UserPointRecord$purchaseArgs<ExtArgs>
 }, ExtArgs["result"]["userPointRecord"]>
 
 export type UserPointRecordSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1127,6 +1342,7 @@ export type UserPointRecordSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   targetType?: boolean
   targetId?: boolean
   exchangeId?: boolean
+  purchaseId?: boolean
   points?: boolean
   beforePoints?: boolean
   afterPoints?: boolean
@@ -1136,6 +1352,7 @@ export type UserPointRecordSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   rule?: boolean | Prisma.UserPointRecord$ruleArgs<ExtArgs>
   event?: boolean | Prisma.UserPointRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  purchase?: boolean | Prisma.UserPointRecord$purchaseArgs<ExtArgs>
 }, ExtArgs["result"]["userPointRecord"]>
 
 export type UserPointRecordSelectScalar = {
@@ -1146,6 +1363,7 @@ export type UserPointRecordSelectScalar = {
   targetType?: boolean
   targetId?: boolean
   exchangeId?: boolean
+  purchaseId?: boolean
   points?: boolean
   beforePoints?: boolean
   afterPoints?: boolean
@@ -1154,21 +1372,24 @@ export type UserPointRecordSelectScalar = {
   createdAt?: boolean
 }
 
-export type UserPointRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "ruleId" | "eventId" | "targetType" | "targetId" | "exchangeId" | "points" | "beforePoints" | "afterPoints" | "eventKey" | "remark" | "createdAt", ExtArgs["result"]["userPointRecord"]>
+export type UserPointRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "ruleId" | "eventId" | "targetType" | "targetId" | "exchangeId" | "purchaseId" | "points" | "beforePoints" | "afterPoints" | "eventKey" | "remark" | "createdAt", ExtArgs["result"]["userPointRecord"]>
 export type UserPointRecordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rule?: boolean | Prisma.UserPointRecord$ruleArgs<ExtArgs>
   event?: boolean | Prisma.UserPointRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  purchase?: boolean | Prisma.UserPointRecord$purchaseArgs<ExtArgs>
 }
 export type UserPointRecordIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rule?: boolean | Prisma.UserPointRecord$ruleArgs<ExtArgs>
   event?: boolean | Prisma.UserPointRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  purchase?: boolean | Prisma.UserPointRecord$purchaseArgs<ExtArgs>
 }
 export type UserPointRecordIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rule?: boolean | Prisma.UserPointRecord$ruleArgs<ExtArgs>
   event?: boolean | Prisma.UserPointRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
+  purchase?: boolean | Prisma.UserPointRecord$purchaseArgs<ExtArgs>
 }
 
 export type $UserPointRecordPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1186,6 +1407,10 @@ export type $UserPointRecordPayload<ExtArgs extends runtime.Types.Extensions.Int
      * 关联用户
      */
     user: Prisma.$AppUserPayload<ExtArgs>
+    /**
+     * 关联购买记录
+     */
+    purchase: Prisma.$UserPurchaseRecordPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1216,6 +1441,10 @@ export type $UserPointRecordPayload<ExtArgs extends runtime.Types.Extensions.Int
      * 兑换ID
      */
     exchangeId: number | null
+    /**
+     * 关联的购买记录ID（购买消费时关联）
+     */
+    purchaseId: number | null
     /**
      * 积分变化（正数为获得，负数为消费）
      */
@@ -1637,6 +1866,7 @@ export interface Prisma__UserPointRecordClient<T, Null = never, ExtArgs extends 
   rule<T extends Prisma.UserPointRecord$ruleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserPointRecord$ruleArgs<ExtArgs>>): Prisma.Prisma__UserPointRuleClient<runtime.Types.Result.GetResult<Prisma.$UserPointRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   event<T extends Prisma.UserPointRecord$eventArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserPointRecord$eventArgs<ExtArgs>>): Prisma.Prisma__UserGrowthEventClient<runtime.Types.Result.GetResult<Prisma.$UserGrowthEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  purchase<T extends Prisma.UserPointRecord$purchaseArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserPointRecord$purchaseArgs<ExtArgs>>): Prisma.Prisma__UserPurchaseRecordClient<runtime.Types.Result.GetResult<Prisma.$UserPurchaseRecordPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1673,6 +1903,7 @@ export interface UserPointRecordFieldRefs {
   readonly targetType: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly targetId: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly exchangeId: Prisma.FieldRef<"UserPointRecord", 'Int'>
+  readonly purchaseId: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly points: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly beforePoints: Prisma.FieldRef<"UserPointRecord", 'Int'>
   readonly afterPoints: Prisma.FieldRef<"UserPointRecord", 'Int'>
@@ -2119,6 +2350,25 @@ export type UserPointRecord$eventArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   include?: Prisma.UserGrowthEventInclude<ExtArgs> | null
   where?: Prisma.UserGrowthEventWhereInput
+}
+
+/**
+ * UserPointRecord.purchase
+ */
+export type UserPointRecord$purchaseArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserPurchaseRecord
+   */
+  select?: Prisma.UserPurchaseRecordSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserPurchaseRecord
+   */
+  omit?: Prisma.UserPurchaseRecordOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserPurchaseRecordInclude<ExtArgs> | null
+  where?: Prisma.UserPurchaseRecordWhereInput
 }
 
 /**

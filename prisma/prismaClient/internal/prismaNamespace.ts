@@ -5796,6 +5796,7 @@ export const UserPointRecordScalarFieldEnum = {
   targetType: 'targetType',
   targetId: 'targetId',
   exchangeId: 'exchangeId',
+  purchaseId: 'purchaseId',
   points: 'points',
   beforePoints: 'beforePoints',
   afterPoints: 'afterPoints',
