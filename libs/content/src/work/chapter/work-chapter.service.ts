@@ -301,31 +301,10 @@ export class WorkChapterService extends BaseService {
    * @throws BadRequestException 当章节不存在或不是同一作品时抛出
    */
   async swapChapterNumbers(dto: DragReorderDto) {
-    const [record1, record2] = await Promise.all([
-      this.workChapter.findUnique({ where: { id: dto.dragId } }),
-      this.workChapter.findUnique({ where: { id: dto.targetId } }),
-    ])
-
-    if (!record1 || !record2) {
-      throw new BadRequestException('章节不存在')
-    }
-
-    if (record1.workId !== record2.workId) {
-      throw new BadRequestException('只能交换同一作品下的章节号')
-    }
-
-    await Promise.all([
-      this.workChapter.update({
-        where: { id: dto.dragId },
-        data: { sortOrder: record2.sortOrder },
-      }),
-      this.workChapter.update({
-        where: { id: dto.targetId },
-        data: { sortOrder: record1.sortOrder },
-      }),
-    ])
-
-    return true
+    return this.workChapter.swapField({
+      where: [{ id: dto.dragId }, { id: dto.targetId }],
+      sourceField: 'workId',
+    })
   }
 
   /**

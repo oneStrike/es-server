@@ -179,12 +179,10 @@ export class LibDictionaryService extends BaseService {
    * 更新字典项排序
    */
   async updateDictionaryItemSort(dto: DragReorderDto) {
-    // swapField 内部已做存在性校验，无需额外事务包装
-    return this.dictionaryItem.swapField(
-      { id: dto.dragId },
-      { id: dto.targetId },
-      'sortOrder',
-    )
+    return this.dictionaryItem.swapField({
+      where: [{ id: dto.dragId }, { id: dto.targetId }],
+      sourceField: 'dictionaryCode',
+    })
   }
 
   // ==================== 私有方法 ====================

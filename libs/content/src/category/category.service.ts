@@ -130,12 +130,8 @@ export class WorkCategoryService extends BaseService {
    * 拖拽排序
    */
   async updateCategorySort(updateSortDto: DragReorderDto) {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.workCategory.swapField(
-        { id: updateSortDto.dragId },
-        { id: updateSortDto.targetId },
-        'order',
-      )
+    return this.workCategory.swapField({
+      where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
     })
   }
 

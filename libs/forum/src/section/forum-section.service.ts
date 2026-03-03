@@ -63,8 +63,7 @@ export class ForumSectionService extends BaseService {
    * @returns 创建的板块信息
    */
   async createSection(createSectionDto: CreateForumSectionDto) {
-    const { name, groupId, userLevelRuleId, ...sectionData } =
-      createSectionDto
+    const { name, groupId, userLevelRuleId, ...sectionData } = createSectionDto
 
     if (!(await this.forumSection.exists({ name, deletedAt: null }))) {
       throw new BadRequestException('板块名称已存在')
@@ -257,12 +256,9 @@ export class ForumSectionService extends BaseService {
    * @returns 排序结果
    */
   async updateSectionSort(updateSortDto: DragReorderDto) {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.forumSection.swapField(
-        { id: updateSortDto.dragId },
-        { id: updateSortDto.targetId },
-        'sortOrder',
-      )
+    return this.forumSection.swapField({
+      where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
+      sourceField: 'groupId',
     })
   }
 }

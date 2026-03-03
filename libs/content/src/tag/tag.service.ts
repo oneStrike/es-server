@@ -111,12 +111,8 @@ export class WorkTagService extends BaseService {
    * 拖拽排序
    */
   async updateTagSort(updateSortDto: DragReorderDto) {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.workTag.swapField(
-        { id: updateSortDto.dragId },
-        { id: updateSortDto.targetId },
-        'order',
-      )
+    return this.workTag.swapField({
+      where: [{ id: updateSortDto.dragId }, { id: updateSortDto.targetId }],
     })
   }
 

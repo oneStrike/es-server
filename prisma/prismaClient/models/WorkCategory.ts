@@ -29,14 +29,14 @@ export type AggregateWorkCategory = {
 export type WorkCategoryAvgAggregateOutputType = {
   id: number | null
   contentType: number | null
-  order: number | null
+  sortOrder: number | null
   popularity: number | null
 }
 
 export type WorkCategorySumAggregateOutputType = {
   id: number | null
   contentType: number[]
-  order: number | null
+  sortOrder: number | null
   popularity: number | null
 }
 
@@ -45,7 +45,7 @@ export type WorkCategoryMinAggregateOutputType = {
   name: string | null
   description: string | null
   icon: string | null
-  order: number | null
+  sortOrder: number | null
   isEnabled: boolean | null
   popularity: number | null
   createdAt: Date | null
@@ -57,7 +57,7 @@ export type WorkCategoryMaxAggregateOutputType = {
   name: string | null
   description: string | null
   icon: string | null
-  order: number | null
+  sortOrder: number | null
   isEnabled: boolean | null
   popularity: number | null
   createdAt: Date | null
@@ -70,7 +70,7 @@ export type WorkCategoryCountAggregateOutputType = {
   description: number
   icon: number
   contentType: number
-  order: number
+  sortOrder: number
   isEnabled: number
   popularity: number
   createdAt: number
@@ -82,14 +82,14 @@ export type WorkCategoryCountAggregateOutputType = {
 export type WorkCategoryAvgAggregateInputType = {
   id?: true
   contentType?: true
-  order?: true
+  sortOrder?: true
   popularity?: true
 }
 
 export type WorkCategorySumAggregateInputType = {
   id?: true
   contentType?: true
-  order?: true
+  sortOrder?: true
   popularity?: true
 }
 
@@ -98,7 +98,7 @@ export type WorkCategoryMinAggregateInputType = {
   name?: true
   description?: true
   icon?: true
-  order?: true
+  sortOrder?: true
   isEnabled?: true
   popularity?: true
   createdAt?: true
@@ -110,7 +110,7 @@ export type WorkCategoryMaxAggregateInputType = {
   name?: true
   description?: true
   icon?: true
-  order?: true
+  sortOrder?: true
   isEnabled?: true
   popularity?: true
   createdAt?: true
@@ -123,7 +123,7 @@ export type WorkCategoryCountAggregateInputType = {
   description?: true
   icon?: true
   contentType?: true
-  order?: true
+  sortOrder?: true
   isEnabled?: true
   popularity?: true
   createdAt?: true
@@ -223,7 +223,7 @@ export type WorkCategoryGroupByOutputType = {
   description: string | null
   icon: string | null
   contentType: number[]
-  order: number
+  sortOrder: number
   isEnabled: boolean
   popularity: number
   createdAt: Date
@@ -259,7 +259,7 @@ export type WorkCategoryWhereInput = {
   description?: Prisma.StringNullableFilter<"WorkCategory"> | string | null
   icon?: Prisma.StringNullableFilter<"WorkCategory"> | string | null
   contentType?: Prisma.IntNullableListFilter<"WorkCategory">
-  order?: Prisma.IntFilter<"WorkCategory"> | number
+  sortOrder?: Prisma.IntFilter<"WorkCategory"> | number
   isEnabled?: Prisma.BoolFilter<"WorkCategory"> | boolean
   popularity?: Prisma.IntFilter<"WorkCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkCategory"> | Date | string
@@ -273,7 +273,7 @@ export type WorkCategoryOrderByWithRelationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   contentType?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -290,7 +290,7 @@ export type WorkCategoryWhereUniqueInput = Prisma.AtLeast<{
   description?: Prisma.StringNullableFilter<"WorkCategory"> | string | null
   icon?: Prisma.StringNullableFilter<"WorkCategory"> | string | null
   contentType?: Prisma.IntNullableListFilter<"WorkCategory">
-  order?: Prisma.IntFilter<"WorkCategory"> | number
+  sortOrder?: Prisma.IntFilter<"WorkCategory"> | number
   isEnabled?: Prisma.BoolFilter<"WorkCategory"> | boolean
   popularity?: Prisma.IntFilter<"WorkCategory"> | number
   createdAt?: Prisma.DateTimeFilter<"WorkCategory"> | Date | string
@@ -304,7 +304,7 @@ export type WorkCategoryOrderByWithAggregationInput = {
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   contentType?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -325,7 +325,7 @@ export type WorkCategoryScalarWhereWithAggregatesInput = {
   description?: Prisma.StringNullableWithAggregatesFilter<"WorkCategory"> | string | null
   icon?: Prisma.StringNullableWithAggregatesFilter<"WorkCategory"> | string | null
   contentType?: Prisma.IntNullableListFilter<"WorkCategory">
-  order?: Prisma.IntWithAggregatesFilter<"WorkCategory"> | number
+  sortOrder?: Prisma.IntWithAggregatesFilter<"WorkCategory"> | number
   isEnabled?: Prisma.BoolWithAggregatesFilter<"WorkCategory"> | boolean
   popularity?: Prisma.IntWithAggregatesFilter<"WorkCategory"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"WorkCategory"> | Date | string
@@ -337,7 +337,7 @@ export type WorkCategoryCreateInput = {
   description?: string | null
   icon?: string | null
   contentType?: Prisma.WorkCategoryCreatecontentTypeInput | number[]
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   popularity?: number
   createdAt?: Date | string
@@ -351,7 +351,7 @@ export type WorkCategoryUncheckedCreateInput = {
   description?: string | null
   icon?: string | null
   contentType?: Prisma.WorkCategoryCreatecontentTypeInput | number[]
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   popularity?: number
   createdAt?: Date | string
@@ -364,7 +364,7 @@ export type WorkCategoryUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentType?: Prisma.WorkCategoryUpdatecontentTypeInput | number[]
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -378,7 +378,7 @@ export type WorkCategoryUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentType?: Prisma.WorkCategoryUpdatecontentTypeInput | number[]
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -392,7 +392,7 @@ export type WorkCategoryCreateManyInput = {
   description?: string | null
   icon?: string | null
   contentType?: Prisma.WorkCategoryCreatecontentTypeInput | number[]
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   popularity?: number
   createdAt?: Date | string
@@ -404,7 +404,7 @@ export type WorkCategoryUpdateManyMutationInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentType?: Prisma.WorkCategoryUpdatecontentTypeInput | number[]
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -417,7 +417,7 @@ export type WorkCategoryUncheckedUpdateManyInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentType?: Prisma.WorkCategoryUpdatecontentTypeInput | number[]
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -435,7 +435,7 @@ export type WorkCategoryCountOrderByAggregateInput = {
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   contentType?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -445,7 +445,7 @@ export type WorkCategoryCountOrderByAggregateInput = {
 export type WorkCategoryAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   contentType?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
 }
 
@@ -454,7 +454,7 @@ export type WorkCategoryMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -466,7 +466,7 @@ export type WorkCategoryMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   icon?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -476,7 +476,7 @@ export type WorkCategoryMinOrderByAggregateInput = {
 export type WorkCategorySumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   contentType?: Prisma.SortOrder
-  order?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   popularity?: Prisma.SortOrder
 }
 
@@ -508,7 +508,7 @@ export type WorkCategoryCreateWithoutWorkCategoriesInput = {
   description?: string | null
   icon?: string | null
   contentType?: Prisma.WorkCategoryCreatecontentTypeInput | number[]
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   popularity?: number
   createdAt?: Date | string
@@ -521,7 +521,7 @@ export type WorkCategoryUncheckedCreateWithoutWorkCategoriesInput = {
   description?: string | null
   icon?: string | null
   contentType?: Prisma.WorkCategoryCreatecontentTypeInput | number[]
-  order?: number
+  sortOrder?: number
   isEnabled?: boolean
   popularity?: number
   createdAt?: Date | string
@@ -549,7 +549,7 @@ export type WorkCategoryUpdateWithoutWorkCategoriesInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentType?: Prisma.WorkCategoryUpdatecontentTypeInput | number[]
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -562,7 +562,7 @@ export type WorkCategoryUncheckedUpdateWithoutWorkCategoriesInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   contentType?: Prisma.WorkCategoryUpdatecontentTypeInput | number[]
-  order?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   popularity?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -606,7 +606,7 @@ export type WorkCategorySelect<ExtArgs extends runtime.Types.Extensions.Internal
   description?: boolean
   icon?: boolean
   contentType?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   popularity?: boolean
   createdAt?: boolean
@@ -621,7 +621,7 @@ export type WorkCategorySelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   description?: boolean
   icon?: boolean
   contentType?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   popularity?: boolean
   createdAt?: boolean
@@ -634,7 +634,7 @@ export type WorkCategorySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   description?: boolean
   icon?: boolean
   contentType?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   popularity?: boolean
   createdAt?: boolean
@@ -647,14 +647,14 @@ export type WorkCategorySelectScalar = {
   description?: boolean
   icon?: boolean
   contentType?: boolean
-  order?: boolean
+  sortOrder?: boolean
   isEnabled?: boolean
   popularity?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type WorkCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "icon" | "contentType" | "order" | "isEnabled" | "popularity" | "createdAt" | "updatedAt", ExtArgs["result"]["workCategory"]>
+export type WorkCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "icon" | "contentType" | "sortOrder" | "isEnabled" | "popularity" | "createdAt" | "updatedAt", ExtArgs["result"]["workCategory"]>
 export type WorkCategoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   workCategories?: boolean | Prisma.WorkCategory$workCategoriesArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCategoryCountOutputTypeDefaultArgs<ExtArgs>
@@ -694,7 +694,7 @@ export type $WorkCategoryPayload<ExtArgs extends runtime.Types.Extensions.Intern
     /**
      * 排序值（数值越小越靠前）
      */
-    order: number
+    sortOrder: number
     /**
      * 是否启用
      */
@@ -1140,7 +1140,7 @@ export interface WorkCategoryFieldRefs {
   readonly description: Prisma.FieldRef<"WorkCategory", 'String'>
   readonly icon: Prisma.FieldRef<"WorkCategory", 'String'>
   readonly contentType: Prisma.FieldRef<"WorkCategory", 'Int[]'>
-  readonly order: Prisma.FieldRef<"WorkCategory", 'Int'>
+  readonly sortOrder: Prisma.FieldRef<"WorkCategory", 'Int'>
   readonly isEnabled: Prisma.FieldRef<"WorkCategory", 'Boolean'>
   readonly popularity: Prisma.FieldRef<"WorkCategory", 'Int'>
   readonly createdAt: Prisma.FieldRef<"WorkCategory", 'DateTime'>

@@ -96,9 +96,7 @@ export class ForumSectionGroupService extends BaseService {
    * @returns 更新后的板块分组
    * @throws NotFoundException 如果板块分组不存在
    */
-  async updateSectionGroup(
-    updateSectionGroupDto: UpdateForumSectionGroupDto,
-  ) {
+  async updateSectionGroup(updateSectionGroupDto: UpdateForumSectionGroupDto) {
     const { id, ...updateData } = updateSectionGroupDto
 
     if (!(await this.forumSectionGroup.exists({ id }))) {
@@ -108,12 +106,12 @@ export class ForumSectionGroupService extends BaseService {
     // 更新的时候检查名称是否重复
     if (
       updateData.name &&
-      await this.forumSectionGroup.exists({
+      (await this.forumSectionGroup.exists({
         name: updateData.name,
         id: {
           not: id,
         },
-      })
+      }))
     ) {
       throw new BadRequestException('板块分组名称已存在')
     }
@@ -159,16 +157,11 @@ export class ForumSectionGroupService extends BaseService {
   /**
    * 交换板块分组的排序顺序
    * @param dto 拖拽重新排序的数据传输对象
-   * @returns 更新后的板块分组
    * @throws NotFoundException 如果板块分组不存在
    */
   async swapSectionGroupSortOrder(dto: DragReorderDto) {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.forumSectionGroup.swapField(
-        { id: dto.dragId },
-        { id: dto.targetId },
-        'sortOrder',
-      )
+    return this.forumSectionGroup.swapField({
+      where: [{ id: dto.dragId }, { id: dto.targetId }],
     })
   }
 
