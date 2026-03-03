@@ -40,7 +40,7 @@ function generateTemporaryValue(value1: unknown, value2: unknown): unknown {
  * // 交换指定字段
  * await prisma.someModel.swapField({
  *   where: [{ id: 1 }, { id: 2 }],
- *   field: 'order'
+ *   field: 'sortOrder'
  * })
  *
  * // 带同源校验（确保两条数据属于同一父级）

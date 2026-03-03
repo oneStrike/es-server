@@ -26,8 +26,8 @@ export class WorkTagService extends BaseService {
     }
 
     // 如果没有指定排序值，设置为最大值+1
-    if (!createTagDto.order) {
-      createTagDto.order = (await this.workTag.maxOrder()) + 1
+    if (!createTagDto.sortOrder) {
+      createTagDto.sortOrder = (await this.workTag.maxOrder()) + 1
     }
 
     return this.workTag.create({
@@ -59,7 +59,7 @@ export class WorkTagService extends BaseService {
     }
 
     if (!pageParams.orderBy) {
-      pageParams.orderBy = JSON.stringify({ order: 'desc' })
+      pageParams.orderBy = JSON.stringify({ sortOrder: 'desc' })
     }
 
     return this.workTag.findPagination({

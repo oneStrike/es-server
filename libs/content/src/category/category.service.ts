@@ -25,9 +25,9 @@ export class WorkCategoryService extends BaseService {
    */
   async createCategory(createCategoryDto: CreateCategoryDto) {
     // 如果没有指定排序值，设置为最大值+1
-    if (!createCategoryDto.order) {
+    if (!createCategoryDto.sortOrder) {
       const maxOrder = await this.workCategory.maxOrder()
-      createCategoryDto.order = maxOrder + 1
+      createCategoryDto.sortOrder = maxOrder + 1
     }
 
     return this.workCategory.create({
@@ -58,7 +58,7 @@ export class WorkCategoryService extends BaseService {
       where.isEnabled = isEnabled
     }
     if (!pageParams.orderBy) {
-      pageParams.orderBy = JSON.stringify({ order: 'desc' })
+      pageParams.orderBy = JSON.stringify({ sortOrder: 'desc' })
     }
 
     if (contentType?.length && contentType !== '[]') {

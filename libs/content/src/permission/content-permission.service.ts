@@ -246,8 +246,8 @@ export class ContentPermissionService extends BaseService {
    * 用于业务层调用，校验用户是否有权访问指定章节
    */
   async checkChapterAccess<T extends Prisma.WorkChapterSelect>(
-    userId: number,
     chapterId: number,
+    userId?: number,
     select?: T,
   ): Promise<ChapterAccessResult<Prisma.WorkChapterGetPayload<{ select: T }>>> {
     type ChapterPayload = Prisma.WorkChapterGetPayload<{ select: T }>
@@ -271,9 +271,18 @@ export class ContentPermissionService extends BaseService {
     const permission = await this.resolveChapterPermissionFromData(
       chapter as PermissionChapterData,
     )
+    if (
+      !userId &&
+      !permission.isPreview &&
+      permission.viewRule !== WorkViewPermissionEnum.ALL
+    ) {
+      throw new BadRequestException(
+        PERMISSION_ERROR_MESSAGE.CHAPTER_ACCESS_REQUIRED,
+      )
+    }
 
     // 执行权限校验
-    await this.checkAccessPermission(userId, {
+    await this.checkAccessPermission(userId!, {
       scope: 'chapter',
       viewRule: permission.viewRule,
       requiredExperience: permission.requiredExperience,

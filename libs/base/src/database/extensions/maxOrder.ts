@@ -6,11 +6,11 @@ import { Prisma } from '../index'
 export async function maxOrder<T>(
   this: T,
   where?: Prisma.Args<T, 'findMany'>['where'],
-  field: string = 'order',
+  field: string = 'sortOrder',
 ): Promise<number> {
   const context = Prisma.getExtensionContext(this) as any
 
-  // 尝试按 `order` 字段倒序获取第一条
+  // 尝试按 `sortOrder` 字段倒序获取第一条
   const byOrder = await context.findFirst({
     where,
     orderBy: [{ [field]: 'desc' }],

@@ -49,7 +49,7 @@ export class BaseCategoryDto extends BaseDto {
     min: 0,
     max: 32767,
   })
-  order!: number
+  sortOrder!: number
 
   @BooleanProperty({
     description: '是否启用',

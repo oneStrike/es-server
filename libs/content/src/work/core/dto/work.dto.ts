@@ -286,10 +286,10 @@ export class BaseWorkDto extends BaseDto {
   @BooleanProperty({
     description: '是否允许评论',
     example: true,
-    required: true,
+    required: false,
     default: true,
   })
-  canComment!: boolean
+  canComment?: boolean
 
   // ==================== 统计数据 ====================
   @NumberProperty({

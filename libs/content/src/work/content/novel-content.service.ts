@@ -19,40 +19,23 @@ export class NovelContentService extends BaseService {
   }
 
   /**
-   * 获取小说章节内容（用户端）
-   * 优先进行权限校验，验证通过后返回内容
-   *
-   * @param chapterId 章节ID
-   * @param userId 用户ID
-   * @returns 章节内容
-   * @throws BadRequestException 章节不存在或权限不足时抛出异常
+   * 获取章节内容（带权限校验）
+   * 用户端使用
    */
-  async getChapterContent(
-    chapterId: number,
-    userId: number,
-  ): Promise<string | null>
+  async getChapterContentWithPermission(chapterId: number, userId?: number) {
+    const result = await this.contentPermissionService.checkChapterAccess(
+      chapterId,
+      userId,
+      { content: true },
+    )
+    return result.chapter.content
+  }
 
   /**
-   * 获取小说章节内容（管理端）
-   * 不进行权限校验，直接返回内容
-   *
-   * @param chapterId 章节ID
-   * @returns 章节内容
-   * @throws BadRequestException 章节不存在时抛出异常
+   * 获取章节内容（无权限校验）
+   * 管理端使用
    */
-
-  async getChapterContent(chapterId: number, userId?: number) {
-    // 用户端：权限校验 + 获取内容（一次查询）
-    if (userId) {
-      const result = await this.contentPermissionService.checkChapterAccess(
-        userId,
-        chapterId,
-        { content: true },
-      )
-      return result.chapter.content
-    }
-
-    // 管理端：无权限校验，直接查询
+  async getChapterContent(chapterId: number) {
     const chapter = await this.workChapter.findUnique({
       where: { id: chapterId },
       select: {

@@ -46,11 +46,12 @@ export class WorkChapterController {
     model: String,
     isArray: true,
   })
+  @Public()
   async getComicChapterContent(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.comicContentService.getChapterContents(query.id, userId)
+    return this.comicContentService.getChapterContentsWithPermission(query.id, userId)
   }
 
   @Get('novel-content')
@@ -58,10 +59,11 @@ export class WorkChapterController {
     summary: '查询小说章节内容',
     model: String,
   })
+  @Public()
   async getNovelChapterContent(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.novelContentService.getChapterContent(query.id, userId)
+    return this.novelContentService.getChapterContentWithPermission(query.id, userId,)
   }
 }

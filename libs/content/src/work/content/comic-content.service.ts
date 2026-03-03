@@ -24,37 +24,23 @@ export class ComicContentService extends BaseService {
   }
 
   /**
-   * 获取漫画章节内容（用户端）
-   * 优先进行权限校验，验证通过后返回内容
-   *
-   * @param chapterId 章节ID
-   * @param userId 用户ID
-   * @returns 图片路径列表
-   * @throws BadRequestException 章节不存在或权限不足时抛出异常
+   * 获取章节内容（带权限校验）
+   * 用户端使用
    */
-  async getChapterContents(chapterId: number, userId: number)
+  async getChapterContentsWithPermission(chapterId: number, userId?: number) {
+    const result = await this.contentPermissionService.checkChapterAccess(
+      chapterId,
+      userId,
+      { content: true },
+    )
+    return this.parseContent(result.chapter.content)
+  }
 
   /**
-   * 获取漫画章节内容（管理端）
-   * 不进行权限校验，直接返回内容
-   *
-   * @param chapterId 章节ID
-   * @returns 图片路径列表
-   * @throws BadRequestException 章节不存在时抛出异常
+   * 获取章节内容（无权限校验）
+   * 管理端使用
    */
-
-  async getChapterContents(chapterId: number, userId?: number) {
-    // 用户端：权限校验 + 获取内容（一次查询）
-    if (userId) {
-      const result = await this.contentPermissionService.checkChapterAccess(
-        userId,
-        chapterId,
-        { content: true },
-      )
-      return this.parseContent(result.chapter.content)
-    }
-
-    // 管理端：无权限校验，直接查询
+  async getChapterContents(chapterId: number) {
     return this.getChapterContentsInternal(chapterId)
   }
 
@@ -166,15 +152,16 @@ export class ComicContentService extends BaseService {
    * 内部方法：获取章节内容（不进行权限校验）
    * 用于其他方法内部调用或管理端直接调用
    */
-  private async getChapterContentsInternal(
-    chapterId: number,
-  ): Promise<string[]> {
+  private async getChapterContentsInternal(chapterId: number) {
     const chapter = await this.workChapter.findUnique({
       where: { id: chapterId },
       select: {
         content: true,
       },
     })
+    if (!chapter) {
+      throw new BadRequestException('章节不存在')
+    }
 
     return this.parseContent(chapter?.content)
   }
