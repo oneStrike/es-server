@@ -1,6 +1,5 @@
 import { WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import { ContentPermissionService } from '@libs/content/permission'
 import { UserPermissionService } from '@libs/user/permission'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
@@ -35,10 +34,7 @@ interface PurchasePermissionConfig {
  */
 @Injectable()
 export class PurchaseService extends BaseService {
-  constructor(
-    private readonly userPermissionService: UserPermissionService,
-    private readonly contentPermissionService: ContentPermissionService,
-  ) {
+  constructor(private readonly userPermissionService: UserPermissionService) {
     super()
   }
 
@@ -65,14 +61,8 @@ export class PurchaseService extends BaseService {
   /**
    * 检查当前目标是否需要购买
    */
-  async checkNeedPurchase(targetId: number) {
-    const { viewRule, price } =
-      await this.contentPermissionService.resolveChapterPermission(targetId)
-
-    if (viewRule !== WorkViewPermissionEnum.PURCHASE) {
-      throw new BadRequestException('当前目标无需购买')
-    }
-    return price
+  async checkNeedPurchase() {
+    return 1
   }
 
   /**
