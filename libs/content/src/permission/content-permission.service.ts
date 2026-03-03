@@ -302,6 +302,7 @@ export class ContentPermissionService extends BaseService {
       return {
         viewRule: workPermission.viewRule as WorkViewPermissionEnum,
         isPreview: chapter.isPreview,
+        canDownload: chapter.canDownload,
         requiredExperience:
           workPermission.requiredViewLevel?.requiredExperience ?? null,
       }
