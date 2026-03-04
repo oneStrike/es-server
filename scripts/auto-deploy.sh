@@ -46,20 +46,45 @@ error() {
 # Git retry configuration
 readonly MAX_RETRIES=5
 
-# Git retry function - executes git command with retry logic (quiet mode)
+# Git retry function - executes git command with retry logic
 # Usage: git_with_retry <git_args...>
 git_with_retry() {
     local attempt=1
+    local git_cmd="git $*"
+
+    log "执行: $git_cmd"
 
     while [ $attempt -le $MAX_RETRIES ]; do
-        if git "$@" 2>/dev/null; then
-            return 0
+        if [ $attempt -gt 1 ]; then
+            warn "第 $attempt 次重试: $git_cmd"
         fi
 
-        [ $attempt -lt $MAX_RETRIES ] && sleep 1
+        # 捕获输出和错误
+        local output
+        local exit_code
+        output=$(git "$@" 2>&1)
+        exit_code=$?
+
+        if [ $exit_code -eq 0 ]; then
+            if [ -n "$output" ]; then
+                log "输出: $output"
+            fi
+            return 0
+        else
+            error "执行失败 (退出码: $exit_code)"
+            if [ -n "$output" ]; then
+                error "错误信息: $output"
+            fi
+        fi
+
+        if [ $attempt -lt $MAX_RETRIES ]; then
+            warn "等待 1 秒后重试..."
+            sleep 1
+        fi
         attempt=$((attempt + 1))
     done
 
+    error "$git_cmd 在 $MAX_RETRIES 次尝试后仍然失败"
     return 1
 }
 

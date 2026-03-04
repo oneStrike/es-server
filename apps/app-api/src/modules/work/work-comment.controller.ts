@@ -31,7 +31,6 @@ export class WorkCommentController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.commentService.createComment(
-      body.targetType,
       body.targetId,
       userId,
       body.content,
@@ -71,7 +70,11 @@ export class WorkCommentController {
     model: QueryCommentRepliesDto,
   })
   async replies(@Query() query: QueryCommentRepliesDto) {
-    return this.commentService.getReplies(query.commentId, query.pageIndex, query.pageSize)
+    return this.commentService.getReplies(
+      query.commentId,
+      query.pageIndex,
+      query.pageSize,
+    )
   }
 
   @Post('like')
@@ -79,7 +82,10 @@ export class WorkCommentController {
     summary: '点赞评论',
     model: DeleteCommentDto,
   })
-  async like(@Body() body: DeleteCommentDto, @CurrentUser('sub') userId: number) {
+  async like(
+    @Body() body: DeleteCommentDto,
+    @CurrentUser('sub') userId: number,
+  ) {
     return this.commentLikeService.likeComment(body.commentId, userId)
   }
 
@@ -88,7 +94,10 @@ export class WorkCommentController {
     summary: '取消点赞评论',
     model: DeleteCommentDto,
   })
-  async unlike(@Body() body: DeleteCommentDto, @CurrentUser('sub') userId: number) {
+  async unlike(
+    @Body() body: DeleteCommentDto,
+    @CurrentUser('sub') userId: number,
+  ) {
     return this.commentLikeService.unlikeComment(body.commentId, userId)
   }
 
@@ -97,7 +106,10 @@ export class WorkCommentController {
     summary: '举报评论',
     model: ReportCommentDto,
   })
-  async report(@Body() body: ReportCommentDto, @CurrentUser('sub') userId: number) {
+  async report(
+    @Body() body: ReportCommentDto,
+    @CurrentUser('sub') userId: number,
+  ) {
     return this.commentReportService.reportComment(
       body.commentId,
       userId,
