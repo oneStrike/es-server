@@ -127,7 +127,7 @@ export class ContentPermissionService extends BaseService {
    * 检查用户等级是否满足访问要求
    *
    * @param user 用户信息（含等级）
-   * @param requiredViewLevelId 访问所需的等级ID
+   * @param requiredExperience 访问所需的经验值
    * @throws BadRequestException 用户无等级或等级不足时抛出异常
    */
   private async validateMemberPermission(

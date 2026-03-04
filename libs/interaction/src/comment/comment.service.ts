@@ -30,6 +30,9 @@ export class CommentService extends BaseService {
   /**
    * 判断评论是否可见
    * @param comment - 评论对象
+   * @param comment.auditStatus - 审核状态
+   * @param comment.isHidden - 是否隐藏
+   * @param comment.deletedAt - 删除时间
    * @returns 是否可见
    */
   private isVisible(comment: {
@@ -323,7 +326,7 @@ export class CommentService extends BaseService {
     userId: number,
     content: string,
     replyToId?: number,
-  ): Promise<any> {
+  ) {
     await Promise.all([
       this.ensureTargetCanComment(targetType, targetId),
       this.ensureUserCanComment(userId),
@@ -594,6 +597,13 @@ export class CommentService extends BaseService {
   /**
    * 获取评论管理分页列表
    * @param query - 查询参数
+   * @param query.targetType - 目标类型
+   * @param query.targetId - 目标ID
+   * @param query.auditStatus - 审核状态
+   * @param query.isHidden - 是否隐藏
+   * @param query.rootOnly - 是否只查询根评论
+   * @param query.pageIndex - 页码
+   * @param query.pageSize - 每页数量
    * @returns 分页评论列表
    */
   async getCommentManagePage(query: {
@@ -691,6 +701,9 @@ export class CommentService extends BaseService {
   /**
    * 更新评论审核状�?
    * @param body - 审核参数
+   * @param body.commentId - 评论ID
+   * @param body.auditStatus - 审核状态
+   * @param body.auditReason - 审核原因
    * @param operatorId - 操作人ID
    * @returns 操作结果
    * @throws NotFoundException 评论不存在时抛出异常
@@ -767,10 +780,12 @@ export class CommentService extends BaseService {
   /**
    * 更新评论隐藏状�?
    * @param body - 隐藏参数
+   * @param body.commentId - 评论ID
+   * @param body.isHidden - 是否隐藏
    * @returns 操作结果
    * @throws NotFoundException 评论不存在时抛出异常
    */
-  async updateCommentHidden(body: { commentId: number, isHidden: boolean }) {
+  async updateCommentHidden(body: { commentId: number; isHidden: boolean }) {
     await this.prisma.$transaction(async (tx) => {
       const comment = await tx.userComment.findUnique({
         where: { id: body.commentId, deletedAt: null },
