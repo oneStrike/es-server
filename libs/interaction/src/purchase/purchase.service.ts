@@ -1,4 +1,4 @@
-import { WorkViewPermissionEnum } from '@libs/base/constant'
+import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { ContentPermissionService } from '@libs/content/permission'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -10,7 +10,11 @@ import {
   QueryPurchasedWorkDto,
   QueryUserPurchaseRecordDto,
 } from './dto/purchase.dto'
-import { PurchaseStatusEnum, PurchaseTargetTypeEnum } from './purchase.constant'
+import {
+  PaymentMethodEnum,
+  PurchaseStatusEnum,
+  PurchaseTargetTypeEnum,
+} from './purchase.constant'
 
 /**
  * 购买服务
@@ -31,11 +35,6 @@ export class PurchaseService extends BaseService {
     return this.prisma.work
   }
 
-  /** 获取作品章节数据访问对象 */
-  get workChapter() {
-    return this.prisma.workChapter
-  }
-
   /** 获取APP用户数据访问对象 */
   get appUser() {
     return this.prisma.appUser
@@ -53,6 +52,10 @@ export class PurchaseService extends BaseService {
     targetType: PurchaseTargetTypeEnum,
     targetId: number,
     userId: number,
+    chapterPermission?: Pick<
+      Awaited<ReturnType<ContentPermissionService['resolveChapterPermission']>>,
+      'price' | 'viewRule'
+    >,
   ) {
     if (
       targetType !== PurchaseTargetTypeEnum.COMIC_CHAPTER &&
@@ -61,7 +64,8 @@ export class PurchaseService extends BaseService {
       throw new BadRequestException('仅支持章节购买')
     }
     const { price, viewRule } =
-      await this.contentPermissionService.resolveChapterPermission(targetId)
+      chapterPermission ??
+      (await this.contentPermissionService.resolveChapterPermission(targetId))
 
     if (viewRule !== WorkViewPermissionEnum.PURCHASE) {
       throw new BadRequestException('该章节禁止购买')
@@ -101,13 +105,20 @@ export class PurchaseService extends BaseService {
    * @returns 购买记录
    * @throws BadRequestException 目标类型不支持或购买验证失败
    */
-  async purchaseTarget(dto: PurchaseTargetDto) {
+  async purchaseTarget(
+    dto: PurchaseTargetDto,
+    chapterPermission?: Pick<
+      Awaited<ReturnType<ContentPermissionService['resolveChapterPermission']>>,
+      'price' | 'viewRule'
+    >,
+  ) {
     const { targetType, targetId, userId, paymentMethod, outTradeNo } = dto
 
     const { targetPrice } = await this.checkNeedPurchase(
       targetType,
       targetId,
       userId,
+      chapterPermission,
     )
 
     this.logger.log(
@@ -206,6 +217,37 @@ export class PurchaseService extends BaseService {
       )
       throw error
     }
+  }
+
+  async purchaseChapter(userId: number, chapterId: number) {
+    const chapterPermission =
+      await this.contentPermissionService.resolveChapterPermission(chapterId)
+
+    if (chapterPermission.workType === WorkTypeEnum.COMIC) {
+      return this.purchaseTarget(
+        {
+          targetType: PurchaseTargetTypeEnum.COMIC_CHAPTER,
+          targetId: chapterId,
+          userId,
+          paymentMethod: PaymentMethodEnum.POINTS,
+        },
+        chapterPermission,
+      )
+    }
+
+    if (chapterPermission.workType === WorkTypeEnum.NOVEL) {
+      return this.purchaseTarget(
+        {
+          targetType: PurchaseTargetTypeEnum.NOVEL_CHAPTER,
+          targetId: chapterId,
+          userId,
+          paymentMethod: PaymentMethodEnum.POINTS,
+        },
+        chapterPermission,
+      )
+    }
+
+    throw new BadRequestException('不支持的章节类型')
   }
 
   /**

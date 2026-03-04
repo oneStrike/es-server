@@ -1,15 +1,11 @@
-import { WorkTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import { PurchaseService } from '@libs/interaction'
 import {
-  PaymentMethodEnum,
-  PurchaseChapterDto,
   PurchasedWorkChapterItemDto,
   PurchasedWorkItemDto,
-  PurchaseTargetTypeEnum,
-QueryPurchasedWorkChapterDto,
-QueryPurchasedWorkDto
+  QueryPurchasedWorkChapterDto,
+  QueryPurchasedWorkDto,
 } from '@libs/interaction/purchase'
 import { Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags, OmitType } from '@nestjs/swagger'
@@ -62,17 +58,9 @@ export class WorkPurchaseController {
     model: IdDto,
   })
   async purchaseChapter(
-    @Query() query: PurchaseChapterDto,
+    @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.purchaseService.purchaseTarget({
-      targetType:
-        query.workType === WorkTypeEnum.COMIC
-          ? PurchaseTargetTypeEnum.COMIC_CHAPTER
-          : PurchaseTargetTypeEnum.NOVEL_CHAPTER,
-      targetId: query.chapterId,
-      userId,
-      paymentMethod: PaymentMethodEnum.POINTS,
-    })
+    return this.purchaseService.purchaseChapter(userId, query.id)
   }
 }

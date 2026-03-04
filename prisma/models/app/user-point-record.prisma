@@ -32,11 +32,11 @@ model UserPointRecord {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   /// 关联规则
-  rule  UserPointRule?   @relation(fields: [ruleId], references: [id])
+  rule     UserPointRule?      @relation(fields: [ruleId], references: [id])
   /// 关联事件
-  event UserGrowthEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  event    UserGrowthEvent?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
   /// 关联用户
-  user    AppUser            @relation("UserPointRecords", fields: [userId], references: [id], onDelete: Cascade)
+  user     AppUser             @relation("UserPointRecords", fields: [userId], references: [id], onDelete: Cascade)
   /// 关联购买记录
   purchase UserPurchaseRecord? @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
 

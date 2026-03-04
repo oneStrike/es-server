@@ -85,6 +85,7 @@ export class ContentPermissionService extends BaseService {
     }
     const permission = await this.resolveChapterPermissionFromData(chapter)
     return {
+      workType: chapter.workType,
       canDownload: permission.canDownload,
       viewRule: permission.viewRule,
       requiredExperience: permission.requiredExperience,
@@ -328,8 +329,13 @@ export class ContentPermissionService extends BaseService {
   /**
    * 检查章节下载权限
    */
-  async checkChapterDownload(userId: number, chapterId: number) {
-    const permission = await this.resolveChapterPermission(chapterId)
+  async checkChapterDownload(
+    userId: number,
+    chapterId: number,
+    resolvedPermission?: Awaited<ReturnType<ContentPermissionService['resolveChapterPermission']>>,
+  ) {
+    const permission =
+      resolvedPermission ?? (await this.resolveChapterPermission(chapterId))
     if (!permission.canDownload) {
       throw new BadRequestException(
         PERMISSION_ERROR_MESSAGE.CHAPTER_DOWNLOAD_FORBIDDEN,

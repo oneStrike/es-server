@@ -10,7 +10,7 @@ model WorkTag {
   /// 标签描述
   description String? @db.VarChar(200)
   /// 排序值（数值越小越靠前）
-  sortOrder       Int     @default(0) @db.SmallInt @map("sort_order")
+  sortOrder   Int     @default(0) @map("sort_order") @db.SmallInt
   /// 是否启用
   isEnabled   Boolean @default(true) @map("is_enabled")
   /// 人气值（用于展示和排序）

@@ -1,63 +1,63 @@
 /// 通用章节模型
 model WorkChapter {
   /// 主键id
-  id                  Int                   @id @default(autoincrement())
+  id                  Int            @id @default(autoincrement())
   /// 作品ID
-  workId              Int                   @map("work_id")
+  workId              Int            @map("work_id")
   /// 作品类型（1=漫画, 2=小说）
-  workType            Int                   @map("work_type") @db.SmallInt
+  workType            Int            @map("work_type") @db.SmallInt
   /// 章节标题
-  title               String                @db.VarChar(100)
+  title               String         @db.VarChar(100)
   /// 章节副标题或描述
-  subtitle            String?               @db.VarChar(200)
+  subtitle            String?        @db.VarChar(200)
   /// 章节封面
-  cover               String?               @map("cover") @db.VarChar(500)
+  cover               String?        @map("cover") @db.VarChar(500)
   /// 章节描述
-  description         String?               @db.VarChar(1000)
+  description         String?        @db.VarChar(1000)
   /// 章节序号（用于排序）
-  sortOrder           Int                   @default(0) @map("sort_order")
+  sortOrder           Int            @default(0) @map("sort_order")
   /// 发布状态
-  isPublished         Boolean               @default(false) @map("is_published")
+  isPublished         Boolean        @default(false) @map("is_published")
   /// 是否为试读章节
-  isPreview           Boolean               @default(false) @map("is_preview")
+  isPreview           Boolean        @default(false) @map("is_preview")
   /// 发布时间
-  publishAt           DateTime?             @map("publish_at") @db.Timestamptz(6)
+  publishAt           DateTime?      @map("publish_at") @db.Timestamptz(6)
   /// 查看规则（-1=继承作品权限 0=所有人, 1=登录用户, 2=会员, 3=购买）
-  viewRule            Int                   @default(-1) @map("view_rule") @db.SmallInt
+  viewRule            Int            @default(-1) @map("view_rule") @db.SmallInt
   /// 允许查看的会员等级ID
-  requiredViewLevelId Int?                  @map("required_read_level_id")
+  requiredViewLevelId Int?           @map("required_read_level_id")
   /// 价格
-  price               Int                   @default(0) @map("price")
+  price               Int            @default(0) @map("price")
   /// 是否允许下载
-  canDownload         Boolean               @default(true) @map("can_download")
+  canDownload         Boolean        @default(true) @map("can_download")
   /// 是否允许评论
-  canComment          Boolean               @default(true) @map("can_comment")
+  canComment          Boolean        @default(true) @map("can_comment")
   /// 内容
   content             String?
   /// 字数（小说章节）
-  wordCount           Int                   @default(0) @map("word_count")
+  wordCount           Int            @default(0) @map("word_count")
   /// 阅读次数
-  viewCount           Int                   @default(0) @map("view_count")
+  viewCount           Int            @default(0) @map("view_count")
   /// 点赞数
-  likeCount           Int                   @default(0) @map("like_count")
+  likeCount           Int            @default(0) @map("like_count")
   /// 评论数
-  commentCount        Int                   @default(0) @map("comment_count")
+  commentCount        Int            @default(0) @map("comment_count")
   /// 购买次数
-  purchaseCount       Int                   @default(0) @map("purchase_count")
+  purchaseCount       Int            @default(0) @map("purchase_count")
   /// 下载次数
-  downloadCount       Int                   @default(0) @map("download_count")
+  downloadCount       Int            @default(0) @map("download_count")
   /// 备注
-  remark              String?               @db.VarChar(1000)
+  remark              String?        @db.VarChar(1000)
   /// 创建时间
-  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt           DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 软删除时间（用于数据恢复或归档）
-  deletedAt           DateTime?             @map("deleted_at") @db.Timestamptz(6)
+  deletedAt           DateTime?      @map("deleted_at") @db.Timestamptz(6)
   /// 关联作品
-  work                Work                  @relation(fields: [workId], references: [id], onDelete: Cascade)
+  work                Work           @relation(fields: [workId], references: [id], onDelete: Cascade)
   /// 关联阅读权限等级
-  requiredViewLevel   UserLevelRule?        @relation("ChapterReadLevel", fields: [requiredViewLevelId], references: [id])
+  requiredViewLevel   UserLevelRule? @relation("ChapterReadLevel", fields: [requiredViewLevelId], references: [id])
   /// 评论
   comments            WorkComment[]
 

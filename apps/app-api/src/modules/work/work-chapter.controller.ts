@@ -9,11 +9,8 @@ import {
   WorkChapterService,
 } from '@libs/content'
 import { PurchaseService } from '@libs/interaction'
-import {
-  PaymentMethodEnum,
-  PurchaseTargetTypeEnum,
-} from '@libs/interaction/purchase'
-import { Controller, Get, Post, Query } from '@nestjs/common'
+
+import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('作品模块/章节')
@@ -77,39 +74,5 @@ export class WorkChapterController {
       query.id,
       userId,
     )
-  }
-
-  @Post('purchase-comic-chapter')
-  @ApiDoc({
-    summary: '购买漫画章节',
-    model: IdDto,
-  })
-  async purchaseComicChapter(
-    @Query() query: IdDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.purchaseService.purchaseTarget({
-      targetType: PurchaseTargetTypeEnum.COMIC_CHAPTER,
-      targetId: query.id,
-      userId,
-      paymentMethod: PaymentMethodEnum.POINTS,
-    })
-  }
-
-  @Post('purchase-novel-chapter')
-  @ApiDoc({
-    summary: '购买漫画章节',
-    model: IdDto,
-  })
-  async purchaseNovelChapter(
-    @Query() query: IdDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.purchaseService.purchaseTarget({
-      targetType: PurchaseTargetTypeEnum.NOVEL_CHAPTER,
-      targetId: query.id,
-      userId,
-      paymentMethod: PaymentMethodEnum.POINTS,
-    })
   }
 }

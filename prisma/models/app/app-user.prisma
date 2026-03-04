@@ -73,7 +73,7 @@ model AppUser {
   /// 评论举报关联（举报人）
   workCommentReports        WorkCommentReport[]         @relation("WorkCommentReportReporter")
   /// 评论举报关联（处理人）
-  handledWorkCommentReports WorkCommentReport[]         @relation("WorkCommentReportHandler") 
+  handledWorkCommentReports WorkCommentReport[]         @relation("WorkCommentReportHandler")
   /// 论坛回复关联
   forumReplies              ForumReply[]
   /// 回复点赞关联

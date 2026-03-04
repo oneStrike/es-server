@@ -23,6 +23,7 @@ export const WORK_PERMISSION_SELECT = {
 export const CHAPTER_PERMISSION_SELECT = {
   // 关联信息
   workId: true,
+  workType: true,
   // 权限规则相关
   viewRule: true,
   requiredViewLevelId: true,

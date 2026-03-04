@@ -111,23 +111,6 @@ export class QueryPurchasedWorkChapterDto extends QueryPurchasedWorkDto {
   workId!: number
 }
 
-export class PurchaseChapterDto extends BaseDto {
-  @EnumProperty({
-    description: '作品类型：1=漫画, 2=小说',
-    enum: WorkTypeEnum,
-    example: WorkTypeEnum.COMIC,
-    required: true,
-  })
-  workType!: WorkTypeEnum
-
-  @NumberProperty({
-    description: '章节ID',
-    example: 1,
-    required: true,
-  })
-  chapterId!: number
-}
-
 export class PurchasedWorkInfoDto {
   @NumberProperty({
     description: '作品ID',
