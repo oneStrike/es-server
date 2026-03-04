@@ -94,6 +94,7 @@ export class CommentIdDto {
 }
 
 export class CreateCommentDto extends PickType(BaseCommentDto, [
+  'targetType',
   'targetId',
   'content',
   'replyToId',
