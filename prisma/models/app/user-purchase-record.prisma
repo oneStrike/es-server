@@ -39,7 +39,7 @@ model UserPurchaseRecord {
   /// 创建时间索引
   @@index([createdAt])
   /// 用户状态类型时间联合索引
-  @@index([userId, status, targetType, createdAt, targetId])
+  @@index([userId, status, targetType, createdAt, targetId], map: "user_purchase_record_user_id_status_target_type_created_at__idx")
   /// 表名映射
   @@map("user_purchase_record")
 }
