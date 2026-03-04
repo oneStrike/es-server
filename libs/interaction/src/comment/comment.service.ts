@@ -3,11 +3,23 @@ import { BaseService } from '@libs/base/database'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import { SystemConfigService } from '@libs/system-config'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { CounterService } from '../counter/counter.service'
-import { AuditRole, AuditStatus, InteractionTargetType } from '../interaction.constant'
+import {
+  AuditRole,
+  AuditStatus,
+  InteractionTargetType,
+} from '../interaction.constant'
 import { TargetValidatorRegistry } from '../validator/target-validator.registry'
 
+/**
+ * 评论服务
+ * 提供评论的创建、删除、查询、审核等功能
+ */
 @Injectable()
 export class CommentService extends BaseService {
   constructor(
@@ -19,18 +31,29 @@ export class CommentService extends BaseService {
     super()
   }
 
+  /**
+   * 判断评论是否可见
+   * @param comment - 评论对象
+   * @returns 是否可见
+   */
   private isVisible(comment: {
     auditStatus: number
     isHidden: boolean
     deletedAt: Date | null
   }) {
     return (
-      comment.auditStatus === AuditStatus.APPROVED
-      && !comment.isHidden
-      && comment.deletedAt === null
+      comment.auditStatus === AuditStatus.APPROVED &&
+      !comment.isHidden &&
+      comment.deletedAt === null
     )
   }
 
+  /**
+   * 解析审核决策
+   * 根据敏感词检测结果和系统配置决定评论的审核状态
+   * @param content - 评论内容
+   * @returns 审核决策结果
+   */
   private async resolveAuditDecision(content: string) {
     const result = this.sensitiveWordDetectService.getMatchedWords({ content })
     const config = await this.systemConfigService.findActiveConfig()
@@ -72,6 +95,12 @@ export class CommentService extends BaseService {
     }
   }
 
+  /**
+   * 确保用户可以评论
+   * 检查用户是否存在、是否被禁用或禁言
+   * @param userId - 用户ID
+   * @throws BadRequestException 用户无法评论时抛出异常
+   */
   private async ensureUserCanComment(userId: number) {
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },
@@ -94,11 +123,21 @@ export class CommentService extends BaseService {
     }
   }
 
+  /**
+   * 确保目标可以评论
+   * 检查目标（作品、章节、帖子等）是否允许评论
+   * @param targetType - 目标类型
+   * @param targetId - 目标ID
+   * @throws BadRequestException 目标不允许评论时抛出异常
+   */
   private async ensureTargetCanComment(
     targetType: InteractionTargetType,
     targetId: number,
   ) {
-    if (targetType === InteractionTargetType.COMIC || targetType === InteractionTargetType.NOVEL) {
+    if (
+      targetType === InteractionTargetType.COMIC ||
+      targetType === InteractionTargetType.NOVEL
+    ) {
       const work = await this.prisma.work.findUnique({
         where: { id: targetId },
         select: { canComment: true },
@@ -109,7 +148,10 @@ export class CommentService extends BaseService {
       return
     }
 
-    if (targetType === InteractionTargetType.COMIC_CHAPTER || targetType === InteractionTargetType.NOVEL_CHAPTER) {
+    if (
+      targetType === InteractionTargetType.COMIC_CHAPTER ||
+      targetType === InteractionTargetType.NOVEL_CHAPTER
+    ) {
       const chapter = await this.prisma.workChapter.findUnique({
         where: { id: targetId },
         select: { canComment: true },
@@ -131,26 +173,62 @@ export class CommentService extends BaseService {
     }
   }
 
+  /**
+   * 增加可见评论计数
+   * @param tx - 事务对象
+   * @param targetType - 目标类型
+   * @param targetId - 目标ID
+   */
   private async incrementVisibleCount(
     tx: any,
     targetType: InteractionTargetType,
     targetId: number,
   ) {
-    await this.counterService.incrementCount(tx, targetType, targetId, 'commentCount')
+    await this.counterService.incrementCount(
+      tx,
+      targetType,
+      targetId,
+      'commentCount',
+    )
   }
 
+  /**
+   * 减少可见评论计数
+   * @param tx - 事务对象
+   * @param targetType - 目标类型
+   * @param targetId - 目标ID
+   */
   private async decrementVisibleCount(
     tx: any,
     targetType: InteractionTargetType,
     targetId: number,
   ) {
-    const current = await this.counterService.getCount(targetType, targetId, 'commentCount')
+    const current = await this.counterService.getCount(
+      targetType,
+      targetId,
+      'commentCount',
+    )
     if (current <= 0) {
       return
     }
-    await this.counterService.decrementCount(tx, targetType, targetId, 'commentCount')
+    await this.counterService.decrementCount(
+      tx,
+      targetType,
+      targetId,
+      'commentCount',
+    )
   }
 
+  /**
+   * 创建评论
+   * @param targetType - 目标类型
+   * @param targetId - 目标ID
+   * @param userId - 用户ID
+   * @param content - 评论内容
+   * @param replyToId - 回复的评论ID（可选）
+   * @returns 创建的评论对象
+   * @throws BadRequestException 验证失败时抛出异常
+   */
   async createComment(
     targetType: InteractionTargetType,
     targetId: number,
@@ -201,7 +279,9 @@ export class CommentService extends BaseService {
       if (replyTo.targetType !== targetType || replyTo.targetId !== targetId) {
         throw new BadRequestException('回复目标与当前评论目标不一致')
       }
-      actualReplyToId = replyTo.replyToId ? (replyTo.actualReplyToId ?? replyTo.id) : replyTo.id
+      actualReplyToId = replyTo.replyToId
+        ? (replyTo.actualReplyToId ?? replyTo.id)
+        : replyTo.id
     }
 
     const comment = await this.prisma.$transaction(async (tx) => {
@@ -220,11 +300,13 @@ export class CommentService extends BaseService {
         },
       })
 
-      if (this.isVisible({
-        auditStatus: decision.auditStatus,
-        isHidden: decision.isHidden,
-        deletedAt: null,
-      })) {
+      if (
+        this.isVisible({
+          auditStatus: decision.auditStatus,
+          isHidden: decision.isHidden,
+          deletedAt: null,
+        })
+      ) {
         await this.incrementVisibleCount(tx, targetType, targetId)
       }
 
@@ -234,10 +316,13 @@ export class CommentService extends BaseService {
     return comment
   }
 
-  async deleteComment(
-    commentId: number,
-    userId: number,
-  ): Promise<void> {
+  /**
+   * 删除评论（用户操作）
+   * @param commentId - 评论ID
+   * @param userId - 用户ID
+   * @throws BadRequestException 评论不存在或无权限时抛出异常
+   */
+  async deleteComment(commentId: number, userId: number): Promise<void> {
     const comment = await this.prisma.userComment.findUnique({
       where: { id: commentId, deletedAt: null },
     })
@@ -262,6 +347,11 @@ export class CommentService extends BaseService {
     })
   }
 
+  /**
+   * 删除评论（管理员操作）
+   * @param commentId - 评论ID
+   * @throws NotFoundException 评论不存在时抛出异常
+   */
   async deleteCommentByAdmin(commentId: number): Promise<void> {
     const comment = await this.prisma.userComment.findUnique({
       where: { id: commentId, deletedAt: null },
@@ -284,6 +374,14 @@ export class CommentService extends BaseService {
     })
   }
 
+  /**
+   * 获取评论列表（根评论）
+   * @param targetType - 目标类型
+   * @param targetId - 目标ID
+   * @param pageIndex - 页码
+   * @param pageSize - 每页数量
+   * @returns 分页评论列表
+   */
   async getComments(
     targetType: InteractionTargetType,
     targetId: number,
@@ -321,6 +419,13 @@ export class CommentService extends BaseService {
     })
   }
 
+  /**
+   * 获取评论的回复列表
+   * @param commentId - 评论ID
+   * @param pageIndex - 页码
+   * @param pageSize - 每页数量
+   * @returns 分页回复列表
+   */
   async getReplies(
     commentId: number,
     pageIndex: number = 1,
@@ -360,6 +465,11 @@ export class CommentService extends BaseService {
     })
   }
 
+  /**
+   * 获取评论管理分页列表
+   * @param query - 查询参数
+   * @returns 分页评论列表
+   */
   async getCommentManagePage(query: {
     targetType?: InteractionTargetType
     targetId?: number
@@ -414,6 +524,12 @@ export class CommentService extends BaseService {
     })
   }
 
+  /**
+   * 获取评论详情
+   * @param commentId - 评论ID
+   * @returns 评论详情
+   * @throws NotFoundException 评论不存在时抛出异常
+   */
   async getCommentDetail(commentId: number) {
     const comment = await this.prisma.userComment.findUnique({
       where: { id: commentId, deletedAt: null },
@@ -446,6 +562,13 @@ export class CommentService extends BaseService {
     return comment
   }
 
+  /**
+   * 更新评论审核状态
+   * @param body - 审核参数
+   * @param operatorId - 操作人ID
+   * @returns 操作结果
+   * @throws NotFoundException 评论不存在时抛出异常
+   */
   async updateCommentAudit(
     body: {
       commentId: number
@@ -507,6 +630,12 @@ export class CommentService extends BaseService {
     return { success: true }
   }
 
+  /**
+   * 更新评论隐藏状态
+   * @param body - 隐藏参数
+   * @returns 操作结果
+   * @throws NotFoundException 评论不存在时抛出异常
+   */
   async updateCommentHidden(body: { commentId: number, isHidden: boolean }) {
     const comment = await this.prisma.userComment.findUnique({
       where: { id: body.commentId, deletedAt: null },
@@ -555,7 +684,16 @@ export class CommentService extends BaseService {
     return { success: true }
   }
 
-  async recalcCommentCount(targetType: InteractionTargetType, targetId: number) {
+  /**
+   * 重新计算评论数量
+   * @param targetType - 目标类型
+   * @param targetId - 目标ID
+   * @returns 计算后的评论数量
+   */
+  async recalcCommentCount(
+    targetType: InteractionTargetType,
+    targetId: number,
+  ) {
     const count = await this.prisma.userComment.count({
       where: {
         targetType,
@@ -565,7 +703,12 @@ export class CommentService extends BaseService {
         deletedAt: null,
       },
     })
-    await this.counterService.setCount(targetType, targetId, 'commentCount', count)
+    await this.counterService.setCount(
+      targetType,
+      targetId,
+      'commentCount',
+      count,
+    )
     return { targetType, targetId, commentCount: count }
   }
 }

@@ -10,7 +10,7 @@ import { AuditStatus, InteractionTargetType } from '../../interaction.constant'
 
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
-    description: 'Target type',
+    description: '目标类型',
     enum: InteractionTargetType,
     example: InteractionTargetType.COMIC,
     required: true,
@@ -18,7 +18,7 @@ export class BaseCommentDto extends BaseDto {
   targetType!: InteractionTargetType
 
   @NumberProperty({
-    description: 'Target ID',
+    description: '目标ID',
     example: 1,
     required: true,
     min: 1,
@@ -26,7 +26,7 @@ export class BaseCommentDto extends BaseDto {
   targetId!: number
 
   @NumberProperty({
-    description: 'Comment user ID',
+    description: '评论用户ID',
     example: 1,
     required: true,
     min: 1,
@@ -34,15 +34,15 @@ export class BaseCommentDto extends BaseDto {
   userId!: number
 
   @StringProperty({
-    description: 'Comment content',
-    example: 'Nice work!',
+    description: '评论内容',
+    example: '写得真棒！',
     required: true,
     minLength: 1,
   })
   content!: string
 
   @NumberProperty({
-    description: 'Replied comment ID',
+    description: '回复的评论ID',
     example: 1,
     required: false,
     min: 1,
@@ -50,7 +50,7 @@ export class BaseCommentDto extends BaseDto {
   replyToId?: number
 
   @NumberProperty({
-    description: 'Floor number',
+    description: '楼层号',
     example: 1,
     required: false,
     min: 1,
@@ -58,7 +58,7 @@ export class BaseCommentDto extends BaseDto {
   floor?: number
 
   @BooleanProperty({
-    description: 'Hidden status',
+    description: '隐藏状态',
     example: false,
     required: true,
     default: false,
@@ -66,7 +66,7 @@ export class BaseCommentDto extends BaseDto {
   isHidden!: boolean
 
   @EnumProperty({
-    description: 'Audit status',
+    description: '审核状态',
     enum: AuditStatus,
     example: AuditStatus.APPROVED,
     required: true,
@@ -75,8 +75,8 @@ export class BaseCommentDto extends BaseDto {
   auditStatus!: AuditStatus
 
   @StringProperty({
-    description: 'Audit reason',
-    example: 'policy violation',
+    description: '审核原因',
+    example: '违反社区规范',
     required: false,
     maxLength: 500,
   })
@@ -85,7 +85,7 @@ export class BaseCommentDto extends BaseDto {
 
 export class CommentIdDto {
   @NumberProperty({
-    description: 'Comment ID',
+    description: '评论ID',
     example: 1,
     required: true,
     min: 1,
@@ -112,7 +112,7 @@ export class QueryCommentPageDto extends IntersectionType(
   ]),
 ) {
   @BooleanProperty({
-    description: 'Only root comments',
+    description: '仅根评论',
     example: true,
     required: false,
   })
