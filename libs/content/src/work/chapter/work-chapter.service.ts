@@ -30,13 +30,6 @@ export class WorkChapterService extends BaseService {
   }
 
   /**
-   * 获取章节购买记录数据访问对象
-   */
-  get workChapterPurchase() {
-    return this.prisma.workChapterPurchase
-  }
-
-  /**
    * 获取应用用户数据访问对象
    */
   get appUser() {

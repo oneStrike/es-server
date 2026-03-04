@@ -109,7 +109,6 @@ export const ModelName = {
   WorkAuthorRelation: 'WorkAuthorRelation',
   WorkCategoryRelation: 'WorkCategoryRelation',
   WorkCategory: 'WorkCategory',
-  WorkChapterPurchase: 'WorkChapterPurchase',
   WorkChapter: 'WorkChapter',
   WorkCommentReport: 'WorkCommentReport',
   WorkComment: 'WorkComment',
@@ -1156,16 +1155,6 @@ export const WorkCategoryScalarFieldEnum = {
 } as const
 
 export type WorkCategoryScalarFieldEnum = (typeof WorkCategoryScalarFieldEnum)[keyof typeof WorkCategoryScalarFieldEnum]
-
-
-export const WorkChapterPurchaseScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkChapterPurchaseScalarFieldEnum = (typeof WorkChapterPurchaseScalarFieldEnum)[keyof typeof WorkChapterPurchaseScalarFieldEnum]
 
 
 export const WorkChapterScalarFieldEnum = {

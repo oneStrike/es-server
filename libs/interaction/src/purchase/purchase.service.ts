@@ -1,32 +1,16 @@
 import { WorkViewPermissionEnum } from '@libs/base/constant'
-import { BaseService } from '@libs/base/database'
-import { UserPermissionService } from '@libs/user/permission'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BaseService, Prisma } from '@libs/base/database'
+import { ContentPermissionService } from '@libs/content/permission'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
+  PurchasedWorkChapterPageDto,
+  PurchasedWorkPageDto,
   PurchaseTargetDto,
+  QueryPurchasedWorkChapterDto,
+  QueryPurchasedWorkDto,
   QueryUserPurchaseRecordDto,
-  RefundPurchaseDto,
 } from './dto/purchase.dto'
-import {
-  PaymentMethodEnum,
-  PurchaseStatusEnum,
-  PurchaseTargetTypeEnum,
-} from './purchase.constant'
-
-/**
- * 购买权限配置接口
- * 定义章节或作品的购买相关权限属性
- */
-interface PurchasePermissionConfig {
-  /** 购买规则（继承/购买/免费等） */
-  purchaseRule: number
-  /** 价格（null 表示免费或不可购买） */
-  price: number | null
-  /** 要求的会员等级ID */
-  requiredPurchaseLevelId: number | null
-  /** 要求的会员等级信息（包含所需经验值） */
-  requiredPurchaseLevel: { requiredExperience: number } | null
-}
+import { PurchaseStatusEnum, PurchaseTargetTypeEnum } from './purchase.constant'
 
 /**
  * 购买服务
@@ -34,7 +18,11 @@ interface PurchasePermissionConfig {
  */
 @Injectable()
 export class PurchaseService extends BaseService {
-  constructor(private readonly userPermissionService: UserPermissionService) {
+  private readonly logger = new Logger(PurchaseService.name)
+
+  constructor(
+    private readonly contentPermissionService: ContentPermissionService,
+  ) {
     super()
   }
 
@@ -61,8 +49,50 @@ export class PurchaseService extends BaseService {
   /**
    * 检查当前目标是否需要购买
    */
-  async checkNeedPurchase() {
-    return 1
+  async checkNeedPurchase(
+    targetType: PurchaseTargetTypeEnum,
+    targetId: number,
+    userId: number,
+  ) {
+    if (
+      targetType !== PurchaseTargetTypeEnum.COMIC_CHAPTER &&
+      targetType !== PurchaseTargetTypeEnum.NOVEL_CHAPTER
+    ) {
+      throw new BadRequestException('仅支持章节购买')
+    }
+    const { price, viewRule } =
+      await this.contentPermissionService.resolveChapterPermission(targetId)
+
+    if (viewRule !== WorkViewPermissionEnum.PURCHASE) {
+      throw new BadRequestException('该章节禁止购买')
+    }
+
+    const existingPurchase =
+      await this.contentPermissionService.validateChapterPurchasePermission(
+        userId,
+        targetId,
+      )
+
+    if (existingPurchase) {
+      throw new BadRequestException('该章节已购买')
+    }
+
+    const user = await this.appUser.findUnique({
+      where: { id: userId },
+      select: { points: true },
+    })
+    if (!user) {
+      throw new BadRequestException('用户不存在')
+    }
+
+    const deficitPoints = Math.max(price - user.points, 0)
+    if (deficitPoints > 0) {
+      throw new BadRequestException('积分不足')
+    }
+
+    return {
+      targetPrice: price,
+    }
   }
 
   /**
@@ -74,337 +104,108 @@ export class PurchaseService extends BaseService {
   async purchaseTarget(dto: PurchaseTargetDto) {
     const { targetType, targetId, userId, paymentMethod, outTradeNo } = dto
 
-    // 验证章节购买权限并获取价格
-    const price = await this.validateChapterPurchasePermission(targetId, userId)
-
-    // 检查是否已购买（防止重复购买）
-    const existingPurchase = await this.userPurchaseRecord.findFirst({
-      where: {
-        targetType,
-        targetId,
-        userId,
-        status: PurchaseStatusEnum.SUCCESS,
-      },
-    })
-    if (existingPurchase) {
-      return existingPurchase
-    }
-
-    // 开启事务：创建购买记录、处理支付、更新购买计数
-    return this.prisma.$transaction(async (tx) => {
-      // 创建购买记录
-      const record = await tx.userPurchaseRecord.create({
-        data: {
-          targetType,
-          targetId,
-          userId,
-          price,
-          status: PurchaseStatusEnum.SUCCESS,
-          paymentMethod,
-          outTradeNo,
-        },
-      })
-
-      // 处理支付，积分流水通过 purchaseId 关联到购买记录
-      await this.processPayment(
-        tx,
-        userId,
-        price,
-        paymentMethod,
-        record.id,
-        targetType,
-        targetId,
-      )
-
-      // 增加章节购买计数
-      await tx.workChapter.update({
-        where: { id: targetId },
-        data: { purchaseCount: { increment: 1 } },
-      })
-
-      return record
-    })
-  }
-
-  /**
-   * 验证章节购买权限
-   * 检查章节是否存在、是否已发布、购买规则和价格
-   * @param chapterId - 章节ID
-   * @param userId - 用户ID
-   * @returns 章节价格
-   * @throws BadRequestException 章节不存在、未发布或不支持购买
-   */
-  private async validateChapterPurchasePermission(
-    chapterId: number,
-    userId: number,
-  ) {
-    const chapter = await this.workChapter.findUnique({
-      where: { id: chapterId },
-      include: {
-        requiredViewLevel: true,
-      },
-    })
-
-    if (!chapter) {
-      throw new BadRequestException('章节不存在')
-    }
-
-    if (!chapter.isPublished) {
-      throw new BadRequestException('该章节暂未发布')
-    }
-
-    // 如果章节继承作品的权限设置，则从作品获取价格和权限
-    if (chapter.viewRule === WorkViewPermissionEnum.INHERIT) {
-      const work = await this.work.findUnique({
-        where: { id: chapter.workId },
-        include: {
-          requiredViewLevel: true,
-        },
-      })
-
-      if (!work) {
-        throw new BadRequestException('作品不存在')
-      }
-
-      await this.validatePurchasePermission(
-        {
-          purchaseRule: work.viewRule,
-          price: work.chapterPrice,
-          requiredPurchaseLevelId: work.requiredViewLevelId,
-          requiredPurchaseLevel: work.requiredViewLevel,
-        },
-        userId,
-        '章节',
-      )
-
-      return work.chapterPrice
-    }
-
-    // 使用章节自身的权限设置
-    await this.validatePurchasePermission(
-      {
-        purchaseRule: chapter.viewRule,
-        price: chapter.price,
-        requiredPurchaseLevelId: chapter.requiredViewLevelId,
-        requiredPurchaseLevel: chapter.requiredViewLevel,
-      },
-      userId,
-      '章节',
-    )
-
-    return chapter.price
-  }
-
-  /**
-   * 验证购买权限
-   * 检查购买规则、价格、用户登录状态和会员等级要求
-   * @param config - 购买权限配置
-   * @param userId - 用户ID
-   * @param targetName - 目标名称（用于错误提示）
-   * @throws BadRequestException 权限验证失败
-   */
-  private async validatePurchasePermission(
-    config: PurchasePermissionConfig,
-    userId: number,
-    targetName: string,
-  ) {
-    // 验证购买规则是否为"需要购买"
-    if (config.purchaseRule !== WorkViewPermissionEnum.PURCHASE) {
-      throw new BadRequestException(`该${targetName}暂不支持购买`)
-    }
-
-    // 验证价格有效性
-    if (!config.price || config.price <= 0) {
-      throw new BadRequestException(`该${targetName}暂不支持购买`)
-    }
-
-    // 验证用户登录状态
-    await this.userPermissionService.validateViewPermission(
-      WorkViewPermissionEnum.LOGGED_IN,
+    const { targetPrice } = await this.checkNeedPurchase(
+      targetType,
+      targetId,
       userId,
     )
 
-    // 如有会员等级要求，验证用户等级
-    if (config.requiredPurchaseLevelId) {
-      await this.userPermissionService.validateViewPermission(
-        WorkViewPermissionEnum.MEMBER,
-        userId,
-        config.requiredPurchaseLevelId,
-      )
-    }
-  }
+    this.logger.log(
+      `purchase_start userId=${userId} targetType=${targetType} targetId=${targetId} price=${targetPrice}`,
+    )
 
-  /**
-   * 处理支付
-   * 目前支持积分支付，后续可扩展其他支付方式
-   * @param tx - 事务对象
-   * @param userId - 用户ID
-   * @param price - 价格
-   * @param paymentMethod - 支付方式
-   * @param purchaseId - 购买记录ID（用于关联积分流水）
-   * @param targetType - 目标类型
-   * @param targetId - 目标ID
-   * @throws BadRequestException 积分不足
-   */
-  private async processPayment(
-    tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
-    userId: number,
-    price: number,
-    paymentMethod: PaymentMethodEnum,
-    purchaseId: number,
-    targetType: PurchaseTargetTypeEnum,
-    targetId: number,
-  ): Promise<void> {
-    if (paymentMethod === PaymentMethodEnum.POINTS) {
-      // 查询用户当前积分
-      const user = await tx.appUser.findUnique({
-        where: { id: userId },
-        select: { points: true },
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const record = await tx.userPurchaseRecord.create({
+          data: {
+            targetType,
+            targetId,
+            userId,
+            price: targetPrice,
+            status: PurchaseStatusEnum.SUCCESS,
+            paymentMethod,
+            outTradeNo,
+          },
+        })
+
+        const updateResult = await tx.appUser.updateMany({
+          where: {
+            id: userId,
+            points: {
+              gte: targetPrice,
+            },
+          },
+          data: {
+            points: {
+              decrement: targetPrice,
+            },
+          },
+        })
+
+        if (updateResult.count === 0) {
+          const user = await tx.appUser.findUnique({
+            where: { id: userId },
+            select: { id: true },
+          })
+          if (!user) {
+            this.logger.warn(
+              `purchase_failed_user_not_found userId=${userId} targetType=${targetType} targetId=${targetId}`,
+            )
+            throw new BadRequestException('用户不存在')
+          }
+          this.logger.warn(
+            `purchase_failed_points_not_enough userId=${userId} targetType=${targetType} targetId=${targetId} need=${targetPrice}`,
+          )
+          throw new BadRequestException('积分不足')
+        }
+
+        const user = await tx.appUser.findUniqueOrThrow({
+          where: { id: userId },
+          select: { points: true },
+        })
+        const afterPoints = user.points
+        const beforePoints = afterPoints + targetPrice
+
+        await tx.userPointRecord.create({
+          data: {
+            userId,
+            points: -targetPrice,
+            beforePoints,
+            afterPoints,
+            purchaseId: record.id,
+            targetType,
+            targetId,
+            remark: '购买章节',
+          },
+        })
+
+        await tx.workChapter.update({
+          where: { id: targetId },
+          data: { purchaseCount: { increment: 1 } },
+        })
+
+        this.logger.log(
+          `purchase_success userId=${userId} targetType=${targetType} targetId=${targetId} price=${targetPrice} purchaseId=${record.id}`,
+        )
+        return record
       })
-      if (!user || user.points < price) {
-        throw new BadRequestException('积分不足')
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        (error as { code?: string }).code === 'P2002'
+      ) {
+        this.logger.warn(
+          `purchase_failed_duplicate userId=${userId} targetType=${targetType} targetId=${targetId}`,
+        )
+        throw new BadRequestException('该章节已购买')
       }
-
-      const beforePoints = user.points
-      const afterPoints = beforePoints - price
-
-      // 扣减积分
-      await tx.appUser.update({
-        where: { id: userId },
-        data: { points: afterPoints },
-      })
-
-      // 创建积分流水记录，通过 purchaseId 关联购买记录
-      await tx.userPointRecord.create({
-        data: {
-          userId,
-          points: -price,
-          beforePoints,
-          afterPoints,
-          purchaseId,
-          targetType,
-          targetId,
-          remark: '购买章节',
-        },
-      })
+      this.logger.error(
+        `purchase_failed_unknown userId=${userId} targetType=${targetType} targetId=${targetId}`,
+        error instanceof Error ? error.stack : undefined,
+      )
+      throw error
     }
-  }
-
-  /**
-   * 处理退款
-   * 退还用户支付的费用（目前仅支持积分退款）
-   * @param tx - 事务对象
-   * @param userId - 用户ID
-   * @param price - 退款金额
-   * @param paymentMethod - 支付方式
-   * @param purchaseId - 购买记录ID
-   * @param targetType - 目标类型
-   * @param targetId - 目标ID
-   */
-  private async processRefund(
-    tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
-    userId: number,
-    price: number,
-    paymentMethod: PaymentMethodEnum,
-    purchaseId: number,
-    targetType: number,
-    targetId: number,
-  ): Promise<void> {
-    if (paymentMethod === PaymentMethodEnum.POINTS) {
-      // 查询用户当前积分
-      const user = await tx.appUser.findUnique({
-        where: { id: userId },
-        select: { points: true },
-      })
-
-      const beforePoints = user?.points ?? 0
-      const afterPoints = beforePoints + price
-
-      // 退还积分
-      await tx.appUser.update({
-        where: { id: userId },
-        data: { points: afterPoints },
-      })
-
-      // 创建积分流水记录，通过 purchaseId 关联购买记录
-      await tx.userPointRecord.create({
-        data: {
-          userId,
-          points: price, // 正数表示获得
-          beforePoints,
-          afterPoints,
-          purchaseId,
-          targetType,
-          targetId,
-          remark: '退款返还',
-        },
-      })
-    }
-  }
-
-  /**
-   * 检查购买状态
-   * 查询用户是否已成功购买指定目标
-   * @param targetType - 目标类型
-   * @param targetId - 目标ID
-   * @param userId - 用户ID
-   * @returns true-已购买，false-未购买
-   */
-  async checkPurchaseStatus(
-    targetType: PurchaseTargetTypeEnum,
-    targetId: number,
-    userId: number,
-  ) {
-    const purchase = await this.userPurchaseRecord.findFirst({
-      where: {
-        targetType,
-        targetId,
-        userId,
-        status: PurchaseStatusEnum.SUCCESS,
-      },
-    })
-    return !!purchase
-  }
-
-  /**
-   * 批量检查购买状态
-   * 查询用户是否已成功购买多个目标
-   * @param targetType - 目标类型
-   * @param targetIds - 目标ID数组
-   * @param userId - 用户ID
-   * @returns Map<目标ID, 是否已购买>
-   */
-  async checkStatusBatch(
-    targetType: PurchaseTargetTypeEnum,
-    targetIds: number[],
-    userId: number,
-  ) {
-    if (targetIds.length === 0) {
-      return new Map()
-    }
-
-    // 批量查询购买记录
-    const purchases = await this.userPurchaseRecord.findMany({
-      where: {
-        targetType,
-        targetId: { in: targetIds },
-        userId,
-        status: PurchaseStatusEnum.SUCCESS,
-      },
-      select: {
-        targetId: true,
-      },
-    })
-
-    // 构建购买状态映射
-    const purchasedIds = new Set(purchases.map((p) => p.targetId))
-    const result = new Map<number, boolean>()
-
-    for (const id of targetIds) {
-      result.set(id, purchasedIds.has(id))
-    }
-
-    return result
   }
 
   /**
@@ -414,67 +215,261 @@ export class PurchaseService extends BaseService {
    * @returns 分页购买记录
    */
   async getUserPurchases(dto: QueryUserPurchaseRecordDto) {
+    const { userId, targetType, status, ...other } = dto
     return this.prisma.userPurchaseRecord.findPagination({
-      where: dto,
+      where: {
+        ...other,
+        userId,
+        targetType,
+        status,
+      },
     })
   }
 
-  /**
-   * 退款
-   * 处理用户退款请求，验证权限后执行退款逻辑
-   * @param dto - 退款请求参数
-   * @returns 更新后的购买记录
-   * @throws BadRequestException 记录不存在、无权操作或状态不支持退款
-   */
-  async refundPurchase(dto: RefundPurchaseDto) {
-    const { purchaseId, userId } = dto
+  private normalizePagination(pageIndex?: number, pageSize?: number) {
+    const rawPageIndex = Number.isFinite(Number(pageIndex))
+      ? Math.floor(Number(pageIndex))
+      : 0
+    const normalizedPageIndex =
+      rawPageIndex >= 1 ? rawPageIndex : Math.max(0, rawPageIndex)
 
-    // 查询购买记录
-    const purchase = await this.userPurchaseRecord.findUnique({
-      where: { id: purchaseId },
-    })
+    const rawPageSize = Number.isFinite(Number(pageSize))
+      ? Math.floor(Number(pageSize))
+      : 15
+    const normalizedPageSize = Math.min(Math.max(1, rawPageSize), 500)
 
-    if (!purchase) {
-      throw new BadRequestException('购买记录不存在')
+    const skip =
+      normalizedPageIndex >= 1
+        ? (normalizedPageIndex - 1) * normalizedPageSize
+        : normalizedPageIndex * normalizedPageSize
+
+    return {
+      pageIndex: normalizedPageIndex,
+      pageSize: normalizedPageSize,
+      skip,
+      take: normalizedPageSize,
+    }
+  }
+
+  private buildCreatedAtFilter(startDate?: string, endDate?: string) {
+    const filters: Prisma.Sql[] = []
+
+    if (startDate) {
+      const start = new Date(startDate)
+      if (!Number.isNaN(start.getTime())) {
+        filters.push(Prisma.sql`upr.created_at >= ${start}`)
+      }
     }
 
-    // 验证用户权限
-    if (purchase.userId !== userId) {
-      throw new BadRequestException('无权操作此记录')
+    if (endDate) {
+      const end = new Date(endDate)
+      if (!Number.isNaN(end.getTime())) {
+        end.setDate(end.getDate() + 1)
+        filters.push(Prisma.sql`upr.created_at < ${end}`)
+      }
     }
 
-    // 验证退款条件：只有成功状态的记录才能退款
-    if (purchase.status !== PurchaseStatusEnum.SUCCESS) {
-      throw new BadRequestException('该记录不支持退款')
+    if (filters.length === 0) {
+      return Prisma.empty
     }
 
-    // 开启事务：更新购买状态、处理退款、减少购买计数
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.userPurchaseRecord.update({
-        where: { id: purchaseId },
-        data: {
-          status: PurchaseStatusEnum.REFUNDED,
+    return Prisma.sql` AND ${Prisma.join(filters, ' AND ')}`
+  }
+
+  async getPurchasedWorks(dto: QueryPurchasedWorkDto): Promise<PurchasedWorkPageDto> {
+    const {
+      userId,
+      workType,
+      status = PurchaseStatusEnum.SUCCESS,
+      pageIndex,
+      pageSize,
+      startDate,
+      endDate,
+    } = dto
+    const { pageIndex: normalizedPageIndex, pageSize: normalizedPageSize, skip, take } =
+      this.normalizePagination(pageIndex, pageSize)
+    const createdAtFilter = this.buildCreatedAtFilter(startDate, endDate)
+    const workTypeFilter = workType
+      ? Prisma.sql` AND w.type = ${workType}`
+      : Prisma.empty
+
+    const [rows, totalRows] = await Promise.all([
+      this.prisma.$queryRaw<
+        Array<{
+          workId: number
+          workType: number
+          workName: string
+          workCover: string
+          purchasedChapterCount: bigint
+          lastPurchasedAt: Date
+        }>
+      >(Prisma.sql`
+        SELECT
+          wc.work_id AS "workId",
+          w.type AS "workType",
+          w.name AS "workName",
+          w.cover AS "workCover",
+          COUNT(*)::bigint AS "purchasedChapterCount",
+          MAX(upr.created_at) AS "lastPurchasedAt"
+        FROM user_purchase_record upr
+        INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        INNER JOIN work w ON w.id = wc.work_id
+        WHERE upr.user_id = ${userId}
+          AND upr.status = ${status}
+          AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          ${workTypeFilter}
+          ${createdAtFilter}
+        GROUP BY wc.work_id, w.type, w.name, w.cover
+        ORDER BY MAX(upr.created_at) DESC
+        LIMIT ${take} OFFSET ${skip}
+      `),
+      this.prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+        SELECT COUNT(DISTINCT wc.work_id)::bigint AS "total"
+        FROM user_purchase_record upr
+        INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        WHERE upr.user_id = ${userId}
+          AND upr.status = ${status}
+          AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          ${workTypeFilter}
+          ${createdAtFilter}
+      `),
+    ])
+
+    const total = Number(totalRows[0]?.total ?? 0n)
+
+    return {
+      list: rows.map((row) => ({
+        work: {
+          id: row.workId,
+          type: row.workType,
+          name: row.workName,
+          cover: row.workCover,
         },
-      })
+        purchasedChapterCount: Number(row.purchasedChapterCount),
+        lastPurchasedAt: row.lastPurchasedAt,
+      })),
+      total,
+      pageIndex: normalizedPageIndex,
+      pageSize: normalizedPageSize,
+    }
+  }
 
-      // 处理退款，积分流水通过 purchaseId 关联到购买记录
-      await this.processRefund(
-        tx,
-        userId,
-        purchase.price,
-        purchase.paymentMethod,
-        purchaseId,
-        purchase.targetType,
-        purchase.targetId,
-      )
+  async getPurchasedWorkChapters(
+    dto: QueryPurchasedWorkChapterDto,
+  ): Promise<PurchasedWorkChapterPageDto> {
+    const {
+      userId,
+      workId,
+      workType,
+      status = PurchaseStatusEnum.SUCCESS,
+      pageIndex,
+      pageSize,
+      startDate,
+      endDate,
+    } = dto
+    const { pageIndex: normalizedPageIndex, pageSize: normalizedPageSize, skip, take } =
+      this.normalizePagination(pageIndex, pageSize)
+    const createdAtFilter = this.buildCreatedAtFilter(startDate, endDate)
+    const workTypeFilter = workType
+      ? Prisma.sql` AND wc.work_type = ${workType}`
+      : Prisma.empty
 
-      // 减少章节购买计数
-      await tx.workChapter.update({
-        where: { id: purchase.targetId },
-        data: { purchaseCount: { increment: -1 } },
-      })
+    const [rows, totalRows] = await Promise.all([
+      this.prisma.$queryRaw<
+        Array<{
+          id: number
+          targetType: number
+          targetId: number
+          userId: number
+          price: number
+          status: number
+          paymentMethod: number
+          outTradeNo: string | null
+          createdAt: Date
+          updatedAt: Date
+          chapterId: number
+          chapterWorkId: number
+          chapterWorkType: number
+          chapterTitle: string
+          chapterSubtitle: string | null
+          chapterCover: string | null
+          chapterSortOrder: number
+          chapterIsPublished: boolean
+          chapterPublishAt: Date | null
+        }>
+      >(Prisma.sql`
+        SELECT
+          upr.id AS "id",
+          upr.target_type AS "targetType",
+          upr.target_id AS "targetId",
+          upr.user_id AS "userId",
+          upr.price AS "price",
+          upr.status AS "status",
+          upr.payment_method AS "paymentMethod",
+          upr.out_trade_no AS "outTradeNo",
+          upr.created_at AS "createdAt",
+          upr.updated_at AS "updatedAt",
+          wc.id AS "chapterId",
+          wc.work_id AS "chapterWorkId",
+          wc.work_type AS "chapterWorkType",
+          wc.title AS "chapterTitle",
+          wc.subtitle AS "chapterSubtitle",
+          wc.cover AS "chapterCover",
+          wc.sort_order AS "chapterSortOrder",
+          wc.is_published AS "chapterIsPublished",
+          wc.publish_at AS "chapterPublishAt"
+        FROM user_purchase_record upr
+        INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        WHERE upr.user_id = ${userId}
+          AND upr.status = ${status}
+          AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          AND wc.work_id = ${workId}
+          ${workTypeFilter}
+          ${createdAtFilter}
+        ORDER BY upr.created_at DESC
+        LIMIT ${take} OFFSET ${skip}
+      `),
+      this.prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+        SELECT COUNT(*)::bigint AS "total"
+        FROM user_purchase_record upr
+        INNER JOIN work_chapter wc ON wc.id = upr.target_id
+        WHERE upr.user_id = ${userId}
+          AND upr.status = ${status}
+          AND upr.target_type IN (${PurchaseTargetTypeEnum.COMIC_CHAPTER}, ${PurchaseTargetTypeEnum.NOVEL_CHAPTER})
+          AND wc.work_id = ${workId}
+          ${workTypeFilter}
+          ${createdAtFilter}
+      `),
+    ])
+    const total = Number(totalRows[0]?.total ?? 0n)
 
-      return updated
-    })
+    return {
+      list: rows.map((row) => ({
+        id: row.id,
+        targetType: row.targetType,
+        targetId: row.targetId,
+        userId: row.userId,
+        price: row.price,
+        status: row.status,
+        paymentMethod: row.paymentMethod,
+        outTradeNo: row.outTradeNo,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        chapter: {
+          id: row.chapterId,
+          workId: row.chapterWorkId,
+          workType: row.chapterWorkType,
+          title: row.chapterTitle,
+          subtitle: row.chapterSubtitle,
+          cover: row.chapterCover,
+          sortOrder: row.chapterSortOrder,
+          isPublished: row.chapterIsPublished,
+          publishAt: row.chapterPublishAt,
+        },
+      })),
+      total,
+      pageIndex: normalizedPageIndex,
+      pageSize: normalizedPageSize,
+    }
   }
 }

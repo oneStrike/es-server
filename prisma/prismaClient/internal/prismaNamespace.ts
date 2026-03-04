@@ -442,7 +442,6 @@ export const ModelName = {
   WorkAuthorRelation: 'WorkAuthorRelation',
   WorkCategoryRelation: 'WorkCategoryRelation',
   WorkCategory: 'WorkCategory',
-  WorkChapterPurchase: 'WorkChapterPurchase',
   WorkChapter: 'WorkChapter',
   WorkCommentReport: 'WorkCommentReport',
   WorkComment: 'WorkComment',
@@ -464,7 +463,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownloadRecord" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userPurchaseRecord" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapterPurchase" | "workChapter" | "workCommentReport" | "workComment" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userCommentReport" | "userComment" | "userDownloadRecord" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userPurchaseRecord" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumReplyLike" | "forumReply" | "forumReport" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapter" | "workCommentReport" | "workComment" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4760,80 +4759,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    WorkChapterPurchase: {
-      payload: Prisma.$WorkChapterPurchasePayload<ExtArgs>
-      fields: Prisma.WorkChapterPurchaseFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkChapterPurchaseFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkChapterPurchaseFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload>
-        }
-        findFirst: {
-          args: Prisma.WorkChapterPurchaseFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkChapterPurchaseFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload>
-        }
-        findMany: {
-          args: Prisma.WorkChapterPurchaseFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload>[]
-        }
-        create: {
-          args: Prisma.WorkChapterPurchaseCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload>
-        }
-        createMany: {
-          args: Prisma.WorkChapterPurchaseCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkChapterPurchaseCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload>[]
-        }
-        delete: {
-          args: Prisma.WorkChapterPurchaseDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload>
-        }
-        update: {
-          args: Prisma.WorkChapterPurchaseUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkChapterPurchaseDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkChapterPurchaseUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkChapterPurchaseUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkChapterPurchaseUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkChapterPurchasePayload>
-        }
-        aggregate: {
-          args: Prisma.WorkChapterPurchaseAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkChapterPurchase>
-        }
-        groupBy: {
-          args: Prisma.WorkChapterPurchaseGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkChapterPurchaseGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkChapterPurchaseCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkChapterPurchaseCountAggregateOutputType> | number
-        }
-      }
-    }
     WorkChapter: {
       payload: Prisma.$WorkChapterPayload<ExtArgs>
       fields: Prisma.WorkChapterFieldRefs
@@ -6341,16 +6266,6 @@ export const WorkCategoryScalarFieldEnum = {
 export type WorkCategoryScalarFieldEnum = (typeof WorkCategoryScalarFieldEnum)[keyof typeof WorkCategoryScalarFieldEnum]
 
 
-export const WorkChapterPurchaseScalarFieldEnum = {
-  id: 'id',
-  chapterId: 'chapterId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type WorkChapterPurchaseScalarFieldEnum = (typeof WorkChapterPurchaseScalarFieldEnum)[keyof typeof WorkChapterPurchaseScalarFieldEnum]
-
-
 export const WorkChapterScalarFieldEnum = {
   id: 'id',
   workId: 'workId',
@@ -6807,7 +6722,6 @@ export type GlobalOmitConfig = {
   workAuthorRelation?: Prisma.WorkAuthorRelationOmit
   workCategoryRelation?: Prisma.WorkCategoryRelationOmit
   workCategory?: Prisma.WorkCategoryOmit
-  workChapterPurchase?: Prisma.WorkChapterPurchaseOmit
   workChapter?: Prisma.WorkChapterOmit
   workCommentReport?: Prisma.WorkCommentReportOmit
   workComment?: Prisma.WorkCommentOmit

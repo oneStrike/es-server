@@ -3,7 +3,7 @@ import { BaseService, Prisma } from '@libs/base/database'
 import {
   PurchaseStatusEnum,
   PurchaseTargetTypeEnum,
-} from '@libs/interaction/purchase'
+} from '@libs/interaction/purchase/purchase.constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { PERMISSION_ERROR_MESSAGE } from './content-permission.constant'
 import {
@@ -155,10 +155,7 @@ export class ContentPermissionService extends BaseService {
   /**
    * 检查用户是否已成功购买指定章节
    */
-  private async validateChapterPurchasePermission(
-    userId: number,
-    chapterId: number,
-  ) {
+  async validateChapterPurchasePermission(userId: number, chapterId: number) {
     const purchased = await this.userPurchaseRecord.findFirst({
       where: {
         targetType: {
@@ -172,11 +169,7 @@ export class ContentPermissionService extends BaseService {
         status: PurchaseStatusEnum.SUCCESS,
       },
     })
-    if (!purchased) {
-      throw new BadRequestException(
-        PERMISSION_ERROR_MESSAGE.CHAPTER_PURCHASE_REQUIRED,
-      )
-    }
+    return !!purchased
   }
 
   private async checkAccessPermission(
@@ -219,7 +212,11 @@ export class ContentPermissionService extends BaseService {
         )
       }
       await this.validateUserExists(userId)
-      await this.validateChapterPurchasePermission(userId, chapterId)
+      if (!(await this.validateChapterPurchasePermission(userId, chapterId))) {
+        throw new BadRequestException(
+          PERMISSION_ERROR_MESSAGE.CHAPTER_PURCHASE_REQUIRED,
+        )
+      }
       return true
     }
 

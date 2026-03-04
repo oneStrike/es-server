@@ -82,7 +82,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof Error && 'code' in exception) {
       const code = (exception as { code?: any }).code
       const knownMessage = this.errorMessageMap[code]
-      const fallbackMessage = knownMessage || exception.message
+      const fallbackMessage = knownMessage || '内部服务器错误'
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         message: fallbackMessage,

@@ -346,11 +346,6 @@ export type WorkCategoryRelation = Prisma.WorkCategoryRelationModel
  */
 export type WorkCategory = Prisma.WorkCategoryModel
 /**
- * Model WorkChapterPurchase
- * 章节购买记录
- */
-export type WorkChapterPurchase = Prisma.WorkChapterPurchaseModel
-/**
  * Model WorkChapter
  * 通用章节模型
  */

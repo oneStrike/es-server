@@ -241,16 +241,25 @@ deploy_project() {
         log "部署服务..."
 
         if [ "$project_name" = "es-server" ]; then
-            docker compose stop app-server admin-server 2>/dev/null || true
-        fi
+            # admin-server 和 app-server 都执行 down 和 up
+            log "重启 admin-server..."
+            docker compose down admin-server 2>/dev/null || true
+            docker compose up -d admin-server --remove-orphans || { error "admin-server 启动失败"; popd > /dev/null; return 1; }
 
-        # shellcheck disable=SC2086
-        if docker compose up -d --remove-orphans $SERVICE_NAME; then
-            log "部署成功"
+            log "重启 app-server..."
+            docker compose down app-server 2>/dev/null || true
+            docker compose up -d app-server --remove-orphans || { error "app-server 启动失败"; popd > /dev/null; return 1; }
         else
-            error "部署失败"
-            popd > /dev/null
-            return 1
+            # 其他项目也使用 down + up 确保新镜像生效
+            # shellcheck disable=SC2086
+            docker compose down $SERVICE_NAME 2>/dev/null || true
+            if docker compose up -d --remove-orphans $SERVICE_NAME; then
+                log "部署成功"
+            else
+                error "部署失败"
+                popd > /dev/null
+                return 1
+            fi
         fi
     fi
 

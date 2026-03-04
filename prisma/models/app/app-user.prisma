@@ -68,8 +68,6 @@ model AppUser {
   forumTopics               ForumTopic[]                @relation("UserTopics")
   /// 最后回复主题关联
   lastReplyTopics           ForumTopic[]                @relation("UserLastReplyTopics")
-  /// 章节购买关联
-  chapterPurchases          WorkChapterPurchase[]
   /// 作品评论关联
   workComments              WorkComment[]
   /// 评论举报关联（举报人）
