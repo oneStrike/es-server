@@ -3,7 +3,7 @@ export async function createInitialAppAnnouncement(prisma: any) {
   const homePage = await prisma.appPage.findFirst({ where: { code: 'home' } })
   const vipPage = await prisma.appPage.findFirst({ where: { code: 'vip_center' } })
 
-  // Use fallback ID 1 if page not found (though it should exist due to seed order)
+  // Use fallback ID 1 if page not found (though it should exist due to seed sortOrder)
   const homePageId = homePage?.id || 1
   const vipPageId = vipPage?.id || 1
 

@@ -34,6 +34,10 @@ export async function createInitialWorkChapters(prisma: any) {
           commentCount: 0,
           purchaseCount: 0,
           wordCount: work.type === 2 ? 3000 + Math.floor(Math.random() * 2000) : 0,
+          requiredViewLevelId: null,
+          price: 0,
+          downloadCount: 0,
+          remark: null,
         },
       })
     }

@@ -48,6 +48,13 @@ export async function createInitialWorkComments(prisma: any) {
           floor: i + 1,
           isHidden: false,
           auditStatus: 1,
+          replyToId: null,
+          actualReplyToId: null,
+          auditById: null,
+          auditRole: null,
+          auditReason: null,
+          auditAt: null,
+          sensitiveWordHits: null,
         },
       })
     }

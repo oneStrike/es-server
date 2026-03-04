@@ -3,7 +3,7 @@ interface IForumBadgeData {
   description: string
   icon: string
   type: number
-  order: number
+  sortOrder: number
   isEnabled: boolean
   business?: string
   eventKey?: string | null
@@ -16,7 +16,7 @@ export async function createInitialForumBadges(prisma: any) {
       description: '完成首次发帖',
       icon: '🌱',
       type: 2,
-      order: 1,
+      sortOrder: 1,
       isEnabled: true,
       business: 'forum',
       eventKey: 'forum.topic.create',
@@ -26,7 +26,7 @@ export async function createInitialForumBadges(prisma: any) {
       description: '发布超过10个主题',
       icon: '🏆',
       type: 2,
-      order: 2,
+      sortOrder: 2,
       isEnabled: true,
       business: 'forum',
       eventKey: 'forum.topic.create',
@@ -36,7 +36,7 @@ export async function createInitialForumBadges(prisma: any) {
       description: '回复超过50个问题',
       icon: '❤️',
       type: 2,
-      order: 3,
+      sortOrder: 3,
       isEnabled: true,
       business: 'forum',
       eventKey: 'forum.reply.create',
@@ -46,7 +46,7 @@ export async function createInitialForumBadges(prisma: any) {
       description: '获得超过100个赞',
       icon: '⭐',
       type: 2,
-      order: 4,
+      sortOrder: 4,
       isEnabled: true,
       business: 'forum',
       eventKey: 'forum.topic.like',
@@ -56,7 +56,7 @@ export async function createInitialForumBadges(prisma: any) {
       description: '获得超过500个赞',
       icon: '👑',
       type: 2,
-      order: 5,
+      sortOrder: 5,
       isEnabled: true,
       business: 'forum',
       eventKey: 'forum.topic.like',
@@ -66,7 +66,7 @@ export async function createInitialForumBadges(prisma: any) {
       description: '认证版主徽章',
       icon: '🛡️',
       type: 1,
-      order: 6,
+      sortOrder: 6,
       isEnabled: true,
       business: 'forum',
       eventKey: null,
@@ -85,7 +85,7 @@ export async function createInitialForumBadges(prisma: any) {
           description: badgeData.description,
           icon: badgeData.icon,
           type: badgeData.type,
-          sortOrder: badgeData.order,
+          sortOrder: badgeData.sortOrder,
           isEnabled: badgeData.isEnabled,
           business: badgeData.business,
           eventKey: badgeData.eventKey ?? undefined,

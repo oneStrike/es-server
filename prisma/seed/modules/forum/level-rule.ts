@@ -3,7 +3,7 @@ interface IForumLevelRuleData {
   requiredExperience: number
   icon: string
   description: string
-  order: number
+  sortOrder: number
   isEnabled: boolean
   color?: string
   badge?: string
@@ -25,7 +25,7 @@ export async function createInitialForumLevelRules(prisma: any) {
       requiredExperience: 0,
       icon: '🥉',
       description: '新注册用户，享受基础权益',
-      order: 1,
+      sortOrder: 1,
       isEnabled: true,
       color: '#909399',
       dailyTopicLimit: 5,
@@ -43,7 +43,7 @@ export async function createInitialForumLevelRules(prisma: any) {
       requiredExperience: 100,
       icon: '🥈',
       description: '累计100积分，享受中级会员权益',
-      order: 2,
+      sortOrder: 2,
       isEnabled: true,
       color: '#409EFF',
       dailyTopicLimit: 10,
@@ -61,7 +61,7 @@ export async function createInitialForumLevelRules(prisma: any) {
       requiredExperience: 500,
       icon: '🥇',
       description: '累计500积分，享受高级会员权益',
-      order: 3,
+      sortOrder: 3,
       isEnabled: true,
       color: '#67C23A',
       dailyTopicLimit: 20,
@@ -79,7 +79,7 @@ export async function createInitialForumLevelRules(prisma: any) {
       requiredExperience: 2000,
       icon: '💎',
       description: '累计2000积分，享受资深会员权益',
-      order: 4,
+      sortOrder: 4,
       isEnabled: true,
       color: '#E6A23C',
       dailyTopicLimit: 30,
@@ -97,7 +97,7 @@ export async function createInitialForumLevelRules(prisma: any) {
       requiredExperience: 5000,
       icon: '👑',
       description: '累计5000积分，享受专家会员权益',
-      order: 5,
+      sortOrder: 5,
       isEnabled: true,
       color: '#F56C6C',
       dailyTopicLimit: 50,
@@ -124,7 +124,7 @@ export async function createInitialForumLevelRules(prisma: any) {
           requiredExperience: levelData.requiredExperience,
           icon: levelData.icon,
           description: levelData.description,
-          sortOrder: levelData.order,
+          sortOrder: levelData.sortOrder,
           isEnabled: levelData.isEnabled,
           color: levelData.color,
           badge: levelData.badge,

@@ -1,11 +1,18 @@
 interface IDictionaryData {
   name: string
   code: string
+  cover?: string
+  isEnabled?: boolean
+  description?: string
 }
 
 interface IDictionaryItemData {
   name: string
   code: string
+  sortOrder?: number
+  cover?: string
+  isEnabled?: boolean
+  description?: string
 }
 
 export async function createInitialDataDictionary(prisma: any) {

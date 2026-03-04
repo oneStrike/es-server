@@ -23,8 +23,8 @@ interface IWorkData {
   copyright: string
   disclaimer: string
   isPublished: boolean
-  publishAt: Date
-  lastUpdated: Date
+  publishAt: Date | null
+  lastUpdated: Date | null
   viewCount: number
   favoriteCount: number
   likeCount: number
@@ -36,6 +36,12 @@ interface IWorkData {
   isNew: boolean
   recommendWeight: number
   type: number
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  chapterPrice?: number
+  canComment?: boolean
+  commentCount?: number
+  downloadCount?: number
 }
 
 const COMIC_WORKS: IWorkData[] = [

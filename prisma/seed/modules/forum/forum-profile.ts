@@ -23,6 +23,7 @@ export async function createInitialForumProfile(prisma: any) {
     favoriteCount: 0,
     signature: '这是我的个人签名',
     bio: '这是我的个人简介',
+    deletedAt: null,
   }
 
   await prisma.appUser.update({
