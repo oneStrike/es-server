@@ -223,16 +223,12 @@ export class ForumProfileService extends BaseService {
       orderBy: { sortOrder: 'asc' },
     })
 
-    if (!defaultLevel) {
-      throw new BadRequestException('系统配置错误：找不到默认论坛等级')
-    }
-
     await tx.appUser.update({
       where: { id: userId },
       data: {
         points: UserDefaults.INITIAL_POINTS,
         experience: UserDefaults.INITIAL_EXPERIENCE,
-        levelId: defaultLevel.id,
+        levelId: defaultLevel?.id ?? null,
         status: UserStatusEnum.NORMAL,
       },
     })

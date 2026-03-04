@@ -126,7 +126,7 @@ export class CommentService extends BaseService {
    * @param targetId - 目标ID
    * @throws BadRequestException 目标不允许评论时抛出异常
    */
-    private async ensureTargetCanComment(
+  private async ensureTargetCanComment(
     targetType: InteractionTargetType,
     targetId: number,
   ) {
@@ -300,9 +300,8 @@ export class CommentService extends BaseService {
     content: string,
     replyToId?: number,
   ): Promise<any> {
-    
-    await this.ensureUserCanComment(userId)
     await this.ensureTargetCanComment(targetType, targetId)
+    await this.ensureUserCanComment(userId)
 
     const decision = await this.resolveAuditDecision(content)
     let floor: number | null = null
@@ -332,10 +331,10 @@ export class CommentService extends BaseService {
         },
       })
       if (!replyTo || replyTo.deletedAt) {
-        throw new BadRequestException('回复目标不存�?)
+        throw new BadRequestException('Reply target not found')
       }
       if (replyTo.targetType !== targetType || replyTo.targetId !== targetId) {
-        throw new BadRequestException('回复目标与当前评论目标不一�?)
+        throw new BadRequestException('Reply target does not match current target')
       }
       actualReplyToId = replyTo.replyToId
         ? (replyTo.actualReplyToId ?? replyTo.id)
@@ -386,7 +385,7 @@ export class CommentService extends BaseService {
     })
 
     if (!comment || comment.userId !== userId) {
-      throw new BadRequestException('评论不存在或无权限删�?)
+      throw new BadRequestException('Comment not found or no permission to delete')
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -415,7 +414,7 @@ export class CommentService extends BaseService {
       where: { id: commentId, deletedAt: null },
     })
     if (!comment) {
-      throw new NotFoundException('评论不存�?)
+      throw new NotFoundException('Comment not found')
     }
     await this.prisma.$transaction(async (tx) => {
       await tx.userComment.update({
@@ -615,7 +614,7 @@ export class CommentService extends BaseService {
       },
     })
     if (!comment) {
-      throw new NotFoundException('评论不存�?)
+      throw new NotFoundException('Comment not found')
     }
     return comment
   }
@@ -647,7 +646,7 @@ export class CommentService extends BaseService {
       },
     })
     if (!comment) {
-      throw new NotFoundException('评论不存�?)
+      throw new NotFoundException('Comment not found')
     }
     const beforeVisible = this.isVisible(comment)
     const updated = await this.prisma.userComment.update({
@@ -707,7 +706,7 @@ export class CommentService extends BaseService {
       },
     })
     if (!comment) {
-      throw new NotFoundException('评论不存�?)
+      throw new NotFoundException('Comment not found')
     }
     const beforeVisible = this.isVisible(comment)
     const updated = await this.prisma.userComment.update({
@@ -765,4 +764,3 @@ export class CommentService extends BaseService {
     return { targetType, targetId, commentCount: count }
   }
 }
-
