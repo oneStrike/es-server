@@ -1,5 +1,5 @@
 import { BaseService } from '@libs/base/database'
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { ReportStatus } from '../interaction.constant'
 
 @Injectable()
@@ -16,7 +16,7 @@ export class CommentReportService extends BaseService {
     })
 
     if (!comment) {
-      throw new Error('评论不存在')
+      throw new NotFoundException('评论不存在')
     }
 
     const existing = await this.prisma.userCommentReport.findFirst({
@@ -28,7 +28,7 @@ export class CommentReportService extends BaseService {
     })
 
     if (existing) {
-      throw new Error('已经举报过该评论，请等待处理')
+      throw new BadRequestException('已经举报过该评论，请等待处理')
     }
 
     await this.prisma.userCommentReport.create({
@@ -79,6 +79,16 @@ export class CommentReportService extends BaseService {
     status: ReportStatus.RESOLVED | ReportStatus.REJECTED,
     handlingNote?: string,
   ): Promise<void> {
+    const report = await this.prisma.userCommentReport.findUnique({
+      where: { id: reportId },
+      select: { id: true, status: true },
+    })
+    if (!report) {
+      throw new NotFoundException('举报记录不存在')
+    }
+    if (report.status !== ReportStatus.PENDING && report.status !== ReportStatus.PROCESSING) {
+      throw new BadRequestException('举报已处理，请勿重复处理')
+    }
     await this.prisma.userCommentReport.update({
       where: { id: reportId },
       data: {

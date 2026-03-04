@@ -58,6 +58,8 @@ model Work {
   favoriteCount       Int       @default(0)
   /// 点赞数
   likeCount           Int       @default(0)
+  /// 评论数
+  commentCount        Int       @default(0) @map("comment_count")
   /// 下载数
   downloadCount       Int       @default(0)
   /// 评分（1-10分，保留一位小数）
@@ -112,5 +114,7 @@ model Work {
   @@index([viewRule])
   /// 阅读所需会员等级索引
   @@index([requiredViewLevelId])
+  /// 评论数索引
+  @@index([commentCount])
   @@map("work")
 }

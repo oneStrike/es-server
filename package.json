@@ -32,6 +32,7 @@
     "prisma:deploy": "pnpm prisma:migrate:deploy && pnpm prisma:seed",
     "prisma:update": "pnpm prisma:generate && pnpm prisma:migrate:dev && pnpm prisma:deploy",
     "prisma:migrate-interaction": "tsx prisma/scripts/run-migration.ts",
+    "prisma:migrate-comment-unified": "tsx prisma/scripts/comment/full-migrate-to-user-comment.ts",
     "publish-api:admin": "tsx publish-api.ts --app admin",
     "publish-api:app": "tsx publish-api.ts --app app"
   },

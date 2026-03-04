@@ -37,6 +37,7 @@ export type WorkAvgAggregateOutputType = {
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
+  commentCount: number | null
   downloadCount: number | null
   rating: number | null
   ratingCount: number | null
@@ -54,6 +55,7 @@ export type WorkSumAggregateOutputType = {
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
+  commentCount: number | null
   downloadCount: number | null
   rating: number | null
   ratingCount: number | null
@@ -90,6 +92,7 @@ export type WorkMinAggregateOutputType = {
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
+  commentCount: number | null
   downloadCount: number | null
   rating: number | null
   ratingCount: number | null
@@ -129,6 +132,7 @@ export type WorkMaxAggregateOutputType = {
   viewCount: number | null
   favoriteCount: number | null
   likeCount: number | null
+  commentCount: number | null
   downloadCount: number | null
   rating: number | null
   ratingCount: number | null
@@ -168,6 +172,7 @@ export type WorkCountAggregateOutputType = {
   viewCount: number
   favoriteCount: number
   likeCount: number
+  commentCount: number
   downloadCount: number
   rating: number
   ratingCount: number
@@ -190,6 +195,7 @@ export type WorkAvgAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  commentCount?: true
   downloadCount?: true
   rating?: true
   ratingCount?: true
@@ -207,6 +213,7 @@ export type WorkSumAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  commentCount?: true
   downloadCount?: true
   rating?: true
   ratingCount?: true
@@ -243,6 +250,7 @@ export type WorkMinAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  commentCount?: true
   downloadCount?: true
   rating?: true
   ratingCount?: true
@@ -282,6 +290,7 @@ export type WorkMaxAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  commentCount?: true
   downloadCount?: true
   rating?: true
   ratingCount?: true
@@ -321,6 +330,7 @@ export type WorkCountAggregateInputType = {
   viewCount?: true
   favoriteCount?: true
   likeCount?: true
+  commentCount?: true
   downloadCount?: true
   rating?: true
   ratingCount?: true
@@ -447,6 +457,7 @@ export type WorkGroupByOutputType = {
   viewCount: number
   favoriteCount: number
   likeCount: number
+  commentCount: number
   downloadCount: number
   rating: number | null
   ratingCount: number
@@ -509,6 +520,7 @@ export type WorkWhereInput = {
   viewCount?: Prisma.IntFilter<"Work"> | number
   favoriteCount?: Prisma.IntFilter<"Work"> | number
   likeCount?: Prisma.IntFilter<"Work"> | number
+  commentCount?: Prisma.IntFilter<"Work"> | number
   downloadCount?: Prisma.IntFilter<"Work"> | number
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
@@ -556,6 +568,7 @@ export type WorkOrderByWithRelationInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
@@ -606,6 +619,7 @@ export type WorkWhereUniqueInput = Prisma.AtLeast<{
   viewCount?: Prisma.IntFilter<"Work"> | number
   favoriteCount?: Prisma.IntFilter<"Work"> | number
   likeCount?: Prisma.IntFilter<"Work"> | number
+  commentCount?: Prisma.IntFilter<"Work"> | number
   downloadCount?: Prisma.IntFilter<"Work"> | number
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
@@ -653,6 +667,7 @@ export type WorkOrderByWithAggregationInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   rating?: Prisma.SortOrderInput | Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
@@ -700,6 +715,7 @@ export type WorkScalarWhereWithAggregatesInput = {
   viewCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   favoriteCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   likeCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
+  commentCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   downloadCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
   rating?: Prisma.FloatNullableWithAggregatesFilter<"Work"> | number | null
   ratingCount?: Prisma.IntWithAggregatesFilter<"Work"> | number
@@ -737,6 +753,7 @@ export type WorkCreateInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -784,6 +801,7 @@ export type WorkUncheckedCreateInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -828,6 +846,7 @@ export type WorkUpdateInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -875,6 +894,7 @@ export type WorkUncheckedUpdateInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -921,6 +941,7 @@ export type WorkCreateManyInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -958,6 +979,7 @@ export type WorkUpdateManyMutationInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -997,6 +1019,7 @@ export type WorkUncheckedUpdateManyInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1056,6 +1079,7 @@ export type WorkCountOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
@@ -1076,6 +1100,7 @@ export type WorkAvgOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
@@ -1112,6 +1137,7 @@ export type WorkMaxOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
@@ -1151,6 +1177,7 @@ export type WorkMinOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
@@ -1171,6 +1198,7 @@ export type WorkSumOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   downloadCount?: Prisma.SortOrder
   rating?: Prisma.SortOrder
   ratingCount?: Prisma.SortOrder
@@ -1363,6 +1391,7 @@ export type WorkCreateWithoutRequiredViewLevelInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -1408,6 +1437,7 @@ export type WorkUncheckedCreateWithoutRequiredViewLevelInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -1483,6 +1513,7 @@ export type WorkScalarWhereInput = {
   viewCount?: Prisma.IntFilter<"Work"> | number
   favoriteCount?: Prisma.IntFilter<"Work"> | number
   likeCount?: Prisma.IntFilter<"Work"> | number
+  commentCount?: Prisma.IntFilter<"Work"> | number
   downloadCount?: Prisma.IntFilter<"Work"> | number
   rating?: Prisma.FloatNullableFilter<"Work"> | number | null
   ratingCount?: Prisma.IntFilter<"Work"> | number
@@ -1520,6 +1551,7 @@ export type WorkCreateWithoutComicInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -1566,6 +1598,7 @@ export type WorkUncheckedCreateWithoutComicInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -1625,6 +1658,7 @@ export type WorkUpdateWithoutComicInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1671,6 +1705,7 @@ export type WorkUncheckedUpdateWithoutComicInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1714,6 +1749,7 @@ export type WorkCreateWithoutNovelInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -1760,6 +1796,7 @@ export type WorkUncheckedCreateWithoutNovelInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -1819,6 +1856,7 @@ export type WorkUpdateWithoutNovelInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1865,6 +1903,7 @@ export type WorkUncheckedUpdateWithoutNovelInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1908,6 +1947,7 @@ export type WorkCreateWithoutAuthorsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -1954,6 +1994,7 @@ export type WorkUncheckedCreateWithoutAuthorsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2013,6 +2054,7 @@ export type WorkUpdateWithoutAuthorsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2059,6 +2101,7 @@ export type WorkUncheckedUpdateWithoutAuthorsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2102,6 +2145,7 @@ export type WorkCreateWithoutCategoriesInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2148,6 +2192,7 @@ export type WorkUncheckedCreateWithoutCategoriesInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2207,6 +2252,7 @@ export type WorkUpdateWithoutCategoriesInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2253,6 +2299,7 @@ export type WorkUncheckedUpdateWithoutCategoriesInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2296,6 +2343,7 @@ export type WorkCreateWithoutChaptersInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2342,6 +2390,7 @@ export type WorkUncheckedCreateWithoutChaptersInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2401,6 +2450,7 @@ export type WorkUpdateWithoutChaptersInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2447,6 +2497,7 @@ export type WorkUncheckedUpdateWithoutChaptersInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2490,6 +2541,7 @@ export type WorkCreateWithoutCommentsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2536,6 +2588,7 @@ export type WorkUncheckedCreateWithoutCommentsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2595,6 +2648,7 @@ export type WorkUpdateWithoutCommentsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2641,6 +2695,7 @@ export type WorkUncheckedUpdateWithoutCommentsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2684,6 +2739,7 @@ export type WorkCreateWithoutTagsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2730,6 +2786,7 @@ export type WorkUncheckedCreateWithoutTagsInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2789,6 +2846,7 @@ export type WorkUpdateWithoutTagsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2835,6 +2893,7 @@ export type WorkUncheckedUpdateWithoutTagsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2879,6 +2938,7 @@ export type WorkCreateManyRequiredViewLevelInput = {
   viewCount?: number
   favoriteCount?: number
   likeCount?: number
+  commentCount?: number
   downloadCount?: number
   rating?: number | null
   ratingCount?: number
@@ -2916,6 +2976,7 @@ export type WorkUpdateWithoutRequiredViewLevelInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -2961,6 +3022,7 @@ export type WorkUncheckedUpdateWithoutRequiredViewLevelInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3006,6 +3068,7 @@ export type WorkUncheckedUpdateManyWithoutRequiredViewLevelInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
   rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
@@ -3112,6 +3175,7 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
+  commentCount?: boolean
   downloadCount?: boolean
   rating?: boolean
   ratingCount?: boolean
@@ -3160,6 +3224,7 @@ export type WorkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
+  commentCount?: boolean
   downloadCount?: boolean
   rating?: boolean
   ratingCount?: boolean
@@ -3200,6 +3265,7 @@ export type WorkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
+  commentCount?: boolean
   downloadCount?: boolean
   rating?: boolean
   ratingCount?: boolean
@@ -3240,6 +3306,7 @@ export type WorkSelectScalar = {
   viewCount?: boolean
   favoriteCount?: boolean
   likeCount?: boolean
+  commentCount?: boolean
   downloadCount?: boolean
   rating?: boolean
   ratingCount?: boolean
@@ -3249,7 +3316,7 @@ export type WorkSelectScalar = {
   deletedAt?: boolean
 }
 
-export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "remark" | "isPublished" | "isRecommended" | "isHot" | "isNew" | "publishAt" | "lastUpdated" | "viewRule" | "requiredViewLevelId" | "chapterPrice" | "canComment" | "recommendWeight" | "viewCount" | "favoriteCount" | "likeCount" | "downloadCount" | "rating" | "ratingCount" | "popularity" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
+export type WorkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "name" | "alias" | "cover" | "description" | "language" | "region" | "ageRating" | "serialStatus" | "publisher" | "originalSource" | "copyright" | "disclaimer" | "remark" | "isPublished" | "isRecommended" | "isHot" | "isNew" | "publishAt" | "lastUpdated" | "viewRule" | "requiredViewLevelId" | "chapterPrice" | "canComment" | "recommendWeight" | "viewCount" | "favoriteCount" | "likeCount" | "commentCount" | "downloadCount" | "rating" | "ratingCount" | "popularity" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["work"]>
 export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comic?: boolean | Prisma.Work$comicArgs<ExtArgs>
   novel?: boolean | Prisma.Work$novelArgs<ExtArgs>
@@ -3421,6 +3488,10 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 点赞数
      */
     likeCount: number
+    /**
+     * 评论数
+     */
+    commentCount: number
     /**
      * 下载数
      */
@@ -3909,6 +3980,7 @@ export interface WorkFieldRefs {
   readonly viewCount: Prisma.FieldRef<"Work", 'Int'>
   readonly favoriteCount: Prisma.FieldRef<"Work", 'Int'>
   readonly likeCount: Prisma.FieldRef<"Work", 'Int'>
+  readonly commentCount: Prisma.FieldRef<"Work", 'Int'>
   readonly downloadCount: Prisma.FieldRef<"Work", 'Int'>
   readonly rating: Prisma.FieldRef<"Work", 'Float'>
   readonly ratingCount: Prisma.FieldRef<"Work", 'Int'>

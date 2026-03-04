@@ -43,6 +43,8 @@ model ForumTopic {
   replyCount        Int       @default(0) @map("reply_count")
   /// 点赞数
   likeCount         Int       @default(0) @map("like_count")
+  /// 评论数
+  commentCount      Int       @default(0) @map("comment_count")
   /// 收藏数
   favoriteCount     Int       @default(0) @map("favorite_count")
   /// 最后回复时间
@@ -90,6 +92,8 @@ model ForumTopic {
   @@index([replyCount])
   /// 点赞数索引
   @@index([likeCount])
+  /// 评论数索引
+  @@index([commentCount])
   /// 收藏数索引
   @@index([favoriteCount])
   /// 最后回复时间索引

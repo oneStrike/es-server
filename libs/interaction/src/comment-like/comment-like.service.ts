@@ -1,9 +1,16 @@
 import { BaseService } from '@libs/base/database'
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 
 @Injectable()
 export class CommentLikeService extends BaseService {
   async likeComment(commentId: number, userId: number): Promise<void> {
+    const comment = await this.prisma.userComment.findUnique({
+      where: { id: commentId, deletedAt: null },
+      select: { id: true },
+    })
+    if (!comment) {
+      throw new NotFoundException('评论不存在')
+    }
     const existing = await this.prisma.userCommentLike.findUnique({
       where: {
         commentId_userId: {
@@ -14,7 +21,7 @@ export class CommentLikeService extends BaseService {
     })
 
     if (existing) {
-      throw new Error('已经点赞过该评论')
+      throw new BadRequestException('已经点赞过该评论')
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -47,7 +54,7 @@ export class CommentLikeService extends BaseService {
     })
 
     if (!existing) {
-      throw new Error('尚未点赞该评论')
+      throw new BadRequestException('尚未点赞该评论')
     }
 
     await this.prisma.$transaction(async (tx) => {

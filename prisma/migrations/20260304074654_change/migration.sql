@@ -1,0 +1,5 @@
+-- RenameIndex
+ALTER INDEX "user_comment_target_type_target_id_audit_status_is_hidden_delet" RENAME TO "user_comment_target_type_target_id_audit_status_is_hidden_d_idx";
+
+-- RenameIndex
+ALTER INDEX "user_purchase_record_user_id_status_target_type_created_at_targ" RENAME TO "user_purchase_record_user_id_status_target_type_created_at__idx";

@@ -1,50 +1,137 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsInt, IsNotEmpty, IsOptional, IsString, Min, MinLength } from 'class-validator'
-import { InteractionTargetType } from '../../interaction.constant'
+import {
+  BooleanProperty,
+  EnumProperty,
+  NumberProperty,
+  StringProperty,
+} from '@libs/base/decorators'
+import { BaseDto, PageDto } from '@libs/base/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import { AuditStatus, InteractionTargetType } from '../../interaction.constant'
 
-export class CreateCommentDto {
-  @ApiProperty({
-    description: '目标类型：1=漫画, 2=小说, 3=漫画章节, 4=小说章节, 5=论坛主题',
+export class BaseCommentDto extends BaseDto {
+  @EnumProperty({
+    description: 'Target type',
     enum: InteractionTargetType,
-    example: 1,
+    example: InteractionTargetType.COMIC,
+    required: true,
   })
-  @IsInt()
-  @IsNotEmpty()
   targetType!: InteractionTargetType
 
-  @ApiProperty({
-    description: '目标ID',
+  @NumberProperty({
+    description: 'Target ID',
     example: 1,
+    required: true,
+    min: 1,
   })
-  @IsInt()
-  @Min(1)
-  @IsNotEmpty()
   targetId!: number
 
-  @ApiProperty({
-    description: '评论内容',
-    example: '这个作品真不错！',
+  @NumberProperty({
+    description: 'Comment user ID',
+    example: 1,
+    required: true,
+    min: 1,
   })
-  @IsString()
-  @MinLength(1)
-  @IsNotEmpty()
+  userId!: number
+
+  @StringProperty({
+    description: 'Comment content',
+    example: 'Nice work!',
+    required: true,
+    minLength: 1,
+  })
   content!: string
 
-  @ApiPropertyOptional({
-    description: '回复的评论ID（楼中楼）',
+  @NumberProperty({
+    description: 'Replied comment ID',
     example: 1,
+    required: false,
+    min: 1,
   })
-  @IsInt()
-  @IsOptional()
   replyToId?: number
+
+  @NumberProperty({
+    description: 'Floor number',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  floor?: number
+
+  @BooleanProperty({
+    description: 'Hidden status',
+    example: false,
+    required: true,
+    default: false,
+  })
+  isHidden!: boolean
+
+  @EnumProperty({
+    description: 'Audit status',
+    enum: AuditStatus,
+    example: AuditStatus.APPROVED,
+    required: true,
+    default: AuditStatus.APPROVED,
+  })
+  auditStatus!: AuditStatus
+
+  @StringProperty({
+    description: 'Audit reason',
+    example: 'policy violation',
+    required: false,
+    maxLength: 500,
+  })
+  auditReason?: string
 }
 
-export class DeleteCommentDto {
-  @ApiProperty({
-    description: '评论ID',
+export class CommentIdDto {
+  @NumberProperty({
+    description: 'Comment ID',
     example: 1,
+    required: true,
+    min: 1,
   })
-  @IsInt()
-  @IsNotEmpty()
   commentId!: number
 }
+
+export class CreateCommentDto extends PickType(BaseCommentDto, [
+  'targetType',
+  'targetId',
+  'content',
+  'replyToId',
+]) {}
+
+export class DeleteCommentDto extends CommentIdDto {}
+
+export class QueryCommentPageDto extends IntersectionType(
+  PageDto,
+  PickType(PartialType(BaseCommentDto), [
+    'targetType',
+    'targetId',
+    'auditStatus',
+    'isHidden',
+  ]),
+) {
+  @BooleanProperty({
+    description: 'Only root comments',
+    example: true,
+    required: false,
+  })
+  rootOnly?: boolean
+}
+
+export class UpdateCommentAuditDto extends IntersectionType(
+  CommentIdDto,
+  PickType(BaseCommentDto, ['auditStatus', 'auditReason']),
+) {}
+
+export class UpdateCommentHiddenDto extends IntersectionType(
+  CommentIdDto,
+  PickType(BaseCommentDto, ['isHidden']),
+) {}
+
+export class RecalcCommentCountDto extends PickType(BaseCommentDto, [
+  'targetType',
+  'targetId',
+]) {}
+
+export class QueryCommentRepliesDto extends IntersectionType(PageDto, CommentIdDto) {}

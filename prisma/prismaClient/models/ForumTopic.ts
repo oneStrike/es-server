@@ -38,6 +38,7 @@ export type ForumTopicAvgAggregateOutputType = {
   viewCount: number | null
   replyCount: number | null
   likeCount: number | null
+  commentCount: number | null
   favoriteCount: number | null
 }
 
@@ -53,6 +54,7 @@ export type ForumTopicSumAggregateOutputType = {
   viewCount: number | null
   replyCount: number | null
   likeCount: number | null
+  commentCount: number | null
   favoriteCount: number | null
 }
 
@@ -76,6 +78,7 @@ export type ForumTopicMinAggregateOutputType = {
   viewCount: number | null
   replyCount: number | null
   likeCount: number | null
+  commentCount: number | null
   favoriteCount: number | null
   lastReplyAt: Date | null
   createdAt: Date | null
@@ -103,6 +106,7 @@ export type ForumTopicMaxAggregateOutputType = {
   viewCount: number | null
   replyCount: number | null
   likeCount: number | null
+  commentCount: number | null
   favoriteCount: number | null
   lastReplyAt: Date | null
   createdAt: Date | null
@@ -131,6 +135,7 @@ export type ForumTopicCountAggregateOutputType = {
   viewCount: number
   replyCount: number
   likeCount: number
+  commentCount: number
   favoriteCount: number
   lastReplyAt: number
   createdAt: number
@@ -152,6 +157,7 @@ export type ForumTopicAvgAggregateInputType = {
   viewCount?: true
   replyCount?: true
   likeCount?: true
+  commentCount?: true
   favoriteCount?: true
 }
 
@@ -167,6 +173,7 @@ export type ForumTopicSumAggregateInputType = {
   viewCount?: true
   replyCount?: true
   likeCount?: true
+  commentCount?: true
   favoriteCount?: true
 }
 
@@ -190,6 +197,7 @@ export type ForumTopicMinAggregateInputType = {
   viewCount?: true
   replyCount?: true
   likeCount?: true
+  commentCount?: true
   favoriteCount?: true
   lastReplyAt?: true
   createdAt?: true
@@ -217,6 +225,7 @@ export type ForumTopicMaxAggregateInputType = {
   viewCount?: true
   replyCount?: true
   likeCount?: true
+  commentCount?: true
   favoriteCount?: true
   lastReplyAt?: true
   createdAt?: true
@@ -245,6 +254,7 @@ export type ForumTopicCountAggregateInputType = {
   viewCount?: true
   replyCount?: true
   likeCount?: true
+  commentCount?: true
   favoriteCount?: true
   lastReplyAt?: true
   createdAt?: true
@@ -360,6 +370,7 @@ export type ForumTopicGroupByOutputType = {
   viewCount: number
   replyCount: number
   likeCount: number
+  commentCount: number
   favoriteCount: number
   lastReplyAt: Date | null
   createdAt: Date
@@ -411,6 +422,7 @@ export type ForumTopicWhereInput = {
   viewCount?: Prisma.IntFilter<"ForumTopic"> | number
   replyCount?: Prisma.IntFilter<"ForumTopic"> | number
   likeCount?: Prisma.IntFilter<"ForumTopic"> | number
+  commentCount?: Prisma.IntFilter<"ForumTopic"> | number
   favoriteCount?: Prisma.IntFilter<"ForumTopic"> | number
   lastReplyAt?: Prisma.DateTimeNullableFilter<"ForumTopic"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumTopic"> | Date | string
@@ -446,6 +458,7 @@ export type ForumTopicOrderByWithRelationInput = {
   viewCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   lastReplyAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -484,6 +497,7 @@ export type ForumTopicWhereUniqueInput = Prisma.AtLeast<{
   viewCount?: Prisma.IntFilter<"ForumTopic"> | number
   replyCount?: Prisma.IntFilter<"ForumTopic"> | number
   likeCount?: Prisma.IntFilter<"ForumTopic"> | number
+  commentCount?: Prisma.IntFilter<"ForumTopic"> | number
   favoriteCount?: Prisma.IntFilter<"ForumTopic"> | number
   lastReplyAt?: Prisma.DateTimeNullableFilter<"ForumTopic"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumTopic"> | Date | string
@@ -519,6 +533,7 @@ export type ForumTopicOrderByWithAggregationInput = {
   viewCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   lastReplyAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -555,6 +570,7 @@ export type ForumTopicScalarWhereWithAggregatesInput = {
   viewCount?: Prisma.IntWithAggregatesFilter<"ForumTopic"> | number
   replyCount?: Prisma.IntWithAggregatesFilter<"ForumTopic"> | number
   likeCount?: Prisma.IntWithAggregatesFilter<"ForumTopic"> | number
+  commentCount?: Prisma.IntWithAggregatesFilter<"ForumTopic"> | number
   favoriteCount?: Prisma.IntWithAggregatesFilter<"ForumTopic"> | number
   lastReplyAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ForumTopic"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ForumTopic"> | Date | string
@@ -579,6 +595,7 @@ export type ForumTopicCreateInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -614,6 +631,7 @@ export type ForumTopicUncheckedCreateInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -642,6 +660,7 @@ export type ForumTopicUpdateInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -677,6 +696,7 @@ export type ForumTopicUncheckedUpdateInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -709,6 +729,7 @@ export type ForumTopicCreateManyInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -733,6 +754,7 @@ export type ForumTopicUpdateManyMutationInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -761,6 +783,7 @@ export type ForumTopicUncheckedUpdateManyInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -809,6 +832,7 @@ export type ForumTopicCountOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   lastReplyAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -828,6 +852,7 @@ export type ForumTopicAvgOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
 }
 
@@ -851,6 +876,7 @@ export type ForumTopicMaxOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   lastReplyAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -878,6 +904,7 @@ export type ForumTopicMinOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
   lastReplyAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -897,6 +924,7 @@ export type ForumTopicSumOrderByAggregateInput = {
   viewCount?: Prisma.SortOrder
   replyCount?: Prisma.SortOrder
   likeCount?: Prisma.SortOrder
+  commentCount?: Prisma.SortOrder
   favoriteCount?: Prisma.SortOrder
 }
 
@@ -1103,6 +1131,7 @@ export type ForumTopicCreateWithoutUserInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1136,6 +1165,7 @@ export type ForumTopicUncheckedCreateWithoutUserInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1174,6 +1204,7 @@ export type ForumTopicCreateWithoutLastReplyUserInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1207,6 +1238,7 @@ export type ForumTopicUncheckedCreateWithoutLastReplyUserInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1268,6 +1300,7 @@ export type ForumTopicScalarWhereInput = {
   viewCount?: Prisma.IntFilter<"ForumTopic"> | number
   replyCount?: Prisma.IntFilter<"ForumTopic"> | number
   likeCount?: Prisma.IntFilter<"ForumTopic"> | number
+  commentCount?: Prisma.IntFilter<"ForumTopic"> | number
   favoriteCount?: Prisma.IntFilter<"ForumTopic"> | number
   lastReplyAt?: Prisma.DateTimeNullableFilter<"ForumTopic"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"ForumTopic"> | Date | string
@@ -1308,6 +1341,7 @@ export type ForumTopicCreateWithoutNotificationsInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1342,6 +1376,7 @@ export type ForumTopicUncheckedCreateWithoutNotificationsInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1385,6 +1420,7 @@ export type ForumTopicUpdateWithoutNotificationsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1419,6 +1455,7 @@ export type ForumTopicUncheckedUpdateWithoutNotificationsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1446,6 +1483,7 @@ export type ForumTopicCreateWithoutRepliesInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1480,6 +1518,7 @@ export type ForumTopicUncheckedCreateWithoutRepliesInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1523,6 +1562,7 @@ export type ForumTopicUpdateWithoutRepliesInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1557,6 +1597,7 @@ export type ForumTopicUncheckedUpdateWithoutRepliesInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1584,6 +1625,7 @@ export type ForumTopicCreateWithoutLastSectionsInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1618,6 +1660,7 @@ export type ForumTopicUncheckedCreateWithoutLastSectionsInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1650,6 +1693,7 @@ export type ForumTopicCreateWithoutSectionInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1683,6 +1727,7 @@ export type ForumTopicUncheckedCreateWithoutSectionInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1732,6 +1777,7 @@ export type ForumTopicUpdateWithoutLastSectionsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1766,6 +1812,7 @@ export type ForumTopicUncheckedUpdateWithoutLastSectionsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1809,6 +1856,7 @@ export type ForumTopicCreateWithoutTopicTagsInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1843,6 +1891,7 @@ export type ForumTopicUncheckedCreateWithoutTopicTagsInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1886,6 +1935,7 @@ export type ForumTopicUpdateWithoutTopicTagsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1920,6 +1970,7 @@ export type ForumTopicUncheckedUpdateWithoutTopicTagsInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1950,6 +2001,7 @@ export type ForumTopicCreateManyUserInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -1977,6 +2029,7 @@ export type ForumTopicCreateManyLastReplyUserInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -2001,6 +2054,7 @@ export type ForumTopicUpdateWithoutUserInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2034,6 +2088,7 @@ export type ForumTopicUncheckedUpdateWithoutUserInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2065,6 +2120,7 @@ export type ForumTopicUncheckedUpdateManyWithoutUserInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2089,6 +2145,7 @@ export type ForumTopicUpdateWithoutLastReplyUserInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2122,6 +2179,7 @@ export type ForumTopicUncheckedUpdateWithoutLastReplyUserInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2153,6 +2211,7 @@ export type ForumTopicUncheckedUpdateManyWithoutLastReplyUserInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2180,6 +2239,7 @@ export type ForumTopicCreateManySectionInput = {
   viewCount?: number
   replyCount?: number
   likeCount?: number
+  commentCount?: number
   favoriteCount?: number
   lastReplyAt?: Date | string | null
   createdAt?: Date | string
@@ -2204,6 +2264,7 @@ export type ForumTopicUpdateWithoutSectionInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2237,6 +2298,7 @@ export type ForumTopicUncheckedUpdateWithoutSectionInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2268,6 +2330,7 @@ export type ForumTopicUncheckedUpdateManyWithoutSectionInput = {
   viewCount?: Prisma.IntFieldUpdateOperationsInput | number
   replyCount?: Prisma.IntFieldUpdateOperationsInput | number
   likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
   favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
   lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -2354,6 +2417,7 @@ export type ForumTopicSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   viewCount?: boolean
   replyCount?: boolean
   likeCount?: boolean
+  commentCount?: boolean
   favoriteCount?: boolean
   lastReplyAt?: boolean
   createdAt?: boolean
@@ -2390,6 +2454,7 @@ export type ForumTopicSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   viewCount?: boolean
   replyCount?: boolean
   likeCount?: boolean
+  commentCount?: boolean
   favoriteCount?: boolean
   lastReplyAt?: boolean
   createdAt?: boolean
@@ -2421,6 +2486,7 @@ export type ForumTopicSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   viewCount?: boolean
   replyCount?: boolean
   likeCount?: boolean
+  commentCount?: boolean
   favoriteCount?: boolean
   lastReplyAt?: boolean
   createdAt?: boolean
@@ -2452,6 +2518,7 @@ export type ForumTopicSelectScalar = {
   viewCount?: boolean
   replyCount?: boolean
   likeCount?: boolean
+  commentCount?: boolean
   favoriteCount?: boolean
   lastReplyAt?: boolean
   createdAt?: boolean
@@ -2459,7 +2526,7 @@ export type ForumTopicSelectScalar = {
   deletedAt?: boolean
 }
 
-export type ForumTopicOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sectionId" | "userId" | "lastReplyUserId" | "auditById" | "title" | "content" | "isPinned" | "isFeatured" | "isLocked" | "isHidden" | "auditStatus" | "auditRole" | "auditReason" | "auditAt" | "version" | "sensitiveWordHits" | "viewCount" | "replyCount" | "likeCount" | "favoriteCount" | "lastReplyAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumTopic"]>
+export type ForumTopicOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sectionId" | "userId" | "lastReplyUserId" | "auditById" | "title" | "content" | "isPinned" | "isFeatured" | "isLocked" | "isHidden" | "auditStatus" | "auditRole" | "auditReason" | "auditAt" | "version" | "sensitiveWordHits" | "viewCount" | "replyCount" | "likeCount" | "commentCount" | "favoriteCount" | "lastReplyAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["forumTopic"]>
 export type ForumTopicInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -2594,6 +2661,10 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      * 点赞数
      */
     likeCount: number
+    /**
+     * 评论数
+     */
+    commentCount: number
     /**
      * 收藏数
      */
@@ -3064,6 +3135,7 @@ export interface ForumTopicFieldRefs {
   readonly viewCount: Prisma.FieldRef<"ForumTopic", 'Int'>
   readonly replyCount: Prisma.FieldRef<"ForumTopic", 'Int'>
   readonly likeCount: Prisma.FieldRef<"ForumTopic", 'Int'>
+  readonly commentCount: Prisma.FieldRef<"ForumTopic", 'Int'>
   readonly favoriteCount: Prisma.FieldRef<"ForumTopic", 'Int'>
   readonly lastReplyAt: Prisma.FieldRef<"ForumTopic", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"ForumTopic", 'DateTime'>
