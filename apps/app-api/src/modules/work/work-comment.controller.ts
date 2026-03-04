@@ -23,7 +23,7 @@ export class WorkCommentController {
 
   @Post('create')
   @ApiDoc({
-    summary: '发表评论',
+    summary: '发表评论1',
     model: CreateCommentDto,
   })
   async create(
