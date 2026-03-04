@@ -1,7 +1,7 @@
 import { DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty, IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+
 import { IsIn, IsString } from 'class-validator'
 import { ReportStatus } from '../../interaction.constant'
 

@@ -108,8 +108,12 @@ model UserComment {
   /// 目标类型与目标ID联合索引，用于查询某目标的评论列表
   /// 注：PostgreSQL 复合索引 (a,b,c) 支持 (a,b) 前缀查询，故不单独创建冗余索引
   @@index([targetType, targetId, createdAt])
+  /// 根评论楼层检索索引（用于取最大楼层与按楼层排序）
+  @@index([targetType, targetId, replyToId, floor])
   /// 目标可见评论检索索引
   @@index([targetType, targetId, auditStatus, isHidden, deletedAt])
+  /// 回复分页检索索引
+  @@index([actualReplyToId, auditStatus, isHidden, deletedAt, createdAt])
   /// 目标时间维度检索索引
   @@index([targetType, targetId, deletedAt, createdAt])
   /// 用户ID索引，用于查询某用户的评论记录
