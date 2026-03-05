@@ -1,5 +1,6 @@
-import { BaseService } from '@libs/base/database'
+import { ReportStatusEnum } from '@libs/base/constant'
 
+import { BaseService } from '@libs/base/database'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import {
   BadRequestException,
@@ -12,10 +13,7 @@ import {
   HandleForumReportDto,
   QueryForumReportDto,
 } from './dto/forum-report.dto'
-import {
-  ForumReportStatusEnum,
-  ForumReportTypeEnum,
-} from './forum-report.constant'
+import { ForumReportTypeEnum } from './forum-report.constant'
 
 /**
  * 论坛举报服务类
@@ -113,7 +111,7 @@ export class ForumReportService extends BaseService {
         type,
         targetId,
         status: {
-          in: [ForumReportStatusEnum.PENDING, ForumReportStatusEnum.PROCESSING],
+          in: [ReportStatusEnum.PENDING, ReportStatusEnum.PROCESSING],
         },
       },
     })
@@ -129,7 +127,7 @@ export class ForumReportService extends BaseService {
         type,
         targetId,
         reason,
-        status: ForumReportStatusEnum.PENDING,
+        status: ReportStatusEnum.PENDING,
       },
     })
 
@@ -289,8 +287,8 @@ export class ForumReportService extends BaseService {
 
     // 仅允许待处理/处理中状态更新
     if (
-      report.status !== ForumReportStatusEnum.PENDING &&
-      report.status !== ForumReportStatusEnum.PROCESSING
+      report.status !== ReportStatusEnum.PENDING &&
+      report.status !== ReportStatusEnum.PROCESSING
     ) {
       throw new BadRequestException('该举报已处理完成')
     }
@@ -298,7 +296,7 @@ export class ForumReportService extends BaseService {
     const updatedReport = await this.forumReport.update({
       where: { id },
       data: {
-        status: status || ForumReportStatusEnum.PROCESSING,
+        status: status || ReportStatusEnum.PROCESSING,
         handlerId,
         handlingNote,
       },
@@ -318,7 +316,7 @@ export class ForumReportService extends BaseService {
    */
   async updateReportStatus(
     id: number,
-    status: ForumReportStatusEnum,
+    status: ReportStatusEnum,
     handlerId?: number,
     handlingNote?: string,
   ) {
@@ -372,7 +370,7 @@ export class ForumReportService extends BaseService {
 
     const pendingReports = await this.forumReport.count({
       where: {
-        status: ForumReportStatusEnum.PENDING,
+        status: ReportStatusEnum.PENDING,
       },
     })
 

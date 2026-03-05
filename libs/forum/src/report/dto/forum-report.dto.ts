@@ -1,3 +1,4 @@
+import { ReportReasonEnum, ReportStatusEnum } from '@libs/base/constant'
 import {
   EnumProperty,
   NumberProperty,
@@ -5,11 +6,7 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import {
-  ForumReportReasonEnum,
-  ForumReportStatusEnum,
-  ForumReportTypeEnum,
-} from '../forum-report.constant'
+import { ForumReportTypeEnum } from '../forum-report.constant'
 
 export class BaseForumReportDto extends BaseDto {
   @NumberProperty({
@@ -38,11 +35,11 @@ export class BaseForumReportDto extends BaseDto {
 
   @EnumProperty({
     description: '举报原因',
-    example: ForumReportReasonEnum.INAPPROPRIATE_CONTENT,
+    example: ReportReasonEnum.INAPPROPRIATE_CONTENT,
     required: true,
-    enum: ForumReportReasonEnum,
+    enum: ReportReasonEnum,
   })
-  reason!: ForumReportReasonEnum
+  reason!: ReportReasonEnum
 
   @StringProperty({
     description: '举报详细说明',
@@ -60,11 +57,11 @@ export class BaseForumReportDto extends BaseDto {
 
   @EnumProperty({
     description: '处理状态',
-    example: ForumReportStatusEnum.PENDING,
+    example: ReportStatusEnum.PENDING,
     required: false,
-    enum: ForumReportStatusEnum,
+    enum: ReportStatusEnum,
   })
-  status?: ForumReportStatusEnum
+  status?: ReportStatusEnum
 
   @NumberProperty({
     description: '处理人ID',

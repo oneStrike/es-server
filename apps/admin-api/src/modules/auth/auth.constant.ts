@@ -1,23 +1,15 @@
 /**
  * 管理端认证模块常量
  */
+import { AuthConstants, createAuthRedisKeys } from '@libs/base/modules/auth'
+
 export enum CacheKey {
   /** 登录验证码 Key 前缀 */
   CAPTCHA = 'admin:auth:login:captcha:',
 }
 
-export const AuthConstants = {
-  /** 最大登录失败尝试次数 */
-  LOGIN_MAX_ATTEMPTS: 5,
-  /** 失败计数过期时间（秒）：5分钟 */
-  LOGIN_FAIL_TTL: 5 * 60,
-  /** 账号锁定时间（秒）：30分钟 */
-  ACCOUNT_LOCK_TTL: 30 * 60,
-}
+// 重新导出通用常量
+export { AuthConstants }
 
-export const AuthRedisKeys = {
-  /** 登录失败计数 Key */
-  LOGIN_FAIL_COUNT: (id: number) => `admin:auth:login:fail:${id}`,
-  /** 登录锁定 Key */
-  LOGIN_LOCK: (id: number) => `admin:auth:login:lock:${id}`,
-}
+// 创建管理端专用的 Redis Keys
+export const AuthRedisKeys = createAuthRedisKeys('admin')

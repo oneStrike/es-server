@@ -1,6 +1,7 @@
 import { BaseService } from '@libs/base/database'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
   AddUserPointsDto,
   ConsumeUserPointsDto,
@@ -11,7 +12,6 @@ import {
   QueryUserPointRuleDto,
   UpdateUserPointRuleDto,
 } from './dto/point-rule.dto'
-import { UserPointRuleTypeEnum } from './point.constant'
 
 /**
  * 积分服务类
@@ -38,7 +38,7 @@ export class UserPointService extends BaseService {
    */
   async createPointRule(dto: CreateUserPointRuleDto) {
     // 校验规则类型是否存在
-    if (!Object.values(UserPointRuleTypeEnum).includes(dto.type)) {
+    if (!Object.values(GrowthRuleTypeEnum).includes(dto.type)) {
       throw new BadRequestException('积分规则类型不存在')
     }
     // 校验是否已存在相同类型规则
@@ -420,7 +420,7 @@ export class UserPointService extends BaseService {
    */
   async addPointsByRuleType(
     userId: number,
-    ruleType: UserPointRuleTypeEnum,
+    ruleType: GrowthRuleTypeEnum,
     remark?: string,
   ) {
     return this.addPoints({

@@ -1,11 +1,11 @@
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { AuditStatus, InteractionTargetType } from '../common.constant'
+import { AuditStatusEnum, InteractionTargetType } from '../common.constant'
 
 @Injectable()
 export class CommentCountService extends BaseService {
   /**
-   * 判断评论在前台是否可见�?
+   * 判断评论在前台是否可见
    */
   isVisible(comment: {
     auditStatus: number
@@ -13,7 +13,7 @@ export class CommentCountService extends BaseService {
     deletedAt: Date | null
   }) {
     return (
-      comment.auditStatus === AuditStatus.APPROVED &&
+      comment.auditStatus === AuditStatusEnum.APPROVED &&
       !comment.isHidden &&
       comment.deletedAt === null
     )
@@ -35,7 +35,7 @@ export class CommentCountService extends BaseService {
   }
 
   /**
-   * 统一更新目标评论计数，减少重复更新逻辑�?
+   * 统一更新目标评论计数，减少重复更新逻辑
    */
   async applyCommentCountDelta(
     tx: any,
@@ -88,7 +88,7 @@ export class CommentCountService extends BaseService {
   }
 
   /**
-   * 根据前后可见性变化同步目标计数�?
+   * 根据前后可见性变化同步目标计数
    */
   async syncVisibleCountByTransition(
     tx: any,

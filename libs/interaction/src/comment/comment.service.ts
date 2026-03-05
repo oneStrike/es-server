@@ -8,8 +8,8 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import {
-  AuditRole,
-  AuditStatus,
+  AuditRoleEnum,
+  AuditStatusEnum,
   InteractionTargetType,
 } from '../common.constant'
 import { CommentCountService } from './comment-count.service'
@@ -41,18 +41,18 @@ export class CommentService extends BaseService {
     const result = this.sensitiveWordDetectService.getMatchedWords({ content })
     const config = await this.systemConfigService.findActiveConfig()
     const policy = config?.contentReviewPolicy
-    let auditStatus: AuditStatus = AuditStatus.APPROVED
+    let auditStatus: AuditStatusEnum = AuditStatusEnum.APPROVED
     let isHidden = false
 
     if (policy && result.highestLevel) {
       if (result.highestLevel === SensitiveWordLevelEnum.SEVERE) {
-        auditStatus = policy.severeAction.auditStatus as AuditStatus
+        auditStatus = policy.severeAction.auditStatus as AuditStatusEnum
         isHidden = policy.severeAction.isHidden ?? false
       } else if (result.highestLevel === SensitiveWordLevelEnum.GENERAL) {
-        auditStatus = policy.generalAction.auditStatus as AuditStatus
+        auditStatus = policy.generalAction.auditStatus as AuditStatusEnum
         isHidden = policy.generalAction.isHidden ?? false
       } else {
-        auditStatus = policy.lightAction.auditStatus as AuditStatus
+        auditStatus = policy.lightAction.auditStatus as AuditStatusEnum
         isHidden = policy.lightAction.isHidden ?? false
       }
     }
@@ -244,7 +244,7 @@ export class CommentService extends BaseService {
         targetType,
         targetId,
         replyToId: null,
-        auditStatus: AuditStatus.APPROVED,
+        auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
         deletedAt: null,
         pageIndex,
@@ -280,7 +280,7 @@ export class CommentService extends BaseService {
     return this.prisma.userComment.findPagination({
       where: {
         actualReplyToId: commentId,
-        auditStatus: AuditStatus.APPROVED,
+        auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
         deletedAt: null,
         ...otherDto,
@@ -317,7 +317,7 @@ export class CommentService extends BaseService {
   async getCommentManagePage(query: {
     targetType?: InteractionTargetType
     targetId?: number
-    auditStatus?: AuditStatus
+    auditStatus?: AuditStatusEnum
     isHidden?: boolean
     rootOnly?: boolean
     pageIndex?: number
@@ -418,7 +418,7 @@ export class CommentService extends BaseService {
   async updateCommentAudit(
     body: {
       commentId: number
-      auditStatus: AuditStatus
+      auditStatus: AuditStatusEnum
       auditReason?: string
     },
     operatorId: number,
@@ -455,7 +455,7 @@ export class CommentService extends BaseService {
             auditStatus: body.auditStatus,
             auditReason: body.auditReason,
             auditById: operatorId,
-            auditRole: AuditRole.ADMIN,
+            auditRole: AuditRoleEnum.ADMIN,
             auditAt: new Date(),
           },
           select: {
@@ -491,7 +491,7 @@ export class CommentService extends BaseService {
    * @param body - 隐藏参数
    * @returns 操作结果
    */
-  async updateCommentHidden(body: { commentId: number; isHidden: boolean }) {
+  async updateCommentHidden(body: { commentId: number, isHidden: boolean }) {
     await this.prisma.$transaction(async (tx) => {
       let updated: {
         targetType: number
@@ -520,7 +520,6 @@ export class CommentService extends BaseService {
         throw error
       }
 
-      // 推断更新前的可见性状态（isHidden 是布尔值，与更新值相反）
       const beforeVisible = this.commentCountService.isVisible({
         auditStatus: updated.auditStatus,
         isHidden: !body.isHidden,
@@ -554,7 +553,7 @@ export class CommentService extends BaseService {
       where: {
         targetType,
         targetId,
-        auditStatus: AuditStatus.APPROVED,
+        auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
         deletedAt: null,
       },

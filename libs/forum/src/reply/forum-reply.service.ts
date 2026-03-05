@@ -2,7 +2,7 @@ import type {
   ForumReplyCreateInput,
   ForumReplyWhereInput,
 } from '@libs/base/database'
-import { UserStatusEnum } from '@libs/base/constant'
+import { AuditStatusEnum, UserStatusEnum } from '@libs/base/constant'
 
 import { BaseService } from '@libs/base/database'
 import {
@@ -20,7 +20,6 @@ import { ForumCounterService } from '../counter/forum-counter.service'
 import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import { ForumNotificationService } from '../notification/notification.service'
 import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
-import { ForumAuditStatusEnum } from './forum-reply.constant'
 
 /**
  * 论坛回复服务类
@@ -220,7 +219,7 @@ export class ForumReplyService extends BaseService {
     })
 
     // 未进入审核队列才触发成长事件
-    if (reply.auditStatus !== ForumAuditStatusEnum.PENDING) {
+    if (reply.auditStatus !== AuditStatusEnum.PENDING) {
       await this.userGrowthEventService.handleEvent({
         business: 'forum',
         eventKey: ForumGrowthEventKey.ReplyCreate,

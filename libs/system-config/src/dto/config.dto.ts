@@ -1,3 +1,4 @@
+import { AuditStatusEnum } from '@libs/base/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -6,7 +7,6 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
-import { ContentReviewAuditStatusEnum } from '../system-config.constant'
 
 export class AliyunSmsConfigDto {
   @StringProperty({
@@ -218,10 +218,10 @@ export class GrowthAntifraudConfigDto {
 export class ContentReviewActionDto {
   @EnumProperty({
     description: '审核状态',
-    example: ContentReviewAuditStatusEnum.PENDING,
-    enum: ContentReviewAuditStatusEnum,
+    example: AuditStatusEnum.PENDING,
+    enum: AuditStatusEnum,
   })
-  auditStatus!: ContentReviewAuditStatusEnum
+  auditStatus!: AuditStatusEnum
 
   @BooleanProperty({
     description: '是否隐藏',

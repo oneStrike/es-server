@@ -1,6 +1,6 @@
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
-import { ReportStatus } from '../common.constant'
+import { ReportStatusEnum } from '../common.constant'
 
 @Injectable()
 export class CommentInteractionService extends BaseService {
@@ -129,7 +129,6 @@ export class CommentInteractionService extends BaseService {
     description?: string,
     evidenceUrl?: string,
   ): Promise<void> {
-    // 并行检查评论存在性和重复举报
     const [comment, existing] = await Promise.all([
       this.prisma.userComment.findUnique({
         where: { id: commentId, deletedAt: null },
@@ -139,7 +138,7 @@ export class CommentInteractionService extends BaseService {
         where: {
           commentId,
           reporterId,
-          status: ReportStatus.PENDING,
+          status: ReportStatusEnum.PENDING,
         },
         select: { id: true },
       }),
@@ -160,13 +159,13 @@ export class CommentInteractionService extends BaseService {
         reason,
         description,
         evidenceUrl,
-        status: ReportStatus.PENDING,
+        status: ReportStatusEnum.PENDING,
       },
     })
   }
 
   async getReports(
-    status?: ReportStatus,
+    status?: ReportStatusEnum,
     pageIndex: number = 1,
     pageSize: number = 20,
   ) {
@@ -198,7 +197,7 @@ export class CommentInteractionService extends BaseService {
   async handleReport(
     reportId: number,
     handlerId: number,
-    status: ReportStatus.RESOLVED | ReportStatus.REJECTED,
+    status: ReportStatusEnum.RESOLVED | ReportStatusEnum.REJECTED,
     handlingNote?: string,
   ): Promise<void> {
     const report = await this.prisma.userCommentReport.findUnique({
@@ -209,8 +208,8 @@ export class CommentInteractionService extends BaseService {
       throw new NotFoundException('举报记录不存在')
     }
     if (
-      report.status !== ReportStatus.PENDING &&
-      report.status !== ReportStatus.PROCESSING
+      report.status !== ReportStatusEnum.PENDING &&
+      report.status !== ReportStatusEnum.PROCESSING
     ) {
       throw new BadRequestException('举报已处理，请勿重复处理')
     }

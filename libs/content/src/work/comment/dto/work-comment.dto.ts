@@ -1,12 +1,8 @@
+import { AuditStatusEnum, ReportStatusEnum, SortOrderEnum } from '@libs/base/constant'
 import { BooleanProperty, DateProperty, EnumProperty, NumberProperty, StringProperty } from '@libs/base/decorators'
 import { BaseDto, IdDto, OMIT_BASE_FIELDS, PageDto } from '@libs/base/dto'
 import { IntersectionType, OmitType, PartialType, PickType } from '@nestjs/swagger'
-import {
-  WorkCommentAuditStatusEnum,
-  WorkCommentReportStatusEnum,
-  WorkCommentSortFieldEnum,
-  WorkCommentSortOrderEnum,
-} from '../work-comment.constant'
+import { WorkCommentSortFieldEnum } from '../work-comment.constant'
 
 /// 评论基础DTO
 export class BaseWorkCommentDto extends BaseDto {
@@ -76,12 +72,12 @@ export class BaseWorkCommentDto extends BaseDto {
 
   @EnumProperty({
     description: '审核状态',
-    example: WorkCommentAuditStatusEnum.APPROVED,
+    example: AuditStatusEnum.APPROVED,
     required: true,
-    enum: WorkCommentAuditStatusEnum,
-    default: WorkCommentAuditStatusEnum.APPROVED,
+    enum: AuditStatusEnum,
+    default: AuditStatusEnum.APPROVED,
   })
-  auditStatus!: WorkCommentAuditStatusEnum
+  auditStatus!: AuditStatusEnum
 
   @StringProperty({
     description: '审核原因',
@@ -157,12 +153,12 @@ export class QueryWorkCommentDto extends IntersectionType(
 
   @EnumProperty({
     description: '排序顺序',
-    example: WorkCommentSortOrderEnum.DESC,
+    example: SortOrderEnum.DESC,
     required: false,
-    enum: WorkCommentSortOrderEnum,
-    default: WorkCommentSortOrderEnum.DESC,
+    enum: SortOrderEnum,
+    default: SortOrderEnum.DESC,
   })
-  sortOrder?: WorkCommentSortOrderEnum
+  sortOrder?: SortOrderEnum
 }
 
 /// 更新评论审核DTO
@@ -227,22 +223,22 @@ export class QueryWorkCommentReportDto extends IntersectionType(
 
   @EnumProperty({
     description: '处理状态',
-    example: WorkCommentReportStatusEnum.PENDING,
+    example: ReportStatusEnum.PENDING,
     required: false,
-    enum: WorkCommentReportStatusEnum,
+    enum: ReportStatusEnum,
   })
-  status?: WorkCommentReportStatusEnum
+  status?: ReportStatusEnum
 }
 
 /// 处理评论举报DTO
 export class HandleWorkCommentReportDto extends IdDto {
   @EnumProperty({
     description: '处理状态',
-    example: WorkCommentReportStatusEnum.RESOLVED,
+    example: ReportStatusEnum.RESOLVED,
     required: false,
-    enum: WorkCommentReportStatusEnum,
+    enum: ReportStatusEnum,
   })
-  status?: WorkCommentReportStatusEnum
+  status?: ReportStatusEnum
 
   @StringProperty({
     description: '处理备注',

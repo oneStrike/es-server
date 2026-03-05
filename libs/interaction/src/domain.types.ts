@@ -1,11 +1,16 @@
 /**
- * 浜や簰妯″潡绫诲瀷瀹氫箟
+ * 交互模块类型定义
  */
 
-import type { AuditRole, AuditStatus, InteractionTargetType, ReportStatus } from './common.constant'
+import type {
+  AuditRoleEnum,
+  AuditStatusEnum,
+  InteractionTargetType,
+  ReportStatusEnum,
+} from './common.constant'
 
 /**
- * 浜や簰璁板綍鍩虹鎺ュ彛
+ * 交互记录基础接口
  */
 export interface IInteractionRecord {
   id: number
@@ -14,7 +19,7 @@ export interface IInteractionRecord {
 }
 
 /**
- * 鐩爣瀵硅薄鎺ュ彛
+ * 目标对象接口
  */
 export interface IInteractionTarget {
   targetType: InteractionTargetType
@@ -22,17 +27,17 @@ export interface IInteractionTarget {
 }
 
 /**
- * 鐐硅禐璁板綍鎺ュ彛
+ * 点赞记录接口
  */
 export interface ILikeRecord extends IInteractionRecord, IInteractionTarget {}
 
 /**
- * 鏀惰棌璁板綍鎺ュ彛
+ * 收藏记录接口
  */
 export interface IFavoriteRecord extends IInteractionRecord, IInteractionTarget {}
 
 /**
- * 娴忚璁板綍鎺ュ彛
+ * 浏览记录接口
  */
 export interface IViewRecord extends IInteractionRecord, IInteractionTarget {
   ipAddress?: string | null
@@ -42,7 +47,7 @@ export interface IViewRecord extends IInteractionRecord, IInteractionTarget {
 }
 
 /**
- * 璇勮璁板綍鎺ュ彛
+ * 评论记录接口
  */
 export interface ICommentRecord extends IInteractionRecord, IInteractionTarget {
   content: string
@@ -50,11 +55,11 @@ export interface ICommentRecord extends IInteractionRecord, IInteractionTarget {
   replyToId?: number | null
   actualReplyToId?: number | null
   isHidden: boolean
-  auditStatus: AuditStatus
+  auditStatus: AuditStatusEnum
   auditReason?: string | null
   auditAt?: Date | null
   auditById?: number | null
-  auditRole?: AuditRole | null
+  auditRole?: AuditRoleEnum | null
   likeCount: number
   sensitiveWordHits?: unknown
   updatedAt: Date
@@ -62,14 +67,14 @@ export interface ICommentRecord extends IInteractionRecord, IInteractionTarget {
 }
 
 /**
- * 璇勮鐐硅禐璁板綍鎺ュ彛
+ * 评论点赞记录接口
  */
 export interface ICommentLikeRecord extends IInteractionRecord {
   commentId: number
 }
 
 /**
- * 璇勮涓炬姤璁板綍鎺ュ彛
+ * 评论举报记录接口
  */
 export interface ICommentReportRecord extends IInteractionRecord {
   reporterId: number
@@ -78,14 +83,14 @@ export interface ICommentReportRecord extends IInteractionRecord {
   reason: string
   description?: string | null
   evidenceUrl?: string | null
-  status: ReportStatus
+  status: ReportStatusEnum
   handlingNote?: string | null
   handledAt?: Date | null
   updatedAt: Date
 }
 
 /**
- * 涓嬭浇璁板綍鎺ュ彛
+ * 下载记录接口
  */
 export interface IDownloadRecord extends IInteractionRecord, IInteractionTarget {
   workId: number
@@ -93,7 +98,7 @@ export interface IDownloadRecord extends IInteractionRecord, IInteractionTarget 
 }
 
 /**
- * 鐢ㄦ埛浜や簰鐘舵€佹帴鍙?
+ * 用户交互状态接口
  */
 export interface IUserInteractionStatus {
   isLiked: boolean
@@ -102,7 +107,7 @@ export interface IUserInteractionStatus {
 }
 
 /**
- * 浜や簰璁℃暟鎺ュ彛
+ * 交互计数接口
  */
 export interface IInteractionCounts {
   likeCount: number
@@ -112,10 +117,8 @@ export interface IInteractionCounts {
   downloadCount: number
 }
 
-// 璇蜂粠璇ユ枃浠跺鍏ワ紝閬垮厤閲嶅瀹氫箟
-
 /**
- * 鍒嗛〉鏌ヨ鍙傛暟鎺ュ彛
+ * 分页查询参数接口
  */
 export interface IInteractionQueryParams {
   page?: number
@@ -125,7 +128,7 @@ export interface IInteractionQueryParams {
 }
 
 /**
- * 鍒嗛〉鏌ヨ缁撴灉鎺ュ彛
+ * 分页查询结果接口
  */
 export interface IInteractionQueryResult<T> {
   list: T[]

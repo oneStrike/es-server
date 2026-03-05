@@ -11,7 +11,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { AuditStatus, InteractionTargetType } from '../../common.constant'
+import { AuditStatusEnum, InteractionTargetType } from '../../common.constant'
 
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
@@ -67,12 +67,12 @@ export class BaseCommentDto extends BaseDto {
 
   @EnumProperty({
     description: '审核状态',
-    enum: AuditStatus,
-    example: AuditStatus.APPROVED,
+    enum: AuditStatusEnum,
+    example: AuditStatusEnum.APPROVED,
     required: true,
-    default: AuditStatus.APPROVED,
+    default: AuditStatusEnum.APPROVED,
   })
-  auditStatus!: AuditStatus
+  auditStatus!: AuditStatusEnum
 
   @StringProperty({
     description: '审核原因',

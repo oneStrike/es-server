@@ -2,7 +2,7 @@ import type {
   ForumTopicCreateInput,
   ForumTopicWhereInput,
 } from '@libs/base/database'
-import { UserStatusEnum } from '@libs/base/constant'
+import { AuditStatusEnum, UserStatusEnum } from '@libs/base/constant'
 
 import { BaseService } from '@libs/base/database'
 import {
@@ -35,7 +35,6 @@ import {
   UpdateForumTopicLockedDto,
   UpdateForumTopicPinnedDto,
 } from './dto/forum-topic.dto'
-import { ForumTopicAuditStatusEnum } from './forum-topic.constant'
 
 /**
  * 论坛主题服务类
@@ -105,8 +104,8 @@ export class ForumTopicService extends BaseService {
 
     return {
       auditStatus: needAudit
-        ? ForumTopicAuditStatusEnum.PENDING
-        : ForumTopicAuditStatusEnum.APPROVED,
+        ? AuditStatusEnum.PENDING
+        : AuditStatusEnum.APPROVED,
       isHidden,
     }
   }
@@ -217,7 +216,7 @@ export class ForumTopicService extends BaseService {
     })
 
     // 未进入审核队列才触发成长事件
-    if (topic.auditStatus !== ForumTopicAuditStatusEnum.PENDING) {
+    if (topic.auditStatus !== AuditStatusEnum.PENDING) {
       await this.userGrowthEventService.handleEvent({
         business: 'forum',
         eventKey: ForumGrowthEventKey.TopicCreate,

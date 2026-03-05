@@ -5,7 +5,7 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { UserPointRuleTypeEnum } from '../point.constant'
+import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 
 export class BaseUserPointRecordDto extends BaseDto {
   @NumberProperty({
@@ -95,11 +95,11 @@ export class AddUserPointsDto {
 
   @EnumProperty({
     description: '规则类型',
-    example: UserPointRuleTypeEnum.CREATE_TOPIC,
+    example: GrowthRuleTypeEnum.CREATE_TOPIC,
     required: true,
-    enum: UserPointRuleTypeEnum,
+    enum: GrowthRuleTypeEnum,
   })
-  ruleType!: UserPointRuleTypeEnum
+  ruleType!: GrowthRuleTypeEnum
 
   @StringProperty({
     description: '备注',

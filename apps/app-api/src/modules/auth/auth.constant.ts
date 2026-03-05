@@ -2,6 +2,18 @@
  * 应用端认证常量定义
  * 覆盖错误文案、登录限制与缓存键
  */
+import {
+  AuthConstants,
+  AuthDefaultValue,
+  createAuthRedisKeys,
+} from '@libs/base/modules/auth'
+
+// 重新导出通用常量
+export { AuthConstants, AuthDefaultValue }
+
+// 创建应用端专用的 Redis Keys
+export const AuthRedisKeys = createAuthRedisKeys('app')
+
 /// 认证错误文案
 export const AuthErrorMessages = {
   /** 账号或密码错误 */
@@ -45,27 +57,3 @@ export const AuthErrorMessages = {
   PASSWORD_ERROR_WITH_REMAINING: (remaining: number) =>
     `账号或密码错误，还剩 ${remaining} 次机会`,
 } as const
-
-/// 登录限制常量
-export const AuthConstants = {
-  /** 最大登录失败次数 */
-  LOGIN_MAX_ATTEMPTS: 5,
-  /** 失败计数过期时间（秒） */
-  LOGIN_FAIL_TTL: 5 * 60,
-  /** 账号锁定时间（秒） */
-  ACCOUNT_LOCK_TTL: 30 * 60,
-}
-
-/// 认证相关 Redis Key
-export const AuthRedisKeys = {
-  /** 登录失败计数 Key */
-  LOGIN_FAIL_COUNT: (userId: number) => `auth:login:fail:${userId}`,
-  /** 账号锁定 Key */
-  LOGIN_LOCK: (userId: number) => `auth:login:lock:${userId}`,
-}
-
-/// 认证默认值
-export const AuthDefaultValue = {
-  /** 未知 IP 标识 */
-  IP_ADDRESS_UNKNOWN: 'unknown',
-}

@@ -1,3 +1,4 @@
+import { AuditRoleEnum, AuditStatusEnum } from '@libs/base/constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -12,10 +13,6 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import {
-  ForumTopicAuditRoleEnum,
-  ForumTopicAuditStatusEnum,
-} from '../forum-topic.constant'
 
 /**
  * 论坛主题基础 DTO
@@ -87,12 +84,12 @@ export class BaseForumTopicDto extends BaseDto {
 
   @EnumProperty({
     description: '审核角色（0=版主, 1=管理员）',
-    example: ForumTopicAuditRoleEnum.MODERATOR,
+    example: AuditRoleEnum.MODERATOR,
     required: false,
-    enum: ForumTopicAuditRoleEnum,
-    default: ForumTopicAuditRoleEnum.MODERATOR,
+    enum: AuditRoleEnum,
+    default: AuditRoleEnum.MODERATOR,
   })
-  auditRole?: ForumTopicAuditRoleEnum
+  auditRole?: AuditRoleEnum
 
   @NumberProperty({
     description: '关联的审核用户ID',
@@ -104,12 +101,12 @@ export class BaseForumTopicDto extends BaseDto {
 
   @EnumProperty({
     description: '审核状态（0=待审核, 1=已通过, 2=已拒绝）',
-    example: ForumTopicAuditStatusEnum.APPROVED,
+    example: AuditStatusEnum.APPROVED,
     required: true,
-    enum: ForumTopicAuditStatusEnum,
-    default: ForumTopicAuditStatusEnum.APPROVED,
+    enum: AuditStatusEnum,
+    default: AuditStatusEnum.APPROVED,
   })
-  auditStatus!: ForumTopicAuditStatusEnum
+  auditStatus!: AuditStatusEnum
 
   @StringProperty({
     description: '审核拒绝原因',

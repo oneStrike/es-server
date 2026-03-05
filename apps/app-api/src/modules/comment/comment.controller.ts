@@ -1,7 +1,6 @@
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  CommentInteractionService,
   CommentService,
   CreateCommentBodyDto,
   QueryCommentPageDto,

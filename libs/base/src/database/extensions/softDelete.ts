@@ -8,7 +8,7 @@ export async function softDelete<T>(
   this: T,
   where: Prisma.Args<T, 'findUnique'>['where'],
 ): Promise<
-  Prisma.Result<T, { where: typeof where; data: { deletedAt: Date } }, 'update'>
+  Prisma.Result<T, { where: typeof where, data: { deletedAt: Date } }, 'update'>
 > {
   const context = Prisma.getExtensionContext(this) as any
   if (where.deletedAt !== null) {

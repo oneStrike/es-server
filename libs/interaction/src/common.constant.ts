@@ -2,10 +2,19 @@
  * 交互模块常量定义
  */
 
+// 从 libs/base 导入统一的审核和举报枚举
+export {
+  AuditRoleEnum,
+  AuditRoleNames,
+  AuditStatusEnum,
+  AuditStatusNames,
+  ReportStatusEnum,
+  ReportStatusNames,
+} from '@libs/base/constant'
+
 /**
  * 交互目标类型枚举
  * 用于标识用户交互操作的目标对象类型
- *
  */
 export enum InteractionTargetType {
   /** 漫画 - 漫画作品 */
@@ -47,45 +56,6 @@ export enum InteractionActionType {
   PURCHASE = 10,
   /** 退款 - 用户申请退款 */
   REFUND = 11,
-}
-
-/**
- * 审核状态枚举
- * 用于评论等内容的审核流程状态
- */
-export enum AuditStatus {
-  /** 待审核 - 内容已提交，等待审核 */
-  PENDING = 0,
-  /** 已通过 - 审核通过，内容可见 */
-  APPROVED = 1,
-  /** 已拒绝 - 审核拒绝，内容不可见 */
-  REJECTED = 2,
-}
-
-/**
- * 审核角色枚举
- * 用于标识执行审核操作的角色类型
- */
-export enum AuditRole {
-  /** 版主 - 论坛版块管理员 */
-  MODERATOR = 0,
-  /** 管理员 - 系统管理员 */
-  ADMIN = 1,
-}
-
-/**
- * 举报状态枚举
- * 用于举报记录的处理状态
- */
-export enum ReportStatus {
-  /** 待处理 - 举报已提交，等待处理 */
-  PENDING = 'pending',
-  /** 处理中 - 举报正在处理 */
-  PROCESSING = 'processing',
-  /** 已解决 - 举报已处理完成 */
-  RESOLVED = 'resolved',
-  /** 已拒绝 - 举报被驳回 */
-  REJECTED = 'rejected',
 }
 
 /**

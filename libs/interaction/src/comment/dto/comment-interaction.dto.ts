@@ -2,7 +2,9 @@ import { DateProperty, EnumProperty, NumberProperty, StringProperty } from '@lib
 import { BaseDto, PageDto } from '@libs/base/dto'
 import { ApiProperty, IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { IsIn, IsString } from 'class-validator'
-import { ReportStatus } from '../../common.constant'
+import { ReportStatusEnum } from '../../common.constant'
+
+export type ReportStatus = ReportStatusEnum
 
 export class LikeCommentDto {
   @NumberProperty({ description: '评论ID', example: 1, required: true, min: 1 })
@@ -27,8 +29,8 @@ export class BaseCommentReportDto extends BaseDto {
   @StringProperty({ description: '证据链接', example: 'https://example.com/evidence.png', required: false })
   evidenceUrl?: string
 
-  @EnumProperty({ description: '举报状态', enum: ReportStatus, example: ReportStatus.PENDING, required: true })
-  status!: ReportStatus
+  @EnumProperty({ description: '举报状态', enum: ReportStatusEnum, example: ReportStatusEnum.PENDING, required: true })
+  status!: ReportStatusEnum
 
   @NumberProperty({ description: '处理人用户ID', example: 1, required: false, min: 1 })
   handlerId?: number
@@ -56,17 +58,16 @@ export class QueryCommentReportDto extends IntersectionType(
   PageDto,
   PickType(PartialType(BaseCommentReportDto), ['status']),
 ) {}
-
 export class HandleCommentReportDto extends IntersectionType(
   ReportIdDto,
   PickType(BaseCommentReportDto, ['handlingNote']),
 ) {
   @ApiProperty({
     description: '处理状态',
-    enum: [ReportStatus.RESOLVED, ReportStatus.REJECTED],
-    example: ReportStatus.RESOLVED,
+    enum: [ReportStatusEnum.RESOLVED, ReportStatusEnum.REJECTED],
+    example: ReportStatusEnum.RESOLVED,
   })
   @IsString()
-  @IsIn([ReportStatus.RESOLVED, ReportStatus.REJECTED])
-  status!: ReportStatus.RESOLVED | ReportStatus.REJECTED
+  @IsIn([ReportStatusEnum.RESOLVED, ReportStatusEnum.REJECTED])
+  status!: ReportStatusEnum.RESOLVED | ReportStatusEnum.REJECTED
 }

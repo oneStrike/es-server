@@ -1,6 +1,6 @@
 import type { CommentRateLimitConfigDto } from '@libs/system-config'
 import type { CommentWithRelations, WorkCommentTransaction } from './work-comment.types'
-import { UserStatusEnum } from '@libs/base/constant'
+import { AuditRoleEnum, AuditStatusEnum, ReportStatusEnum, SortOrderEnum, UserStatusEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import {
   ForumUserActionTargetTypeEnum,
@@ -21,13 +21,8 @@ import {
   UpdateWorkCommentAuditDto,
   UpdateWorkCommentHiddenDto,
 } from './dto/work-comment.dto'
-import {
-  WorkCommentAuditRoleEnum,
-  WorkCommentAuditStatusEnum,
-  WorkCommentReportStatusEnum,
-  WorkCommentSortFieldEnum,
-  WorkCommentSortOrderEnum,
-} from './work-comment.constant'
+
+import { WorkCommentSortFieldEnum } from './work-comment.constant'
 
 @Injectable()
 export class WorkCommentService extends BaseService {
@@ -110,7 +105,7 @@ export class WorkCommentService extends BaseService {
     deletedAt?: Date | null
   }) {
     return (
-      comment.auditStatus === WorkCommentAuditStatusEnum.APPROVED &&
+      comment.auditStatus === AuditStatusEnum.APPROVED &&
       !comment.isHidden &&
       !comment.deletedAt
     )
@@ -249,7 +244,7 @@ export class WorkCommentService extends BaseService {
     })
     const config = await this.systemConfigService.findActiveConfig()
     const policy = config?.contentReviewPolicy
-    let auditStatus = WorkCommentAuditStatusEnum.APPROVED
+    let auditStatus = AuditStatusEnum.APPROVED
     let isHidden = false
     if (detectResult.highestLevel && policy) {
       if (detectResult.highestLevel === SensitiveWordLevelEnum.SEVERE) {
@@ -359,7 +354,7 @@ export class WorkCommentService extends BaseService {
           auditStatus: reviewResult.auditStatus,
           isHidden: reviewResult.isHidden,
           auditAt:
-            reviewResult.auditStatus === WorkCommentAuditStatusEnum.PENDING
+            reviewResult.auditStatus === AuditStatusEnum.PENDING
               ? null
               : now,
           sensitiveWordHits: reviewResult.hits
@@ -427,22 +422,22 @@ export class WorkCommentService extends BaseService {
     }
     const orderBy =
       dto.sortBy === WorkCommentSortFieldEnum.CREATED_AT
-        ? { createdAt: dto.sortOrder ?? WorkCommentSortOrderEnum.DESC }
-        : { floor: dto.sortOrder ?? WorkCommentSortOrderEnum.ASC }
+        ? { createdAt: dto.sortOrder ?? SortOrderEnum.DESC }
+        : { floor: dto.sortOrder ?? SortOrderEnum.ASC }
     type WorkCommentPageWhere = Prisma.WorkCommentWhereInput & {
       pageIndex?: number
       pageSize?: number
     }
     const visibleReplyWhere: Prisma.WorkCommentWhereInput = {
       deletedAt: null,
-      auditStatus: WorkCommentAuditStatusEnum.APPROVED,
+      auditStatus: AuditStatusEnum.APPROVED,
       isHidden: false,
     }
     const where: WorkCommentPageWhere = {
         workId: dto.workId,
         chapterId: dto.chapterId ?? null,
         replyToId: null,
-        auditStatus: WorkCommentAuditStatusEnum.APPROVED,
+        auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
         OR: [
           { deletedAt: null },
@@ -528,8 +523,8 @@ export class WorkCommentService extends BaseService {
     }
     const orderBy =
       dto.sortBy === WorkCommentSortFieldEnum.FLOOR
-        ? { floor: dto.sortOrder ?? WorkCommentSortOrderEnum.DESC }
-        : { createdAt: dto.sortOrder ?? WorkCommentSortOrderEnum.DESC }
+        ? { floor: dto.sortOrder ?? SortOrderEnum.DESC }
+        : { createdAt: dto.sortOrder ?? SortOrderEnum.DESC }
     const result = await this.workComment.findPagination({
       where: {
         ...where,
@@ -608,7 +603,7 @@ export class WorkCommentService extends BaseService {
           auditReason: dto.auditReason,
           auditAt: now,
           auditById: adminUserId,
-          auditRole: WorkCommentAuditRoleEnum.ADMIN,
+          auditRole: AuditRoleEnum.ADMIN,
         },
       })
       const isVisible = this.isVisible(updated)
@@ -672,7 +667,7 @@ export class WorkCommentService extends BaseService {
         workId,
         chapterId: chapterId ?? null,
         deletedAt: null,
-        auditStatus: WorkCommentAuditStatusEnum.APPROVED,
+        auditStatus: AuditStatusEnum.APPROVED,
         isHidden: false,
       },
     })
@@ -709,8 +704,8 @@ export class WorkCommentService extends BaseService {
         commentId: dto.commentId,
         status: {
           in: [
-            WorkCommentReportStatusEnum.PENDING,
-            WorkCommentReportStatusEnum.PROCESSING,
+            ReportStatusEnum.PENDING,
+            ReportStatusEnum.PROCESSING,
           ],
         },
       },
@@ -725,7 +720,7 @@ export class WorkCommentService extends BaseService {
         reason: dto.reason,
         description: dto.description,
         evidenceUrl: dto.evidenceUrl,
-        status: WorkCommentReportStatusEnum.PENDING,
+        status: ReportStatusEnum.PENDING,
       },
     })
   }
@@ -775,7 +770,7 @@ export class WorkCommentService extends BaseService {
     return this.workCommentReport.update({
       where: { id: dto.id },
       data: {
-        status: dto.status ?? WorkCommentReportStatusEnum.PROCESSING,
+        status: dto.status ?? ReportStatusEnum.PROCESSING,
         handlerId,
         handlingNote: dto.handlingNote,
         handledAt: new Date(),

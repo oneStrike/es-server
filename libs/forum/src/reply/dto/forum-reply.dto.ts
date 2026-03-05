@@ -1,3 +1,4 @@
+import { AuditStatusEnum, SortOrderEnum } from '@libs/base/constant'
 import {
   BooleanProperty,
   EnumProperty,
@@ -6,11 +7,7 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, IdDto, PageDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import {
-  ForumAuditStatusEnum,
-  ForumReplySortFieldEnum,
-  ForumReplySortOrderEnum,
-} from '../forum-reply.constant'
+import { ForumReplySortFieldEnum } from '../forum-reply.constant'
 
 /**
  * 论坛回复基础DTO
@@ -77,12 +74,12 @@ export class BaseForumReplyDto extends BaseDto {
 
   @EnumProperty({
     description: '审核状态（0=待审核, 1=已通过, 2=已拒绝）',
-    example: ForumAuditStatusEnum.APPROVED,
+    example: AuditStatusEnum.APPROVED,
     required: true,
-    enum: ForumAuditStatusEnum,
-    default: ForumAuditStatusEnum.APPROVED,
+    enum: AuditStatusEnum,
+    default: AuditStatusEnum.APPROVED,
   })
-  auditStatus!: ForumAuditStatusEnum
+  auditStatus!: AuditStatusEnum
 
   @StringProperty({
     description: '审核拒绝原因',
@@ -131,11 +128,11 @@ export class QueryForumReplyDto extends IntersectionType(
 
   @EnumProperty({
     description: '排序方式（asc=升序, desc=降序）',
-    example: ForumReplySortOrderEnum.ASC,
+    example: SortOrderEnum.ASC,
     required: false,
-    enum: ForumReplySortOrderEnum,
+    enum: SortOrderEnum,
   })
-  sortOrder?: ForumReplySortOrderEnum
+  sortOrder?: SortOrderEnum
 }
 
 /**
