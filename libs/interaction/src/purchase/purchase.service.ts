@@ -1,4 +1,4 @@
-import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
+import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { ContentPermissionService } from '@libs/content/permission'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
@@ -223,7 +223,7 @@ export class PurchaseService extends BaseService {
     const chapterPermission =
       await this.contentPermissionService.resolveChapterPermission(chapterId)
 
-    if (chapterPermission.workType === WorkTypeEnum.COMIC) {
+    if (chapterPermission.workType === ContentTypeEnum.COMIC) {
       return this.purchaseTarget(
         {
           targetType: PurchaseTargetTypeEnum.COMIC_CHAPTER,
@@ -235,7 +235,7 @@ export class PurchaseService extends BaseService {
       )
     }
 
-    if (chapterPermission.workType === WorkTypeEnum.NOVEL) {
+    if (chapterPermission.workType === ContentTypeEnum.NOVEL) {
       return this.purchaseTarget(
         {
           targetType: PurchaseTargetTypeEnum.NOVEL_CHAPTER,

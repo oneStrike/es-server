@@ -1,4 +1,4 @@
-import { WorkTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { BatchOperationResponseDto, IdDto } from '@libs/base/dto'
 import {
@@ -26,7 +26,7 @@ export class NovelController {
     model: IdDto,
   })
   async create(@Body() body: CreateWorkDto) {
-    return this.workService.createWork({ ...body, type: WorkTypeEnum.NOVEL })
+    return this.workService.createWork({ ...body, type: ContentTypeEnum.NOVEL })
   }
 
   @Get('/page')
@@ -35,7 +35,7 @@ export class NovelController {
     model: BaseWorkDto,
   })
   async getPage(@Query() query: QueryWorkDto) {
-    return this.workService.getWorkPage({ ...query, type: WorkTypeEnum.NOVEL })
+    return this.workService.getWorkPage({ ...query, type: ContentTypeEnum.NOVEL })
   }
 
   @Get('/detail')

@@ -2,7 +2,7 @@
  * 作品类型枚举
  * 内联定义，不依赖项目中的其他文件
  */
-enum WorkTypeEnum {
+enum ContentTypeEnum {
   /** 漫画 */
   COMIC = 1,
   /** 小说 */
@@ -72,7 +72,7 @@ const COMIC_WORKS: IWorkData[] = [
     viewCount: 0,
     favoriteCount: 0,
     likeCount: 0,
-    type: WorkTypeEnum.COMIC,
+    type: ContentTypeEnum.COMIC,
   },
   {
     name: '海贼王',
@@ -101,7 +101,7 @@ const COMIC_WORKS: IWorkData[] = [
     viewCount: 0,
     favoriteCount: 0,
     likeCount: 0,
-    type: WorkTypeEnum.COMIC,
+    type: ContentTypeEnum.COMIC,
   },
   {
     name: '鬼灭之刃',
@@ -130,7 +130,7 @@ const COMIC_WORKS: IWorkData[] = [
     viewCount: 0,
     favoriteCount: 0,
     likeCount: 0,
-    type: WorkTypeEnum.COMIC,
+    type: ContentTypeEnum.COMIC,
   },
   {
     name: '你的名字',
@@ -159,7 +159,7 @@ const COMIC_WORKS: IWorkData[] = [
     viewCount: 0,
     favoriteCount: 0,
     likeCount: 0,
-    type: WorkTypeEnum.COMIC,
+    type: ContentTypeEnum.COMIC,
   },
   {
     name: '龙珠',
@@ -188,7 +188,7 @@ const COMIC_WORKS: IWorkData[] = [
     viewCount: 0,
     favoriteCount: 0,
     likeCount: 0,
-    type: WorkTypeEnum.COMIC,
+    type: ContentTypeEnum.COMIC,
   },
   {
     name: '火影忍者',
@@ -217,7 +217,7 @@ const COMIC_WORKS: IWorkData[] = [
     viewCount: 0,
     favoriteCount: 0,
     likeCount: 0,
-    type: WorkTypeEnum.COMIC,
+    type: ContentTypeEnum.COMIC,
   },
 ]
 
@@ -249,7 +249,7 @@ const NOVEL_WORKS: IWorkData[] = [
     viewCount: 0,
     favoriteCount: 0,
     likeCount: 0,
-    type: WorkTypeEnum.NOVEL,
+    type: ContentTypeEnum.NOVEL,
   },
   {
     name: '白夜行',
@@ -278,7 +278,7 @@ const NOVEL_WORKS: IWorkData[] = [
     viewCount: 0,
     favoriteCount: 0,
     likeCount: 0,
-    type: WorkTypeEnum.NOVEL,
+    type: ContentTypeEnum.NOVEL,
   },
   {
     name: '嫌疑人X的献身',
@@ -307,7 +307,7 @@ const NOVEL_WORKS: IWorkData[] = [
     viewCount: 0,
     favoriteCount: 0,
     likeCount: 0,
-    type: WorkTypeEnum.NOVEL,
+    type: ContentTypeEnum.NOVEL,
   },
 ]
 

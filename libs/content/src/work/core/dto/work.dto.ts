@@ -1,4 +1,4 @@
-import { WorkTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
+import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -121,11 +121,11 @@ export class BaseWorkDto extends BaseDto {
   // ==================== 基础信息 ====================
   @EnumProperty({
     description: '作品类型（1=漫画, 2=小说）',
-    example: WorkTypeEnum.COMIC,
+    example: ContentTypeEnum.COMIC,
     required: true,
-    enum: WorkTypeEnum,
+    enum: ContentTypeEnum,
   })
-  type!: WorkTypeEnum
+  type!: ContentTypeEnum
 
   @StringProperty({
     description: '作品名称',
@@ -548,11 +548,11 @@ export class QueryWorkDto extends IntersectionType(
 
   @EnumProperty({
     description: '作品类型（1=漫画, 2=小说）',
-    example: WorkTypeEnum.COMIC,
+    example: ContentTypeEnum.COMIC,
     required: true,
-    enum: WorkTypeEnum,
+    enum: ContentTypeEnum,
   })
-  type!: WorkTypeEnum
+  type!: ContentTypeEnum
 
   @ArrayProperty({
     description: '分类ID列表',

@@ -27,3 +27,16 @@ export enum UserStatusEnum {
   /** 永久封禁 */
   PERMANENT_BANNED = 5,
 }
+/// 性别枚举
+export enum GenderEnum {
+  /** 女 */
+  FEMALE = 2,
+  /** 男 */
+  MALE = 1,
+  /** 其他 */
+  OTHER = 3,
+  /** 保密 */
+  SECRET = 4,
+  /** 未知 */
+  UNKNOWN = 0,
+}

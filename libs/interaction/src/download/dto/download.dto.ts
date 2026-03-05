@@ -1,4 +1,4 @@
-import { WorkTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum } from '@libs/base/constant'
 import {
   ArrayProperty,
   BooleanProperty,
@@ -58,11 +58,11 @@ export class QueryDownloadedWorkDto extends IntersectionType(
 ) {
   @EnumProperty({
     description: '作品类型：1=漫画, 2=小说',
-    enum: WorkTypeEnum,
-    example: WorkTypeEnum.COMIC,
+    enum: ContentTypeEnum,
+    example: ContentTypeEnum.COMIC,
     required: false,
   })
-  workType?: WorkTypeEnum
+  workType?: ContentTypeEnum
 }
 
 export class QueryDownloadedWorkChapterDto extends QueryDownloadedWorkDto {

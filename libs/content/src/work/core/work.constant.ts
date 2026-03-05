@@ -1,4 +1,4 @@
-import { WorkTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum } from '@libs/base/constant'
 
 /// 作品连载状态枚举
 export enum WorkSerialStatusEnum {
@@ -23,6 +23,6 @@ export const WorkGrowthEventKey = {
 
 /// 作品类型映射（用于业务逻辑判断）
 export const WorkTypeMap = {
-  [WorkTypeEnum.COMIC]: '漫画',
-  [WorkTypeEnum.NOVEL]: '小说',
+  [ContentTypeEnum.COMIC]: '漫画',
+  [ContentTypeEnum.NOVEL]: '小说',
 } as const

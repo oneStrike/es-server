@@ -1,4 +1,4 @@
-import { WorkTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { ContentPermissionService } from '@libs/content/permission'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -116,7 +116,7 @@ export class DownloadService extends BaseService {
     const chapterPermission =
       await this.contentPermissionService.resolveChapterPermission(chapterId)
 
-    if (chapterPermission.workType === WorkTypeEnum.COMIC) {
+    if (chapterPermission.workType === ContentTypeEnum.COMIC) {
       return this.downloadTarget(
         {
           targetType: DownloadTargetTypeEnum.COMIC_CHAPTER,
@@ -127,7 +127,7 @@ export class DownloadService extends BaseService {
       )
     }
 
-    if (chapterPermission.workType === WorkTypeEnum.NOVEL) {
+    if (chapterPermission.workType === ContentTypeEnum.NOVEL) {
       return this.downloadTarget(
         {
           targetType: DownloadTargetTypeEnum.NOVEL_CHAPTER,

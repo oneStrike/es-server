@@ -1,4 +1,4 @@
-import { WorkTypeEnum } from '@libs/base/constant'
+import { ContentTypeEnum } from '@libs/base/constant'
 import { ApiDoc, ApiPageDoc } from '@libs/base/decorators'
 import { DragReorderDto, IdDto } from '@libs/base/dto'
 import {
@@ -23,7 +23,7 @@ export class ComicChapterController {
   async create(@Body() body: CreateWorkChapterDto) {
     return this.workChapterService.createChapter({
       ...body,
-      workType: WorkTypeEnum.COMIC,
+      workType: ContentTypeEnum.COMIC,
     })
   }
 
