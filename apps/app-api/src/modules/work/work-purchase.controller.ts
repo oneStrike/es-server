@@ -7,10 +7,12 @@ import {
   QueryPurchasedWorkChapterDto,
   QueryPurchasedWorkDto,
 } from '@libs/interaction/purchase'
-import { Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags, OmitType } from '@nestjs/swagger'
 
-class AppQueryPurchasedWorkDto extends OmitType(QueryPurchasedWorkDto, ['userId']) {}
+class AppQueryPurchasedWorkDto extends OmitType(QueryPurchasedWorkDto, [
+  'userId',
+]) {}
 
 class AppQueryPurchasedWorkChapterDto extends OmitType(
   QueryPurchasedWorkChapterDto,
@@ -58,9 +60,9 @@ export class WorkPurchaseController {
     model: IdDto,
   })
   async purchaseChapter(
-    @Query() query: IdDto,
+    @Body() body: IdDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.purchaseService.purchaseChapter(userId, query.id)
+    return this.purchaseService.purchaseChapter(userId, body.id)
   }
 }

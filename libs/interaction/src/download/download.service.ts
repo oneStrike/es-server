@@ -96,20 +96,19 @@ export class DownloadService extends BaseService {
     )
 
     return this.prisma.$transaction(async (tx) => {
-      try {
-        const record = await tx.userDownloadRecord.create({
-          data: dto,
-        })
+      await tx.userDownloadRecord.create({
+        data: dto,
+      })
 
-        await tx.workChapter.update({
-          where: { id: targetId },
-          data: { downloadCount: { increment: 1 } },
-        })
-
-        return record
-      } catch {
-        throw new BadRequestException('下载操作失败，请稍后重试')
+      const workChapter = await tx.workChapter.update({
+        where: { id: targetId },
+        data: { downloadCount: { increment: 1 } },
+        select: { content: true },
+      })
+      if (!workChapter.content) {
+        throw new BadRequestException('下载内容不存在')
       }
+      return workChapter.content
     })
   }
 

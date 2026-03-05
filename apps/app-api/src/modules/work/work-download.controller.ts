@@ -8,10 +8,12 @@ import {
   QueryDownloadedWorkChapterDto,
   QueryDownloadedWorkDto,
 } from '@libs/interaction/download'
-import { Controller, Get, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags, OmitType } from '@nestjs/swagger'
 
-class AppQueryDownloadedWorkDto extends OmitType(QueryDownloadedWorkDto, ['userId']) {}
+class AppQueryDownloadedWorkDto extends OmitType(QueryDownloadedWorkDto, [
+  'userId',
+]) {}
 
 class AppQueryDownloadedWorkChapterDto extends OmitType(
   QueryDownloadedWorkChapterDto,
@@ -59,9 +61,9 @@ export class WorkDownloadController {
     model: BaseUserDownloadRecordDto,
   })
   async downloadChapter(
-    @Query() query: IdDto,
+    @Body() body: IdDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.downloadService.downloadChapter(userId, query.id)
+    return this.downloadService.downloadChapter(userId, body.id)
   }
 }
