@@ -12,4 +12,18 @@ export abstract class BaseService {
   protected get prisma(): PrismaClientType {
     return this.prismaService.client
   }
+
+  /**
+   * 判断错误是否为 Prisma 记录未找到错误 (P2025)
+   * @param error - 错误对象
+   * @returns 是否为记录未找到错误
+   */
+  isRecordNotFound(error: unknown) {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P2025'
+    )
+  }
 }

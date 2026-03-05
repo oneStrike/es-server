@@ -1,5 +1,9 @@
 import { BaseService } from '@libs/base/database'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
@@ -65,15 +69,6 @@ export class LikeService extends BaseService {
       error !== null &&
       'code' in error &&
       (error as { code?: string }).code === 'P2002'
-    )
-  }
-
-  private isRecordNotFound(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: string }).code === 'P2025'
     )
   }
 

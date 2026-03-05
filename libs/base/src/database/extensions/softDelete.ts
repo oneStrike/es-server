@@ -7,27 +7,26 @@ import { Prisma } from '../index'
 export async function softDelete<T>(
   this: T,
   where: Prisma.Args<T, 'findUnique'>['where'],
-): Promise<number> {
+): Promise<
+  Prisma.Result<T, { where: typeof where; data: { deletedAt: Date } }, 'update'>
+> {
   const context = Prisma.getExtensionContext(this) as any
+  if (where.deletedAt !== null) {
+    where.deletedAt = null
+  }
   const target = await context.findUnique({
     where,
-    select: { id: true, deletedAt: true },
   })
   if (!target) {
     throw new BadRequestException('删除失败：数据不存在')
   }
 
-  if (target.deletedAt !== null) {
-    throw new BadRequestException('删除失败：数据已被删除')
-  }
-
-  await context.update({
+  return await context.update({
     where,
     data: {
       deletedAt: new Date(),
     },
   })
-  return target.id
 }
 
 /**

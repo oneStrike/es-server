@@ -13,29 +13,16 @@ export class CommentInteractionService extends BaseService {
     )
   }
 
-  private isRecordNotFound(error: unknown): boolean {
+  private isForeignKeyError(error: unknown): boolean {
     return (
       typeof error === 'object' &&
       error !== null &&
       'code' in error &&
-      (error as { code?: string }).code === 'P2025'
+      (error as { code?: string }).code === 'P2003'
     )
   }
 
-  private async ensureCommentExists(commentId: number) {
-    const comment = await this.prisma.userComment.findUnique({
-      where: { id: commentId, deletedAt: null },
-      select: { id: true },
-    })
-
-    if (!comment) {
-      throw new NotFoundException('评论不存在')
-    }
-  }
-
   async likeComment(commentId: number, userId: number): Promise<void> {
-    await this.ensureCommentExists(commentId)
-
     await this.prisma.$transaction(async (tx) => {
       try {
         await tx.userCommentLike.create({
@@ -44,6 +31,9 @@ export class CommentInteractionService extends BaseService {
       } catch (error) {
         if (this.isDuplicateError(error)) {
           throw new BadRequestException('已经点赞过该评论')
+        }
+        if (this.isForeignKeyError(error)) {
+          throw new NotFoundException('评论不存在')
         }
         throw error
       }
@@ -139,16 +129,25 @@ export class CommentInteractionService extends BaseService {
     description?: string,
     evidenceUrl?: string,
   ): Promise<void> {
-    await this.ensureCommentExists(commentId)
+    // 并行检查评论存在性和重复举报
+    const [comment, existing] = await Promise.all([
+      this.prisma.userComment.findUnique({
+        where: { id: commentId, deletedAt: null },
+        select: { id: true },
+      }),
+      this.prisma.userCommentReport.findFirst({
+        where: {
+          commentId,
+          reporterId,
+          status: ReportStatus.PENDING,
+        },
+        select: { id: true },
+      }),
+    ])
 
-    const existing = await this.prisma.userCommentReport.findFirst({
-      where: {
-        commentId,
-        reporterId,
-        status: ReportStatus.PENDING,
-      },
-      select: { id: true },
-    })
+    if (!comment) {
+      throw new NotFoundException('评论不存在')
+    }
 
     if (existing) {
       throw new BadRequestException('已经举报过该评论，请等待处理')

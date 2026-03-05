@@ -66,15 +66,6 @@ export class FavoriteService extends BaseService {
     )
   }
 
-  private isRecordNotFound(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: string }).code === 'P2025'
-    )
-  }
-
   /**
    * 统一维护 favoriteCount，避免分散更新逻辑导致计数不一致。
    */

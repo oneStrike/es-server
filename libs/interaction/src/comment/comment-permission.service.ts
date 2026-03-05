@@ -6,7 +6,29 @@ import { InteractionTargetType } from '../common.constant'
 @Injectable()
 export class CommentPermissionService extends BaseService {
   /**
-   * 校验用户是否允许发表评论�?
+   * 验证用户和目标是否可以评论
+   * 组合调用 ensureUserCanComment 和 ensureTargetCanComment
+   * @param userId - 用户ID
+   * @param targetType - 目标类型
+   * @param targetId - 目标ID
+   * @throws BadRequestException 用户或目标无评论权限时抛出
+   */
+  async ensureCanComment(
+    userId: number,
+    targetType: InteractionTargetType,
+    targetId: number,
+  ) {
+    await Promise.all([
+      this.ensureTargetCanComment(targetType, targetId),
+      this.ensureUserCanComment(userId),
+    ])
+  }
+
+  /**
+   * 校验用户是否允许发表评论
+   * 检查用户是否存在、是否被禁用、是否被禁言或封禁
+   * @param userId - 用户ID
+   * @throws BadRequestException 用户无评论权限时抛出
    */
   async ensureUserCanComment(userId: number) {
     const user = await this.prisma.appUser.findUnique({
@@ -31,7 +53,11 @@ export class CommentPermissionService extends BaseService {
   }
 
   /**
-   * 校验目标是否支持评论，并校验目标类型是否匹配�?
+   * 校验目标是否支持评论，并校验目标类型是否匹配
+   * 根据目标类型（作品/章节/论坛主题）进行不同的校验逻辑
+   * @param targetType - 目标类型
+   * @param targetId - 目标ID
+   * @throws BadRequestException 目标不存在、类型不匹配或不允许评论时抛出
    */
   async ensureTargetCanComment(
     targetType: InteractionTargetType,
@@ -50,16 +76,18 @@ export class CommentPermissionService extends BaseService {
         })
 
         if (!work || work.deletedAt !== null) {
-          throw new BadRequestException('Target not found')
+          throw new BadRequestException('目标不存在')
         }
 
+        // 校验作品类型与传入的 targetType 是否匹配
+        // COMIC 对应 type=1，NOVEL 对应 type=2
         const expectedType = targetType === InteractionTargetType.COMIC ? 1 : 2
         if (work.type !== expectedType) {
-          throw new BadRequestException('Target type mismatch')
+          throw new BadRequestException('目标类型不匹配')
         }
 
         if (!work.canComment) {
-          throw new BadRequestException('Target does not allow comments')
+          throw new BadRequestException('该目标不允许评论')
         }
         return
       }
@@ -76,17 +104,19 @@ export class CommentPermissionService extends BaseService {
         })
 
         if (!chapter || chapter.deletedAt !== null) {
-          throw new BadRequestException('Target not found')
+          throw new BadRequestException('目标不存在')
         }
 
+        // 校验章节的作品类型与传入的 targetType 是否匹配
+        // COMIC_CHAPTER 对应 workType=1，NOVEL_CHAPTER 对应 workType=2
         const expectedWorkType =
           targetType === InteractionTargetType.COMIC_CHAPTER ? 1 : 2
         if (chapter.workType !== expectedWorkType) {
-          throw new BadRequestException('Target type mismatch')
+          throw new BadRequestException('目标类型不匹配')
         }
 
         if (!chapter.canComment) {
-          throw new BadRequestException('Target does not allow comments')
+          throw new BadRequestException('该目标不允许评论')
         }
         return
       }
@@ -101,17 +131,17 @@ export class CommentPermissionService extends BaseService {
         })
 
         if (!topic || topic.deletedAt !== null) {
-          throw new BadRequestException('Target not found')
+          throw new BadRequestException('目标不存在')
         }
 
         if (topic.isLocked) {
-          throw new BadRequestException('Topic is locked')
+          throw new BadRequestException('该主题已被锁定，无法评论')
         }
         return
       }
 
       default:
-        throw new BadRequestException('Unsupported target type')
+        throw new BadRequestException('不支持的目标类型')
     }
   }
 }

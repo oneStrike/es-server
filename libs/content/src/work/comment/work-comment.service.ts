@@ -383,14 +383,15 @@ export class WorkCommentService extends BaseService {
     return created
   }
 
-  async deleteComment(id: number, userId: number) {
+  async deleteComment(id: number, userId?: number) {
     const comment = await this.workComment.findUnique({
       where: { id },
     })
     if (!comment || comment.deletedAt) {
       throw new BadRequestException('评论不存在')
     }
-    if (comment.userId !== userId) {
+    // 用户操作需要验证权限
+    if (userId && comment.userId !== userId) {
       throw new BadRequestException('无权删除该评论')
     }
     const wasVisible = this.isVisible(comment)
@@ -401,30 +402,16 @@ export class WorkCommentService extends BaseService {
       }
       return id
     })
-    await this.actionLogService.createActionLog({
-      userId,
-      actionType: ForumUserActionTypeEnum.DELETE_REPLY,
-      targetType: ForumUserActionTargetTypeEnum.REPLY,
-      targetId: id,
-    })
-    return deletedId
-  }
-
-  async deleteCommentByAdmin(id: number) {
-    const comment = await this.workComment.findUnique({
-      where: { id },
-    })
-    if (!comment || comment.deletedAt) {
-      throw new BadRequestException('评论不存在')
+    // 用户操作记录日志
+    if (userId) {
+      await this.actionLogService.createActionLog({
+        userId,
+        actionType: ForumUserActionTypeEnum.DELETE_REPLY,
+        targetType: ForumUserActionTargetTypeEnum.REPLY,
+        targetId: id,
+      })
     }
-    const wasVisible = this.isVisible(comment)
-    return this.prisma.$transaction(async (tx: WorkCommentTransaction) => {
-      await tx.workComment.softDelete({ id })
-      if (wasVisible) {
-        await this.updateCommentCount(tx, comment.workId, comment.chapterId, -1)
-      }
-      return id
-    })
+    return deletedId
   }
 
   async getCommentPage(dto: QueryWorkCommentDto) {

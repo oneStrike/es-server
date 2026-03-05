@@ -90,7 +90,7 @@ export class NovelChapterCommentController {
     model: IdDto,
   })
   async delete(@Body() body: IdDto) {
-    return this.workCommentService.deleteCommentByAdmin(body.id)
+    return this.workCommentService.deleteComment(body.id)
   }
 
   @Post('/recalc-count')
