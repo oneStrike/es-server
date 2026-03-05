@@ -13,18 +13,77 @@ import {
 } from '@nestjs/swagger'
 import { IsIn, IsString } from 'class-validator'
 import { ReportStatusEnum } from '../../common.constant'
+import { CommentIdDto } from './comment.dto'
 
 export type ReportStatus = ReportStatusEnum
 
-export class LikeCommentDto {
-  @NumberProperty({ description: '评论ID', example: 1, required: true, min: 1 })
-  commentId!: number
+/**
+ * 点赞评论 DTO
+ */
+export class LikeCommentDto extends CommentIdDto {}
+
+/**
+ * 取消点赞评论 DTO
+ */
+export class UnlikeCommentDto extends CommentIdDto {}
+
+/**
+ * 举报基础信息 DTO - 包含举报相关的基础字段
+ */
+export class BaseReportInfoDto {
+  @StringProperty({
+    description: '举报原因',
+    example: 'spam',
+    required: true,
+    minLength: 1,
+  })
+  reason!: string
+
+  @StringProperty({
+    description: '举报描述',
+    example: '包含垃圾内容',
+    required: false,
+  })
+  description?: string
+
+  @StringProperty({
+    description: '证据链接',
+    example: 'https://example.com/evidence.png',
+    required: false,
+  })
+  evidenceUrl?: string
 }
 
-export class UnlikeCommentDto extends LikeCommentDto {}
+/**
+ * 举报处理信息 DTO - 包含举报处理相关的字段
+ */
+export class ReportHandlingDto {
+  @StringProperty({
+    description: '处理备注',
+    example: 'handled',
+    required: false,
+    maxLength: 500,
+  })
+  handlingNote?: string
 
+  @DateProperty({
+    description: '处理时间',
+    example: '2026-03-04T09:00:00.000Z',
+    required: false,
+  })
+  handledAt?: Date
+}
+
+/**
+ * 评论举报完整 DTO - 内部服务使用
+ */
 export class BaseCommentReportDto extends BaseDto {
-  @NumberProperty({ description: '评论ID', example: 1, required: true, min: 1 })
+  @NumberProperty({
+    description: '评论ID',
+    example: 1,
+    required: true,
+    min: 1,
+  })
   commentId!: number
 
   @NumberProperty({
@@ -89,25 +148,36 @@ export class BaseCommentReportDto extends BaseDto {
   handledAt?: Date
 }
 
+/**
+ * 举报ID DTO
+ */
 export class ReportIdDto {
   @NumberProperty({ description: '举报ID', example: 1, required: true, min: 1 })
   reportId!: number
 }
 
-export class ReportCommentDto extends PickType(BaseCommentReportDto, [
-  'commentId',
-  'reason',
-  'description',
-  'evidenceUrl',
-]) {}
+/**
+ * 举报评论 DTO - 用户提交举报
+ */
+export class ReportCommentDto extends IntersectionType(
+  CommentIdDto,
+  BaseReportInfoDto,
+) {}
 
+/**
+ * 查询评论举报列表 DTO
+ */
 export class QueryCommentReportDto extends IntersectionType(
   PageDto,
   PickType(PartialType(BaseCommentReportDto), ['status']),
 ) {}
+
+/**
+ * 处理评论举报 DTO
+ */
 export class HandleCommentReportDto extends IntersectionType(
   ReportIdDto,
-  PickType(BaseCommentReportDto, ['handlingNote']),
+  ReportHandlingDto,
 ) {
   @ApiProperty({
     description: '处理状态',

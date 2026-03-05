@@ -4,15 +4,52 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
-import { BaseDto, PageDto } from '@libs/base/dto'
-import {
-  IntersectionType,
-  OmitType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger'
+import { BaseDto, PageDto, UserIdDto } from '@libs/base/dto'
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
 import { AuditStatusEnum, InteractionTargetType } from '../../common.constant'
 
+/**
+ * 交互目标 DTO - 包含目标类型和目标ID
+ * 用于评论、点赞等交互操作的目标对象标识
+ */
+export class InteractionTargetDto {
+  @EnumProperty({
+    description: '目标类型',
+    enum: InteractionTargetType,
+    example: InteractionTargetType.COMIC,
+    required: true,
+  })
+  targetType!: InteractionTargetType
+
+  @NumberProperty({ description: '目标ID', example: 1, required: true, min: 1 })
+  targetId!: number
+}
+
+/**
+ * 评论审核信息 DTO - 包含审核状态相关字段
+ */
+export class CommentAuditDto {
+  @EnumProperty({
+    description: '审核状态',
+    enum: AuditStatusEnum,
+    example: AuditStatusEnum.APPROVED,
+    required: true,
+    default: AuditStatusEnum.APPROVED,
+  })
+  auditStatus!: AuditStatusEnum
+
+  @StringProperty({
+    description: '审核原因',
+    example: '违反社区规范',
+    required: false,
+    maxLength: 500,
+  })
+  auditReason?: string
+}
+
+/**
+ * 评论基础 DTO - 包含评论的所有基础字段
+ */
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
     description: '目标类型',
@@ -83,6 +120,9 @@ export class BaseCommentDto extends BaseDto {
   auditReason?: string
 }
 
+/**
+ * 评论ID DTO - 用于接收评论ID参数
+ */
 export class CommentIdDto {
   @NumberProperty({
     description: '评论ID',
@@ -93,24 +133,27 @@ export class CommentIdDto {
   commentId!: number
 }
 
-export class CreateCommentDto extends PickType(BaseCommentDto, [
-  'userId',
-  'targetType',
-  'targetId',
-  'content',
-  'replyToId',
-]) {}
+/**
+ * 创建评论 DTO - 内部服务使用
+ */
+export class CreateCommentDto extends IntersectionType(
+  UserIdDto,
+  InteractionTargetDto,
+  PickType(BaseCommentDto, ['content', 'replyToId']),
+) {}
 
-export class CreateCommentBodyDto extends OmitType(CreateCommentDto, [
-  'userId',
-  'replyToId',
-]) {}
+/**
+ * 创建评论请求体 DTO - API接口使用（不含userId）
+ */
+export class CreateCommentBodyDto extends IntersectionType(
+  InteractionTargetDto,
+  PickType(BaseCommentDto, ['content']),
+) {}
 
-export class ReplyCommentDto extends PickType(BaseCommentDto, [
-  'userId',
-  'content',
-  'replyToId',
-]) {
+/**
+ * 回复目标 DTO - 包含回复目标评论ID
+ */
+export class ReplyTargetDto {
   @NumberProperty({
     description: '回复的评论ID',
     example: 1,
@@ -120,20 +163,30 @@ export class ReplyCommentDto extends PickType(BaseCommentDto, [
   replyToId!: number
 }
 
-export class ReplyCommentBodyDto extends OmitType(ReplyCommentDto, [
-  'userId',
-]) {}
+/**
+ * 回复评论 DTO - 内部服务使用
+ */
+export class ReplyCommentDto extends IntersectionType(
+  UserIdDto,
+  ReplyTargetDto,
+  PickType(BaseCommentDto, ['content']),
+) {}
 
-export class DeleteCommentDto extends CommentIdDto {}
+/**
+ * 回复评论请求体 DTO - API接口使用（不含userId）
+ */
+export class ReplyCommentBodyDto extends IntersectionType(
+  ReplyTargetDto,
+  PickType(BaseCommentDto, ['content']),
+) {}
 
+/**
+ * 查询评论分页 DTO
+ */
 export class QueryCommentPageDto extends IntersectionType(
   PageDto,
-  PickType(PartialType(BaseCommentDto), [
-    'targetType',
-    'targetId',
-    'auditStatus',
-    'isHidden',
-  ]),
+  PartialType(InteractionTargetDto),
+  PickType(PartialType(BaseCommentDto), ['auditStatus', 'isHidden']),
 ) {
   @BooleanProperty({
     description: '仅根评论',
@@ -143,26 +196,39 @@ export class QueryCommentPageDto extends IntersectionType(
   rootOnly?: boolean
 }
 
+/**
+ * 查询我的评论分页 DTO
+ */
 export class QueryMyCommentPageDto extends IntersectionType(
   PageDto,
-  PickType(QueryCommentPageDto, ['targetType', 'targetId', 'auditStatus']),
+  PartialType(InteractionTargetDto),
+  PickType(PartialType(CommentAuditDto), ['auditStatus']),
 ) {}
 
+/**
+ * 更新评论审核状态 DTO
+ */
 export class UpdateCommentAuditDto extends IntersectionType(
   CommentIdDto,
-  PickType(BaseCommentDto, ['auditStatus', 'auditReason']),
+  CommentAuditDto,
 ) {}
 
+/**
+ * 更新评论隐藏状态 DTO
+ */
 export class UpdateCommentHiddenDto extends IntersectionType(
   CommentIdDto,
   PickType(BaseCommentDto, ['isHidden']),
 ) {}
 
-export class RecalcCommentCountDto extends PickType(BaseCommentDto, [
-  'targetType',
-  'targetId',
-]) {}
+/**
+ * 重新计算评论数量 DTO
+ */
+export class RecalcCommentCountDto extends InteractionTargetDto {}
 
+/**
+ * 查询评论回复列表 DTO
+ */
 export class QueryCommentRepliesDto extends IntersectionType(
   PageDto,
   CommentIdDto,
