@@ -6,6 +6,15 @@ export enum ContentTypeEnum {
   NOVEL = 2,
 }
 
+export enum BusinessModuleEnum {
+  /** 漫画 */
+  COMIC = 1,
+  /** 小说 */
+  NOVEL = 2,
+  /** 论坛 */
+  FORUM = 3,
+}
+
 /// 作品可见权限枚举
 export enum WorkViewPermissionEnum {
   INHERIT = -1,
