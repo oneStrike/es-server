@@ -1,75 +1,127 @@
-import { Injectable } from '@nestjs/common'
-import { BaseInteractionService } from '../base-interaction.service'
-import { CounterService } from '../counter/counter.service'
-import { InteractionActionType, InteractionTargetType } from '../interaction.constant'
-import { TargetValidatorRegistry } from '../validator/target-validator.registry'
+import { BaseService } from '@libs/base/database'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
-export class LikeService extends BaseInteractionService {
-  constructor(
-    protected readonly counterService: CounterService,
-    protected readonly validatorRegistry: TargetValidatorRegistry,
+export class LikeService extends BaseService {
+  private getTargetCountModel(tx: any, targetType: InteractionTargetType) {
+    switch (targetType) {
+      case InteractionTargetType.COMIC:
+      case InteractionTargetType.NOVEL:
+        return tx.work
+      case InteractionTargetType.COMIC_CHAPTER:
+      case InteractionTargetType.NOVEL_CHAPTER:
+        return tx.workChapter
+      case InteractionTargetType.FORUM_TOPIC:
+        return tx.forumTopic
+      default:
+        throw new BadRequestException('Unsupported target type')
+    }
+  }
+
+  private getTargetCountWhere(
+    targetType: InteractionTargetType,
+    targetId: number,
   ) {
-    super()
+    switch (targetType) {
+      case InteractionTargetType.COMIC:
+        return { id: targetId, type: 1, deletedAt: null }
+      case InteractionTargetType.NOVEL:
+        return { id: targetId, type: 2, deletedAt: null }
+      case InteractionTargetType.COMIC_CHAPTER:
+        return { id: targetId, workType: 1, deletedAt: null }
+      case InteractionTargetType.NOVEL_CHAPTER:
+        return { id: targetId, workType: 2, deletedAt: null }
+      case InteractionTargetType.FORUM_TOPIC:
+        return { id: targetId, deletedAt: null }
+      default:
+        throw new BadRequestException('Unsupported target type')
+    }
   }
 
-  protected getActionType(): InteractionActionType {
-    return InteractionActionType.LIKE
-  }
-
-  protected getCancelActionType(): InteractionActionType {
-    return InteractionActionType.UNLIKE
-  }
-
-  protected async checkUserInteracted(
+  /**
+   * Keep validation explicit so "target not found" is returned before
+   * duplicate-like checks, matching the previous user-facing behavior.
+   */
+  private async ensureTargetExists(
     targetType: InteractionTargetType,
     targetId: number,
-    userId: number,
-  ): Promise<boolean> {
-    const like = await this.prisma.userLike.findUnique({
-      where: {
-        targetType_targetId_userId: {
-          targetType,
-          targetId,
-          userId,
-        },
-      },
+  ) {
+    const where = this.getTargetCountWhere(targetType, targetId)
+    const model = this.getTargetCountModel(this.prisma, targetType)
+    const target = await model.findFirst({
+      where,
+      select: { id: true },
     })
-    return !!like
+
+    if (!target) {
+      throw new NotFoundException('Target not found')
+    }
   }
 
-  protected async createInteraction(
+  private isDuplicateLikeError(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P2002'
+    )
+  }
+
+  private isRecordNotFound(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P2025'
+    )
+  }
+
+  /**
+   * Centralize count mutation with a single UPDATE statement and shared guards.
+   */
+  private async applyLikeCountDelta(
+    tx: any,
     targetType: InteractionTargetType,
     targetId: number,
-    userId: number,
-  ): Promise<void> {
-    await this.prisma.userLike.create({
+    delta: number,
+  ) {
+    if (delta === 0) {
+      return
+    }
+
+    const model = this.getTargetCountModel(tx, targetType)
+    const where = this.getTargetCountWhere(targetType, targetId)
+
+    if (delta > 0) {
+      const updated = await model.updateMany({
+        where,
+        data: {
+          likeCount: {
+            increment: delta,
+          },
+        },
+      })
+
+      // If the target disappeared between validation and write, rollback.
+      if (updated.count === 0) {
+        throw new NotFoundException('Target not found')
+      }
+      return
+    }
+
+    const amount = Math.abs(delta)
+    await model.updateMany({
+      where: {
+        ...where,
+        likeCount: { gte: amount },
+      },
       data: {
-        targetType,
-        targetId,
-        userId,
-      },
-    })
-  }
-
-  protected async deleteInteraction(
-    targetType: InteractionTargetType,
-    targetId: number,
-    userId: number,
-  ): Promise<void> {
-    await this.prisma.userLike.delete({
-      where: {
-        targetType_targetId_userId: {
-          targetType,
-          targetId,
-          userId,
+        likeCount: {
+          decrement: amount,
         },
       },
     })
-  }
-
-  protected getCountField(): string {
-    return 'likeCount'
   }
 
   async checkStatusBatch(
@@ -127,14 +179,39 @@ export class LikeService extends BaseInteractionService {
     targetType: InteractionTargetType,
     targetId: number,
   ): Promise<number> {
-    return this.getCount(targetType, targetId)
+    const model = this.getTargetCountModel(this.prisma, targetType)
+    const target = await model.findUnique({
+      where: { id: targetId },
+      select: { likeCount: true },
+    })
+    return target?.likeCount ?? 0
   }
 
   async getLikeCounts(
     targetType: InteractionTargetType,
     targetIds: number[],
   ): Promise<Map<number, number>> {
-    return this.getCounts(targetType, targetIds)
+    if (targetIds.length === 0) {
+      return new Map()
+    }
+
+    const model = this.getTargetCountModel(this.prisma, targetType)
+    const targets = await model.findMany({
+      where: {
+        id: { in: targetIds },
+      },
+      select: {
+        id: true,
+        likeCount: true,
+      },
+    })
+
+    const countMap = new Map<number, number>()
+    for (const target of targets) {
+      countMap.set(target.id, target.likeCount ?? 0)
+    }
+
+    return countMap
   }
 
   async like(
@@ -142,7 +219,26 @@ export class LikeService extends BaseInteractionService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    return this.interact(targetType, targetId, userId)
+    await this.ensureTargetExists(targetType, targetId)
+
+    await this.prisma.$transaction(async (tx) => {
+      try {
+        await tx.userLike.create({
+          data: {
+            targetType,
+            targetId,
+            userId,
+          },
+        })
+      } catch (error) {
+        if (this.isDuplicateLikeError(error)) {
+          throw new BadRequestException('Already liked')
+        }
+        throw error
+      }
+
+      await this.applyLikeCountDelta(tx, targetType, targetId, 1)
+    })
   }
 
   async unlike(
@@ -150,7 +246,28 @@ export class LikeService extends BaseInteractionService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    return this.cancelInteract(targetType, targetId, userId)
+    await this.ensureTargetExists(targetType, targetId)
+
+    await this.prisma.$transaction(async (tx) => {
+      try {
+        await tx.userLike.delete({
+          where: {
+            targetType_targetId_userId: {
+              targetType,
+              targetId,
+              userId,
+            },
+          },
+        })
+      } catch (error) {
+        if (this.isRecordNotFound(error)) {
+          throw new BadRequestException('Not liked yet')
+        }
+        throw error
+      }
+
+      await this.applyLikeCountDelta(tx, targetType, targetId, -1)
+    })
   }
 
   async checkLikeStatus(
@@ -158,7 +275,17 @@ export class LikeService extends BaseInteractionService {
     targetId: number,
     userId: number,
   ): Promise<boolean> {
-    return this.checkStatus(targetType, targetId, userId)
+    const like = await this.prisma.userLike.findUnique({
+      where: {
+        targetType_targetId_userId: {
+          targetType,
+          targetId,
+          userId,
+        },
+      },
+      select: { id: true },
+    })
+    return !!like
   }
 
   async getUserLikes(

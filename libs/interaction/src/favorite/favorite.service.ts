@@ -1,75 +1,124 @@
-import { Injectable } from '@nestjs/common'
-import { BaseInteractionService } from '../base-interaction.service'
-import { CounterService } from '../counter/counter.service'
-import { InteractionActionType, InteractionTargetType } from '../interaction.constant'
-import { TargetValidatorRegistry } from '../validator/target-validator.registry'
+import { BaseService } from '@libs/base/database'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
-export class FavoriteService extends BaseInteractionService {
-  constructor(
-    protected readonly counterService: CounterService,
-    protected readonly validatorRegistry: TargetValidatorRegistry,
+export class FavoriteService extends BaseService {
+  private getTargetCountModel(tx: any, targetType: InteractionTargetType) {
+    switch (targetType) {
+      case InteractionTargetType.COMIC:
+      case InteractionTargetType.NOVEL:
+        return tx.work
+      case InteractionTargetType.FORUM_TOPIC:
+        return tx.forumTopic
+      case InteractionTargetType.COMIC_CHAPTER:
+      case InteractionTargetType.NOVEL_CHAPTER:
+      default:
+        throw new BadRequestException('不支持的收藏类型')
+    }
+  }
+
+  private getTargetCountWhere(
+    targetType: InteractionTargetType,
+    targetId: number,
   ) {
-    super()
+    switch (targetType) {
+      case InteractionTargetType.COMIC:
+        return { id: targetId, type: 1, deletedAt: null }
+      case InteractionTargetType.NOVEL:
+        return { id: targetId, type: 2, deletedAt: null }
+      case InteractionTargetType.FORUM_TOPIC:
+        return { id: targetId, deletedAt: null }
+      default:
+        throw new BadRequestException('Unsupported target type')
+    }
   }
 
-  protected getActionType(): InteractionActionType {
-    return InteractionActionType.FAVORITE
-  }
-
-  protected getCancelActionType(): InteractionActionType {
-    return InteractionActionType.UNFAVORITE
-  }
-
-  protected async checkUserInteracted(
+  /**
+   * 显式校验目标，保证“目标不存在”优先于“已收藏/未收藏”等状态错误。
+   */
+  private async ensureTargetExists(
     targetType: InteractionTargetType,
     targetId: number,
-    userId: number,
-  ): Promise<boolean> {
-    const favorite = await this.prisma.userFavorite.findUnique({
-      where: {
-        targetType_targetId_userId: {
-          targetType,
-          targetId,
-          userId,
-        },
-      },
+  ) {
+    const where = this.getTargetCountWhere(targetType, targetId)
+    const model = this.getTargetCountModel(this.prisma, targetType)
+    const target = await model.findFirst({
+      where,
+      select: { id: true },
     })
-    return !!favorite
+
+    if (!target) {
+      throw new NotFoundException('Target not found')
+    }
   }
 
-  protected async createInteraction(
+  private isDuplicateFavoriteError(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P2002'
+    )
+  }
+
+  private isRecordNotFound(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P2025'
+    )
+  }
+
+  /**
+   * 统一维护 favoriteCount，避免分散更新逻辑导致计数不一致。
+   */
+  private async applyFavoriteCountDelta(
+    tx: any,
     targetType: InteractionTargetType,
     targetId: number,
-    userId: number,
-  ): Promise<void> {
-    await this.prisma.userFavorite.create({
+    delta: number,
+  ) {
+    if (delta === 0) {
+      return
+    }
+
+    const model = this.getTargetCountModel(tx, targetType)
+    const where = this.getTargetCountWhere(targetType, targetId)
+
+    if (delta > 0) {
+      const updated = await model.updateMany({
+        where,
+        data: {
+          favoriteCount: {
+            increment: delta,
+          },
+        },
+      })
+
+      if (updated.count === 0) {
+        throw new NotFoundException('Target not found')
+      }
+      return
+    }
+
+    const amount = Math.abs(delta)
+    await model.updateMany({
+      where: {
+        ...where,
+        favoriteCount: { gte: amount },
+      },
       data: {
-        targetType,
-        targetId,
-        userId,
-      },
-    })
-  }
-
-  protected async deleteInteraction(
-    targetType: InteractionTargetType,
-    targetId: number,
-    userId: number,
-  ): Promise<void> {
-    await this.prisma.userFavorite.delete({
-      where: {
-        targetType_targetId_userId: {
-          targetType,
-          targetId,
-          userId,
+        favoriteCount: {
+          decrement: amount,
         },
       },
     })
-  }
-
-  protected getCountField(): string {
-    return 'favoriteCount'
   }
 
   async checkStatusBatch(
@@ -107,7 +156,26 @@ export class FavoriteService extends BaseInteractionService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    return this.interact(targetType, targetId, userId)
+    await this.ensureTargetExists(targetType, targetId)
+
+    await this.prisma.$transaction(async (tx) => {
+      try {
+        await tx.userFavorite.create({
+          data: {
+            targetType,
+            targetId,
+            userId,
+          },
+        })
+      } catch (error) {
+        if (this.isDuplicateFavoriteError(error)) {
+          throw new BadRequestException('Already favorited')
+        }
+        throw error
+      }
+
+      await this.applyFavoriteCountDelta(tx, targetType, targetId, 1)
+    })
   }
 
   async unfavorite(
@@ -115,7 +183,28 @@ export class FavoriteService extends BaseInteractionService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    return this.cancelInteract(targetType, targetId, userId)
+    await this.ensureTargetExists(targetType, targetId)
+
+    await this.prisma.$transaction(async (tx) => {
+      try {
+        await tx.userFavorite.delete({
+          where: {
+            targetType_targetId_userId: {
+              targetType,
+              targetId,
+              userId,
+            },
+          },
+        })
+      } catch (error) {
+        if (this.isRecordNotFound(error)) {
+          throw new BadRequestException('Not favorited yet')
+        }
+        throw error
+      }
+
+      await this.applyFavoriteCountDelta(tx, targetType, targetId, -1)
+    })
   }
 
   async checkFavoriteStatus(
@@ -123,7 +212,17 @@ export class FavoriteService extends BaseInteractionService {
     targetId: number,
     userId: number,
   ): Promise<boolean> {
-    return this.checkStatus(targetType, targetId, userId)
+    const favorite = await this.prisma.userFavorite.findUnique({
+      where: {
+        targetType_targetId_userId: {
+          targetType,
+          targetId,
+          userId,
+        },
+      },
+      select: { id: true },
+    })
+    return !!favorite
   }
 
   async getUserFavorites(

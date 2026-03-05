@@ -2,7 +2,7 @@ import type { JwtUserInfoInterface } from '@libs/base/types'
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  CommentReportService,
+  CommentInteractionService,
   CommentService,
   HandleCommentReportDto,
   QueryCommentPageDto,
@@ -16,17 +16,17 @@ import { ApiTags } from '@nestjs/swagger'
 import { Audit } from '../../../common/decorators/audit.decorator'
 import { ActionTypeEnum } from '../../system/audit/audit.constant'
 
-@ApiTags('å†…å®¹ç®¡ç†/è¯„è®ºæ¨¡å—')
+@ApiTags('ÄÚÈİ¹ÜÀí/ÆÀÂÛÄ£¿é')
 @Controller('admin/content/comment')
 export class ContentCommentController {
   constructor(
     private readonly commentService: CommentService,
-    private readonly commentReportService: CommentReportService,
+    private readonly commentInteractionService: CommentInteractionService,
   ) {}
 
   @Get('/page')
   @ApiPageDoc({
-    summary: 'åˆ†é¡µæŸ¥è¯¢è¯„è®º',
+    summary: '·ÖÒ³²éÑ¯ÆÀÂÛ',
     model: IdDto,
   })
   async getPage(@Query() query: QueryCommentPageDto) {
@@ -35,7 +35,7 @@ export class ContentCommentController {
 
   @Get('/detail')
   @ApiDoc({
-    summary: 'è·å–è¯„è®ºè¯¦æƒ…',
+    summary: '»ñÈ¡ÆÀÂÛÏêÇé',
     model: IdDto,
   })
   async getDetail(@Query() query: IdDto) {
@@ -43,9 +43,9 @@ export class ContentCommentController {
   }
 
   @Post('/update-audit')
-  @Audit({ actionType: ActionTypeEnum.UPDATE, content: 'æ›´æ–°è¯„è®ºå®¡æ ¸çŠ¶æ€' })
+  @Audit({ actionType: ActionTypeEnum.UPDATE, content: '¸üĞÂÆÀÂÛÉóºË×´Ì¬' })
   @ApiDoc({
-    summary: 'æ›´æ–°è¯„è®ºå®¡æ ¸çŠ¶æ€',
+    summary: '¸üĞÂÆÀÂÛÉóºË×´Ì¬',
     model: IdDto,
   })
   async updateAudit(
@@ -56,9 +56,9 @@ export class ContentCommentController {
   }
 
   @Post('/update-hidden')
-  @Audit({ actionType: ActionTypeEnum.UPDATE, content: 'æ›´æ–°è¯„è®ºéšè—çŠ¶æ€' })
+  @Audit({ actionType: ActionTypeEnum.UPDATE, content: '¸üĞÂÆÀÂÛÒş²Ø×´Ì¬' })
   @ApiDoc({
-    summary: 'æ›´æ–°è¯„è®ºéšè—çŠ¶æ€',
+    summary: '¸üĞÂÆÀÂÛÒş²Ø×´Ì¬',
     model: IdDto,
   })
   async updateHidden(@Body() body: UpdateCommentHiddenDto) {
@@ -66,9 +66,9 @@ export class ContentCommentController {
   }
 
   @Post('/delete')
-  @Audit({ actionType: ActionTypeEnum.DELETE, content: 'åˆ é™¤è¯„è®º' })
+  @Audit({ actionType: ActionTypeEnum.DELETE, content: 'É¾³ıÆÀÂÛ' })
   @ApiDoc({
-    summary: 'åˆ é™¤è¯„è®º',
+    summary: 'É¾³ıÆÀÂÛ',
     model: IdDto,
   })
   async delete(@Body() body: IdDto) {
@@ -77,7 +77,7 @@ export class ContentCommentController {
 
   @Post('/recalc-count')
   @ApiDoc({
-    summary: 'é‡ç®—è¯„è®ºæ•°',
+    summary: 'ÖØËãÆÀÂÛÊı',
     model: RecalcCommentCountDto,
   })
   async recalcCount(@Body() body: RecalcCommentCountDto) {
@@ -86,23 +86,27 @@ export class ContentCommentController {
 
   @Get('/report/page')
   @ApiPageDoc({
-    summary: 'åˆ†é¡µæŸ¥è¯¢è¯„è®ºä¸¾æŠ¥',
+    summary: '·ÖÒ³²éÑ¯ÆÀÂÛ¾Ù±¨',
     model: IdDto,
   })
   async getReportPage(@Query() query: QueryCommentReportDto) {
-    return this.commentReportService.getReports(query.status, query.pageIndex, query.pageSize)
+    return this.commentInteractionService.getReports(
+      query.status,
+      query.pageIndex,
+      query.pageSize,
+    )
   }
 
   @Post('/report/handle')
   @ApiDoc({
-    summary: 'å¤„ç†è¯„è®ºä¸¾æŠ¥',
+    summary: '´¦ÀíÆÀÂÛ¾Ù±¨',
     model: IdDto,
   })
   async handleReport(
     @Body() body: HandleCommentReportDto,
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
-    return this.commentReportService.handleReport(
+    return this.commentInteractionService.handleReport(
       body.reportId,
       user.sub,
       body.status,

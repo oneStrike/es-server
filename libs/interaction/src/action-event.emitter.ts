@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common'
-import { InteractionActionType, InteractionTargetType } from './interaction.constant'
+import { InteractionActionType, InteractionTargetType } from './common.constant'
 
 export interface InteractionEvent {
   actionType: InteractionActionType

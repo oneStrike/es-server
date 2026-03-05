@@ -1,6 +1,6 @@
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { InteractionTargetType } from '../interaction.constant'
+import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
 export class CounterService extends BaseService {
@@ -15,7 +15,7 @@ export class CounterService extends BaseService {
     const model = (tx)[modelName]
 
     if (!model) {
-      throw new Error(`未找到模型: ${modelName}`)
+      throw new Error(`未找到模�? ${modelName}`)
     }
 
     await model.update({
@@ -39,7 +39,7 @@ export class CounterService extends BaseService {
     const model = (tx)[modelName]
 
     if (!model) {
-      throw new Error(`未找到模型: ${modelName}`)
+      throw new Error(`未找到模�? ${modelName}`)
     }
 
     await model.update({
@@ -118,7 +118,7 @@ export class CounterService extends BaseService {
     const model = (this.prisma as any)[modelName]
 
     if (!model) {
-      throw new Error(`未找到模型: ${modelName}`)
+      throw new Error(`未找到模�? ${modelName}`)
     }
 
     await model.update({

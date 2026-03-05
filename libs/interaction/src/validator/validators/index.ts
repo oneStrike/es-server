@@ -1,6 +1,0 @@
-export * from './base.validator'
-export * from './comic-chapter.validator'
-export * from './comic.validator'
-export * from './forum-topic.validator'
-export * from './novel-chapter.validator'
-export * from './novel.validator'

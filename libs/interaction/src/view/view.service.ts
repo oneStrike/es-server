@@ -1,14 +1,57 @@
 import { BaseService } from '@libs/base/database'
-import { Injectable } from '@nestjs/common'
-import { InteractionTargetType } from '../interaction.constant'
-import { TargetValidatorRegistry } from '../validator/target-validator.registry'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
 export class ViewService extends BaseService {
-  constructor(
-    private readonly validatorRegistry: TargetValidatorRegistry,
+  private getTargetWhere(
+    targetType: InteractionTargetType,
+    targetId: number,
   ) {
-    super()
+    switch (targetType) {
+      case InteractionTargetType.COMIC:
+        return { id: targetId, type: 1, deletedAt: null }
+      case InteractionTargetType.NOVEL:
+        return { id: targetId, type: 2, deletedAt: null }
+      case InteractionTargetType.COMIC_CHAPTER:
+        return { id: targetId, workType: 1, deletedAt: null }
+      case InteractionTargetType.NOVEL_CHAPTER:
+        return { id: targetId, workType: 2, deletedAt: null }
+      case InteractionTargetType.FORUM_TOPIC:
+        return { id: targetId, deletedAt: null }
+      default:
+        throw new BadRequestException('Unsupported target type')
+    }
+  }
+
+  private getTargetModel(client: any, targetType: InteractionTargetType) {
+    switch (targetType) {
+      case InteractionTargetType.COMIC:
+      case InteractionTargetType.NOVEL:
+        return client.work
+      case InteractionTargetType.COMIC_CHAPTER:
+      case InteractionTargetType.NOVEL_CHAPTER:
+        return client.workChapter
+      case InteractionTargetType.FORUM_TOPIC:
+        return client.forumTopic
+      default:
+        throw new BadRequestException('Unsupported target type')
+    }
+  }
+
+  /**
+   * 判断目标是否有效�?   * 维持原行为：无效目标直接返回，不抛出异常�?
+   */
+  private async isTargetValid(
+    targetType: InteractionTargetType,
+    targetId: number,
+  ): Promise<boolean> {
+    const model = this.getTargetModel(this.prisma, targetType)
+    const target = await model.findFirst({
+      where: this.getTargetWhere(targetType, targetId),
+      select: { id: true },
+    })
+    return !!target
   }
 
   async recordView(
@@ -19,10 +62,7 @@ export class ViewService extends BaseService {
     device?: string,
     userAgent?: string,
   ): Promise<void> {
-    const validator = this.validatorRegistry.getValidator(targetType)
-    const result = await validator.validate(targetId)
-
-    if (!result.valid) {
+    if (!(await this.isTargetValid(targetType, targetId))) {
       return
     }
 

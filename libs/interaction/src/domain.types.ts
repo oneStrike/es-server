@@ -1,11 +1,11 @@
 /**
- * 交互模块类型定义
+ * 浜や簰妯″潡绫诲瀷瀹氫箟
  */
 
-import type { AuditRole, AuditStatus, InteractionTargetType, ReportStatus } from './interaction.constant'
+import type { AuditRole, AuditStatus, InteractionTargetType, ReportStatus } from './common.constant'
 
 /**
- * 交互记录基础接口
+ * 浜や簰璁板綍鍩虹鎺ュ彛
  */
 export interface IInteractionRecord {
   id: number
@@ -14,7 +14,7 @@ export interface IInteractionRecord {
 }
 
 /**
- * 目标对象接口
+ * 鐩爣瀵硅薄鎺ュ彛
  */
 export interface IInteractionTarget {
   targetType: InteractionTargetType
@@ -22,17 +22,17 @@ export interface IInteractionTarget {
 }
 
 /**
- * 点赞记录接口
+ * 鐐硅禐璁板綍鎺ュ彛
  */
 export interface ILikeRecord extends IInteractionRecord, IInteractionTarget {}
 
 /**
- * 收藏记录接口
+ * 鏀惰棌璁板綍鎺ュ彛
  */
 export interface IFavoriteRecord extends IInteractionRecord, IInteractionTarget {}
 
 /**
- * 浏览记录接口
+ * 娴忚璁板綍鎺ュ彛
  */
 export interface IViewRecord extends IInteractionRecord, IInteractionTarget {
   ipAddress?: string | null
@@ -42,7 +42,7 @@ export interface IViewRecord extends IInteractionRecord, IInteractionTarget {
 }
 
 /**
- * 评论记录接口
+ * 璇勮璁板綍鎺ュ彛
  */
 export interface ICommentRecord extends IInteractionRecord, IInteractionTarget {
   content: string
@@ -62,14 +62,14 @@ export interface ICommentRecord extends IInteractionRecord, IInteractionTarget {
 }
 
 /**
- * 评论点赞记录接口
+ * 璇勮鐐硅禐璁板綍鎺ュ彛
  */
 export interface ICommentLikeRecord extends IInteractionRecord {
   commentId: number
 }
 
 /**
- * 评论举报记录接口
+ * 璇勮涓炬姤璁板綍鎺ュ彛
  */
 export interface ICommentReportRecord extends IInteractionRecord {
   reporterId: number
@@ -85,7 +85,7 @@ export interface ICommentReportRecord extends IInteractionRecord {
 }
 
 /**
- * 下载记录接口
+ * 涓嬭浇璁板綍鎺ュ彛
  */
 export interface IDownloadRecord extends IInteractionRecord, IInteractionTarget {
   workId: number
@@ -93,7 +93,7 @@ export interface IDownloadRecord extends IInteractionRecord, IInteractionTarget 
 }
 
 /**
- * 用户交互状态接口
+ * 鐢ㄦ埛浜や簰鐘舵€佹帴鍙?
  */
 export interface IUserInteractionStatus {
   isLiked: boolean
@@ -102,7 +102,7 @@ export interface IUserInteractionStatus {
 }
 
 /**
- * 交互计数接口
+ * 浜や簰璁℃暟鎺ュ彛
  */
 export interface IInteractionCounts {
   likeCount: number
@@ -112,11 +112,10 @@ export interface IInteractionCounts {
   downloadCount: number
 }
 
-// 注意：ITargetValidationResult 和 ITargetValidator 接口定义在 validator/target-validator.interface.ts 中
-// 请从该文件导入，避免重复定义
+// 璇蜂粠璇ユ枃浠跺鍏ワ紝閬垮厤閲嶅瀹氫箟
 
 /**
- * 分页查询参数接口
+ * 鍒嗛〉鏌ヨ鍙傛暟鎺ュ彛
  */
 export interface IInteractionQueryParams {
   page?: number
@@ -126,7 +125,7 @@ export interface IInteractionQueryParams {
 }
 
 /**
- * 分页查询结果接口
+ * 鍒嗛〉鏌ヨ缁撴灉鎺ュ彛
  */
 export interface IInteractionQueryResult<T> {
   list: T[]

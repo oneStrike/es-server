@@ -1,7 +1,6 @@
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import {
-  CommentLikeService,
-  CommentReportService,
+  CommentInteractionService,
   CommentService,
   CreateCommentDto,
   DeleteCommentDto,
@@ -17,8 +16,7 @@ import { ApiTags } from '@nestjs/swagger'
 export class WorkCommentController {
   constructor(
     private readonly commentService: CommentService,
-    private readonly commentLikeService: CommentLikeService,
-    private readonly commentReportService: CommentReportService,
+    private readonly commentInteractionService: CommentInteractionService,
   ) {}
 
   @Post('create')
@@ -87,7 +85,7 @@ export class WorkCommentController {
     @Body() body: DeleteCommentDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.commentLikeService.likeComment(body.commentId, userId)
+    return this.commentInteractionService.likeComment(body.commentId, userId)
   }
 
   @Post('unlike')
@@ -99,7 +97,7 @@ export class WorkCommentController {
     @Body() body: DeleteCommentDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.commentLikeService.unlikeComment(body.commentId, userId)
+    return this.commentInteractionService.unlikeComment(body.commentId, userId)
   }
 
   @Post('report')
@@ -111,7 +109,7 @@ export class WorkCommentController {
     @Body() body: ReportCommentDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.commentReportService.reportComment(
+    return this.commentInteractionService.reportComment(
       body.commentId,
       userId,
       body.reason,
