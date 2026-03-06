@@ -1,33 +1,43 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { Injectable, OnModuleDestroy } from '@nestjs/common'
-import { InteractionActionType, InteractionTargetType } from './common.constant'
+import { InteractionActionType } from './common.constant'
 
 export interface InteractionEvent {
   actionType: InteractionActionType
-  targetType: InteractionTargetType
+  targetType: InteractionTargetTypeEnum
   targetId: number
   userId: number
   timestamp: Date
   extraData?: Record<string, unknown>
 }
 
-export type InteractionEventHandler = (event: InteractionEvent) => Promise<void> | void
+export type InteractionEventHandler = (
+  event: InteractionEvent,
+) => Promise<void> | void
 
 @Injectable()
 export class InteractionEventEmitter implements OnModuleDestroy {
-  private handlers: Map<InteractionActionType, Set<InteractionEventHandler>> = new Map()
+  private handlers: Map<InteractionActionType, Set<InteractionEventHandler>> =
+    new Map()
 
   onModuleDestroy() {
     this.handlers.clear()
   }
 
-  on(actionType: InteractionActionType, handler: InteractionEventHandler): void {
+  on(
+    actionType: InteractionActionType,
+    handler: InteractionEventHandler,
+  ): void {
     if (!this.handlers.has(actionType)) {
       this.handlers.set(actionType, new Set())
     }
     this.handlers.get(actionType)!.add(handler)
   }
 
-  off(actionType: InteractionActionType, handler: InteractionEventHandler): void {
+  off(
+    actionType: InteractionActionType,
+    handler: InteractionEventHandler,
+  ): void {
     this.handlers.get(actionType)?.delete(handler)
   }
 
@@ -38,7 +48,7 @@ export class InteractionEventEmitter implements OnModuleDestroy {
     }
 
     await Promise.all(
-      Array.from(handlers).map(async handler => handler(event))
+      Array.from(handlers).map(async (handler) => handler(event)),
     )
   }
 }

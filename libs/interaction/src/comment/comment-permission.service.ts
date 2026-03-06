@@ -1,7 +1,6 @@
-import { UserStatusEnum } from '@libs/base/constant'
+import { InteractionTargetTypeEnum, UserStatusEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
 export class CommentPermissionService extends BaseService {
@@ -15,7 +14,7 @@ export class CommentPermissionService extends BaseService {
    */
   async ensureCanComment(
     userId: number,
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
     await Promise.all([
@@ -60,12 +59,12 @@ export class CommentPermissionService extends BaseService {
    * @throws BadRequestException 目标不存在、类型不匹配或不允许评论时抛出
    */
   async ensureTargetCanComment(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
     switch (targetType) {
-      case InteractionTargetType.COMIC:
-      case InteractionTargetType.NOVEL: {
+      case InteractionTargetTypeEnum.COMIC:
+      case InteractionTargetTypeEnum.NOVEL: {
         const work = await this.prisma.work.findUnique({
           where: { id: targetId },
           select: {
@@ -81,7 +80,7 @@ export class CommentPermissionService extends BaseService {
 
         // 校验作品类型与传入的 targetType 是否匹配
         // COMIC 对应 type=1，NOVEL 对应 type=2
-        const expectedType = targetType === InteractionTargetType.COMIC ? 1 : 2
+        const expectedType = targetType === InteractionTargetTypeEnum.COMIC ? 1 : 2
         if (work.type !== expectedType) {
           throw new BadRequestException('目标类型不匹配')
         }
@@ -92,8 +91,8 @@ export class CommentPermissionService extends BaseService {
         return
       }
 
-      case InteractionTargetType.COMIC_CHAPTER:
-      case InteractionTargetType.NOVEL_CHAPTER: {
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER: {
         const chapter = await this.prisma.workChapter.findUnique({
           where: { id: targetId },
           select: {
@@ -110,7 +109,7 @@ export class CommentPermissionService extends BaseService {
         // 校验章节的作品类型与传入的 targetType 是否匹配
         // COMIC_CHAPTER 对应 workType=1，NOVEL_CHAPTER 对应 workType=2
         const expectedWorkType =
-          targetType === InteractionTargetType.COMIC_CHAPTER ? 1 : 2
+          targetType === InteractionTargetTypeEnum.COMIC_CHAPTER ? 1 : 2
         if (chapter.workType !== expectedWorkType) {
           throw new BadRequestException('目标类型不匹配')
         }
@@ -121,7 +120,7 @@ export class CommentPermissionService extends BaseService {
         return
       }
 
-      case InteractionTargetType.FORUM_TOPIC: {
+      case InteractionTargetTypeEnum.FORUM_TOPIC: {
         const topic = await this.prisma.forumTopic.findUnique({
           where: { id: targetId },
           select: {

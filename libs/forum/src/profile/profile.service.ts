@@ -1,9 +1,13 @@
 import type { PrismaClientType } from '@libs/base/database/prisma.types'
-import { UserDefaults, UserStatusEnum } from '@libs/base/constant'
+import {
+  InteractionTargetTypeEnum,
+  UserDefaults,
+  UserStatusEnum,
+} from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import { FavoriteService, InteractionTargetType } from '@libs/interaction'
+import { FavoriteService } from '@libs/interaction'
 import { UserPointService } from '@libs/user/point'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import {
   QueryForumProfileListDto,
   UpdateForumProfileStatusDto,
@@ -159,7 +163,7 @@ export class ForumProfileService extends BaseService {
   async getMyFavorites(userId: number) {
     const result = await this.favoriteService.getUserFavorites(
       userId,
-      InteractionTargetType.FORUM_TOPIC,
+      InteractionTargetTypeEnum.FORUM_TOPIC,
     )
 
     if (result.list.length === 0) {

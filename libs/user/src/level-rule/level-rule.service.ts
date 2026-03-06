@@ -1,6 +1,9 @@
 import type { PrismaClientType } from '@libs/base/database/prisma.types'
+import {
+  InteractionTargetTypeEnum,
+} from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import { FavoriteService, InteractionTargetType, LikeService } from '@libs/interaction'
+import { FavoriteService, LikeService } from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CheckUserLevelPermissionDto,
@@ -328,7 +331,7 @@ export class UserLevelRuleService extends BaseService {
           const topicLikes = await this.prisma.userLike.count({
             where: {
               userId,
-              targetType: InteractionTargetType.FORUM_TOPIC,
+              targetType: InteractionTargetTypeEnum.FORUM_TOPIC,
               createdAt: { gte: today },
             },
           })
@@ -351,7 +354,7 @@ export class UserLevelRuleService extends BaseService {
           used = await this.prisma.userFavorite.count({
             where: {
               userId,
-              targetType: InteractionTargetType.FORUM_TOPIC,
+              targetType: InteractionTargetTypeEnum.FORUM_TOPIC,
               createdAt: { gte: today },
             },
           })

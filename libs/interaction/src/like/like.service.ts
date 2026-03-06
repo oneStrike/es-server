@@ -1,22 +1,22 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
 export class LikeService extends BaseService {
-  private getTargetCountModel(tx: any, targetType: InteractionTargetType) {
+  private getTargetCountModel(tx: any, targetType: InteractionTargetTypeEnum) {
     switch (targetType) {
-      case InteractionTargetType.COMIC:
-      case InteractionTargetType.NOVEL:
+      case InteractionTargetTypeEnum.COMIC:
+      case InteractionTargetTypeEnum.NOVEL:
         return tx.work
-      case InteractionTargetType.COMIC_CHAPTER:
-      case InteractionTargetType.NOVEL_CHAPTER:
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
         return tx.workChapter
-      case InteractionTargetType.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
         return tx.forumTopic
       default:
         throw new BadRequestException('Unsupported target type')
@@ -24,19 +24,19 @@ export class LikeService extends BaseService {
   }
 
   private getTargetCountWhere(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
     switch (targetType) {
-      case InteractionTargetType.COMIC:
+      case InteractionTargetTypeEnum.COMIC:
         return { id: targetId, type: 1, deletedAt: null }
-      case InteractionTargetType.NOVEL:
+      case InteractionTargetTypeEnum.NOVEL:
         return { id: targetId, type: 2, deletedAt: null }
-      case InteractionTargetType.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
         return { id: targetId, workType: 1, deletedAt: null }
-      case InteractionTargetType.NOVEL_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
         return { id: targetId, workType: 2, deletedAt: null }
-      case InteractionTargetType.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
         return { id: targetId, deletedAt: null }
       default:
         throw new BadRequestException('Unsupported target type')
@@ -48,7 +48,7 @@ export class LikeService extends BaseService {
    * duplicate-like checks, matching the previous user-facing behavior.
    */
   private async ensureTargetExists(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
     const where = this.getTargetCountWhere(targetType, targetId)
@@ -77,7 +77,7 @@ export class LikeService extends BaseService {
    */
   private async applyLikeCountDelta(
     tx: any,
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     delta: number,
   ) {
@@ -120,7 +120,7 @@ export class LikeService extends BaseService {
   }
 
   async checkStatusBatch(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetIds: number[],
     userId: number,
   ): Promise<Map<number, boolean>> {
@@ -150,7 +150,7 @@ export class LikeService extends BaseService {
   }
 
   async getTargetLikes(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     pageIndex: number = 1,
     pageSize: number = 20,
@@ -171,7 +171,7 @@ export class LikeService extends BaseService {
   }
 
   async getLikeCount(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ): Promise<number> {
     const model = this.getTargetCountModel(this.prisma, targetType)
@@ -183,7 +183,7 @@ export class LikeService extends BaseService {
   }
 
   async getLikeCounts(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetIds: number[],
   ): Promise<Map<number, number>> {
     if (targetIds.length === 0) {
@@ -210,7 +210,7 @@ export class LikeService extends BaseService {
   }
 
   async like(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<void> {
@@ -237,7 +237,7 @@ export class LikeService extends BaseService {
   }
 
   async unlike(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<void> {
@@ -266,7 +266,7 @@ export class LikeService extends BaseService {
   }
 
   async checkLikeStatus(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<boolean> {
@@ -285,7 +285,7 @@ export class LikeService extends BaseService {
 
   async getUserLikes(
     userId: number,
-    targetType?: InteractionTargetType,
+    targetType?: InteractionTargetTypeEnum,
     pageIndex: number = 0,
     pageSize: number = 15,
   ) {

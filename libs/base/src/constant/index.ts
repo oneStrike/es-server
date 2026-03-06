@@ -1,6 +1,7 @@
 export * from './audit.constant'
 export * from './base.constant'
 export * from './content.constant'
+export * from './interaction.constant'
 export * from './logger.constant'
 export * from './report.constant'
 export * from './sort.constant'

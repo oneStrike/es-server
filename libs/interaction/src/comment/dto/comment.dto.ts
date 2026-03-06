@@ -1,3 +1,4 @@
+import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import {
   BooleanProperty,
   EnumProperty,
@@ -6,7 +7,6 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, PageDto, UserIdDto } from '@libs/base/dto'
 import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
-import { AuditStatusEnum, InteractionTargetType } from '../../common.constant'
 
 /**
  * 交互目标 DTO - 包含目标类型和目标ID
@@ -15,11 +15,11 @@ import { AuditStatusEnum, InteractionTargetType } from '../../common.constant'
 export class InteractionTargetDto {
   @EnumProperty({
     description: '目标类型',
-    enum: InteractionTargetType,
-    example: InteractionTargetType.COMIC,
+    enum: InteractionTargetTypeEnum,
+    example: InteractionTargetTypeEnum.COMIC,
     required: true,
   })
-  targetType!: InteractionTargetType
+  targetType!: InteractionTargetTypeEnum
 
   @NumberProperty({ description: '目标ID', example: 1, required: true, min: 1 })
   targetId!: number
@@ -53,11 +53,11 @@ export class CommentAuditDto {
 export class BaseCommentDto extends BaseDto {
   @EnumProperty({
     description: '目标类型',
-    enum: InteractionTargetType,
-    example: InteractionTargetType.COMIC,
+    enum: InteractionTargetTypeEnum,
+    example: InteractionTargetTypeEnum.COMIC,
     required: true,
   })
-  targetType!: InteractionTargetType
+  targetType!: InteractionTargetTypeEnum
 
   @NumberProperty({ description: '目标ID', example: 1, required: true, min: 1 })
   targetId!: number

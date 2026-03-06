@@ -1,38 +1,38 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
 export class ViewService extends BaseService {
   private getTargetWhere(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
     switch (targetType) {
-      case InteractionTargetType.COMIC:
+      case InteractionTargetTypeEnum.COMIC:
         return { id: targetId, type: 1, deletedAt: null }
-      case InteractionTargetType.NOVEL:
+      case InteractionTargetTypeEnum.NOVEL:
         return { id: targetId, type: 2, deletedAt: null }
-      case InteractionTargetType.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
         return { id: targetId, workType: 1, deletedAt: null }
-      case InteractionTargetType.NOVEL_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
         return { id: targetId, workType: 2, deletedAt: null }
-      case InteractionTargetType.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
         return { id: targetId, deletedAt: null }
       default:
         throw new BadRequestException('Unsupported target type')
     }
   }
 
-  private getTargetModel(client: any, targetType: InteractionTargetType) {
+  private getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
     switch (targetType) {
-      case InteractionTargetType.COMIC:
-      case InteractionTargetType.NOVEL:
+      case InteractionTargetTypeEnum.COMIC:
+      case InteractionTargetTypeEnum.NOVEL:
         return client.work
-      case InteractionTargetType.COMIC_CHAPTER:
-      case InteractionTargetType.NOVEL_CHAPTER:
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
         return client.workChapter
-      case InteractionTargetType.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
         return client.forumTopic
       default:
         throw new BadRequestException('Unsupported target type')
@@ -43,7 +43,7 @@ export class ViewService extends BaseService {
    * 判断目标是否有效�?   * 维持原行为：无效目标直接返回，不抛出异常�?
    */
   private async isTargetValid(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ): Promise<boolean> {
     const model = this.getTargetModel(this.prisma, targetType)
@@ -55,7 +55,7 @@ export class ViewService extends BaseService {
   }
 
   async recordView(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     userId: number,
     ipAddress?: string,
@@ -81,7 +81,7 @@ export class ViewService extends BaseService {
 
   async getUserViews(
     userId: number,
-    targetType?: InteractionTargetType,
+    targetType?: InteractionTargetTypeEnum,
     pageIndex: number = 1,
     pageSize: number = 20,
   ) {
@@ -96,10 +96,7 @@ export class ViewService extends BaseService {
     })
   }
 
-  async deleteView(
-    viewId: number,
-    userId: number,
-  ): Promise<void> {
+  async deleteView(viewId: number, userId: number): Promise<void> {
     await this.prisma.userView.deleteMany({
       where: {
         id: viewId,
@@ -108,10 +105,7 @@ export class ViewService extends BaseService {
     })
   }
 
-  async deleteViews(
-    viewIds: number[],
-    userId: number,
-  ): Promise<void> {
+  async deleteViews(viewIds: number[], userId: number): Promise<void> {
     await this.prisma.userView.deleteMany({
       where: {
         id: { in: viewIds },
@@ -122,7 +116,7 @@ export class ViewService extends BaseService {
 
   async clearUserViews(
     userId: number,
-    targetType?: InteractionTargetType,
+    targetType?: InteractionTargetTypeEnum,
   ): Promise<void> {
     const where: any = { userId }
     if (targetType !== undefined) {

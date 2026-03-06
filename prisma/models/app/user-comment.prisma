@@ -5,10 +5,7 @@ model UserComment {
   /// 主键ID（自增）
   id Int @id @default(autoincrement())
 
-  /// 目标类型
-  /// 1=漫画, 2=小说, 3=漫画章节, 4=小说章节, 5=论坛主题
-  /// 注意：作品必须区分漫画(1)和小说(2)，不能使用通用类型
-  /// 评论支持：漫画、漫画章节、小说、小说章节、论坛
+  /// 目标类型 1=漫画, 2=小说, 3=漫画章节, 4=小说章节, 5=论坛主题
   targetType Int @map("target_type") @db.SmallInt
 
   /// 目标ID
@@ -21,59 +18,42 @@ model UserComment {
   targetId Int @map("target_id")
 
   /// 用户ID（关联 app_user.id）
-  /// 发表评论的用户
   userId Int @map("user_id")
 
   /// 评论内容
-  /// 用户发表的评论文本，支持富文本格式
   content String @db.Text
 
   /// 楼层号
-  /// 一级评论的楼层编号，从1开始递增
-  /// 楼中楼回复此字段为null
   floor Int? @map("floor")
 
   /// 回复的评论ID（楼中楼）
-  /// 直接回复的评论ID，用于构建回复关系
   replyToId Int? @map("reply_to_id")
 
   /// 实际回复的根评论ID
-  /// 一级评论的ID，用于快速定位楼中楼所属的一级评论
-  /// 当 replyToId 指向楼中楼时，此字段指向该楼中楼的根评论
   actualReplyToId Int? @map("actual_reply_to_id")
 
   /// 是否隐藏
-  /// 管理员可设置隐藏评论，隐藏后前端不展示
   isHidden Boolean @default(false) @map("is_hidden")
 
   /// 审核状态（0=待审核, 1=已通过, 2=已拒绝）
-  /// 配合敏感词检测系统自动设置
   auditStatus Int @default(0) @map("audit_status") @db.SmallInt
 
   /// 审核人ID（关联 app_user.id）
-  /// 执行审核操作的用户ID
   auditById Int? @map("audit_by_id")
 
   /// 审核人角色（0=版主, 1=管理员）
-  /// 标识审核人的角色类型
   auditRole Int? @map("audit_role") @db.SmallInt
 
   /// 审核原因
-  /// 审核拒绝时的原因说明
   auditReason String? @map("audit_reason") @db.VarChar(500)
 
   /// 审核时间
-  /// 执行审核操作的时间
   auditAt DateTime? @map("audit_at") @db.Timestamptz(6)
 
   /// 点赞数
-  /// 该评论被点赞的次数，用于热度排序
   likeCount Int @default(0) @map("like_count")
 
   /// 敏感词命中记录
-  /// JSON格式存储命中的敏感词详情，包含词名、等级、位置等
-  /// 用于审核参考和追溯
-  /// 注：此字段为例外情况，因敏感词命中记录结构复杂且会变，使用JSONB存储
   sensitiveWordHits Json? @map("sensitive_word_hits") @db.JsonB
 
   /// 创建时间

@@ -1,8 +1,8 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import {
   InteractionActionType,
   InteractionEvent,
   InteractionEventEmitter,
-  InteractionTargetType,
 } from '@libs/interaction'
 import { UserGrowthEventService } from '@libs/user/growth-event'
 import { Injectable, OnModuleInit } from '@nestjs/common'
@@ -16,28 +16,37 @@ export class ContentInteractionEventHandler implements OnModuleInit {
 
   onModuleInit() {
     this.eventEmitter.on(InteractionActionType.LIKE, this.handleLike.bind(this))
-    this.eventEmitter.on(InteractionActionType.FAVORITE, this.handleFavorite.bind(this))
-    this.eventEmitter.on(InteractionActionType.DOWNLOAD, this.handleDownload.bind(this))
+    this.eventEmitter.on(
+      InteractionActionType.FAVORITE,
+      this.handleFavorite.bind(this),
+    )
+    this.eventEmitter.on(
+      InteractionActionType.DOWNLOAD,
+      this.handleDownload.bind(this),
+    )
   }
 
-  private isWorkType(targetType: InteractionTargetType): boolean {
+  private isWorkType(targetType: InteractionTargetTypeEnum): boolean {
     return (
-      targetType === InteractionTargetType.COMIC ||
-      targetType === InteractionTargetType.NOVEL ||
-      targetType === InteractionTargetType.COMIC_CHAPTER ||
-      targetType === InteractionTargetType.NOVEL_CHAPTER
+      targetType === InteractionTargetTypeEnum.COMIC ||
+      targetType === InteractionTargetTypeEnum.NOVEL ||
+      targetType === InteractionTargetTypeEnum.COMIC_CHAPTER ||
+      targetType === InteractionTargetTypeEnum.NOVEL_CHAPTER
     )
   }
 
   private async handleLike(event: InteractionEvent): Promise<void> {
-    if (!this.isWorkType(event.targetType))
-{ return }
+    if (!this.isWorkType(event.targetType)) {
+      return
+    }
 
     const targetId = event.targetId
     const userId = event.userId
 
-    if (event.targetType === InteractionTargetType.COMIC_CHAPTER ||
-      event.targetType === InteractionTargetType.NOVEL_CHAPTER) {
+    if (
+      event.targetType === InteractionTargetTypeEnum.COMIC_CHAPTER ||
+      event.targetType === InteractionTargetTypeEnum.NOVEL_CHAPTER
+    ) {
       await this.userGrowthEventService.handleEvent({
         business: 'work',
         eventKey: 'chapter_like',
@@ -57,8 +66,9 @@ export class ContentInteractionEventHandler implements OnModuleInit {
   }
 
   private async handleFavorite(event: InteractionEvent): Promise<void> {
-    if (!this.isWorkType(event.targetType))
-{ return }
+    if (!this.isWorkType(event.targetType)) {
+      return
+    }
 
     const targetId = event.targetId
     const userId = event.userId
@@ -73,8 +83,9 @@ export class ContentInteractionEventHandler implements OnModuleInit {
   }
 
   private async handleDownload(event: InteractionEvent): Promise<void> {
-    if (!this.isWorkType(event.targetType))
-{ return }
+    if (!this.isWorkType(event.targetType)) {
+      return
+    }
 
     const targetId = event.targetId
     const userId = event.userId

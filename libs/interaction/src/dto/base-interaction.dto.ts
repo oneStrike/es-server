@@ -1,16 +1,16 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator'
-import { InteractionTargetType } from '../common.constant'
 
 export class BaseInteractionDto {
   @ApiProperty({
     description: '目标类型：1=漫画,2=小说,3=漫画章节,4=小说章节,5=论坛主题',
-    enum: InteractionTargetType,
+    enum: InteractionTargetTypeEnum,
     example: 1,
   })
   @IsInt()
   @IsNotEmpty()
-  targetType!: InteractionTargetType
+  targetType!: InteractionTargetTypeEnum
 
   @ApiProperty({ description: '目标ID', example: 1 })
   @IsInt()
@@ -20,10 +20,10 @@ export class BaseInteractionDto {
 }
 
 export class BaseInteractionQueryDto {
-  @ApiPropertyOptional({ description: '目标类型', enum: InteractionTargetType })
+  @ApiPropertyOptional({ description: '目标类型', enum: InteractionTargetTypeEnum })
   @IsInt()
   @IsOptional()
-  targetType?: InteractionTargetType
+  targetType?: InteractionTargetTypeEnum
 
   @ApiPropertyOptional({ description: '页码', default: 1 })
   @IsInt()

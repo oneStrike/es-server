@@ -1,6 +1,7 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { AuditStatusEnum, InteractionTargetType } from '../common.constant'
+import { AuditStatusEnum } from '../common.constant'
 
 @Injectable()
 export class CommentCountService extends BaseService {
@@ -19,15 +20,15 @@ export class CommentCountService extends BaseService {
     )
   }
 
-  private getTargetCountModel(tx: any, targetType: InteractionTargetType) {
+  private getTargetCountModel(tx: any, targetType: InteractionTargetTypeEnum) {
     switch (targetType) {
-      case InteractionTargetType.COMIC:
-      case InteractionTargetType.NOVEL:
+      case InteractionTargetTypeEnum.COMIC:
+      case InteractionTargetTypeEnum.NOVEL:
         return tx.work
-      case InteractionTargetType.COMIC_CHAPTER:
-      case InteractionTargetType.NOVEL_CHAPTER:
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
         return tx.workChapter
-      case InteractionTargetType.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
         return tx.forumTopic
       default:
         throw new BadRequestException('Unsupported target type')
@@ -39,7 +40,7 @@ export class CommentCountService extends BaseService {
    */
   async applyCommentCountDelta(
     tx: any,
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     delta: number,
   ) {
@@ -76,7 +77,7 @@ export class CommentCountService extends BaseService {
   }
 
   async setCommentCount(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     count: number,
   ) {
@@ -92,7 +93,7 @@ export class CommentCountService extends BaseService {
    */
   async syncVisibleCountByTransition(
     tx: any,
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     beforeVisible: boolean,
     afterVisible: boolean,

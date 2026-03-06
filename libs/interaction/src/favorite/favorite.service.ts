@@ -1,37 +1,37 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
 export class FavoriteService extends BaseService {
-  private getTargetCountModel(tx: any, targetType: InteractionTargetType) {
+  private getTargetCountModel(tx: any, targetType: InteractionTargetTypeEnum) {
     switch (targetType) {
-      case InteractionTargetType.COMIC:
-      case InteractionTargetType.NOVEL:
+      case InteractionTargetTypeEnum.COMIC:
+      case InteractionTargetTypeEnum.NOVEL:
         return tx.work
-      case InteractionTargetType.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
         return tx.forumTopic
-      case InteractionTargetType.COMIC_CHAPTER:
-      case InteractionTargetType.NOVEL_CHAPTER:
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
       default:
         throw new BadRequestException('不支持的收藏类型')
     }
   }
 
   private getTargetCountWhere(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
     switch (targetType) {
-      case InteractionTargetType.COMIC:
+      case InteractionTargetTypeEnum.COMIC:
         return { id: targetId, type: 1, deletedAt: null }
-      case InteractionTargetType.NOVEL:
+      case InteractionTargetTypeEnum.NOVEL:
         return { id: targetId, type: 2, deletedAt: null }
-      case InteractionTargetType.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
         return { id: targetId, deletedAt: null }
       default:
         throw new BadRequestException('Unsupported target type')
@@ -42,7 +42,7 @@ export class FavoriteService extends BaseService {
    * 显式校验目标，保证“目标不存在”优先于“已收藏/未收藏”等状态错误。
    */
   private async ensureTargetExists(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
     const where = this.getTargetCountWhere(targetType, targetId)
@@ -71,7 +71,7 @@ export class FavoriteService extends BaseService {
    */
   private async applyFavoriteCountDelta(
     tx: any,
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     delta: number,
   ) {
@@ -113,7 +113,7 @@ export class FavoriteService extends BaseService {
   }
 
   async checkStatusBatch(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetIds: number[],
     userId: number,
   ): Promise<Map<number, boolean>> {
@@ -143,7 +143,7 @@ export class FavoriteService extends BaseService {
   }
 
   async favorite(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<void> {
@@ -170,7 +170,7 @@ export class FavoriteService extends BaseService {
   }
 
   async unfavorite(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<void> {
@@ -199,7 +199,7 @@ export class FavoriteService extends BaseService {
   }
 
   async checkFavoriteStatus(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     userId: number,
   ): Promise<boolean> {
@@ -218,7 +218,7 @@ export class FavoriteService extends BaseService {
 
   async getUserFavorites(
     userId: number,
-    targetType?: InteractionTargetType,
+    targetType?: InteractionTargetTypeEnum,
     pageIndex: number = 0,
     pageSize: number = 15,
   ) {

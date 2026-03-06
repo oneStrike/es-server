@@ -1,18 +1,18 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { InteractionTargetType } from '../common.constant'
 
 @Injectable()
 export class CounterService extends BaseService {
   async incrementCount(
     tx: any,
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     field: string,
     amount: number = 1,
   ): Promise<void> {
     const { modelName, where } = this.getModelInfo(targetType, targetId)
-    const model = (tx)[modelName]
+    const model = tx[modelName]
 
     if (!model) {
       throw new Error(`未找到模�? ${modelName}`)
@@ -30,13 +30,13 @@ export class CounterService extends BaseService {
 
   async decrementCount(
     tx: any,
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     field: string,
     amount: number = 1,
   ): Promise<void> {
     const { modelName, where } = this.getModelInfo(targetType, targetId)
-    const model = (tx)[modelName]
+    const model = tx[modelName]
 
     if (!model) {
       throw new Error(`未找到模�? ${modelName}`)
@@ -53,7 +53,7 @@ export class CounterService extends BaseService {
   }
 
   async getCount(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     field: string,
   ): Promise<number> {
@@ -75,7 +75,7 @@ export class CounterService extends BaseService {
   }
 
   async getCounts(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetIds: number[],
     field: string,
   ): Promise<Map<number, number>> {
@@ -109,7 +109,7 @@ export class CounterService extends BaseService {
   }
 
   async setCount(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
     field: string,
     value: number,
@@ -130,23 +130,23 @@ export class CounterService extends BaseService {
   }
 
   private getModelInfo(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ): { modelName: string, where: any } {
     switch (targetType) {
-      case InteractionTargetType.COMIC:
-      case InteractionTargetType.NOVEL:
+      case InteractionTargetTypeEnum.COMIC:
+      case InteractionTargetTypeEnum.NOVEL:
         return {
           modelName: 'work',
           where: { id: targetId },
         }
-      case InteractionTargetType.COMIC_CHAPTER:
-      case InteractionTargetType.NOVEL_CHAPTER:
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
         return {
           modelName: 'workChapter',
           where: { id: targetId },
         }
-      case InteractionTargetType.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
         return {
           modelName: 'forumTopic',
           where: { id: targetId },

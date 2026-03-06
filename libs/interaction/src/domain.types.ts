@@ -5,9 +5,9 @@
 import type {
   AuditRoleEnum,
   AuditStatusEnum,
-  InteractionTargetType,
+  InteractionTargetTypeEnum,
   ReportStatusEnum,
-} from './common.constant'
+} from '@libs/base/constant'
 
 /**
  * 交互记录基础接口
@@ -22,7 +22,7 @@ export interface IInteractionRecord {
  * 目标对象接口
  */
 export interface IInteractionTarget {
-  targetType: InteractionTargetType
+  targetType: InteractionTargetTypeEnum
   targetId: number
 }
 
@@ -34,7 +34,8 @@ export interface ILikeRecord extends IInteractionRecord, IInteractionTarget {}
 /**
  * 收藏记录接口
  */
-export interface IFavoriteRecord extends IInteractionRecord, IInteractionTarget {}
+export interface IFavoriteRecord
+  extends IInteractionRecord, IInteractionTarget {}
 
 /**
  * 浏览记录接口
@@ -92,7 +93,8 @@ export interface ICommentReportRecord extends IInteractionRecord {
 /**
  * 下载记录接口
  */
-export interface IDownloadRecord extends IInteractionRecord, IInteractionTarget {
+export interface IDownloadRecord
+  extends IInteractionRecord, IInteractionTarget {
   workId: number
   workType: number
 }

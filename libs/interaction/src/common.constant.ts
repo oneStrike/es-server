@@ -13,23 +13,6 @@ export {
 } from '@libs/base/constant'
 
 /**
- * 交互目标类型枚举
- * 用于标识用户交互操作的目标对象类型
- */
-export enum InteractionTargetType {
-  /** 漫画 - 漫画作品 */
-  COMIC = 1,
-  /** 小说 - 小说作品 */
-  NOVEL = 2,
-  /** 漫画章节 - 漫画作品的章节 */
-  COMIC_CHAPTER = 3,
-  /** 小说章节 - 小说作品的章节 */
-  NOVEL_CHAPTER = 4,
-  /** 论坛主题 - 论坛板块中的帖子 */
-  FORUM_TOPIC = 5,
-}
-
-/**
  * 交互操作类型枚举
  * 用于标识用户对目标执行的操作类型
  */

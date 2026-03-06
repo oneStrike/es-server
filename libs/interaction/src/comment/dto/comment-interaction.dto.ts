@@ -15,21 +15,6 @@ import { IsIn, IsString } from 'class-validator'
 import { ReportStatusEnum } from '../../common.constant'
 import { CommentIdDto } from './comment.dto'
 
-export type ReportStatus = ReportStatusEnum
-
-/**
- * 点赞评论 DTO
- */
-export class LikeCommentDto extends CommentIdDto {}
-
-/**
- * 取消点赞评论 DTO
- */
-export class UnlikeCommentDto extends CommentIdDto {}
-
-/**
- * 举报基础信息 DTO - 包含举报相关的基础字段
- */
 export class BaseReportInfoDto {
   @StringProperty({
     description: '举报原因',

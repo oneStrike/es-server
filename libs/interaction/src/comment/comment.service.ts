@@ -1,3 +1,8 @@
+import {
+  AuditRoleEnum,
+  AuditStatusEnum,
+  InteractionTargetTypeEnum,
+} from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
@@ -7,18 +12,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import {
-  AuditRoleEnum,
-  AuditStatusEnum,
-  InteractionTargetType,
-} from '../common.constant'
 import { CommentCountService } from './comment-count.service'
 import { CommentPermissionService } from './comment-permission.service'
 import {
   CreateCommentDto,
+  QueryCommentPageDto,
   QueryCommentRepliesDto,
   QueryMyCommentPageDto,
   ReplyCommentDto,
+  UpdateCommentAuditDto,
 } from './dto/comment.dto'
 
 @Injectable()
@@ -60,7 +62,9 @@ export class CommentService extends BaseService {
     return {
       auditStatus,
       isHidden,
-      sensitiveWordHits: result.hits?.length ? result.hits : undefined,
+      sensitiveWordHits: result.hits?.length
+        ? JSON.stringify(result.hits)
+        : undefined,
     }
   }
 
@@ -97,11 +101,7 @@ export class CommentService extends BaseService {
           userId,
           content,
           floor,
-          replyToId: null,
-          actualReplyToId: null,
-          auditStatus: decision.auditStatus,
-          isHidden: decision.isHidden,
-          sensitiveWordHits: decision.sensitiveWordHits as any,
+          ...decision,
         },
       })
 
@@ -150,7 +150,7 @@ export class CommentService extends BaseService {
     const { targetType, targetId } = replyTo
     await this.commentPermissionService.ensureCanComment(
       userId,
-      targetType as InteractionTargetType,
+      targetType as InteractionTargetTypeEnum,
       targetId,
     )
 
@@ -167,12 +167,9 @@ export class CommentService extends BaseService {
           targetId,
           userId,
           content,
-          floor: null,
           replyToId,
           actualReplyToId,
-          auditStatus: decision.auditStatus,
-          isHidden: decision.isHidden,
-          sensitiveWordHits: decision.sensitiveWordHits as any,
+          ...decision,
         },
       })
 
@@ -185,7 +182,7 @@ export class CommentService extends BaseService {
       ) {
         await this.commentCountService.applyCommentCountDelta(
           tx,
-          targetType as InteractionTargetType,
+          targetType as InteractionTargetTypeEnum,
           targetId,
           1,
         )
@@ -217,56 +214,11 @@ export class CommentService extends BaseService {
 
       await this.commentCountService.applyCommentCountDelta(
         tx,
-        result.targetType as InteractionTargetType,
+        result.targetType as InteractionTargetTypeEnum,
         result.targetId,
         -1,
       )
       return { id: result.id }
-    })
-  }
-
-  /**
-   * 获取评论列表（根评论）
-   * @param targetType - 目标类型
-   * @param targetId - 目标ID
-   * @param pageIndex - 页码
-   * @param pageSize - 每页数量
-   * @returns 分页评论列表
-   */
-  async getComments(
-    targetType: InteractionTargetType,
-    targetId: number,
-    pageIndex: number = 1,
-    pageSize: number = 20,
-  ) {
-    return this.prisma.userComment.findPagination({
-      where: {
-        targetType,
-        targetId,
-        replyToId: null,
-        auditStatus: AuditStatusEnum.APPROVED,
-        isHidden: false,
-        deletedAt: null,
-        pageIndex,
-        pageSize,
-      } as any,
-      orderBy: { floor: 'asc' },
-      include: {
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            avatar: true,
-          },
-        },
-        _count: {
-          select: {
-            replies: {
-              where: { deletedAt: null },
-            },
-          },
-        },
-      },
     })
   }
 
@@ -293,18 +245,6 @@ export class CommentService extends BaseService {
             avatar: true,
           },
         },
-        replyTo: {
-          select: {
-            id: true,
-            userId: true,
-            user: {
-              select: {
-                id: true,
-                nickname: true,
-              },
-            },
-          },
-        },
       },
     })
   }
@@ -314,55 +254,21 @@ export class CommentService extends BaseService {
    * @param query - 查询参数
    * @returns 分页评论列表
    */
-  async getCommentManagePage(query: {
-    targetType?: InteractionTargetType
-    targetId?: number
-    auditStatus?: AuditStatusEnum
-    isHidden?: boolean
-    rootOnly?: boolean
-    pageIndex?: number
-    pageSize?: number
-  }) {
-    const {
-      targetType,
-      targetId,
-      auditStatus,
-      isHidden,
-      rootOnly = false,
-      pageIndex = 1,
-      pageSize = 20,
-    } = query
+  async getCommentManagePage(query: QueryCommentPageDto) {
+    const { rootOnly = false, ...otherDto } = query
 
     return this.prisma.userComment.findPagination({
       where: {
-        ...(targetType !== undefined && { targetType }),
-        ...(targetId !== undefined && { targetId }),
-        ...(auditStatus !== undefined && { auditStatus }),
-        ...(isHidden !== undefined && { isHidden }),
         ...(rootOnly && { replyToId: null }),
         deletedAt: null,
-        pageIndex,
-        pageSize,
-      } as any,
-      orderBy: { createdAt: 'desc' },
+        ...otherDto,
+      },
       include: {
         user: {
           select: {
             id: true,
             nickname: true,
             avatar: true,
-          },
-        },
-        replyTo: {
-          select: {
-            id: true,
-            userId: true,
-            user: {
-              select: {
-                id: true,
-                nickname: true,
-              },
-            },
           },
         },
       },
@@ -388,8 +294,6 @@ export class CommentService extends BaseService {
         },
         replyTo: {
           select: {
-            id: true,
-            userId: true,
             user: {
               select: {
                 id: true,
@@ -403,7 +307,7 @@ export class CommentService extends BaseService {
     })
 
     if (!comment) {
-      throw new NotFoundException('Comment not found')
+      throw new NotFoundException('未找到相关评论')
     }
 
     return comment
@@ -415,14 +319,7 @@ export class CommentService extends BaseService {
    * @param operatorId - 操作人ID
    * @returns 操作结果
    */
-  async updateCommentAudit(
-    body: {
-      commentId: number
-      auditStatus: AuditStatusEnum
-      auditReason?: string
-    },
-    operatorId: number,
-  ) {
+  async updateCommentAudit(body: UpdateCommentAuditDto, operatorId: number) {
     await this.prisma.$transaction(async (tx) => {
       const comment = await tx.userComment.findUnique({
         where: { id: body.commentId, deletedAt: null },
@@ -435,7 +332,7 @@ export class CommentService extends BaseService {
         },
       })
       if (!comment) {
-        throw new NotFoundException('Comment not found')
+        throw new NotFoundException('未找到相关评论')
       }
 
       const beforeVisible = this.commentCountService.isVisible(comment)
@@ -476,7 +373,7 @@ export class CommentService extends BaseService {
       const afterVisible = this.commentCountService.isVisible(updated)
       await this.commentCountService.syncVisibleCountByTransition(
         tx,
-        updated.targetType as InteractionTargetType,
+        updated.targetType as InteractionTargetTypeEnum,
         updated.targetId,
         beforeVisible,
         afterVisible,
@@ -529,7 +426,7 @@ export class CommentService extends BaseService {
 
       await this.commentCountService.syncVisibleCountByTransition(
         tx,
-        updated.targetType as InteractionTargetType,
+        updated.targetType as InteractionTargetTypeEnum,
         updated.targetId,
         beforeVisible,
         afterVisible,
@@ -546,7 +443,7 @@ export class CommentService extends BaseService {
    * @returns 计算结果
    */
   async recalcCommentCount(
-    targetType: InteractionTargetType,
+    targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
     const count = await this.prisma.userComment.count({

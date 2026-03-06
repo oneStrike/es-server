@@ -1,16 +1,16 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsInt, IsNotEmpty, Min } from 'class-validator'
-import { InteractionTargetType } from '../../common.constant'
 
 export class FavoriteDto {
   @ApiProperty({
     description: '目标类型�?=漫画, 2=小说, 5=论坛主题',
-    enum: InteractionTargetType,
+    enum: InteractionTargetTypeEnum,
     example: 1,
   })
   @IsInt()
   @IsNotEmpty()
-  targetType!: InteractionTargetType
+  targetType!: InteractionTargetTypeEnum
 
   @ApiProperty({
     description: '目标ID',
