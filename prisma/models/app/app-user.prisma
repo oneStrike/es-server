@@ -91,8 +91,6 @@ model AppUser {
   updatedConfigs          ForumConfig[]               @relation("ForumConfigUpdater")
   /// 操作的论坛配置历史
   operatedConfigHistories ForumConfigHistory[]        @relation("ForumConfigHistoryOperator")
-  /// 更新的系统配置
-  updatedSystemConfigs    SystemConfig[]              @relation("SystemConfigUpdater")
 
   /// 点赞记录
   userLikes           UserLike[]

@@ -1,12 +1,17 @@
-import { ApiDoc } from '@libs/base/decorators'
-import { SystemConfigDto, SystemConfigService } from '@libs/system-config'
+import { ApiDoc, CurrentUser } from '@libs/base/decorators'
+import { IdDto } from '@libs/base/dto'
+import {
+  SystemConfigBodyDto,
+  SystemConfigDto,
+  SystemConfigService,
+} from '@libs/system-config'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('系统配置')
 @Controller('admin/system')
 export class SystemConfigController {
-  constructor(private readonly systemConfigService: SystemConfigService) { }
+  constructor(private readonly systemConfigService: SystemConfigService) {}
 
   @Get('config-detail')
   @ApiDoc({
@@ -33,9 +38,12 @@ export class SystemConfigController {
   @Post('config-update')
   @ApiDoc({
     summary: '更新系统配置',
-    model: { type: 'boolean' },
+    model: IdDto,
   })
-  async updateConfig(@Body() dto: SystemConfigDto) {
-    return this.systemConfigService.updateConfig(dto)
+  async updateConfig(
+    @Body() dto: SystemConfigBodyDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.systemConfigService.updateConfig(dto, userId)
   }
 }

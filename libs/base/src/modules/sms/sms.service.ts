@@ -6,7 +6,7 @@ import * as $Util from '@alicloud/tea-util'
 import { ConfigReader } from '@libs/system-config'
 import { Injectable, Logger } from '@nestjs/common'
 import { CheckVerifyCodeDto, SendVerifyCodeDto } from './dto/sms.dto'
-import { SmsErrorMap, SmsErrorMessages } from './sms.constant'
+import { SmsErrorMap, SmsErrorMessages, SmsTemplateCodeEnum } from './sms.constant'
 
 /**
  * 阿里云短信验证码服务
@@ -147,8 +147,8 @@ export class SmsService {
 
       const runtime = new $Util.RuntimeOptions({})
 
-      // 使用传入的模板编码，或系统默认模板编码
-      const finalTemplateCode = templateCode || smsConfig.templateCode
+      // 使用传入的模板编码，或默认登录/注册模板编码
+      const finalTemplateCode = templateCode || SmsTemplateCodeEnum.LOGIN_REGISTER
 
       const sendSmsVerifyCodeRequest =
         new $Dypnsapi20170525.SendSmsVerifyCodeRequest({

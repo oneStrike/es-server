@@ -228,7 +228,7 @@ export type SystemConfigWhereInput = {
   contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
-  updatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
+  updatedBy?: Prisma.XOR<Prisma.AdminUserNullableScalarRelationFilter, Prisma.AdminUserWhereInput> | null
 }
 
 export type SystemConfigOrderByWithRelationInput = {
@@ -240,7 +240,7 @@ export type SystemConfigOrderByWithRelationInput = {
   contentReviewPolicy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  updatedBy?: Prisma.AppUserOrderByWithRelationInput
+  updatedBy?: Prisma.AdminUserOrderByWithRelationInput
 }
 
 export type SystemConfigWhereUniqueInput = Prisma.AtLeast<{
@@ -255,7 +255,7 @@ export type SystemConfigWhereUniqueInput = Prisma.AtLeast<{
   contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
-  updatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
+  updatedBy?: Prisma.XOR<Prisma.AdminUserNullableScalarRelationFilter, Prisma.AdminUserWhereInput> | null
 }, "id">
 
 export type SystemConfigOrderByWithAggregationInput = {
@@ -295,7 +295,7 @@ export type SystemConfigCreateInput = {
   contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
-  updatedBy?: Prisma.AppUserCreateNestedOneWithoutUpdatedSystemConfigsInput
+  updatedBy?: Prisma.AdminUserCreateNestedOneWithoutUpdatedSystemConfigsInput
 }
 
 export type SystemConfigUncheckedCreateInput = {
@@ -316,7 +316,7 @@ export type SystemConfigUpdateInput = {
   contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedBy?: Prisma.AppUserUpdateOneWithoutUpdatedSystemConfigsNestedInput
+  updatedBy?: Prisma.AdminUserUpdateOneWithoutUpdatedSystemConfigsNestedInput
 }
 
 export type SystemConfigUncheckedUpdateInput = {
@@ -610,9 +610,9 @@ export type $SystemConfigPayload<ExtArgs extends runtime.Types.Extensions.Intern
   name: "SystemConfig"
   objects: {
     /**
-     * 关联最后修改人
+     * 关联最后修改人（管理员）
      */
-    updatedBy: Prisma.$AppUserPayload<ExtArgs> | null
+    updatedBy: Prisma.$AdminUserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -620,7 +620,7 @@ export type $SystemConfigPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     id: number
     /**
-     * 最后修改人ID（关联 app_user.id，可为空）
+     * 最后修改人ID
      */
     updatedById: number | null
     /**
@@ -1041,7 +1041,7 @@ readonly fields: SystemConfigFieldRefs;
  */
 export interface Prisma__SystemConfigClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  updatedBy<T extends Prisma.SystemConfig$updatedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SystemConfig$updatedByArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  updatedBy<T extends Prisma.SystemConfig$updatedByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SystemConfig$updatedByArgs<ExtArgs>>): Prisma.Prisma__AdminUserClient<runtime.Types.Result.GetResult<Prisma.$AdminUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1488,18 +1488,18 @@ export type SystemConfigDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
  */
 export type SystemConfig$updatedByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the AppUser
+   * Select specific fields to fetch from the AdminUser
    */
-  select?: Prisma.AppUserSelect<ExtArgs> | null
+  select?: Prisma.AdminUserSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the AppUser
+   * Omit specific fields from the AdminUser
    */
-  omit?: Prisma.AppUserOmit<ExtArgs> | null
+  omit?: Prisma.AdminUserOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.AppUserInclude<ExtArgs> | null
-  where?: Prisma.AppUserWhereInput
+  include?: Prisma.AdminUserInclude<ExtArgs> | null
+  where?: Prisma.AdminUserWhereInput
 }
 
 /**

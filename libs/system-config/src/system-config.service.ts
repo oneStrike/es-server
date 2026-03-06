@@ -5,6 +5,7 @@ import { isMasked, maskString } from '@libs/base/utils'
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigReader } from './config-reader'
+import { SystemConfigDto } from './dto/config.dto'
 import {
   CACHE_KEY,
   CACHE_TTL,
@@ -87,38 +88,33 @@ export class SystemConfigService extends BaseService implements OnModuleInit {
    * 3. 掩码忽略：前端传回的掩码值（****）会被忽略，保留原值
    * 4. 缓存刷新：更新后自动刷新缓存并通知 ConfigReader
    *
-   * @param dto 配置数据，支持扁平入参或结构化入参
+   * @param dto 配置数据（结构化入参）
+   * @param userId 用户 ID（预留参数）
    * @returns 更新后的配置对象
    */
-  async updateConfig(dto: Record<string, any>) {
+  async updateConfig(dto: SystemConfigDto, userId: number) {
     const currentConfig = this.configReader.get()
     const data: any = {}
 
-    // 兼容扁平入参：accessKeyId / sms 等直接视为 aliyunConfig
-    if (dto.accessKeyId || dto.sms) {
-      data.aliyunConfig = this.processSensitiveFields(
-        this.filterAllowedFields(dto, DEFAULT_CONFIG.aliyunConfig),
-        currentConfig.aliyunConfig,
-        CONFIG_SECURITY_META.aliyunConfig.sensitiveFields,
-      )
-    } else {
-      // 结构化入参处理
-      for (const key of Object.keys(dto)) {
-        // 只处理 DEFAULT_CONFIG 中定义的配置项
-        if (!(key in DEFAULT_CONFIG)) {
-          continue
-        }
+    // 结构化入参处理
+    for (const key of Object.keys(dto)) {
+      // 只处理 DEFAULT_CONFIG 中定义的配置项
+      if (!(key in DEFAULT_CONFIG)) {
+        continue
+      }
 
-        const meta = CONFIG_SECURITY_META[key]
-        if (meta) {
-          data[key] = this.processSensitiveFields(
-            this.filterAllowedFields(dto[key], (DEFAULT_CONFIG as any)[key]),
-            (currentConfig as any)[key],
-            meta.sensitiveFields,
-          )
-        } else {
-          data[key] = this.filterAllowedFields(dto[key], (DEFAULT_CONFIG as any)[key])
-        }
+      const meta = CONFIG_SECURITY_META[key]
+      if (meta) {
+        data[key] = await this.processSensitiveFields(
+          this.filterAllowedFields(dto[key], (DEFAULT_CONFIG as any)[key]),
+          (currentConfig as any)[key],
+          meta.sensitiveFields,
+        )
+      } else {
+        data[key] = this.filterAllowedFields(
+          dto[key],
+          (DEFAULT_CONFIG as any)[key],
+        )
       }
     }
 
@@ -127,16 +123,19 @@ export class SystemConfigService extends BaseService implements OnModuleInit {
       Object.entries(data).filter(([, value]) => value !== undefined),
     )
 
-    // 更新数据库
-    const result = await this.systemConfig.upsert({
-      where: { id: 1 },
-      create: cleanData,
-      update: cleanData,
+    // 创建新记录（支持历史配置）
+    const result = await this.systemConfig.create({
+      data: {
+        ...cleanData,
+        updatedBy: {
+          connect: { id: userId },
+        },
+      },
     })
 
     // 刷新缓存并通知 ConfigReader
     await this.refreshCache(result)
-    return result
+    return { id: result.id }
   }
 
   /**
@@ -145,7 +144,10 @@ export class SystemConfigService extends BaseService implements OnModuleInit {
    * @param allowedFields 允许的字段模板（从 DEFAULT_CONFIG 获取）
    * @returns 过滤后的对象
    */
-  private filterAllowedFields(input: any, allowedFields: any): Record<string, any> {
+  private filterAllowedFields(
+    input: any,
+    allowedFields: any,
+  ): Record<string, any> {
     if (!input || typeof input !== 'object') {
       return input
     }
@@ -211,15 +213,48 @@ export class SystemConfigService extends BaseService implements OnModuleInit {
 
   /**
    * 初始化时加载配置到缓存
+   * 读取最新一条配置记录
    */
   private async initCache() {
-    const config = await this.systemConfig.findFirst()
+    const config = await this.findLatestConfig()
     if (config) {
       await this.refreshCache(config)
     } else {
       const newConfig = await this.systemConfig.create({ data: DEFAULT_CONFIG })
       await this.refreshCache(newConfig)
     }
+  }
+
+  /**
+   * 获取最新的配置记录
+   */
+  private async findLatestConfig() {
+    return this.systemConfig.findFirst({
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  /**
+   * 获取配置历史列表（分页）
+   * @param page 页码
+   * @param pageSize 每页数量
+   */
+  async findConfigHistory(page = 1, pageSize = 10) {
+    const skip = (page - 1) * pageSize
+    const [list, total] = await Promise.all([
+      this.systemConfig.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+        include: {
+          updatedBy: {
+            select: { id: true, username: true, avatar: true },
+          },
+        },
+      }),
+      this.systemConfig.count(),
+    ])
+    return { list, total, page, pageSize }
   }
 
   /**
@@ -232,7 +267,9 @@ export class SystemConfigService extends BaseService implements OnModuleInit {
         for (const field of metadata.sensitiveFields) {
           if (configItem[field]) {
             try {
-              configItem[field] = await this.aesService.decrypt(configItem[field])
+              configItem[field] = await this.aesService.decrypt(
+                configItem[field],
+              )
             } catch {
               // 解密失败则保留原值
             }

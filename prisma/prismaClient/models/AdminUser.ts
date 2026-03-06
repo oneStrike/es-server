@@ -271,6 +271,7 @@ export type AdminUserWhereInput = {
   tokens?: Prisma.AdminUserTokenListRelationFilter
   createdTasks?: Prisma.TaskListRelationFilter
   updatedTasks?: Prisma.TaskListRelationFilter
+  updatedSystemConfigs?: Prisma.SystemConfigListRelationFilter
 }
 
 export type AdminUserOrderByWithRelationInput = {
@@ -288,6 +289,7 @@ export type AdminUserOrderByWithRelationInput = {
   tokens?: Prisma.AdminUserTokenOrderByRelationAggregateInput
   createdTasks?: Prisma.TaskOrderByRelationAggregateInput
   updatedTasks?: Prisma.TaskOrderByRelationAggregateInput
+  updatedSystemConfigs?: Prisma.SystemConfigOrderByRelationAggregateInput
 }
 
 export type AdminUserWhereUniqueInput = Prisma.AtLeast<{
@@ -308,6 +310,7 @@ export type AdminUserWhereUniqueInput = Prisma.AtLeast<{
   tokens?: Prisma.AdminUserTokenListRelationFilter
   createdTasks?: Prisma.TaskListRelationFilter
   updatedTasks?: Prisma.TaskListRelationFilter
+  updatedSystemConfigs?: Prisma.SystemConfigListRelationFilter
 }, "id" | "username">
 
 export type AdminUserOrderByWithAggregationInput = {
@@ -360,6 +363,7 @@ export type AdminUserCreateInput = {
   tokens?: Prisma.AdminUserTokenCreateNestedManyWithoutUserInput
   createdTasks?: Prisma.TaskCreateNestedManyWithoutCreatedByInput
   updatedTasks?: Prisma.TaskCreateNestedManyWithoutUpdatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
 }
 
 export type AdminUserUncheckedCreateInput = {
@@ -377,6 +381,7 @@ export type AdminUserUncheckedCreateInput = {
   tokens?: Prisma.AdminUserTokenUncheckedCreateNestedManyWithoutUserInput
   createdTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutUpdatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
 }
 
 export type AdminUserUpdateInput = {
@@ -393,6 +398,7 @@ export type AdminUserUpdateInput = {
   tokens?: Prisma.AdminUserTokenUpdateManyWithoutUserNestedInput
   createdTasks?: Prisma.TaskUpdateManyWithoutCreatedByNestedInput
   updatedTasks?: Prisma.TaskUpdateManyWithoutUpdatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type AdminUserUncheckedUpdateInput = {
@@ -410,6 +416,7 @@ export type AdminUserUncheckedUpdateInput = {
   tokens?: Prisma.AdminUserTokenUncheckedUpdateManyWithoutUserNestedInput
   createdTasks?: Prisma.TaskUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTasks?: Prisma.TaskUncheckedUpdateManyWithoutUpdatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type AdminUserCreateManyInput = {
@@ -565,6 +572,22 @@ export type AdminUserUpdateOneWithoutUpdatedTasksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUserUpdateToOneWithWhereWithoutUpdatedTasksInput, Prisma.AdminUserUpdateWithoutUpdatedTasksInput>, Prisma.AdminUserUncheckedUpdateWithoutUpdatedTasksInput>
 }
 
+export type AdminUserCreateNestedOneWithoutUpdatedSystemConfigsInput = {
+  create?: Prisma.XOR<Prisma.AdminUserCreateWithoutUpdatedSystemConfigsInput, Prisma.AdminUserUncheckedCreateWithoutUpdatedSystemConfigsInput>
+  connectOrCreate?: Prisma.AdminUserCreateOrConnectWithoutUpdatedSystemConfigsInput
+  connect?: Prisma.AdminUserWhereUniqueInput
+}
+
+export type AdminUserUpdateOneWithoutUpdatedSystemConfigsNestedInput = {
+  create?: Prisma.XOR<Prisma.AdminUserCreateWithoutUpdatedSystemConfigsInput, Prisma.AdminUserUncheckedCreateWithoutUpdatedSystemConfigsInput>
+  connectOrCreate?: Prisma.AdminUserCreateOrConnectWithoutUpdatedSystemConfigsInput
+  upsert?: Prisma.AdminUserUpsertWithoutUpdatedSystemConfigsInput
+  disconnect?: Prisma.AdminUserWhereInput | boolean
+  delete?: Prisma.AdminUserWhereInput | boolean
+  connect?: Prisma.AdminUserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AdminUserUpdateToOneWithWhereWithoutUpdatedSystemConfigsInput, Prisma.AdminUserUpdateWithoutUpdatedSystemConfigsInput>, Prisma.AdminUserUncheckedUpdateWithoutUpdatedSystemConfigsInput>
+}
+
 export type AdminUserCreateWithoutTokensInput = {
   username: string
   password: string
@@ -578,6 +601,7 @@ export type AdminUserCreateWithoutTokensInput = {
   updatedAt?: Date | string
   createdTasks?: Prisma.TaskCreateNestedManyWithoutCreatedByInput
   updatedTasks?: Prisma.TaskCreateNestedManyWithoutUpdatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
 }
 
 export type AdminUserUncheckedCreateWithoutTokensInput = {
@@ -594,6 +618,7 @@ export type AdminUserUncheckedCreateWithoutTokensInput = {
   updatedAt?: Date | string
   createdTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutCreatedByInput
   updatedTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutUpdatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
 }
 
 export type AdminUserCreateOrConnectWithoutTokensInput = {
@@ -625,6 +650,7 @@ export type AdminUserUpdateWithoutTokensInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdTasks?: Prisma.TaskUpdateManyWithoutCreatedByNestedInput
   updatedTasks?: Prisma.TaskUpdateManyWithoutUpdatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type AdminUserUncheckedUpdateWithoutTokensInput = {
@@ -641,6 +667,7 @@ export type AdminUserUncheckedUpdateWithoutTokensInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdTasks?: Prisma.TaskUncheckedUpdateManyWithoutCreatedByNestedInput
   updatedTasks?: Prisma.TaskUncheckedUpdateManyWithoutUpdatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type AdminUserCreateWithoutCreatedTasksInput = {
@@ -656,6 +683,7 @@ export type AdminUserCreateWithoutCreatedTasksInput = {
   updatedAt?: Date | string
   tokens?: Prisma.AdminUserTokenCreateNestedManyWithoutUserInput
   updatedTasks?: Prisma.TaskCreateNestedManyWithoutUpdatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
 }
 
 export type AdminUserUncheckedCreateWithoutCreatedTasksInput = {
@@ -672,6 +700,7 @@ export type AdminUserUncheckedCreateWithoutCreatedTasksInput = {
   updatedAt?: Date | string
   tokens?: Prisma.AdminUserTokenUncheckedCreateNestedManyWithoutUserInput
   updatedTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutUpdatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
 }
 
 export type AdminUserCreateOrConnectWithoutCreatedTasksInput = {
@@ -692,6 +721,7 @@ export type AdminUserCreateWithoutUpdatedTasksInput = {
   updatedAt?: Date | string
   tokens?: Prisma.AdminUserTokenCreateNestedManyWithoutUserInput
   createdTasks?: Prisma.TaskCreateNestedManyWithoutCreatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
 }
 
 export type AdminUserUncheckedCreateWithoutUpdatedTasksInput = {
@@ -708,6 +738,7 @@ export type AdminUserUncheckedCreateWithoutUpdatedTasksInput = {
   updatedAt?: Date | string
   tokens?: Prisma.AdminUserTokenUncheckedCreateNestedManyWithoutUserInput
   createdTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
 }
 
 export type AdminUserCreateOrConnectWithoutUpdatedTasksInput = {
@@ -739,6 +770,7 @@ export type AdminUserUpdateWithoutCreatedTasksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tokens?: Prisma.AdminUserTokenUpdateManyWithoutUserNestedInput
   updatedTasks?: Prisma.TaskUpdateManyWithoutUpdatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type AdminUserUncheckedUpdateWithoutCreatedTasksInput = {
@@ -755,6 +787,7 @@ export type AdminUserUncheckedUpdateWithoutCreatedTasksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tokens?: Prisma.AdminUserTokenUncheckedUpdateManyWithoutUserNestedInput
   updatedTasks?: Prisma.TaskUncheckedUpdateManyWithoutUpdatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type AdminUserUpsertWithoutUpdatedTasksInput = {
@@ -781,6 +814,7 @@ export type AdminUserUpdateWithoutUpdatedTasksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tokens?: Prisma.AdminUserTokenUpdateManyWithoutUserNestedInput
   createdTasks?: Prisma.TaskUpdateManyWithoutCreatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
 }
 
 export type AdminUserUncheckedUpdateWithoutUpdatedTasksInput = {
@@ -797,6 +831,89 @@ export type AdminUserUncheckedUpdateWithoutUpdatedTasksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   tokens?: Prisma.AdminUserTokenUncheckedUpdateManyWithoutUserNestedInput
   createdTasks?: Prisma.TaskUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+}
+
+export type AdminUserCreateWithoutUpdatedSystemConfigsInput = {
+  username: string
+  password: string
+  mobile?: string | null
+  avatar?: string | null
+  role?: number
+  isEnabled?: boolean
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tokens?: Prisma.AdminUserTokenCreateNestedManyWithoutUserInput
+  createdTasks?: Prisma.TaskCreateNestedManyWithoutCreatedByInput
+  updatedTasks?: Prisma.TaskCreateNestedManyWithoutUpdatedByInput
+}
+
+export type AdminUserUncheckedCreateWithoutUpdatedSystemConfigsInput = {
+  id?: number
+  username: string
+  password: string
+  mobile?: string | null
+  avatar?: string | null
+  role?: number
+  isEnabled?: boolean
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  tokens?: Prisma.AdminUserTokenUncheckedCreateNestedManyWithoutUserInput
+  createdTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutCreatedByInput
+  updatedTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutUpdatedByInput
+}
+
+export type AdminUserCreateOrConnectWithoutUpdatedSystemConfigsInput = {
+  where: Prisma.AdminUserWhereUniqueInput
+  create: Prisma.XOR<Prisma.AdminUserCreateWithoutUpdatedSystemConfigsInput, Prisma.AdminUserUncheckedCreateWithoutUpdatedSystemConfigsInput>
+}
+
+export type AdminUserUpsertWithoutUpdatedSystemConfigsInput = {
+  update: Prisma.XOR<Prisma.AdminUserUpdateWithoutUpdatedSystemConfigsInput, Prisma.AdminUserUncheckedUpdateWithoutUpdatedSystemConfigsInput>
+  create: Prisma.XOR<Prisma.AdminUserCreateWithoutUpdatedSystemConfigsInput, Prisma.AdminUserUncheckedCreateWithoutUpdatedSystemConfigsInput>
+  where?: Prisma.AdminUserWhereInput
+}
+
+export type AdminUserUpdateToOneWithWhereWithoutUpdatedSystemConfigsInput = {
+  where?: Prisma.AdminUserWhereInput
+  data: Prisma.XOR<Prisma.AdminUserUpdateWithoutUpdatedSystemConfigsInput, Prisma.AdminUserUncheckedUpdateWithoutUpdatedSystemConfigsInput>
+}
+
+export type AdminUserUpdateWithoutUpdatedSystemConfigsInput = {
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tokens?: Prisma.AdminUserTokenUpdateManyWithoutUserNestedInput
+  createdTasks?: Prisma.TaskUpdateManyWithoutCreatedByNestedInput
+  updatedTasks?: Prisma.TaskUpdateManyWithoutUpdatedByNestedInput
+}
+
+export type AdminUserUncheckedUpdateWithoutUpdatedSystemConfigsInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  mobile?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.IntFieldUpdateOperationsInput | number
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  tokens?: Prisma.AdminUserTokenUncheckedUpdateManyWithoutUserNestedInput
+  createdTasks?: Prisma.TaskUncheckedUpdateManyWithoutCreatedByNestedInput
+  updatedTasks?: Prisma.TaskUncheckedUpdateManyWithoutUpdatedByNestedInput
 }
 
 
@@ -808,12 +925,14 @@ export type AdminUserCountOutputType = {
   tokens: number
   createdTasks: number
   updatedTasks: number
+  updatedSystemConfigs: number
 }
 
 export type AdminUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tokens?: boolean | AdminUserCountOutputTypeCountTokensArgs
   createdTasks?: boolean | AdminUserCountOutputTypeCountCreatedTasksArgs
   updatedTasks?: boolean | AdminUserCountOutputTypeCountUpdatedTasksArgs
+  updatedSystemConfigs?: boolean | AdminUserCountOutputTypeCountUpdatedSystemConfigsArgs
 }
 
 /**
@@ -847,6 +966,13 @@ export type AdminUserCountOutputTypeCountUpdatedTasksArgs<ExtArgs extends runtim
   where?: Prisma.TaskWhereInput
 }
 
+/**
+ * AdminUserCountOutputType without action
+ */
+export type AdminUserCountOutputTypeCountUpdatedSystemConfigsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.SystemConfigWhereInput
+}
+
 
 export type AdminUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -863,6 +989,7 @@ export type AdminUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   tokens?: boolean | Prisma.AdminUser$tokensArgs<ExtArgs>
   createdTasks?: boolean | Prisma.AdminUser$createdTasksArgs<ExtArgs>
   updatedTasks?: boolean | Prisma.AdminUser$updatedTasksArgs<ExtArgs>
+  updatedSystemConfigs?: boolean | Prisma.AdminUser$updatedSystemConfigsArgs<ExtArgs>
   _count?: boolean | Prisma.AdminUserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["adminUser"]>
 
@@ -913,6 +1040,7 @@ export type AdminUserInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   tokens?: boolean | Prisma.AdminUser$tokensArgs<ExtArgs>
   createdTasks?: boolean | Prisma.AdminUser$createdTasksArgs<ExtArgs>
   updatedTasks?: boolean | Prisma.AdminUser$updatedTasksArgs<ExtArgs>
+  updatedSystemConfigs?: boolean | Prisma.AdminUser$updatedSystemConfigsArgs<ExtArgs>
   _count?: boolean | Prisma.AdminUserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type AdminUserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -933,6 +1061,10 @@ export type $AdminUserPayload<ExtArgs extends runtime.Types.Extensions.InternalA
      * 更新的任务关联
      */
     updatedTasks: Prisma.$TaskPayload<ExtArgs>[]
+    /**
+     * 更新的系统配置关联
+     */
+    updatedSystemConfigs: Prisma.$SystemConfigPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1376,6 +1508,7 @@ export interface Prisma__AdminUserClient<T, Null = never, ExtArgs extends runtim
   tokens<T extends Prisma.AdminUser$tokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AdminUser$tokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdminUserTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdTasks<T extends Prisma.AdminUser$createdTasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AdminUser$createdTasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   updatedTasks<T extends Prisma.AdminUser$updatedTasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AdminUser$updatedTasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  updatedSystemConfigs<T extends Prisma.AdminUser$updatedSystemConfigsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AdminUser$updatedSystemConfigsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1882,6 +2015,30 @@ export type AdminUser$updatedTasksArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.TaskScalarFieldEnum | Prisma.TaskScalarFieldEnum[]
+}
+
+/**
+ * AdminUser.updatedSystemConfigs
+ */
+export type AdminUser$updatedSystemConfigsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SystemConfig
+   */
+  select?: Prisma.SystemConfigSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SystemConfig
+   */
+  omit?: Prisma.SystemConfigOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SystemConfigInclude<ExtArgs> | null
+  where?: Prisma.SystemConfigWhereInput
+  orderBy?: Prisma.SystemConfigOrderByWithRelationInput | Prisma.SystemConfigOrderByWithRelationInput[]
+  cursor?: Prisma.SystemConfigWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.SystemConfigScalarFieldEnum | Prisma.SystemConfigScalarFieldEnum[]
 }
 
 /**

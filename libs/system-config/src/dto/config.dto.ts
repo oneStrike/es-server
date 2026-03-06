@@ -6,6 +6,8 @@ import {
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
+import { IdDto } from '@libs/base/dto'
+import { IntersectionType } from '@nestjs/swagger'
 
 // ============================================================================
 // 阿里云配置
@@ -28,13 +30,6 @@ export class AliyunSmsConfigDto {
     required: false,
   })
   signName?: string
-
-  @StringProperty({
-    description: '默认短信模板编码',
-    example: '100001',
-    required: false,
-  })
-  templateCode?: string
 
   @NumberProperty({
     description: '验证码长度',
@@ -257,3 +252,8 @@ export class SystemConfigDto {
   })
   contentReviewPolicy?: ContentReviewPolicyDto
 }
+
+export class SystemConfigBodyDto extends IntersectionType(
+  SystemConfigDto,
+  IdDto,
+) {}

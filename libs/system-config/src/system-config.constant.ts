@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 配置安全元数据 - 定义每个配置项的敏感字段
  * 用于自动加密存储和脱敏展示
  */
@@ -59,8 +59,6 @@ export const DEFAULT_CONFIG = {
       endpoint: 'dypnsapi.aliyuncs.com',
       /** 短信签名名称（空字符串表示未配置） */
       signName: '',
-      /** 默认短信模板编码（用于发送验证码） */
-      templateCode: '100001',
       /** 验证码长度（默认6位） */
       verifyCodeLength: 6,
       /** 验证码过期时间（默认300秒=5分钟） */

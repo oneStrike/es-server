@@ -385,7 +385,6 @@ export type AppUserWhereInput = {
   taskProgressLogs?: Prisma.TaskProgressLogListRelationFilter
   updatedConfigs?: Prisma.ForumConfigListRelationFilter
   operatedConfigHistories?: Prisma.ForumConfigHistoryListRelationFilter
-  updatedSystemConfigs?: Prisma.SystemConfigListRelationFilter
   userLikes?: Prisma.UserLikeListRelationFilter
   userFavorites?: Prisma.UserFavoriteListRelationFilter
   userViews?: Prisma.UserViewListRelationFilter
@@ -439,7 +438,6 @@ export type AppUserOrderByWithRelationInput = {
   taskProgressLogs?: Prisma.TaskProgressLogOrderByRelationAggregateInput
   updatedConfigs?: Prisma.ForumConfigOrderByRelationAggregateInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryOrderByRelationAggregateInput
-  updatedSystemConfigs?: Prisma.SystemConfigOrderByRelationAggregateInput
   userLikes?: Prisma.UserLikeOrderByRelationAggregateInput
   userFavorites?: Prisma.UserFavoriteOrderByRelationAggregateInput
   userViews?: Prisma.UserViewOrderByRelationAggregateInput
@@ -496,7 +494,6 @@ export type AppUserWhereUniqueInput = Prisma.AtLeast<{
   taskProgressLogs?: Prisma.TaskProgressLogListRelationFilter
   updatedConfigs?: Prisma.ForumConfigListRelationFilter
   operatedConfigHistories?: Prisma.ForumConfigHistoryListRelationFilter
-  updatedSystemConfigs?: Prisma.SystemConfigListRelationFilter
   userLikes?: Prisma.UserLikeListRelationFilter
   userFavorites?: Prisma.UserFavoriteListRelationFilter
   userViews?: Prisma.UserViewListRelationFilter
@@ -604,7 +601,6 @@ export type AppUserCreateInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -657,7 +653,6 @@ export type AppUserUncheckedCreateInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -709,7 +704,6 @@ export type AppUserUpdateInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -762,7 +756,6 @@ export type AppUserUncheckedUpdateInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -1398,22 +1391,6 @@ export type AppUserUpdateOneRequiredWithoutForumActionLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutForumActionLogsInput, Prisma.AppUserUpdateWithoutForumActionLogsInput>, Prisma.AppUserUncheckedUpdateWithoutForumActionLogsInput>
 }
 
-export type AppUserCreateNestedOneWithoutUpdatedSystemConfigsInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutUpdatedSystemConfigsInput, Prisma.AppUserUncheckedCreateWithoutUpdatedSystemConfigsInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutUpdatedSystemConfigsInput
-  connect?: Prisma.AppUserWhereUniqueInput
-}
-
-export type AppUserUpdateOneWithoutUpdatedSystemConfigsNestedInput = {
-  create?: Prisma.XOR<Prisma.AppUserCreateWithoutUpdatedSystemConfigsInput, Prisma.AppUserUncheckedCreateWithoutUpdatedSystemConfigsInput>
-  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutUpdatedSystemConfigsInput
-  upsert?: Prisma.AppUserUpsertWithoutUpdatedSystemConfigsInput
-  disconnect?: Prisma.AppUserWhereInput | boolean
-  delete?: Prisma.AppUserWhereInput | boolean
-  connect?: Prisma.AppUserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutUpdatedSystemConfigsInput, Prisma.AppUserUpdateWithoutUpdatedSystemConfigsInput>, Prisma.AppUserUncheckedUpdateWithoutUpdatedSystemConfigsInput>
-}
-
 export type AppUserCreateWithoutAgreementLogsInput = {
   account: string
   phone?: string | null
@@ -1453,7 +1430,6 @@ export type AppUserCreateWithoutAgreementLogsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -1505,7 +1481,6 @@ export type AppUserUncheckedCreateWithoutAgreementLogsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -1572,7 +1547,6 @@ export type AppUserUpdateWithoutAgreementLogsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -1624,7 +1598,6 @@ export type AppUserUncheckedUpdateWithoutAgreementLogsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -1675,7 +1648,6 @@ export type AppUserCreateWithoutAnnouncementReadsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -1727,7 +1699,6 @@ export type AppUserUncheckedCreateWithoutAnnouncementReadsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -1794,7 +1765,6 @@ export type AppUserUpdateWithoutAnnouncementReadsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -1846,7 +1816,6 @@ export type AppUserUncheckedUpdateWithoutAnnouncementReadsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -1897,7 +1866,6 @@ export type AppUserCreateWithoutTokensInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -1949,7 +1917,6 @@ export type AppUserUncheckedCreateWithoutTokensInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -2016,7 +1983,6 @@ export type AppUserUpdateWithoutTokensInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -2068,7 +2034,6 @@ export type AppUserUncheckedUpdateWithoutTokensInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -2119,7 +2084,6 @@ export type AppUserCreateWithoutTaskAssignmentsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -2171,7 +2135,6 @@ export type AppUserUncheckedCreateWithoutTaskAssignmentsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -2238,7 +2201,6 @@ export type AppUserUpdateWithoutTaskAssignmentsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -2290,7 +2252,6 @@ export type AppUserUncheckedUpdateWithoutTaskAssignmentsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -2341,7 +2302,6 @@ export type AppUserCreateWithoutTaskProgressLogsInput = {
   taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -2393,7 +2353,6 @@ export type AppUserUncheckedCreateWithoutTaskProgressLogsInput = {
   taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -2460,7 +2419,6 @@ export type AppUserUpdateWithoutTaskProgressLogsInput = {
   taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -2512,7 +2470,6 @@ export type AppUserUncheckedUpdateWithoutTaskProgressLogsInput = {
   taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -2563,7 +2520,6 @@ export type AppUserCreateWithoutUserBadgesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -2615,7 +2571,6 @@ export type AppUserUncheckedCreateWithoutUserBadgesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -2682,7 +2637,6 @@ export type AppUserUpdateWithoutUserBadgesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -2734,7 +2688,6 @@ export type AppUserUncheckedUpdateWithoutUserBadgesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -2786,7 +2739,6 @@ export type AppUserCreateWithoutUserCommentLikesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -2838,7 +2790,6 @@ export type AppUserUncheckedCreateWithoutUserCommentLikesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -2905,7 +2856,6 @@ export type AppUserUpdateWithoutUserCommentLikesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -2957,7 +2907,6 @@ export type AppUserUncheckedUpdateWithoutUserCommentLikesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -3008,7 +2957,6 @@ export type AppUserCreateWithoutUserCommentsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -3060,7 +3008,6 @@ export type AppUserUncheckedCreateWithoutUserCommentsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -3127,7 +3074,6 @@ export type AppUserUpdateWithoutUserCommentsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -3179,7 +3125,6 @@ export type AppUserUncheckedUpdateWithoutUserCommentsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -3230,7 +3175,6 @@ export type AppUserCreateWithoutUserDownloadRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -3282,7 +3226,6 @@ export type AppUserUncheckedCreateWithoutUserDownloadRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -3349,7 +3292,6 @@ export type AppUserUpdateWithoutUserDownloadRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -3401,7 +3343,6 @@ export type AppUserUncheckedUpdateWithoutUserDownloadRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -3451,7 +3392,6 @@ export type AppUserCreateWithoutExperienceRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -3503,7 +3443,6 @@ export type AppUserUncheckedCreateWithoutExperienceRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -3570,7 +3509,6 @@ export type AppUserUpdateWithoutExperienceRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -3622,7 +3560,6 @@ export type AppUserUncheckedUpdateWithoutExperienceRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -3674,7 +3611,6 @@ export type AppUserCreateWithoutUserFavoritesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
@@ -3726,7 +3662,6 @@ export type AppUserUncheckedCreateWithoutUserFavoritesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
@@ -3793,7 +3728,6 @@ export type AppUserUpdateWithoutUserFavoritesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
@@ -3845,7 +3779,6 @@ export type AppUserUncheckedUpdateWithoutUserFavoritesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
@@ -3895,7 +3828,6 @@ export type AppUserCreateWithoutUserGrowthEventsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -3947,7 +3879,6 @@ export type AppUserUncheckedCreateWithoutUserGrowthEventsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -4014,7 +3945,6 @@ export type AppUserUpdateWithoutUserGrowthEventsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -4066,7 +3996,6 @@ export type AppUserUncheckedUpdateWithoutUserGrowthEventsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -4117,7 +4046,6 @@ export type AppUserCreateWithoutLevelInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -4169,7 +4097,6 @@ export type AppUserUncheckedCreateWithoutLevelInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -4274,7 +4201,6 @@ export type AppUserCreateWithoutUserLikesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
@@ -4326,7 +4252,6 @@ export type AppUserUncheckedCreateWithoutUserLikesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
@@ -4393,7 +4318,6 @@ export type AppUserUpdateWithoutUserLikesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
@@ -4445,7 +4369,6 @@ export type AppUserUncheckedUpdateWithoutUserLikesInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
@@ -4495,7 +4418,6 @@ export type AppUserCreateWithoutPointRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -4547,7 +4469,6 @@ export type AppUserUncheckedCreateWithoutPointRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -4614,7 +4535,6 @@ export type AppUserUpdateWithoutPointRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -4666,7 +4586,6 @@ export type AppUserUncheckedUpdateWithoutPointRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -4718,7 +4637,6 @@ export type AppUserCreateWithoutUserPurchaseRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -4770,7 +4688,6 @@ export type AppUserUncheckedCreateWithoutUserPurchaseRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -4837,7 +4754,6 @@ export type AppUserUpdateWithoutUserPurchaseRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -4889,7 +4805,6 @@ export type AppUserUncheckedUpdateWithoutUserPurchaseRecordsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -4940,7 +4855,6 @@ export type AppUserCreateWithoutUserReportsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -4992,7 +4906,6 @@ export type AppUserUncheckedCreateWithoutUserReportsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -5048,7 +4961,6 @@ export type AppUserCreateWithoutHandledUserReportsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -5100,7 +5012,6 @@ export type AppUserUncheckedCreateWithoutHandledUserReportsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -5167,7 +5078,6 @@ export type AppUserUpdateWithoutUserReportsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -5219,7 +5129,6 @@ export type AppUserUncheckedUpdateWithoutUserReportsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -5281,7 +5190,6 @@ export type AppUserUpdateWithoutHandledUserReportsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -5333,7 +5241,6 @@ export type AppUserUncheckedUpdateWithoutHandledUserReportsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -5384,7 +5291,6 @@ export type AppUserCreateWithoutUserViewsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
@@ -5436,7 +5342,6 @@ export type AppUserUncheckedCreateWithoutUserViewsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
@@ -5503,7 +5408,6 @@ export type AppUserUpdateWithoutUserViewsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
@@ -5555,7 +5459,6 @@ export type AppUserUncheckedUpdateWithoutUserViewsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
@@ -5605,7 +5508,6 @@ export type AppUserCreateWithoutOperatedConfigHistoriesInput = {
   taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -5657,7 +5559,6 @@ export type AppUserUncheckedCreateWithoutOperatedConfigHistoriesInput = {
   taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -5724,7 +5625,6 @@ export type AppUserUpdateWithoutOperatedConfigHistoriesInput = {
   taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -5776,7 +5676,6 @@ export type AppUserUncheckedUpdateWithoutOperatedConfigHistoriesInput = {
   taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -5827,7 +5726,6 @@ export type AppUserCreateWithoutUpdatedConfigsInput = {
   taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -5879,7 +5777,6 @@ export type AppUserUncheckedCreateWithoutUpdatedConfigsInput = {
   taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -5946,7 +5843,6 @@ export type AppUserUpdateWithoutUpdatedConfigsInput = {
   taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -5998,7 +5894,6 @@ export type AppUserUncheckedUpdateWithoutUpdatedConfigsInput = {
   taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -6049,7 +5944,6 @@ export type AppUserCreateWithoutModeratorApplicationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -6101,7 +5995,6 @@ export type AppUserUncheckedCreateWithoutModeratorApplicationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -6157,7 +6050,6 @@ export type AppUserCreateWithoutAuditedApplicationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -6209,7 +6101,6 @@ export type AppUserUncheckedCreateWithoutAuditedApplicationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -6276,7 +6167,6 @@ export type AppUserUpdateWithoutModeratorApplicationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -6328,7 +6218,6 @@ export type AppUserUncheckedUpdateWithoutModeratorApplicationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -6390,7 +6279,6 @@ export type AppUserUpdateWithoutAuditedApplicationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -6442,7 +6330,6 @@ export type AppUserUncheckedUpdateWithoutAuditedApplicationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -6493,7 +6380,6 @@ export type AppUserCreateWithoutModeratorInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -6545,7 +6431,6 @@ export type AppUserUncheckedCreateWithoutModeratorInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -6612,7 +6497,6 @@ export type AppUserUpdateWithoutModeratorInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -6664,7 +6548,6 @@ export type AppUserUncheckedUpdateWithoutModeratorInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -6715,7 +6598,6 @@ export type AppUserCreateWithoutForumNotificationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -6767,7 +6649,6 @@ export type AppUserUncheckedCreateWithoutForumNotificationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -6834,7 +6715,6 @@ export type AppUserUpdateWithoutForumNotificationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -6886,7 +6766,6 @@ export type AppUserUncheckedUpdateWithoutForumNotificationsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -6937,7 +6816,6 @@ export type AppUserCreateWithoutForumProfileInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -6989,7 +6867,6 @@ export type AppUserUncheckedCreateWithoutForumProfileInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -7056,7 +6933,6 @@ export type AppUserUpdateWithoutForumProfileInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -7108,7 +6984,6 @@ export type AppUserUncheckedUpdateWithoutForumProfileInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -7159,7 +7034,6 @@ export type AppUserCreateWithoutForumTopicsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -7211,7 +7085,6 @@ export type AppUserUncheckedCreateWithoutForumTopicsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -7267,7 +7140,6 @@ export type AppUserCreateWithoutLastReplyTopicsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -7319,7 +7191,6 @@ export type AppUserUncheckedCreateWithoutLastReplyTopicsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -7386,7 +7257,6 @@ export type AppUserUpdateWithoutForumTopicsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -7438,7 +7308,6 @@ export type AppUserUncheckedUpdateWithoutForumTopicsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -7500,7 +7369,6 @@ export type AppUserUpdateWithoutLastReplyTopicsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -7552,7 +7420,6 @@ export type AppUserUncheckedUpdateWithoutLastReplyTopicsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -7603,7 +7470,6 @@ export type AppUserCreateWithoutForumActionLogsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
@@ -7655,7 +7521,6 @@ export type AppUserUncheckedCreateWithoutForumActionLogsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
   updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
@@ -7722,7 +7587,6 @@ export type AppUserUpdateWithoutForumActionLogsInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -7768,229 +7632,6 @@ export type AppUserUncheckedUpdateWithoutForumActionLogsInput = {
   moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
   auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
   moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
-  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutUserNestedInput
-  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
-  handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
-  userDownloadRecords?: Prisma.UserDownloadRecordUncheckedUpdateManyWithoutUserNestedInput
-  userPurchaseRecords?: Prisma.UserPurchaseRecordUncheckedUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserCreateWithoutUpdatedSystemConfigsInput = {
-  account: string
-  phone?: string | null
-  email?: string | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
-  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
-  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
-  announcementReads?: Prisma.AppAnnouncementReadCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
-  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
-  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeCreateNestedManyWithoutUserInput
-  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
-  handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
-  userDownloadRecords?: Prisma.UserDownloadRecordCreateNestedManyWithoutUserInput
-  userPurchaseRecords?: Prisma.UserPurchaseRecordCreateNestedManyWithoutUserInput
-}
-
-export type AppUserUncheckedCreateWithoutUpdatedSystemConfigsInput = {
-  id?: number
-  account: string
-  phone?: string | null
-  email?: string | null
-  levelId?: number | null
-  nickname: string
-  password: string
-  avatar?: string | null
-  isEnabled?: boolean
-  gender?: number
-  birthDate?: Date | string | null
-  points?: number
-  experience?: number
-  status?: number
-  banReason?: string | null
-  banUntil?: Date | string | null
-  lastLoginAt?: Date | string | null
-  lastLoginIp?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
-  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
-  announcementReads?: Prisma.AppAnnouncementReadUncheckedCreateNestedManyWithoutUserInput
-  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutUserInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutUserInput
-  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
-  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
-  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
-  userGrowthEvents?: Prisma.UserGrowthEventUncheckedCreateNestedManyWithoutUserInput
-  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
-  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
-  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
-  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
-  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
-  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
-  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
-  userCommentLikes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutUserInput
-  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
-  handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
-  userDownloadRecords?: Prisma.UserDownloadRecordUncheckedCreateNestedManyWithoutUserInput
-  userPurchaseRecords?: Prisma.UserPurchaseRecordUncheckedCreateNestedManyWithoutUserInput
-}
-
-export type AppUserCreateOrConnectWithoutUpdatedSystemConfigsInput = {
-  where: Prisma.AppUserWhereUniqueInput
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutUpdatedSystemConfigsInput, Prisma.AppUserUncheckedCreateWithoutUpdatedSystemConfigsInput>
-}
-
-export type AppUserUpsertWithoutUpdatedSystemConfigsInput = {
-  update: Prisma.XOR<Prisma.AppUserUpdateWithoutUpdatedSystemConfigsInput, Prisma.AppUserUncheckedUpdateWithoutUpdatedSystemConfigsInput>
-  create: Prisma.XOR<Prisma.AppUserCreateWithoutUpdatedSystemConfigsInput, Prisma.AppUserUncheckedCreateWithoutUpdatedSystemConfigsInput>
-  where?: Prisma.AppUserWhereInput
-}
-
-export type AppUserUpdateToOneWithWhereWithoutUpdatedSystemConfigsInput = {
-  where?: Prisma.AppUserWhereInput
-  data: Prisma.XOR<Prisma.AppUserUpdateWithoutUpdatedSystemConfigsInput, Prisma.AppUserUncheckedUpdateWithoutUpdatedSystemConfigsInput>
-}
-
-export type AppUserUpdateWithoutUpdatedSystemConfigsInput = {
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
-  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
-  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
-  announcementReads?: Prisma.AppAnnouncementReadUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
-  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
-  userGrowthEvents?: Prisma.UserGrowthEventUpdateManyWithoutUserNestedInput
-  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
-  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
-  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
-  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
-  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
-  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
-  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
-  userCommentLikes?: Prisma.UserCommentLikeUpdateManyWithoutUserNestedInput
-  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
-  handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
-  userDownloadRecords?: Prisma.UserDownloadRecordUpdateManyWithoutUserNestedInput
-  userPurchaseRecords?: Prisma.UserPurchaseRecordUpdateManyWithoutUserNestedInput
-}
-
-export type AppUserUncheckedUpdateWithoutUpdatedSystemConfigsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  account?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  nickname?: Prisma.StringFieldUpdateOperationsInput | string
-  password?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  gender?: Prisma.IntFieldUpdateOperationsInput | number
-  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  status?: Prisma.IntFieldUpdateOperationsInput | number
-  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
-  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
-  announcementReads?: Prisma.AppAnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
-  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutUserNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutUserNestedInput
-  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
-  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
-  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
-  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
-  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
-  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
-  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
   userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
   userGrowthEvents?: Prisma.UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput
   taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -8070,7 +7711,6 @@ export type AppUserUpdateWithoutLevelInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
@@ -8122,7 +7762,6 @@ export type AppUserUncheckedUpdateWithoutLevelInput = {
   taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
   updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
-  updatedSystemConfigs?: Prisma.SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
@@ -8180,7 +7819,6 @@ export type AppUserCountOutputType = {
   taskProgressLogs: number
   updatedConfigs: number
   operatedConfigHistories: number
-  updatedSystemConfigs: number
   userLikes: number
   userFavorites: number
   userViews: number
@@ -8210,7 +7848,6 @@ export type AppUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   taskProgressLogs?: boolean | AppUserCountOutputTypeCountTaskProgressLogsArgs
   updatedConfigs?: boolean | AppUserCountOutputTypeCountUpdatedConfigsArgs
   operatedConfigHistories?: boolean | AppUserCountOutputTypeCountOperatedConfigHistoriesArgs
-  updatedSystemConfigs?: boolean | AppUserCountOutputTypeCountUpdatedSystemConfigsArgs
   userLikes?: boolean | AppUserCountOutputTypeCountUserLikesArgs
   userFavorites?: boolean | AppUserCountOutputTypeCountUserFavoritesArgs
   userViews?: boolean | AppUserCountOutputTypeCountUserViewsArgs
@@ -8354,13 +7991,6 @@ export type AppUserCountOutputTypeCountOperatedConfigHistoriesArgs<ExtArgs exten
 /**
  * AppUserCountOutputType without action
  */
-export type AppUserCountOutputTypeCountUpdatedSystemConfigsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.SystemConfigWhereInput
-}
-
-/**
- * AppUserCountOutputType without action
- */
 export type AppUserCountOutputTypeCountUserLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.UserLikeWhereInput
 }
@@ -8464,7 +8094,6 @@ export type AppUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   taskProgressLogs?: boolean | Prisma.AppUser$taskProgressLogsArgs<ExtArgs>
   updatedConfigs?: boolean | Prisma.AppUser$updatedConfigsArgs<ExtArgs>
   operatedConfigHistories?: boolean | Prisma.AppUser$operatedConfigHistoriesArgs<ExtArgs>
-  updatedSystemConfigs?: boolean | Prisma.AppUser$updatedSystemConfigsArgs<ExtArgs>
   userLikes?: boolean | Prisma.AppUser$userLikesArgs<ExtArgs>
   userFavorites?: boolean | Prisma.AppUser$userFavoritesArgs<ExtArgs>
   userViews?: boolean | Prisma.AppUser$userViewsArgs<ExtArgs>
@@ -8573,7 +8202,6 @@ export type AppUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   taskProgressLogs?: boolean | Prisma.AppUser$taskProgressLogsArgs<ExtArgs>
   updatedConfigs?: boolean | Prisma.AppUser$updatedConfigsArgs<ExtArgs>
   operatedConfigHistories?: boolean | Prisma.AppUser$operatedConfigHistoriesArgs<ExtArgs>
-  updatedSystemConfigs?: boolean | Prisma.AppUser$updatedSystemConfigsArgs<ExtArgs>
   userLikes?: boolean | Prisma.AppUser$userLikesArgs<ExtArgs>
   userFavorites?: boolean | Prisma.AppUser$userFavoritesArgs<ExtArgs>
   userViews?: boolean | Prisma.AppUser$userViewsArgs<ExtArgs>
@@ -8675,10 +8303,6 @@ export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      * 操作的论坛配置历史
      */
     operatedConfigHistories: Prisma.$ForumConfigHistoryPayload<ExtArgs>[]
-    /**
-     * 更新的系统配置
-     */
-    updatedSystemConfigs: Prisma.$SystemConfigPayload<ExtArgs>[]
     /**
      * 点赞记录
      */
@@ -9215,7 +8839,6 @@ export interface Prisma__AppUserClient<T, Null = never, ExtArgs extends runtime.
   taskProgressLogs<T extends Prisma.AppUser$taskProgressLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$taskProgressLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TaskProgressLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   updatedConfigs<T extends Prisma.AppUser$updatedConfigsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$updatedConfigsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   operatedConfigHistories<T extends Prisma.AppUser$operatedConfigHistoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$operatedConfigHistoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumConfigHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  updatedSystemConfigs<T extends Prisma.AppUser$updatedSystemConfigsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$updatedSystemConfigsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userLikes<T extends Prisma.AppUser$userLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$userLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userFavorites<T extends Prisma.AppUser$userFavoritesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$userFavoritesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserFavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userViews<T extends Prisma.AppUser$userViewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$userViewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserViewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -10142,30 +9765,6 @@ export type AppUser$operatedConfigHistoriesArgs<ExtArgs extends runtime.Types.Ex
   take?: number
   skip?: number
   distinct?: Prisma.ForumConfigHistoryScalarFieldEnum | Prisma.ForumConfigHistoryScalarFieldEnum[]
-}
-
-/**
- * AppUser.updatedSystemConfigs
- */
-export type AppUser$updatedSystemConfigsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the SystemConfig
-   */
-  select?: Prisma.SystemConfigSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the SystemConfig
-   */
-  omit?: Prisma.SystemConfigOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.SystemConfigInclude<ExtArgs> | null
-  where?: Prisma.SystemConfigWhereInput
-  orderBy?: Prisma.SystemConfigOrderByWithRelationInput | Prisma.SystemConfigOrderByWithRelationInput[]
-  cursor?: Prisma.SystemConfigWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.SystemConfigScalarFieldEnum | Prisma.SystemConfigScalarFieldEnum[]
 }
 
 /**

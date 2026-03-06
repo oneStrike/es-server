@@ -29,11 +29,3 @@ export enum SmsTemplateCodeEnum {
   /** 验证绑定手机号 */
   VERIFY_BIND_PHONE = '100005',
 }
-
-/// 默认短信配置
-export const defaultConfig = {
-  /** 默认模板码 */
-  templateCode: SmsTemplateCodeEnum.LOGIN_REGISTER,
-  /** 阿里云短信服务地址 */
-  endpoint: 'dypnsapi.aliyuncs.com',
-}
