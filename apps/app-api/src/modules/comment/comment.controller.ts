@@ -1,12 +1,14 @@
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
+  CommentInteractionService,
   CommentService,
   CreateCommentBodyDto,
   QueryCommentPageDto,
   QueryCommentRepliesDto,
   QueryMyCommentPageDto,
   ReplyCommentBodyDto,
+  ReportCommentBodyDto,
 } from '@libs/interaction'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -14,7 +16,10 @@ import { ApiTags } from '@nestjs/swagger'
 @ApiTags('评论模块')
 @Controller('app/comment')
 export class CommentController {
-  constructor(private readonly commentService: CommentService) {}
+  constructor(
+    private readonly commentService: CommentService,
+    private readonly commentInteractionService: CommentInteractionService,
+  ) {}
 
   @Post('post')
   @ApiDoc({
@@ -74,5 +79,37 @@ export class CommentController {
   })
   async replies(@Query() query: QueryCommentRepliesDto) {
     return this.commentService.getReplies(query)
+  }
+
+  @Post('like')
+  @ApiDoc({
+    summary: '点赞评论',
+    model: IdDto,
+  })
+  async likeComment(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
+    return this.commentInteractionService.likeComment(body.id, userId)
+  }
+
+  @Post('unlike')
+  @ApiDoc({
+    summary: '取消点赞评论',
+    model: IdDto,
+  })
+  async unlikeComment(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
+    return this.commentInteractionService.unlikeComment(body.id, userId)
+  }
+
+  @Post('report')
+  @ApiDoc({
+    summary: '举报评论',
+  })
+  async reportComment(
+    @Body() body: ReportCommentBodyDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.commentInteractionService.reportComment({
+      ...body,
+      reporterId: userId,
+    })
   }
 }

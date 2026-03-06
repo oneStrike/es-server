@@ -3,6 +3,7 @@ import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import {
+  applyCountDelta,
   exists,
   findPagination,
   maxOrder,
@@ -22,6 +23,7 @@ export function makePrismaClient(connectionString: string) {
   return new PrismaClient({ adapter }).$extends({
     model: {
       $allModels: {
+        applyCountDelta,
         exists,
         ...softDelete,
         findPagination,

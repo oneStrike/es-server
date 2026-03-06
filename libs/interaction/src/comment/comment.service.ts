@@ -1,8 +1,4 @@
-import {
-  AuditRoleEnum,
-  AuditStatusEnum,
-  InteractionTargetTypeEnum,
-} from '@libs/base/constant'
+import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
@@ -12,7 +8,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { CommentCountService } from './comment-count.service'
 import { CommentPermissionService } from './comment-permission.service'
 import {
   CreateCommentDto,
@@ -21,6 +16,7 @@ import {
   QueryMyCommentPageDto,
   ReplyCommentDto,
   UpdateCommentAuditDto,
+  UpdateCommentHiddenDto,
 } from './dto/comment.dto'
 
 @Injectable()
@@ -29,9 +25,77 @@ export class CommentService extends BaseService {
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly systemConfigService: SystemConfigService,
     private readonly commentPermissionService: CommentPermissionService,
-    private readonly commentCountService: CommentCountService,
   ) {
     super()
+  }
+
+  /**
+   * 判断评论是否可见（前台展示）
+   */
+  private isVisible(comment: {
+    auditStatus: number
+    isHidden: boolean
+    deletedAt: Date | null
+  }): boolean {
+    return (
+      comment.auditStatus === AuditStatusEnum.APPROVED &&
+      !comment.isHidden &&
+      comment.deletedAt === null
+    )
+  }
+
+  /**
+   * 获取目标模型和查询条件
+   */
+  private getTargetInfo(
+    tx: any,
+    targetType: InteractionTargetTypeEnum,
+    targetId: number,
+  ) {
+    switch (targetType) {
+      case InteractionTargetTypeEnum.COMIC:
+        return {
+          model: tx.work,
+          where: { id: targetId, type: 1, deletedAt: null },
+        }
+      case InteractionTargetTypeEnum.NOVEL:
+        return {
+          model: tx.work,
+          where: { id: targetId, type: 2, deletedAt: null },
+        }
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+        return {
+          model: tx.workChapter,
+          where: { id: targetId, workType: 1, deletedAt: null },
+        }
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
+        return {
+          model: tx.workChapter,
+          where: { id: targetId, workType: 2, deletedAt: null },
+        }
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
+        return {
+          model: tx.forumTopic,
+          where: { id: targetId, deletedAt: null },
+        }
+    }
+  }
+
+  /**
+   * 应用评论计数变化
+   */
+  private async applyCommentCountDelta(
+    tx: any,
+    targetType: InteractionTargetTypeEnum,
+    targetId: number,
+    delta: number,
+  ) {
+    if (delta === 0) {
+      return
+    }
+
+    const { model, where } = this.getTargetInfo(tx, targetType, targetId)
+    await model.applyCountDelta(where, 'commentCount', delta)
   }
 
   /**
@@ -105,19 +169,8 @@ export class CommentService extends BaseService {
         },
       })
 
-      if (
-        this.commentCountService.isVisible({
-          auditStatus: decision.auditStatus,
-          isHidden: decision.isHidden,
-          deletedAt: null,
-        })
-      ) {
-        await this.commentCountService.applyCommentCountDelta(
-          tx,
-          targetType,
-          targetId,
-          1,
-        )
+      if (this.isVisible({ ...decision, deletedAt: null })) {
+        await this.applyCommentCountDelta(tx, targetType, targetId, 1)
       }
 
       return { id: newComment.id }
@@ -173,14 +226,8 @@ export class CommentService extends BaseService {
         },
       })
 
-      if (
-        this.commentCountService.isVisible({
-          auditStatus: decision.auditStatus,
-          isHidden: decision.isHidden,
-          deletedAt: null,
-        })
-      ) {
-        await this.commentCountService.applyCommentCountDelta(
+      if (this.isVisible({ ...decision, deletedAt: null })) {
+        await this.applyCommentCountDelta(
           tx,
           targetType as InteractionTargetTypeEnum,
           targetId,
@@ -202,17 +249,11 @@ export class CommentService extends BaseService {
       const where = userId ? { id: commentId, userId } : { id: commentId }
       const result = await tx.userComment.softDelete(where)
 
-      const beforeVisible = this.commentCountService.isVisible({
-        auditStatus: result.auditStatus,
-        isHidden: result.isHidden,
-        deletedAt: null,
-      })
-
-      if (!beforeVisible) {
+      if (!this.isVisible({ ...result, deletedAt: null })) {
         return { id: result.id }
       }
 
-      await this.commentCountService.applyCommentCountDelta(
+      await this.applyCommentCountDelta(
         tx,
         result.targetType as InteractionTargetTypeEnum,
         result.targetId,
@@ -315,14 +356,13 @@ export class CommentService extends BaseService {
 
   /**
    * 更新评论审核状态
-   * @param body - 审核参数
-   * @param operatorId - 操作人ID
+   * @param dto - 审核参数
    * @returns 操作结果
    */
-  async updateCommentAudit(body: UpdateCommentAuditDto, operatorId: number) {
+  async updateCommentAudit(dto: UpdateCommentAuditDto) {
     await this.prisma.$transaction(async (tx) => {
       const comment = await tx.userComment.findUnique({
-        where: { id: body.commentId, deletedAt: null },
+        where: { id: dto.commentId, deletedAt: null },
         select: {
           targetType: true,
           targetId: true,
@@ -335,135 +375,87 @@ export class CommentService extends BaseService {
         throw new NotFoundException('未找到相关评论')
       }
 
-      const beforeVisible = this.commentCountService.isVisible(comment)
+      const beforeVisible = this.isVisible(comment)
 
-      let updated: {
-        targetType: number
-        targetId: number
-        auditStatus: number
-        isHidden: boolean
-        deletedAt: Date | null
+      const { commentId, ...otherDto } = dto
+      const updated = await tx.userComment.update({
+        where: { id: commentId, deletedAt: null },
+        data: {
+          ...otherDto,
+          auditAt: new Date(),
+        },
+        select: {
+          targetType: true,
+          targetId: true,
+          auditStatus: true,
+          isHidden: true,
+          deletedAt: true,
+        },
+      })
+
+      const afterVisible = this.isVisible(updated)
+      if (beforeVisible !== afterVisible) {
+        await this.applyCommentCountDelta(
+          tx,
+          updated.targetType as InteractionTargetTypeEnum,
+          updated.targetId,
+          afterVisible ? 1 : -1,
+        )
       }
-
-      try {
-        updated = await tx.userComment.update({
-          where: { id: body.commentId, deletedAt: null },
-          data: {
-            auditStatus: body.auditStatus,
-            auditReason: body.auditReason,
-            auditById: operatorId,
-            auditRole: AuditRoleEnum.ADMIN,
-            auditAt: new Date(),
-          },
-          select: {
-            targetType: true,
-            targetId: true,
-            auditStatus: true,
-            isHidden: true,
-            deletedAt: true,
-          },
-        })
-      } catch (error) {
-        if (this.isRecordNotFound(error)) {
-          throw new NotFoundException('Comment not found')
-        }
-        throw error
-      }
-
-      const afterVisible = this.commentCountService.isVisible(updated)
-      await this.commentCountService.syncVisibleCountByTransition(
-        tx,
-        updated.targetType as InteractionTargetTypeEnum,
-        updated.targetId,
-        beforeVisible,
-        afterVisible,
-      )
     })
 
-    return { success: true }
+    return { id: dto.commentId }
   }
 
   /**
    * 更新评论隐藏状态
-   * @param body - 隐藏参数
+   * @param dto - 隐藏参数
    * @returns 操作结果
    */
-  async updateCommentHidden(body: { commentId: number, isHidden: boolean }) {
+  async updateCommentHidden(dto: UpdateCommentHiddenDto) {
     await this.prisma.$transaction(async (tx) => {
-      let updated: {
-        targetType: number
-        targetId: number
-        auditStatus: number
-        isHidden: boolean
-        deletedAt: Date | null
+      if (
+        !(await tx.userComment.exists({ id: dto.commentId, deletedAt: null }))
+      ) {
+        throw new NotFoundException('未找到相关评论')
       }
 
-      try {
-        updated = await tx.userComment.update({
-          where: { id: body.commentId, deletedAt: null },
-          data: { isHidden: body.isHidden },
-          select: {
-            targetType: true,
-            targetId: true,
-            auditStatus: true,
-            isHidden: true,
-            deletedAt: true,
-          },
-        })
-      } catch (error) {
-        if (this.isRecordNotFound(error)) {
-          throw new NotFoundException('Comment not found')
-        }
-        throw error
-      }
+      const updated = await tx.userComment.update({
+        where: { id: dto.commentId, deletedAt: null },
+        data: { isHidden: dto.isHidden },
+        select: {
+          targetType: true,
+          targetId: true,
+          isHidden: true,
+          auditStatus: true,
+          deletedAt: true,
+        },
+      })
 
-      const beforeVisible = this.commentCountService.isVisible({
+      const beforeVisible = this.isVisible({
         auditStatus: updated.auditStatus,
-        isHidden: !body.isHidden,
+        isHidden: !dto.isHidden,
         deletedAt: updated.deletedAt,
       })
-      const afterVisible = this.commentCountService.isVisible(updated)
+      const afterVisible = this.isVisible(updated)
 
-      await this.commentCountService.syncVisibleCountByTransition(
-        tx,
-        updated.targetType as InteractionTargetTypeEnum,
-        updated.targetId,
-        beforeVisible,
-        afterVisible,
-      )
+      if (beforeVisible !== afterVisible) {
+        await this.applyCommentCountDelta(
+          tx,
+          updated.targetType as InteractionTargetTypeEnum,
+          updated.targetId,
+          afterVisible ? 1 : -1,
+        )
+      }
     })
 
-    return { success: true }
-  }
-
-  /**
-   * 重新计算评论数量
-   * @param targetType - 目标类型
-   * @param targetId - 目标ID
-   * @returns 计算结果
-   */
-  async recalcCommentCount(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    const count = await this.prisma.userComment.count({
-      where: {
-        targetType,
-        targetId,
-        auditStatus: AuditStatusEnum.APPROVED,
-        isHidden: false,
-        deletedAt: null,
-      },
-    })
-
-    await this.commentCountService.setCommentCount(targetType, targetId, count)
-    return { targetType, targetId, commentCount: count }
+    return { id: dto.commentId }
   }
 
   /**
    * 获取用户的评论列表
-   * @param userId - 用户ID
    * @param dto - 筛选参数
+   * @param userId - 用户ID
    * @returns 分页评论列表
    */
   async getUserComments(dto: QueryMyCommentPageDto, userId: number) {

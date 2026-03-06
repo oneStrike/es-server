@@ -1,4 +1,8 @@
-import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
+import {
+  AuditRoleEnum,
+  AuditStatusEnum,
+  InteractionTargetTypeEnum,
+} from '@libs/base/constant'
 import {
   BooleanProperty,
   EnumProperty,
@@ -6,7 +10,12 @@ import {
   StringProperty,
 } from '@libs/base/decorators'
 import { BaseDto, PageDto, UserIdDto } from '@libs/base/dto'
-import { IntersectionType, PartialType, PickType } from '@nestjs/swagger'
+import {
+  IntersectionType,
+  OmitType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger'
 
 /**
  * 交互目标 DTO - 包含目标类型和目标ID
@@ -211,7 +220,30 @@ export class QueryMyCommentPageDto extends IntersectionType(
 export class UpdateCommentAuditDto extends IntersectionType(
   CommentIdDto,
   CommentAuditDto,
-) {}
+) {
+  @NumberProperty({
+    description: '审核人ID',
+    example: 1,
+    required: true,
+    validation: false,
+  })
+  operatorId!: number
+
+  @EnumProperty({
+    description: '审核人角色',
+    enum: AuditRoleEnum,
+    example: AuditRoleEnum.ADMIN,
+    required: true,
+    default: AuditRoleEnum.ADMIN,
+    validation: false,
+  })
+  auditRole!: AuditRoleEnum
+}
+
+export class UpdateCommentAuditBodyDto extends OmitType(UpdateCommentAuditDto, [
+  'operatorId',
+  'auditRole',
+]) {}
 
 /**
  * 更新评论隐藏状态 DTO

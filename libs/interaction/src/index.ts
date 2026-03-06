@@ -1,6 +1,5 @@
 export * from './action-event.emitter'
 // 评论模块
-export * from './comment/comment-count.service'
 export * from './comment/comment-interaction.service'
 export * from './comment/comment-permission.service'
 export * from './comment/comment.module'

@@ -62,85 +62,121 @@ export class CommentPermissionService extends BaseService {
     targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-      case InteractionTargetTypeEnum.NOVEL: {
-        const work = await this.prisma.work.findUnique({
-          where: { id: targetId },
-          select: {
-            type: true,
-            canComment: true,
-            deletedAt: true,
-          },
-        })
+    const validators: Record<
+      InteractionTargetTypeEnum,
+      (id: number) => Promise<void>
+    > = {
+      [InteractionTargetTypeEnum.COMIC]: async (id) => this.validateWork(id, 1),
+      [InteractionTargetTypeEnum.NOVEL]: async (id) => this.validateWork(id, 2),
+      [InteractionTargetTypeEnum.COMIC_CHAPTER]: async (id) =>
+        this.validateChapter(id, 1),
+      [InteractionTargetTypeEnum.NOVEL_CHAPTER]: async (id) =>
+        this.validateChapter(id, 2),
+      [InteractionTargetTypeEnum.FORUM_TOPIC]: async (id) =>
+        this.validateForumTopic(id),
+    }
 
-        if (!work || work.deletedAt !== null) {
-          throw new BadRequestException('目标不存在')
-        }
+    const validator = validators[targetType]
+    if (!validator) {
+      throw new BadRequestException('不支持的目标类型')
+    }
 
-        // 校验作品类型与传入的 targetType 是否匹配
-        // COMIC 对应 type=1，NOVEL 对应 type=2
-        const expectedType = targetType === InteractionTargetTypeEnum.COMIC ? 1 : 2
-        if (work.type !== expectedType) {
-          throw new BadRequestException('目标类型不匹配')
-        }
+    await validator(targetId)
+  }
 
-        if (!work.canComment) {
-          throw new BadRequestException('该目标不允许评论')
-        }
-        return
-      }
+  /**
+   * 校验作品是否允许评论
+   * @param workId - 作品ID
+   * @param expectedType - 期望的作品类型（1=漫画，2=小说）
+   * @throws BadRequestException 作品不存在、类型不匹配或不允许评论时抛出
+   */
+  private async validateWork(
+    workId: number,
+    expectedType: number,
+  ): Promise<void> {
+    const work = await this.prisma.work.findUnique({
+      where: { id: workId },
+      select: { type: true, canComment: true, deletedAt: true },
+    })
 
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER: {
-        const chapter = await this.prisma.workChapter.findUnique({
-          where: { id: targetId },
-          select: {
-            workType: true,
-            canComment: true,
-            deletedAt: true,
-          },
-        })
+    this.ensureExists(work, '作品不存在')
+    this.ensureTypeMatch(work!.type, expectedType, '作品类型不匹配')
 
-        if (!chapter || chapter.deletedAt !== null) {
-          throw new BadRequestException('目标不存在')
-        }
+    if (!work!.canComment) {
+      throw new BadRequestException('该作品不允许评论')
+    }
+  }
 
-        // 校验章节的作品类型与传入的 targetType 是否匹配
-        // COMIC_CHAPTER 对应 workType=1，NOVEL_CHAPTER 对应 workType=2
-        const expectedWorkType =
-          targetType === InteractionTargetTypeEnum.COMIC_CHAPTER ? 1 : 2
-        if (chapter.workType !== expectedWorkType) {
-          throw new BadRequestException('目标类型不匹配')
-        }
+  /**
+   * 校验章节是否允许评论
+   * @param chapterId - 章节ID
+   * @param expectedWorkType - 期望的作品类型（1=漫画，2=小说）
+   * @throws BadRequestException 章节不存在、类型不匹配或不允许评论时抛出
+   */
+  private async validateChapter(
+    chapterId: number,
+    expectedWorkType: number,
+  ): Promise<void> {
+    const chapter = await this.prisma.workChapter.findUnique({
+      where: { id: chapterId },
+      select: { workType: true, canComment: true, deletedAt: true },
+    })
 
-        if (!chapter.canComment) {
-          throw new BadRequestException('该目标不允许评论')
-        }
-        return
-      }
+    this.ensureExists(chapter, '章节不存在')
+    this.ensureTypeMatch(chapter!.workType, expectedWorkType, '章节类型不匹配')
 
-      case InteractionTargetTypeEnum.FORUM_TOPIC: {
-        const topic = await this.prisma.forumTopic.findUnique({
-          where: { id: targetId },
-          select: {
-            isLocked: true,
-            deletedAt: true,
-          },
-        })
+    if (!chapter!.canComment) {
+      throw new BadRequestException('章节不允许评论')
+    }
+  }
 
-        if (!topic || topic.deletedAt !== null) {
-          throw new BadRequestException('目标不存在')
-        }
+  /**
+   * 校验论坛主题是否允许评论
+   * @param topicId - 主题ID
+   * @throws BadRequestException 主题不存在或已被锁定时抛出
+   */
+  private async validateForumTopic(topicId: number): Promise<void> {
+    const topic = await this.prisma.forumTopic.findUnique({
+      where: { id: topicId },
+      select: { isLocked: true, deletedAt: true },
+    })
 
-        if (topic.isLocked) {
-          throw new BadRequestException('该主题已被锁定，无法评论')
-        }
-        return
-      }
+    this.ensureExists(topic, '帖子不存在')
 
-      default:
-        throw new BadRequestException('不支持的目标类型')
+    if (topic!.isLocked) {
+      throw new BadRequestException('帖子已被锁定，无法评论')
+    }
+  }
+
+  /**
+   * 确保目标存在（未删除）
+   * @param target - 目标对象
+   * @param message - 不存在时的错误消息
+   * @throws BadRequestException 目标不存在时抛出
+   */
+  private ensureExists<T extends { deletedAt: Date | null }>(
+    target: T | null,
+    message: string,
+  ): void {
+    if (!target || target.deletedAt !== null) {
+      throw new BadRequestException(message)
+    }
+  }
+
+  /**
+   * 确保类型匹配
+   * @param actualType - 实际类型
+   * @param expectedType - 期望类型
+   * @param message - 不匹配时的错误消息
+   * @throws BadRequestException 类型不匹配时抛出
+   */
+  private ensureTypeMatch(
+    actualType: number,
+    expectedType: number,
+    message: string,
+  ): void {
+    if (actualType !== expectedType) {
+      throw new BadRequestException(message)
     }
   }
 }

@@ -5,118 +5,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { CounterService } from '../counter/counter.service'
 
 @Injectable()
 export class LikeService extends BaseService {
-  private getTargetCountModel(tx: any, targetType: InteractionTargetTypeEnum) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-      case InteractionTargetTypeEnum.NOVEL:
-        return tx.work
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return tx.workChapter
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-        return tx.forumTopic
-      default:
-        throw new BadRequestException('Unsupported target type')
-    }
-  }
-
-  private getTargetCountWhere(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-        return { id: targetId, type: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL:
-        return { id: targetId, type: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-        return { id: targetId, workType: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return { id: targetId, workType: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-        return { id: targetId, deletedAt: null }
-      default:
-        throw new BadRequestException('Unsupported target type')
-    }
-  }
-
-  /**
-   * Keep validation explicit so "target not found" is returned before
-   * duplicate-like checks, matching the previous user-facing behavior.
-   */
-  private async ensureTargetExists(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    const where = this.getTargetCountWhere(targetType, targetId)
-    const model = this.getTargetCountModel(this.prisma, targetType)
-    const target = await model.findFirst({
-      where,
-      select: { id: true },
-    })
-
-    if (!target) {
-      throw new NotFoundException('Target not found')
-    }
-  }
-
-  private isDuplicateLikeError(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: string }).code === 'P2002'
-    )
-  }
-
-  /**
-   * Centralize count mutation with a single UPDATE statement and shared guards.
-   */
-  private async applyLikeCountDelta(
-    tx: any,
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-    delta: number,
-  ) {
-    if (delta === 0) {
-      return
-    }
-
-    const model = this.getTargetCountModel(tx, targetType)
-    const where = this.getTargetCountWhere(targetType, targetId)
-
-    if (delta > 0) {
-      const updated = await model.updateMany({
-        where,
-        data: {
-          likeCount: {
-            increment: delta,
-          },
-        },
-      })
-
-      // If the target disappeared between validation and write, rollback.
-      if (updated.count === 0) {
-        throw new NotFoundException('Target not found')
-      }
-      return
-    }
-
-    const amount = Math.abs(delta)
-    await model.updateMany({
-      where: {
-        ...where,
-        likeCount: { gte: amount },
-      },
-      data: {
-        likeCount: {
-          decrement: amount,
-        },
-      },
-    })
+  constructor(private readonly counterService: CounterService) {
+    super()
   }
 
   async checkStatusBatch(
@@ -174,39 +68,14 @@ export class LikeService extends BaseService {
     targetType: InteractionTargetTypeEnum,
     targetId: number,
   ): Promise<number> {
-    const model = this.getTargetCountModel(this.prisma, targetType)
-    const target = await model.findUnique({
-      where: { id: targetId },
-      select: { likeCount: true },
-    })
-    return target?.likeCount ?? 0
+    return this.counterService.getCount(targetType, targetId, 'likeCount')
   }
 
   async getLikeCounts(
     targetType: InteractionTargetTypeEnum,
     targetIds: number[],
   ): Promise<Map<number, number>> {
-    if (targetIds.length === 0) {
-      return new Map()
-    }
-
-    const model = this.getTargetCountModel(this.prisma, targetType)
-    const targets = await model.findMany({
-      where: {
-        id: { in: targetIds },
-      },
-      select: {
-        id: true,
-        likeCount: true,
-      },
-    })
-
-    const countMap = new Map<number, number>()
-    for (const target of targets) {
-      countMap.set(target.id, target.likeCount ?? 0)
-    }
-
-    return countMap
+    return this.counterService.getCounts(targetType, targetIds, 'likeCount')
   }
 
   async like(
@@ -214,7 +83,7 @@ export class LikeService extends BaseService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    await this.ensureTargetExists(targetType, targetId)
+    await this.counterService.ensureTargetExists(targetType, targetId)
 
     await this.prisma.$transaction(async (tx) => {
       try {
@@ -226,13 +95,19 @@ export class LikeService extends BaseService {
           },
         })
       } catch (error) {
-        if (this.isDuplicateLikeError(error)) {
+        if (this.counterService.isDuplicateError(error)) {
           throw new BadRequestException('Already liked')
         }
         throw error
       }
 
-      await this.applyLikeCountDelta(tx, targetType, targetId, 1)
+      await this.counterService.applyCountDelta(
+        tx,
+        targetType,
+        targetId,
+        'likeCount',
+        1,
+      )
     })
   }
 
@@ -241,7 +116,7 @@ export class LikeService extends BaseService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    await this.ensureTargetExists(targetType, targetId)
+    await this.counterService.ensureTargetExists(targetType, targetId)
 
     await this.prisma.$transaction(async (tx) => {
       try {
@@ -261,7 +136,13 @@ export class LikeService extends BaseService {
         throw error
       }
 
-      await this.applyLikeCountDelta(tx, targetType, targetId, -1)
+      await this.counterService.applyCountDelta(
+        tx,
+        targetType,
+        targetId,
+        'likeCount',
+        -1,
+      )
     })
   }
 

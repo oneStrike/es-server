@@ -1,57 +1,28 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { CounterService } from '../counter/counter.service'
 
 @Injectable()
 export class ViewService extends BaseService {
-  private getTargetWhere(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-        return { id: targetId, type: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL:
-        return { id: targetId, type: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-        return { id: targetId, workType: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return { id: targetId, workType: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-        return { id: targetId, deletedAt: null }
-      default:
-        throw new BadRequestException('Unsupported target type')
-    }
-  }
-
-  private getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-      case InteractionTargetTypeEnum.NOVEL:
-        return client.work
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return client.workChapter
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-        return client.forumTopic
-      default:
-        throw new BadRequestException('Unsupported target type')
-    }
+  constructor(private readonly counterService: CounterService) {
+    super()
   }
 
   /**
-   * 判断目标是否有效�?   * 维持原行为：无效目标直接返回，不抛出异常�?
+   * 判断目标是否有效
+   * 维持原行为：无效目标直接返回，不抛出异常
    */
   private async isTargetValid(
     targetType: InteractionTargetTypeEnum,
     targetId: number,
   ): Promise<boolean> {
-    const model = this.getTargetModel(this.prisma, targetType)
-    const target = await model.findFirst({
-      where: this.getTargetWhere(targetType, targetId),
-      select: { id: true },
-    })
-    return !!target
+    try {
+      await this.counterService.ensureTargetExists(targetType, targetId)
+      return true
+    } catch {
+      return false
+    }
   }
 
   async recordView(

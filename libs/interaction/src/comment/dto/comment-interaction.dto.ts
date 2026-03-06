@@ -142,9 +142,26 @@ export class ReportIdDto {
 }
 
 /**
- * 举报评论 DTO - 用户提交举报
+ * 举报评论 DTO - 用户提交举报（内部服务使用，包含 reporterId）
  */
 export class ReportCommentDto extends IntersectionType(
+  CommentIdDto,
+  BaseReportInfoDto,
+) {
+  @NumberProperty({
+    description: '举报用户ID',
+    example: 1,
+    required: true,
+    min: 1,
+    validation: false,
+  })
+  reporterId!: number
+}
+
+/**
+ * 举报评论请求体 DTO - API接口使用（不含 reporterId）
+ */
+export class ReportCommentBodyDto extends IntersectionType(
   CommentIdDto,
   BaseReportInfoDto,
 ) {}

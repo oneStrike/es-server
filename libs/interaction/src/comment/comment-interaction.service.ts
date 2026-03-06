@@ -1,134 +1,104 @@
 import { BaseService } from '@libs/base/database'
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import { ReportStatusEnum } from '../common.constant'
+import { ReportCommentDto } from './dto/comment-interaction.dto'
 
+/**
+ * 评论交互服务
+ * 处理评论的点赞、取消点赞、举报等交互操作
+ */
 @Injectable()
 export class CommentInteractionService extends BaseService {
-  private isDuplicateError(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: string }).code === 'P2002'
-    )
-  }
-
-  private isForeignKeyError(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: string }).code === 'P2003'
-    )
-  }
-
-  async likeComment(commentId: number, userId: number): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      try {
-        await tx.userCommentLike.create({
-          data: { commentId, userId },
-        })
-      } catch (error) {
-        if (this.isDuplicateError(error)) {
-          throw new BadRequestException('已经点赞过该评论')
-        }
-        if (this.isForeignKeyError(error)) {
-          throw new NotFoundException('评论不存在')
-        }
-        throw error
-      }
-
-      await tx.userComment.update({
-        where: { id: commentId },
-        data: {
-          likeCount: {
-            increment: 1,
-          },
-        },
-      })
-    })
-  }
-
-  async unlikeComment(commentId: number, userId: number): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      try {
-        await tx.userCommentLike.delete({
-          where: {
-            commentId_userId: {
-              commentId,
-              userId,
+  /**
+   * 点赞评论
+   * @param commentId - 评论ID
+   * @param userId - 用户ID
+   * @throws BadRequestException 已点赞过该评论时抛出
+   * @throws NotFoundException 评论不存在时抛出
+   */
+  async likeComment(commentId: number, userId: number) {
+    return this.prisma.$transaction(async (tx) => {
+      const comment = await tx.userComment.findUnique({
+        where: { id: commentId, deletedAt: null },
+        select: {
+          id: true,
+          likes: {
+            select: {
+              id: true,
             },
           },
-        })
-      } catch (error) {
-        if (this.isRecordNotFound(error)) {
-          throw new BadRequestException('尚未点赞该评论')
-        }
-        throw error
+        },
+      })
+
+      if (!comment) {
+        throw new NotFoundException('评论不存在')
+      }
+      if (comment.likes.length) {
+        throw new BadRequestException('已点赞过该评论')
       }
 
-      await tx.userComment.updateMany({
-        where: {
-          id: commentId,
-          likeCount: { gte: 1 },
-        },
-        data: {
-          likeCount: {
-            decrement: 1,
+      await tx.userCommentLike.create({
+        data: { commentId, userId },
+      })
+
+      await tx.userComment.applyCountDelta({ id: commentId }, 'likeCount', 1)
+      return { id: commentId }
+    })
+  }
+
+  /**
+   * 取消点赞评论
+   * @param commentId - 评论ID
+   * @param userId - 用户ID
+   * @throws BadRequestException 尚未点赞该评论时抛出
+   */
+  async unlikeComment(commentId: number, userId: number) {
+    return this.prisma.$transaction(async (tx) => {
+      const comment = await tx.userComment.findUnique({
+        where: { id: commentId, deletedAt: null },
+        select: {
+          id: true,
+          likes: {
+            select: {
+              id: true,
+            },
           },
         },
       })
-    })
-  }
 
-  async checkLikeStatus(commentId: number, userId: number): Promise<boolean> {
-    const like = await this.prisma.userCommentLike.findUnique({
-      where: {
-        commentId_userId: {
-          commentId,
-          userId,
+      if (!comment) {
+        throw new NotFoundException('评论不存在')
+      }
+
+      if (!comment.likes.length) {
+        throw new BadRequestException('尚未点赞该评论')
+      }
+      await tx.userCommentLike.delete({
+        where: {
+          commentId_userId: {
+            commentId,
+            userId,
+          },
         },
-      },
-      select: { id: true },
+      })
+
+      await tx.userComment.applyCountDelta({ id: commentId }, 'likeCount', -1)
+      return { id: commentId }
     })
-    return !!like
   }
 
-  async checkLikeStatusBatch(
-    commentIds: number[],
-    userId: number,
-  ): Promise<Map<number, boolean>> {
-    if (commentIds.length === 0) {
-      return new Map()
-    }
-
-    const likes = await this.prisma.userCommentLike.findMany({
-      where: {
-        commentId: { in: commentIds },
-        userId,
-      },
-      select: {
-        commentId: true,
-      },
-    })
-
-    const likedSet = new Set(likes.map((l) => l.commentId))
-    const statusMap = new Map<number, boolean>()
-
-    for (const commentId of commentIds) {
-      statusMap.set(commentId, likedSet.has(commentId))
-    }
-
-    return statusMap
-  }
-
-  async reportComment(
-    commentId: number,
-    reporterId: number,
-    reason: string,
-    description?: string,
-    evidenceUrl?: string,
-  ): Promise<void> {
+  /**
+   * 举报评论
+   * @param dto - 举报信息DTO
+   * @throws NotFoundException 评论不存在时抛出
+   * @throws BadRequestException 已举报过该评论时抛出
+   */
+  async reportComment(dto: ReportCommentDto) {
+    const { commentId, reporterId, reason, description, evidenceUrl } = dto
     const [comment, existing] = await Promise.all([
       this.prisma.userComment.findUnique({
         where: { id: commentId, deletedAt: null },
@@ -138,7 +108,6 @@ export class CommentInteractionService extends BaseService {
         where: {
           commentId,
           reporterId,
-          status: ReportStatusEnum.PENDING,
         },
         select: { id: true },
       }),
@@ -160,66 +129,6 @@ export class CommentInteractionService extends BaseService {
         description,
         evidenceUrl,
         status: ReportStatusEnum.PENDING,
-      },
-    })
-  }
-
-  async getReports(
-    status?: ReportStatusEnum,
-    pageIndex: number = 1,
-    pageSize: number = 20,
-  ) {
-    return this.prisma.userCommentReport.findPagination({
-      where: {
-        ...(status !== undefined && { status }),
-        pageIndex,
-        pageSize,
-      } as any,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        comment: {
-          select: {
-            id: true,
-            content: true,
-            userId: true,
-          },
-        },
-        reporter: {
-          select: {
-            id: true,
-            nickname: true,
-          },
-        },
-      },
-    })
-  }
-
-  async handleReport(
-    reportId: number,
-    handlerId: number,
-    status: ReportStatusEnum.RESOLVED | ReportStatusEnum.REJECTED,
-    handlingNote?: string,
-  ): Promise<void> {
-    const report = await this.prisma.userCommentReport.findUnique({
-      where: { id: reportId },
-      select: { id: true, status: true },
-    })
-    if (!report) {
-      throw new NotFoundException('举报记录不存在')
-    }
-    if (
-      report.status !== ReportStatusEnum.PENDING &&
-      report.status !== ReportStatusEnum.PROCESSING
-    ) {
-      throw new BadRequestException('举报已处理，请勿重复处理')
-    }
-    await this.prisma.userCommentReport.update({
-      where: { id: reportId },
-      data: {
-        handlerId,
-        status,
-        handlingNote,
-        handledAt: new Date(),
       },
     })
   }
