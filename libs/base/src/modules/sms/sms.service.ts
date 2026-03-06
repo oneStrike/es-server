@@ -3,14 +3,10 @@ import Credential, { Config } from '@alicloud/credentials'
 import Dypnsapi20170525, * as $Dypnsapi20170525 from '@alicloud/dypnsapi20170525'
 import * as $OpenApi from '@alicloud/openapi-client'
 import * as $Util from '@alicloud/tea-util'
-import { AliyunConfigDto, SystemConfigService } from '@libs/system-config'
+import { ConfigReader } from '@libs/system-config'
 import { Injectable, Logger } from '@nestjs/common'
 import { CheckVerifyCodeDto, SendVerifyCodeDto } from './dto/sms.dto'
-import {
-  defaultConfig as SmsDefaultConfig,
-  SmsErrorMap,
-  SmsErrorMessages,
-} from './sms.constant'
+import { SmsErrorMap, SmsErrorMessages } from './sms.constant'
 
 /**
  * 阿里云短信验证码服务
@@ -20,8 +16,8 @@ import {
  * - 校验短信验证码（使用阿里云接口校验）
  *
  * 配置来源:
- * - 配置从 SystemConfigService 读取，该服务内置缓存机制
- * - 配置更新后自动刷新缓存
+ * - 配置从 ConfigReader 同步读取（启动时已缓存到内存）
+ * - 配置更新后由 SystemConfigService 自动刷新缓存
  *
  * 客户端管理:
  * - 阿里云客户端单例，配置变更时自动重建
@@ -34,65 +30,55 @@ export class SmsService {
   /** 缓存的 AccessKeyId，用于检测配置变更 */
   private cachedAccessKeyId?: string
 
-  constructor(private readonly systemConfigService: SystemConfigService) {}
+  constructor(private readonly configReader: ConfigReader) {}
 
   /**
-   * 获取阿里云配置
+   * 获取阿里云客户端实例（单例模式）
    *
-   * 配置从 SystemConfigService 读取，该服务内置缓存（TTL 2小时）
-   * 当 AccessKeyId 变化时，会重置客户端实例
+   * 配置从 ConfigReader 同步读取，当 AccessKeyId 变化时重建客户端
    *
-   * @returns 阿里云配置对象
-   * @throws 配置不存在或配置不完整时抛出异常
+   * @returns Dypnsapi20170525 客户端实例
    */
-  private async getAliyunConfig(): Promise<AliyunConfigDto> {
-    const dbConfig = (await this.systemConfigService.findActiveConfig()) as any
-    if (!dbConfig?.aliyunConfig) {
-      throw new Error(SmsErrorMessages.CONFIG_NOT_FOUND)
-    }
+  private getClient(): Dypnsapi20170525 {
+    const aliyunConfig = this.configReader.getAliyunConfig()
 
-    const aliyunConfig = dbConfig.aliyunConfig as AliyunConfigDto
+    // 校验必要配置
     if (!aliyunConfig.accessKeyId || !aliyunConfig.accessKeySecret) {
       throw new Error(SmsErrorMessages.CONFIG_NOT_FOUND)
     }
+    if (!aliyunConfig.sms?.signName) {
+      throw new Error('阿里云短信签名未配置')
+    }
 
-    // 配置变更时重置 client
+    // 配置变更时重置客户端
     if (this.cachedAccessKeyId !== aliyunConfig.accessKeyId) {
       this.client = undefined
       this.cachedAccessKeyId = aliyunConfig.accessKeyId
     }
 
-    return aliyunConfig
-  }
-
-  /**
-   * 获取阿里云客户端实例（单例模式）
-   *
-   * @returns Dypnsapi20170525 客户端实例
-   */
-  private async getClient(): Promise<Dypnsapi20170525> {
-    if (this.client) {
-      return this.client
+    // 单例创建客户端
+    if (!this.client) {
+      this.client = this.createClient(aliyunConfig)
     }
 
-    const config = await this.getAliyunConfig()
-
-    if (!config.accessKeyId || !config.accessKeySecret) {
-      throw new Error('阿里云短信 AccessKey 未配置')
-    }
-    if (!config.sms?.signName) {
-      throw new Error('阿里云短信配置不完整')
-    }
-
-    this.client = this.createClient(config)
     return this.client
   }
 
   /**
    * 创建阿里云短信客户端
-   * @returns Dypnsapi20170525客户端实例
+   *
+   * @param config 阿里云配置
+   * @param config.accessKeyId 阿里云 AccessKeyId
+   * @param config.accessKeySecret 阿里云 AccessKeySecret
+   * @param config.sms 短信配置
+   * @param config.sms.endpoint 短信服务端点（可选）
+   * @returns Dypnsapi20170525 客户端实例
    */
-  private createClient(config: AliyunConfigDto): Dypnsapi20170525 {
+  private createClient(config: {
+    accessKeyId: string
+    accessKeySecret: string
+    sms: { endpoint?: string }
+  }): Dypnsapi20170525 {
     const credential = new Credential(
       new Config({
         type: 'access_key',
@@ -103,7 +89,8 @@ export class SmsService {
     const openApiConfig = new $OpenApi.Config({
       credential,
     })
-    openApiConfig.endpoint = SmsDefaultConfig.endpoint
+    // 使用配置中的端点，或默认端点
+    openApiConfig.endpoint = config.sms.endpoint || 'dypnsapi.aliyuncs.com'
     return new Dypnsapi20170525(openApiConfig)
   }
 
@@ -113,15 +100,12 @@ export class SmsService {
    * 使用阿里云短信服务接口进行验证码校验，验证码由阿里云生成和管理。
    *
    * @param dto 校验请求参数
-   * @param dto.phone 手机号
-   * @param dto.code 验证码
    * @returns 校验是否通过
    */
   async checkVerifyCode(dto: CheckVerifyCodeDto): Promise<boolean> {
     const { phone, code } = dto
 
-    await this.getAliyunConfig()
-    const client = await this.getClient()
+    const client = this.getClient()
     const runtime = new $Util.RuntimeOptions({})
     const checkSmsVerifyCodeRequest =
       new $Dypnsapi20170525.CheckSmsVerifyCodeRequest({
@@ -152,30 +136,31 @@ export class SmsService {
    * 验证码有效期和长度从系统配置读取。
    *
    * @param dto 发送请求参数
-   * @param dto.phone 手机号
-   * @param dto.templateCode 短信模板编码（可选，默认使用系统配置）
    * @returns 发送是否成功
    */
   async sendVerifyCode(dto: SendVerifyCodeDto): Promise<boolean> {
-    const { phone, templateCode = SmsDefaultConfig.templateCode } = dto
+    const { phone, templateCode } = dto
 
     try {
-      const config = await this.getAliyunConfig()
-      const client = await this.getClient()
+      const { sms: smsConfig } = this.configReader.getAliyunConfig()
+      const client = this.getClient()
 
       const runtime = new $Util.RuntimeOptions({})
+
+      // 使用传入的模板编码，或系统默认模板编码
+      const finalTemplateCode = templateCode || smsConfig.templateCode
 
       const sendSmsVerifyCodeRequest =
         new $Dypnsapi20170525.SendSmsVerifyCodeRequest({
           phoneNumber: phone,
-          signName: config.sms.signName,
-          templateCode,
+          signName: smsConfig.signName,
+          templateCode: finalTemplateCode,
           templateParam: JSON.stringify({
             code: '##code##',
             min: '5',
           }),
-          validTime: config.sms.verifyCodeExpire,
-          codeLength: config.sms.verifyCodeLength,
+          validTime: smsConfig.verifyCodeExpire,
+          codeLength: smsConfig.verifyCodeLength,
         })
       const resp = await client.sendSmsVerifyCodeWithOptions(
         sendSmsVerifyCodeRequest,

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import { UserLevelRuleModule } from '../level-rule/level-rule.module'
-import { UserGrowthEventAntifraudService } from './growth-event.antifraud.service'
 import { UserGrowthEventAuditCronService } from './growth-event.audit-cron.service'
 import { UserGrowthEventAuditService } from './growth-event.audit.service'
 import { LocalUserGrowthEventBus } from './growth-event.bus'
@@ -16,7 +15,6 @@ import { UserGrowthEventService } from './growth-event.service'
     LocalUserGrowthEventBus,
     UserGrowthEventAuditService,
     UserGrowthEventAuditCronService,
-    UserGrowthEventAntifraudService,
     UserGrowthEventConsumer,
     {
       provide: USER_GROWTH_EVENT_BUS,

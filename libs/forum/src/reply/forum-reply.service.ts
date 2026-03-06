@@ -1,7 +1,3 @@
-import type {
-  ForumReplyCreateInput,
-  ForumReplyWhereInput,
-} from '@libs/base/database'
 import { AuditStatusEnum, UserStatusEnum } from '@libs/base/constant'
 
 import { BaseService } from '@libs/base/database'
@@ -38,7 +34,7 @@ export class ForumReplyService extends BaseService {
   }
 
   get forumReply() {
-    return this.prisma.forumReply
+    return (this.prisma as any).userComment
   }
 
   get forumTopic() {
@@ -136,7 +132,7 @@ export class ForumReplyService extends BaseService {
       auditReason = '包含严重敏感词，需要审核'
     }
 
-    const updatePayload: ForumReplyCreateInput = {
+    const updatePayload: any = {
       ...replyData,
       floor: newFloor ?? undefined,
       auditStatus,
@@ -174,7 +170,7 @@ export class ForumReplyService extends BaseService {
 
     // 创建回复与计数更新放在同一事务中，避免计数不一致
     const reply = await this.prisma.$transaction(async (tx) => {
-      const reply = await tx.forumReply.create({
+      const reply = await (tx as any).userComment.create({
         data: updatePayload,
       })
 
@@ -188,7 +184,7 @@ export class ForumReplyService extends BaseService {
 
       // 回复他人时发送通知
       if (replyToId) {
-        const replyTo = await tx.forumReply.findUnique({
+        const replyTo = await (tx as any).userComment.findUnique({
           where: { id: replyToId },
           select: {
             userId: true,
@@ -240,7 +236,7 @@ export class ForumReplyService extends BaseService {
   async getForumReplyPage(queryForumReplyDto: QueryForumReplyDto) {
     const { content, sortBy, sortOrder, ...otherDto } = queryForumReplyDto
 
-    const where: ForumReplyWhereInput = {}
+    const where: any = {}
 
     if (content) {
       where.content = {
@@ -326,7 +322,7 @@ export class ForumReplyService extends BaseService {
 
     // 级联软删除回复并同步计数
     return this.prisma.$transaction(async (tx) => {
-      const childReplies = await tx.forumReply.findMany({
+      const childReplies = await (tx as any).userComment.findMany({
         where: {
           replyToId: id,
           deletedAt: null,
@@ -342,7 +338,7 @@ export class ForumReplyService extends BaseService {
 
       if (childReplyIds.length > 0) {
         // 批量软删除子回复
-        await tx.forumReply.updateMany({
+        await (tx as any).userComment.updateMany({
           where: {
             id: {
               in: childReplyIds,
@@ -508,7 +504,7 @@ export class ForumReplyService extends BaseService {
         })
       }
 
-      const result = await tx.forumReply.deleteMany({
+      const result = await (tx as any).userComment.deleteMany({
         where: { id: { in: ids } },
       })
 

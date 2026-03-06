@@ -64,7 +64,8 @@ export type AppPage = Prisma.AppPageModel
 export type AppUserToken = Prisma.AppUserTokenModel
 /**
  * Model AppUser
- * 应用用户表 - 存储应用用户的核心信息
+ * 应用用户表
+ * 存储应用端用户信息及其关联关系
  */
 export type AppUser = Prisma.AppUserModel
 /**
@@ -100,17 +101,9 @@ export type UserBadge = Prisma.UserBadgeModel
  */
 export type UserCommentLike = Prisma.UserCommentLikeModel
 /**
- * Model UserCommentReport
- * 评论举报记录表
- * 记录用户对违规评论的举报信息
- * 支持举报处理流程和举报统计
- */
-export type UserCommentReport = Prisma.UserCommentReportModel
-/**
  * Model UserComment
  * 用户评论表
- * 统一存储漫画评论、漫画章节评论、小说评论、小说章节评论、论坛回复等所有评论内容
- * 支持楼中楼回复、审核流程、敏感词检测等功能
+ * 统一存储作品评论、章节评论和论坛回复
  */
 export type UserComment = Prisma.UserCommentModel
 /**
@@ -178,6 +171,12 @@ export type UserPointRule = Prisma.UserPointRuleModel
  */
 export type UserPurchaseRecord = Prisma.UserPurchaseRecordModel
 /**
+ * Model UserReport
+ * 用户举报记录表
+ * 统一存储评论举报、论坛主题举报、论坛回复举报、用户举报
+ */
+export type UserReport = Prisma.UserReportModel
+/**
  * Model UserView
  * 用户浏览记录表
  * 记录用户对各类目标（漫画、小说、章节、论坛主题）的浏览行为
@@ -217,7 +216,7 @@ export type ForumModeratorSection = Prisma.ForumModeratorSectionModel
 export type ForumModerator = Prisma.ForumModeratorModel
 /**
  * Model ForumNotification
- * 论坛通知表 - 存储用户通知信息，包括回复、点赞、收藏、系统通知等
+ * 论坛通知表
  */
 export type ForumNotification = Prisma.ForumNotificationModel
 /**
@@ -225,21 +224,6 @@ export type ForumNotification = Prisma.ForumNotificationModel
  * 论坛用户资料表 - 存储用户的论坛信息，包括积分、等级、统计数据、签名等
  */
 export type ForumProfile = Prisma.ForumProfileModel
-/**
- * Model ForumReplyLike
- * 论坛回复点赞表 - 存储用户对论坛回复的点赞记录
- */
-export type ForumReplyLike = Prisma.ForumReplyLikeModel
-/**
- * Model ForumReply
- * 论坛回复表 - 存储论坛主题的回复信息
- */
-export type ForumReply = Prisma.ForumReplyModel
-/**
- * Model ForumReport
- * 论坛举报表 - 记录用户举报内容
- */
-export type ForumReport = Prisma.ForumReportModel
 /**
  * Model ForumSectionGroup
  * 论坛板块分组表 - 管理论坛板块分组信息，用于对板块进行分类组织
@@ -262,7 +246,7 @@ export type ForumTag = Prisma.ForumTagModel
 export type ForumTopicTag = Prisma.ForumTopicTagModel
 /**
  * Model ForumTopic
- * 论坛主题表 - 存储论坛主题信息，包括标题、内容、审核状态、统计数据等
+ * 论坛主题表
  */
 export type ForumTopic = Prisma.ForumTopicModel
 /**
@@ -327,19 +311,10 @@ export type WorkCategoryRelation = Prisma.WorkCategoryRelationModel
 export type WorkCategory = Prisma.WorkCategoryModel
 /**
  * Model WorkChapter
- * 通用章节模型
+ * 作品章节表
+ * 存储漫画/小说章节信息与统计数据
  */
 export type WorkChapter = Prisma.WorkChapterModel
-/**
- * Model WorkCommentReport
- * 作品评论举报表 - 存储用户对评论的举报记录
- */
-export type WorkCommentReport = Prisma.WorkCommentReportModel
-/**
- * Model WorkComment
- * 作品评论表 - 存储用户对作品的评论信息
- */
-export type WorkComment = Prisma.WorkCommentModel
 /**
  * Model WorkTagRelation
  * 作品标签关联表
@@ -352,6 +327,7 @@ export type WorkTagRelation = Prisma.WorkTagRelationModel
 export type WorkTag = Prisma.WorkTagModel
 /**
  * Model Work
- * 作品基表模型
+ * 作品表
+ * 统一存储漫画与小说的基础信息
  */
 export type Work = Prisma.WorkModel

@@ -1,7 +1,7 @@
 import {
   BaseService,
-  ForumReplyWhereInput,
   ForumTopicWhereInput,
+  UserCommentWhereInput,
 } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import {
@@ -31,8 +31,8 @@ export class ForumSearchService extends BaseService {
   /**
    * 获取回复模型
    */
-  get forumReply() {
-    return this.prisma.forumReply
+  get userComment() {
+    return this.prisma.userComment
   }
 
   /**
@@ -121,12 +121,6 @@ export class ForumSearchService extends BaseService {
             nickname: true,
           },
         },
-        _count: {
-          select: {
-            replies: true,
-            likes: true,
-          },
-        },
       },
       orderBy,
     })
@@ -139,32 +133,16 @@ export class ForumSearchService extends BaseService {
    * @returns 回复搜索结果
    */
   private async searchReplies(dto: ForumSearchReplyDto) {
-    const where: ForumReplyWhereInput = {
+    const where: UserCommentWhereInput = {
       deletedAt: null,
       content: {
         contains: dto.keyword,
       },
     }
 
-    if (dto.sectionId) {
-      where.topic = {
-        sectionId: dto.sectionId,
-      }
-    }
-
-    if (dto.tagId) {
-      where.topic = {
-        topicTags: {
-          some: {
-            tagId: dto.tagId,
-          },
-        },
-      }
-    }
-
     const orderBy = this.getOrderBy(dto.sort)
 
-    return this.forumReply.findPagination({
+    return this.userComment.findPagination({
       where,
       include: {
         topic: {

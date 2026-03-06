@@ -382,7 +382,7 @@ export class ForumTopicService extends BaseService {
 
     // 主题与回复软删除保持一致
     await this.prisma.$transaction(async (tx) => {
-      await tx.forumReply.softDeleteMany({ topicId: id })
+      await tx.userComment.softDeleteMany({ targetId: id })
       await tx.forumTopic.softDelete({ id })
 
       await this.forumCounterService.updateTopicRelatedCounts(

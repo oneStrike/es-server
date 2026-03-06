@@ -5,7 +5,6 @@ import { Injectable } from '@nestjs/common'
 import { OnEvent } from '@nestjs/event-emitter'
 import { UserLevelRuleService } from '../level-rule/level-rule.service'
 import { UserGrowthEventDto } from './dto/growth-event.dto'
-import { UserGrowthEventAntifraudService } from './growth-event.antifraud.service'
 import { UserGrowthEventAuditService } from './growth-event.audit.service'
 import { UserGrowthEventStatus } from './growth-event.constant'
 import {
@@ -26,7 +25,6 @@ type GrowthRuleUsageClient = Pick<
 export class UserGrowthEventConsumer extends BaseService {
   constructor(
     private readonly auditService: UserGrowthEventAuditService,
-    private readonly antifraudService: UserGrowthEventAntifraudService,
     private readonly levelRuleService: UserLevelRuleService,
   ) {
     super()
@@ -105,27 +103,6 @@ export class UserGrowthEventConsumer extends BaseService {
         return
       }
 
-      // 防刷：基于规则的最大值与冷却时间做风控判断
-      const cooldownSeconds = this.getCooldownSeconds(
-        pointRules,
-        experienceRules,
-      )
-      const pointsValue = this.getMaxDelta(pointRules, 'points')
-      const experienceValue = this.getMaxDelta(experienceRules, 'experience')
-      const antifraudDecision = await this.antifraudService.check(event, {
-        cooldownSeconds,
-        points: pointsValue,
-        experience: experienceValue,
-      })
-      if (!antifraudDecision.allow) {
-        // 命中防刷时记录审计但不发放奖励
-        await this.auditService.updateStatus(
-          audit.id,
-          UserGrowthEventStatus.REJECTED_ANTIFRAUD,
-        )
-        return
-      }
-
       // 发放规则：在事务内写入积分/经验/徽章记录并更新用户状态
       const result = await this.applyRules(
         event,
@@ -155,35 +132,6 @@ export class UserGrowthEventConsumer extends BaseService {
         UserGrowthEventStatus.FAILED,
       )
     }
-  }
-
-  /**
-   * 计算规则冷却秒数（取积分与经验规则的最大冷却）
-   */
-  private getCooldownSeconds(
-    pointRules: { cooldownSeconds: number }[],
-    experienceRules: { cooldownSeconds: number }[],
-  ) {
-    const pointCooldown = Math.max(
-      0,
-      ...pointRules.map((rule) => rule.cooldownSeconds || 0),
-    )
-    const experienceCooldown = Math.max(
-      0,
-      ...experienceRules.map((rule) => rule.cooldownSeconds || 0),
-    )
-    return Math.max(pointCooldown, experienceCooldown)
-  }
-
-  /**
-   * 获取规则的最大增量值
-   * 用于防刷判断的价值评估
-   */
-  private getMaxDelta<T extends { points?: number, experience?: number }>(
-    rules: T[],
-    key: 'points' | 'experience',
-  ) {
-    return Math.max(0, ...rules.map((rule) => rule[key] ?? 0))
   }
 
   private async getRuleUsageStats(

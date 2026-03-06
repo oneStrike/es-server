@@ -1,4 +1,4 @@
-import { ReportReasonEnum, ReportStatusEnum } from '@libs/base/constant'
+import { ReportReasonEnum, ReportStatusEnum, ReportTargetTypeEnum } from '@libs/base/constant'
 import {
   EnumProperty,
   NumberProperty,
@@ -25,8 +25,16 @@ export class BaseForumReportDto extends BaseDto {
   })
   type!: ForumReportTypeEnum
 
+  @EnumProperty({
+    description: '统一举报目标类型',
+    example: ReportTargetTypeEnum.FORUM_TOPIC,
+    required: false,
+    enum: ReportTargetTypeEnum,
+  })
+  targetType?: ReportTargetTypeEnum
+
   @NumberProperty({
-    description: '被举报对象ID（主题ID/回复ID/用户ID）',
+    description: '举报目标ID（主题ID/回复ID/用户ID）',
     example: 1,
     required: true,
     min: 1,
@@ -81,6 +89,7 @@ export class BaseForumReportDto extends BaseDto {
 export class CreateForumReportDto extends PickType(BaseForumReportDto, [
   'reporterId',
   'type',
+  'targetType',
   'targetId',
   'reason',
   'description',
@@ -90,7 +99,7 @@ export class CreateForumReportDto extends PickType(BaseForumReportDto, [
 export class QueryForumReportDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseForumReportDto, ['type', 'reason', 'status', 'reporterId']),
+    PickType(BaseForumReportDto, ['type', 'targetType', 'reason', 'status', 'reporterId']),
   ),
 ) {}
 

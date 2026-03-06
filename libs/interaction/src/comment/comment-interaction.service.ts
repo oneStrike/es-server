@@ -1,3 +1,6 @@
+import {
+  ReportTargetTypeEnum,
+} from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
   BadRequestException,
@@ -104,9 +107,9 @@ export class CommentInteractionService extends BaseService {
         where: { id: commentId, deletedAt: null },
         select: { id: true },
       }),
-      this.prisma.userCommentReport.findFirst({
+      this.prisma.userReport.findFirst({
         where: {
-          commentId,
+          targetId: commentId,
           reporterId,
         },
         select: { id: true },
@@ -121,9 +124,10 @@ export class CommentInteractionService extends BaseService {
       throw new BadRequestException('已经举报过该评论，请等待处理')
     }
 
-    await this.prisma.userCommentReport.create({
+    await this.prisma.userReport.create({
       data: {
-        commentId,
+        targetId: commentId,
+        targetType: ReportTargetTypeEnum.COMMENT,
         reporterId,
         reason,
         description,

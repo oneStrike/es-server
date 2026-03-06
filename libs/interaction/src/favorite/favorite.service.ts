@@ -3,7 +3,6 @@ import { BaseService } from '@libs/base/database'
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common'
 import { CounterService } from '../counter/counter.service'
 

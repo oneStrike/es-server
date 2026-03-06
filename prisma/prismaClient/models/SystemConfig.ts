@@ -54,13 +54,9 @@ export type SystemConfigCountAggregateOutputType = {
   id: number
   updatedById: number
   aliyunConfig: number
-  growthAntifraudConfig: number
-  contentReviewPolicy: number
-  commentRateLimitConfig: number
   siteConfig: number
   maintenanceConfig: number
-  registerConfig: number
-  notifyConfig: number
+  contentReviewPolicy: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -95,13 +91,9 @@ export type SystemConfigCountAggregateInputType = {
   id?: true
   updatedById?: true
   aliyunConfig?: true
-  growthAntifraudConfig?: true
-  contentReviewPolicy?: true
-  commentRateLimitConfig?: true
   siteConfig?: true
   maintenanceConfig?: true
-  registerConfig?: true
-  notifyConfig?: true
+  contentReviewPolicy?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -197,13 +189,9 @@ export type SystemConfigGroupByOutputType = {
   id: number
   updatedById: number | null
   aliyunConfig: runtime.JsonValue | null
-  growthAntifraudConfig: runtime.JsonValue | null
-  contentReviewPolicy: runtime.JsonValue | null
-  commentRateLimitConfig: runtime.JsonValue | null
   siteConfig: runtime.JsonValue | null
   maintenanceConfig: runtime.JsonValue | null
-  registerConfig: runtime.JsonValue | null
-  notifyConfig: runtime.JsonValue | null
+  contentReviewPolicy: runtime.JsonValue | null
   createdAt: Date
   updatedAt: Date
   _count: SystemConfigCountAggregateOutputType | null
@@ -235,13 +223,9 @@ export type SystemConfigWhereInput = {
   id?: Prisma.IntFilter<"SystemConfig"> | number
   updatedById?: Prisma.IntNullableFilter<"SystemConfig"> | number | null
   aliyunConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  growthAntifraudConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
-  commentRateLimitConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   siteConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   maintenanceConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  registerConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  notifyConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
@@ -251,13 +235,9 @@ export type SystemConfigOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   aliyunConfig?: Prisma.SortOrderInput | Prisma.SortOrder
-  growthAntifraudConfig?: Prisma.SortOrderInput | Prisma.SortOrder
-  contentReviewPolicy?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentRateLimitConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   siteConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   maintenanceConfig?: Prisma.SortOrderInput | Prisma.SortOrder
-  registerConfig?: Prisma.SortOrderInput | Prisma.SortOrder
-  notifyConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  contentReviewPolicy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   updatedBy?: Prisma.AppUserOrderByWithRelationInput
@@ -270,13 +250,9 @@ export type SystemConfigWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.SystemConfigWhereInput | Prisma.SystemConfigWhereInput[]
   updatedById?: Prisma.IntNullableFilter<"SystemConfig"> | number | null
   aliyunConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  growthAntifraudConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
-  commentRateLimitConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   siteConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   maintenanceConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  registerConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  notifyConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedBy?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
@@ -286,13 +262,9 @@ export type SystemConfigOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   updatedById?: Prisma.SortOrderInput | Prisma.SortOrder
   aliyunConfig?: Prisma.SortOrderInput | Prisma.SortOrder
-  growthAntifraudConfig?: Prisma.SortOrderInput | Prisma.SortOrder
-  contentReviewPolicy?: Prisma.SortOrderInput | Prisma.SortOrder
-  commentRateLimitConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   siteConfig?: Prisma.SortOrderInput | Prisma.SortOrder
   maintenanceConfig?: Prisma.SortOrderInput | Prisma.SortOrder
-  registerConfig?: Prisma.SortOrderInput | Prisma.SortOrder
-  notifyConfig?: Prisma.SortOrderInput | Prisma.SortOrder
+  contentReviewPolicy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SystemConfigCountOrderByAggregateInput
@@ -309,26 +281,18 @@ export type SystemConfigScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"SystemConfig"> | number
   updatedById?: Prisma.IntNullableWithAggregatesFilter<"SystemConfig"> | number | null
   aliyunConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
-  growthAntifraudConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
-  contentReviewPolicy?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
-  commentRateLimitConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
   siteConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
   maintenanceConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
-  registerConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
-  notifyConfig?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
+  contentReviewPolicy?: Prisma.JsonNullableWithAggregatesFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SystemConfig"> | Date | string
 }
 
 export type SystemConfigCreateInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
   updatedBy?: Prisma.AppUserCreateNestedOneWithoutUpdatedSystemConfigsInput
@@ -338,26 +302,18 @@ export type SystemConfigUncheckedCreateInput = {
   id?: number
   updatedById?: number | null
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type SystemConfigUpdateInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedBy?: Prisma.AppUserUpdateOneWithoutUpdatedSystemConfigsNestedInput
@@ -367,13 +323,9 @@ export type SystemConfigUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -382,26 +334,18 @@ export type SystemConfigCreateManyInput = {
   id?: number
   updatedById?: number | null
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type SystemConfigUpdateManyMutationInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -410,13 +354,9 @@ export type SystemConfigUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   updatedById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -435,13 +375,9 @@ export type SystemConfigCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   updatedById?: Prisma.SortOrder
   aliyunConfig?: Prisma.SortOrder
-  growthAntifraudConfig?: Prisma.SortOrder
-  contentReviewPolicy?: Prisma.SortOrder
-  commentRateLimitConfig?: Prisma.SortOrder
   siteConfig?: Prisma.SortOrder
   maintenanceConfig?: Prisma.SortOrder
-  registerConfig?: Prisma.SortOrder
-  notifyConfig?: Prisma.SortOrder
+  contentReviewPolicy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -514,13 +450,9 @@ export type SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput = {
 
 export type SystemConfigCreateWithoutUpdatedByInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -528,13 +460,9 @@ export type SystemConfigCreateWithoutUpdatedByInput = {
 export type SystemConfigUncheckedCreateWithoutUpdatedByInput = {
   id?: number
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -572,13 +500,9 @@ export type SystemConfigScalarWhereInput = {
   id?: Prisma.IntFilter<"SystemConfig"> | number
   updatedById?: Prisma.IntNullableFilter<"SystemConfig"> | number | null
   aliyunConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  growthAntifraudConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
-  commentRateLimitConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   siteConfig?: Prisma.JsonNullableFilter<"SystemConfig">
   maintenanceConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  registerConfig?: Prisma.JsonNullableFilter<"SystemConfig">
-  notifyConfig?: Prisma.JsonNullableFilter<"SystemConfig">
+  contentReviewPolicy?: Prisma.JsonNullableFilter<"SystemConfig">
   createdAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"SystemConfig"> | Date | string
 }
@@ -586,26 +510,18 @@ export type SystemConfigScalarWhereInput = {
 export type SystemConfigCreateManyUpdatedByInput = {
   id?: number
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
 }
 
 export type SystemConfigUpdateWithoutUpdatedByInput = {
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -613,13 +529,9 @@ export type SystemConfigUpdateWithoutUpdatedByInput = {
 export type SystemConfigUncheckedUpdateWithoutUpdatedByInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -627,13 +539,9 @@ export type SystemConfigUncheckedUpdateWithoutUpdatedByInput = {
 export type SystemConfigUncheckedUpdateManyWithoutUpdatedByInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   aliyunConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  growthAntifraudConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  commentRateLimitConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   siteConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   maintenanceConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  registerConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  notifyConfig?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  contentReviewPolicy?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -644,13 +552,9 @@ export type SystemConfigSelect<ExtArgs extends runtime.Types.Extensions.Internal
   id?: boolean
   updatedById?: boolean
   aliyunConfig?: boolean
-  growthAntifraudConfig?: boolean
-  contentReviewPolicy?: boolean
-  commentRateLimitConfig?: boolean
   siteConfig?: boolean
   maintenanceConfig?: boolean
-  registerConfig?: boolean
-  notifyConfig?: boolean
+  contentReviewPolicy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
@@ -660,13 +564,9 @@ export type SystemConfigSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   updatedById?: boolean
   aliyunConfig?: boolean
-  growthAntifraudConfig?: boolean
-  contentReviewPolicy?: boolean
-  commentRateLimitConfig?: boolean
   siteConfig?: boolean
   maintenanceConfig?: boolean
-  registerConfig?: boolean
-  notifyConfig?: boolean
+  contentReviewPolicy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
@@ -676,13 +576,9 @@ export type SystemConfigSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   updatedById?: boolean
   aliyunConfig?: boolean
-  growthAntifraudConfig?: boolean
-  contentReviewPolicy?: boolean
-  commentRateLimitConfig?: boolean
   siteConfig?: boolean
   maintenanceConfig?: boolean
-  registerConfig?: boolean
-  notifyConfig?: boolean
+  contentReviewPolicy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
@@ -692,18 +588,14 @@ export type SystemConfigSelectScalar = {
   id?: boolean
   updatedById?: boolean
   aliyunConfig?: boolean
-  growthAntifraudConfig?: boolean
-  contentReviewPolicy?: boolean
-  commentRateLimitConfig?: boolean
   siteConfig?: boolean
   maintenanceConfig?: boolean
-  registerConfig?: boolean
-  notifyConfig?: boolean
+  contentReviewPolicy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type SystemConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "updatedById" | "aliyunConfig" | "growthAntifraudConfig" | "contentReviewPolicy" | "commentRateLimitConfig" | "siteConfig" | "maintenanceConfig" | "registerConfig" | "notifyConfig" | "createdAt" | "updatedAt", ExtArgs["result"]["systemConfig"]>
+export type SystemConfigOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "updatedById" | "aliyunConfig" | "siteConfig" | "maintenanceConfig" | "contentReviewPolicy" | "createdAt" | "updatedAt", ExtArgs["result"]["systemConfig"]>
 export type SystemConfigInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   updatedBy?: boolean | Prisma.SystemConfig$updatedByArgs<ExtArgs>
 }
@@ -736,18 +628,6 @@ export type $SystemConfigPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     aliyunConfig: runtime.JsonValue | null
     /**
-     * 成长防刷配置（JSON格式，冷却时间/每日上限/总上限）
-     */
-    growthAntifraudConfig: runtime.JsonValue | null
-    /**
-     * 内容审核策略（JSON格式，敏感词等级处理策略）
-     */
-    contentReviewPolicy: runtime.JsonValue | null
-    /**
-     * 评论频率限制配置（JSON格式，按分钟/小时/天限流）
-     */
-    commentRateLimitConfig: runtime.JsonValue | null
-    /**
      * 站点基础配置（JSON格式，名称/描述/关键词/Logo等）
      */
     siteConfig: runtime.JsonValue | null
@@ -756,13 +636,9 @@ export type $SystemConfigPayload<ExtArgs extends runtime.Types.Extensions.Intern
      */
     maintenanceConfig: runtime.JsonValue | null
     /**
-     * 注册策略配置（JSON格式，注册开关/邮箱/手机验证）
+     * 内容审核策略（JSON格式，敏感词等级处理策略）
      */
-    registerConfig: runtime.JsonValue | null
-    /**
-     * 通知策略配置（JSON格式，邮件/站内/系统通知开关）
-     */
-    notifyConfig: runtime.JsonValue | null
+    contentReviewPolicy: runtime.JsonValue | null
     /**
      * 创建时间
      */
@@ -1198,13 +1074,9 @@ export interface SystemConfigFieldRefs {
   readonly id: Prisma.FieldRef<"SystemConfig", 'Int'>
   readonly updatedById: Prisma.FieldRef<"SystemConfig", 'Int'>
   readonly aliyunConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
-  readonly growthAntifraudConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
-  readonly contentReviewPolicy: Prisma.FieldRef<"SystemConfig", 'Json'>
-  readonly commentRateLimitConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
   readonly siteConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
   readonly maintenanceConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
-  readonly registerConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
-  readonly notifyConfig: Prisma.FieldRef<"SystemConfig", 'Json'>
+  readonly contentReviewPolicy: Prisma.FieldRef<"SystemConfig", 'Json'>
   readonly createdAt: Prisma.FieldRef<"SystemConfig", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"SystemConfig", 'DateTime'>
 }

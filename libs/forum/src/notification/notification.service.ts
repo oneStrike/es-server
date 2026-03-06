@@ -61,11 +61,7 @@ export class ForumNotificationService extends BaseService {
     }
 
     if (createNotificationDto.replyId) {
-      createData.reply = {
-        connect: {
-          id: createNotificationDto.replyId,
-        },
-      }
+      createData.replyId = createNotificationDto.replyId
     }
     if (createNotificationDto.topicId) {
       createData.topic = {

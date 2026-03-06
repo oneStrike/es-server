@@ -18,7 +18,7 @@ model UserGrowthEvent {
   /// 事件发生时间
   occurredAt DateTime @map("occurred_at") @db.Timestamptz(6)
 
-  /// 处理状态（如 PROCESSED/REJECTED_ANTIFRAUD）
+  /// 处理状态（如 PROCESSED/IGNORED_RULE_NOT_FOUND）
   status                 String @db.VarChar(30)
   /// 命中规则引用（JSON）
   ruleRefs               Json?  @map("rule_refs")

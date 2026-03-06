@@ -1235,7 +1235,7 @@ export type $UserGrowthEventPayload<ExtArgs extends runtime.Types.Extensions.Int
      */
     occurredAt: Date
     /**
-     * 处理状态（如 PROCESSED/REJECTED_ANTIFRAUD）
+     * 处理状态（如 PROCESSED/IGNORED_RULE_NOT_FOUND）
      */
     status: string
     /**

@@ -1,28 +1,29 @@
-/// 作品基表模型
+/// 作品表
+/// 统一存储漫画与小说的基础信息
 model Work {
-  /// 主键id
+  /// 主键ID
   id                  Int       @id @default(autoincrement())
-  /// 作品类型（1=漫画, 2=小说）
+  /// 作品类型
   type                Int       @db.SmallInt
   /// 作品名称
   name                String    @db.VarChar(100)
-  /// 作品别名（多个别名用逗号分隔）
+  /// 别名
   alias               String?   @db.VarChar(200)
-  /// 作品封面URL
+  /// 封面
   cover               String    @db.VarChar(500)
-  /// 作品简介
+  /// 简介
   description         String
-  /// 语言代码（数据字典）
+  /// 语言
   language            String    @db.VarChar(10)
-  /// 地区代码（数据字典）
+  /// 地区
   region              String    @db.VarChar(10)
-  /// 内容年龄分级 数据字典
+  /// 年龄分级
   ageRating           String?   @db.VarChar(10)
-  /// 连载状态（0=未开始, 1=连载中, 2=已完结, 3=暂停, 4=停更）
+  /// 连载状态
   serialStatus        Int       @default(0) @db.SmallInt
-  /// 出版社
+  /// 出版方
   publisher           String?   @db.VarChar(100)
-  /// 原作来源（如：小说改编、游戏改编等）
+  /// 原作来源
   originalSource      String?   @db.VarChar(100)
   /// 版权信息
   copyright           String?   @db.VarChar(500)
@@ -30,29 +31,29 @@ model Work {
   disclaimer          String?
   /// 备注
   remark              String?   @db.VarChar(1000)
-  /// 发布状态
+  /// 是否发布
   isPublished         Boolean   @default(true)
-  /// 是否推荐到首页
+  /// 是否推荐
   isRecommended       Boolean   @default(false)
   /// 是否热门
   isHot               Boolean   @default(false)
-  /// 是否新作
+  /// 是否最新
   isNew               Boolean   @default(false)
   /// 发布日期
   publishAt           DateTime? @db.Date
-  /// 最后更新时间（内容更新时间）
+  /// 最近更新时间
   lastUpdated         DateTime? @db.Timestamptz(6)
-  /// 阅读权限规则（0=所有人, 1=登录, 2=会员, 3=购买）
+  /// 阅读规则
   viewRule            Int       @default(0) @map("view_rule") @db.SmallInt
-  /// 阅读所需的会员等级ID
+  /// 阅读等级限制ID
   requiredViewLevelId Int?      @map("required_view_level_id")
   /// 章节价格
   chapterPrice        Int       @default(0) @map("chapter_price")
-  /// 是否允许评论
+  /// 是否可评论
   canComment          Boolean   @default(true) @map("can_comment")
-  /// 推荐权重（影响推荐排序）
+  /// 推荐权重
   recommendWeight     Float     @default(1.0)
-  /// 浏览量
+  /// 浏览数
   viewCount           Int       @default(0)
   /// 收藏数
   favoriteCount       Int       @default(0)
@@ -62,59 +63,46 @@ model Work {
   commentCount        Int       @default(0) @map("comment_count")
   /// 下载数
   downloadCount       Int       @default(0)
-  /// 评分（1-10分，保留一位小数）
+  /// 评分
   rating              Float?
   /// 评分人数
   ratingCount         Int       @default(0)
-  /// 热度（真实数据）
+  /// 热度值
   popularity          Int       @default(0)
   /// 创建时间
   createdAt           DateTime  @default(now()) @db.Timestamptz(6)
   /// 更新时间
   updatedAt           DateTime  @updatedAt @db.Timestamptz(6)
-  /// 软删除时间（用于数据恢复或归档）
+  /// 删除时间
   deletedAt           DateTime? @db.Timestamptz(6)
 
   /// 漫画扩展信息
-  comic             WorkComic?
+  comic WorkComic?
   /// 小说扩展信息
-  novel             WorkNovel?
-  /// 关联的作者列表
-  authors           WorkAuthorRelation[]
-  /// 关联的分类列表
-  categories        WorkCategoryRelation[]
-  /// 关联的标签列表
-  tags              WorkTagRelation[]
-  /// 关联的章节列表
-  chapters          WorkChapter[]
-  /// 评论关联
-  comments          WorkComment[]
-  /// 阅读所需的会员等级
-  requiredViewLevel UserLevelRule?         @relation("WorkViewLevel", fields: [requiredViewLevelId], references: [id])
+  novel WorkNovel?
+  /// 作者关系
+  authors WorkAuthorRelation[]
+  /// 分类关系
+  categories WorkCategoryRelation[]
+  /// 标签关系
+  tags WorkTagRelation[]
+  /// 章节列表
+  chapters WorkChapter[]
+  /// 阅读等级关联
+  requiredViewLevel UserLevelRule? @relation("WorkViewLevel", fields: [requiredViewLevelId], references: [id])
 
-  /// 发布状态与发布时间索引
   @@index([isPublished, publishAt])
-  /// 热度索引
   @@index([popularity])
-  /// 语言与地区索引
   @@index([language, region])
-  /// 连载状态索引
   @@index([serialStatus])
-  /// 最后更新时间索引
   @@index([lastUpdated])
-  /// 名称索引
   @@index([name])
-  /// 推荐索引
   @@index([isRecommended])
-  /// 热门与新作索引
   @@index([isHot, isNew])
-  /// 作品类型索引
   @@index([type])
-  /// 阅读权限规则索引
   @@index([viewRule])
-  /// 阅读所需会员等级索引
   @@index([requiredViewLevelId])
-  /// 评论数索引
   @@index([commentCount])
+
   @@map("work")
 }

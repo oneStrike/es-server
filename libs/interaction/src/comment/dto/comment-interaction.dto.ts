@@ -1,3 +1,4 @@
+import { ReportTargetTypeEnum } from '@libs/base/constant'
 import {
   DateProperty,
   EnumProperty,
@@ -40,7 +41,7 @@ export class BaseReportInfoDto {
 }
 
 /**
- * 举报处理信息 DTO - 包含举报处理相关的字段
+ * 举报处理信息 DTO
  */
 export class ReportHandlingDto {
   @StringProperty({
@@ -60,9 +61,25 @@ export class ReportHandlingDto {
 }
 
 /**
- * 评论举报完整 DTO - 内部服务使用
+ * 评论举报完整 DTO（内部使用）
  */
 export class BaseCommentReportDto extends BaseDto {
+  @EnumProperty({
+    description: '举报目标类型（统一举报表字段）',
+    enum: ReportTargetTypeEnum,
+    example: ReportTargetTypeEnum.COMMENT,
+    required: false,
+  })
+  targetType?: ReportTargetTypeEnum
+
+  @NumberProperty({
+    description: '举报目标ID（统一举报表字段）',
+    example: 1,
+    required: false,
+    min: 1,
+  })
+  targetId?: number
+
   @NumberProperty({
     description: '评论ID',
     example: 1,
@@ -142,7 +159,7 @@ export class ReportIdDto {
 }
 
 /**
- * 举报评论 DTO - 用户提交举报（内部服务使用，包含 reporterId）
+ * 举报评论 DTO（内部服务使用，包含 reporterId）
  */
 export class ReportCommentDto extends IntersectionType(
   CommentIdDto,
@@ -159,7 +176,7 @@ export class ReportCommentDto extends IntersectionType(
 }
 
 /**
- * 举报评论请求体 DTO - API接口使用（不含 reporterId）
+ * 举报评论请求体 DTO（API 接口使用，不包含 reporterId）
  */
 export class ReportCommentBodyDto extends IntersectionType(
   CommentIdDto,

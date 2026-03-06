@@ -1,7 +1,5 @@
 import type { PrismaClientType } from '@libs/base/database/prisma.types'
-import {
-  InteractionTargetTypeEnum,
-} from '@libs/base/constant'
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { FavoriteService, LikeService } from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -28,11 +26,11 @@ export class UserLevelRuleService extends BaseService {
   }
 
   get forumReply() {
-    return this.prisma.forumReply
+    return this.prisma.userComment
   }
 
   get forumReplyLike() {
-    return this.prisma.forumReplyLike
+    return this.prisma.userCommentLike
   }
 
   constructor(

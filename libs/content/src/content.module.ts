@@ -4,7 +4,6 @@ import { WorkAuthorModule } from './author/author.module'
 import { WorkCategoryModule } from './category/category.module'
 import { ContentInteractionModule } from './interaction'
 import { WorkTagModule } from './tag/tag.module'
-import { WorkCommentModule } from './work/comment/work-comment.module'
 import { WorkModule } from './work/work.module'
 
 @Module({
@@ -15,7 +14,6 @@ import { WorkModule } from './work/work.module'
     WorkAuthorModule,
     WorkCategoryModule,
     WorkTagModule,
-    WorkCommentModule,
   ],
   exports: [
     InteractionModule,
@@ -23,7 +21,6 @@ import { WorkModule } from './work/work.module'
     WorkAuthorModule,
     WorkCategoryModule,
     WorkTagModule,
-    WorkCommentModule,
   ],
 })
 export class ContentModule {}

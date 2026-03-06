@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model ForumTopic
- * 论坛主题表 - 存储论坛主题信息，包括标题、内容、审核状态、统计数据等
+ * 论坛主题表
  */
 export type ForumTopicModel = runtime.Types.Result.DefaultSelection<Prisma.$ForumTopicPayload>
 
@@ -431,7 +431,6 @@ export type ForumTopicWhereInput = {
   section?: Prisma.XOR<Prisma.ForumSectionScalarRelationFilter, Prisma.ForumSectionWhereInput>
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
   lastReplyUser?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
-  replies?: Prisma.ForumReplyListRelationFilter
   lastSections?: Prisma.ForumSectionListRelationFilter
   topicTags?: Prisma.ForumTopicTagListRelationFilter
   notifications?: Prisma.ForumNotificationListRelationFilter
@@ -467,7 +466,6 @@ export type ForumTopicOrderByWithRelationInput = {
   section?: Prisma.ForumSectionOrderByWithRelationInput
   user?: Prisma.AppUserOrderByWithRelationInput
   lastReplyUser?: Prisma.AppUserOrderByWithRelationInput
-  replies?: Prisma.ForumReplyOrderByRelationAggregateInput
   lastSections?: Prisma.ForumSectionOrderByRelationAggregateInput
   topicTags?: Prisma.ForumTopicTagOrderByRelationAggregateInput
   notifications?: Prisma.ForumNotificationOrderByRelationAggregateInput
@@ -506,7 +504,6 @@ export type ForumTopicWhereUniqueInput = Prisma.AtLeast<{
   section?: Prisma.XOR<Prisma.ForumSectionScalarRelationFilter, Prisma.ForumSectionWhereInput>
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
   lastReplyUser?: Prisma.XOR<Prisma.AppUserNullableScalarRelationFilter, Prisma.AppUserWhereInput> | null
-  replies?: Prisma.ForumReplyListRelationFilter
   lastSections?: Prisma.ForumSectionListRelationFilter
   topicTags?: Prisma.ForumTopicTagListRelationFilter
   notifications?: Prisma.ForumNotificationListRelationFilter
@@ -604,7 +601,6 @@ export type ForumTopicCreateInput = {
   section: Prisma.ForumSectionCreateNestedOneWithoutTopicsInput
   user: Prisma.AppUserCreateNestedOneWithoutForumTopicsInput
   lastReplyUser?: Prisma.AppUserCreateNestedOneWithoutLastReplyTopicsInput
-  replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutTopicInput
@@ -637,7 +633,6 @@ export type ForumTopicUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagUncheckedCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutTopicInput
@@ -669,7 +664,6 @@ export type ForumTopicUpdateInput = {
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutTopicsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutForumTopicsNestedInput
   lastReplyUser?: Prisma.AppUserUpdateOneWithoutLastReplyTopicsNestedInput
-  replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutTopicNestedInput
@@ -702,7 +696,6 @@ export type ForumTopicUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUncheckedUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutTopicNestedInput
@@ -1028,20 +1021,6 @@ export type ForumTopicUpdateOneWithoutNotificationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ForumTopicUpdateToOneWithWhereWithoutNotificationsInput, Prisma.ForumTopicUpdateWithoutNotificationsInput>, Prisma.ForumTopicUncheckedUpdateWithoutNotificationsInput>
 }
 
-export type ForumTopicCreateNestedOneWithoutRepliesInput = {
-  create?: Prisma.XOR<Prisma.ForumTopicCreateWithoutRepliesInput, Prisma.ForumTopicUncheckedCreateWithoutRepliesInput>
-  connectOrCreate?: Prisma.ForumTopicCreateOrConnectWithoutRepliesInput
-  connect?: Prisma.ForumTopicWhereUniqueInput
-}
-
-export type ForumTopicUpdateOneRequiredWithoutRepliesNestedInput = {
-  create?: Prisma.XOR<Prisma.ForumTopicCreateWithoutRepliesInput, Prisma.ForumTopicUncheckedCreateWithoutRepliesInput>
-  connectOrCreate?: Prisma.ForumTopicCreateOrConnectWithoutRepliesInput
-  upsert?: Prisma.ForumTopicUpsertWithoutRepliesInput
-  connect?: Prisma.ForumTopicWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ForumTopicUpdateToOneWithWhereWithoutRepliesInput, Prisma.ForumTopicUpdateWithoutRepliesInput>, Prisma.ForumTopicUncheckedUpdateWithoutRepliesInput>
-}
-
 export type ForumTopicCreateNestedOneWithoutLastSectionsInput = {
   create?: Prisma.XOR<Prisma.ForumTopicCreateWithoutLastSectionsInput, Prisma.ForumTopicUncheckedCreateWithoutLastSectionsInput>
   connectOrCreate?: Prisma.ForumTopicCreateOrConnectWithoutLastSectionsInput
@@ -1139,7 +1118,6 @@ export type ForumTopicCreateWithoutUserInput = {
   deletedAt?: Date | string | null
   section: Prisma.ForumSectionCreateNestedOneWithoutTopicsInput
   lastReplyUser?: Prisma.AppUserCreateNestedOneWithoutLastReplyTopicsInput
-  replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutTopicInput
@@ -1171,7 +1149,6 @@ export type ForumTopicUncheckedCreateWithoutUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagUncheckedCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutTopicInput
@@ -1212,7 +1189,6 @@ export type ForumTopicCreateWithoutLastReplyUserInput = {
   deletedAt?: Date | string | null
   section: Prisma.ForumSectionCreateNestedOneWithoutTopicsInput
   user: Prisma.AppUserCreateNestedOneWithoutForumTopicsInput
-  replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutTopicInput
@@ -1244,7 +1220,6 @@ export type ForumTopicUncheckedCreateWithoutLastReplyUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagUncheckedCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutTopicInput
@@ -1350,7 +1325,6 @@ export type ForumTopicCreateWithoutNotificationsInput = {
   section: Prisma.ForumSectionCreateNestedOneWithoutTopicsInput
   user: Prisma.AppUserCreateNestedOneWithoutForumTopicsInput
   lastReplyUser?: Prisma.AppUserCreateNestedOneWithoutLastReplyTopicsInput
-  replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagCreateNestedManyWithoutTopicInput
 }
@@ -1382,7 +1356,6 @@ export type ForumTopicUncheckedCreateWithoutNotificationsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagUncheckedCreateNestedManyWithoutTopicInput
 }
@@ -1429,7 +1402,6 @@ export type ForumTopicUpdateWithoutNotificationsInput = {
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutTopicsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutForumTopicsNestedInput
   lastReplyUser?: Prisma.AppUserUpdateOneWithoutLastReplyTopicsNestedInput
-  replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUpdateManyWithoutTopicNestedInput
 }
@@ -1461,151 +1433,8 @@ export type ForumTopicUncheckedUpdateWithoutNotificationsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUncheckedUpdateManyWithoutTopicNestedInput
-}
-
-export type ForumTopicCreateWithoutRepliesInput = {
-  auditById?: number | null
-  title: string
-  content: string
-  isPinned?: boolean
-  isFeatured?: boolean
-  isLocked?: boolean
-  isHidden?: boolean
-  auditStatus?: number
-  auditRole?: number | null
-  auditReason?: string | null
-  auditAt?: Date | string | null
-  version?: number
-  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  viewCount?: number
-  replyCount?: number
-  likeCount?: number
-  commentCount?: number
-  favoriteCount?: number
-  lastReplyAt?: Date | string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  section: Prisma.ForumSectionCreateNestedOneWithoutTopicsInput
-  user: Prisma.AppUserCreateNestedOneWithoutForumTopicsInput
-  lastReplyUser?: Prisma.AppUserCreateNestedOneWithoutLastReplyTopicsInput
-  lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
-  topicTags?: Prisma.ForumTopicTagCreateNestedManyWithoutTopicInput
-  notifications?: Prisma.ForumNotificationCreateNestedManyWithoutTopicInput
-}
-
-export type ForumTopicUncheckedCreateWithoutRepliesInput = {
-  id?: number
-  sectionId: number
-  userId: number
-  lastReplyUserId?: number | null
-  auditById?: number | null
-  title: string
-  content: string
-  isPinned?: boolean
-  isFeatured?: boolean
-  isLocked?: boolean
-  isHidden?: boolean
-  auditStatus?: number
-  auditRole?: number | null
-  auditReason?: string | null
-  auditAt?: Date | string | null
-  version?: number
-  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  viewCount?: number
-  replyCount?: number
-  likeCount?: number
-  commentCount?: number
-  favoriteCount?: number
-  lastReplyAt?: Date | string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
-  topicTags?: Prisma.ForumTopicTagUncheckedCreateNestedManyWithoutTopicInput
-  notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutTopicInput
-}
-
-export type ForumTopicCreateOrConnectWithoutRepliesInput = {
-  where: Prisma.ForumTopicWhereUniqueInput
-  create: Prisma.XOR<Prisma.ForumTopicCreateWithoutRepliesInput, Prisma.ForumTopicUncheckedCreateWithoutRepliesInput>
-}
-
-export type ForumTopicUpsertWithoutRepliesInput = {
-  update: Prisma.XOR<Prisma.ForumTopicUpdateWithoutRepliesInput, Prisma.ForumTopicUncheckedUpdateWithoutRepliesInput>
-  create: Prisma.XOR<Prisma.ForumTopicCreateWithoutRepliesInput, Prisma.ForumTopicUncheckedCreateWithoutRepliesInput>
-  where?: Prisma.ForumTopicWhereInput
-}
-
-export type ForumTopicUpdateToOneWithWhereWithoutRepliesInput = {
-  where?: Prisma.ForumTopicWhereInput
-  data: Prisma.XOR<Prisma.ForumTopicUpdateWithoutRepliesInput, Prisma.ForumTopicUncheckedUpdateWithoutRepliesInput>
-}
-
-export type ForumTopicUpdateWithoutRepliesInput = {
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
-  isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isFeatured?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
-  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  section?: Prisma.ForumSectionUpdateOneRequiredWithoutTopicsNestedInput
-  user?: Prisma.AppUserUpdateOneRequiredWithoutForumTopicsNestedInput
-  lastReplyUser?: Prisma.AppUserUpdateOneWithoutLastReplyTopicsNestedInput
-  lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
-  topicTags?: Prisma.ForumTopicTagUpdateManyWithoutTopicNestedInput
-  notifications?: Prisma.ForumNotificationUpdateManyWithoutTopicNestedInput
-}
-
-export type ForumTopicUncheckedUpdateWithoutRepliesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  sectionId?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  lastReplyUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  content?: Prisma.StringFieldUpdateOperationsInput | string
-  isPinned?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isFeatured?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  version?: Prisma.IntFieldUpdateOperationsInput | number
-  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
-  replyCount?: Prisma.IntFieldUpdateOperationsInput | number
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
-  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
-  lastReplyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
-  topicTags?: Prisma.ForumTopicTagUncheckedUpdateManyWithoutTopicNestedInput
-  notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutTopicNestedInput
 }
 
 export type ForumTopicCreateWithoutLastSectionsInput = {
@@ -1634,7 +1463,6 @@ export type ForumTopicCreateWithoutLastSectionsInput = {
   section: Prisma.ForumSectionCreateNestedOneWithoutTopicsInput
   user: Prisma.AppUserCreateNestedOneWithoutForumTopicsInput
   lastReplyUser?: Prisma.AppUserCreateNestedOneWithoutLastReplyTopicsInput
-  replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   topicTags?: Prisma.ForumTopicTagCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutTopicInput
 }
@@ -1666,7 +1494,6 @@ export type ForumTopicUncheckedCreateWithoutLastSectionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   topicTags?: Prisma.ForumTopicTagUncheckedCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutTopicInput
 }
@@ -1701,7 +1528,6 @@ export type ForumTopicCreateWithoutSectionInput = {
   deletedAt?: Date | string | null
   user: Prisma.AppUserCreateNestedOneWithoutForumTopicsInput
   lastReplyUser?: Prisma.AppUserCreateNestedOneWithoutLastReplyTopicsInput
-  replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutTopicInput
@@ -1733,7 +1559,6 @@ export type ForumTopicUncheckedCreateWithoutSectionInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   topicTags?: Prisma.ForumTopicTagUncheckedCreateNestedManyWithoutTopicInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutTopicInput
@@ -1786,7 +1611,6 @@ export type ForumTopicUpdateWithoutLastSectionsInput = {
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutTopicsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutForumTopicsNestedInput
   lastReplyUser?: Prisma.AppUserUpdateOneWithoutLastReplyTopicsNestedInput
-  replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutTopicNestedInput
 }
@@ -1818,7 +1642,6 @@ export type ForumTopicUncheckedUpdateWithoutLastSectionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUncheckedUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutTopicNestedInput
 }
@@ -1865,7 +1688,6 @@ export type ForumTopicCreateWithoutTopicTagsInput = {
   section: Prisma.ForumSectionCreateNestedOneWithoutTopicsInput
   user: Prisma.AppUserCreateNestedOneWithoutForumTopicsInput
   lastReplyUser?: Prisma.AppUserCreateNestedOneWithoutLastReplyTopicsInput
-  replies?: Prisma.ForumReplyCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionCreateNestedManyWithoutLastTopicInput
   notifications?: Prisma.ForumNotificationCreateNestedManyWithoutTopicInput
 }
@@ -1897,7 +1719,6 @@ export type ForumTopicUncheckedCreateWithoutTopicTagsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   deletedAt?: Date | string | null
-  replies?: Prisma.ForumReplyUncheckedCreateNestedManyWithoutTopicInput
   lastSections?: Prisma.ForumSectionUncheckedCreateNestedManyWithoutLastTopicInput
   notifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutTopicInput
 }
@@ -1944,7 +1765,6 @@ export type ForumTopicUpdateWithoutTopicTagsInput = {
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutTopicsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutForumTopicsNestedInput
   lastReplyUser?: Prisma.AppUserUpdateOneWithoutLastReplyTopicsNestedInput
-  replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutTopicNestedInput
 }
@@ -1976,7 +1796,6 @@ export type ForumTopicUncheckedUpdateWithoutTopicTagsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutTopicNestedInput
 }
@@ -2062,7 +1881,6 @@ export type ForumTopicUpdateWithoutUserInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutTopicsNestedInput
   lastReplyUser?: Prisma.AppUserUpdateOneWithoutLastReplyTopicsNestedInput
-  replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutTopicNestedInput
@@ -2094,7 +1912,6 @@ export type ForumTopicUncheckedUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUncheckedUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutTopicNestedInput
@@ -2153,7 +1970,6 @@ export type ForumTopicUpdateWithoutLastReplyUserInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   section?: Prisma.ForumSectionUpdateOneRequiredWithoutTopicsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutForumTopicsNestedInput
-  replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutTopicNestedInput
@@ -2185,7 +2001,6 @@ export type ForumTopicUncheckedUpdateWithoutLastReplyUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUncheckedUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutTopicNestedInput
@@ -2272,7 +2087,6 @@ export type ForumTopicUpdateWithoutSectionInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.AppUserUpdateOneRequiredWithoutForumTopicsNestedInput
   lastReplyUser?: Prisma.AppUserUpdateOneWithoutLastReplyTopicsNestedInput
-  replies?: Prisma.ForumReplyUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUpdateManyWithoutTopicNestedInput
@@ -2304,7 +2118,6 @@ export type ForumTopicUncheckedUpdateWithoutSectionInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  replies?: Prisma.ForumReplyUncheckedUpdateManyWithoutTopicNestedInput
   lastSections?: Prisma.ForumSectionUncheckedUpdateManyWithoutLastTopicNestedInput
   topicTags?: Prisma.ForumTopicTagUncheckedUpdateManyWithoutTopicNestedInput
   notifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutTopicNestedInput
@@ -2344,14 +2157,12 @@ export type ForumTopicUncheckedUpdateManyWithoutSectionInput = {
  */
 
 export type ForumTopicCountOutputType = {
-  replies: number
   lastSections: number
   topicTags: number
   notifications: number
 }
 
 export type ForumTopicCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  replies?: boolean | ForumTopicCountOutputTypeCountRepliesArgs
   lastSections?: boolean | ForumTopicCountOutputTypeCountLastSectionsArgs
   topicTags?: boolean | ForumTopicCountOutputTypeCountTopicTagsArgs
   notifications?: boolean | ForumTopicCountOutputTypeCountNotificationsArgs
@@ -2365,13 +2176,6 @@ export type ForumTopicCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.E
    * Select specific fields to fetch from the ForumTopicCountOutputType
    */
   select?: Prisma.ForumTopicCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * ForumTopicCountOutputType without action
- */
-export type ForumTopicCountOutputTypeCountRepliesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ForumReplyWhereInput
 }
 
 /**
@@ -2426,7 +2230,6 @@ export type ForumTopicSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   lastReplyUser?: boolean | Prisma.ForumTopic$lastReplyUserArgs<ExtArgs>
-  replies?: boolean | Prisma.ForumTopic$repliesArgs<ExtArgs>
   lastSections?: boolean | Prisma.ForumTopic$lastSectionsArgs<ExtArgs>
   topicTags?: boolean | Prisma.ForumTopic$topicTagsArgs<ExtArgs>
   notifications?: boolean | Prisma.ForumTopic$notificationsArgs<ExtArgs>
@@ -2531,7 +2334,6 @@ export type ForumTopicInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   section?: boolean | Prisma.ForumSectionDefaultArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   lastReplyUser?: boolean | Prisma.ForumTopic$lastReplyUserArgs<ExtArgs>
-  replies?: boolean | Prisma.ForumTopic$repliesArgs<ExtArgs>
   lastSections?: boolean | Prisma.ForumTopic$lastSectionsArgs<ExtArgs>
   topicTags?: boolean | Prisma.ForumTopic$topicTagsArgs<ExtArgs>
   notifications?: boolean | Prisma.ForumTopic$notificationsArgs<ExtArgs>
@@ -2552,11 +2354,11 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
   name: "ForumTopic"
   objects: {
     /**
-     * 关联板块
+     * 关联版块
      */
     section: Prisma.$ForumSectionPayload<ExtArgs>
     /**
-     * 关联用户
+     * 关联发帖用户
      */
     user: Prisma.$AppUserPayload<ExtArgs>
     /**
@@ -2564,19 +2366,15 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     lastReplyUser: Prisma.$AppUserPayload<ExtArgs> | null
     /**
-     * 回复列表
-     */
-    replies: Prisma.$ForumReplyPayload<ExtArgs>[]
-    /**
-     * 关联的最后回复板块
+     * 关联最后主题版块
      */
     lastSections: Prisma.$ForumSectionPayload<ExtArgs>[]
     /**
-     * 标签关联
+     * 关联主题标签
      */
     topicTags: Prisma.$ForumTopicTagPayload<ExtArgs>[]
     /**
-     * 通知关联
+     * 关联通知
      */
     notifications: Prisma.$ForumNotificationPayload<ExtArgs>[]
   }
@@ -2586,11 +2384,11 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     id: number
     /**
-     * 关联的板块ID
+     * 版块ID
      */
     sectionId: number
     /**
-     * 关联的用户ID
+     * 发帖用户ID
      */
     userId: number
     /**
@@ -2602,11 +2400,11 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     auditById: number | null
     /**
-     * 主题标题
+     * 标题
      */
     title: string
     /**
-     * 主题内容
+     * 内容
      */
     content: string
     /**
@@ -2614,7 +2412,7 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     isPinned: boolean
     /**
-     * 是否加精
+     * 是否精选
      */
     isFeatured: boolean
     /**
@@ -2622,15 +2420,15 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     isLocked: boolean
     /**
-     * 是否隐藏（待审核）
+     * 是否隐藏
      */
     isHidden: boolean
     /**
-     * 审核状态（0=待审核, 1=已通过, 2=已拒绝）
+     * 审核状态
      */
     auditStatus: number
     /**
-     * 审核人角色（0=版主, 1=管理员）
+     * 审核角色
      */
     auditRole: number | null
     /**
@@ -2642,7 +2440,7 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     auditAt: Date | null
     /**
-     * 版本号（用于乐观锁）
+     * 乐观锁版本号
      */
     version: number
     /**
@@ -2650,7 +2448,7 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     sensitiveWordHits: runtime.JsonValue | null
     /**
-     * 浏览量
+     * 浏览数
      */
     viewCount: number
     /**
@@ -2682,7 +2480,7 @@ export type $ForumTopicPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     updatedAt: Date
     /**
-     * 软删除时间
+     * 删除时间
      */
     deletedAt: Date | null
   }, ExtArgs["result"]["forumTopic"]>
@@ -3082,7 +2880,6 @@ export interface Prisma__ForumTopicClient<T, Null = never, ExtArgs extends runti
   section<T extends Prisma.ForumSectionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumSectionDefaultArgs<ExtArgs>>): Prisma.Prisma__ForumSectionClient<runtime.Types.Result.GetResult<Prisma.$ForumSectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   lastReplyUser<T extends Prisma.ForumTopic$lastReplyUserArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumTopic$lastReplyUserArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  replies<T extends Prisma.ForumTopic$repliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumTopic$repliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumReplyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   lastSections<T extends Prisma.ForumTopic$lastSectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumTopic$lastSectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumSectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   topicTags<T extends Prisma.ForumTopic$topicTagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumTopic$topicTagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumTopicTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notifications<T extends Prisma.ForumTopic$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ForumTopic$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ForumNotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3562,30 +3359,6 @@ export type ForumTopic$lastReplyUserArgs<ExtArgs extends runtime.Types.Extension
    */
   include?: Prisma.AppUserInclude<ExtArgs> | null
   where?: Prisma.AppUserWhereInput
-}
-
-/**
- * ForumTopic.replies
- */
-export type ForumTopic$repliesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ForumReply
-   */
-  select?: Prisma.ForumReplySelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ForumReply
-   */
-  omit?: Prisma.ForumReplyOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ForumReplyInclude<ExtArgs> | null
-  where?: Prisma.ForumReplyWhereInput
-  orderBy?: Prisma.ForumReplyOrderByWithRelationInput | Prisma.ForumReplyOrderByWithRelationInput[]
-  cursor?: Prisma.ForumReplyWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ForumReplyScalarFieldEnum | Prisma.ForumReplyScalarFieldEnum[]
 }
 
 /**

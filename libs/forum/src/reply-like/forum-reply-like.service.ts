@@ -27,11 +27,11 @@ export class ForumReplyLikeService extends BaseService {
   }
 
   get forumReplyLike() {
-    return this.prisma.forumReplyLike
+    return (this.prisma as any).userCommentLike
   }
 
   get forumReply() {
-    return this.prisma.forumReply
+    return (this.prisma as any).userComment
   }
 
   // get forumProfile() {
@@ -67,8 +67,8 @@ export class ForumReplyLikeService extends BaseService {
 
     const existingLike = await this.forumReplyLike.findUnique({
       where: {
-        replyId_userId: {
-          replyId,
+        commentId_userId: {
+          commentId: replyId,
           userId,
         },
       },
@@ -79,14 +79,14 @@ export class ForumReplyLikeService extends BaseService {
     }
 
     const like = await this.prisma.$transaction(async (tx) => {
-      const like = await tx.forumReplyLike.create({
+      const like = await (tx as any).userCommentLike.create({
         data: {
-          replyId,
+          commentId: replyId,
           userId,
         },
       })
 
-      await tx.forumReply.update({
+      await (tx as any).userComment.update({
         where: { id: replyId },
         data: {
           likeCount: {
@@ -139,8 +139,8 @@ export class ForumReplyLikeService extends BaseService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      await tx.forumReply.update({
-        where: { id: like.replyId },
+      await (tx as any).userComment.update({
+        where: { id: like.commentId },
         data: {
           likeCount: {
             decrement: 1,
@@ -152,10 +152,10 @@ export class ForumReplyLikeService extends BaseService {
         userId,
         actionType: ForumUserActionTypeEnum.UNLIKE_REPLY,
         targetType: ForumUserActionTargetTypeEnum.REPLY,
-        targetId: like.replyId,
+        targetId: like.commentId,
       })
 
-      return tx.forumReplyLike.delete({
+      return (tx as any).userCommentLike.delete({
         where: { id },
       })
     })
@@ -170,8 +170,8 @@ export class ForumReplyLikeService extends BaseService {
   async checkUserLiked(replyId: number, userId: number) {
     const like = await this.forumReplyLike.findUnique({
       where: {
-        replyId_userId: {
-          replyId,
+        commentId_userId: {
+          commentId: replyId,
           userId,
         },
       },

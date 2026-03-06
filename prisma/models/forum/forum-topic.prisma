@@ -1,43 +1,43 @@
-/// 论坛主题表 - 存储论坛主题信息，包括标题、内容、审核状态、统计数据等
+/// 论坛主题表
 model ForumTopic {
   /// 主键ID
   id Int @id @default(autoincrement())
 
-  /// 关联的板块ID
+  /// 版块ID
   sectionId       Int  @map("section_id")
-  /// 关联的用户ID
+  /// 发帖用户ID
   userId          Int  @map("user_id")
   /// 最后回复用户ID
   lastReplyUserId Int? @map("last_reply_user_id")
   /// 审核人ID
   auditById       Int? @map("audit_by_id")
 
-  /// 主题标题
+  /// 标题
   title   String @db.VarChar(200)
-  /// 主题内容
+  /// 内容
   content String
 
   /// 是否置顶
   isPinned          Boolean   @default(false) @map("is_pinned")
-  /// 是否加精
+  /// 是否精选
   isFeatured        Boolean   @default(false) @map("is_featured")
   /// 是否锁定
   isLocked          Boolean   @default(false) @map("is_locked")
-  /// 是否隐藏（待审核）
+  /// 是否隐藏
   isHidden          Boolean   @default(false) @map("is_hidden")
-  /// 审核状态（0=待审核, 1=已通过, 2=已拒绝）
+  /// 审核状态
   auditStatus       Int       @default(1) @map("audit_status") @db.SmallInt
-  /// 审核人角色（0=版主, 1=管理员）
+  /// 审核角色
   auditRole         Int?      @map("audit_role") @db.SmallInt
   /// 审核原因
   auditReason       String?   @map("audit_reason") @db.VarChar(500)
   /// 审核时间
   auditAt           DateTime? @map("audit_at") @db.Timestamptz(6)
-  /// 版本号（用于乐观锁）
+  /// 乐观锁版本号
   version           Int       @default(0)
   /// 敏感词命中记录
   sensitiveWordHits Json?     @map("sensitive_word_hits") @db.JsonB
-  /// 浏览量
+  /// 浏览数
   viewCount         Int       @default(0) @map("view_count")
   /// 回复数
   replyCount        Int       @default(0) @map("reply_count")
@@ -54,62 +54,41 @@ model ForumTopic {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  /// 软删除时间
+  /// 删除时间
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  /// 关联板块
+  /// 关联版块
   section       ForumSection        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  /// 关联用户
+  /// 关联发帖用户
   user          AppUser             @relation("UserTopics", fields: [userId], references: [id])
   /// 关联最后回复用户
   lastReplyUser AppUser?            @relation("UserLastReplyTopics", fields: [lastReplyUserId], references: [id])
-  /// 回复列表
-  replies       ForumReply[]
-  /// 关联的最后回复板块
+  /// 关联最后主题版块
   lastSections  ForumSection[]      @relation("LastTopic")
-  /// 标签关联
+  /// 关联主题标签
   topicTags     ForumTopicTag[]
-  /// 通知关联
+  /// 关联通知
   notifications ForumNotification[] @relation("NotificationTopic")
 
-  /// 板块索引
   @@index([sectionId])
-  /// 用户索引
   @@index([userId])
-  /// 置顶状态与创建时间索引
   @@index([isPinned, createdAt])
-  /// 加精状态与创建时间索引
   @@index([isFeatured, createdAt])
-  /// 锁定状态索引
   @@index([isLocked])
-  /// 隐藏状态索引
   @@index([isHidden])
-  /// 审核状态索引
   @@index([auditStatus])
-  /// 浏览量索引
   @@index([viewCount])
-  /// 回复数索引
   @@index([replyCount])
-  /// 点赞数索引
   @@index([likeCount])
-  /// 评论数索引
   @@index([commentCount])
-  /// 收藏数索引
   @@index([favoriteCount])
-  /// 最后回复时间索引
   @@index([lastReplyAt])
-  /// 创建时间索引
   @@index([createdAt])
-  /// 更新时间索引
   @@index([updatedAt])
-  /// 删除时间索引
   @@index([deletedAt])
-  /// 板块、置顶与创建时间索引
   @@index([sectionId, isPinned, createdAt])
-  /// 板块、加精与创建时间索引
   @@index([sectionId, isFeatured, createdAt])
-  /// 复合索引优化
-  /// 板块与最后回复时间索引
   @@index([sectionId, lastReplyAt])
+
   @@map("forum_topic")
 }

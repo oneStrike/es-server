@@ -143,19 +143,6 @@ export class ForumProfileService extends BaseService {
             name: true,
           },
         },
-        include: {
-          section: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          _count: {
-            select: {
-              replies: true,
-            },
-          },
-        },
       },
     })
   }
@@ -178,11 +165,6 @@ export class ForumProfileService extends BaseService {
           select: {
             id: true,
             name: true,
-          },
-        },
-        _count: {
-          select: {
-            replies: true,
           },
         },
       },

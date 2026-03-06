@@ -1,13 +1,18 @@
+/**
+ * 作品评论种子数据
+ * 使用统一的 UserComment 模型
+ * targetType: 1=漫画, 2=小说, 3=漫画章节, 4=小说章节, 5=论坛主题
+ */
 export async function createInitialWorkComments(prisma: any) {
   const works = await prisma.work.findMany({
-    select: { id: true, name: true, type: true },
+    select: { id: true, type: true },
   })
 
   const users = await prisma.appUser.findMany({
-    select: { id: true, nickname: true },
+    select: { id: true },
   })
 
-  if (users.length === 0) {
+  if (users.length === 0 || works.length === 0) {
     return
   }
 
@@ -23,8 +28,11 @@ export async function createInitialWorkComments(prisma: any) {
   ]
 
   for (const work of works) {
-    const existingComments = await prisma.workComment.findMany({
-      where: { workId: work.id },
+    // targetType: 1=漫画, 2=小说
+    const targetType = work.type
+
+    const existingComments = await prisma.userComment.findMany({
+      where: { targetType, targetId: work.id },
     })
 
     if (existingComments.length > 0) {
@@ -38,11 +46,10 @@ export async function createInitialWorkComments(prisma: any) {
       const randomComment =
         sampleComments[Math.floor(Math.random() * sampleComments.length)]
 
-      await prisma.workComment.create({
+      await prisma.userComment.create({
         data: {
-          workId: work.id,
-          workType: work.type,
-          chapterId: null,
+          targetType,
+          targetId: work.id,
           userId: randomUser.id,
           content: randomComment,
           floor: i + 1,
@@ -55,6 +62,7 @@ export async function createInitialWorkComments(prisma: any) {
           auditReason: null,
           auditAt: null,
           sensitiveWordHits: null,
+          likeCount: Math.floor(Math.random() * 20),
         },
       })
     }

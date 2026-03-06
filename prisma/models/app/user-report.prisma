@@ -1,0 +1,63 @@
+/// 用户举报记录表
+/// 统一存储评论举报、论坛主题举报、论坛回复举报、用户举报
+model UserReport {
+  /// 主键ID（自增）
+  id Int @id @default(autoincrement())
+
+  /// 举报人ID（关联 app_user.id）
+  reporterId Int @map("reporter_id")
+
+  /// 处理人ID（关联 app_user.id，可空）
+  handlerId Int? @map("handler_id")
+
+  /// 举报目标类型（1=评论, 2=论坛主题, 3=论坛回复, 4=用户）
+  targetType Int @map("target_type") @db.SmallInt
+
+  /// 举报目标ID
+  targetId Int @map("target_id")
+
+  /// 举报原因
+  reason String @db.VarChar(50)
+
+  /// 举报描述
+  description String? @db.VarChar(500)
+
+  /// 证据图片URL
+  evidenceUrl String? @map("evidence_url") @db.VarChar(500)
+
+  /// 处理状态（pending=待处理, processing=处理中, resolved=已处理, rejected=已驳回）
+  status String @default("pending") @db.VarChar(20)
+
+  /// 处理备注
+  handlingNote String? @map("handling_note") @db.VarChar(500)
+
+  /// 处理时间
+  handledAt DateTime? @map("handled_at") @db.Timestamptz(6)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 举报人关系
+  reporter AppUser @relation("UserReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  /// 处理人关系
+  handler AppUser? @relation("UserReportHandler", fields: [handlerId], references: [id])
+
+  /// 目标查询索引
+  @@index([targetType, targetId])
+  /// 举报人查询索引
+  @@index([reporterId])
+  /// 处理人查询索引
+  @@index([handlerId])
+  /// 状态查询索引
+  @@index([status])
+  /// 创建时间索引
+  @@index([createdAt])
+  /// 去重索引（同一用户对同一目标仅允许一条举报）
+  @@unique([reporterId, targetType, targetId])
+
+  @@map("user_report")
+}

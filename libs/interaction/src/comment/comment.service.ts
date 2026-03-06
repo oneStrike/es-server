@@ -2,7 +2,7 @@ import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
-import { SystemConfigService } from '@libs/system-config'
+import { ConfigReader } from '@libs/system-config'
 import {
   BadRequestException,
   Injectable,
@@ -23,7 +23,7 @@ import {
 export class CommentService extends BaseService {
   constructor(
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly configReader: ConfigReader,
     private readonly commentPermissionService: CommentPermissionService,
   ) {
     super()
@@ -103,23 +103,22 @@ export class CommentService extends BaseService {
    * @param content - 评论内容
    * @returns 审核状态、是否隐藏、敏感词命中信息
    */
-  private async resolveAuditDecision(content: string) {
+  private resolveAuditDecision(content: string) {
     const result = this.sensitiveWordDetectService.getMatchedWords({ content })
-    const config = await this.systemConfigService.findActiveConfig()
-    const policy = config?.contentReviewPolicy
+    const policy = this.configReader.getContentReviewPolicy()
     let auditStatus: AuditStatusEnum = AuditStatusEnum.APPROVED
     let isHidden = false
 
-    if (policy && result.highestLevel) {
+    if (result.highestLevel) {
       if (result.highestLevel === SensitiveWordLevelEnum.SEVERE) {
         auditStatus = policy.severeAction.auditStatus as AuditStatusEnum
-        isHidden = policy.severeAction.isHidden ?? false
+        isHidden = policy.severeAction.isHidden
       } else if (result.highestLevel === SensitiveWordLevelEnum.GENERAL) {
         auditStatus = policy.generalAction.auditStatus as AuditStatusEnum
-        isHidden = policy.generalAction.isHidden ?? false
+        isHidden = policy.generalAction.isHidden
       } else {
         auditStatus = policy.lightAction.auditStatus as AuditStatusEnum
-        isHidden = policy.lightAction.isHidden ?? false
+        isHidden = policy.lightAction.isHidden
       }
     }
 
@@ -145,7 +144,7 @@ export class CommentService extends BaseService {
       targetId,
     )
 
-    const decision = await this.resolveAuditDecision(content)
+    const decision = this.resolveAuditDecision(content)
 
     const result = await this.prisma.userComment.aggregate({
       where: {
@@ -211,7 +210,7 @@ export class CommentService extends BaseService {
       ? (replyTo.actualReplyToId ?? replyTo.id)
       : replyTo.id
 
-    const decision = await this.resolveAuditDecision(content)
+    const decision = this.resolveAuditDecision(content)
 
     return this.prisma.$transaction(async (tx) => {
       const newComment = await tx.userComment.create({
