@@ -3,6 +3,11 @@ import {
 } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
+  MessageNotificationSubjectTypeEnum,
+  MessageNotificationTypeEnum,
+  MessageOutboxService,
+} from '@libs/message'
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -17,7 +22,10 @@ import { ReportCommentDto } from './dto/comment-interaction.dto'
  */
 @Injectable()
 export class CommentInteractionService extends BaseService {
-  constructor(private readonly commentGrowthService: CommentGrowthService) {
+  constructor(
+    private readonly commentGrowthService: CommentGrowthService,
+    private readonly messageOutboxService: MessageOutboxService,
+  ) {
     super()
   }
 
@@ -35,6 +43,8 @@ export class CommentInteractionService extends BaseService {
         select: {
           id: true,
           userId: true,
+          targetType: true,
+          targetId: true,
           likes: {
             where: { userId },
             select: {
@@ -63,6 +73,27 @@ export class CommentInteractionService extends BaseService {
         authorUserId: comment.userId,
         likerUserId: userId,
       })
+
+      if (comment.userId !== userId) {
+        await this.messageOutboxService.enqueueNotificationEvent(
+          {
+            eventType: MessageNotificationTypeEnum.COMMENT_LIKE,
+            bizKey: `notify:comment:like:${commentId}:actor:${userId}:receiver:${comment.userId}`,
+            payload: {
+              receiverUserId: comment.userId,
+              actorUserId: userId,
+              type: MessageNotificationTypeEnum.COMMENT_LIKE,
+              targetType: comment.targetType,
+              targetId: comment.targetId,
+              subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
+              subjectId: comment.id,
+              title: '你的评论收到了点赞',
+              content: '有人点赞了你的评论',
+            },
+          },
+          tx,
+        )
+      }
       return { id: commentId }
     })
   }

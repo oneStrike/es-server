@@ -15,6 +15,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets'
 import { ChatMessageTypeEnum, MESSAGE_CHAT_SERVICE_TOKEN } from '../chat/chat.constant'
+import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 
 /** WebSocket 请求信封结构 */
 interface WsRequestEnvelope<TPayload> {
@@ -69,6 +70,7 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly moduleRef: ModuleRef,
+    private readonly messageWsMonitorService: MessageWsMonitorService,
   ) {}
 
   /**
@@ -83,6 +85,7 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
     }
     client.data.userId = userId
     void client.join(this.getUserRoom(userId))
+    this.recordReconnectMetric()
   }
 
   /** 处理 WebSocket 断开连接 */
@@ -111,13 +114,16 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
     @ConnectedSocket() client: Socket,
     @MessageBody() body: WsRequestEnvelope<WsSendPayload>,
   ) {
+    const requestStartAt = Date.now()
+    this.recordRequestMetric()
+
     const requestId = this.normalizeRequestId(body?.requestId)
     if (!requestId) {
       this.emitAck(client, {
         requestId: null,
         code: 40001,
         message: 'requestId 不能为空',
-      })
+      }, requestStartAt)
       return
     }
 
@@ -127,7 +133,7 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
         requestId,
         code: 40101,
         message: '未授权',
-      })
+      }, requestStartAt)
       client.disconnect(true)
       return
     }
@@ -138,7 +144,7 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
         requestId,
         code: 40001,
         message: '无效的 chat.send 载荷',
-      })
+      }, requestStartAt)
       return
     }
 
@@ -163,12 +169,12 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
           ...result,
           clientMessageId,
         },
-      })
+      }, requestStartAt)
     } catch (error) {
       this.emitAck(client, {
         requestId,
         ...this.mapErrorToAck(error),
-      })
+      }, requestStartAt)
     }
   }
 
@@ -181,13 +187,16 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
     @ConnectedSocket() client: Socket,
     @MessageBody() body: WsRequestEnvelope<WsReadPayload>,
   ) {
+    const requestStartAt = Date.now()
+    this.recordRequestMetric()
+
     const requestId = this.normalizeRequestId(body?.requestId)
     if (!requestId) {
       this.emitAck(client, {
         requestId: null,
         code: 40001,
         message: 'requestId 不能为空',
-      })
+      }, requestStartAt)
       return
     }
 
@@ -197,7 +206,7 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
         requestId,
         code: 40101,
         message: '未授权',
-      })
+      }, requestStartAt)
       client.disconnect(true)
       return
     }
@@ -213,7 +222,7 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
         requestId,
         code: 40001,
         message: '无效的 chat.read 载荷',
-      })
+      }, requestStartAt)
       return
     }
 
@@ -230,12 +239,12 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
         code: 0,
         message: 'ok',
         data: result,
-      })
+      }, requestStartAt)
     } catch (error) {
       this.emitAck(client, {
         requestId,
         ...this.mapErrorToAck(error),
-      })
+      }, requestStartAt)
     }
   }
 
@@ -325,8 +334,12 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   /** 发送应答消息 */
-  private emitAck(client: Socket, payload: WsAckPayload) {
+  private emitAck(client: Socket, payload: WsAckPayload, requestStartAt?: number) {
     client.emit('chat.ack', payload)
+    if (Number.isFinite(requestStartAt)) {
+      const latencyMs = Math.max(0, Date.now() - Number(requestStartAt))
+      this.recordAckMetric(payload.code, latencyMs)
+    }
   }
 
   /** 标准化请求ID */
@@ -458,5 +471,37 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
       }
     }
     return fallback
+  }
+
+  private recordRequestMetric() {
+    void this.messageWsMonitorService.recordRequest().catch((error) => {
+      this.logger.warn(`记录 WS 请求监控失败: ${this.stringifyError(error)}`)
+    })
+  }
+
+  private recordAckMetric(code: number, latencyMs: number) {
+    void this.messageWsMonitorService.recordAck(code, latencyMs).catch((error) => {
+      this.logger.warn(`记录 WS ack 监控失败: ${this.stringifyError(error)}`)
+    })
+  }
+
+  private recordReconnectMetric() {
+    void this.messageWsMonitorService.recordReconnect().catch((error) => {
+      this.logger.warn(`记录 WS 连接监控失败: ${this.stringifyError(error)}`)
+    })
+  }
+
+  private stringifyError(error: unknown) {
+    if (error instanceof Error) {
+      return error.message
+    }
+    if (typeof error === 'string') {
+      return error
+    }
+    try {
+      return JSON.stringify(error)
+    } catch {
+      return 'unknown'
+    }
   }
 }

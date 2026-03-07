@@ -190,3 +190,89 @@ export class MessageOutboxMonitorSummaryDto {
   })
   topErrors: MessageOutboxErrorItemDto[]
 }
+
+export class QueryMessageWsMonitorDto {
+  @NumberProperty({
+    description: '统计窗口（小时）',
+    example: 24,
+    required: false,
+    default: 24,
+    min: 1,
+    max: 168,
+  })
+  windowHours?: number
+}
+
+export class MessageWsMonitorSummaryDto {
+  @DateProperty({
+    description: '快照时间',
+    example: '2026-03-07T12:00:00.000Z',
+  })
+  snapshotAt: Date
+
+  @DateProperty({
+    description: '统计窗口起始时间',
+    example: '2026-03-06T12:00:00.000Z',
+  })
+  windowStartAt: Date
+
+  @NumberProperty({
+    description: '统计窗口（小时）',
+    example: 24,
+  })
+  windowHours: number
+
+  @NumberProperty({
+    description: 'WS 请求总数',
+    example: 1200,
+  })
+  requestCount: number
+
+  @NumberProperty({
+    description: 'ack 成功数量',
+    example: 1180,
+  })
+  ackSuccessCount: number
+
+  @NumberProperty({
+    description: 'ack 失败数量',
+    example: 20,
+  })
+  ackErrorCount: number
+
+  @NumberProperty({
+    description: 'ack 成功率（0~1）',
+    example: 0.9833,
+  })
+  ackSuccessRate: number
+
+  @NumberProperty({
+    description: '平均 ack 延迟（毫秒）',
+    example: 12.4,
+  })
+  avgAckLatencyMs: number
+
+  @NumberProperty({
+    description: '连接/重连次数',
+    example: 85,
+  })
+  reconnectCount: number
+
+  @NumberProperty({
+    description: '补偿触发次数',
+    example: 16,
+  })
+  resyncTriggerCount: number
+
+  @NumberProperty({
+    description: '补偿成功次数',
+    example: 15,
+  })
+  resyncSuccessCount: number
+
+  @NumberProperty({
+    description: '补偿成功率（0~1）',
+    example: 0.9375,
+  })
+  resyncSuccessRate: number
+}

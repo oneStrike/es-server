@@ -9,6 +9,7 @@ import type {
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { MessageInboxService } from '../inbox/inbox.service'
+import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 import { MessageNotificationRealtimeService } from '../notification/notification-realtime.service'
 import {
   CHAT_MESSAGE_PAGE_LIMIT_DEFAULT,
@@ -39,6 +40,7 @@ export class MessageChatService extends BaseService {
   constructor(
     private readonly messageNotificationRealtimeService: MessageNotificationRealtimeService,
     private readonly messageInboxService: MessageInboxService,
+    private readonly messageWsMonitorService: MessageWsMonitorService,
   ) {
     super()
   }
@@ -253,6 +255,7 @@ export class MessageChatService extends BaseService {
 
     // afterSeq 模式：获取指定序列号之后的新消息（用于实时拉取）
     if (afterSeq !== undefined) {
+      this.recordResyncTriggeredMetric()
       const messages = await this.prisma.chatMessage.findMany({
         where: {
           conversationId,
@@ -268,6 +271,7 @@ export class MessageChatService extends BaseService {
       })
 
       const list = messages.map((item) => this.toMessageOutput(item))
+      this.recordResyncSuccessMetric()
       return {
         list,
         // 返回最后一条消息的序列号作为下次拉取的起点
@@ -610,21 +614,13 @@ export class MessageChatService extends BaseService {
 
           // 幂等性检查：如果提供了 clientMessageId，检查是否已存在相同消息
           if (clientMessageId) {
-            const existedMessage = await tx.chatMessage.findFirst({
+            const existedMessage = await tx.chatMessage.findUnique({
               where: {
-                conversationId,
-                senderId: userId,
-                status: {
-                  not: ChatMessageStatusEnum.DELETED,
+                conversationId_senderId_clientMessageId: {
+                  conversationId,
+                  senderId: userId,
+                  clientMessageId,
                 },
-                // 在 payload JSON 中查找 clientMessageId
-                payload: {
-                  path: ['clientMessageId'],
-                  equals: clientMessageId,
-                },
-              },
-              orderBy: {
-                messageSeq: 'asc',
               },
             })
             // 命中幂等：返回已存在的消息，不创建新消息
@@ -652,6 +648,7 @@ export class MessageChatService extends BaseService {
               conversationId,
               messageSeq: nextMessageSeq,
               senderId: userId,
+              clientMessageId,
               messageType,
               content,
               payload,
@@ -753,7 +750,7 @@ export class MessageChatService extends BaseService {
   /**
    * 根据 clientMessageId 查找消息
    *
-   * 用于幂等性检查，在 payload JSON 中匹配 clientMessageId
+   * 用于幂等性检查，通过唯一约束字段匹配 clientMessageId
    *
    * @param conversationId - 会话ID
    * @param userId - 发送者ID
@@ -765,20 +762,13 @@ export class MessageChatService extends BaseService {
     userId: number,
     clientMessageId: string,
   ) {
-    return this.prisma.chatMessage.findFirst({
+    return this.prisma.chatMessage.findUnique({
       where: {
-        conversationId,
-        senderId: userId,
-        status: {
-          not: ChatMessageStatusEnum.DELETED,
+        conversationId_senderId_clientMessageId: {
+          conversationId,
+          senderId: userId,
+          clientMessageId,
         },
-        payload: {
-          path: ['clientMessageId'],
-          equals: clientMessageId,
-        },
-      },
-      orderBy: {
-        messageSeq: 'asc',
       },
     })
   }
@@ -984,6 +974,7 @@ export class MessageChatService extends BaseService {
       conversationId: item.conversationId,
       messageSeq: item.messageSeq.toString(),
       senderId: item.senderId,
+      clientMessageId: item.clientMessageId ?? undefined,
       messageType: item.messageType,
       content: item.content,
       payload: item.payload ?? undefined,
@@ -1205,5 +1196,13 @@ export class MessageChatService extends BaseService {
       ...(payload as Prisma.JsonObject),
       clientMessageId,
     } as Prisma.InputJsonValue
+  }
+
+  private recordResyncTriggeredMetric() {
+    void this.messageWsMonitorService.recordResyncTriggered().catch(() => {})
+  }
+
+  private recordResyncSuccessMetric() {
+    void this.messageWsMonitorService.recordResyncSuccess().catch(() => {})
   }
 }

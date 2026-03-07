@@ -1,4 +1,7 @@
-import type { QueryMessageOutboxMonitorDto } from './dto/message-monitor.dto'
+import type {
+  QueryMessageOutboxMonitorDto,
+  QueryMessageWsMonitorDto,
+} from './dto/message-monitor.dto'
 import { BaseService, Prisma } from '@libs/base/database'
 import { MessageOutboxStatusEnum } from '@libs/message/outbox/outbox.constant'
 import { Injectable } from '@nestjs/common'
@@ -173,6 +176,59 @@ export class MessageMonitorService extends BaseService {
         message: item.message,
         count: Number(item.count),
       })),
+    }
+  }
+
+  async getWsMonitorSummary(query: QueryMessageWsMonitorDto) {
+    const now = new Date()
+    const windowHours = this.normalizeWindowHours(query.windowHours)
+    const windowStartAt = new Date(now.getTime() - windowHours * 60 * 60 * 1000)
+
+    const aggregate = await this.prisma.messageWsMetric.aggregate({
+      where: {
+        bucketAt: {
+          gte: windowStartAt,
+        },
+      },
+      _sum: {
+        requestCount: true,
+        ackSuccessCount: true,
+        ackErrorCount: true,
+        ackLatencyTotalMs: true,
+        reconnectCount: true,
+        resyncTriggerCount: true,
+        resyncSuccessCount: true,
+      },
+    })
+
+    const requestCount = aggregate._sum.requestCount ?? 0
+    const ackSuccessCount = aggregate._sum.ackSuccessCount ?? 0
+    const ackErrorCount = aggregate._sum.ackErrorCount ?? 0
+    const ackTotalCount = ackSuccessCount + ackErrorCount
+    const ackLatencyTotalMs = Number(aggregate._sum.ackLatencyTotalMs ?? 0n)
+    const reconnectCount = aggregate._sum.reconnectCount ?? 0
+    const resyncTriggerCount = aggregate._sum.resyncTriggerCount ?? 0
+    const resyncSuccessCount = aggregate._sum.resyncSuccessCount ?? 0
+
+    return {
+      snapshotAt: now,
+      windowStartAt,
+      windowHours,
+      requestCount,
+      ackSuccessCount,
+      ackErrorCount,
+      ackSuccessRate: ackTotalCount
+        ? Number((ackSuccessCount / ackTotalCount).toFixed(4))
+        : 0,
+      avgAckLatencyMs: ackTotalCount
+        ? Number((ackLatencyTotalMs / ackTotalCount).toFixed(4))
+        : 0,
+      reconnectCount,
+      resyncTriggerCount,
+      resyncSuccessCount,
+      resyncSuccessRate: resyncTriggerCount
+        ? Number((resyncSuccessCount / resyncTriggerCount).toFixed(4))
+        : 0,
     }
   }
 

@@ -2,12 +2,13 @@ import { JwtAuthModule } from '@libs/base/modules/auth'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { MessageInboxModule } from '../inbox/inbox.module'
+import { MessageMonitorModule } from '../monitor/monitor.module'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
 import { MessageGateway } from './notification.gateway'
 import { MessageNotificationService } from './notification.service'
 
 @Module({
-  imports: [ConfigModule, JwtAuthModule, MessageInboxModule],
+  imports: [ConfigModule, JwtAuthModule, MessageInboxModule, MessageMonitorModule],
   providers: [
     MessageGateway,
     MessageNotificationRealtimeService,

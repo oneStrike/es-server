@@ -906,7 +906,7 @@ export type $ChatConversationMemberPayload<ExtArgs extends runtime.Types.Extensi
      */
     userId: number
     /**
-     * 成员角色（OWNER/MEMBER）
+     * 成员角色（1=会话所有者,2=普通成员）
      */
     role: number
     /**

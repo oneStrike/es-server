@@ -84,6 +84,14 @@ export class BaseChatMessageDto {
   })
   content: string
 
+  @StringProperty({
+    description: '客户端幂等键',
+    example: 'cmsg_9d7a4a0b',
+    required: false,
+    maxLength: 64,
+  })
+  clientMessageId?: string
+
   @JsonProperty({
     description: '扩展载荷',
     example: '{"image":"https://example.com/a.png"}',

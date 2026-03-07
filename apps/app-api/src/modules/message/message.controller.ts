@@ -6,7 +6,6 @@ import {
   BaseUserNotificationDto,
   InboxSummaryDto,
   InboxTimelineItemDto,
-  MarkConversationReadDto,
   MessageChatService,
   MessageInboxService,
   MessageNotificationService,
@@ -16,7 +15,6 @@ import {
   QueryChatConversationMessagesDto,
   QueryInboxTimelineDto,
   QueryUserNotificationListDto,
-  SendChatMessageDto,
 } from '@libs/message'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -107,29 +105,6 @@ export class MessageController {
     @CurrentUser('sub') userId: number,
   ) {
     return this.messageChatService.getConversationMessages(userId, query)
-  }
-
-  @Post('chat/conversation/send')
-  @ApiDoc({
-    summary: '发送会话消息',
-    model: IdDto,
-  })
-  async sendMessage(
-    @Body() body: SendChatMessageDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.messageChatService.sendMessage(userId, body)
-  }
-
-  @Post('chat/conversation/read')
-  @ApiDoc({
-    summary: '标记会话已读到某条消息',
-  })
-  async markConversationRead(
-    @Body() body: MarkConversationReadDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.messageChatService.markConversationRead(userId, body)
   }
 
   @Get('inbox/summary')

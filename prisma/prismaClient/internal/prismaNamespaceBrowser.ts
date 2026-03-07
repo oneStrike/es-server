@@ -98,6 +98,7 @@ export const ModelName = {
   ChatConversation: 'ChatConversation',
   ChatMessage: 'ChatMessage',
   MessageOutbox: 'MessageOutbox',
+  MessageWsMetric: 'MessageWsMetric',
   UserNotification: 'UserNotification',
   RequestLog: 'RequestLog',
   SensitiveWord: 'SensitiveWord',
@@ -935,6 +936,7 @@ export const ChatMessageScalarFieldEnum = {
   conversationId: 'conversationId',
   messageSeq: 'messageSeq',
   senderId: 'senderId',
+  clientMessageId: 'clientMessageId',
   messageType: 'messageType',
   content: 'content',
   payload: 'payload',
@@ -962,6 +964,23 @@ export const MessageOutboxScalarFieldEnum = {
 } as const
 
 export type MessageOutboxScalarFieldEnum = (typeof MessageOutboxScalarFieldEnum)[keyof typeof MessageOutboxScalarFieldEnum]
+
+
+export const MessageWsMetricScalarFieldEnum = {
+  id: 'id',
+  bucketAt: 'bucketAt',
+  requestCount: 'requestCount',
+  ackSuccessCount: 'ackSuccessCount',
+  ackErrorCount: 'ackErrorCount',
+  ackLatencyTotalMs: 'ackLatencyTotalMs',
+  reconnectCount: 'reconnectCount',
+  resyncTriggerCount: 'resyncTriggerCount',
+  resyncSuccessCount: 'resyncSuccessCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MessageWsMetricScalarFieldEnum = (typeof MessageWsMetricScalarFieldEnum)[keyof typeof MessageWsMetricScalarFieldEnum]
 
 
 export const UserNotificationScalarFieldEnum = {

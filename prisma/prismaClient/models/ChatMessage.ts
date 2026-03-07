@@ -49,6 +49,7 @@ export type ChatMessageMinAggregateOutputType = {
   conversationId: number | null
   messageSeq: bigint | null
   senderId: number | null
+  clientMessageId: string | null
   messageType: number | null
   content: string | null
   status: number | null
@@ -62,6 +63,7 @@ export type ChatMessageMaxAggregateOutputType = {
   conversationId: number | null
   messageSeq: bigint | null
   senderId: number | null
+  clientMessageId: string | null
   messageType: number | null
   content: string | null
   status: number | null
@@ -75,6 +77,7 @@ export type ChatMessageCountAggregateOutputType = {
   conversationId: number
   messageSeq: number
   senderId: number
+  clientMessageId: number
   messageType: number
   content: number
   payload: number
@@ -109,6 +112,7 @@ export type ChatMessageMinAggregateInputType = {
   conversationId?: true
   messageSeq?: true
   senderId?: true
+  clientMessageId?: true
   messageType?: true
   content?: true
   status?: true
@@ -122,6 +126,7 @@ export type ChatMessageMaxAggregateInputType = {
   conversationId?: true
   messageSeq?: true
   senderId?: true
+  clientMessageId?: true
   messageType?: true
   content?: true
   status?: true
@@ -135,6 +140,7 @@ export type ChatMessageCountAggregateInputType = {
   conversationId?: true
   messageSeq?: true
   senderId?: true
+  clientMessageId?: true
   messageType?: true
   content?: true
   payload?: true
@@ -236,6 +242,7 @@ export type ChatMessageGroupByOutputType = {
   conversationId: number
   messageSeq: bigint
   senderId: number
+  clientMessageId: string | null
   messageType: number
   content: string
   payload: runtime.JsonValue | null
@@ -273,6 +280,7 @@ export type ChatMessageWhereInput = {
   conversationId?: Prisma.IntFilter<"ChatMessage"> | number
   messageSeq?: Prisma.BigIntFilter<"ChatMessage"> | bigint | number
   senderId?: Prisma.IntFilter<"ChatMessage"> | number
+  clientMessageId?: Prisma.StringNullableFilter<"ChatMessage"> | string | null
   messageType?: Prisma.IntFilter<"ChatMessage"> | number
   content?: Prisma.StringFilter<"ChatMessage"> | string
   payload?: Prisma.JsonNullableFilter<"ChatMessage">
@@ -289,6 +297,7 @@ export type ChatMessageOrderByWithRelationInput = {
   conversationId?: Prisma.SortOrder
   messageSeq?: Prisma.SortOrder
   senderId?: Prisma.SortOrder
+  clientMessageId?: Prisma.SortOrderInput | Prisma.SortOrder
   messageType?: Prisma.SortOrder
   content?: Prisma.SortOrder
   payload?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -303,12 +312,14 @@ export type ChatMessageOrderByWithRelationInput = {
 export type ChatMessageWhereUniqueInput = Prisma.AtLeast<{
   id?: bigint | number
   conversationId_messageSeq?: Prisma.ChatMessageConversationIdMessageSeqCompoundUniqueInput
+  conversationId_senderId_clientMessageId?: Prisma.ChatMessageConversationIdSenderIdClientMessageIdCompoundUniqueInput
   AND?: Prisma.ChatMessageWhereInput | Prisma.ChatMessageWhereInput[]
   OR?: Prisma.ChatMessageWhereInput[]
   NOT?: Prisma.ChatMessageWhereInput | Prisma.ChatMessageWhereInput[]
   conversationId?: Prisma.IntFilter<"ChatMessage"> | number
   messageSeq?: Prisma.BigIntFilter<"ChatMessage"> | bigint | number
   senderId?: Prisma.IntFilter<"ChatMessage"> | number
+  clientMessageId?: Prisma.StringNullableFilter<"ChatMessage"> | string | null
   messageType?: Prisma.IntFilter<"ChatMessage"> | number
   content?: Prisma.StringFilter<"ChatMessage"> | string
   payload?: Prisma.JsonNullableFilter<"ChatMessage">
@@ -318,13 +329,14 @@ export type ChatMessageWhereUniqueInput = Prisma.AtLeast<{
   revokedAt?: Prisma.DateTimeNullableFilter<"ChatMessage"> | Date | string | null
   conversation?: Prisma.XOR<Prisma.ChatConversationScalarRelationFilter, Prisma.ChatConversationWhereInput>
   sender?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
-}, "id" | "conversationId_messageSeq">
+}, "id" | "conversationId_messageSeq" | "conversationId_senderId_clientMessageId">
 
 export type ChatMessageOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   conversationId?: Prisma.SortOrder
   messageSeq?: Prisma.SortOrder
   senderId?: Prisma.SortOrder
+  clientMessageId?: Prisma.SortOrderInput | Prisma.SortOrder
   messageType?: Prisma.SortOrder
   content?: Prisma.SortOrder
   payload?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -347,6 +359,7 @@ export type ChatMessageScalarWhereWithAggregatesInput = {
   conversationId?: Prisma.IntWithAggregatesFilter<"ChatMessage"> | number
   messageSeq?: Prisma.BigIntWithAggregatesFilter<"ChatMessage"> | bigint | number
   senderId?: Prisma.IntWithAggregatesFilter<"ChatMessage"> | number
+  clientMessageId?: Prisma.StringNullableWithAggregatesFilter<"ChatMessage"> | string | null
   messageType?: Prisma.IntWithAggregatesFilter<"ChatMessage"> | number
   content?: Prisma.StringWithAggregatesFilter<"ChatMessage"> | string
   payload?: Prisma.JsonNullableWithAggregatesFilter<"ChatMessage">
@@ -359,6 +372,7 @@ export type ChatMessageScalarWhereWithAggregatesInput = {
 export type ChatMessageCreateInput = {
   id?: bigint | number
   messageSeq: bigint | number
+  clientMessageId?: string | null
   messageType: number
   content: string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -375,6 +389,7 @@ export type ChatMessageUncheckedCreateInput = {
   conversationId: number
   messageSeq: bigint | number
   senderId: number
+  clientMessageId?: string | null
   messageType: number
   content: string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -387,6 +402,7 @@ export type ChatMessageUncheckedCreateInput = {
 export type ChatMessageUpdateInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -403,6 +419,7 @@ export type ChatMessageUncheckedUpdateInput = {
   conversationId?: Prisma.IntFieldUpdateOperationsInput | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   senderId?: Prisma.IntFieldUpdateOperationsInput | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -417,6 +434,7 @@ export type ChatMessageCreateManyInput = {
   conversationId: number
   messageSeq: bigint | number
   senderId: number
+  clientMessageId?: string | null
   messageType: number
   content: string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -429,6 +447,7 @@ export type ChatMessageCreateManyInput = {
 export type ChatMessageUpdateManyMutationInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -443,6 +462,7 @@ export type ChatMessageUncheckedUpdateManyInput = {
   conversationId?: Prisma.IntFieldUpdateOperationsInput | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   senderId?: Prisma.IntFieldUpdateOperationsInput | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -467,11 +487,18 @@ export type ChatMessageConversationIdMessageSeqCompoundUniqueInput = {
   messageSeq: bigint | number
 }
 
+export type ChatMessageConversationIdSenderIdClientMessageIdCompoundUniqueInput = {
+  conversationId: number
+  senderId: number
+  clientMessageId: string
+}
+
 export type ChatMessageCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   conversationId?: Prisma.SortOrder
   messageSeq?: Prisma.SortOrder
   senderId?: Prisma.SortOrder
+  clientMessageId?: Prisma.SortOrder
   messageType?: Prisma.SortOrder
   content?: Prisma.SortOrder
   payload?: Prisma.SortOrder
@@ -495,6 +522,7 @@ export type ChatMessageMaxOrderByAggregateInput = {
   conversationId?: Prisma.SortOrder
   messageSeq?: Prisma.SortOrder
   senderId?: Prisma.SortOrder
+  clientMessageId?: Prisma.SortOrder
   messageType?: Prisma.SortOrder
   content?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -508,6 +536,7 @@ export type ChatMessageMinOrderByAggregateInput = {
   conversationId?: Prisma.SortOrder
   messageSeq?: Prisma.SortOrder
   senderId?: Prisma.SortOrder
+  clientMessageId?: Prisma.SortOrder
   messageType?: Prisma.SortOrder
   content?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -612,6 +641,7 @@ export type ChatMessageUncheckedUpdateManyWithoutConversationNestedInput = {
 export type ChatMessageCreateWithoutSenderInput = {
   id?: bigint | number
   messageSeq: bigint | number
+  clientMessageId?: string | null
   messageType: number
   content: string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -626,6 +656,7 @@ export type ChatMessageUncheckedCreateWithoutSenderInput = {
   id?: bigint | number
   conversationId: number
   messageSeq: bigint | number
+  clientMessageId?: string | null
   messageType: number
   content: string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -669,6 +700,7 @@ export type ChatMessageScalarWhereInput = {
   conversationId?: Prisma.IntFilter<"ChatMessage"> | number
   messageSeq?: Prisma.BigIntFilter<"ChatMessage"> | bigint | number
   senderId?: Prisma.IntFilter<"ChatMessage"> | number
+  clientMessageId?: Prisma.StringNullableFilter<"ChatMessage"> | string | null
   messageType?: Prisma.IntFilter<"ChatMessage"> | number
   content?: Prisma.StringFilter<"ChatMessage"> | string
   payload?: Prisma.JsonNullableFilter<"ChatMessage">
@@ -681,6 +713,7 @@ export type ChatMessageScalarWhereInput = {
 export type ChatMessageCreateWithoutConversationInput = {
   id?: bigint | number
   messageSeq: bigint | number
+  clientMessageId?: string | null
   messageType: number
   content: string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -695,6 +728,7 @@ export type ChatMessageUncheckedCreateWithoutConversationInput = {
   id?: bigint | number
   messageSeq: bigint | number
   senderId: number
+  clientMessageId?: string | null
   messageType: number
   content: string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -734,6 +768,7 @@ export type ChatMessageCreateManySenderInput = {
   id?: bigint | number
   conversationId: number
   messageSeq: bigint | number
+  clientMessageId?: string | null
   messageType: number
   content: string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -746,6 +781,7 @@ export type ChatMessageCreateManySenderInput = {
 export type ChatMessageUpdateWithoutSenderInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -760,6 +796,7 @@ export type ChatMessageUncheckedUpdateWithoutSenderInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   conversationId?: Prisma.IntFieldUpdateOperationsInput | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -773,6 +810,7 @@ export type ChatMessageUncheckedUpdateManyWithoutSenderInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   conversationId?: Prisma.IntFieldUpdateOperationsInput | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -786,6 +824,7 @@ export type ChatMessageCreateManyConversationInput = {
   id?: bigint | number
   messageSeq: bigint | number
   senderId: number
+  clientMessageId?: string | null
   messageType: number
   content: string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -798,6 +837,7 @@ export type ChatMessageCreateManyConversationInput = {
 export type ChatMessageUpdateWithoutConversationInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -812,6 +852,7 @@ export type ChatMessageUncheckedUpdateWithoutConversationInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   senderId?: Prisma.IntFieldUpdateOperationsInput | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -825,6 +866,7 @@ export type ChatMessageUncheckedUpdateManyWithoutConversationInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   messageSeq?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   senderId?: Prisma.IntFieldUpdateOperationsInput | number
+  clientMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   messageType?: Prisma.IntFieldUpdateOperationsInput | number
   content?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
@@ -841,6 +883,7 @@ export type ChatMessageSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   conversationId?: boolean
   messageSeq?: boolean
   senderId?: boolean
+  clientMessageId?: boolean
   messageType?: boolean
   content?: boolean
   payload?: boolean
@@ -857,6 +900,7 @@ export type ChatMessageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   conversationId?: boolean
   messageSeq?: boolean
   senderId?: boolean
+  clientMessageId?: boolean
   messageType?: boolean
   content?: boolean
   payload?: boolean
@@ -873,6 +917,7 @@ export type ChatMessageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   conversationId?: boolean
   messageSeq?: boolean
   senderId?: boolean
+  clientMessageId?: boolean
   messageType?: boolean
   content?: boolean
   payload?: boolean
@@ -889,6 +934,7 @@ export type ChatMessageSelectScalar = {
   conversationId?: boolean
   messageSeq?: boolean
   senderId?: boolean
+  clientMessageId?: boolean
   messageType?: boolean
   content?: boolean
   payload?: boolean
@@ -898,7 +944,7 @@ export type ChatMessageSelectScalar = {
   revokedAt?: boolean
 }
 
-export type ChatMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "messageSeq" | "senderId" | "messageType" | "content" | "payload" | "status" | "createdAt" | "editedAt" | "revokedAt", ExtArgs["result"]["chatMessage"]>
+export type ChatMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "conversationId" | "messageSeq" | "senderId" | "clientMessageId" | "messageType" | "content" | "payload" | "status" | "createdAt" | "editedAt" | "revokedAt", ExtArgs["result"]["chatMessage"]>
 export type ChatMessageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   conversation?: boolean | Prisma.ChatConversationDefaultArgs<ExtArgs>
   sender?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -942,7 +988,11 @@ export type $ChatMessagePayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     senderId: number
     /**
-     * 消息类型（TEXT/IMAGE/SYSTEM）
+     * 客户端幂等键（同发送者同会话下唯一）
+     */
+    clientMessageId: string | null
+    /**
+     * 消息类型（1=文本,2=图片,3=系统）
      */
     messageType: number
     /**
@@ -954,7 +1004,7 @@ export type $ChatMessagePayload<ExtArgs extends runtime.Types.Extensions.Interna
      */
     payload: runtime.JsonValue | null
     /**
-     * 消息状态（NORMAL/REVOKED/DELETED）
+     * 消息状态（1=正常,2=撤回,3=删除）
      */
     status: number
     /**
@@ -1398,6 +1448,7 @@ export interface ChatMessageFieldRefs {
   readonly conversationId: Prisma.FieldRef<"ChatMessage", 'Int'>
   readonly messageSeq: Prisma.FieldRef<"ChatMessage", 'BigInt'>
   readonly senderId: Prisma.FieldRef<"ChatMessage", 'Int'>
+  readonly clientMessageId: Prisma.FieldRef<"ChatMessage", 'String'>
   readonly messageType: Prisma.FieldRef<"ChatMessage", 'Int'>
   readonly content: Prisma.FieldRef<"ChatMessage", 'String'>
   readonly payload: Prisma.FieldRef<"ChatMessage", 'Json'>

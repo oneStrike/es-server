@@ -1,6 +1,15 @@
-import { AuditStatusEnum, UserStatusEnum } from '@libs/base/constant'
+import {
+  AuditStatusEnum,
+  InteractionTargetTypeEnum,
+  UserStatusEnum,
+} from '@libs/base/constant'
 
 import { BaseService } from '@libs/base/database'
+import {
+  MessageNotificationSubjectTypeEnum,
+  MessageNotificationTypeEnum,
+  MessageOutboxService,
+} from '@libs/message'
 import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
@@ -14,7 +23,6 @@ import {
 } from '../action-log/action-log.constant'
 import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import { ForumNotificationService } from '../notification/notification.service'
 import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
 
 /**
@@ -24,7 +32,7 @@ import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
 @Injectable()
 export class ForumReplyService extends BaseService {
   constructor(
-    private readonly notificationService: ForumNotificationService,
+    private readonly messageOutboxService: MessageOutboxService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
     private readonly actionLogService: ForumUserActionLogService,
@@ -192,14 +200,24 @@ export class ForumReplyService extends BaseService {
         })
 
         if (replyTo && replyTo.userId !== userId) {
-          await this.notificationService.createReplyNotification({
-            userId: replyTo.userId,
-            title: '收到新回复',
-            content: `${user.nickname || '用户'} 回复了你的内容`,
-            topicId,
-            replyId: reply.id,
-            isRead: false,
-          })
+          await this.messageOutboxService.enqueueNotificationEvent(
+            {
+              eventType: MessageNotificationTypeEnum.COMMENT_REPLY,
+              bizKey: `notify:forum:reply:${reply.id}:receiver:${replyTo.userId}`,
+              payload: {
+                receiverUserId: replyTo.userId,
+                actorUserId: userId,
+                type: MessageNotificationTypeEnum.COMMENT_REPLY,
+                targetType: InteractionTargetTypeEnum.FORUM_TOPIC,
+                targetId: topicId,
+                subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
+                subjectId: reply.id,
+                title: '收到新回复',
+                content: `${user.nickname || '用户'} 回复了你的内容`,
+              },
+            },
+            tx,
+          )
         }
       }
 

@@ -274,6 +274,11 @@ export type ChatMessage = Prisma.ChatMessageModel
  */
 export type MessageOutbox = Prisma.MessageOutboxModel
 /**
+ * Model MessageWsMetric
+ * WebSocket 监控分钟聚合表
+ */
+export type MessageWsMetric = Prisma.MessageWsMetricModel
+/**
  * Model UserNotification
  * 用户通知表
  * 统一承载站内通知（回复/点赞/收藏/关注/系统消息）

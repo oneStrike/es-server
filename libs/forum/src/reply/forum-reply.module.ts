@@ -1,9 +1,9 @@
+import { MessageModule } from '@libs/message'
 import { SensitiveWordModule } from '@libs/sensitive-word'
 import { UserGrowthRewardModule } from '@libs/user/growth-reward'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
-import { ForumNotificationModule } from '../notification/notification.module'
 import { ForumReplyService } from './forum-reply.service'
 
 /**
@@ -12,7 +12,7 @@ import { ForumReplyService } from './forum-reply.service'
  */
 @Module({
   imports: [
-    ForumNotificationModule,
+    MessageModule,
     SensitiveWordModule,
     ForumCounterModule,
     ForumUserActionLogModule,

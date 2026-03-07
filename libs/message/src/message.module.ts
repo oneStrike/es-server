@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { MessageChatModule } from './chat/chat.module'
 import { MessageInboxModule } from './inbox/inbox.module'
+import { MessageMonitorModule } from './monitor/monitor.module'
 import { MessageNotificationModule } from './notification/notification.module'
 import { MessageOutboxModule } from './outbox/outbox.module'
 
@@ -11,12 +12,14 @@ import { MessageOutboxModule } from './outbox/outbox.module'
 @Module({
   imports: [
     MessageInboxModule,
+    MessageMonitorModule,
     MessageNotificationModule,
     MessageOutboxModule,
     MessageChatModule,
   ],
   exports: [
     MessageInboxModule,
+    MessageMonitorModule,
     MessageNotificationModule,
     MessageOutboxModule,
     MessageChatModule,

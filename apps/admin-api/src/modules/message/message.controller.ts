@@ -3,7 +3,9 @@ import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import {
   MessageOutboxMonitorSummaryDto,
+  MessageWsMonitorSummaryDto,
   QueryMessageOutboxMonitorDto,
+  QueryMessageWsMonitorDto,
 } from './dto/message-monitor.dto'
 import { MessageMonitorService } from './message-monitor.service'
 
@@ -19,5 +21,14 @@ export class MessageController {
   })
   async getOutboxMonitorSummary(@Query() query: QueryMessageOutboxMonitorDto) {
     return this.messageMonitorService.getOutboxMonitorSummary(query)
+  }
+
+  @Get('monitor/ws-summary')
+  @ApiDoc({
+    summary: '获取消息 WS 监控摘要',
+    model: MessageWsMonitorSummaryDto,
+  })
+  async getWsMonitorSummary(@Query() query: QueryMessageWsMonitorDto) {
+    return this.messageMonitorService.getWsMonitorSummary(query)
   }
 }

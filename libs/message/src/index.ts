@@ -13,6 +13,8 @@ export * from './inbox/dto/inbox.dto'
 export * from './inbox/inbox.module'
 export * from './inbox/inbox.service'
 export * from './message.module'
+export * from './monitor/monitor.module'
+export * from './monitor/ws-monitor.service'
 
 export * from './notification/dto/notification.dto'
 export * from './notification/notification-realtime.service'

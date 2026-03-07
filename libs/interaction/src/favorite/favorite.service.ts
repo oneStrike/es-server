@@ -1,6 +1,10 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
+  MessageNotificationTypeEnum,
+  MessageOutboxService,
+} from '@libs/message'
+import {
   BadRequestException,
   Injectable,
 } from '@nestjs/common'
@@ -8,7 +12,10 @@ import { CounterService } from '../counter/counter.service'
 
 @Injectable()
 export class FavoriteService extends BaseService {
-  constructor(private readonly counterService: CounterService) {
+  constructor(
+    private readonly counterService: CounterService,
+    private readonly messageOutboxService: MessageOutboxService,
+  ) {
     super()
   }
 
@@ -72,6 +79,30 @@ export class FavoriteService extends BaseService {
         'favoriteCount',
         1,
       )
+
+      const receiverUserId = await this.resolveReceiverUserId(
+        tx,
+        targetType,
+        targetId,
+      )
+      if (receiverUserId && receiverUserId !== userId) {
+        await this.messageOutboxService.enqueueNotificationEvent(
+          {
+            eventType: MessageNotificationTypeEnum.CONTENT_FAVORITE,
+            bizKey: `notify:favorite:${targetType}:${targetId}:actor:${userId}:receiver:${receiverUserId}`,
+            payload: {
+              receiverUserId,
+              actorUserId: userId,
+              type: MessageNotificationTypeEnum.CONTENT_FAVORITE,
+              targetType,
+              targetId,
+              title: '你的内容被收藏了',
+              content: '有人收藏了你的内容',
+            },
+          },
+          tx,
+        )
+      }
     })
   }
 
@@ -148,5 +179,20 @@ export class FavoriteService extends BaseService {
         createdAt: true,
       },
     })
+  }
+
+  private async resolveReceiverUserId(
+    tx: any,
+    targetType: InteractionTargetTypeEnum,
+    targetId: number,
+  ) {
+    if (targetType === InteractionTargetTypeEnum.FORUM_TOPIC) {
+      const topic = await tx.forumTopic.findUnique({
+        where: { id: targetId },
+        select: { userId: true },
+      })
+      return topic?.userId
+    }
+    return undefined
   }
 }

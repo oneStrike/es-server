@@ -431,6 +431,7 @@ export const ModelName = {
   ChatConversation: 'ChatConversation',
   ChatMessage: 'ChatMessage',
   MessageOutbox: 'MessageOutbox',
+  MessageWsMetric: 'MessageWsMetric',
   UserNotification: 'UserNotification',
   RequestLog: 'RequestLog',
   SensitiveWord: 'SensitiveWord',
@@ -462,7 +463,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthorRelation" | "workAuthor" | "workCategoryRelation" | "workCategory" | "workChapter" | "workComic" | "workNovel" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "messageWsMetric" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthorRelation" | "workAuthor" | "workCategoryRelation" | "workCategory" | "workChapter" | "workComic" | "workNovel" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3944,6 +3945,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MessageWsMetric: {
+      payload: Prisma.$MessageWsMetricPayload<ExtArgs>
+      fields: Prisma.MessageWsMetricFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MessageWsMetricFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MessageWsMetricFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload>
+        }
+        findFirst: {
+          args: Prisma.MessageWsMetricFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MessageWsMetricFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload>
+        }
+        findMany: {
+          args: Prisma.MessageWsMetricFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload>[]
+        }
+        create: {
+          args: Prisma.MessageWsMetricCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload>
+        }
+        createMany: {
+          args: Prisma.MessageWsMetricCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MessageWsMetricCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload>[]
+        }
+        delete: {
+          args: Prisma.MessageWsMetricDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload>
+        }
+        update: {
+          args: Prisma.MessageWsMetricUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload>
+        }
+        deleteMany: {
+          args: Prisma.MessageWsMetricDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MessageWsMetricUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MessageWsMetricUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload>[]
+        }
+        upsert: {
+          args: Prisma.MessageWsMetricUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageWsMetricPayload>
+        }
+        aggregate: {
+          args: Prisma.MessageWsMetricAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMessageWsMetric>
+        }
+        groupBy: {
+          args: Prisma.MessageWsMetricGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MessageWsMetricGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MessageWsMetricCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MessageWsMetricCountAggregateOutputType> | number
+        }
+      }
+    }
     UserNotification: {
       payload: Prisma.$UserNotificationPayload<ExtArgs>
       fields: Prisma.UserNotificationFieldRefs
@@ -5970,6 +6045,7 @@ export const ChatMessageScalarFieldEnum = {
   conversationId: 'conversationId',
   messageSeq: 'messageSeq',
   senderId: 'senderId',
+  clientMessageId: 'clientMessageId',
   messageType: 'messageType',
   content: 'content',
   payload: 'payload',
@@ -5997,6 +6073,23 @@ export const MessageOutboxScalarFieldEnum = {
 } as const
 
 export type MessageOutboxScalarFieldEnum = (typeof MessageOutboxScalarFieldEnum)[keyof typeof MessageOutboxScalarFieldEnum]
+
+
+export const MessageWsMetricScalarFieldEnum = {
+  id: 'id',
+  bucketAt: 'bucketAt',
+  requestCount: 'requestCount',
+  ackSuccessCount: 'ackSuccessCount',
+  ackErrorCount: 'ackErrorCount',
+  ackLatencyTotalMs: 'ackLatencyTotalMs',
+  reconnectCount: 'reconnectCount',
+  resyncTriggerCount: 'resyncTriggerCount',
+  resyncSuccessCount: 'resyncSuccessCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MessageWsMetricScalarFieldEnum = (typeof MessageWsMetricScalarFieldEnum)[keyof typeof MessageWsMetricScalarFieldEnum]
 
 
 export const UserNotificationScalarFieldEnum = {
@@ -6594,6 +6687,7 @@ export type GlobalOmitConfig = {
   chatConversation?: Prisma.ChatConversationOmit
   chatMessage?: Prisma.ChatMessageOmit
   messageOutbox?: Prisma.MessageOutboxOmit
+  messageWsMetric?: Prisma.MessageWsMetricOmit
   userNotification?: Prisma.UserNotificationOmit
   requestLog?: Prisma.RequestLogOmit
   sensitiveWord?: Prisma.SensitiveWordOmit

@@ -8,7 +8,6 @@ import { ForumConfigModule } from './config'
 import { ForumCounterModule } from './counter'
 import { ForumInteractionModule } from './interaction'
 import { ForumModeratorModule } from './moderator'
-import { ForumNotificationModule } from './notification'
 import { ForumProfileModule } from './profile'
 import { ForumReplyModule } from './reply'
 import { ForumReplyLikeModule } from './reply-like'
@@ -28,7 +27,6 @@ import { ForumTopicModule } from './topic'
     UserExperienceModule,
     UserLevelRuleModule,
     ForumModeratorModule,
-    ForumNotificationModule,
     UserPointModule,
     ForumProfileModule,
     ForumReplyModule,
@@ -48,7 +46,6 @@ import { ForumTopicModule } from './topic'
     UserExperienceModule,
     UserLevelRuleModule,
     ForumModeratorModule,
-    ForumNotificationModule,
     UserPointModule,
     ForumProfileModule,
     ForumReplyModule,

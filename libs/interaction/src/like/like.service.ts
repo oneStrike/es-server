@@ -1,6 +1,10 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
+  MessageNotificationTypeEnum,
+  MessageOutboxService,
+} from '@libs/message'
+import {
   BadRequestException,
   Injectable,
 } from '@nestjs/common'
@@ -8,7 +12,10 @@ import { CounterService } from '../counter/counter.service'
 
 @Injectable()
 export class LikeService extends BaseService {
-  constructor(private readonly counterService: CounterService) {
+  constructor(
+    private readonly counterService: CounterService,
+    private readonly messageOutboxService: MessageOutboxService,
+  ) {
     super()
   }
 
@@ -107,6 +114,30 @@ export class LikeService extends BaseService {
         'likeCount',
         1,
       )
+
+      const receiverUserId = await this.resolveReceiverUserId(
+        tx,
+        targetType,
+        targetId,
+      )
+      if (receiverUserId && receiverUserId !== userId) {
+        await this.messageOutboxService.enqueueNotificationEvent(
+          {
+            eventType: MessageNotificationTypeEnum.COMMENT_LIKE,
+            bizKey: `notify:like:${targetType}:${targetId}:actor:${userId}:receiver:${receiverUserId}`,
+            payload: {
+              receiverUserId,
+              actorUserId: userId,
+              type: MessageNotificationTypeEnum.COMMENT_LIKE,
+              targetType,
+              targetId,
+              title: '你的内容收到了点赞',
+              content: '有人点赞了你的内容',
+            },
+          },
+          tx,
+        )
+      }
     })
   }
 
@@ -183,5 +214,20 @@ export class LikeService extends BaseService {
         createdAt: true,
       },
     })
+  }
+
+  private async resolveReceiverUserId(
+    tx: any,
+    targetType: InteractionTargetTypeEnum,
+    targetId: number,
+  ) {
+    if (targetType === InteractionTargetTypeEnum.FORUM_TOPIC) {
+      const topic = await tx.forumTopic.findUnique({
+        where: { id: targetId },
+        select: { userId: true },
+      })
+      return topic?.userId
+    }
+    return undefined
   }
 }
