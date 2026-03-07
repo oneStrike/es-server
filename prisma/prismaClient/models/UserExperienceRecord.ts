@@ -30,7 +30,6 @@ export type UserExperienceRecordAvgAggregateOutputType = {
   id: number | null
   userId: number | null
   ruleId: number | null
-  eventId: number | null
   experience: number | null
   beforeExperience: number | null
   afterExperience: number | null
@@ -40,7 +39,6 @@ export type UserExperienceRecordSumAggregateOutputType = {
   id: number | null
   userId: number | null
   ruleId: number | null
-  eventId: number | null
   experience: number | null
   beforeExperience: number | null
   afterExperience: number | null
@@ -50,7 +48,6 @@ export type UserExperienceRecordMinAggregateOutputType = {
   id: number | null
   userId: number | null
   ruleId: number | null
-  eventId: number | null
   experience: number | null
   beforeExperience: number | null
   afterExperience: number | null
@@ -63,7 +60,6 @@ export type UserExperienceRecordMaxAggregateOutputType = {
   id: number | null
   userId: number | null
   ruleId: number | null
-  eventId: number | null
   experience: number | null
   beforeExperience: number | null
   afterExperience: number | null
@@ -76,7 +72,6 @@ export type UserExperienceRecordCountAggregateOutputType = {
   id: number
   userId: number
   ruleId: number
-  eventId: number
   experience: number
   beforeExperience: number
   afterExperience: number
@@ -91,7 +86,6 @@ export type UserExperienceRecordAvgAggregateInputType = {
   id?: true
   userId?: true
   ruleId?: true
-  eventId?: true
   experience?: true
   beforeExperience?: true
   afterExperience?: true
@@ -101,7 +95,6 @@ export type UserExperienceRecordSumAggregateInputType = {
   id?: true
   userId?: true
   ruleId?: true
-  eventId?: true
   experience?: true
   beforeExperience?: true
   afterExperience?: true
@@ -111,7 +104,6 @@ export type UserExperienceRecordMinAggregateInputType = {
   id?: true
   userId?: true
   ruleId?: true
-  eventId?: true
   experience?: true
   beforeExperience?: true
   afterExperience?: true
@@ -124,7 +116,6 @@ export type UserExperienceRecordMaxAggregateInputType = {
   id?: true
   userId?: true
   ruleId?: true
-  eventId?: true
   experience?: true
   beforeExperience?: true
   afterExperience?: true
@@ -137,7 +128,6 @@ export type UserExperienceRecordCountAggregateInputType = {
   id?: true
   userId?: true
   ruleId?: true
-  eventId?: true
   experience?: true
   beforeExperience?: true
   afterExperience?: true
@@ -237,7 +227,6 @@ export type UserExperienceRecordGroupByOutputType = {
   id: number
   userId: number
   ruleId: number | null
-  eventId: number | null
   experience: number
   beforeExperience: number
   afterExperience: number
@@ -273,7 +262,6 @@ export type UserExperienceRecordWhereInput = {
   id?: Prisma.IntFilter<"UserExperienceRecord"> | number
   userId?: Prisma.IntFilter<"UserExperienceRecord"> | number
   ruleId?: Prisma.IntNullableFilter<"UserExperienceRecord"> | number | null
-  eventId?: Prisma.IntNullableFilter<"UserExperienceRecord"> | number | null
   experience?: Prisma.IntFilter<"UserExperienceRecord"> | number
   beforeExperience?: Prisma.IntFilter<"UserExperienceRecord"> | number
   afterExperience?: Prisma.IntFilter<"UserExperienceRecord"> | number
@@ -281,7 +269,6 @@ export type UserExperienceRecordWhereInput = {
   remark?: Prisma.StringNullableFilter<"UserExperienceRecord"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserExperienceRecord"> | Date | string
   rule?: Prisma.XOR<Prisma.UserExperienceRuleNullableScalarRelationFilter, Prisma.UserExperienceRuleWhereInput> | null
-  event?: Prisma.XOR<Prisma.UserGrowthEventNullableScalarRelationFilter, Prisma.UserGrowthEventWhereInput> | null
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
 }
 
@@ -289,7 +276,6 @@ export type UserExperienceRecordOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrderInput | Prisma.SortOrder
-  eventId?: Prisma.SortOrderInput | Prisma.SortOrder
   experience?: Prisma.SortOrder
   beforeExperience?: Prisma.SortOrder
   afterExperience?: Prisma.SortOrder
@@ -297,7 +283,6 @@ export type UserExperienceRecordOrderByWithRelationInput = {
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   rule?: Prisma.UserExperienceRuleOrderByWithRelationInput
-  event?: Prisma.UserGrowthEventOrderByWithRelationInput
   user?: Prisma.AppUserOrderByWithRelationInput
 }
 
@@ -308,7 +293,6 @@ export type UserExperienceRecordWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserExperienceRecordWhereInput | Prisma.UserExperienceRecordWhereInput[]
   userId?: Prisma.IntFilter<"UserExperienceRecord"> | number
   ruleId?: Prisma.IntNullableFilter<"UserExperienceRecord"> | number | null
-  eventId?: Prisma.IntNullableFilter<"UserExperienceRecord"> | number | null
   experience?: Prisma.IntFilter<"UserExperienceRecord"> | number
   beforeExperience?: Prisma.IntFilter<"UserExperienceRecord"> | number
   afterExperience?: Prisma.IntFilter<"UserExperienceRecord"> | number
@@ -316,7 +300,6 @@ export type UserExperienceRecordWhereUniqueInput = Prisma.AtLeast<{
   remark?: Prisma.StringNullableFilter<"UserExperienceRecord"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserExperienceRecord"> | Date | string
   rule?: Prisma.XOR<Prisma.UserExperienceRuleNullableScalarRelationFilter, Prisma.UserExperienceRuleWhereInput> | null
-  event?: Prisma.XOR<Prisma.UserGrowthEventNullableScalarRelationFilter, Prisma.UserGrowthEventWhereInput> | null
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
 }, "id">
 
@@ -324,7 +307,6 @@ export type UserExperienceRecordOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrderInput | Prisma.SortOrder
-  eventId?: Prisma.SortOrderInput | Prisma.SortOrder
   experience?: Prisma.SortOrder
   beforeExperience?: Prisma.SortOrder
   afterExperience?: Prisma.SortOrder
@@ -345,7 +327,6 @@ export type UserExperienceRecordScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"UserExperienceRecord"> | number
   userId?: Prisma.IntWithAggregatesFilter<"UserExperienceRecord"> | number
   ruleId?: Prisma.IntNullableWithAggregatesFilter<"UserExperienceRecord"> | number | null
-  eventId?: Prisma.IntNullableWithAggregatesFilter<"UserExperienceRecord"> | number | null
   experience?: Prisma.IntWithAggregatesFilter<"UserExperienceRecord"> | number
   beforeExperience?: Prisma.IntWithAggregatesFilter<"UserExperienceRecord"> | number
   afterExperience?: Prisma.IntWithAggregatesFilter<"UserExperienceRecord"> | number
@@ -362,7 +343,6 @@ export type UserExperienceRecordCreateInput = {
   remark?: string | null
   createdAt?: Date | string
   rule?: Prisma.UserExperienceRuleCreateNestedOneWithoutRecordsInput
-  event?: Prisma.UserGrowthEventCreateNestedOneWithoutExperienceRecordsInput
   user: Prisma.AppUserCreateNestedOneWithoutExperienceRecordsInput
 }
 
@@ -370,7 +350,6 @@ export type UserExperienceRecordUncheckedCreateInput = {
   id?: number
   userId: number
   ruleId?: number | null
-  eventId?: number | null
   experience: number
   beforeExperience: number
   afterExperience: number
@@ -387,7 +366,6 @@ export type UserExperienceRecordUpdateInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rule?: Prisma.UserExperienceRuleUpdateOneWithoutRecordsNestedInput
-  event?: Prisma.UserGrowthEventUpdateOneWithoutExperienceRecordsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutExperienceRecordsNestedInput
 }
 
@@ -395,7 +373,6 @@ export type UserExperienceRecordUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   beforeExperience?: Prisma.IntFieldUpdateOperationsInput | number
   afterExperience?: Prisma.IntFieldUpdateOperationsInput | number
@@ -408,7 +385,6 @@ export type UserExperienceRecordCreateManyInput = {
   id?: number
   userId: number
   ruleId?: number | null
-  eventId?: number | null
   experience: number
   beforeExperience: number
   afterExperience: number
@@ -430,7 +406,6 @@ export type UserExperienceRecordUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   beforeExperience?: Prisma.IntFieldUpdateOperationsInput | number
   afterExperience?: Prisma.IntFieldUpdateOperationsInput | number
@@ -453,7 +428,6 @@ export type UserExperienceRecordCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
-  eventId?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   beforeExperience?: Prisma.SortOrder
   afterExperience?: Prisma.SortOrder
@@ -466,7 +440,6 @@ export type UserExperienceRecordAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
-  eventId?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   beforeExperience?: Prisma.SortOrder
   afterExperience?: Prisma.SortOrder
@@ -476,7 +449,6 @@ export type UserExperienceRecordMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
-  eventId?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   beforeExperience?: Prisma.SortOrder
   afterExperience?: Prisma.SortOrder
@@ -489,7 +461,6 @@ export type UserExperienceRecordMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
-  eventId?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   beforeExperience?: Prisma.SortOrder
   afterExperience?: Prisma.SortOrder
@@ -502,7 +473,6 @@ export type UserExperienceRecordSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   ruleId?: Prisma.SortOrder
-  eventId?: Prisma.SortOrder
   experience?: Prisma.SortOrder
   beforeExperience?: Prisma.SortOrder
   afterExperience?: Prisma.SortOrder
@@ -592,48 +562,6 @@ export type UserExperienceRecordUncheckedUpdateManyWithoutRuleNestedInput = {
   deleteMany?: Prisma.UserExperienceRecordScalarWhereInput | Prisma.UserExperienceRecordScalarWhereInput[]
 }
 
-export type UserExperienceRecordCreateNestedManyWithoutEventInput = {
-  create?: Prisma.XOR<Prisma.UserExperienceRecordCreateWithoutEventInput, Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput> | Prisma.UserExperienceRecordCreateWithoutEventInput[] | Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput[]
-  connectOrCreate?: Prisma.UserExperienceRecordCreateOrConnectWithoutEventInput | Prisma.UserExperienceRecordCreateOrConnectWithoutEventInput[]
-  createMany?: Prisma.UserExperienceRecordCreateManyEventInputEnvelope
-  connect?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-}
-
-export type UserExperienceRecordUncheckedCreateNestedManyWithoutEventInput = {
-  create?: Prisma.XOR<Prisma.UserExperienceRecordCreateWithoutEventInput, Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput> | Prisma.UserExperienceRecordCreateWithoutEventInput[] | Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput[]
-  connectOrCreate?: Prisma.UserExperienceRecordCreateOrConnectWithoutEventInput | Prisma.UserExperienceRecordCreateOrConnectWithoutEventInput[]
-  createMany?: Prisma.UserExperienceRecordCreateManyEventInputEnvelope
-  connect?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-}
-
-export type UserExperienceRecordUpdateManyWithoutEventNestedInput = {
-  create?: Prisma.XOR<Prisma.UserExperienceRecordCreateWithoutEventInput, Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput> | Prisma.UserExperienceRecordCreateWithoutEventInput[] | Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput[]
-  connectOrCreate?: Prisma.UserExperienceRecordCreateOrConnectWithoutEventInput | Prisma.UserExperienceRecordCreateOrConnectWithoutEventInput[]
-  upsert?: Prisma.UserExperienceRecordUpsertWithWhereUniqueWithoutEventInput | Prisma.UserExperienceRecordUpsertWithWhereUniqueWithoutEventInput[]
-  createMany?: Prisma.UserExperienceRecordCreateManyEventInputEnvelope
-  set?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-  disconnect?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-  delete?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-  connect?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-  update?: Prisma.UserExperienceRecordUpdateWithWhereUniqueWithoutEventInput | Prisma.UserExperienceRecordUpdateWithWhereUniqueWithoutEventInput[]
-  updateMany?: Prisma.UserExperienceRecordUpdateManyWithWhereWithoutEventInput | Prisma.UserExperienceRecordUpdateManyWithWhereWithoutEventInput[]
-  deleteMany?: Prisma.UserExperienceRecordScalarWhereInput | Prisma.UserExperienceRecordScalarWhereInput[]
-}
-
-export type UserExperienceRecordUncheckedUpdateManyWithoutEventNestedInput = {
-  create?: Prisma.XOR<Prisma.UserExperienceRecordCreateWithoutEventInput, Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput> | Prisma.UserExperienceRecordCreateWithoutEventInput[] | Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput[]
-  connectOrCreate?: Prisma.UserExperienceRecordCreateOrConnectWithoutEventInput | Prisma.UserExperienceRecordCreateOrConnectWithoutEventInput[]
-  upsert?: Prisma.UserExperienceRecordUpsertWithWhereUniqueWithoutEventInput | Prisma.UserExperienceRecordUpsertWithWhereUniqueWithoutEventInput[]
-  createMany?: Prisma.UserExperienceRecordCreateManyEventInputEnvelope
-  set?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-  disconnect?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-  delete?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-  connect?: Prisma.UserExperienceRecordWhereUniqueInput | Prisma.UserExperienceRecordWhereUniqueInput[]
-  update?: Prisma.UserExperienceRecordUpdateWithWhereUniqueWithoutEventInput | Prisma.UserExperienceRecordUpdateWithWhereUniqueWithoutEventInput[]
-  updateMany?: Prisma.UserExperienceRecordUpdateManyWithWhereWithoutEventInput | Prisma.UserExperienceRecordUpdateManyWithWhereWithoutEventInput[]
-  deleteMany?: Prisma.UserExperienceRecordScalarWhereInput | Prisma.UserExperienceRecordScalarWhereInput[]
-}
-
 export type UserExperienceRecordCreateWithoutUserInput = {
   experience: number
   beforeExperience: number
@@ -642,13 +570,11 @@ export type UserExperienceRecordCreateWithoutUserInput = {
   remark?: string | null
   createdAt?: Date | string
   rule?: Prisma.UserExperienceRuleCreateNestedOneWithoutRecordsInput
-  event?: Prisma.UserGrowthEventCreateNestedOneWithoutExperienceRecordsInput
 }
 
 export type UserExperienceRecordUncheckedCreateWithoutUserInput = {
   id?: number
   ruleId?: number | null
-  eventId?: number | null
   experience: number
   beforeExperience: number
   afterExperience: number
@@ -690,7 +616,6 @@ export type UserExperienceRecordScalarWhereInput = {
   id?: Prisma.IntFilter<"UserExperienceRecord"> | number
   userId?: Prisma.IntFilter<"UserExperienceRecord"> | number
   ruleId?: Prisma.IntNullableFilter<"UserExperienceRecord"> | number | null
-  eventId?: Prisma.IntNullableFilter<"UserExperienceRecord"> | number | null
   experience?: Prisma.IntFilter<"UserExperienceRecord"> | number
   beforeExperience?: Prisma.IntFilter<"UserExperienceRecord"> | number
   afterExperience?: Prisma.IntFilter<"UserExperienceRecord"> | number
@@ -706,14 +631,12 @@ export type UserExperienceRecordCreateWithoutRuleInput = {
   eventKey?: string | null
   remark?: string | null
   createdAt?: Date | string
-  event?: Prisma.UserGrowthEventCreateNestedOneWithoutExperienceRecordsInput
   user: Prisma.AppUserCreateNestedOneWithoutExperienceRecordsInput
 }
 
 export type UserExperienceRecordUncheckedCreateWithoutRuleInput = {
   id?: number
   userId: number
-  eventId?: number | null
   experience: number
   beforeExperience: number
   afterExperience: number
@@ -748,59 +671,9 @@ export type UserExperienceRecordUpdateManyWithWhereWithoutRuleInput = {
   data: Prisma.XOR<Prisma.UserExperienceRecordUpdateManyMutationInput, Prisma.UserExperienceRecordUncheckedUpdateManyWithoutRuleInput>
 }
 
-export type UserExperienceRecordCreateWithoutEventInput = {
-  experience: number
-  beforeExperience: number
-  afterExperience: number
-  eventKey?: string | null
-  remark?: string | null
-  createdAt?: Date | string
-  rule?: Prisma.UserExperienceRuleCreateNestedOneWithoutRecordsInput
-  user: Prisma.AppUserCreateNestedOneWithoutExperienceRecordsInput
-}
-
-export type UserExperienceRecordUncheckedCreateWithoutEventInput = {
-  id?: number
-  userId: number
-  ruleId?: number | null
-  experience: number
-  beforeExperience: number
-  afterExperience: number
-  eventKey?: string | null
-  remark?: string | null
-  createdAt?: Date | string
-}
-
-export type UserExperienceRecordCreateOrConnectWithoutEventInput = {
-  where: Prisma.UserExperienceRecordWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserExperienceRecordCreateWithoutEventInput, Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput>
-}
-
-export type UserExperienceRecordCreateManyEventInputEnvelope = {
-  data: Prisma.UserExperienceRecordCreateManyEventInput | Prisma.UserExperienceRecordCreateManyEventInput[]
-  skipDuplicates?: boolean
-}
-
-export type UserExperienceRecordUpsertWithWhereUniqueWithoutEventInput = {
-  where: Prisma.UserExperienceRecordWhereUniqueInput
-  update: Prisma.XOR<Prisma.UserExperienceRecordUpdateWithoutEventInput, Prisma.UserExperienceRecordUncheckedUpdateWithoutEventInput>
-  create: Prisma.XOR<Prisma.UserExperienceRecordCreateWithoutEventInput, Prisma.UserExperienceRecordUncheckedCreateWithoutEventInput>
-}
-
-export type UserExperienceRecordUpdateWithWhereUniqueWithoutEventInput = {
-  where: Prisma.UserExperienceRecordWhereUniqueInput
-  data: Prisma.XOR<Prisma.UserExperienceRecordUpdateWithoutEventInput, Prisma.UserExperienceRecordUncheckedUpdateWithoutEventInput>
-}
-
-export type UserExperienceRecordUpdateManyWithWhereWithoutEventInput = {
-  where: Prisma.UserExperienceRecordScalarWhereInput
-  data: Prisma.XOR<Prisma.UserExperienceRecordUpdateManyMutationInput, Prisma.UserExperienceRecordUncheckedUpdateManyWithoutEventInput>
-}
-
 export type UserExperienceRecordCreateManyUserInput = {
   id?: number
   ruleId?: number | null
-  eventId?: number | null
   experience: number
   beforeExperience: number
   afterExperience: number
@@ -817,13 +690,11 @@ export type UserExperienceRecordUpdateWithoutUserInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   rule?: Prisma.UserExperienceRuleUpdateOneWithoutRecordsNestedInput
-  event?: Prisma.UserGrowthEventUpdateOneWithoutExperienceRecordsNestedInput
 }
 
 export type UserExperienceRecordUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   beforeExperience?: Prisma.IntFieldUpdateOperationsInput | number
   afterExperience?: Prisma.IntFieldUpdateOperationsInput | number
@@ -835,7 +706,6 @@ export type UserExperienceRecordUncheckedUpdateWithoutUserInput = {
 export type UserExperienceRecordUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   beforeExperience?: Prisma.IntFieldUpdateOperationsInput | number
   afterExperience?: Prisma.IntFieldUpdateOperationsInput | number
@@ -847,7 +717,6 @@ export type UserExperienceRecordUncheckedUpdateManyWithoutUserInput = {
 export type UserExperienceRecordCreateManyRuleInput = {
   id?: number
   userId: number
-  eventId?: number | null
   experience: number
   beforeExperience: number
   afterExperience: number
@@ -863,14 +732,12 @@ export type UserExperienceRecordUpdateWithoutRuleInput = {
   eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  event?: Prisma.UserGrowthEventUpdateOneWithoutExperienceRecordsNestedInput
   user?: Prisma.AppUserUpdateOneRequiredWithoutExperienceRecordsNestedInput
 }
 
 export type UserExperienceRecordUncheckedUpdateWithoutRuleInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   beforeExperience?: Prisma.IntFieldUpdateOperationsInput | number
   afterExperience?: Prisma.IntFieldUpdateOperationsInput | number
@@ -882,54 +749,6 @@ export type UserExperienceRecordUncheckedUpdateWithoutRuleInput = {
 export type UserExperienceRecordUncheckedUpdateManyWithoutRuleInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  eventId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  beforeExperience?: Prisma.IntFieldUpdateOperationsInput | number
-  afterExperience?: Prisma.IntFieldUpdateOperationsInput | number
-  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type UserExperienceRecordCreateManyEventInput = {
-  id?: number
-  userId: number
-  ruleId?: number | null
-  experience: number
-  beforeExperience: number
-  afterExperience: number
-  eventKey?: string | null
-  remark?: string | null
-  createdAt?: Date | string
-}
-
-export type UserExperienceRecordUpdateWithoutEventInput = {
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  beforeExperience?: Prisma.IntFieldUpdateOperationsInput | number
-  afterExperience?: Prisma.IntFieldUpdateOperationsInput | number
-  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  rule?: Prisma.UserExperienceRuleUpdateOneWithoutRecordsNestedInput
-  user?: Prisma.AppUserUpdateOneRequiredWithoutExperienceRecordsNestedInput
-}
-
-export type UserExperienceRecordUncheckedUpdateWithoutEventInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  beforeExperience?: Prisma.IntFieldUpdateOperationsInput | number
-  afterExperience?: Prisma.IntFieldUpdateOperationsInput | number
-  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type UserExperienceRecordUncheckedUpdateManyWithoutEventInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  ruleId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   beforeExperience?: Prisma.IntFieldUpdateOperationsInput | number
   afterExperience?: Prisma.IntFieldUpdateOperationsInput | number
@@ -944,7 +763,6 @@ export type UserExperienceRecordSelect<ExtArgs extends runtime.Types.Extensions.
   id?: boolean
   userId?: boolean
   ruleId?: boolean
-  eventId?: boolean
   experience?: boolean
   beforeExperience?: boolean
   afterExperience?: boolean
@@ -952,7 +770,6 @@ export type UserExperienceRecordSelect<ExtArgs extends runtime.Types.Extensions.
   remark?: boolean
   createdAt?: boolean
   rule?: boolean | Prisma.UserExperienceRecord$ruleArgs<ExtArgs>
-  event?: boolean | Prisma.UserExperienceRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userExperienceRecord"]>
 
@@ -960,7 +777,6 @@ export type UserExperienceRecordSelectCreateManyAndReturn<ExtArgs extends runtim
   id?: boolean
   userId?: boolean
   ruleId?: boolean
-  eventId?: boolean
   experience?: boolean
   beforeExperience?: boolean
   afterExperience?: boolean
@@ -968,7 +784,6 @@ export type UserExperienceRecordSelectCreateManyAndReturn<ExtArgs extends runtim
   remark?: boolean
   createdAt?: boolean
   rule?: boolean | Prisma.UserExperienceRecord$ruleArgs<ExtArgs>
-  event?: boolean | Prisma.UserExperienceRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userExperienceRecord"]>
 
@@ -976,7 +791,6 @@ export type UserExperienceRecordSelectUpdateManyAndReturn<ExtArgs extends runtim
   id?: boolean
   userId?: boolean
   ruleId?: boolean
-  eventId?: boolean
   experience?: boolean
   beforeExperience?: boolean
   afterExperience?: boolean
@@ -984,7 +798,6 @@ export type UserExperienceRecordSelectUpdateManyAndReturn<ExtArgs extends runtim
   remark?: boolean
   createdAt?: boolean
   rule?: boolean | Prisma.UserExperienceRecord$ruleArgs<ExtArgs>
-  event?: boolean | Prisma.UserExperienceRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userExperienceRecord"]>
 
@@ -992,7 +805,6 @@ export type UserExperienceRecordSelectScalar = {
   id?: boolean
   userId?: boolean
   ruleId?: boolean
-  eventId?: boolean
   experience?: boolean
   beforeExperience?: boolean
   afterExperience?: boolean
@@ -1001,20 +813,17 @@ export type UserExperienceRecordSelectScalar = {
   createdAt?: boolean
 }
 
-export type UserExperienceRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "ruleId" | "eventId" | "experience" | "beforeExperience" | "afterExperience" | "eventKey" | "remark" | "createdAt", ExtArgs["result"]["userExperienceRecord"]>
+export type UserExperienceRecordOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "ruleId" | "experience" | "beforeExperience" | "afterExperience" | "eventKey" | "remark" | "createdAt", ExtArgs["result"]["userExperienceRecord"]>
 export type UserExperienceRecordInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rule?: boolean | Prisma.UserExperienceRecord$ruleArgs<ExtArgs>
-  event?: boolean | Prisma.UserExperienceRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type UserExperienceRecordIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rule?: boolean | Prisma.UserExperienceRecord$ruleArgs<ExtArgs>
-  event?: boolean | Prisma.UserExperienceRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 export type UserExperienceRecordIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   rule?: boolean | Prisma.UserExperienceRecord$ruleArgs<ExtArgs>
-  event?: boolean | Prisma.UserExperienceRecord$eventArgs<ExtArgs>
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
 
@@ -1025,10 +834,6 @@ export type $UserExperienceRecordPayload<ExtArgs extends runtime.Types.Extension
      * 关联规则
      */
     rule: Prisma.$UserExperienceRulePayload<ExtArgs> | null
-    /**
-     * 关联事件
-     */
-    event: Prisma.$UserGrowthEventPayload<ExtArgs> | null
     /**
      * 关联用户
      */
@@ -1047,10 +852,6 @@ export type $UserExperienceRecordPayload<ExtArgs extends runtime.Types.Extension
      * 关联的规则ID
      */
     ruleId: number | null
-    /**
-     * 关联的事件ID
-     */
-    eventId: number | null
     /**
      * 经验值变化
      */
@@ -1470,7 +1271,6 @@ readonly fields: UserExperienceRecordFieldRefs;
 export interface Prisma__UserExperienceRecordClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   rule<T extends Prisma.UserExperienceRecord$ruleArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserExperienceRecord$ruleArgs<ExtArgs>>): Prisma.Prisma__UserExperienceRuleClient<runtime.Types.Result.GetResult<Prisma.$UserExperienceRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  event<T extends Prisma.UserExperienceRecord$eventArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserExperienceRecord$eventArgs<ExtArgs>>): Prisma.Prisma__UserGrowthEventClient<runtime.Types.Result.GetResult<Prisma.$UserGrowthEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1504,7 +1304,6 @@ export interface UserExperienceRecordFieldRefs {
   readonly id: Prisma.FieldRef<"UserExperienceRecord", 'Int'>
   readonly userId: Prisma.FieldRef<"UserExperienceRecord", 'Int'>
   readonly ruleId: Prisma.FieldRef<"UserExperienceRecord", 'Int'>
-  readonly eventId: Prisma.FieldRef<"UserExperienceRecord", 'Int'>
   readonly experience: Prisma.FieldRef<"UserExperienceRecord", 'Int'>
   readonly beforeExperience: Prisma.FieldRef<"UserExperienceRecord", 'Int'>
   readonly afterExperience: Prisma.FieldRef<"UserExperienceRecord", 'Int'>
@@ -1932,25 +1731,6 @@ export type UserExperienceRecord$ruleArgs<ExtArgs extends runtime.Types.Extensio
    */
   include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
   where?: Prisma.UserExperienceRuleWhereInput
-}
-
-/**
- * UserExperienceRecord.event
- */
-export type UserExperienceRecord$eventArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UserGrowthEvent
-   */
-  select?: Prisma.UserGrowthEventSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the UserGrowthEvent
-   */
-  omit?: Prisma.UserGrowthEventOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserGrowthEventInclude<ExtArgs> | null
-  where?: Prisma.UserGrowthEventWhereInput
 }
 
 /**

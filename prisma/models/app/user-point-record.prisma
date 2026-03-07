@@ -7,8 +7,6 @@ model UserPointRecord {
   userId       Int     @map("user_id")
   /// 关联的规则ID
   ruleId       Int?    @map("rule_id")
-  /// 关联的事件ID
-  eventId      Int?    @map("event_id")
   /// 目标类型
   targetType   Int?    @map("target_type") @db.SmallInt
   /// 目标ID
@@ -33,8 +31,6 @@ model UserPointRecord {
 
   /// 关联规则
   rule     UserPointRule?      @relation(fields: [ruleId], references: [id])
-  /// 关联事件
-  event    UserGrowthEvent?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
   /// 关联用户
   user     AppUser             @relation("UserPointRecords", fields: [userId], references: [id], onDelete: Cascade)
   /// 关联购买记录
@@ -44,8 +40,6 @@ model UserPointRecord {
   @@index([userId])
   /// 规则索引
   @@index([ruleId])
-  /// 事件索引
-  @@index([eventId])
   /// 创建时间索引
   @@index([createdAt])
   /// 用户与创建时间索引

@@ -309,8 +309,6 @@ export type UserGrowthEventWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"UserGrowthEvent"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserGrowthEvent"> | Date | string
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
-  pointRecords?: Prisma.UserPointRecordListRelationFilter
-  experienceRecords?: Prisma.UserExperienceRecordListRelationFilter
 }
 
 export type UserGrowthEventOrderByWithRelationInput = {
@@ -331,8 +329,6 @@ export type UserGrowthEventOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.AppUserOrderByWithRelationInput
-  pointRecords?: Prisma.UserPointRecordOrderByRelationAggregateInput
-  experienceRecords?: Prisma.UserExperienceRecordOrderByRelationAggregateInput
 }
 
 export type UserGrowthEventWhereUniqueInput = Prisma.AtLeast<{
@@ -356,8 +352,6 @@ export type UserGrowthEventWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"UserGrowthEvent"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserGrowthEvent"> | Date | string
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
-  pointRecords?: Prisma.UserPointRecordListRelationFilter
-  experienceRecords?: Prisma.UserExperienceRecordListRelationFilter
 }, "id">
 
 export type UserGrowthEventOrderByWithAggregationInput = {
@@ -422,8 +416,6 @@ export type UserGrowthEventCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.AppUserCreateNestedOneWithoutUserGrowthEventsInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutEventInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutEventInput
 }
 
 export type UserGrowthEventUncheckedCreateInput = {
@@ -443,8 +435,6 @@ export type UserGrowthEventUncheckedCreateInput = {
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutEventInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type UserGrowthEventUpdateInput = {
@@ -463,8 +453,6 @@ export type UserGrowthEventUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.AppUserUpdateOneRequiredWithoutUserGrowthEventsNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutEventNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutEventNestedInput
 }
 
 export type UserGrowthEventUncheckedUpdateInput = {
@@ -484,8 +472,6 @@ export type UserGrowthEventUncheckedUpdateInput = {
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutEventNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type UserGrowthEventCreateManyInput = {
@@ -551,11 +537,6 @@ export type UserGrowthEventListRelationFilter = {
 
 export type UserGrowthEventOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type UserGrowthEventNullableScalarRelationFilter = {
-  is?: Prisma.UserGrowthEventWhereInput | null
-  isNot?: Prisma.UserGrowthEventWhereInput | null
 }
 
 export type UserGrowthEventCountOrderByAggregateInput = {
@@ -667,38 +648,6 @@ export type UserGrowthEventUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.UserGrowthEventScalarWhereInput | Prisma.UserGrowthEventScalarWhereInput[]
 }
 
-export type UserGrowthEventCreateNestedOneWithoutExperienceRecordsInput = {
-  create?: Prisma.XOR<Prisma.UserGrowthEventCreateWithoutExperienceRecordsInput, Prisma.UserGrowthEventUncheckedCreateWithoutExperienceRecordsInput>
-  connectOrCreate?: Prisma.UserGrowthEventCreateOrConnectWithoutExperienceRecordsInput
-  connect?: Prisma.UserGrowthEventWhereUniqueInput
-}
-
-export type UserGrowthEventUpdateOneWithoutExperienceRecordsNestedInput = {
-  create?: Prisma.XOR<Prisma.UserGrowthEventCreateWithoutExperienceRecordsInput, Prisma.UserGrowthEventUncheckedCreateWithoutExperienceRecordsInput>
-  connectOrCreate?: Prisma.UserGrowthEventCreateOrConnectWithoutExperienceRecordsInput
-  upsert?: Prisma.UserGrowthEventUpsertWithoutExperienceRecordsInput
-  disconnect?: Prisma.UserGrowthEventWhereInput | boolean
-  delete?: Prisma.UserGrowthEventWhereInput | boolean
-  connect?: Prisma.UserGrowthEventWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserGrowthEventUpdateToOneWithWhereWithoutExperienceRecordsInput, Prisma.UserGrowthEventUpdateWithoutExperienceRecordsInput>, Prisma.UserGrowthEventUncheckedUpdateWithoutExperienceRecordsInput>
-}
-
-export type UserGrowthEventCreateNestedOneWithoutPointRecordsInput = {
-  create?: Prisma.XOR<Prisma.UserGrowthEventCreateWithoutPointRecordsInput, Prisma.UserGrowthEventUncheckedCreateWithoutPointRecordsInput>
-  connectOrCreate?: Prisma.UserGrowthEventCreateOrConnectWithoutPointRecordsInput
-  connect?: Prisma.UserGrowthEventWhereUniqueInput
-}
-
-export type UserGrowthEventUpdateOneWithoutPointRecordsNestedInput = {
-  create?: Prisma.XOR<Prisma.UserGrowthEventCreateWithoutPointRecordsInput, Prisma.UserGrowthEventUncheckedCreateWithoutPointRecordsInput>
-  connectOrCreate?: Prisma.UserGrowthEventCreateOrConnectWithoutPointRecordsInput
-  upsert?: Prisma.UserGrowthEventUpsertWithoutPointRecordsInput
-  disconnect?: Prisma.UserGrowthEventWhereInput | boolean
-  delete?: Prisma.UserGrowthEventWhereInput | boolean
-  connect?: Prisma.UserGrowthEventWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserGrowthEventUpdateToOneWithWhereWithoutPointRecordsInput, Prisma.UserGrowthEventUpdateWithoutPointRecordsInput>, Prisma.UserGrowthEventUncheckedUpdateWithoutPointRecordsInput>
-}
-
 export type UserGrowthEventCreateWithoutUserInput = {
   business: string
   eventKey: string
@@ -714,8 +663,6 @@ export type UserGrowthEventCreateWithoutUserInput = {
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutEventInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutEventInput
 }
 
 export type UserGrowthEventUncheckedCreateWithoutUserInput = {
@@ -734,8 +681,6 @@ export type UserGrowthEventUncheckedCreateWithoutUserInput = {
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   updatedAt?: Date | string
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutEventInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutEventInput
 }
 
 export type UserGrowthEventCreateOrConnectWithoutUserInput = {
@@ -786,194 +731,6 @@ export type UserGrowthEventScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"UserGrowthEvent"> | Date | string
 }
 
-export type UserGrowthEventCreateWithoutExperienceRecordsInput = {
-  business: string
-  eventKey: string
-  targetId?: number | null
-  ip?: string | null
-  deviceId?: string | null
-  occurredAt: Date | string
-  status: string
-  ruleRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  pointsDeltaApplied?: number
-  experienceDeltaApplied?: number
-  badgeAssigned?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  user: Prisma.AppUserCreateNestedOneWithoutUserGrowthEventsInput
-  pointRecords?: Prisma.UserPointRecordCreateNestedManyWithoutEventInput
-}
-
-export type UserGrowthEventUncheckedCreateWithoutExperienceRecordsInput = {
-  id?: number
-  business: string
-  eventKey: string
-  userId: number
-  targetId?: number | null
-  ip?: string | null
-  deviceId?: string | null
-  occurredAt: Date | string
-  status: string
-  ruleRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  pointsDeltaApplied?: number
-  experienceDeltaApplied?: number
-  badgeAssigned?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  pointRecords?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutEventInput
-}
-
-export type UserGrowthEventCreateOrConnectWithoutExperienceRecordsInput = {
-  where: Prisma.UserGrowthEventWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserGrowthEventCreateWithoutExperienceRecordsInput, Prisma.UserGrowthEventUncheckedCreateWithoutExperienceRecordsInput>
-}
-
-export type UserGrowthEventUpsertWithoutExperienceRecordsInput = {
-  update: Prisma.XOR<Prisma.UserGrowthEventUpdateWithoutExperienceRecordsInput, Prisma.UserGrowthEventUncheckedUpdateWithoutExperienceRecordsInput>
-  create: Prisma.XOR<Prisma.UserGrowthEventCreateWithoutExperienceRecordsInput, Prisma.UserGrowthEventUncheckedCreateWithoutExperienceRecordsInput>
-  where?: Prisma.UserGrowthEventWhereInput
-}
-
-export type UserGrowthEventUpdateToOneWithWhereWithoutExperienceRecordsInput = {
-  where?: Prisma.UserGrowthEventWhereInput
-  data: Prisma.XOR<Prisma.UserGrowthEventUpdateWithoutExperienceRecordsInput, Prisma.UserGrowthEventUncheckedUpdateWithoutExperienceRecordsInput>
-}
-
-export type UserGrowthEventUpdateWithoutExperienceRecordsInput = {
-  business?: Prisma.StringFieldUpdateOperationsInput | string
-  eventKey?: Prisma.StringFieldUpdateOperationsInput | string
-  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  ruleRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  pointsDeltaApplied?: Prisma.IntFieldUpdateOperationsInput | number
-  experienceDeltaApplied?: Prisma.IntFieldUpdateOperationsInput | number
-  badgeAssigned?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.AppUserUpdateOneRequiredWithoutUserGrowthEventsNestedInput
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutEventNestedInput
-}
-
-export type UserGrowthEventUncheckedUpdateWithoutExperienceRecordsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  business?: Prisma.StringFieldUpdateOperationsInput | string
-  eventKey?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  ruleRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  pointsDeltaApplied?: Prisma.IntFieldUpdateOperationsInput | number
-  experienceDeltaApplied?: Prisma.IntFieldUpdateOperationsInput | number
-  badgeAssigned?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutEventNestedInput
-}
-
-export type UserGrowthEventCreateWithoutPointRecordsInput = {
-  business: string
-  eventKey: string
-  targetId?: number | null
-  ip?: string | null
-  deviceId?: string | null
-  occurredAt: Date | string
-  status: string
-  ruleRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  pointsDeltaApplied?: number
-  experienceDeltaApplied?: number
-  badgeAssigned?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  user: Prisma.AppUserCreateNestedOneWithoutUserGrowthEventsInput
-  experienceRecords?: Prisma.UserExperienceRecordCreateNestedManyWithoutEventInput
-}
-
-export type UserGrowthEventUncheckedCreateWithoutPointRecordsInput = {
-  id?: number
-  business: string
-  eventKey: string
-  userId: number
-  targetId?: number | null
-  ip?: string | null
-  deviceId?: string | null
-  occurredAt: Date | string
-  status: string
-  ruleRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  pointsDeltaApplied?: number
-  experienceDeltaApplied?: number
-  badgeAssigned?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutEventInput
-}
-
-export type UserGrowthEventCreateOrConnectWithoutPointRecordsInput = {
-  where: Prisma.UserGrowthEventWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserGrowthEventCreateWithoutPointRecordsInput, Prisma.UserGrowthEventUncheckedCreateWithoutPointRecordsInput>
-}
-
-export type UserGrowthEventUpsertWithoutPointRecordsInput = {
-  update: Prisma.XOR<Prisma.UserGrowthEventUpdateWithoutPointRecordsInput, Prisma.UserGrowthEventUncheckedUpdateWithoutPointRecordsInput>
-  create: Prisma.XOR<Prisma.UserGrowthEventCreateWithoutPointRecordsInput, Prisma.UserGrowthEventUncheckedCreateWithoutPointRecordsInput>
-  where?: Prisma.UserGrowthEventWhereInput
-}
-
-export type UserGrowthEventUpdateToOneWithWhereWithoutPointRecordsInput = {
-  where?: Prisma.UserGrowthEventWhereInput
-  data: Prisma.XOR<Prisma.UserGrowthEventUpdateWithoutPointRecordsInput, Prisma.UserGrowthEventUncheckedUpdateWithoutPointRecordsInput>
-}
-
-export type UserGrowthEventUpdateWithoutPointRecordsInput = {
-  business?: Prisma.StringFieldUpdateOperationsInput | string
-  eventKey?: Prisma.StringFieldUpdateOperationsInput | string
-  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  ruleRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  pointsDeltaApplied?: Prisma.IntFieldUpdateOperationsInput | number
-  experienceDeltaApplied?: Prisma.IntFieldUpdateOperationsInput | number
-  badgeAssigned?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.AppUserUpdateOneRequiredWithoutUserGrowthEventsNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutEventNestedInput
-}
-
-export type UserGrowthEventUncheckedUpdateWithoutPointRecordsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  business?: Prisma.StringFieldUpdateOperationsInput | string
-  eventKey?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ip?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  deviceId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  ruleRefs?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  pointsDeltaApplied?: Prisma.IntFieldUpdateOperationsInput | number
-  experienceDeltaApplied?: Prisma.IntFieldUpdateOperationsInput | number
-  badgeAssigned?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutEventNestedInput
-}
-
 export type UserGrowthEventCreateManyUserInput = {
   id?: number
   business: string
@@ -1007,8 +764,6 @@ export type UserGrowthEventUpdateWithoutUserInput = {
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  pointRecords?: Prisma.UserPointRecordUpdateManyWithoutEventNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUpdateManyWithoutEventNestedInput
 }
 
 export type UserGrowthEventUncheckedUpdateWithoutUserInput = {
@@ -1027,8 +782,6 @@ export type UserGrowthEventUncheckedUpdateWithoutUserInput = {
   context?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  pointRecords?: Prisma.UserPointRecordUncheckedUpdateManyWithoutEventNestedInput
-  experienceRecords?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutEventNestedInput
 }
 
 export type UserGrowthEventUncheckedUpdateManyWithoutUserInput = {
@@ -1050,44 +803,6 @@ export type UserGrowthEventUncheckedUpdateManyWithoutUserInput = {
 }
 
 
-/**
- * Count Type UserGrowthEventCountOutputType
- */
-
-export type UserGrowthEventCountOutputType = {
-  pointRecords: number
-  experienceRecords: number
-}
-
-export type UserGrowthEventCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  pointRecords?: boolean | UserGrowthEventCountOutputTypeCountPointRecordsArgs
-  experienceRecords?: boolean | UserGrowthEventCountOutputTypeCountExperienceRecordsArgs
-}
-
-/**
- * UserGrowthEventCountOutputType without action
- */
-export type UserGrowthEventCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UserGrowthEventCountOutputType
-   */
-  select?: Prisma.UserGrowthEventCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * UserGrowthEventCountOutputType without action
- */
-export type UserGrowthEventCountOutputTypeCountPointRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.UserPointRecordWhereInput
-}
-
-/**
- * UserGrowthEventCountOutputType without action
- */
-export type UserGrowthEventCountOutputTypeCountExperienceRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.UserExperienceRecordWhereInput
-}
-
 
 export type UserGrowthEventSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1107,9 +822,6 @@ export type UserGrowthEventSelect<ExtArgs extends runtime.Types.Extensions.Inter
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
-  pointRecords?: boolean | Prisma.UserGrowthEvent$pointRecordsArgs<ExtArgs>
-  experienceRecords?: boolean | Prisma.UserGrowthEvent$experienceRecordsArgs<ExtArgs>
-  _count?: boolean | Prisma.UserGrowthEventCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userGrowthEvent"]>
 
 export type UserGrowthEventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1174,9 +886,6 @@ export type UserGrowthEventSelectScalar = {
 export type UserGrowthEventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "business" | "eventKey" | "userId" | "targetId" | "ip" | "deviceId" | "occurredAt" | "status" | "ruleRefs" | "pointsDeltaApplied" | "experienceDeltaApplied" | "badgeAssigned" | "context" | "createdAt" | "updatedAt", ExtArgs["result"]["userGrowthEvent"]>
 export type UserGrowthEventInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
-  pointRecords?: boolean | Prisma.UserGrowthEvent$pointRecordsArgs<ExtArgs>
-  experienceRecords?: boolean | Prisma.UserGrowthEvent$experienceRecordsArgs<ExtArgs>
-  _count?: boolean | Prisma.UserGrowthEventCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserGrowthEventIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -1192,14 +901,6 @@ export type $UserGrowthEventPayload<ExtArgs extends runtime.Types.Extensions.Int
      * 关联用户
      */
     user: Prisma.$AppUserPayload<ExtArgs>
-    /**
-     * 积分记录关联
-     */
-    pointRecords: Prisma.$UserPointRecordPayload<ExtArgs>[]
-    /**
-     * 经验记录关联
-     */
-    experienceRecords: Prisma.$UserExperienceRecordPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -1661,8 +1362,6 @@ readonly fields: UserGrowthEventFieldRefs;
 export interface Prisma__UserGrowthEventClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.AppUserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUserDefaultArgs<ExtArgs>>): Prisma.Prisma__AppUserClient<runtime.Types.Result.GetResult<Prisma.$AppUserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  pointRecords<T extends Prisma.UserGrowthEvent$pointRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserGrowthEvent$pointRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPointRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  experienceRecords<T extends Prisma.UserGrowthEvent$experienceRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserGrowthEvent$experienceRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserExperienceRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2110,54 +1809,6 @@ export type UserGrowthEventDeleteManyArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many UserGrowthEvents to delete.
    */
   limit?: number
-}
-
-/**
- * UserGrowthEvent.pointRecords
- */
-export type UserGrowthEvent$pointRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UserPointRecord
-   */
-  select?: Prisma.UserPointRecordSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the UserPointRecord
-   */
-  omit?: Prisma.UserPointRecordOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRecordInclude<ExtArgs> | null
-  where?: Prisma.UserPointRecordWhereInput
-  orderBy?: Prisma.UserPointRecordOrderByWithRelationInput | Prisma.UserPointRecordOrderByWithRelationInput[]
-  cursor?: Prisma.UserPointRecordWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.UserPointRecordScalarFieldEnum | Prisma.UserPointRecordScalarFieldEnum[]
-}
-
-/**
- * UserGrowthEvent.experienceRecords
- */
-export type UserGrowthEvent$experienceRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UserExperienceRecord
-   */
-  select?: Prisma.UserExperienceRecordSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the UserExperienceRecord
-   */
-  omit?: Prisma.UserExperienceRecordOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRecordInclude<ExtArgs> | null
-  where?: Prisma.UserExperienceRecordWhereInput
-  orderBy?: Prisma.UserExperienceRecordOrderByWithRelationInput | Prisma.UserExperienceRecordOrderByWithRelationInput[]
-  cursor?: Prisma.UserExperienceRecordWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.UserExperienceRecordScalarFieldEnum | Prisma.UserExperienceRecordScalarFieldEnum[]
 }
 
 /**

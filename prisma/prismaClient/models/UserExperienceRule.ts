@@ -32,7 +32,6 @@ export type UserExperienceRuleAvgAggregateOutputType = {
   experience: number | null
   dailyLimit: number | null
   totalLimit: number | null
-  cooldownSeconds: number | null
 }
 
 export type UserExperienceRuleSumAggregateOutputType = {
@@ -41,7 +40,6 @@ export type UserExperienceRuleSumAggregateOutputType = {
   experience: number | null
   dailyLimit: number | null
   totalLimit: number | null
-  cooldownSeconds: number | null
 }
 
 export type UserExperienceRuleMinAggregateOutputType = {
@@ -50,9 +48,6 @@ export type UserExperienceRuleMinAggregateOutputType = {
   experience: number | null
   dailyLimit: number | null
   totalLimit: number | null
-  cooldownSeconds: number | null
-  business: string | null
-  eventKey: string | null
   isEnabled: boolean | null
   remark: string | null
   createdAt: Date | null
@@ -65,9 +60,6 @@ export type UserExperienceRuleMaxAggregateOutputType = {
   experience: number | null
   dailyLimit: number | null
   totalLimit: number | null
-  cooldownSeconds: number | null
-  business: string | null
-  eventKey: string | null
   isEnabled: boolean | null
   remark: string | null
   createdAt: Date | null
@@ -80,9 +72,6 @@ export type UserExperienceRuleCountAggregateOutputType = {
   experience: number
   dailyLimit: number
   totalLimit: number
-  cooldownSeconds: number
-  business: number
-  eventKey: number
   isEnabled: number
   remark: number
   createdAt: number
@@ -97,7 +86,6 @@ export type UserExperienceRuleAvgAggregateInputType = {
   experience?: true
   dailyLimit?: true
   totalLimit?: true
-  cooldownSeconds?: true
 }
 
 export type UserExperienceRuleSumAggregateInputType = {
@@ -106,7 +94,6 @@ export type UserExperienceRuleSumAggregateInputType = {
   experience?: true
   dailyLimit?: true
   totalLimit?: true
-  cooldownSeconds?: true
 }
 
 export type UserExperienceRuleMinAggregateInputType = {
@@ -115,9 +102,6 @@ export type UserExperienceRuleMinAggregateInputType = {
   experience?: true
   dailyLimit?: true
   totalLimit?: true
-  cooldownSeconds?: true
-  business?: true
-  eventKey?: true
   isEnabled?: true
   remark?: true
   createdAt?: true
@@ -130,9 +114,6 @@ export type UserExperienceRuleMaxAggregateInputType = {
   experience?: true
   dailyLimit?: true
   totalLimit?: true
-  cooldownSeconds?: true
-  business?: true
-  eventKey?: true
   isEnabled?: true
   remark?: true
   createdAt?: true
@@ -145,9 +126,6 @@ export type UserExperienceRuleCountAggregateInputType = {
   experience?: true
   dailyLimit?: true
   totalLimit?: true
-  cooldownSeconds?: true
-  business?: true
-  eventKey?: true
   isEnabled?: true
   remark?: true
   createdAt?: true
@@ -247,9 +225,6 @@ export type UserExperienceRuleGroupByOutputType = {
   experience: number
   dailyLimit: number
   totalLimit: number
-  cooldownSeconds: number
-  business: string | null
-  eventKey: string | null
   isEnabled: boolean
   remark: string | null
   createdAt: Date
@@ -285,9 +260,6 @@ export type UserExperienceRuleWhereInput = {
   experience?: Prisma.IntFilter<"UserExperienceRule"> | number
   dailyLimit?: Prisma.IntFilter<"UserExperienceRule"> | number
   totalLimit?: Prisma.IntFilter<"UserExperienceRule"> | number
-  cooldownSeconds?: Prisma.IntFilter<"UserExperienceRule"> | number
-  business?: Prisma.StringNullableFilter<"UserExperienceRule"> | string | null
-  eventKey?: Prisma.StringNullableFilter<"UserExperienceRule"> | string | null
   isEnabled?: Prisma.BoolFilter<"UserExperienceRule"> | boolean
   remark?: Prisma.StringNullableFilter<"UserExperienceRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserExperienceRule"> | Date | string
@@ -301,9 +273,6 @@ export type UserExperienceRuleOrderByWithRelationInput = {
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
   totalLimit?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  business?: Prisma.SortOrderInput | Prisma.SortOrder
-  eventKey?: Prisma.SortOrderInput | Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -320,9 +289,6 @@ export type UserExperienceRuleWhereUniqueInput = Prisma.AtLeast<{
   experience?: Prisma.IntFilter<"UserExperienceRule"> | number
   dailyLimit?: Prisma.IntFilter<"UserExperienceRule"> | number
   totalLimit?: Prisma.IntFilter<"UserExperienceRule"> | number
-  cooldownSeconds?: Prisma.IntFilter<"UserExperienceRule"> | number
-  business?: Prisma.StringNullableFilter<"UserExperienceRule"> | string | null
-  eventKey?: Prisma.StringNullableFilter<"UserExperienceRule"> | string | null
   isEnabled?: Prisma.BoolFilter<"UserExperienceRule"> | boolean
   remark?: Prisma.StringNullableFilter<"UserExperienceRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserExperienceRule"> | Date | string
@@ -336,9 +302,6 @@ export type UserExperienceRuleOrderByWithAggregationInput = {
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
   totalLimit?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  business?: Prisma.SortOrderInput | Prisma.SortOrder
-  eventKey?: Prisma.SortOrderInput | Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -359,9 +322,6 @@ export type UserExperienceRuleScalarWhereWithAggregatesInput = {
   experience?: Prisma.IntWithAggregatesFilter<"UserExperienceRule"> | number
   dailyLimit?: Prisma.IntWithAggregatesFilter<"UserExperienceRule"> | number
   totalLimit?: Prisma.IntWithAggregatesFilter<"UserExperienceRule"> | number
-  cooldownSeconds?: Prisma.IntWithAggregatesFilter<"UserExperienceRule"> | number
-  business?: Prisma.StringNullableWithAggregatesFilter<"UserExperienceRule"> | string | null
-  eventKey?: Prisma.StringNullableWithAggregatesFilter<"UserExperienceRule"> | string | null
   isEnabled?: Prisma.BoolWithAggregatesFilter<"UserExperienceRule"> | boolean
   remark?: Prisma.StringNullableWithAggregatesFilter<"UserExperienceRule"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserExperienceRule"> | Date | string
@@ -373,9 +333,6 @@ export type UserExperienceRuleCreateInput = {
   experience: number
   dailyLimit?: number
   totalLimit?: number
-  cooldownSeconds?: number
-  business?: string | null
-  eventKey?: string | null
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -389,9 +346,6 @@ export type UserExperienceRuleUncheckedCreateInput = {
   experience: number
   dailyLimit?: number
   totalLimit?: number
-  cooldownSeconds?: number
-  business?: string | null
-  eventKey?: string | null
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -404,9 +358,6 @@ export type UserExperienceRuleUpdateInput = {
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
   totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -420,9 +371,6 @@ export type UserExperienceRuleUncheckedUpdateInput = {
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
   totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -436,9 +384,6 @@ export type UserExperienceRuleCreateManyInput = {
   experience: number
   dailyLimit?: number
   totalLimit?: number
-  cooldownSeconds?: number
-  business?: string | null
-  eventKey?: string | null
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -450,9 +395,6 @@ export type UserExperienceRuleUpdateManyMutationInput = {
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
   totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -465,9 +407,6 @@ export type UserExperienceRuleUncheckedUpdateManyInput = {
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
   totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -485,9 +424,6 @@ export type UserExperienceRuleCountOrderByAggregateInput = {
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
   totalLimit?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  business?: Prisma.SortOrder
-  eventKey?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -500,7 +436,6 @@ export type UserExperienceRuleAvgOrderByAggregateInput = {
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
   totalLimit?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
 }
 
 export type UserExperienceRuleMaxOrderByAggregateInput = {
@@ -509,9 +444,6 @@ export type UserExperienceRuleMaxOrderByAggregateInput = {
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
   totalLimit?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  business?: Prisma.SortOrder
-  eventKey?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -524,9 +456,6 @@ export type UserExperienceRuleMinOrderByAggregateInput = {
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
   totalLimit?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
-  business?: Prisma.SortOrder
-  eventKey?: Prisma.SortOrder
   isEnabled?: Prisma.SortOrder
   remark?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -539,7 +468,6 @@ export type UserExperienceRuleSumOrderByAggregateInput = {
   experience?: Prisma.SortOrder
   dailyLimit?: Prisma.SortOrder
   totalLimit?: Prisma.SortOrder
-  cooldownSeconds?: Prisma.SortOrder
 }
 
 export type UserExperienceRuleCreateNestedOneWithoutRecordsInput = {
@@ -563,9 +491,6 @@ export type UserExperienceRuleCreateWithoutRecordsInput = {
   experience: number
   dailyLimit?: number
   totalLimit?: number
-  cooldownSeconds?: number
-  business?: string | null
-  eventKey?: string | null
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -578,9 +503,6 @@ export type UserExperienceRuleUncheckedCreateWithoutRecordsInput = {
   experience: number
   dailyLimit?: number
   totalLimit?: number
-  cooldownSeconds?: number
-  business?: string | null
-  eventKey?: string | null
   isEnabled?: boolean
   remark?: string | null
   createdAt?: Date | string
@@ -608,9 +530,6 @@ export type UserExperienceRuleUpdateWithoutRecordsInput = {
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
   totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -623,9 +542,6 @@ export type UserExperienceRuleUncheckedUpdateWithoutRecordsInput = {
   experience?: Prisma.IntFieldUpdateOperationsInput | number
   dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
   totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  cooldownSeconds?: Prisma.IntFieldUpdateOperationsInput | number
-  business?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  eventKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -669,9 +585,6 @@ export type UserExperienceRuleSelect<ExtArgs extends runtime.Types.Extensions.In
   experience?: boolean
   dailyLimit?: boolean
   totalLimit?: boolean
-  cooldownSeconds?: boolean
-  business?: boolean
-  eventKey?: boolean
   isEnabled?: boolean
   remark?: boolean
   createdAt?: boolean
@@ -686,9 +599,6 @@ export type UserExperienceRuleSelectCreateManyAndReturn<ExtArgs extends runtime.
   experience?: boolean
   dailyLimit?: boolean
   totalLimit?: boolean
-  cooldownSeconds?: boolean
-  business?: boolean
-  eventKey?: boolean
   isEnabled?: boolean
   remark?: boolean
   createdAt?: boolean
@@ -701,9 +611,6 @@ export type UserExperienceRuleSelectUpdateManyAndReturn<ExtArgs extends runtime.
   experience?: boolean
   dailyLimit?: boolean
   totalLimit?: boolean
-  cooldownSeconds?: boolean
-  business?: boolean
-  eventKey?: boolean
   isEnabled?: boolean
   remark?: boolean
   createdAt?: boolean
@@ -716,16 +623,13 @@ export type UserExperienceRuleSelectScalar = {
   experience?: boolean
   dailyLimit?: boolean
   totalLimit?: boolean
-  cooldownSeconds?: boolean
-  business?: boolean
-  eventKey?: boolean
   isEnabled?: boolean
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserExperienceRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "experience" | "dailyLimit" | "totalLimit" | "cooldownSeconds" | "business" | "eventKey" | "isEnabled" | "remark" | "createdAt" | "updatedAt", ExtArgs["result"]["userExperienceRule"]>
+export type UserExperienceRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "experience" | "dailyLimit" | "totalLimit" | "isEnabled" | "remark" | "createdAt" | "updatedAt", ExtArgs["result"]["userExperienceRule"]>
 export type UserExperienceRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   records?: boolean | Prisma.UserExperienceRule$recordsArgs<ExtArgs>
   _count?: boolean | Prisma.UserExperienceRuleCountOutputTypeDefaultArgs<ExtArgs>
@@ -762,18 +666,6 @@ export type $UserExperienceRulePayload<ExtArgs extends runtime.Types.Extensions.
      * 总上限（0=无限制）
      */
     totalLimit: number
-    /**
-     * 冷却秒数（0=无限制）
-     */
-    cooldownSeconds: number
-    /**
-     * 业务域标识（如 forum/comic）
-     */
-    business: string | null
-    /**
-     * 事件键（如 forum.topic.create）
-     */
-    eventKey: string | null
     /**
      * 是否启用
      */
@@ -1219,9 +1111,6 @@ export interface UserExperienceRuleFieldRefs {
   readonly experience: Prisma.FieldRef<"UserExperienceRule", 'Int'>
   readonly dailyLimit: Prisma.FieldRef<"UserExperienceRule", 'Int'>
   readonly totalLimit: Prisma.FieldRef<"UserExperienceRule", 'Int'>
-  readonly cooldownSeconds: Prisma.FieldRef<"UserExperienceRule", 'Int'>
-  readonly business: Prisma.FieldRef<"UserExperienceRule", 'String'>
-  readonly eventKey: Prisma.FieldRef<"UserExperienceRule", 'String'>
   readonly isEnabled: Prisma.FieldRef<"UserExperienceRule", 'Boolean'>
   readonly remark: Prisma.FieldRef<"UserExperienceRule", 'String'>
   readonly createdAt: Prisma.FieldRef<"UserExperienceRule", 'DateTime'>

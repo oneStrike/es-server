@@ -7,8 +7,6 @@ model UserExperienceRecord {
   userId           Int     @map("user_id")
   /// 关联的规则ID
   ruleId           Int?    @map("rule_id")
-  /// 关联的事件ID
-  eventId          Int?    @map("event_id")
   /// 经验值变化
   experience       Int
   /// 变化前经验值
@@ -25,8 +23,6 @@ model UserExperienceRecord {
 
   /// 关联规则
   rule  UserExperienceRule? @relation(fields: [ruleId], references: [id])
-  /// 关联事件
-  event UserGrowthEvent?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
   /// 关联用户
   user  AppUser             @relation("UserExperienceRecords", fields: [userId], references: [id], onDelete: Cascade)
 
@@ -34,8 +30,6 @@ model UserExperienceRecord {
   @@index([userId])
   /// 规则索引
   @@index([ruleId])
-  /// 事件索引
-  @@index([eventId])
   /// 创建时间索引
   @@index([createdAt])
   /// 用户与创建时间索引

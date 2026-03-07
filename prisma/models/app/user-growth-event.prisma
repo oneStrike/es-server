@@ -38,10 +38,6 @@ model UserGrowthEvent {
 
   /// 关联用户
   user              AppUser                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /// 积分记录关联
-  pointRecords      UserPointRecord[]
-  /// 经验记录关联
-  experienceRecords UserExperienceRecord[]
 
   /// 业务域与事件键索引
   @@index([business, eventKey])
