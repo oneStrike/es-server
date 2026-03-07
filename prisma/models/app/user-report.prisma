@@ -46,6 +46,8 @@ model UserReport {
   /// 处理人关系
   handler AppUser? @relation("UserReportHandler", fields: [handlerId], references: [id])
 
+  /// 去重索引（同一用户对同一目标仅允许一条举报）
+  @@unique([reporterId, targetType, targetId])
   /// 目标查询索引
   @@index([targetType, targetId])
   /// 举报人查询索引
@@ -56,8 +58,5 @@ model UserReport {
   @@index([status])
   /// 创建时间索引
   @@index([createdAt])
-  /// 去重索引（同一用户对同一目标仅允许一条举报）
-  @@unique([reporterId, targetType, targetId])
-
   @@map("user_report")
 }

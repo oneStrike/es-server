@@ -1,0 +1,31 @@
+/// 聊天会话表（仅私聊）
+model ChatConversation {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 业务键（direct:{minUserId}:{maxUserId}）
+  bizKey        String    @map("biz_key") @db.VarChar(100)
+  /// 最后一条消息ID（快照字段）
+  lastMessageId BigInt?   @map("last_message_id")
+  /// 最后一条消息时间（快照字段）
+  lastMessageAt DateTime? @map("last_message_at") @db.Timestamptz(6)
+  /// 最后发言人ID（快照字段）
+  lastSenderId  Int?      @map("last_sender_id")
+  /// 创建时间
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// 最后发言人
+  lastSender AppUser?                 @relation("ChatConversationLastSender", fields: [lastSenderId], references: [id], onDelete: SetNull)
+  /// 会话成员
+  members    ChatConversationMember[]
+  /// 会话消息
+  messages   ChatMessage[]
+
+  /// 业务键唯一
+  @@unique([bizKey])
+  /// 会话列表排序索引
+  @@index([lastMessageAt(sort: Desc)])
+  @@map("chat_conversation")
+}

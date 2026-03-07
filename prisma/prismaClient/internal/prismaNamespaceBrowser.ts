@@ -94,6 +94,11 @@ export const ModelName = {
   ForumTopicTag: 'ForumTopicTag',
   ForumTopic: 'ForumTopic',
   ForumUserActionLog: 'ForumUserActionLog',
+  ChatConversationMember: 'ChatConversationMember',
+  ChatConversation: 'ChatConversation',
+  ChatMessage: 'ChatMessage',
+  MessageOutbox: 'MessageOutbox',
+  UserNotification: 'UserNotification',
   RequestLog: 'RequestLog',
   SensitiveWord: 'SensitiveWord',
   SystemConfig: 'SystemConfig',
@@ -894,6 +899,93 @@ export const ForumUserActionLogScalarFieldEnum = {
 } as const
 
 export type ForumUserActionLogScalarFieldEnum = (typeof ForumUserActionLogScalarFieldEnum)[keyof typeof ForumUserActionLogScalarFieldEnum]
+
+
+export const ChatConversationMemberScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  userId: 'userId',
+  role: 'role',
+  joinedAt: 'joinedAt',
+  leftAt: 'leftAt',
+  isMuted: 'isMuted',
+  lastReadMessageId: 'lastReadMessageId',
+  lastReadAt: 'lastReadAt',
+  unreadCount: 'unreadCount'
+} as const
+
+export type ChatConversationMemberScalarFieldEnum = (typeof ChatConversationMemberScalarFieldEnum)[keyof typeof ChatConversationMemberScalarFieldEnum]
+
+
+export const ChatConversationScalarFieldEnum = {
+  id: 'id',
+  bizKey: 'bizKey',
+  lastMessageId: 'lastMessageId',
+  lastMessageAt: 'lastMessageAt',
+  lastSenderId: 'lastSenderId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChatConversationScalarFieldEnum = (typeof ChatConversationScalarFieldEnum)[keyof typeof ChatConversationScalarFieldEnum]
+
+
+export const ChatMessageScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  messageSeq: 'messageSeq',
+  senderId: 'senderId',
+  messageType: 'messageType',
+  content: 'content',
+  payload: 'payload',
+  status: 'status',
+  createdAt: 'createdAt',
+  editedAt: 'editedAt',
+  revokedAt: 'revokedAt'
+} as const
+
+export type ChatMessageScalarFieldEnum = (typeof ChatMessageScalarFieldEnum)[keyof typeof ChatMessageScalarFieldEnum]
+
+
+export const MessageOutboxScalarFieldEnum = {
+  id: 'id',
+  domain: 'domain',
+  eventType: 'eventType',
+  bizKey: 'bizKey',
+  payload: 'payload',
+  status: 'status',
+  retryCount: 'retryCount',
+  nextRetryAt: 'nextRetryAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  processedAt: 'processedAt'
+} as const
+
+export type MessageOutboxScalarFieldEnum = (typeof MessageOutboxScalarFieldEnum)[keyof typeof MessageOutboxScalarFieldEnum]
+
+
+export const UserNotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  type: 'type',
+  bizKey: 'bizKey',
+  actorUserId: 'actorUserId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  subjectType: 'subjectType',
+  subjectId: 'subjectId',
+  title: 'title',
+  content: 'content',
+  payload: 'payload',
+  aggregateKey: 'aggregateKey',
+  aggregateCount: 'aggregateCount',
+  isRead: 'isRead',
+  readAt: 'readAt',
+  expiredAt: 'expiredAt',
+  createdAt: 'createdAt'
+} as const
+
+export type UserNotificationScalarFieldEnum = (typeof UserNotificationScalarFieldEnum)[keyof typeof UserNotificationScalarFieldEnum]
 
 
 export const RequestLogScalarFieldEnum = {

@@ -7,26 +7,26 @@ model GrowthAuditLog {
   /// 请求链路ID（可选）
   requestId String? @map("request_id") @db.VarChar(80)
   /// 用户ID
-  userId Int @map("user_id")
+  userId    Int     @map("user_id")
 
   /// 幂等业务键
-  bizKey String @map("biz_key") @db.VarChar(120)
+  bizKey    String @map("biz_key") @db.VarChar(120)
   /// 资产类型（POINTS / EXPERIENCE / BADGE）
   assetType String @map("asset_type") @db.VarChar(30)
   /// 动作（GRANT / CONSUME / APPLY_RULE / ASSIGN_BADGE）
-  action String @db.VarChar(30)
+  action    String @db.VarChar(30)
 
   /// 规则类型（可选）
-  ruleType Int? @map("rule_type") @db.SmallInt
+  ruleType Int?    @map("rule_type") @db.SmallInt
   /// 判定结果（allow / deny）
-  decision String @db.VarChar(20)
+  decision String  @db.VarChar(20)
   /// 拒绝或处理原因
-  reason String? @db.VarChar(80)
+  reason   String? @db.VarChar(80)
 
   /// 请求变更值（可选）
   deltaRequested Int? @map("delta_requested")
   /// 实际变更值（可选）
-  deltaApplied Int? @map("delta_applied")
+  deltaApplied   Int? @map("delta_applied")
 
   /// 扩展上下文
   context Json?
@@ -45,4 +45,3 @@ model GrowthAuditLog {
   @@index([requestId])
   @@map("growth_audit_log")
 }
-

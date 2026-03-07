@@ -1,0 +1,37 @@
+/// 聊天会话成员表（仅私聊）
+model ChatConversationMember {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 会话ID
+  conversationId    Int       @map("conversation_id")
+  /// 用户ID
+  userId            Int       @map("user_id")
+  /// 成员角色（OWNER/MEMBER）
+  role              Int       @db.SmallInt
+  /// 加入时间
+  joinedAt          DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
+  /// 离开时间
+  leftAt            DateTime? @map("left_at") @db.Timestamptz(6)
+  /// 是否静音
+  isMuted           Boolean   @default(false) @map("is_muted")
+  /// 最后已读消息ID
+  lastReadMessageId BigInt?   @map("last_read_message_id")
+  /// 最后已读时间
+  lastReadAt        DateTime? @map("last_read_at") @db.Timestamptz(6)
+  /// 未读数缓存
+  unreadCount       Int       @default(0) @map("unread_count")
+
+  /// 所属会话
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  /// 所属用户
+  user         AppUser          @relation("ChatConversationMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 同一会话同一用户唯一
+  @@unique([conversationId, userId])
+  /// 会话查询索引
+  @@index([conversationId])
+  /// 未读会话查询索引
+  @@index([userId, unreadCount, conversationId])
+  @@map("chat_conversation_member")
+}

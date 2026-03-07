@@ -89,6 +89,5 @@ model ForumTopic {
   @@index([sectionId, isPinned, createdAt])
   @@index([sectionId, isFeatured, createdAt])
   @@index([sectionId, lastReplyAt])
-
   @@map("forum_topic")
 }

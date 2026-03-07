@@ -5,14 +5,14 @@ model GrowthRuleUsageSlot {
   id Int @id @default(autoincrement())
 
   /// 用户ID
-  userId Int @map("user_id")
+  userId    Int    @map("user_id")
   /// 资产类型（POINTS / EXPERIENCE）
   assetType String @map("asset_type") @db.VarChar(30)
   /// 规则键（如 points:10 / experience:6）
-  ruleKey String @map("rule_key") @db.VarChar(80)
+  ruleKey   String @map("rule_key") @db.VarChar(80)
 
   /// 槽位类型（DAILY / TOTAL / COOLDOWN）
-  slotType String @map("slot_type") @db.VarChar(20)
+  slotType  String @map("slot_type") @db.VarChar(20)
   /// 槽位值（如 2026-03-07 / all / 2026-03-07T09:15）
   slotValue String @map("slot_value") @db.VarChar(60)
 
@@ -28,4 +28,3 @@ model GrowthRuleUsageSlot {
   @@index([userId, assetType, ruleKey, createdAt])
   @@map("growth_rule_usage_slot")
 }
-

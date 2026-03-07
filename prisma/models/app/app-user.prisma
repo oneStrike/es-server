@@ -67,6 +67,16 @@ model AppUser {
   lastReplyTopics         ForumTopic[]                @relation("UserLastReplyTopics")
   /// 论坛通知
   forumNotifications      ForumNotification[]
+  /// 通知接收记录
+  receivedNotifications   UserNotification[]          @relation("UserNotificationReceiver")
+  /// 通知触发记录
+  triggeredNotifications  UserNotification[]          @relation("UserNotificationActor")
+  /// 私聊会话成员记录
+  chatConversationMembers ChatConversationMember[]    @relation("ChatConversationMemberUser")
+  /// 私聊发送消息记录
+  sentChatMessages        ChatMessage[]               @relation("ChatMessageSender")
+  /// 私聊会话最后发言快照
+  lastSentConversations   ChatConversation[]          @relation("ChatConversationLastSender")
   /// 版主申请（申请人）
   moderatorApplications   ForumModeratorApplication[] @relation("ModeratorApplicant")
   /// 版主申请（审核人）
@@ -129,6 +139,5 @@ model AppUser {
   @@index([status])
   /// 等级索引
   @@index([levelId])
-
   @@map("app_user")
 }

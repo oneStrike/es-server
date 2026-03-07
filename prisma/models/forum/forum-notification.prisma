@@ -44,6 +44,5 @@ model ForumNotification {
   @@index([userId, isRead])
   @@index([userId, priority])
   @@index([userId, createdAt])
-
   @@map("forum_notification")
 }

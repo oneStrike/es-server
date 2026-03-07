@@ -77,19 +77,19 @@ model Work {
   deletedAt           DateTime? @db.Timestamptz(6)
 
   /// 漫画扩展信息
-  comic WorkComic?
+  comic             WorkComic?
   /// 小说扩展信息
-  novel WorkNovel?
+  novel             WorkNovel?
   /// 作者关系
-  authors WorkAuthorRelation[]
+  authors           WorkAuthorRelation[]
   /// 分类关系
-  categories WorkCategoryRelation[]
+  categories        WorkCategoryRelation[]
   /// 标签关系
-  tags WorkTagRelation[]
+  tags              WorkTagRelation[]
   /// 章节列表
-  chapters WorkChapter[]
+  chapters          WorkChapter[]
   /// 阅读等级关联
-  requiredViewLevel UserLevelRule? @relation("WorkViewLevel", fields: [requiredViewLevelId], references: [id])
+  requiredViewLevel UserLevelRule?         @relation("WorkViewLevel", fields: [requiredViewLevelId], references: [id])
 
   @@index([isPublished, publishAt])
   @@index([popularity])
@@ -103,6 +103,5 @@ model Work {
   @@index([viewRule])
   @@index([requiredViewLevelId])
   @@index([commentCount])
-
   @@map("work")
 }

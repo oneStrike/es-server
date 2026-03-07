@@ -98,6 +98,5 @@ model UserComment {
   @@index([actualReplyToId])
   /// 删除时间索引
   @@index([deletedAt])
-
   @@map("user_comment")
 }

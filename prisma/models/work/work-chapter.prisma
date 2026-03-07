@@ -2,59 +2,59 @@
 /// 存储漫画/小说章节信息与统计数据
 model WorkChapter {
   /// 主键ID
-  id                  Int            @id @default(autoincrement())
+  id                  Int       @id @default(autoincrement())
   /// 作品ID
-  workId              Int            @map("work_id")
+  workId              Int       @map("work_id")
   /// 作品类型
-  workType            Int            @map("work_type") @db.SmallInt
+  workType            Int       @map("work_type") @db.SmallInt
   /// 章节标题
-  title               String         @db.VarChar(100)
+  title               String    @db.VarChar(100)
   /// 章节副标题
-  subtitle            String?        @db.VarChar(200)
+  subtitle            String?   @db.VarChar(200)
   /// 章节封面
-  cover               String?        @map("cover") @db.VarChar(500)
+  cover               String?   @map("cover") @db.VarChar(500)
   /// 章节简介
-  description         String?        @db.VarChar(1000)
+  description         String?   @db.VarChar(1000)
   /// 排序值
-  sortOrder           Int            @default(0) @map("sort_order")
+  sortOrder           Int       @default(0) @map("sort_order")
   /// 是否发布
-  isPublished         Boolean        @default(false) @map("is_published")
+  isPublished         Boolean   @default(false) @map("is_published")
   /// 是否预览章节
-  isPreview           Boolean        @default(false) @map("is_preview")
+  isPreview           Boolean   @default(false) @map("is_preview")
   /// 发布时间
-  publishAt           DateTime?      @map("publish_at") @db.Timestamptz(6)
+  publishAt           DateTime? @map("publish_at") @db.Timestamptz(6)
   /// 阅读规则
-  viewRule            Int            @default(-1) @map("view_rule") @db.SmallInt
+  viewRule            Int       @default(-1) @map("view_rule") @db.SmallInt
   /// 阅读等级限制ID
-  requiredViewLevelId Int?           @map("required_read_level_id")
+  requiredViewLevelId Int?      @map("required_read_level_id")
   /// 章节价格
-  price               Int            @default(0) @map("price")
+  price               Int       @default(0) @map("price")
   /// 是否可下载
-  canDownload         Boolean        @default(true) @map("can_download")
+  canDownload         Boolean   @default(true) @map("can_download")
   /// 是否可评论
-  canComment          Boolean        @default(true) @map("can_comment")
+  canComment          Boolean   @default(true) @map("can_comment")
   /// 章节内容
   content             String?
   /// 字数
-  wordCount           Int            @default(0) @map("word_count")
+  wordCount           Int       @default(0) @map("word_count")
   /// 浏览数
-  viewCount           Int            @default(0) @map("view_count")
+  viewCount           Int       @default(0) @map("view_count")
   /// 点赞数
-  likeCount           Int            @default(0) @map("like_count")
+  likeCount           Int       @default(0) @map("like_count")
   /// 评论数
-  commentCount        Int            @default(0) @map("comment_count")
+  commentCount        Int       @default(0) @map("comment_count")
   /// 购买数
-  purchaseCount       Int            @default(0) @map("purchase_count")
+  purchaseCount       Int       @default(0) @map("purchase_count")
   /// 下载数
-  downloadCount       Int            @default(0) @map("download_count")
+  downloadCount       Int       @default(0) @map("download_count")
   /// 备注
-  remark              String?        @db.VarChar(1000)
+  remark              String?   @db.VarChar(1000)
   /// 创建时间
-  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   /// 更新时间
-  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   /// 删除时间
-  deletedAt           DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   /// 关联作品
   work              Work           @relation(fields: [workId], references: [id], onDelete: Cascade)
@@ -73,6 +73,5 @@ model WorkChapter {
   @@index([publishAt])
   @@index([requiredViewLevelId])
   @@index([workType])
-
   @@map("work_chapter")
 }

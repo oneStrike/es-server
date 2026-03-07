@@ -27,13 +27,13 @@ model AdminUser {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   /// 关联令牌
-  tokens       AdminUserToken[]
+  tokens               AdminUserToken[]
   /// 创建的任务关联
-  createdTasks Task[]           @relation("TaskCreatedBy")
+  createdTasks         Task[]           @relation("TaskCreatedBy")
   /// 更新的任务关联
-  updatedTasks Task[]           @relation("TaskUpdatedBy")
+  updatedTasks         Task[]           @relation("TaskUpdatedBy")
   /// 更新的系统配置关联
-  updatedSystemConfigs SystemConfig[] @relation("SystemConfigUpdater")
+  updatedSystemConfigs SystemConfig[]   @relation("SystemConfigUpdater")
 
   /// 启用状态索引
   @@index([isEnabled])

@@ -253,6 +253,33 @@ export type ForumTopic = Prisma.ForumTopicModel
  */
 export type ForumUserActionLog = Prisma.ForumUserActionLogModel
 /**
+ * Model ChatConversationMember
+ * 聊天会话成员表（仅私聊）
+ */
+export type ChatConversationMember = Prisma.ChatConversationMemberModel
+/**
+ * Model ChatConversation
+ * 聊天会话表（仅私聊）
+ */
+export type ChatConversation = Prisma.ChatConversationModel
+/**
+ * Model ChatMessage
+ * 聊天消息表（仅私聊）
+ */
+export type ChatMessage = Prisma.ChatMessageModel
+/**
+ * Model MessageOutbox
+ * 消息投递外盒表
+ * 用于保障通知/聊天事件可靠异步投递
+ */
+export type MessageOutbox = Prisma.MessageOutboxModel
+/**
+ * Model UserNotification
+ * 用户通知表
+ * 统一承载站内通知（回复/点赞/收藏/关注/系统消息）
+ */
+export type UserNotification = Prisma.UserNotificationModel
+/**
  * Model RequestLog
  * 请求日志
  */

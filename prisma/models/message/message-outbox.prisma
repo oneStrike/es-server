@@ -1,0 +1,35 @@
+/// 消息投递外盒表
+/// 用于保障通知/聊天事件可靠异步投递
+model MessageOutbox {
+  /// 主键ID
+  id BigInt @id @default(autoincrement())
+
+  /// 事件域（notification/chat）
+  domain      String    @db.VarChar(20)
+  /// 事件类型
+  eventType   String    @map("event_type") @db.VarChar(60)
+  /// 全局幂等业务键
+  bizKey      String    @map("biz_key") @db.VarChar(180)
+  /// 事件载荷
+  payload     Json      @db.JsonB
+  /// 投递状态（PENDING/PROCESSING/SUCCESS/FAILED）
+  status      String    @default("PENDING") @db.VarChar(20)
+  /// 重试次数
+  retryCount  Int       @default(0) @map("retry_count")
+  /// 下次重试时间
+  nextRetryAt DateTime? @map("next_retry_at") @db.Timestamptz(6)
+  /// 最后错误信息
+  lastError   String?   @map("last_error") @db.VarChar(500)
+  /// 创建时间
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 处理完成时间
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
+
+  /// 唯一约束：全局幂等
+  @@unique([bizKey])
+  /// 消费轮询索引
+  @@index([status, nextRetryAt, id])
+  /// 监控索引
+  @@index([domain, status, createdAt])
+  @@map("message_outbox")
+}
