@@ -9,144 +9,122 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import {
-  CreateForumReportDto,
-  HandleForumReportDto,
-  QueryForumReportDto,
-} from './dto/forum-report.dto'
-import { ForumReportTypeEnum } from './forum-report.constant'
+  CreateWorkReportDto,
+  HandleWorkReportDto,
+  QueryWorkReportDto,
+} from './dto/work-report.dto'
 
-const FORUM_REPORT_TARGET_TYPES = [
-  ReportTargetTypeEnum.FORUM_TOPIC,
-  ReportTargetTypeEnum.FORUM_REPLY,
-  ReportTargetTypeEnum.USER,
+const WORK_REPORT_TARGET_TYPES = [
+  ReportTargetTypeEnum.WORK,
+  ReportTargetTypeEnum.WORK_CHAPTER,
 ] as const
 
-type ForumReportTargetType = (typeof FORUM_REPORT_TARGET_TYPES)[number]
+type WorkReportTargetType = (typeof WORK_REPORT_TARGET_TYPES)[number]
 
 @Injectable()
-export class ForumReportService extends BaseService {
+export class WorkReportService extends BaseService {
   constructor(
-    private readonly userGrowthRewardService: UserGrowthRewardService,
     private readonly reportService: ReportService,
+    private readonly userGrowthRewardService: UserGrowthRewardService,
   ) {
     super()
   }
 
-  get forumTopic() {
-    return this.prisma.forumTopic
-  }
-
-  get userComment() {
-    return this.prisma.userComment
-  }
-
-  private isForumTargetType(
+  private isWorkTargetType(
     targetType: ReportTargetTypeEnum,
-  ): targetType is ForumReportTargetType {
-    return FORUM_REPORT_TARGET_TYPES.includes(
-      targetType as ForumReportTargetType,
-    )
+  ): targetType is WorkReportTargetType {
+    return WORK_REPORT_TARGET_TYPES.includes(targetType as WorkReportTargetType)
   }
 
-  private ensureForumTargetType(
+  private ensureWorkTargetType(
     targetType: ReportTargetTypeEnum,
-  ): ForumReportTargetType {
-    if (!this.isForumTargetType(targetType)) {
-      throw new BadRequestException('不支持的论坛举报目标类型')
+  ): WorkReportTargetType {
+    if (!this.isWorkTargetType(targetType)) {
+      throw new BadRequestException('不支持的作品举报目标类型')
     }
     return targetType
   }
 
-  async createForumReport(createForumReportDto: CreateForumReportDto) {
-    const { reporterId, type, targetType, targetId, reason, ...reportData } =
-      createForumReportDto
+  private async ensureReportTargetExists(
+    targetType: WorkReportTargetType,
+    targetId: number,
+  ) {
+    if (targetType === ReportTargetTypeEnum.WORK) {
+      const work = await this.prisma.work.findUnique({
+        where: { id: targetId, deletedAt: null },
+        select: { id: true },
+      })
+      if (!work) {
+        throw new NotFoundException('作品不存在')
+      }
+      return
+    }
 
-    const resolvedTargetType = this.ensureForumTargetType(
-      targetType ??
-        (type === ForumReportTypeEnum.TOPIC
-          ? ReportTargetTypeEnum.FORUM_TOPIC
-          : type === ForumReportTypeEnum.REPLY
-            ? ReportTargetTypeEnum.FORUM_REPLY
-            : ReportTargetTypeEnum.USER),
-    )
+    const chapter = await this.prisma.workChapter.findUnique({
+      where: { id: targetId, deletedAt: null },
+      select: { id: true },
+    })
+    if (!chapter) {
+      throw new NotFoundException('章节不存在')
+    }
+  }
+
+  async createWorkReport(createWorkReportDto: CreateWorkReportDto) {
+    const {
+      reporterId,
+      targetType = ReportTargetTypeEnum.WORK,
+      targetId,
+      reason,
+      description,
+      evidenceUrl,
+    } = createWorkReportDto
+
+    const resolvedTargetType = this.ensureWorkTargetType(targetType)
 
     const reporter = await this.prisma.appUser.findUnique({
       where: { id: reporterId },
       select: { id: true },
     })
-
     if (!reporter) {
       throw new BadRequestException('举报人不存在')
     }
 
-    if (resolvedTargetType === ReportTargetTypeEnum.FORUM_TOPIC) {
-      const topic = await this.forumTopic.findUnique({
-        where: { id: targetId, deletedAt: null },
-        select: { userId: true },
-      })
+    await this.ensureReportTargetExists(resolvedTargetType, targetId)
 
-      if (!topic) {
-        throw new NotFoundException('主题不存在')
-      }
-
-      if (topic.userId === reporterId) {
-        throw new BadRequestException('不能举报自己的主题')
-      }
-    } else if (resolvedTargetType === ReportTargetTypeEnum.FORUM_REPLY) {
-      const reply = await this.userComment.findUnique({
-        where: { id: targetId },
-        select: { userId: true },
-      })
-
-      if (!reply) {
-        throw new NotFoundException('回复不存在')
-      }
-
-      if (reply.userId === reporterId) {
-        throw new BadRequestException('不能举报自己的回复')
-      }
-    } else if (resolvedTargetType === ReportTargetTypeEnum.USER) {
-      const user = await this.prisma.appUser.findUnique({
-        where: { id: targetId },
-        select: { id: true },
-      })
-
-      if (!user) {
-        throw new NotFoundException('用户不存在')
-      }
-
-      if (targetId === reporterId) {
-        throw new BadRequestException('不能举报自己')
-      }
-    }
+    const duplicateMessage =
+      resolvedTargetType === ReportTargetTypeEnum.WORK
+        ? '您已经举报过该作品，请勿重复举报'
+        : '您已经举报过该章节，请勿重复举报'
 
     const report = await this.reportService.createReport(
       {
-        ...reportData,
         reporterId,
         targetType: resolvedTargetType,
         targetId,
         reason,
+        description,
+        evidenceUrl,
         status: ReportStatusEnum.PENDING,
       },
       {
-        duplicateMessage: '您已经举报过该内容，请勿重复举报',
+        duplicateMessage,
       },
     )
 
     await this.userGrowthRewardService.tryRewardByRule({
       userId: reporterId,
       ruleType: GrowthRuleTypeEnum.REPORT_CREATE,
-      bizKey: `forum:report:create:${report.id}:user:${reporterId}`,
-      source: 'forum_report',
-      remark: `create forum report #${report.id}`,
+      bizKey: `work:report:create:${report.id}:user:${reporterId}`,
+      source: 'work_report',
+      remark: `create work report #${report.id}`,
+      targetType: resolvedTargetType,
       targetId,
     })
 
     return report
   }
 
-  async getForumReports(queryForumReportDto: QueryForumReportDto) {
+  async getWorkReports(queryWorkReportDto: QueryWorkReportDto) {
     const {
       targetType,
       reason,
@@ -154,22 +132,20 @@ export class ForumReportService extends BaseService {
       reporterId,
       pageIndex = 0,
       pageSize = 15,
-    } = queryForumReportDto
+    } = queryWorkReportDto
 
     const where: Record<string, unknown> = {
       targetType: targetType
-        ? this.ensureForumTargetType(targetType)
-        : { in: FORUM_REPORT_TARGET_TYPES },
+        ? this.ensureWorkTargetType(targetType)
+        : { in: WORK_REPORT_TARGET_TYPES },
     }
 
     if (reason) {
       where.reason = reason
     }
-
     if (status) {
       where.status = status
     }
-
     if (reporterId) {
       where.reporterId = reporterId
     }
@@ -218,35 +194,29 @@ export class ForumReportService extends BaseService {
       },
     })
 
-    if (!report || !this.isForumTargetType(report.targetType)) {
+    if (!report || !this.isWorkTargetType(report.targetType)) {
       throw new NotFoundException('举报记录不存在')
     }
 
     let targetDetails: any = null
-
-    if (report.targetType === ReportTargetTypeEnum.FORUM_TOPIC) {
-      targetDetails = await this.forumTopic.findUnique({
+    if (report.targetType === ReportTargetTypeEnum.WORK) {
+      targetDetails = await this.prisma.work.findUnique({
+        where: { id: report.targetId },
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          cover: true,
+        },
+      })
+    } else {
+      targetDetails = await this.prisma.workChapter.findUnique({
         where: { id: report.targetId },
         select: {
           id: true,
           title: true,
-          content: true,
-        },
-      })
-    } else if (report.targetType === ReportTargetTypeEnum.FORUM_REPLY) {
-      targetDetails = await this.userComment.findUnique({
-        where: { id: report.targetId },
-        select: {
-          id: true,
-          content: true,
-        },
-      })
-    } else if (report.targetType === ReportTargetTypeEnum.USER) {
-      targetDetails = await this.prisma.appUser.findUnique({
-        where: { id: report.targetId },
-        select: {
-          id: true,
-          nickname: true,
+          workId: true,
+          workType: true,
         },
       })
     }
@@ -257,12 +227,11 @@ export class ForumReportService extends BaseService {
     }
   }
 
-  async handleReport(handleReportDto: HandleForumReportDto) {
-    const { id, status, handlerId, handlingNote } = handleReportDto
+  async handleReport(handleWorkReportDto: HandleWorkReportDto) {
+    const { id, status, handlerId, handlingNote } = handleWorkReportDto
 
     const report = await this.reportService.getReportById(id)
-
-    if (!report || !this.isForumTargetType(report.targetType)) {
+    if (!report || !this.isWorkTargetType(report.targetType)) {
       throw new NotFoundException('举报记录不存在')
     }
 
@@ -287,8 +256,7 @@ export class ForumReportService extends BaseService {
     handlingNote?: string,
   ) {
     const report = await this.reportService.getReportById(id)
-
-    if (!report || !this.isForumTargetType(report.targetType)) {
+    if (!report || !this.isWorkTargetType(report.targetType)) {
       throw new NotFoundException('举报记录不存在')
     }
 
@@ -301,7 +269,7 @@ export class ForumReportService extends BaseService {
 
   async getReportStatistics() {
     const baseWhere = {
-      targetType: { in: FORUM_REPORT_TARGET_TYPES },
+      targetType: { in: WORK_REPORT_TARGET_TYPES },
     }
 
     const totalReports = await this.reportService.countReports(baseWhere)
@@ -362,22 +330,20 @@ export class ForumReportService extends BaseService {
     }
   }
 
-  async deleteForumReport(id: number) {
+  async deleteWorkReport(id: number) {
     const report = await this.reportService.getReportById(id)
-
-    if (!report || !this.isForumTargetType(report.targetType)) {
+    if (!report || !this.isWorkTargetType(report.targetType)) {
       throw new NotFoundException('举报记录不存在')
     }
 
     await this.reportService.deleteReport(id)
-
     return { success: true }
   }
 
-  async getUserReports(dto: QueryForumReportDto) {
+  async getUserReports(dto: QueryWorkReportDto) {
     const { reporterId, pageIndex = 0, pageSize = 15, ...otherDto } = dto
     const where: Record<string, unknown> = {
-      targetType: { in: FORUM_REPORT_TARGET_TYPES },
+      targetType: { in: WORK_REPORT_TARGET_TYPES },
       ...otherDto,
     }
 
@@ -394,6 +360,6 @@ export class ForumReportService extends BaseService {
       orderBy: {
         createdAt: 'desc',
       },
-    })
+    } as any)
   }
 }

@@ -22,6 +22,7 @@ export class BaseReportInfoDto {
     example: 'spam',
     required: true,
     minLength: 1,
+    maxLength: 50,
   })
   reason!: string
 
@@ -29,6 +30,7 @@ export class BaseReportInfoDto {
     description: '举报描述',
     example: '包含垃圾内容',
     required: false,
+    maxLength: 500,
   })
   description?: string
 
@@ -36,13 +38,11 @@ export class BaseReportInfoDto {
     description: '证据链接',
     example: 'https://example.com/evidence.png',
     required: false,
+    maxLength: 500,
   })
   evidenceUrl?: string
 }
 
-/**
- * 举报处理信息 DTO
- */
 export class ReportHandlingDto {
   @StringProperty({
     description: '处理备注',
@@ -60,9 +60,6 @@ export class ReportHandlingDto {
   handledAt?: Date
 }
 
-/**
- * 评论举报完整 DTO（内部使用）
- */
 export class BaseCommentReportDto extends BaseDto {
   @EnumProperty({
     description: '举报目标类型（统一举报表字段）',
@@ -101,6 +98,7 @@ export class BaseCommentReportDto extends BaseDto {
     example: 'spam',
     required: true,
     minLength: 1,
+    maxLength: 50,
   })
   reason!: string
 
@@ -108,6 +106,7 @@ export class BaseCommentReportDto extends BaseDto {
     description: '举报描述',
     example: '包含垃圾内容',
     required: false,
+    maxLength: 500,
   })
   description?: string
 
@@ -115,6 +114,7 @@ export class BaseCommentReportDto extends BaseDto {
     description: '证据链接',
     example: 'https://example.com/evidence.png',
     required: false,
+    maxLength: 500,
   })
   evidenceUrl?: string
 
@@ -150,17 +150,11 @@ export class BaseCommentReportDto extends BaseDto {
   handledAt?: Date
 }
 
-/**
- * 举报ID DTO
- */
 export class ReportIdDto {
   @NumberProperty({ description: '举报ID', example: 1, required: true, min: 1 })
   reportId!: number
 }
 
-/**
- * 举报评论 DTO（内部服务使用，包含 reporterId）
- */
 export class ReportCommentDto extends IntersectionType(
   CommentIdDto,
   BaseReportInfoDto,
@@ -175,25 +169,16 @@ export class ReportCommentDto extends IntersectionType(
   reporterId!: number
 }
 
-/**
- * 举报评论请求体 DTO（API 接口使用，不包含 reporterId）
- */
 export class ReportCommentBodyDto extends IntersectionType(
   CommentIdDto,
   BaseReportInfoDto,
 ) {}
 
-/**
- * 查询评论举报列表 DTO
- */
 export class QueryCommentReportDto extends IntersectionType(
   PageDto,
   PickType(PartialType(BaseCommentReportDto), ['status']),
 ) {}
 
-/**
- * 处理评论举报 DTO
- */
 export class HandleCommentReportDto extends IntersectionType(
   ReportIdDto,
   ReportHandlingDto,

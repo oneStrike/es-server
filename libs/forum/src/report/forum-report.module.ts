@@ -1,3 +1,4 @@
+import { ReportModule } from '@libs/interaction'
 import { UserGrowthRewardModule } from '@libs/user/growth-reward'
 import { Module } from '@nestjs/common'
 import { ForumReportService } from './forum-report.service'
@@ -7,7 +8,7 @@ import { ForumReportService } from './forum-report.service'
  * 提供论坛举报管理的完整功能
  */
 @Module({
-  imports: [UserGrowthRewardModule],
+  imports: [UserGrowthRewardModule, ReportModule],
   providers: [ForumReportService],
   exports: [ForumReportService],
 })

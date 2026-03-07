@@ -1,10 +1,9 @@
 /**
- * 评论成长规则种子数据
+ * Interaction growth rule seeds.
  *
- * 规则类型：
+ * Rule types:
  * - 10: CREATE_COMMENT
  * - 11: COMMENT_LIKED
- * - 12: FIRST_COMMENT_OF_DAY
  */
 export async function createInitialInteractionGrowthRules(prisma: any) {
   const pointRules = [
@@ -24,14 +23,6 @@ export async function createInitialInteractionGrowthRules(prisma: any) {
       isEnabled: true,
       remark: '评论被点赞获得积分',
     },
-    {
-      type: 12,
-      points: 5,
-      dailyLimit: 1,
-      totalLimit: 0,
-      isEnabled: true,
-      remark: '每日首评额外积分',
-    },
   ]
 
   const experienceRules = [
@@ -50,14 +41,6 @@ export async function createInitialInteractionGrowthRules(prisma: any) {
       totalLimit: 0,
       isEnabled: true,
       remark: '评论被点赞获得经验',
-    },
-    {
-      type: 12,
-      experience: 5,
-      dailyLimit: 1,
-      totalLimit: 0,
-      isEnabled: true,
-      remark: '每日首评额外经验',
     },
   ]
 
@@ -81,4 +64,3 @@ export async function createInitialInteractionGrowthRules(prisma: any) {
     }
   }
 }
-

@@ -1,14 +1,16 @@
-import { ApiDoc, ApiPageDoc, Public } from '@libs/base/decorators'
+import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
   BaseWorkDto,
+  CreateWorkReportBodyDto,
   PageWorkDto,
   QueryWorkDto,
   QueryWorkTypeDto,
   WorkChapterService,
+  WorkReportService,
   WorkService,
 } from '@libs/content'
-import { Controller, Get, Query } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('作品模块')
@@ -17,6 +19,7 @@ export class WorkController {
   constructor(
     private readonly workService: WorkService,
     private readonly workChapterService: WorkChapterService,
+    private readonly workReportService: WorkReportService,
   ) {}
 
   @Get('hot')
@@ -67,5 +70,19 @@ export class WorkController {
   })
   async getWorkDetail(@Query() query: IdDto) {
     return this.workService.getWorkDetail(query.id)
+  }
+
+  @Post('report')
+  @ApiDoc({
+    summary: '举报作品',
+  })
+  async reportWork(
+    @Body() body: CreateWorkReportBodyDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.workReportService.createWorkReport({
+      ...body,
+      reporterId: userId,
+    })
   }
 }

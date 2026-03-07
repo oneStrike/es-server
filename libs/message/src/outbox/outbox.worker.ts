@@ -7,14 +7,11 @@ import { MessageNotificationService } from '../notification/notification.service
 import {
   MESSAGE_OUTBOX_BATCH_SIZE,
   MESSAGE_OUTBOX_MAX_RETRY,
+  MESSAGE_OUTBOX_PROCESSING_TIMEOUT_SECONDS,
   MessageOutboxDomainEnum,
   MessageOutboxStatusEnum,
 } from './outbox.constant'
 
-/**
- * 消息发件箱工作器
- * 定时消费发件箱中的待处理事件，实现消息的可靠投递
- */
 @Injectable()
 export class MessageOutboxWorker extends BaseService {
   private readonly logger = new Logger(MessageOutboxWorker.name)
@@ -25,13 +22,12 @@ export class MessageOutboxWorker extends BaseService {
     super()
   }
 
-  /**
-   * 消费发件箱事件
-   * 每5秒执行一次，批量处理待处理的事件
-   */
   @Cron('*/5 * * * * *')
   async consumeOutbox() {
     const now = new Date()
+
+    await this.recoverStaleProcessingEvents(now)
+
     const events = await this.prisma.messageOutbox.findMany({
       where: {
         status: MessageOutboxStatusEnum.PENDING,
@@ -43,11 +39,14 @@ export class MessageOutboxWorker extends BaseService {
       orderBy: { id: 'asc' },
       take: MESSAGE_OUTBOX_BATCH_SIZE,
     })
+
     if (!events.length) {
       return
     }
 
     for (const event of events) {
+      const processingDeadline = this.buildProcessingDeadline()
+
       const lockResult = await this.prisma.messageOutbox.updateMany({
         where: {
           id: event.id,
@@ -55,6 +54,7 @@ export class MessageOutboxWorker extends BaseService {
         },
         data: {
           status: MessageOutboxStatusEnum.PROCESSING,
+          nextRetryAt: processingDeadline,
         },
       })
       if (!lockResult.count) {
@@ -68,6 +68,7 @@ export class MessageOutboxWorker extends BaseService {
           data: {
             status: MessageOutboxStatusEnum.SUCCESS,
             processedAt: new Date(),
+            nextRetryAt: null,
             lastError: null,
           },
         })
@@ -77,25 +78,44 @@ export class MessageOutboxWorker extends BaseService {
     }
   }
 
-  /**
-   * 处理单个发件箱事件
-   * @param event 发件箱事件
-   */
+  private async recoverStaleProcessingEvents(now: Date) {
+    const recovered = await this.prisma.messageOutbox.updateMany({
+      where: {
+        status: MessageOutboxStatusEnum.PROCESSING,
+        nextRetryAt: { lte: now },
+      },
+      data: {
+        status: MessageOutboxStatusEnum.PENDING,
+        lastError: 'processing timeout recovered',
+      },
+    })
+
+    if (recovered.count > 0) {
+      this.logger.warn(
+        `Recovered stale processing outbox events: ${recovered.count}`,
+      )
+    }
+  }
+
+  private buildProcessingDeadline() {
+    const deadline = new Date()
+    deadline.setSeconds(
+      deadline.getSeconds() + MESSAGE_OUTBOX_PROCESSING_TIMEOUT_SECONDS,
+    )
+    return deadline
+  }
+
   private async processEvent(event: MessageOutbox) {
     if (event.domain === MessageOutboxDomainEnum.NOTIFICATION) {
       await this.processNotificationEvent(event)
       return
     }
-    throw new Error(`不支持的发件箱域: ${event.domain}`)
+    throw new Error(`Unsupported outbox domain: ${event.domain}`)
   }
 
-  /**
-   * 处理通知类型的事件
-   * @param event 发件箱事件
-   */
   private async processNotificationEvent(event: MessageOutbox) {
     if (!event.payload || typeof event.payload !== 'object') {
-      throw new Error('无效的通知负载')
+      throw new Error('Invalid notification payload')
     }
     await this.messageNotificationService.createFromOutbox(
       event.bizKey,
@@ -103,11 +123,6 @@ export class MessageOutboxWorker extends BaseService {
     )
   }
 
-  /**
-   * 处理事件处理过程中的错误
-   * @param event 发件箱事件
-   * @param error 错误信息
-   */
   private async handleProcessError(event: MessageOutbox, error: unknown) {
     const retryCount = event.retryCount + 1
     const message = this.stringifyError(error).slice(0, 500)
@@ -122,7 +137,7 @@ export class MessageOutboxWorker extends BaseService {
           processedAt: new Date(),
         },
       })
-      this.logger.error(`发件箱事件永久失败: id=${event.id}, 错误=${message}`)
+      this.logger.error(`Outbox event permanently failed: id=${event.id}, error=${message}`)
       return
     }
 
@@ -140,15 +155,10 @@ export class MessageOutboxWorker extends BaseService {
       },
     })
     this.logger.warn(
-      `发件箱事件重试已安排: id=${event.id}, 重试次数=${retryCount}, 错误=${message}`,
+      `Outbox retry scheduled: id=${event.id}, retry=${retryCount}, error=${message}`,
     )
   }
 
-  /**
-   * 将错误对象转换为字符串
-   * @param error 错误对象
-   * @returns 错误字符串
-   */
   private stringifyError(error: unknown) {
     if (error instanceof Error) {
       return error.message
@@ -159,7 +169,7 @@ export class MessageOutboxWorker extends BaseService {
     try {
       return JSON.stringify(error)
     } catch {
-      return '未知错误'
+      return 'unknown error'
     }
   }
 }

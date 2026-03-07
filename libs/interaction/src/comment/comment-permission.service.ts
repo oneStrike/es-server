@@ -1,17 +1,12 @@
-import { InteractionTargetTypeEnum, UserStatusEnum } from '@libs/base/constant'
+import {
+  InteractionTargetTypeEnum,
+  UserStatusEnum,
+} from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 
 @Injectable()
 export class CommentPermissionService extends BaseService {
-  /**
-   * 验证用户和目标是否可以评论
-   * 组合调用 ensureUserCanComment 和 ensureTargetCanComment
-   * @param userId - 用户ID
-   * @param targetType - 目标类型
-   * @param targetId - 目标ID
-   * @throws BadRequestException 用户或目标无评论权限时抛出
-   */
   async ensureCanComment(
     userId: number,
     targetType: InteractionTargetTypeEnum,
@@ -23,16 +18,19 @@ export class CommentPermissionService extends BaseService {
     ])
   }
 
-  /**
-   * 校验用户是否允许发表评论
-   * 检查用户是否存在、是否被禁用、是否被禁言或封禁
-   * @param userId - 用户ID
-   * @throws BadRequestException 用户无评论权限时抛出
-   */
   async ensureUserCanComment(userId: number) {
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },
-      select: { isEnabled: true, status: true },
+      select: {
+        isEnabled: true,
+        status: true,
+        level: {
+          select: {
+            dailyReplyCommentLimit: true,
+            postInterval: true,
+          },
+        },
+      },
     })
 
     if (!user || !user.isEnabled) {
@@ -49,15 +47,10 @@ export class CommentPermissionService extends BaseService {
     ) {
       throw new BadRequestException('用户已被禁言或封禁，无法评论')
     }
+
+    await this.ensureUserLevelRateLimit(userId, user.level)
   }
 
-  /**
-   * 校验目标是否支持评论，并校验目标类型是否匹配
-   * 根据目标类型（作品/章节/论坛主题）进行不同的校验逻辑
-   * @param targetType - 目标类型
-   * @param targetId - 目标ID
-   * @throws BadRequestException 目标不存在、类型不匹配或不允许评论时抛出
-   */
   async ensureTargetCanComment(
     targetType: InteractionTargetTypeEnum,
     targetId: number,
@@ -84,12 +77,6 @@ export class CommentPermissionService extends BaseService {
     await validator(targetId)
   }
 
-  /**
-   * 校验作品是否允许评论
-   * @param workId - 作品ID
-   * @param expectedType - 期望的作品类型（1=漫画，2=小说）
-   * @throws BadRequestException 作品不存在、类型不匹配或不允许评论时抛出
-   */
   private async validateWork(
     workId: number,
     expectedType: number,
@@ -107,12 +94,6 @@ export class CommentPermissionService extends BaseService {
     }
   }
 
-  /**
-   * 校验章节是否允许评论
-   * @param chapterId - 章节ID
-   * @param expectedWorkType - 期望的作品类型（1=漫画，2=小说）
-   * @throws BadRequestException 章节不存在、类型不匹配或不允许评论时抛出
-   */
   private async validateChapter(
     chapterId: number,
     expectedWorkType: number,
@@ -130,11 +111,6 @@ export class CommentPermissionService extends BaseService {
     }
   }
 
-  /**
-   * 校验论坛主题是否允许评论
-   * @param topicId - 主题ID
-   * @throws BadRequestException 主题不存在或已被锁定时抛出
-   */
   private async validateForumTopic(topicId: number): Promise<void> {
     const topic = await this.prisma.forumTopic.findUnique({
       where: { id: topicId },
@@ -148,12 +124,71 @@ export class CommentPermissionService extends BaseService {
     }
   }
 
-  /**
-   * 确保目标存在（未删除）
-   * @param target - 目标对象
-   * @param message - 不存在时的错误消息
-   * @throws BadRequestException 目标不存在时抛出
-   */
+  private async ensureUserLevelRateLimit(
+    userId: number,
+    level: {
+      dailyReplyCommentLimit: number
+      postInterval: number
+    } | null,
+  ): Promise<void> {
+    if (!level) {
+      return
+    }
+
+    if (level.dailyReplyCommentLimit > 0) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const usedToday = await this.prisma.userComment.count({
+        where: {
+          userId,
+          createdAt: { gte: today },
+        },
+      })
+
+      if (usedToday >= level.dailyReplyCommentLimit) {
+        throw new BadRequestException(
+          `今日评论次数已达上限（${level.dailyReplyCommentLimit}）`,
+        )
+      }
+    }
+
+    if (level.postInterval > 0) {
+      const [lastTopic, lastComment] = await Promise.all([
+        this.prisma.forumTopic.findFirst({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true },
+        }),
+        this.prisma.userComment.findFirst({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true },
+        }),
+      ])
+
+      const lastPostAt =
+        lastTopic && lastComment
+          ? lastTopic.createdAt > lastComment.createdAt
+            ? lastTopic.createdAt
+            : lastComment.createdAt
+          : lastTopic?.createdAt || lastComment?.createdAt || null
+
+      if (lastPostAt) {
+        const secondsSinceLastPost = Math.floor(
+          (Date.now() - lastPostAt.getTime()) / 1000,
+        )
+        if (secondsSinceLastPost < level.postInterval) {
+          throw new BadRequestException(
+            `操作过于频繁，请 ${
+              level.postInterval - secondsSinceLastPost
+            } 秒后再试`,
+          )
+        }
+      }
+    }
+  }
+
   private ensureExists<T extends { deletedAt: Date | null }>(
     target: T | null,
     message: string,
@@ -163,13 +198,6 @@ export class CommentPermissionService extends BaseService {
     }
   }
 
-  /**
-   * 确保类型匹配
-   * @param actualType - 实际类型
-   * @param expectedType - 期望类型
-   * @param message - 不匹配时的错误消息
-   * @throws BadRequestException 类型不匹配时抛出
-   */
   private ensureTypeMatch(
     actualType: number,
     expectedType: number,
