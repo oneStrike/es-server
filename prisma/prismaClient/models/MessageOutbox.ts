@@ -29,20 +29,26 @@ export type AggregateMessageOutbox = {
 
 export type MessageOutboxAvgAggregateOutputType = {
   id: number | null
+  domain: number | null
+  eventType: number | null
+  status: number | null
   retryCount: number | null
 }
 
 export type MessageOutboxSumAggregateOutputType = {
   id: bigint | null
+  domain: number | null
+  eventType: number | null
+  status: number | null
   retryCount: number | null
 }
 
 export type MessageOutboxMinAggregateOutputType = {
   id: bigint | null
-  domain: string | null
-  eventType: string | null
+  domain: number | null
+  eventType: number | null
   bizKey: string | null
-  status: string | null
+  status: number | null
   retryCount: number | null
   nextRetryAt: Date | null
   lastError: string | null
@@ -52,10 +58,10 @@ export type MessageOutboxMinAggregateOutputType = {
 
 export type MessageOutboxMaxAggregateOutputType = {
   id: bigint | null
-  domain: string | null
-  eventType: string | null
+  domain: number | null
+  eventType: number | null
   bizKey: string | null
-  status: string | null
+  status: number | null
   retryCount: number | null
   nextRetryAt: Date | null
   lastError: string | null
@@ -81,11 +87,17 @@ export type MessageOutboxCountAggregateOutputType = {
 
 export type MessageOutboxAvgAggregateInputType = {
   id?: true
+  domain?: true
+  eventType?: true
+  status?: true
   retryCount?: true
 }
 
 export type MessageOutboxSumAggregateInputType = {
   id?: true
+  domain?: true
+  eventType?: true
+  status?: true
   retryCount?: true
 }
 
@@ -218,11 +230,11 @@ export type MessageOutboxGroupByArgs<ExtArgs extends runtime.Types.Extensions.In
 
 export type MessageOutboxGroupByOutputType = {
   id: bigint
-  domain: string
-  eventType: string
+  domain: number
+  eventType: number
   bizKey: string
   payload: runtime.JsonValue
-  status: string
+  status: number
   retryCount: number
   nextRetryAt: Date | null
   lastError: string | null
@@ -255,11 +267,11 @@ export type MessageOutboxWhereInput = {
   OR?: Prisma.MessageOutboxWhereInput[]
   NOT?: Prisma.MessageOutboxWhereInput | Prisma.MessageOutboxWhereInput[]
   id?: Prisma.BigIntFilter<"MessageOutbox"> | bigint | number
-  domain?: Prisma.StringFilter<"MessageOutbox"> | string
-  eventType?: Prisma.StringFilter<"MessageOutbox"> | string
+  domain?: Prisma.IntFilter<"MessageOutbox"> | number
+  eventType?: Prisma.IntFilter<"MessageOutbox"> | number
   bizKey?: Prisma.StringFilter<"MessageOutbox"> | string
   payload?: Prisma.JsonFilter<"MessageOutbox">
-  status?: Prisma.StringFilter<"MessageOutbox"> | string
+  status?: Prisma.IntFilter<"MessageOutbox"> | number
   retryCount?: Prisma.IntFilter<"MessageOutbox"> | number
   nextRetryAt?: Prisma.DateTimeNullableFilter<"MessageOutbox"> | Date | string | null
   lastError?: Prisma.StringNullableFilter<"MessageOutbox"> | string | null
@@ -287,10 +299,10 @@ export type MessageOutboxWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.MessageOutboxWhereInput | Prisma.MessageOutboxWhereInput[]
   OR?: Prisma.MessageOutboxWhereInput[]
   NOT?: Prisma.MessageOutboxWhereInput | Prisma.MessageOutboxWhereInput[]
-  domain?: Prisma.StringFilter<"MessageOutbox"> | string
-  eventType?: Prisma.StringFilter<"MessageOutbox"> | string
+  domain?: Prisma.IntFilter<"MessageOutbox"> | number
+  eventType?: Prisma.IntFilter<"MessageOutbox"> | number
   payload?: Prisma.JsonFilter<"MessageOutbox">
-  status?: Prisma.StringFilter<"MessageOutbox"> | string
+  status?: Prisma.IntFilter<"MessageOutbox"> | number
   retryCount?: Prisma.IntFilter<"MessageOutbox"> | number
   nextRetryAt?: Prisma.DateTimeNullableFilter<"MessageOutbox"> | Date | string | null
   lastError?: Prisma.StringNullableFilter<"MessageOutbox"> | string | null
@@ -322,11 +334,11 @@ export type MessageOutboxScalarWhereWithAggregatesInput = {
   OR?: Prisma.MessageOutboxScalarWhereWithAggregatesInput[]
   NOT?: Prisma.MessageOutboxScalarWhereWithAggregatesInput | Prisma.MessageOutboxScalarWhereWithAggregatesInput[]
   id?: Prisma.BigIntWithAggregatesFilter<"MessageOutbox"> | bigint | number
-  domain?: Prisma.StringWithAggregatesFilter<"MessageOutbox"> | string
-  eventType?: Prisma.StringWithAggregatesFilter<"MessageOutbox"> | string
+  domain?: Prisma.IntWithAggregatesFilter<"MessageOutbox"> | number
+  eventType?: Prisma.IntWithAggregatesFilter<"MessageOutbox"> | number
   bizKey?: Prisma.StringWithAggregatesFilter<"MessageOutbox"> | string
   payload?: Prisma.JsonWithAggregatesFilter<"MessageOutbox">
-  status?: Prisma.StringWithAggregatesFilter<"MessageOutbox"> | string
+  status?: Prisma.IntWithAggregatesFilter<"MessageOutbox"> | number
   retryCount?: Prisma.IntWithAggregatesFilter<"MessageOutbox"> | number
   nextRetryAt?: Prisma.DateTimeNullableWithAggregatesFilter<"MessageOutbox"> | Date | string | null
   lastError?: Prisma.StringNullableWithAggregatesFilter<"MessageOutbox"> | string | null
@@ -336,11 +348,11 @@ export type MessageOutboxScalarWhereWithAggregatesInput = {
 
 export type MessageOutboxCreateInput = {
   id?: bigint | number
-  domain: string
-  eventType: string
+  domain: number
+  eventType: number
   bizKey: string
   payload: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  status?: string
+  status?: number
   retryCount?: number
   nextRetryAt?: Date | string | null
   lastError?: string | null
@@ -350,11 +362,11 @@ export type MessageOutboxCreateInput = {
 
 export type MessageOutboxUncheckedCreateInput = {
   id?: bigint | number
-  domain: string
-  eventType: string
+  domain: number
+  eventType: number
   bizKey: string
   payload: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  status?: string
+  status?: number
   retryCount?: number
   nextRetryAt?: Date | string | null
   lastError?: string | null
@@ -364,11 +376,11 @@ export type MessageOutboxUncheckedCreateInput = {
 
 export type MessageOutboxUpdateInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
-  domain?: Prisma.StringFieldUpdateOperationsInput | string
-  eventType?: Prisma.StringFieldUpdateOperationsInput | string
+  domain?: Prisma.IntFieldUpdateOperationsInput | number
+  eventType?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -378,11 +390,11 @@ export type MessageOutboxUpdateInput = {
 
 export type MessageOutboxUncheckedUpdateInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
-  domain?: Prisma.StringFieldUpdateOperationsInput | string
-  eventType?: Prisma.StringFieldUpdateOperationsInput | string
+  domain?: Prisma.IntFieldUpdateOperationsInput | number
+  eventType?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -392,11 +404,11 @@ export type MessageOutboxUncheckedUpdateInput = {
 
 export type MessageOutboxCreateManyInput = {
   id?: bigint | number
-  domain: string
-  eventType: string
+  domain: number
+  eventType: number
   bizKey: string
   payload: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  status?: string
+  status?: number
   retryCount?: number
   nextRetryAt?: Date | string | null
   lastError?: string | null
@@ -406,11 +418,11 @@ export type MessageOutboxCreateManyInput = {
 
 export type MessageOutboxUpdateManyMutationInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
-  domain?: Prisma.StringFieldUpdateOperationsInput | string
-  eventType?: Prisma.StringFieldUpdateOperationsInput | string
+  domain?: Prisma.IntFieldUpdateOperationsInput | number
+  eventType?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -420,11 +432,11 @@ export type MessageOutboxUpdateManyMutationInput = {
 
 export type MessageOutboxUncheckedUpdateManyInput = {
   id?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
-  domain?: Prisma.StringFieldUpdateOperationsInput | string
-  eventType?: Prisma.StringFieldUpdateOperationsInput | string
+  domain?: Prisma.IntFieldUpdateOperationsInput | number
+  eventType?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   payload?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   retryCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextRetryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -448,6 +460,9 @@ export type MessageOutboxCountOrderByAggregateInput = {
 
 export type MessageOutboxAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  domain?: Prisma.SortOrder
+  eventType?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   retryCount?: Prisma.SortOrder
 }
 
@@ -479,6 +494,9 @@ export type MessageOutboxMinOrderByAggregateInput = {
 
 export type MessageOutboxSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  domain?: Prisma.SortOrder
+  eventType?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   retryCount?: Prisma.SortOrder
 }
 
@@ -551,13 +569,13 @@ export type $MessageOutboxPayload<ExtArgs extends runtime.Types.Extensions.Inter
      */
     id: bigint
     /**
-     * 事件域（notification/chat）
+     * 事件域（1=通知,2=聊天）
      */
-    domain: string
+    domain: number
     /**
-     * 事件类型
+     * 事件类型（按业务枚举定义，使用 SmallInt）
      */
-    eventType: string
+    eventType: number
     /**
      * 全局幂等业务键
      */
@@ -567,9 +585,9 @@ export type $MessageOutboxPayload<ExtArgs extends runtime.Types.Extensions.Inter
      */
     payload: runtime.JsonValue
     /**
-     * 投递状态（PENDING/PROCESSING/SUCCESS/FAILED）
+     * 投递状态（1=待处理,2=处理中,3=成功,4=失败）
      */
-    status: string
+    status: number
     /**
      * 重试次数
      */
@@ -1014,11 +1032,11 @@ export interface Prisma__MessageOutboxClient<T, Null = never, ExtArgs extends ru
  */
 export interface MessageOutboxFieldRefs {
   readonly id: Prisma.FieldRef<"MessageOutbox", 'BigInt'>
-  readonly domain: Prisma.FieldRef<"MessageOutbox", 'String'>
-  readonly eventType: Prisma.FieldRef<"MessageOutbox", 'String'>
+  readonly domain: Prisma.FieldRef<"MessageOutbox", 'Int'>
+  readonly eventType: Prisma.FieldRef<"MessageOutbox", 'Int'>
   readonly bizKey: Prisma.FieldRef<"MessageOutbox", 'String'>
   readonly payload: Prisma.FieldRef<"MessageOutbox", 'Json'>
-  readonly status: Prisma.FieldRef<"MessageOutbox", 'String'>
+  readonly status: Prisma.FieldRef<"MessageOutbox", 'Int'>
   readonly retryCount: Prisma.FieldRef<"MessageOutbox", 'Int'>
   readonly nextRetryAt: Prisma.FieldRef<"MessageOutbox", 'DateTime'>
   readonly lastError: Prisma.FieldRef<"MessageOutbox", 'String'>

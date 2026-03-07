@@ -30,9 +30,11 @@ export type AggregateUserNotification = {
 export type UserNotificationAvgAggregateOutputType = {
   id: number | null
   userId: number | null
+  type: number | null
   actorUserId: number | null
   targetType: number | null
   targetId: number | null
+  subjectType: number | null
   subjectId: number | null
   aggregateCount: number | null
 }
@@ -40,9 +42,11 @@ export type UserNotificationAvgAggregateOutputType = {
 export type UserNotificationSumAggregateOutputType = {
   id: number | null
   userId: number | null
+  type: number | null
   actorUserId: number | null
   targetType: number | null
   targetId: number | null
+  subjectType: number | null
   subjectId: number | null
   aggregateCount: number | null
 }
@@ -50,12 +54,12 @@ export type UserNotificationSumAggregateOutputType = {
 export type UserNotificationMinAggregateOutputType = {
   id: number | null
   userId: number | null
-  type: string | null
+  type: number | null
   bizKey: string | null
   actorUserId: number | null
   targetType: number | null
   targetId: number | null
-  subjectType: string | null
+  subjectType: number | null
   subjectId: number | null
   title: string | null
   content: string | null
@@ -70,12 +74,12 @@ export type UserNotificationMinAggregateOutputType = {
 export type UserNotificationMaxAggregateOutputType = {
   id: number | null
   userId: number | null
-  type: string | null
+  type: number | null
   bizKey: string | null
   actorUserId: number | null
   targetType: number | null
   targetId: number | null
-  subjectType: string | null
+  subjectType: number | null
   subjectId: number | null
   title: string | null
   content: string | null
@@ -113,9 +117,11 @@ export type UserNotificationCountAggregateOutputType = {
 export type UserNotificationAvgAggregateInputType = {
   id?: true
   userId?: true
+  type?: true
   actorUserId?: true
   targetType?: true
   targetId?: true
+  subjectType?: true
   subjectId?: true
   aggregateCount?: true
 }
@@ -123,9 +129,11 @@ export type UserNotificationAvgAggregateInputType = {
 export type UserNotificationSumAggregateInputType = {
   id?: true
   userId?: true
+  type?: true
   actorUserId?: true
   targetType?: true
   targetId?: true
+  subjectType?: true
   subjectId?: true
   aggregateCount?: true
 }
@@ -281,12 +289,12 @@ export type UserNotificationGroupByArgs<ExtArgs extends runtime.Types.Extensions
 export type UserNotificationGroupByOutputType = {
   id: number
   userId: number
-  type: string
+  type: number
   bizKey: string
   actorUserId: number | null
   targetType: number | null
   targetId: number | null
-  subjectType: string | null
+  subjectType: number | null
   subjectId: number | null
   title: string
   content: string
@@ -325,12 +333,12 @@ export type UserNotificationWhereInput = {
   NOT?: Prisma.UserNotificationWhereInput | Prisma.UserNotificationWhereInput[]
   id?: Prisma.IntFilter<"UserNotification"> | number
   userId?: Prisma.IntFilter<"UserNotification"> | number
-  type?: Prisma.StringFilter<"UserNotification"> | string
+  type?: Prisma.IntFilter<"UserNotification"> | number
   bizKey?: Prisma.StringFilter<"UserNotification"> | string
   actorUserId?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   targetType?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   targetId?: Prisma.IntNullableFilter<"UserNotification"> | number | null
-  subjectType?: Prisma.StringNullableFilter<"UserNotification"> | string | null
+  subjectType?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   subjectId?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   title?: Prisma.StringFilter<"UserNotification"> | string
   content?: Prisma.StringFilter<"UserNotification"> | string
@@ -375,12 +383,12 @@ export type UserNotificationWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.UserNotificationWhereInput[]
   NOT?: Prisma.UserNotificationWhereInput | Prisma.UserNotificationWhereInput[]
   userId?: Prisma.IntFilter<"UserNotification"> | number
-  type?: Prisma.StringFilter<"UserNotification"> | string
+  type?: Prisma.IntFilter<"UserNotification"> | number
   bizKey?: Prisma.StringFilter<"UserNotification"> | string
   actorUserId?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   targetType?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   targetId?: Prisma.IntNullableFilter<"UserNotification"> | number | null
-  subjectType?: Prisma.StringNullableFilter<"UserNotification"> | string | null
+  subjectType?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   subjectId?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   title?: Prisma.StringFilter<"UserNotification"> | string
   content?: Prisma.StringFilter<"UserNotification"> | string
@@ -427,12 +435,12 @@ export type UserNotificationScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserNotificationScalarWhereWithAggregatesInput | Prisma.UserNotificationScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"UserNotification"> | number
   userId?: Prisma.IntWithAggregatesFilter<"UserNotification"> | number
-  type?: Prisma.StringWithAggregatesFilter<"UserNotification"> | string
+  type?: Prisma.IntWithAggregatesFilter<"UserNotification"> | number
   bizKey?: Prisma.StringWithAggregatesFilter<"UserNotification"> | string
   actorUserId?: Prisma.IntNullableWithAggregatesFilter<"UserNotification"> | number | null
   targetType?: Prisma.IntNullableWithAggregatesFilter<"UserNotification"> | number | null
   targetId?: Prisma.IntNullableWithAggregatesFilter<"UserNotification"> | number | null
-  subjectType?: Prisma.StringNullableWithAggregatesFilter<"UserNotification"> | string | null
+  subjectType?: Prisma.IntNullableWithAggregatesFilter<"UserNotification"> | number | null
   subjectId?: Prisma.IntNullableWithAggregatesFilter<"UserNotification"> | number | null
   title?: Prisma.StringWithAggregatesFilter<"UserNotification"> | string
   content?: Prisma.StringWithAggregatesFilter<"UserNotification"> | string
@@ -446,11 +454,11 @@ export type UserNotificationScalarWhereWithAggregatesInput = {
 }
 
 export type UserNotificationCreateInput = {
-  type: string
+  type: number
   bizKey: string
   targetType?: number | null
   targetId?: number | null
-  subjectType?: string | null
+  subjectType?: number | null
   subjectId?: number | null
   title: string
   content: string
@@ -468,12 +476,12 @@ export type UserNotificationCreateInput = {
 export type UserNotificationUncheckedCreateInput = {
   id?: number
   userId: number
-  type: string
+  type: number
   bizKey: string
   actorUserId?: number | null
   targetType?: number | null
   targetId?: number | null
-  subjectType?: string | null
+  subjectType?: number | null
   subjectId?: number | null
   title: string
   content: string
@@ -487,11 +495,11 @@ export type UserNotificationUncheckedCreateInput = {
 }
 
 export type UserNotificationUpdateInput = {
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -509,12 +517,12 @@ export type UserNotificationUpdateInput = {
 export type UserNotificationUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   actorUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -530,12 +538,12 @@ export type UserNotificationUncheckedUpdateInput = {
 export type UserNotificationCreateManyInput = {
   id?: number
   userId: number
-  type: string
+  type: number
   bizKey: string
   actorUserId?: number | null
   targetType?: number | null
   targetId?: number | null
-  subjectType?: string | null
+  subjectType?: number | null
   subjectId?: number | null
   title: string
   content: string
@@ -549,11 +557,11 @@ export type UserNotificationCreateManyInput = {
 }
 
 export type UserNotificationUpdateManyMutationInput = {
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -569,12 +577,12 @@ export type UserNotificationUpdateManyMutationInput = {
 export type UserNotificationUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   actorUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -626,9 +634,11 @@ export type UserNotificationCountOrderByAggregateInput = {
 export type UserNotificationAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   actorUserId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  subjectType?: Prisma.SortOrder
   subjectId?: Prisma.SortOrder
   aggregateCount?: Prisma.SortOrder
 }
@@ -676,9 +686,11 @@ export type UserNotificationMinOrderByAggregateInput = {
 export type UserNotificationSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  type?: Prisma.SortOrder
   actorUserId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  subjectType?: Prisma.SortOrder
   subjectId?: Prisma.SortOrder
   aggregateCount?: Prisma.SortOrder
 }
@@ -768,11 +780,11 @@ export type UserNotificationUncheckedUpdateManyWithoutActorUserNestedInput = {
 }
 
 export type UserNotificationCreateWithoutUserInput = {
-  type: string
+  type: number
   bizKey: string
   targetType?: number | null
   targetId?: number | null
-  subjectType?: string | null
+  subjectType?: number | null
   subjectId?: number | null
   title: string
   content: string
@@ -788,12 +800,12 @@ export type UserNotificationCreateWithoutUserInput = {
 
 export type UserNotificationUncheckedCreateWithoutUserInput = {
   id?: number
-  type: string
+  type: number
   bizKey: string
   actorUserId?: number | null
   targetType?: number | null
   targetId?: number | null
-  subjectType?: string | null
+  subjectType?: number | null
   subjectId?: number | null
   title: string
   content: string
@@ -817,11 +829,11 @@ export type UserNotificationCreateManyUserInputEnvelope = {
 }
 
 export type UserNotificationCreateWithoutActorUserInput = {
-  type: string
+  type: number
   bizKey: string
   targetType?: number | null
   targetId?: number | null
-  subjectType?: string | null
+  subjectType?: number | null
   subjectId?: number | null
   title: string
   content: string
@@ -838,11 +850,11 @@ export type UserNotificationCreateWithoutActorUserInput = {
 export type UserNotificationUncheckedCreateWithoutActorUserInput = {
   id?: number
   userId: number
-  type: string
+  type: number
   bizKey: string
   targetType?: number | null
   targetId?: number | null
-  subjectType?: string | null
+  subjectType?: number | null
   subjectId?: number | null
   title: string
   content: string
@@ -887,12 +899,12 @@ export type UserNotificationScalarWhereInput = {
   NOT?: Prisma.UserNotificationScalarWhereInput | Prisma.UserNotificationScalarWhereInput[]
   id?: Prisma.IntFilter<"UserNotification"> | number
   userId?: Prisma.IntFilter<"UserNotification"> | number
-  type?: Prisma.StringFilter<"UserNotification"> | string
+  type?: Prisma.IntFilter<"UserNotification"> | number
   bizKey?: Prisma.StringFilter<"UserNotification"> | string
   actorUserId?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   targetType?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   targetId?: Prisma.IntNullableFilter<"UserNotification"> | number | null
-  subjectType?: Prisma.StringNullableFilter<"UserNotification"> | string | null
+  subjectType?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   subjectId?: Prisma.IntNullableFilter<"UserNotification"> | number | null
   title?: Prisma.StringFilter<"UserNotification"> | string
   content?: Prisma.StringFilter<"UserNotification"> | string
@@ -923,12 +935,12 @@ export type UserNotificationUpdateManyWithWhereWithoutActorUserInput = {
 
 export type UserNotificationCreateManyUserInput = {
   id?: number
-  type: string
+  type: number
   bizKey: string
   actorUserId?: number | null
   targetType?: number | null
   targetId?: number | null
-  subjectType?: string | null
+  subjectType?: number | null
   subjectId?: number | null
   title: string
   content: string
@@ -944,11 +956,11 @@ export type UserNotificationCreateManyUserInput = {
 export type UserNotificationCreateManyActorUserInput = {
   id?: number
   userId: number
-  type: string
+  type: number
   bizKey: string
   targetType?: number | null
   targetId?: number | null
-  subjectType?: string | null
+  subjectType?: number | null
   subjectId?: number | null
   title: string
   content: string
@@ -962,11 +974,11 @@ export type UserNotificationCreateManyActorUserInput = {
 }
 
 export type UserNotificationUpdateWithoutUserInput = {
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -982,12 +994,12 @@ export type UserNotificationUpdateWithoutUserInput = {
 
 export type UserNotificationUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   actorUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1002,12 +1014,12 @@ export type UserNotificationUncheckedUpdateWithoutUserInput = {
 
 export type UserNotificationUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   actorUserId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1021,11 +1033,11 @@ export type UserNotificationUncheckedUpdateManyWithoutUserInput = {
 }
 
 export type UserNotificationUpdateWithoutActorUserInput = {
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1042,11 +1054,11 @@ export type UserNotificationUpdateWithoutActorUserInput = {
 export type UserNotificationUncheckedUpdateWithoutActorUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1062,11 +1074,11 @@ export type UserNotificationUncheckedUpdateWithoutActorUserInput = {
 export type UserNotificationUncheckedUpdateManyWithoutActorUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.IntFieldUpdateOperationsInput | number
   bizKey?: Prisma.StringFieldUpdateOperationsInput | string
   targetType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  subjectType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectType?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   subjectId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1207,9 +1219,9 @@ export type $UserNotificationPayload<ExtArgs extends runtime.Types.Extensions.In
      */
     userId: number
     /**
-     * 通知类型
+     * 通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息）
      */
-    type: string
+    type: number
     /**
      * 幂等业务键（接收人维度）
      */
@@ -1227,9 +1239,9 @@ export type $UserNotificationPayload<ExtArgs extends runtime.Types.Extensions.In
      */
     targetId: number | null
     /**
-     * 主体类型
+     * 主体类型（1=评论,2=作品,3=用户,4=系统）
      */
-    subjectType: string | null
+    subjectType: number | null
     /**
      * 主体ID
      */
@@ -1697,12 +1709,12 @@ export interface Prisma__UserNotificationClient<T, Null = never, ExtArgs extends
 export interface UserNotificationFieldRefs {
   readonly id: Prisma.FieldRef<"UserNotification", 'Int'>
   readonly userId: Prisma.FieldRef<"UserNotification", 'Int'>
-  readonly type: Prisma.FieldRef<"UserNotification", 'String'>
+  readonly type: Prisma.FieldRef<"UserNotification", 'Int'>
   readonly bizKey: Prisma.FieldRef<"UserNotification", 'String'>
   readonly actorUserId: Prisma.FieldRef<"UserNotification", 'Int'>
   readonly targetType: Prisma.FieldRef<"UserNotification", 'Int'>
   readonly targetId: Prisma.FieldRef<"UserNotification", 'Int'>
-  readonly subjectType: Prisma.FieldRef<"UserNotification", 'String'>
+  readonly subjectType: Prisma.FieldRef<"UserNotification", 'Int'>
   readonly subjectId: Prisma.FieldRef<"UserNotification", 'Int'>
   readonly title: Prisma.FieldRef<"UserNotification", 'String'>
   readonly content: Prisma.FieldRef<"UserNotification", 'String'>

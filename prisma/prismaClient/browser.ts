@@ -305,25 +305,15 @@ export type Dictionary = Prisma.DictionaryModel
  */
 export type DictionaryItem = Prisma.DictionaryItemModel
 /**
- * Model WorkAuthor
- * 作者信息模型
- */
-export type WorkAuthor = Prisma.WorkAuthorModel
-/**
- * Model WorkComic
- * 漫画作品扩展表
- */
-export type WorkComic = Prisma.WorkComicModel
-/**
- * Model WorkNovel
- * 小说作品扩展表
- */
-export type WorkNovel = Prisma.WorkNovelModel
-/**
  * Model WorkAuthorRelation
  * 作品作者关联表（多对多关系中间表）
  */
 export type WorkAuthorRelation = Prisma.WorkAuthorRelationModel
+/**
+ * Model WorkAuthor
+ * 作者信息模型
+ */
+export type WorkAuthor = Prisma.WorkAuthorModel
 /**
  * Model WorkCategoryRelation
  * 作品分类关联表
@@ -340,6 +330,16 @@ export type WorkCategory = Prisma.WorkCategoryModel
  * 存储漫画/小说章节信息与统计数据
  */
 export type WorkChapter = Prisma.WorkChapterModel
+/**
+ * Model WorkComic
+ * 漫画作品扩展表
+ */
+export type WorkComic = Prisma.WorkComicModel
+/**
+ * Model WorkNovel
+ * 小说作品扩展表
+ */
+export type WorkNovel = Prisma.WorkNovelModel
 /**
  * Model WorkTagRelation
  * 作品标签关联表

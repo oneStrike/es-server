@@ -523,6 +523,11 @@ export type WorkAuthorUncheckedUpdateManyInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
+export type WorkAuthorScalarRelationFilter = {
+  is?: Prisma.WorkAuthorWhereInput
+  isNot?: Prisma.WorkAuthorWhereInput
+}
+
 export type WorkAuthorCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
@@ -591,20 +596,6 @@ export type WorkAuthorSumOrderByAggregateInput = {
   followersCount?: Prisma.SortOrder
 }
 
-export type WorkAuthorScalarRelationFilter = {
-  is?: Prisma.WorkAuthorWhereInput
-  isNot?: Prisma.WorkAuthorWhereInput
-}
-
-export type WorkAuthorCreatetypeInput = {
-  set: number[]
-}
-
-export type WorkAuthorUpdatetypeInput = {
-  set?: number[]
-  push?: number | number[]
-}
-
 export type WorkAuthorCreateNestedOneWithoutWorkAuthorsInput = {
   create?: Prisma.XOR<Prisma.WorkAuthorCreateWithoutWorkAuthorsInput, Prisma.WorkAuthorUncheckedCreateWithoutWorkAuthorsInput>
   connectOrCreate?: Prisma.WorkAuthorCreateOrConnectWithoutWorkAuthorsInput
@@ -617,6 +608,15 @@ export type WorkAuthorUpdateOneRequiredWithoutWorkAuthorsNestedInput = {
   upsert?: Prisma.WorkAuthorUpsertWithoutWorkAuthorsInput
   connect?: Prisma.WorkAuthorWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.WorkAuthorUpdateToOneWithWhereWithoutWorkAuthorsInput, Prisma.WorkAuthorUpdateWithoutWorkAuthorsInput>, Prisma.WorkAuthorUncheckedUpdateWithoutWorkAuthorsInput>
+}
+
+export type WorkAuthorCreatetypeInput = {
+  set: number[]
+}
+
+export type WorkAuthorUpdatetypeInput = {
+  set?: number[]
+  push?: number | number[]
 }
 
 export type WorkAuthorCreateWithoutWorkAuthorsInput = {

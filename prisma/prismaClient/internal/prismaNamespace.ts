@@ -437,13 +437,13 @@ export const ModelName = {
   SystemConfig: 'SystemConfig',
   Dictionary: 'Dictionary',
   DictionaryItem: 'DictionaryItem',
-  WorkAuthor: 'WorkAuthor',
-  WorkComic: 'WorkComic',
-  WorkNovel: 'WorkNovel',
   WorkAuthorRelation: 'WorkAuthorRelation',
+  WorkAuthor: 'WorkAuthor',
   WorkCategoryRelation: 'WorkCategoryRelation',
   WorkCategory: 'WorkCategory',
   WorkChapter: 'WorkChapter',
+  WorkComic: 'WorkComic',
+  WorkNovel: 'WorkNovel',
   WorkTagRelation: 'WorkTagRelation',
   WorkTag: 'WorkTag',
   Work: 'Work'
@@ -462,7 +462,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapter" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthorRelation" | "workAuthor" | "workCategoryRelation" | "workCategory" | "workChapter" | "workComic" | "workNovel" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4388,228 +4388,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    WorkAuthor: {
-      payload: Prisma.$WorkAuthorPayload<ExtArgs>
-      fields: Prisma.WorkAuthorFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkAuthorFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkAuthorFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
-        }
-        findFirst: {
-          args: Prisma.WorkAuthorFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkAuthorFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
-        }
-        findMany: {
-          args: Prisma.WorkAuthorFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>[]
-        }
-        create: {
-          args: Prisma.WorkAuthorCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
-        }
-        createMany: {
-          args: Prisma.WorkAuthorCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkAuthorCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>[]
-        }
-        delete: {
-          args: Prisma.WorkAuthorDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
-        }
-        update: {
-          args: Prisma.WorkAuthorUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkAuthorDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkAuthorUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkAuthorUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkAuthorUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
-        }
-        aggregate: {
-          args: Prisma.WorkAuthorAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkAuthor>
-        }
-        groupBy: {
-          args: Prisma.WorkAuthorGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkAuthorGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkAuthorCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkAuthorCountAggregateOutputType> | number
-        }
-      }
-    }
-    WorkComic: {
-      payload: Prisma.$WorkComicPayload<ExtArgs>
-      fields: Prisma.WorkComicFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkComicFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkComicFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
-        }
-        findFirst: {
-          args: Prisma.WorkComicFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkComicFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
-        }
-        findMany: {
-          args: Prisma.WorkComicFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>[]
-        }
-        create: {
-          args: Prisma.WorkComicCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
-        }
-        createMany: {
-          args: Prisma.WorkComicCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkComicCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>[]
-        }
-        delete: {
-          args: Prisma.WorkComicDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
-        }
-        update: {
-          args: Prisma.WorkComicUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkComicDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkComicUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkComicUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkComicUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
-        }
-        aggregate: {
-          args: Prisma.WorkComicAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComic>
-        }
-        groupBy: {
-          args: Prisma.WorkComicGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkComicGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkComicCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkComicCountAggregateOutputType> | number
-        }
-      }
-    }
-    WorkNovel: {
-      payload: Prisma.$WorkNovelPayload<ExtArgs>
-      fields: Prisma.WorkNovelFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.WorkNovelFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.WorkNovelFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
-        }
-        findFirst: {
-          args: Prisma.WorkNovelFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.WorkNovelFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
-        }
-        findMany: {
-          args: Prisma.WorkNovelFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>[]
-        }
-        create: {
-          args: Prisma.WorkNovelCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
-        }
-        createMany: {
-          args: Prisma.WorkNovelCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.WorkNovelCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>[]
-        }
-        delete: {
-          args: Prisma.WorkNovelDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
-        }
-        update: {
-          args: Prisma.WorkNovelUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
-        }
-        deleteMany: {
-          args: Prisma.WorkNovelDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.WorkNovelUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.WorkNovelUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>[]
-        }
-        upsert: {
-          args: Prisma.WorkNovelUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
-        }
-        aggregate: {
-          args: Prisma.WorkNovelAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkNovel>
-        }
-        groupBy: {
-          args: Prisma.WorkNovelGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkNovelGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.WorkNovelCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.WorkNovelCountAggregateOutputType> | number
-        }
-      }
-    }
     WorkAuthorRelation: {
       payload: Prisma.$WorkAuthorRelationPayload<ExtArgs>
       fields: Prisma.WorkAuthorRelationFieldRefs
@@ -4681,6 +4459,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.WorkAuthorRelationCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.WorkAuthorRelationCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkAuthor: {
+      payload: Prisma.$WorkAuthorPayload<ExtArgs>
+      fields: Prisma.WorkAuthorFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkAuthorFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkAuthorFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkAuthorFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkAuthorFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
+        }
+        findMany: {
+          args: Prisma.WorkAuthorFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>[]
+        }
+        create: {
+          args: Prisma.WorkAuthorCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
+        }
+        createMany: {
+          args: Prisma.WorkAuthorCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkAuthorCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkAuthorDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
+        }
+        update: {
+          args: Prisma.WorkAuthorUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkAuthorDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkAuthorUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkAuthorUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkAuthorUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkAuthorPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkAuthorAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkAuthor>
+        }
+        groupBy: {
+          args: Prisma.WorkAuthorGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkAuthorGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkAuthorCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkAuthorCountAggregateOutputType> | number
         }
       }
     }
@@ -4903,6 +4755,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.WorkChapterCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.WorkChapterCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkComic: {
+      payload: Prisma.$WorkComicPayload<ExtArgs>
+      fields: Prisma.WorkComicFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkComicFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkComicFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkComicFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkComicFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
+        }
+        findMany: {
+          args: Prisma.WorkComicFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>[]
+        }
+        create: {
+          args: Prisma.WorkComicCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
+        }
+        createMany: {
+          args: Prisma.WorkComicCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkComicCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkComicDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
+        }
+        update: {
+          args: Prisma.WorkComicUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkComicDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkComicUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkComicUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkComicUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkComicPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkComicAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkComic>
+        }
+        groupBy: {
+          args: Prisma.WorkComicGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkComicCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkComicCountAggregateOutputType> | number
+        }
+      }
+    }
+    WorkNovel: {
+      payload: Prisma.$WorkNovelPayload<ExtArgs>
+      fields: Prisma.WorkNovelFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.WorkNovelFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.WorkNovelFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
+        }
+        findFirst: {
+          args: Prisma.WorkNovelFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.WorkNovelFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
+        }
+        findMany: {
+          args: Prisma.WorkNovelFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>[]
+        }
+        create: {
+          args: Prisma.WorkNovelCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
+        }
+        createMany: {
+          args: Prisma.WorkNovelCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.WorkNovelCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>[]
+        }
+        delete: {
+          args: Prisma.WorkNovelDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
+        }
+        update: {
+          args: Prisma.WorkNovelUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
+        }
+        deleteMany: {
+          args: Prisma.WorkNovelDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.WorkNovelUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.WorkNovelUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>[]
+        }
+        upsert: {
+          args: Prisma.WorkNovelUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$WorkNovelPayload>
+        }
+        aggregate: {
+          args: Prisma.WorkNovelAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateWorkNovel>
+        }
+        groupBy: {
+          args: Prisma.WorkNovelGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkNovelGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.WorkNovelCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.WorkNovelCountAggregateOutputType> | number
         }
       }
     }
@@ -6111,6 +6111,18 @@ export const DictionaryItemScalarFieldEnum = {
 export type DictionaryItemScalarFieldEnum = (typeof DictionaryItemScalarFieldEnum)[keyof typeof DictionaryItemScalarFieldEnum]
 
 
+export const WorkAuthorRelationScalarFieldEnum = {
+  id: 'id',
+  workId: 'workId',
+  authorId: 'authorId',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkAuthorRelationScalarFieldEnum = (typeof WorkAuthorRelationScalarFieldEnum)[keyof typeof WorkAuthorRelationScalarFieldEnum]
+
+
 export const WorkAuthorScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -6130,39 +6142,6 @@ export const WorkAuthorScalarFieldEnum = {
 } as const
 
 export type WorkAuthorScalarFieldEnum = (typeof WorkAuthorScalarFieldEnum)[keyof typeof WorkAuthorScalarFieldEnum]
-
-
-export const WorkComicScalarFieldEnum = {
-  id: 'id',
-  workId: 'workId',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkComicScalarFieldEnum = (typeof WorkComicScalarFieldEnum)[keyof typeof WorkComicScalarFieldEnum]
-
-
-export const WorkNovelScalarFieldEnum = {
-  id: 'id',
-  workId: 'workId',
-  wordCount: 'wordCount',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkNovelScalarFieldEnum = (typeof WorkNovelScalarFieldEnum)[keyof typeof WorkNovelScalarFieldEnum]
-
-
-export const WorkAuthorRelationScalarFieldEnum = {
-  id: 'id',
-  workId: 'workId',
-  authorId: 'authorId',
-  sortOrder: 'sortOrder',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type WorkAuthorRelationScalarFieldEnum = (typeof WorkAuthorRelationScalarFieldEnum)[keyof typeof WorkAuthorRelationScalarFieldEnum]
 
 
 export const WorkCategoryRelationScalarFieldEnum = {
@@ -6223,6 +6202,27 @@ export const WorkChapterScalarFieldEnum = {
 } as const
 
 export type WorkChapterScalarFieldEnum = (typeof WorkChapterScalarFieldEnum)[keyof typeof WorkChapterScalarFieldEnum]
+
+
+export const WorkComicScalarFieldEnum = {
+  id: 'id',
+  workId: 'workId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkComicScalarFieldEnum = (typeof WorkComicScalarFieldEnum)[keyof typeof WorkComicScalarFieldEnum]
+
+
+export const WorkNovelScalarFieldEnum = {
+  id: 'id',
+  workId: 'workId',
+  wordCount: 'wordCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkNovelScalarFieldEnum = (typeof WorkNovelScalarFieldEnum)[keyof typeof WorkNovelScalarFieldEnum]
 
 
 export const WorkTagRelationScalarFieldEnum = {
@@ -6600,13 +6600,13 @@ export type GlobalOmitConfig = {
   systemConfig?: Prisma.SystemConfigOmit
   dictionary?: Prisma.DictionaryOmit
   dictionaryItem?: Prisma.DictionaryItemOmit
-  workAuthor?: Prisma.WorkAuthorOmit
-  workComic?: Prisma.WorkComicOmit
-  workNovel?: Prisma.WorkNovelOmit
   workAuthorRelation?: Prisma.WorkAuthorRelationOmit
+  workAuthor?: Prisma.WorkAuthorOmit
   workCategoryRelation?: Prisma.WorkCategoryRelationOmit
   workCategory?: Prisma.WorkCategoryOmit
   workChapter?: Prisma.WorkChapterOmit
+  workComic?: Prisma.WorkComicOmit
+  workNovel?: Prisma.WorkNovelOmit
   workTagRelation?: Prisma.WorkTagRelationOmit
   workTag?: Prisma.WorkTagOmit
   work?: Prisma.WorkOmit

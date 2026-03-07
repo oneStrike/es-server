@@ -1,4 +1,9 @@
 import type { Prisma } from '@libs/base/database'
+import type {
+  MessageNotificationSubjectTypeEnum,
+  MessageNotificationTypeEnum,
+} from '../../notification/notification.constant'
+import type { MessageOutboxDomainEnum } from '../outbox.constant'
 
 /**
  * 通知发件箱载荷接口
@@ -10,13 +15,13 @@ export interface NotificationOutboxPayload {
   /** 触发用户ID */
   actorUserId?: number
   /** 通知类型 */
-  type: string
+  type: MessageNotificationTypeEnum
   /** 目标类型 */
   targetType?: number
   /** 目标ID */
   targetId?: number
   /** 主体类型 */
-  subjectType?: string
+  subjectType?: MessageNotificationSubjectTypeEnum
   /** 主体ID */
   subjectId?: number
   /** 通知标题 */
@@ -38,9 +43,9 @@ export interface NotificationOutboxPayload {
  */
 export interface CreateMessageOutboxEventDto {
   /** 领域类型 */
-  domain: string
+  domain: MessageOutboxDomainEnum
   /** 事件类型 */
-  eventType: string
+  eventType: number
   /** 业务幂等键 */
   bizKey: string
   /** 事件载荷 */
@@ -52,7 +57,7 @@ export interface CreateMessageOutboxEventDto {
  */
 export interface CreateNotificationOutboxEventDto {
   /** 事件类型 */
-  eventType: string
+  eventType: MessageNotificationTypeEnum
   /** 业务幂等键 */
   bizKey: string
   /** 通知载荷 */

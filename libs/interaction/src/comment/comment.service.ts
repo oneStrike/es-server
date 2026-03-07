@@ -1,6 +1,7 @@
 import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
+  MessageNotificationSubjectTypeEnum,
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
@@ -268,7 +269,7 @@ export class CommentService extends BaseService {
                 type: MessageNotificationTypeEnum.COMMENT_REPLY,
                 targetType,
                 targetId,
-                subjectType: 'comment',
+                subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
                 subjectId: newComment.id,
                 title: '收到新的评论回复',
                 content: '你收到了一条新的评论回复',

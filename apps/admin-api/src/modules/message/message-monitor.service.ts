@@ -165,9 +165,9 @@ export class MessageMonitorService extends BaseService {
         }))
         .sort((prev, next) => {
           if (prev.domain === next.domain) {
-            return prev.status.localeCompare(next.status)
+            return prev.status - next.status
           }
-          return prev.domain.localeCompare(next.domain)
+          return prev.domain - next.domain
         }),
       topErrors: topErrorsRows.map((item) => ({
         message: item.message,

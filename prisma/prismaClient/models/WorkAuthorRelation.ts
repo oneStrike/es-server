@@ -350,16 +350,6 @@ export type WorkAuthorRelationUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type WorkAuthorRelationListRelationFilter = {
-  every?: Prisma.WorkAuthorRelationWhereInput
-  some?: Prisma.WorkAuthorRelationWhereInput
-  none?: Prisma.WorkAuthorRelationWhereInput
-}
-
-export type WorkAuthorRelationOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
-}
-
 export type WorkAuthorRelationWorkIdAuthorIdCompoundUniqueInput = {
   workId: number
   authorId: number
@@ -404,6 +394,16 @@ export type WorkAuthorRelationSumOrderByAggregateInput = {
   workId?: Prisma.SortOrder
   authorId?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
+}
+
+export type WorkAuthorRelationListRelationFilter = {
+  every?: Prisma.WorkAuthorRelationWhereInput
+  some?: Prisma.WorkAuthorRelationWhereInput
+  none?: Prisma.WorkAuthorRelationWhereInput
+}
+
+export type WorkAuthorRelationOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type WorkAuthorRelationCreateNestedManyWithoutAuthorInput = {

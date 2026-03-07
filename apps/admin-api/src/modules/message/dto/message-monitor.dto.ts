@@ -28,17 +28,17 @@ export class QueryMessageOutboxMonitorDto {
 }
 
 export class MessageOutboxDomainStatusItemDto {
-  @StringProperty({
-    description: '事件域',
-    example: 'notification',
+  @NumberProperty({
+    description: '事件域（1=通知,2=聊天）',
+    example: 1,
   })
-  domain: string
+  domain: number
 
-  @StringProperty({
-    description: '状态',
-    example: 'PENDING',
+  @NumberProperty({
+    description: '状态（1=待处理,2=处理中,3=成功,4=失败）',
+    example: 1,
   })
-  status: string
+  status: number
 
   @NumberProperty({
     description: '数量',

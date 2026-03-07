@@ -1,11 +1,16 @@
 import {
   BooleanProperty,
   DateProperty,
+  EnumProperty,
   JsonProperty,
   NumberProperty,
   StringProperty,
 } from '@libs/base/decorators'
 import { PageDto } from '@libs/base/dto'
+import {
+  MessageNotificationSubjectTypeEnum,
+  MessageNotificationTypeEnum,
+} from '../notification.constant'
 
 /**
  * 用户通知基础数据传输对象
@@ -23,12 +28,12 @@ export class BaseUserNotificationDto {
   })
   userId: number
 
-  @StringProperty({
+  @EnumProperty({
     description: '通知类型',
-    example: 'COMMENT_REPLY',
-    maxLength: 40,
+    example: MessageNotificationTypeEnum.COMMENT_REPLY,
+    enum: MessageNotificationTypeEnum,
   })
-  type: string
+  type: MessageNotificationTypeEnum
 
   @StringProperty({
     description: '业务幂等键',
@@ -58,13 +63,13 @@ export class BaseUserNotificationDto {
   })
   targetId?: number
 
-  @StringProperty({
+  @EnumProperty({
     description: '主体类型',
-    example: 'comment',
-    maxLength: 40,
+    example: MessageNotificationSubjectTypeEnum.COMMENT,
+    enum: MessageNotificationSubjectTypeEnum,
     required: false,
   })
-  subjectType?: string
+  subjectType?: MessageNotificationSubjectTypeEnum
 
   @NumberProperty({
     description: '主体ID',
@@ -146,13 +151,13 @@ export class QueryUserNotificationListDto extends PageDto {
   })
   isRead?: boolean
 
-  @StringProperty({
+  @EnumProperty({
     description: '通知类型',
     required: false,
-    example: 'COMMENT_REPLY',
-    maxLength: 40,
+    example: MessageNotificationTypeEnum.COMMENT_REPLY,
+    enum: MessageNotificationTypeEnum,
   })
-  type?: string
+  type?: MessageNotificationTypeEnum
 }
 
 /**

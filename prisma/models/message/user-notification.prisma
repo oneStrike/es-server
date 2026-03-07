@@ -6,8 +6,8 @@ model UserNotification {
 
   /// 通知接收用户ID
   userId         Int       @map("user_id")
-  /// 通知类型
-  type           String    @db.VarChar(40)
+  /// 通知类型（1=评论回复,2=评论点赞,3=内容收藏,4=用户关注,5=系统公告,6=聊天消息）
+  type           Int       @db.SmallInt
   /// 幂等业务键（接收人维度）
   bizKey         String    @map("biz_key") @db.VarChar(160)
   /// 触发用户ID
@@ -16,8 +16,8 @@ model UserNotification {
   targetType     Int?      @map("target_type") @db.SmallInt
   /// 目标ID
   targetId       Int?      @map("target_id")
-  /// 主体类型
-  subjectType    String?   @map("subject_type") @db.VarChar(40)
+  /// 主体类型（1=评论,2=作品,3=用户,4=系统）
+  subjectType    Int?      @map("subject_type") @db.SmallInt
   /// 主体ID
   subjectId      Int?      @map("subject_id")
   /// 标题

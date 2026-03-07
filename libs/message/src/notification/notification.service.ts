@@ -5,6 +5,7 @@ import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { MessageInboxService } from '../inbox/inbox.service'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
+import { MessageNotificationTypeEnum } from './notification.constant'
 
 /**
  * 消息通知服务
@@ -36,7 +37,7 @@ export class MessageNotificationService extends BaseService {
       where: {
         userId,
         ...(isRead !== undefined ? { isRead } : {}),
-        ...(type ? { type } : {}),
+        ...(type !== undefined ? { type } : {}),
         ...pagination,
       },
       include: {
@@ -133,11 +134,12 @@ export class MessageNotificationService extends BaseService {
     const receiverUserId = Number(payload.receiverUserId)
     const actorUserId =
       payload.actorUserId === undefined ? undefined : Number(payload.actorUserId)
+    const notificationType = this.parseRequiredNotificationType(payload.type)
 
     if (!Number.isInteger(receiverUserId) || receiverUserId <= 0) {
       throw new BadRequestException('通知接收用户ID非法')
     }
-    if (!payload.type || !payload.title || !payload.content) {
+    if (!payload.title || !payload.content) {
       throw new BadRequestException('通知事件缺少必要字段')
     }
     // 自己不能通知自己
@@ -162,19 +164,16 @@ export class MessageNotificationService extends BaseService {
       const notification = await this.notification.create({
         data: {
           userId: receiverUserId,
-          type: payload.type,
+          type: notificationType,
           bizKey,
           actorUserId:
             actorUserId !== undefined && Number.isInteger(actorUserId)
               ? actorUserId
               : undefined,
-          targetType:
-            payload.targetType !== undefined
-              ? Number(payload.targetType)
-              : undefined,
+          targetType: this.parseOptionalSmallInt(payload.targetType, 'targetType'),
           targetId:
             payload.targetId !== undefined ? Number(payload.targetId) : undefined,
-          subjectType: payload.subjectType,
+          subjectType: this.parseOptionalSmallInt(payload.subjectType, 'subjectType'),
           subjectId:
             payload.subjectId !== undefined
               ? Number(payload.subjectId)
@@ -215,5 +214,28 @@ export class MessageNotificationService extends BaseService {
   private async emitInboxSummaryUpdate(userId: number) {
     const summary = await this.messageInboxService.getSummary(userId)
     this.messageNotificationRealtimeService.emitInboxSummaryUpdate(userId, summary)
+  }
+
+  private parseRequiredNotificationType(value: unknown) {
+    const type = Number(value)
+    if (
+      !Number.isInteger(type)
+      || type < MessageNotificationTypeEnum.COMMENT_REPLY
+      || type > MessageNotificationTypeEnum.CHAT_MESSAGE
+    ) {
+      throw new BadRequestException('通知类型非法')
+    }
+    return type
+  }
+
+  private parseOptionalSmallInt(value: unknown, fieldName: string) {
+    if (value === undefined || value === null) {
+      return undefined
+    }
+    const normalized = Number(value)
+    if (!Number.isInteger(normalized) || normalized < 0 || normalized > 32767) {
+      throw new BadRequestException(`${fieldName} must be a valid smallint`)
+    }
+    return normalized
   }
 }

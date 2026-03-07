@@ -1,27 +1,27 @@
 /**
  * 消息发件箱领域枚举
- * 定义发件箱事件所属的业务领域
+ * 统一使用 SmallInt 存储
  */
 export enum MessageOutboxDomainEnum {
   /** 通知领域 */
-  NOTIFICATION = 'notification',
+  NOTIFICATION = 1,
   /** 聊天领域 */
-  CHAT = 'chat',
+  CHAT = 2,
 }
 
 /**
  * 消息发件箱状态枚举
- * 定义发件箱事件的处理状态
+ * 统一使用 SmallInt 存储
  */
 export enum MessageOutboxStatusEnum {
   /** 待处理 */
-  PENDING = 'PENDING',
+  PENDING = 1,
   /** 处理中 */
-  PROCESSING = 'PROCESSING',
+  PROCESSING = 2,
   /** 处理成功 */
-  SUCCESS = 'SUCCESS',
+  SUCCESS = 3,
   /** 处理失败 */
-  FAILED = 'FAILED',
+  FAILED = 4,
 }
 
 /** 发件箱批量处理大小 */
