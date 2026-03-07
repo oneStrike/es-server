@@ -42,3 +42,31 @@ export function isNumberEnum(
       numberValues.length * 2 === values.length)
   )
 }
+
+/**
+ * 获取数字枚举的有效值列表
+ *
+ * @description TypeScript 数字枚举会生成双向映射（name -> value 和 value -> name），
+ * 此函数过滤掉反向映射的字符串值，只返回有效的数字值。
+ *
+ * @example
+ * ```typescript
+ * enum Status {
+ *   ACTIVE = 1,
+ *   INACTIVE = 2
+ * }
+ * // 编译后: { ACTIVE: 1, 1: 'ACTIVE', INACTIVE: 2, 2: 'INACTIVE' }
+ *
+ * getNumberEnumValues(Status) // 返回 [1, 2]
+ * ```
+ *
+ * @param enumObject 枚举对象
+ * @returns 数字枚举值数组（仅包含正向映射的数字值）
+ */
+export function getNumberEnumValues<T extends Record<string | number, string | number>>(
+  enumObject: T,
+): number[] {
+  return Object.values(enumObject).filter(
+    (value): value is number => typeof value === 'number',
+  )
+}

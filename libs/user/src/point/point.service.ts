@@ -7,22 +7,14 @@ import {
   ConsumeUserPointsDto,
   QueryUserPointRecordDto,
 } from './dto/point-record.dto'
-import {
-  CreateUserPointRuleDto,
-  QueryUserPointRuleDto,
-  UpdateUserPointRuleDto,
-} from './dto/point-rule.dto'
+import { UserPointRuleService } from './point-rule.service'
 
 /**
  * 积分服务类
- * 提供用户积分的增删改查等核心业务逻辑
+ * 提供用户积分的增加、消费、记录查询等核心业务逻辑
  */
 @Injectable()
 export class UserPointService extends BaseService {
-  get userPointRule() {
-    return this.prisma.userPointRule
-  }
-
   get userPointRecord() {
     return this.prisma.userPointRecord
   }
@@ -31,65 +23,8 @@ export class UserPointService extends BaseService {
     return this.prisma.appUser
   }
 
-  /**
-   * 创建积分规则
-   * @param dto 创建规则的数据
-   * @returns 创建的规则信息
-   */
-  async createPointRule(dto: CreateUserPointRuleDto) {
-    // 校验规则类型是否存在
-    if (!Object.values(GrowthRuleTypeEnum).includes(dto.type)) {
-      throw new BadRequestException('积分规则类型不存在')
-    }
-    // 校验是否已存在相同类型规则
-    if (await this.userPointRule.exists({ type: dto.type })) {
-      throw new BadRequestException('已存在相同类型的积分规则')
-    }
-    return this.userPointRule.create({
-      data: dto,
-    })
-  }
-
-  /**
-   * 分页查询积分规则列表
-   * @param queryPointRuleDto 查询条件
-   * @returns 分页的规则列表
-   */
-  async getPointRulePage(queryPointRuleDto: QueryUserPointRuleDto) {
-    return this.userPointRule.findPagination({
-      where: queryPointRuleDto,
-    })
-  }
-
-  /**
-   * 获取积分规则详情
-   * @param id 规则ID
-   * @returns 规则详情信息
-   */
-  async getPointRuleDetail(id: number) {
-    const rule = await this.userPointRule.findUnique({
-      where: { id },
-    })
-
-    if (!rule) {
-      throw new BadRequestException('积分规则不存在')
-    }
-
-    return rule
-  }
-
-  /**
-   * 更新积分规则
-   * @param dto 更新规则的数据
-   * @returns 更新后的规则信息
-   */
-  async updatePointRule(dto: UpdateUserPointRuleDto) {
-    const { id, ...updateData } = dto
-
-    return this.userPointRule.update({
-      where: { id },
-      data: updateData,
-    })
+  constructor(private readonly pointRuleService: UserPointRuleService) {
+    super()
   }
 
   /**
@@ -108,12 +43,7 @@ export class UserPointService extends BaseService {
       throw new BadRequestException('用户不存在')
     }
 
-    const rule = await this.userPointRule.findUnique({
-      where: {
-        type: ruleType,
-        isEnabled: true,
-      },
-    })
+    const rule = await this.pointRuleService.getEnabledRuleByType(ruleType)
 
     if (!rule) {
       throw new BadRequestException('积分规则不存在')

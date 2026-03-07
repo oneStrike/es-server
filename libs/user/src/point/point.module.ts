@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { UserPointRuleService } from './point-rule.service'
 import { UserPointService } from './point.service'
 
 /**
@@ -7,7 +8,7 @@ import { UserPointService } from './point.service'
  */
 @Module({
   imports: [],
-  providers: [UserPointService],
-  exports: [UserPointService],
+  providers: [UserPointService, UserPointRuleService],
+  exports: [UserPointService, UserPointRuleService],
 })
 export class UserPointModule {}

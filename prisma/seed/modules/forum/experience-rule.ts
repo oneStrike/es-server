@@ -1,3 +1,17 @@
+/**
+ * 论坛经验规则种子数据
+ *
+ * 枚举值对照 (GrowthRuleTypeEnum):
+ * - 1: 发表主题 (CREATE_TOPIC)
+ * - 2: 发表回复 (CREATE_REPLY)
+ * - 3: 主题被点赞 (TOPIC_LIKED)
+ * - 4: 回复被点赞 (REPLY_LIKED)
+ * - 5: 主题被收藏 (TOPIC_FAVORITED)
+ * - 6: 每日签到 (DAILY_CHECK_IN)
+ * - 7: 管理员操作 (ADMIN)
+ * - 8: 主题浏览 (TOPIC_VIEW)
+ * - 9: 举报 (REPORT_CREATE)
+ */
 interface IForumExperienceRuleData {
   name: string
   description: string

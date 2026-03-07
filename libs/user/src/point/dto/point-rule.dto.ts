@@ -16,7 +16,7 @@ import { GrowthRuleTypeEnum } from '../../growth-rule.constant'
 export class BaseUserPointRuleDto extends BaseDto {
   @EnumProperty({
     description:
-      '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到, 7=管理员操作, 8=主题浏览, 9=举报, 101=漫画浏览, 102=漫画点赞, 103=漫画收藏, 111=章节阅读, 112=章节点赞, 113=章节购买, 114=章节下载, 115=章节兑换）',
+      '规则类型（1=发表主题, 2=发表回复, 3=主题被点赞, 4=回复被点赞, 5=主题被收藏, 6=每日签到, 7=管理员操作, 8=主题浏览, 9=举报, 100=漫画浏览, 101=漫画点赞, 102=漫画收藏, 200=小说浏览, 201=小说点赞, 202=小说收藏, 300=章节阅读, 301=章节点赞, 302=章节购买, 303=章节下载, 304=章节兑换）',
     example: GrowthRuleTypeEnum.CREATE_TOPIC,
     required: true,
     enum: GrowthRuleTypeEnum,
@@ -82,20 +82,16 @@ export class BaseUserPointRuleDto extends BaseDto {
 export class CreateUserPointRuleDto extends OmitType(
   BaseUserPointRuleDto,
   OMIT_BASE_FIELDS,
-) { }
+) {}
 
 export class UpdateUserPointRuleDto extends IntersectionType(
-  PartialType(CreateUserPointRuleDto),
+  CreateUserPointRuleDto,
   IdDto,
-) { }
+) {}
 
 export class QueryUserPointRuleDto extends IntersectionType(
   PageDto,
   PartialType(
-    PickType(BaseUserPointRuleDto, [
-      'type',
-      'business',
-      'isEnabled',
-    ]),
+    PickType(BaseUserPointRuleDto, ['type', 'business', 'isEnabled']),
   ),
-) { }
+) {}

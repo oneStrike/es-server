@@ -1,10 +1,10 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger'
 import type { EnumPropertyOptions } from './types'
-import { isDevelopment, isNumberEnum } from '@libs/base/utils'
+import { getNumberEnumValues, isDevelopment, isNumberEnum } from '@libs/base/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiProperty } from '@nestjs/swagger'
 import { Transform } from 'class-transformer'
-import { IsEnum, IsOptional } from 'class-validator'
+import { IsEnum, IsIn, IsOptional } from 'class-validator'
 
 /**
  * 枚举属性装饰器
@@ -51,15 +51,28 @@ import { IsEnum, IsOptional } from 'class-validator'
  */
 export function EnumProperty(options: EnumPropertyOptions) {
   const validation = options.validation ?? true
+  const isNumEnum = isNumberEnum(options.enum)
 
   const decorators: any[] = []
 
   if (validation) {
-    decorators.push(
-      IsEnum(options.enum, {
-        message: `必须是有效的枚举值: ${Object.values(options.enum).join(', ')}`,
-      }),
-    )
+    // 对于数字枚举，使用 IsIn 替代 IsEnum，避免双向映射问题
+    // TypeScript 数字枚举会生成反向映射（如 1 -> 'CREATE_TOPIC'），
+    // IsEnum 会把反向映射的字符串也当作有效值，这是我们不想要的
+    if (isNumEnum) {
+      const validValues = getNumberEnumValues(options.enum)
+      decorators.push(
+        IsIn(validValues, {
+          message: `必须是有效的枚举值: ${validValues.join(', ')}`,
+        }),
+      )
+    } else {
+      decorators.push(
+        IsEnum(options.enum, {
+          message: `必须是有效的枚举值: ${Object.values(options.enum).join(', ')}`,
+        }),
+      )
+    }
 
     if (!(options.required ?? true)) {
       decorators.push(IsOptional())
@@ -78,16 +91,14 @@ export function EnumProperty(options: EnumPropertyOptions) {
           return value
         }
 
-        if (isNumberEnum(options.enum) && typeof value === 'string') {
+        if (isNumEnum && typeof value === 'string') {
           const trimmedValue = value.trim()
           if (trimmedValue === '') {
             return undefined
           }
           const numValue = Number(trimmedValue)
-          if (
-            !Number.isNaN(numValue) &&
-            Object.values(options.enum).includes(numValue)
-          ) {
+          const validValues = getNumberEnumValues(options.enum)
+          if (!Number.isNaN(numValue) && validValues.includes(numValue)) {
             return numValue
           }
         }
