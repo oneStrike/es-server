@@ -1,0 +1,31 @@
+/// 成长规则限流槽位表
+/// 通过唯一约束实现高并发下的 daily/total/cooldown 防重复命中
+model GrowthRuleUsageSlot {
+  /// 主键ID
+  id Int @id @default(autoincrement())
+
+  /// 用户ID
+  userId Int @map("user_id")
+  /// 资产类型（POINTS / EXPERIENCE）
+  assetType String @map("asset_type") @db.VarChar(30)
+  /// 规则键（如 points:10 / experience:6）
+  ruleKey String @map("rule_key") @db.VarChar(80)
+
+  /// 槽位类型（DAILY / TOTAL / COOLDOWN）
+  slotType String @map("slot_type") @db.VarChar(20)
+  /// 槽位值（如 2026-03-07 / all / 2026-03-07T09:15）
+  slotValue String @map("slot_value") @db.VarChar(60)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// 用户关联
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 唯一槽位约束：核心并发防重
+  @@unique([userId, assetType, ruleKey, slotType, slotValue])
+  /// 用户规则检索索引
+  @@index([userId, assetType, ruleKey, createdAt])
+  @@map("growth_rule_usage_slot")
+}
+

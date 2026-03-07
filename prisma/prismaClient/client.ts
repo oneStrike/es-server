@@ -89,6 +89,24 @@ export type AppUserToken = Prisma.AppUserTokenModel
  */
 export type AppUser = Prisma.AppUserModel
 /**
+ * Model GrowthAuditLog
+ * 成长结算审计日志表
+ * 记录规则判定与结算结果，便于排障和运营追踪
+ */
+export type GrowthAuditLog = Prisma.GrowthAuditLogModel
+/**
+ * Model GrowthLedgerRecord
+ * 统一成长流水表
+ * 记录积分、经验等可计量资产的变更流水
+ */
+export type GrowthLedgerRecord = Prisma.GrowthLedgerRecordModel
+/**
+ * Model GrowthRuleUsageSlot
+ * 成长规则限流槽位表
+ * 通过唯一约束实现高并发下的 daily/total/cooldown 防重复命中
+ */
+export type GrowthRuleUsageSlot = Prisma.GrowthRuleUsageSlotModel
+/**
  * Model TaskAssignment
  * 任务分配记录
  */
@@ -134,11 +152,6 @@ export type UserComment = Prisma.UserCommentModel
  */
 export type UserDownloadRecord = Prisma.UserDownloadRecordModel
 /**
- * Model UserExperienceRecord
- * 用户经验记录表 - 记录用户经验变化历史
- */
-export type UserExperienceRecord = Prisma.UserExperienceRecordModel
-/**
  * Model UserExperienceRule
  * 用户经验规则表 - 定义经验获取规则，包括发帖、回复、点赞、签到等
  */
@@ -150,16 +163,6 @@ export type UserExperienceRule = Prisma.UserExperienceRuleModel
  * 支持收藏计数统计和用户收藏列表查询
  */
 export type UserFavorite = Prisma.UserFavoriteModel
-/**
- * Model UserGrowthEventArchive
- * 成长事件归档记录
- */
-export type UserGrowthEventArchive = Prisma.UserGrowthEventArchiveModel
-/**
- * Model UserGrowthEvent
- * 用户成长事件审计表 - 记录成长事件处理过程与结果
- */
-export type UserGrowthEvent = Prisma.UserGrowthEventModel
 /**
  * Model UserLevelRule
  * 用户等级规则表 - 定义用户等级规则，包括等级名称、所需经验、等级权益等
@@ -173,11 +176,6 @@ export type UserLevelRule = Prisma.UserLevelRuleModel
  * 注意：评论点赞使用独立的 user_comment_like 表
  */
 export type UserLike = Prisma.UserLikeModel
-/**
- * Model UserPointRecord
- * 用户积分记录表 - 记录用户积分变化历史
- */
-export type UserPointRecord = Prisma.UserPointRecordModel
 /**
  * Model UserPointRule
  * 用户积分规则表 - 定义积分获取和消费规则，包括发帖、回复、点赞、签到等

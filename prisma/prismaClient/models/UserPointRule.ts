@@ -264,7 +264,6 @@ export type UserPointRuleWhereInput = {
   remark?: Prisma.StringNullableFilter<"UserPointRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserPointRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserPointRule"> | Date | string
-  records?: Prisma.UserPointRecordListRelationFilter
 }
 
 export type UserPointRuleOrderByWithRelationInput = {
@@ -277,7 +276,6 @@ export type UserPointRuleOrderByWithRelationInput = {
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  records?: Prisma.UserPointRecordOrderByRelationAggregateInput
 }
 
 export type UserPointRuleWhereUniqueInput = Prisma.AtLeast<{
@@ -293,7 +291,6 @@ export type UserPointRuleWhereUniqueInput = Prisma.AtLeast<{
   remark?: Prisma.StringNullableFilter<"UserPointRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserPointRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserPointRule"> | Date | string
-  records?: Prisma.UserPointRecordListRelationFilter
 }, "id" | "type">
 
 export type UserPointRuleOrderByWithAggregationInput = {
@@ -337,7 +334,6 @@ export type UserPointRuleCreateInput = {
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  records?: Prisma.UserPointRecordCreateNestedManyWithoutRuleInput
 }
 
 export type UserPointRuleUncheckedCreateInput = {
@@ -350,7 +346,6 @@ export type UserPointRuleUncheckedCreateInput = {
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  records?: Prisma.UserPointRecordUncheckedCreateNestedManyWithoutRuleInput
 }
 
 export type UserPointRuleUpdateInput = {
@@ -362,7 +357,6 @@ export type UserPointRuleUpdateInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  records?: Prisma.UserPointRecordUpdateManyWithoutRuleNestedInput
 }
 
 export type UserPointRuleUncheckedUpdateInput = {
@@ -375,7 +369,6 @@ export type UserPointRuleUncheckedUpdateInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  records?: Prisma.UserPointRecordUncheckedUpdateManyWithoutRuleNestedInput
 }
 
 export type UserPointRuleCreateManyInput = {
@@ -411,11 +404,6 @@ export type UserPointRuleUncheckedUpdateManyInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type UserPointRuleNullableScalarRelationFilter = {
-  is?: Prisma.UserPointRuleWhereInput | null
-  isNot?: Prisma.UserPointRuleWhereInput | null
 }
 
 export type UserPointRuleCountOrderByAggregateInput = {
@@ -470,113 +458,6 @@ export type UserPointRuleSumOrderByAggregateInput = {
   totalLimit?: Prisma.SortOrder
 }
 
-export type UserPointRuleCreateNestedOneWithoutRecordsInput = {
-  create?: Prisma.XOR<Prisma.UserPointRuleCreateWithoutRecordsInput, Prisma.UserPointRuleUncheckedCreateWithoutRecordsInput>
-  connectOrCreate?: Prisma.UserPointRuleCreateOrConnectWithoutRecordsInput
-  connect?: Prisma.UserPointRuleWhereUniqueInput
-}
-
-export type UserPointRuleUpdateOneWithoutRecordsNestedInput = {
-  create?: Prisma.XOR<Prisma.UserPointRuleCreateWithoutRecordsInput, Prisma.UserPointRuleUncheckedCreateWithoutRecordsInput>
-  connectOrCreate?: Prisma.UserPointRuleCreateOrConnectWithoutRecordsInput
-  upsert?: Prisma.UserPointRuleUpsertWithoutRecordsInput
-  disconnect?: Prisma.UserPointRuleWhereInput | boolean
-  delete?: Prisma.UserPointRuleWhereInput | boolean
-  connect?: Prisma.UserPointRuleWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserPointRuleUpdateToOneWithWhereWithoutRecordsInput, Prisma.UserPointRuleUpdateWithoutRecordsInput>, Prisma.UserPointRuleUncheckedUpdateWithoutRecordsInput>
-}
-
-export type UserPointRuleCreateWithoutRecordsInput = {
-  type: number
-  points: number
-  dailyLimit?: number
-  totalLimit?: number
-  isEnabled?: boolean
-  remark?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-}
-
-export type UserPointRuleUncheckedCreateWithoutRecordsInput = {
-  id?: number
-  type: number
-  points: number
-  dailyLimit?: number
-  totalLimit?: number
-  isEnabled?: boolean
-  remark?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-}
-
-export type UserPointRuleCreateOrConnectWithoutRecordsInput = {
-  where: Prisma.UserPointRuleWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserPointRuleCreateWithoutRecordsInput, Prisma.UserPointRuleUncheckedCreateWithoutRecordsInput>
-}
-
-export type UserPointRuleUpsertWithoutRecordsInput = {
-  update: Prisma.XOR<Prisma.UserPointRuleUpdateWithoutRecordsInput, Prisma.UserPointRuleUncheckedUpdateWithoutRecordsInput>
-  create: Prisma.XOR<Prisma.UserPointRuleCreateWithoutRecordsInput, Prisma.UserPointRuleUncheckedCreateWithoutRecordsInput>
-  where?: Prisma.UserPointRuleWhereInput
-}
-
-export type UserPointRuleUpdateToOneWithWhereWithoutRecordsInput = {
-  where?: Prisma.UserPointRuleWhereInput
-  data: Prisma.XOR<Prisma.UserPointRuleUpdateWithoutRecordsInput, Prisma.UserPointRuleUncheckedUpdateWithoutRecordsInput>
-}
-
-export type UserPointRuleUpdateWithoutRecordsInput = {
-  type?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type UserPointRuleUncheckedUpdateWithoutRecordsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.IntFieldUpdateOperationsInput | number
-  points?: Prisma.IntFieldUpdateOperationsInput | number
-  dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-
-/**
- * Count Type UserPointRuleCountOutputType
- */
-
-export type UserPointRuleCountOutputType = {
-  records: number
-}
-
-export type UserPointRuleCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  records?: boolean | UserPointRuleCountOutputTypeCountRecordsArgs
-}
-
-/**
- * UserPointRuleCountOutputType without action
- */
-export type UserPointRuleCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UserPointRuleCountOutputType
-   */
-  select?: Prisma.UserPointRuleCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * UserPointRuleCountOutputType without action
- */
-export type UserPointRuleCountOutputTypeCountRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.UserPointRecordWhereInput
-}
 
 
 export type UserPointRuleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -589,8 +470,6 @@ export type UserPointRuleSelect<ExtArgs extends runtime.Types.Extensions.Interna
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  records?: boolean | Prisma.UserPointRule$recordsArgs<ExtArgs>
-  _count?: boolean | Prisma.UserPointRuleCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userPointRule"]>
 
 export type UserPointRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -630,21 +509,10 @@ export type UserPointRuleSelectScalar = {
 }
 
 export type UserPointRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "points" | "dailyLimit" | "totalLimit" | "isEnabled" | "remark" | "createdAt" | "updatedAt", ExtArgs["result"]["userPointRule"]>
-export type UserPointRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  records?: boolean | Prisma.UserPointRule$recordsArgs<ExtArgs>
-  _count?: boolean | Prisma.UserPointRuleCountOutputTypeDefaultArgs<ExtArgs>
-}
-export type UserPointRuleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UserPointRuleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $UserPointRulePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UserPointRule"
-  objects: {
-    /**
-     * 积分记录关联
-     */
-    records: Prisma.$UserPointRecordPayload<ExtArgs>[]
-  }
+  objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
      * 主键ID
@@ -1076,7 +944,6 @@ readonly fields: UserPointRuleFieldRefs;
  */
 export interface Prisma__UserPointRuleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  records<T extends Prisma.UserPointRule$recordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserPointRule$recordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPointRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1132,10 +999,6 @@ export type UserPointRuleFindUniqueArgs<ExtArgs extends runtime.Types.Extensions
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
-  /**
    * Filter, which UserPointRule to fetch.
    */
   where: Prisma.UserPointRuleWhereUniqueInput
@@ -1155,10 +1018,6 @@ export type UserPointRuleFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Ext
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
-  /**
    * Filter, which UserPointRule to fetch.
    */
   where: Prisma.UserPointRuleWhereUniqueInput
@@ -1177,10 +1036,6 @@ export type UserPointRuleFindFirstArgs<ExtArgs extends runtime.Types.Extensions.
    * Omit specific fields from the UserPointRule
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
   /**
    * Filter, which UserPointRule to fetch.
    */
@@ -1231,10 +1086,6 @@ export type UserPointRuleFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exte
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
-  /**
    * Filter, which UserPointRule to fetch.
    */
   where?: Prisma.UserPointRuleWhereInput
@@ -1284,10 +1135,6 @@ export type UserPointRuleFindManyArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
-  /**
    * Filter, which UserPointRules to fetch.
    */
   where?: Prisma.UserPointRuleWhereInput
@@ -1331,10 +1178,6 @@ export type UserPointRuleCreateArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the UserPointRule
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
   /**
    * The data needed to create a UserPointRule.
    */
@@ -1384,10 +1227,6 @@ export type UserPointRuleUpdateArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the UserPointRule
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
   /**
    * The data needed to update a UserPointRule.
    */
@@ -1456,10 +1295,6 @@ export type UserPointRuleUpsertArgs<ExtArgs extends runtime.Types.Extensions.Int
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
-  /**
    * The filter to search for the UserPointRule to update in case it exists.
    */
   where: Prisma.UserPointRuleWhereUniqueInput
@@ -1487,10 +1322,6 @@ export type UserPointRuleDeleteArgs<ExtArgs extends runtime.Types.Extensions.Int
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
-  /**
    * Filter which UserPointRule to delete.
    */
   where: Prisma.UserPointRuleWhereUniqueInput
@@ -1512,30 +1343,6 @@ export type UserPointRuleDeleteManyArgs<ExtArgs extends runtime.Types.Extensions
 }
 
 /**
- * UserPointRule.records
- */
-export type UserPointRule$recordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UserPointRecord
-   */
-  select?: Prisma.UserPointRecordSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the UserPointRecord
-   */
-  omit?: Prisma.UserPointRecordOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRecordInclude<ExtArgs> | null
-  where?: Prisma.UserPointRecordWhereInput
-  orderBy?: Prisma.UserPointRecordOrderByWithRelationInput | Prisma.UserPointRecordOrderByWithRelationInput[]
-  cursor?: Prisma.UserPointRecordWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.UserPointRecordScalarFieldEnum | Prisma.UserPointRecordScalarFieldEnum[]
-}
-
-/**
  * UserPointRule without action
  */
 export type UserPointRuleDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1547,8 +1354,4 @@ export type UserPointRuleDefaultArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the UserPointRule
    */
   omit?: Prisma.UserPointRuleOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserPointRuleInclude<ExtArgs> | null
 }

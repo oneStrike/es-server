@@ -394,6 +394,9 @@ export const ModelName = {
   AppPage: 'AppPage',
   AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
+  GrowthAuditLog: 'GrowthAuditLog',
+  GrowthLedgerRecord: 'GrowthLedgerRecord',
+  GrowthRuleUsageSlot: 'GrowthRuleUsageSlot',
   TaskAssignment: 'TaskAssignment',
   TaskProgressLog: 'TaskProgressLog',
   Task: 'Task',
@@ -402,14 +405,10 @@ export const ModelName = {
   UserCommentLike: 'UserCommentLike',
   UserComment: 'UserComment',
   UserDownloadRecord: 'UserDownloadRecord',
-  UserExperienceRecord: 'UserExperienceRecord',
   UserExperienceRule: 'UserExperienceRule',
   UserFavorite: 'UserFavorite',
-  UserGrowthEventArchive: 'UserGrowthEventArchive',
-  UserGrowthEvent: 'UserGrowthEvent',
   UserLevelRule: 'UserLevelRule',
   UserLike: 'UserLike',
-  UserPointRecord: 'UserPointRecord',
   UserPointRule: 'UserPointRule',
   UserPurchaseRecord: 'UserPurchaseRecord',
   UserReport: 'UserReport',
@@ -458,7 +457,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userComment" | "userDownloadRecord" | "userExperienceRecord" | "userExperienceRule" | "userFavorite" | "userGrowthEventArchive" | "userGrowthEvent" | "userLevelRule" | "userLike" | "userPointRecord" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapter" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthor" | "workComic" | "workNovel" | "workAuthorRelation" | "workCategoryRelation" | "workCategory" | "workChapter" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1202,6 +1201,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    GrowthAuditLog: {
+      payload: Prisma.$GrowthAuditLogPayload<ExtArgs>
+      fields: Prisma.GrowthAuditLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GrowthAuditLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GrowthAuditLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload>
+        }
+        findFirst: {
+          args: Prisma.GrowthAuditLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GrowthAuditLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload>
+        }
+        findMany: {
+          args: Prisma.GrowthAuditLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload>[]
+        }
+        create: {
+          args: Prisma.GrowthAuditLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload>
+        }
+        createMany: {
+          args: Prisma.GrowthAuditLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GrowthAuditLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload>[]
+        }
+        delete: {
+          args: Prisma.GrowthAuditLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload>
+        }
+        update: {
+          args: Prisma.GrowthAuditLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.GrowthAuditLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GrowthAuditLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GrowthAuditLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.GrowthAuditLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthAuditLogPayload>
+        }
+        aggregate: {
+          args: Prisma.GrowthAuditLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGrowthAuditLog>
+        }
+        groupBy: {
+          args: Prisma.GrowthAuditLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GrowthAuditLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GrowthAuditLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GrowthAuditLogCountAggregateOutputType> | number
+        }
+      }
+    }
+    GrowthLedgerRecord: {
+      payload: Prisma.$GrowthLedgerRecordPayload<ExtArgs>
+      fields: Prisma.GrowthLedgerRecordFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GrowthLedgerRecordFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GrowthLedgerRecordFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload>
+        }
+        findFirst: {
+          args: Prisma.GrowthLedgerRecordFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GrowthLedgerRecordFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload>
+        }
+        findMany: {
+          args: Prisma.GrowthLedgerRecordFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload>[]
+        }
+        create: {
+          args: Prisma.GrowthLedgerRecordCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload>
+        }
+        createMany: {
+          args: Prisma.GrowthLedgerRecordCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GrowthLedgerRecordCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload>[]
+        }
+        delete: {
+          args: Prisma.GrowthLedgerRecordDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload>
+        }
+        update: {
+          args: Prisma.GrowthLedgerRecordUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload>
+        }
+        deleteMany: {
+          args: Prisma.GrowthLedgerRecordDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GrowthLedgerRecordUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GrowthLedgerRecordUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload>[]
+        }
+        upsert: {
+          args: Prisma.GrowthLedgerRecordUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthLedgerRecordPayload>
+        }
+        aggregate: {
+          args: Prisma.GrowthLedgerRecordAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGrowthLedgerRecord>
+        }
+        groupBy: {
+          args: Prisma.GrowthLedgerRecordGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GrowthLedgerRecordGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GrowthLedgerRecordCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GrowthLedgerRecordCountAggregateOutputType> | number
+        }
+      }
+    }
+    GrowthRuleUsageSlot: {
+      payload: Prisma.$GrowthRuleUsageSlotPayload<ExtArgs>
+      fields: Prisma.GrowthRuleUsageSlotFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GrowthRuleUsageSlotFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GrowthRuleUsageSlotFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload>
+        }
+        findFirst: {
+          args: Prisma.GrowthRuleUsageSlotFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GrowthRuleUsageSlotFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload>
+        }
+        findMany: {
+          args: Prisma.GrowthRuleUsageSlotFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload>[]
+        }
+        create: {
+          args: Prisma.GrowthRuleUsageSlotCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload>
+        }
+        createMany: {
+          args: Prisma.GrowthRuleUsageSlotCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GrowthRuleUsageSlotCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload>[]
+        }
+        delete: {
+          args: Prisma.GrowthRuleUsageSlotDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload>
+        }
+        update: {
+          args: Prisma.GrowthRuleUsageSlotUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload>
+        }
+        deleteMany: {
+          args: Prisma.GrowthRuleUsageSlotDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GrowthRuleUsageSlotUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GrowthRuleUsageSlotUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload>[]
+        }
+        upsert: {
+          args: Prisma.GrowthRuleUsageSlotUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GrowthRuleUsageSlotPayload>
+        }
+        aggregate: {
+          args: Prisma.GrowthRuleUsageSlotAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGrowthRuleUsageSlot>
+        }
+        groupBy: {
+          args: Prisma.GrowthRuleUsageSlotGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GrowthRuleUsageSlotGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GrowthRuleUsageSlotCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GrowthRuleUsageSlotCountAggregateOutputType> | number
+        }
+      }
+    }
     TaskAssignment: {
       payload: Prisma.$TaskAssignmentPayload<ExtArgs>
       fields: Prisma.TaskAssignmentFieldRefs
@@ -1794,80 +2015,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    UserExperienceRecord: {
-      payload: Prisma.$UserExperienceRecordPayload<ExtArgs>
-      fields: Prisma.UserExperienceRecordFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.UserExperienceRecordFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.UserExperienceRecordFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
-        }
-        findFirst: {
-          args: Prisma.UserExperienceRecordFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.UserExperienceRecordFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
-        }
-        findMany: {
-          args: Prisma.UserExperienceRecordFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>[]
-        }
-        create: {
-          args: Prisma.UserExperienceRecordCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
-        }
-        createMany: {
-          args: Prisma.UserExperienceRecordCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.UserExperienceRecordCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>[]
-        }
-        delete: {
-          args: Prisma.UserExperienceRecordDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
-        }
-        update: {
-          args: Prisma.UserExperienceRecordUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
-        }
-        deleteMany: {
-          args: Prisma.UserExperienceRecordDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.UserExperienceRecordUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.UserExperienceRecordUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>[]
-        }
-        upsert: {
-          args: Prisma.UserExperienceRecordUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserExperienceRecordPayload>
-        }
-        aggregate: {
-          args: Prisma.UserExperienceRecordAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateUserExperienceRecord>
-        }
-        groupBy: {
-          args: Prisma.UserExperienceRecordGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserExperienceRecordGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.UserExperienceRecordCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserExperienceRecordCountAggregateOutputType> | number
-        }
-      }
-    }
     UserExperienceRule: {
       payload: Prisma.$UserExperienceRulePayload<ExtArgs>
       fields: Prisma.UserExperienceRuleFieldRefs
@@ -2016,154 +2163,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    UserGrowthEventArchive: {
-      payload: Prisma.$UserGrowthEventArchivePayload<ExtArgs>
-      fields: Prisma.UserGrowthEventArchiveFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.UserGrowthEventArchiveFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.UserGrowthEventArchiveFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
-        }
-        findFirst: {
-          args: Prisma.UserGrowthEventArchiveFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.UserGrowthEventArchiveFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
-        }
-        findMany: {
-          args: Prisma.UserGrowthEventArchiveFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>[]
-        }
-        create: {
-          args: Prisma.UserGrowthEventArchiveCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
-        }
-        createMany: {
-          args: Prisma.UserGrowthEventArchiveCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.UserGrowthEventArchiveCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>[]
-        }
-        delete: {
-          args: Prisma.UserGrowthEventArchiveDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
-        }
-        update: {
-          args: Prisma.UserGrowthEventArchiveUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
-        }
-        deleteMany: {
-          args: Prisma.UserGrowthEventArchiveDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.UserGrowthEventArchiveUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.UserGrowthEventArchiveUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>[]
-        }
-        upsert: {
-          args: Prisma.UserGrowthEventArchiveUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventArchivePayload>
-        }
-        aggregate: {
-          args: Prisma.UserGrowthEventArchiveAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateUserGrowthEventArchive>
-        }
-        groupBy: {
-          args: Prisma.UserGrowthEventArchiveGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserGrowthEventArchiveGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.UserGrowthEventArchiveCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserGrowthEventArchiveCountAggregateOutputType> | number
-        }
-      }
-    }
-    UserGrowthEvent: {
-      payload: Prisma.$UserGrowthEventPayload<ExtArgs>
-      fields: Prisma.UserGrowthEventFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.UserGrowthEventFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.UserGrowthEventFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
-        }
-        findFirst: {
-          args: Prisma.UserGrowthEventFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.UserGrowthEventFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
-        }
-        findMany: {
-          args: Prisma.UserGrowthEventFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>[]
-        }
-        create: {
-          args: Prisma.UserGrowthEventCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
-        }
-        createMany: {
-          args: Prisma.UserGrowthEventCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.UserGrowthEventCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>[]
-        }
-        delete: {
-          args: Prisma.UserGrowthEventDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
-        }
-        update: {
-          args: Prisma.UserGrowthEventUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
-        }
-        deleteMany: {
-          args: Prisma.UserGrowthEventDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.UserGrowthEventUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.UserGrowthEventUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>[]
-        }
-        upsert: {
-          args: Prisma.UserGrowthEventUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserGrowthEventPayload>
-        }
-        aggregate: {
-          args: Prisma.UserGrowthEventAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateUserGrowthEvent>
-        }
-        groupBy: {
-          args: Prisma.UserGrowthEventGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserGrowthEventGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.UserGrowthEventCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserGrowthEventCountAggregateOutputType> | number
-        }
-      }
-    }
     UserLevelRule: {
       payload: Prisma.$UserLevelRulePayload<ExtArgs>
       fields: Prisma.UserLevelRuleFieldRefs
@@ -2309,80 +2308,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserLikeCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserLikeCountAggregateOutputType> | number
-        }
-      }
-    }
-    UserPointRecord: {
-      payload: Prisma.$UserPointRecordPayload<ExtArgs>
-      fields: Prisma.UserPointRecordFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.UserPointRecordFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.UserPointRecordFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
-        }
-        findFirst: {
-          args: Prisma.UserPointRecordFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.UserPointRecordFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
-        }
-        findMany: {
-          args: Prisma.UserPointRecordFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>[]
-        }
-        create: {
-          args: Prisma.UserPointRecordCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
-        }
-        createMany: {
-          args: Prisma.UserPointRecordCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.UserPointRecordCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>[]
-        }
-        delete: {
-          args: Prisma.UserPointRecordDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
-        }
-        update: {
-          args: Prisma.UserPointRecordUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
-        }
-        deleteMany: {
-          args: Prisma.UserPointRecordDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.UserPointRecordUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.UserPointRecordUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>[]
-        }
-        upsert: {
-          args: Prisma.UserPointRecordUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserPointRecordPayload>
-        }
-        aggregate: {
-          args: Prisma.UserPointRecordAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateUserPointRecord>
-        }
-        groupBy: {
-          args: Prisma.UserPointRecordGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserPointRecordGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.UserPointRecordCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserPointRecordCountAggregateOutputType> | number
         }
       }
     }
@@ -5054,6 +4979,59 @@ export const AppUserScalarFieldEnum = {
 export type AppUserScalarFieldEnum = (typeof AppUserScalarFieldEnum)[keyof typeof AppUserScalarFieldEnum]
 
 
+export const GrowthAuditLogScalarFieldEnum = {
+  id: 'id',
+  requestId: 'requestId',
+  userId: 'userId',
+  bizKey: 'bizKey',
+  assetType: 'assetType',
+  action: 'action',
+  ruleType: 'ruleType',
+  decision: 'decision',
+  reason: 'reason',
+  deltaRequested: 'deltaRequested',
+  deltaApplied: 'deltaApplied',
+  context: 'context',
+  createdAt: 'createdAt'
+} as const
+
+export type GrowthAuditLogScalarFieldEnum = (typeof GrowthAuditLogScalarFieldEnum)[keyof typeof GrowthAuditLogScalarFieldEnum]
+
+
+export const GrowthLedgerRecordScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  assetType: 'assetType',
+  delta: 'delta',
+  beforeValue: 'beforeValue',
+  afterValue: 'afterValue',
+  bizKey: 'bizKey',
+  source: 'source',
+  ruleType: 'ruleType',
+  ruleId: 'ruleId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  remark: 'remark',
+  context: 'context',
+  createdAt: 'createdAt'
+} as const
+
+export type GrowthLedgerRecordScalarFieldEnum = (typeof GrowthLedgerRecordScalarFieldEnum)[keyof typeof GrowthLedgerRecordScalarFieldEnum]
+
+
+export const GrowthRuleUsageSlotScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  assetType: 'assetType',
+  ruleKey: 'ruleKey',
+  slotType: 'slotType',
+  slotValue: 'slotValue',
+  createdAt: 'createdAt'
+} as const
+
+export type GrowthRuleUsageSlotScalarFieldEnum = (typeof GrowthRuleUsageSlotScalarFieldEnum)[keyof typeof GrowthRuleUsageSlotScalarFieldEnum]
+
+
 export const TaskAssignmentScalarFieldEnum = {
   id: 'id',
   taskId: 'taskId',
@@ -5191,21 +5169,6 @@ export const UserDownloadRecordScalarFieldEnum = {
 export type UserDownloadRecordScalarFieldEnum = (typeof UserDownloadRecordScalarFieldEnum)[keyof typeof UserDownloadRecordScalarFieldEnum]
 
 
-export const UserExperienceRecordScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  ruleId: 'ruleId',
-  experience: 'experience',
-  beforeExperience: 'beforeExperience',
-  afterExperience: 'afterExperience',
-  eventKey: 'eventKey',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type UserExperienceRecordScalarFieldEnum = (typeof UserExperienceRecordScalarFieldEnum)[keyof typeof UserExperienceRecordScalarFieldEnum]
-
-
 export const UserExperienceRuleScalarFieldEnum = {
   id: 'id',
   type: 'type',
@@ -5230,52 +5193,6 @@ export const UserFavoriteScalarFieldEnum = {
 } as const
 
 export type UserFavoriteScalarFieldEnum = (typeof UserFavoriteScalarFieldEnum)[keyof typeof UserFavoriteScalarFieldEnum]
-
-
-export const UserGrowthEventArchiveScalarFieldEnum = {
-  id: 'id',
-  sourceId: 'sourceId',
-  business: 'business',
-  eventKey: 'eventKey',
-  userId: 'userId',
-  targetId: 'targetId',
-  ip: 'ip',
-  deviceId: 'deviceId',
-  occurredAt: 'occurredAt',
-  status: 'status',
-  ruleRefs: 'ruleRefs',
-  pointsDeltaApplied: 'pointsDeltaApplied',
-  experienceDeltaApplied: 'experienceDeltaApplied',
-  badgeAssigned: 'badgeAssigned',
-  context: 'context',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  archivedAt: 'archivedAt'
-} as const
-
-export type UserGrowthEventArchiveScalarFieldEnum = (typeof UserGrowthEventArchiveScalarFieldEnum)[keyof typeof UserGrowthEventArchiveScalarFieldEnum]
-
-
-export const UserGrowthEventScalarFieldEnum = {
-  id: 'id',
-  business: 'business',
-  eventKey: 'eventKey',
-  userId: 'userId',
-  targetId: 'targetId',
-  ip: 'ip',
-  deviceId: 'deviceId',
-  occurredAt: 'occurredAt',
-  status: 'status',
-  ruleRefs: 'ruleRefs',
-  pointsDeltaApplied: 'pointsDeltaApplied',
-  experienceDeltaApplied: 'experienceDeltaApplied',
-  badgeAssigned: 'badgeAssigned',
-  context: 'context',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type UserGrowthEventScalarFieldEnum = (typeof UserGrowthEventScalarFieldEnum)[keyof typeof UserGrowthEventScalarFieldEnum]
 
 
 export const UserLevelRuleScalarFieldEnum = {
@@ -5314,25 +5231,6 @@ export const UserLikeScalarFieldEnum = {
 } as const
 
 export type UserLikeScalarFieldEnum = (typeof UserLikeScalarFieldEnum)[keyof typeof UserLikeScalarFieldEnum]
-
-
-export const UserPointRecordScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  ruleId: 'ruleId',
-  targetType: 'targetType',
-  targetId: 'targetId',
-  exchangeId: 'exchangeId',
-  purchaseId: 'purchaseId',
-  points: 'points',
-  beforePoints: 'beforePoints',
-  afterPoints: 'afterPoints',
-  eventKey: 'eventKey',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type UserPointRecordScalarFieldEnum = (typeof UserPointRecordScalarFieldEnum)[keyof typeof UserPointRecordScalarFieldEnum]
 
 
 export const UserPointRuleScalarFieldEnum = {
@@ -6197,6 +6095,9 @@ export type GlobalOmitConfig = {
   appPage?: Prisma.AppPageOmit
   appUserToken?: Prisma.AppUserTokenOmit
   appUser?: Prisma.AppUserOmit
+  growthAuditLog?: Prisma.GrowthAuditLogOmit
+  growthLedgerRecord?: Prisma.GrowthLedgerRecordOmit
+  growthRuleUsageSlot?: Prisma.GrowthRuleUsageSlotOmit
   taskAssignment?: Prisma.TaskAssignmentOmit
   taskProgressLog?: Prisma.TaskProgressLogOmit
   task?: Prisma.TaskOmit
@@ -6205,14 +6106,10 @@ export type GlobalOmitConfig = {
   userCommentLike?: Prisma.UserCommentLikeOmit
   userComment?: Prisma.UserCommentOmit
   userDownloadRecord?: Prisma.UserDownloadRecordOmit
-  userExperienceRecord?: Prisma.UserExperienceRecordOmit
   userExperienceRule?: Prisma.UserExperienceRuleOmit
   userFavorite?: Prisma.UserFavoriteOmit
-  userGrowthEventArchive?: Prisma.UserGrowthEventArchiveOmit
-  userGrowthEvent?: Prisma.UserGrowthEventOmit
   userLevelRule?: Prisma.UserLevelRuleOmit
   userLike?: Prisma.UserLikeOmit
-  userPointRecord?: Prisma.UserPointRecordOmit
   userPointRule?: Prisma.UserPointRuleOmit
   userPurchaseRecord?: Prisma.UserPurchaseRecordOmit
   userReport?: Prisma.UserReportOmit

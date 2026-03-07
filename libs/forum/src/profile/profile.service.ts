@@ -6,6 +6,7 @@ import {
 } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { FavoriteService } from '@libs/interaction'
+import { GrowthAssetTypeEnum } from '@libs/user/growth-ledger'
 import { UserPointService } from '@libs/user/point'
 import { Injectable } from '@nestjs/common'
 import {
@@ -190,11 +191,28 @@ export class ForumProfileService extends BaseService {
    * @returns 分页的积分记录列表
    */
   async getPointRecords(userId: number) {
-    return this.prisma.userPointRecord.findPagination({
+    const page = await this.prisma.growthLedgerRecord.findPagination({
       where: {
         userId,
+        assetType: GrowthAssetTypeEnum.POINTS,
+      },
+      orderBy: {
+        id: 'desc',
       },
     })
+    return {
+      ...page,
+      list: page.list.map((item) => ({
+        id: item.id,
+        userId: item.userId,
+        ruleId: item.ruleId ?? undefined,
+        points: item.delta,
+        beforePoints: item.beforeValue,
+        afterPoints: item.afterValue,
+        remark: item.remark ?? undefined,
+        createdAt: item.createdAt,
+      })),
+    }
   }
 
   /**

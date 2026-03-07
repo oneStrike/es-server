@@ -1,100 +1,89 @@
 /**
- * 任务系统常量定义
+ * 娴犺濮熺化鑽ょ埠鐢悂鍣虹€规矮绠?
  */
 export enum TaskTypeEnum {
-  /** 新手任务 */
+  /** 閺傜増澧滄禒璇插 */
   NEWBIE = 1,
-  /** 日常任务 */
+  /** 閺冦儱鐖舵禒璇插 */
   DAILY = 2,
-  /** 可重复任务 */
+  /** 閸欘垶鍣告径宥勬崲閸? */
   REPEAT = 3,
-  /** 活动任务 */
+  /** 濞茶濮╂禒璇插 */
   ACTIVITY = 4,
-  /** 运营任务 */
+  /** 鏉╂劘鎯€娴犺濮? */
   OPERATION = 5,
 }
 
 /**
- * 任务状态枚举
+ * 娴犺濮熼悩鑸碘偓浣圭亣娑?
  */
 export enum TaskStatusEnum {
-  /** 草稿 */
+  /** 閼藉顭? */
   DRAFT = 0,
-  /** 已发布 */
+  /** 瀹告彃褰傜敮? */
   PUBLISHED = 1,
-  /** 已下线 */
+  /** 瀹歌弓绗呯痪? */
   OFFLINE = 2,
 }
 
 /**
- * 任务领取模式枚举
+ * 娴犺濮熸０鍡楀絿濡€崇础閺嬫矮濡?
  */
 export enum TaskClaimModeEnum {
-  /** 自动领取 */
+  /** 閼奉亜濮╂０鍡楀絿 */
   AUTO = 1,
-  /** 手动领取 */
+  /** 閹靛濮╂０鍡楀絿 */
   MANUAL = 2,
 }
 
 /**
- * 任务完成模式枚举
+ * 娴犺濮熺€瑰本鍨氬Ο鈥崇础閺嬫矮濡?
  */
 export enum TaskCompleteModeEnum {
-  /** 自动完成 */
+  /** 閼奉亜濮╃€瑰本鍨? */
   AUTO = 1,
-  /** 手动完成 */
+  /** 閹靛濮╃€瑰本鍨? */
   MANUAL = 2,
 }
 
 /**
- * 任务指派状态枚举
+ * 娴犺濮熼幐鍥ㄦ烦閻樿埖鈧焦鐏囨稉?
  */
 export enum TaskAssignmentStatusEnum {
-  /** 待开始 */
+  /** 瀵板懎绱戞慨? */
   PENDING = 0,
-  /** 进行中 */
+  /** 鏉╂稖顢戞稉? */
   IN_PROGRESS = 1,
-  /** 已完成 */
+  /** 瀹告彃鐣幋? */
   COMPLETED = 2,
-  /** 已过期 */
+  /** 瀹歌尪绻冮張? */
   EXPIRED = 3,
 }
 
 /**
- * 任务进度动作枚举
+ * 娴犺濮熸潻娑樺閸斻劋缍旈弸姘
  */
 export enum TaskProgressActionTypeEnum {
-  /** 领取 */
+  /** 妫板棗褰? */
   CLAIM = 1,
-  /** 进度更新 */
+  /** 鏉╂稑瀹抽弴瀛樻煀 */
   PROGRESS = 2,
-  /** 完成 */
+  /** 鐎瑰本鍨? */
   COMPLETE = 3,
-  /** 过期 */
+  /** 鏉╁洦婀? */
   EXPIRE = 4,
 }
 
 /**
- * 任务重复周期枚举
+ * 娴犺濮熼柌宥咁槻閸涖劍婀￠弸姘
  */
 export enum TaskRepeatTypeEnum {
-  /** 一次性 */
+  /** 娑撯偓濞嗏剝鈧? */
   ONCE = 'once',
-  /** 每日 */
+  /** 濮ｅ繑妫? */
   DAILY = 'daily',
-  /** 每周 */
+  /** 濮ｅ繐鎳? */
   WEEKLY = 'weekly',
-  /** 每月 */
+  /** 濮ｅ繑婀€ */
   MONTHLY = 'monthly',
 }
-
-/**
- * 任务成长事件 Key 映射
- */
-export const TaskGrowthEventKey = {
-  /** 任务完成 */
-  COMPLETE: 'task.complete',
-} as const
-
-export type TaskGrowthEventKeyType =
-  (typeof TaskGrowthEventKey)[keyof typeof TaskGrowthEventKey]

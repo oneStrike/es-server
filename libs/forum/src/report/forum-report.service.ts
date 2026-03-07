@@ -1,13 +1,13 @@
 import { ReportStatusEnum, ReportTargetTypeEnum } from '@libs/base/constant'
 
 import { BaseService } from '@libs/base/database'
-import { UserGrowthEventService } from '@libs/user/growth-event'
+import { UserGrowthRewardService } from '@libs/user/growth-reward'
+import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
-import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import {
   CreateForumReportDto,
   HandleForumReportDto,
@@ -22,7 +22,7 @@ import { ForumReportTypeEnum } from './forum-report.constant'
 @Injectable()
 export class ForumReportService extends BaseService {
   constructor(
-    private readonly userGrowthEventService: UserGrowthEventService,
+    private readonly userGrowthRewardService: UserGrowthRewardService,
   ) {
     super()
   }
@@ -139,12 +139,13 @@ export class ForumReportService extends BaseService {
       },
     })
 
-    await this.userGrowthEventService.handleEvent({
-      business: 'forum',
-      eventKey: ForumGrowthEventKey.ReportCreate,
+    await this.userGrowthRewardService.tryRewardByRule({
       userId: reporterId,
+      ruleType: GrowthRuleTypeEnum.REPORT_CREATE,
+      bizKey: `forum:report:create:${report.id}:user:${reporterId}`,
+      source: 'forum_report',
+      remark: `create forum report #${report.id}`,
       targetId,
-      occurredAt: new Date(),
     })
 
     return report

@@ -8,6 +8,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { ReportStatusEnum } from '../common.constant'
+import { CommentGrowthService } from './comment-growth.service'
 import { ReportCommentDto } from './dto/comment-interaction.dto'
 
 /**
@@ -16,6 +17,10 @@ import { ReportCommentDto } from './dto/comment-interaction.dto'
  */
 @Injectable()
 export class CommentInteractionService extends BaseService {
+  constructor(private readonly commentGrowthService: CommentGrowthService) {
+    super()
+  }
+
   /**
    * 点赞评论
    * @param commentId - 评论ID
@@ -29,7 +34,9 @@ export class CommentInteractionService extends BaseService {
         where: { id: commentId, deletedAt: null },
         select: {
           id: true,
+          userId: true,
           likes: {
+            where: { userId },
             select: {
               id: true,
             },
@@ -49,6 +56,13 @@ export class CommentInteractionService extends BaseService {
       })
 
       await tx.userComment.applyCountDelta({ id: commentId }, 'likeCount', 1)
+
+      // 点赞奖励发给评论作者（非点赞人）
+      await this.commentGrowthService.rewardCommentLiked(tx, {
+        commentId,
+        authorUserId: comment.userId,
+        likerUserId: userId,
+      })
       return { id: commentId }
     })
   }

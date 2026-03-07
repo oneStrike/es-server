@@ -8,6 +8,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import {
   CreateCommentDto,
@@ -25,6 +26,7 @@ export class CommentService extends BaseService {
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly configReader: ConfigReader,
     private readonly commentPermissionService: CommentPermissionService,
+    private readonly commentGrowthService: CommentGrowthService,
   ) {
     super()
   }
@@ -170,6 +172,14 @@ export class CommentService extends BaseService {
 
       if (this.isVisible({ ...decision, deletedAt: null })) {
         await this.applyCommentCountDelta(tx, targetType, targetId, 1)
+
+        // 评论创建奖励（积分 + 经验）：与评论写入处于同一事务
+        await this.commentGrowthService.rewardCommentCreated(tx, {
+          userId,
+          commentId: newComment.id,
+          targetType,
+          targetId,
+        })
       }
 
       return { id: newComment.id }
@@ -232,6 +242,14 @@ export class CommentService extends BaseService {
           targetId,
           1,
         )
+
+        // 回复也视为评论创建行为，复用相同奖励规则
+        await this.commentGrowthService.rewardCommentCreated(tx, {
+          userId,
+          commentId: newComment.id,
+          targetType,
+          targetId,
+        })
       }
 
       return { id: newComment.id }

@@ -28,6 +28,14 @@ export enum GrowthRuleTypeEnum {
   /** 举报 */
   REPORT_CREATE = 9,
 
+  // 评论相关
+  /** 发表评论 */
+  CREATE_COMMENT = 10,
+  /** 评论被点赞 */
+  COMMENT_LIKED = 11,
+  /** 每日首评 */
+  FIRST_COMMENT_OF_DAY = 12,
+
   // 漫画作品相关
   /** 漫画浏览 */
   COMIC_WORK_VIEW = 100,
@@ -70,6 +78,9 @@ export const GrowthRuleTypeNames: Record<GrowthRuleTypeEnum, string> = {
   [GrowthRuleTypeEnum.ADMIN]: '管理员操作',
   [GrowthRuleTypeEnum.TOPIC_VIEW]: '主题浏览',
   [GrowthRuleTypeEnum.REPORT_CREATE]: '举报',
+  [GrowthRuleTypeEnum.CREATE_COMMENT]: '发表评论',
+  [GrowthRuleTypeEnum.COMMENT_LIKED]: '评论被点赞',
+  [GrowthRuleTypeEnum.FIRST_COMMENT_OF_DAY]: '每日首评',
   [GrowthRuleTypeEnum.COMIC_WORK_VIEW]: '漫画浏览',
   [GrowthRuleTypeEnum.COMIC_WORK_LIKE]: '漫画点赞',
   [GrowthRuleTypeEnum.COMIC_WORK_FAVORITE]: '漫画收藏',

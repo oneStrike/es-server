@@ -1,4 +1,3 @@
-import type { PrismaClientType } from '@libs/base/database/prisma.types'
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { FavoriteService, LikeService } from '@libs/interaction'
@@ -12,8 +11,6 @@ import {
   UserLevelStatisticsDto,
 } from './dto/level-rule.dto'
 import { UserLevelRulePermissionEnum } from './level-rule.constant'
-
-type LevelRuleClient = Pick<PrismaClientType, 'userLevelRule'>
 
 @Injectable()
 export class UserLevelRuleService extends BaseService {
@@ -208,7 +205,7 @@ export class UserLevelRuleService extends BaseService {
 
   async getHighestLevelRuleByExperience(
     experience: number,
-    tx?: LevelRuleClient,
+    tx?: any,
   ) {
     const client = tx ?? this.prisma
     return client.userLevelRule.findFirst({

@@ -1,6 +1,7 @@
 import { BaseService } from '@libs/base/database'
-
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { GrowthAssetTypeEnum, GrowthLedgerActionEnum } from '../growth-ledger/growth-ledger.constant'
+import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
   AddUserPointsDto,
@@ -11,19 +12,18 @@ import { UserPointRuleService } from './point-rule.service'
 
 /**
  * 积分服务类
- * 提供用户积分的增加、消费、记录查询等核心业务逻辑
+ * 对外保留原有方法签名，内部统一切换到 GrowthLedger 写入。
  */
 @Injectable()
 export class UserPointService extends BaseService {
-  get userPointRecord() {
-    return this.prisma.userPointRecord
-  }
-
   get appUser() {
     return this.prisma.appUser
   }
 
-  constructor(private readonly pointRuleService: UserPointRuleService) {
+  constructor(
+    private readonly pointRuleService: UserPointRuleService,
+    private readonly growthLedgerService: GrowthLedgerService,
+  ) {
     super()
   }
 
@@ -32,71 +32,54 @@ export class UserPointService extends BaseService {
    * @param addPointsDto 增加积分的数据
    * @returns 增加积分的结果
    */
-  async addPoints(addPointsDto: AddUserPointsDto) {
+  async addPoints(addPointsDto: AddUserPointsDto & { bizKey?: string, source?: string }) {
     const { userId, ruleType, remark } = addPointsDto
 
     const user = await this.appUser.findUnique({
       where: { id: userId },
+      select: { id: true },
     })
-
     if (!user) {
       throw new BadRequestException('用户不存在')
     }
 
     const rule = await this.pointRuleService.getEnabledRuleByType(ruleType)
-
     if (!rule) {
       throw new BadRequestException('积分规则不存在')
     }
-
     if (rule.points <= 0) {
       throw new BadRequestException('积分规则配置错误')
     }
 
-    // 按规则校验当日可获取次数
-    if (rule.dailyLimit > 0) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
+    const bizKey =
+      addPointsDto.bizKey
+      ?? this.buildBizKey(`point:rule:${ruleType}`, userId)
+    const source = addPointsDto.source ?? 'point_service'
 
-      const todayCount = await this.userPointRecord.count({
-        where: {
-          userId,
-          ruleId: rule.id,
-          createdAt: {
-            gte: today,
-          },
-        },
-      })
-
-      if (todayCount >= rule.dailyLimit) {
-        throw new BadRequestException('今日积分已达上限')
-      }
-    }
-
-    // 记录变更与用户积分更新放在同一事务
     return this.prisma.$transaction(async (tx) => {
-      const beforePoints = user.points
-      const afterPoints = beforePoints + rule.points
-
-      const record = await tx.userPointRecord.create({
-        data: {
-          userId,
-          ruleId: rule.id,
-          points: rule.points,
-          beforePoints,
-          afterPoints,
-          remark,
-        },
+      const result = await this.growthLedgerService.applyByRule(tx, {
+        userId,
+        assetType: GrowthAssetTypeEnum.POINTS,
+        ruleType,
+        bizKey,
+        source,
+        remark,
       })
 
-      await tx.appUser.update({
-        where: { id: userId },
-        data: {
-          points: afterPoints,
-        },
+      if (!result.success && !result.duplicated) {
+        throw new BadRequestException(this.mapRuleFailReason(result.reason))
+      }
+
+      const recordId = result.recordId
+      if (!recordId) {
+        throw new BadRequestException('积分发放失败')
+      }
+
+      const record = await tx.growthLedgerRecord.findUniqueOrThrow({
+        where: { id: recordId },
       })
 
-      return record
+      return this.toPointRecord(record)
     })
   }
 
@@ -106,93 +89,57 @@ export class UserPointService extends BaseService {
    * @returns 消费积分的结果
    */
   async consumePoints(
-    consumePointsDto: ConsumeUserPointsDto,
+    consumePointsDto: ConsumeUserPointsDto & { bizKey?: string, source?: string },
     tx?: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
   ) {
     const { userId, points, remark, targetType, targetId, exchangeId } =
       consumePointsDto
 
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-    })
+    const applyConsume = async (
+      trx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
+    ) => {
+      const bizKey =
+        consumePointsDto.bizKey
+        ?? this.buildBizKey(`point:consume:${targetType ?? 0}:${targetId ?? 0}`, userId)
+      const source = consumePointsDto.source ?? 'point_service'
 
-    if (!user) {
-      throw new BadRequestException('用户不存在')
-    }
+      const result = await this.growthLedgerService.applyDelta(trx as any, {
+        userId,
+        assetType: GrowthAssetTypeEnum.POINTS,
+        action: GrowthLedgerActionEnum.CONSUME,
+        amount: points,
+        bizKey,
+        source,
+        remark,
+        targetType,
+        targetId,
+        context: exchangeId ? { exchangeId } : undefined,
+      })
 
-    if (user.points < points) {
-      throw new BadRequestException('积分不足')
+      if (!result.success && !result.duplicated) {
+        throw new BadRequestException(
+          result.reason === 'insufficient_balance' ? '积分不足' : '积分扣减失败',
+        )
+      }
+
+      const recordId = result.recordId
+      if (!recordId) {
+        throw new BadRequestException('积分扣减失败')
+      }
+
+      const record = await (trx as any).growthLedgerRecord.findUniqueOrThrow({
+        where: { id: recordId },
+      })
+
+      return this.toPointRecord(record)
     }
 
     if (tx) {
-      const beforePoints = user.points
-      const afterPoints = beforePoints - points
-
-      const record = await tx.userPointRecord.create({
-        data: {
-          userId,
-          points: -points,
-          beforePoints,
-          afterPoints,
-          remark,
-          targetType,
-          targetId,
-          exchangeId,
-        },
-      })
-
-      await tx.appUser.update({
-        where: { id: userId },
-        data: {
-          points: afterPoints,
-        },
-      })
-
-      return record
+      return applyConsume(tx)
     }
 
     return this.prisma.$transaction(async (transaction) => {
-      // 检查余额并扣除
-      const updateResult = await transaction.appUser.updateMany({
-        where: {
-          id: userId,
-          points: {
-            gte: points, // 确保积分足够
-          },
-        },
-        data: {
-          points: {
-            decrement: points,
-          },
-        },
-      })
-
-      if (updateResult.count === 0) {
-        throw new BadRequestException('积分不足或用户不存在')
-      }
-
-      // 获取更新后的积分用于记录
-      const user = await transaction.appUser.findUniqueOrThrow({
-        where: { id: userId },
-      })
-
-      const afterPoints = user.points
-      const beforePoints = afterPoints + points
-
-      const record = await transaction.userPointRecord.create({
-        data: {
-          userId,
-          points: -points,
-          beforePoints,
-          afterPoints,
-          remark,
-          targetType,
-          targetId,
-          exchangeId,
-        },
-      })
-
-      return record
+      return applyConsume(transaction)
     })
   }
 
@@ -203,17 +150,20 @@ export class UserPointService extends BaseService {
    */
   async getPointRecordPage(dto: QueryUserPointRecordDto) {
     const { userId, ruleId, ...otherDto } = dto
-    return this.userPointRecord.findPagination({
+    const page = await this.prisma.growthLedgerRecord.findPagination({
       where: {
         ...otherDto,
-        rule: {
-          id: ruleId,
-        },
-        user: {
-          id: userId,
-        },
+        userId,
+        ruleId,
+        assetType: GrowthAssetTypeEnum.POINTS,
       },
+      orderBy: { id: 'desc' },
     })
+
+    return {
+      ...page,
+      list: page.list.map((item) => this.toPointRecord(item)),
+    }
   }
 
   /**
@@ -222,19 +172,21 @@ export class UserPointService extends BaseService {
    * @returns 记录详情信息
    */
   async getPointRecordDetail(id: number) {
-    const record = await this.userPointRecord.findUnique({
+    const record = await this.prisma.growthLedgerRecord.findUnique({
       where: { id },
       include: {
         user: true,
-        rule: true,
       },
     })
 
-    if (!record) {
+    if (!record || record.assetType !== GrowthAssetTypeEnum.POINTS) {
       throw new BadRequestException('积分记录不存在')
     }
 
-    return record
+    return {
+      ...this.toPointRecord(record),
+      user: record.user,
+    }
   }
 
   /**
@@ -245,6 +197,7 @@ export class UserPointService extends BaseService {
   async getUserPointStats(userId: number) {
     const user = await this.appUser.findUnique({
       where: { id: userId },
+      select: { id: true, points: true },
     })
 
     if (!user) {
@@ -254,40 +207,31 @@ export class UserPointService extends BaseService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const todayEarned = await this.userPointRecord.aggregate({
-      where: {
-        userId,
-        points: {
-          gt: 0,
+    const [todayEarned, todayConsumed] = await Promise.all([
+      this.prisma.growthLedgerRecord.aggregate({
+        where: {
+          userId,
+          assetType: GrowthAssetTypeEnum.POINTS,
+          delta: { gt: 0 },
+          createdAt: { gte: today },
         },
-        createdAt: {
-          gte: today,
+        _sum: { delta: true },
+      }),
+      this.prisma.growthLedgerRecord.aggregate({
+        where: {
+          userId,
+          assetType: GrowthAssetTypeEnum.POINTS,
+          delta: { lt: 0 },
+          createdAt: { gte: today },
         },
-      },
-      _sum: {
-        points: true,
-      },
-    })
-
-    const todayConsumed = await this.userPointRecord.aggregate({
-      where: {
-        userId,
-        points: {
-          lt: 0,
-        },
-        createdAt: {
-          gte: today,
-        },
-      },
-      _sum: {
-        points: true,
-      },
-    })
+        _sum: { delta: true },
+      }),
+    ])
 
     return {
       currentPoints: user.points,
-      todayEarned: todayEarned._sum.points || 0,
-      todayConsumed: Math.abs(todayConsumed._sum.points || 0),
+      todayEarned: todayEarned._sum.delta || 0,
+      todayConsumed: Math.abs(todayConsumed._sum.delta || 0),
     }
   }
 
@@ -303,42 +247,37 @@ export class UserPointService extends BaseService {
     points: number,
     operation: 'add' | 'consume',
   ) {
-    const user = await this.appUser.findUnique({
-      where: { id: userId },
-    })
+    const result = await this.prisma.$transaction(async (tx) => {
+      const action =
+        operation === 'add'
+          ? GrowthLedgerActionEnum.GRANT
+          : GrowthLedgerActionEnum.CONSUME
 
-    if (!user) {
-      throw new BadRequestException('用户不存在')
-    }
-
-    if (operation === 'consume' && user.points < points) {
-      throw new BadRequestException('积分不足')
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      const beforePoints = user.points
-      let afterPoints: number
-
-      if (operation === 'add') {
-        afterPoints = beforePoints + points
-      } else {
-        afterPoints = beforePoints - points
-      }
-
-      await tx.appUser.update({
-        where: { id: userId },
-        data: {
-          points: afterPoints,
-        },
+      const ledger = await this.growthLedgerService.applyDelta(tx, {
+        userId,
+        assetType: GrowthAssetTypeEnum.POINTS,
+        action,
+        amount: points,
+        bizKey: this.buildBizKey(`comic-sync:${operation}`, userId),
+        source: 'comic_sync',
+        remark: operation === 'add' ? '漫画系统积分增加' : '漫画系统积分消费',
       })
+
+      if (!ledger.success && !ledger.duplicated) {
+        throw new BadRequestException(
+          ledger.reason === 'insufficient_balance' ? '积分不足' : '积分同步失败',
+        )
+      }
 
       return {
         success: true,
-        beforePoints,
-        afterPoints,
+        beforePoints: ledger.beforeValue,
+        afterPoints: ledger.afterValue,
         points,
       }
     })
+
+    return result
   }
 
   /**
@@ -352,11 +291,68 @@ export class UserPointService extends BaseService {
     userId: number,
     ruleType: GrowthRuleTypeEnum,
     remark?: string,
+    extra?: {
+      bizKey?: string
+      source?: string
+      targetType?: number
+      targetId?: number
+    },
   ) {
     return this.addPoints({
       userId,
       ruleType,
       remark,
+      bizKey: extra?.bizKey,
+      source: extra?.source,
     })
+  }
+
+  private toPointRecord(record: {
+    id: number
+    userId: number
+    ruleId: number | null
+    targetType: number | null
+    targetId: number | null
+    delta: number
+    beforeValue: number
+    afterValue: number
+    remark: string | null
+    createdAt: Date
+    updatedAt?: Date
+  }) {
+    return {
+      id: record.id,
+      userId: record.userId,
+      ruleId: record.ruleId ?? undefined,
+      targetType: record.targetType ?? undefined,
+      targetId: record.targetId ?? undefined,
+      points: record.delta,
+      beforePoints: record.beforeValue,
+      afterPoints: record.afterValue,
+      remark: record.remark ?? undefined,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    }
+  }
+
+  private mapRuleFailReason(reason?: string) {
+    switch (reason) {
+      case 'rule_not_found':
+        return '积分规则不存在'
+      case 'rule_disabled':
+        return '积分规则已禁用'
+      case 'rule_zero':
+        return '积分规则配置错误'
+      case 'daily_limit':
+        return '今日积分已达上限'
+      case 'total_limit':
+        return '积分总次数已达上限'
+      default:
+        return '积分发放失败'
+    }
+  }
+
+  private buildBizKey(prefix: string, userId: number) {
+    return `${prefix}:${userId}:${Date.now()}`
   }
 }

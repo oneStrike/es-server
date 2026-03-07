@@ -1,7 +1,8 @@
 import { UserStatusEnum } from '@libs/base/constant'
-
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
+import { GrowthAssetTypeEnum } from '../growth-ledger/growth-ledger.constant'
+import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { UserLevelRuleService } from '../level-rule/level-rule.service'
 import {
   AddUserExperienceDto,
@@ -15,11 +16,14 @@ import {
 
 /**
  * 经验服务类
- * 提供用户经验的增删改查等核心业务逻辑
+ * 对外保留原方法，内部统一走 GrowthLedger。
  */
 @Injectable()
 export class UserExperienceService extends BaseService {
-  constructor(private readonly levelRuleService: UserLevelRuleService) {
+  constructor(
+    private readonly levelRuleService: UserLevelRuleService,
+    private readonly growthLedgerService: GrowthLedgerService,
+  ) {
     super()
   }
 
@@ -28,13 +32,6 @@ export class UserExperienceService extends BaseService {
    */
   get userExperienceRule() {
     return this.prisma.userExperienceRule
-  }
-
-  /**
-   * 获取经验记录数据库访问器
-   */
-  get userExperienceRecord() {
-    return this.prisma.userExperienceRecord
   }
 
   /**
@@ -119,21 +116,10 @@ export class UserExperienceService extends BaseService {
   async deleteExperienceRule(id: number) {
     const rule = await this.userExperienceRule.findUnique({
       where: { id },
-      include: {
-        _count: {
-          select: {
-            records: true,
-          },
-        },
-      },
     })
 
     if (!rule) {
       throw new BadRequestException('经验规则不存在')
-    }
-
-    if (rule._count.records > 0) {
-      throw new BadRequestException('该经验规则下已有记录，无法删除')
     }
 
     return this.userExperienceRule.delete({
@@ -146,7 +132,14 @@ export class UserExperienceService extends BaseService {
    * @param addExperienceDto 增加经验的数据
    * @returns 增加经验的结果
    */
-  async addExperience(addExperienceDto: AddUserExperienceDto) {
+  async addExperience(
+    addExperienceDto: AddUserExperienceDto & {
+      bizKey?: string
+      source?: string
+      targetType?: number
+      targetId?: number
+    },
+  ) {
     const { userId, ruleType, remark } = addExperienceDto
 
     const user = await this.appUser.findUnique({
@@ -156,79 +149,49 @@ export class UserExperienceService extends BaseService {
           not: UserStatusEnum.PERMANENT_BANNED,
         },
       },
+      select: { id: true },
     })
 
     if (!user) {
       throw new BadRequestException('用户不存在或已被永久封禁')
     }
 
-    const rule = await this.userExperienceRule.findUnique({
-      where: {
-        type: ruleType,
-        isEnabled: true,
-      },
-    })
+    const bizKey =
+      addExperienceDto.bizKey
+      ?? this.buildBizKey(`experience:rule:${ruleType}`, userId)
+    const source = addExperienceDto.source ?? 'experience_service'
 
-    if (!rule) {
-      throw new BadRequestException('经验规则不存在')
-    }
-
-    if (rule.experience <= 0) {
-      throw new BadRequestException('经验规则配置错误')
-    }
-
-    // 按规则校验当日可获取次数
-    if (rule.dailyLimit > 0) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-
-      const todayCount = await this.userExperienceRecord.count({
-        where: {
-          userId,
-          ruleId: rule.id,
-          createdAt: {
-            gte: today,
-          },
-        },
-      })
-
-      if (todayCount >= rule.dailyLimit) {
-        throw new BadRequestException('今日经验已达上限')
-      }
-    }
-
-    // 记录变更、经验更新与等级升级放在同一事务
     return this.prisma.$transaction(async (tx) => {
-      const beforeExperience = user.experience
-      const afterExperience = beforeExperience + rule.experience
-
-      const record = await tx.userExperienceRecord.create({
-        data: {
-          userId,
-          ruleId: rule.id,
-          experience: rule.experience,
-          beforeExperience,
-          afterExperience,
-          remark,
-        },
+      const result = await this.growthLedgerService.applyByRule(tx, {
+        userId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        ruleType,
+        bizKey,
+        source,
+        remark,
+        targetType: addExperienceDto.targetType,
+        targetId: addExperienceDto.targetId,
       })
 
-      await tx.appUser.update({
-        where: { id: userId },
-        data: {
-          experience: afterExperience,
-        },
-      })
+      if (!result.success && !result.duplicated) {
+        throw new BadRequestException(this.mapRuleFailReason(result.reason))
+      }
 
-      // 按经验值选择当前可达的最高等级
+      // 经验变化后按最新经验值刷新等级
+      const currentExperience = result.afterValue ?? (
+        await tx.appUser.findUniqueOrThrow({
+          where: { id: userId },
+          select: { experience: true },
+        })
+      ).experience
+
       const newLevelRule =
         await this.levelRuleService.getHighestLevelRuleByExperience(
-          afterExperience,
+          currentExperience,
           tx,
         )
 
-      // 仅当等级变化时更新，避免重复写入
-      if (newLevelRule && newLevelRule.id !== user.levelId) {
+      if (newLevelRule) {
         await tx.appUser.update({
           where: { id: userId },
           data: {
@@ -237,7 +200,16 @@ export class UserExperienceService extends BaseService {
         })
       }
 
-      return record
+      const recordId = result.recordId
+      if (!recordId) {
+        throw new BadRequestException('经验发放失败')
+      }
+
+      const record = await tx.growthLedgerRecord.findUniqueOrThrow({
+        where: { id: recordId },
+      })
+
+      return this.toExperienceRecord(record)
     })
   }
 
@@ -247,17 +219,19 @@ export class UserExperienceService extends BaseService {
    * @returns 分页的记录列表
    */
   async getExperienceRecordPage(dto: QueryUserExperienceRecordDto) {
-    return this.userExperienceRecord.findPagination({
+    const page = await this.prisma.growthLedgerRecord.findPagination({
       where: {
-        ...dto,
-        rule: {
-          id: dto.ruleId,
-        },
-        user: {
-          id: dto.userId,
-        },
+        userId: dto.userId,
+        ruleId: dto.ruleId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
       },
+      orderBy: { id: 'desc' },
     })
+
+    return {
+      ...page,
+      list: page.list.map((item) => this.toExperienceRecord(item)),
+    }
   }
 
   /**
@@ -266,19 +240,21 @@ export class UserExperienceService extends BaseService {
    * @returns 记录详情信息
    */
   async getExperienceRecordDetail(id: number) {
-    const record = await this.userExperienceRecord.findUnique({
+    const record = await this.prisma.growthLedgerRecord.findUnique({
       where: { id },
       include: {
         user: true,
-        rule: true,
       },
     })
 
-    if (!record) {
+    if (!record || record.assetType !== GrowthAssetTypeEnum.EXPERIENCE) {
       throw new BadRequestException('经验记录不存在')
     }
 
-    return record
+    return {
+      ...this.toExperienceRecord(record),
+      user: record.user,
+    }
   }
 
   /**
@@ -301,22 +277,69 @@ export class UserExperienceService extends BaseService {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const todayEarned = await this.userExperienceRecord.aggregate({
+    const todayEarned = await this.prisma.growthLedgerRecord.aggregate({
       where: {
         userId,
+        assetType: GrowthAssetTypeEnum.EXPERIENCE,
+        delta: { gt: 0 },
         createdAt: {
           gte: today,
         },
       },
       _sum: {
-        experience: true,
+        delta: true,
       },
     })
 
     return {
       currentExperience: user.experience,
-      todayEarned: todayEarned._sum.experience || 0,
+      todayEarned: todayEarned._sum.delta || 0,
       level: user.level,
     }
+  }
+
+  private toExperienceRecord(record: {
+    id: number
+    userId: number
+    ruleId: number | null
+    delta: number
+    beforeValue: number
+    afterValue: number
+    remark: string | null
+    createdAt: Date
+    updatedAt?: Date
+  }) {
+    return {
+      id: record.id,
+      userId: record.userId,
+      ruleId: record.ruleId ?? undefined,
+      experience: record.delta,
+      beforeExperience: record.beforeValue,
+      afterExperience: record.afterValue,
+      remark: record.remark ?? undefined,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    }
+  }
+
+  private mapRuleFailReason(reason?: string) {
+    switch (reason) {
+      case 'rule_not_found':
+        return '经验规则不存在'
+      case 'rule_disabled':
+        return '经验规则已禁用'
+      case 'rule_zero':
+        return '经验规则配置错误'
+      case 'daily_limit':
+        return '今日经验已达上限'
+      case 'total_limit':
+        return '经验总次数已达上限'
+      default:
+        return '经验发放失败'
+    }
+  }
+
+  private buildBizKey(prefix: string, userId: number) {
+    return `${prefix}:${userId}:${Date.now()}`
   }
 }

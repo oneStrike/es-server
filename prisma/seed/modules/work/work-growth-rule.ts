@@ -23,8 +23,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 1,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.view',
     },
     {
       description: '点赞漫画作品获得2积分，每日最多50次',
@@ -32,8 +30,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 2,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.like',
     },
     {
       description: '收藏漫画作品获得3积分，每日最多20次',
@@ -41,8 +37,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 3,
       dailyLimit: 20,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.favorite',
     },
     // 小说作品相关 (200-202)
     {
@@ -51,8 +45,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 1,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.novel.view',
     },
     {
       description: '点赞小说作品获得2积分，每日最多50次',
@@ -60,8 +52,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 2,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.novel.like',
     },
     {
       description: '收藏小说作品获得3积分，每日最多20次',
@@ -69,8 +59,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 3,
       dailyLimit: 20,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.novel.favorite',
     },
     // 漫画章节相关 (300-304)
     {
@@ -79,8 +67,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 1,
       dailyLimit: 100,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.chapter.read',
     },
     {
       description: '点赞漫画章节获得1积分，每日最多50次',
@@ -88,8 +74,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 1,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.chapter.like',
     },
     {
       description: '购买漫画章节获得5积分，每日最多50次',
@@ -97,8 +81,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 5,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.chapter.purchase',
     },
     {
       description: '下载漫画章节获得1积分，每日最多20次',
@@ -106,8 +88,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: 1,
       dailyLimit: 20,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.chapter.download',
     },
     {
       description: '兑换漫画章节消耗积分',
@@ -115,8 +95,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       points: -10,
       dailyLimit: 0,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.chapter.exchange',
     },
   ]
 
@@ -129,8 +107,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 1,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.view',
     },
     {
       name: '漫画点赞',
@@ -139,8 +115,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 2,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.like',
     },
     {
       name: '漫画收藏',
@@ -149,8 +123,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 3,
       dailyLimit: 20,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.favorite',
     },
     // 小说作品相关 (200-202)
     {
@@ -160,8 +132,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 1,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.novel.view',
     },
     {
       name: '小说点赞',
@@ -170,8 +140,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 2,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.novel.like',
     },
     {
       name: '小说收藏',
@@ -180,8 +148,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 3,
       dailyLimit: 20,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.novel.favorite',
     },
     // 漫画章节相关 (300-304)
     {
@@ -191,8 +157,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 1,
       dailyLimit: 100,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.chapter.read',
     },
     {
       name: '章节点赞',
@@ -201,8 +165,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 1,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.chapter.like',
     },
     {
       name: '章节购买',
@@ -211,8 +173,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 5,
       dailyLimit: 50,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.chapter.purchase',
     },
     {
       name: '章节下载',
@@ -221,8 +181,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 1,
       dailyLimit: 20,
       isEnabled: true,
-      business: 'work',
-      eventKey: 'work.comic.chapter.download',
     },
     {
       name: '章节兑换',
@@ -231,8 +189,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
       experience: 0,
       dailyLimit: 0,
       isEnabled: false,
-      business: 'work',
-      eventKey: 'work.comic.chapter.exchange',
     },
   ]
 
@@ -249,8 +205,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
           dailyLimit: ruleData.dailyLimit ?? 0,
           isEnabled: ruleData.isEnabled,
           remark: ruleData.description,
-          business: ruleData.business,
-          eventKey: ruleData.eventKey ?? undefined,
         },
       })
     }
@@ -269,8 +223,6 @@ export async function createInitialWorkGrowthRules(prisma: any) {
           dailyLimit: ruleData.dailyLimit ?? 0,
           isEnabled: ruleData.isEnabled,
           remark: ruleData.description,
-          business: ruleData.business,
-          eventKey: ruleData.eventKey ?? undefined,
         },
       })
     }

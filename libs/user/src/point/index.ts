@@ -1,6 +1,6 @@
 export * from './dto/point-record.dto'
 export * from './dto/point-rule.dto'
+export * from './point-rule.service'
 export * from './point.constant'
 export * from './point.module'
-export * from './point-rule.service'
 export * from './point.service'

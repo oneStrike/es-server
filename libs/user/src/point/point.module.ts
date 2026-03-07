@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { GrowthLedgerModule } from '../growth-ledger/growth-ledger.module'
 import { UserPointRuleService } from './point-rule.service'
 import { UserPointService } from './point.service'
 
@@ -7,7 +8,7 @@ import { UserPointService } from './point.service'
  * 提供用户积分管理的完整功能
  */
 @Module({
-  imports: [],
+  imports: [GrowthLedgerModule],
   providers: [UserPointService, UserPointRuleService],
   exports: [UserPointService, UserPointRuleService],
 })

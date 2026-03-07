@@ -24,9 +24,7 @@ model UserPurchaseRecord {
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   /// 关联用户
-  user         AppUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /// 关联积分流水记录（一对多：购买和退款各产生一条流水）
-  pointRecords UserPointRecord[]
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   /// 唯一约束：同一用户对同一目标只能有一条成功购买记录
   @@unique([targetType, targetId, userId, status])

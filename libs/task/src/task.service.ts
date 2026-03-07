@@ -12,7 +12,7 @@ import type {
   UpdateTaskStatusDto,
 } from './dto/task.dto'
 import { BaseService, Prisma } from '@libs/base/database'
-import { UserGrowthEventService } from '@libs/user/growth-event'
+import { UserGrowthRewardService } from '@libs/user/growth-reward'
 import {
   BadRequestException,
   Injectable,
@@ -23,7 +23,6 @@ import {
   TaskAssignmentStatusEnum,
   TaskClaimModeEnum,
   TaskCompleteModeEnum,
-  TaskGrowthEventKey,
   TaskProgressActionTypeEnum,
   TaskRepeatTypeEnum,
   TaskStatusEnum,
@@ -48,7 +47,7 @@ export class TaskService extends BaseService {
   }
 
   constructor(
-    private readonly userGrowthEventService: UserGrowthEventService,
+    private readonly userGrowthRewardService: UserGrowthRewardService,
   ) {
     super()
   }
@@ -659,17 +658,11 @@ export class TaskService extends BaseService {
     },
     assignment: { id: number },
   ) {
-    await this.userGrowthEventService.handleEvent({
-      business: 'task',
-      eventKey: TaskGrowthEventKey.COMPLETE,
+    await this.userGrowthRewardService.tryRewardTaskComplete({
       userId,
-      targetId: task.id,
-      occurredAt: new Date(),
-      context: JSON.stringify({
-        taskId: task.id,
-        assignmentId: assignment.id,
-        rewardConfig: task.rewardConfig,
-      }),
+      taskId: task.id,
+      assignmentId: assignment.id,
+      rewardConfig: task.rewardConfig,
     })
   }
 }

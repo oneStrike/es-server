@@ -61,10 +61,6 @@ model AppUser {
   announcementReads       AppAnnouncementRead[]
   /// 登录令牌
   tokens                  AppUserToken[]
-  /// 积分记录
-  pointRecords            UserPointRecord[]           @relation("UserPointRecords")
-  /// 经验记录
-  experienceRecords       UserExperienceRecord[]      @relation("UserExperienceRecords")
   /// 发布的论坛主题
   forumTopics             ForumTopic[]                @relation("UserTopics")
   /// 最后回复的主题
@@ -81,8 +77,12 @@ model AppUser {
   forumActionLogs         ForumUserActionLog[]
   /// 用户徽章
   userBadges              UserBadgeAssignment[]
-  /// 成长事件
-  userGrowthEvents        UserGrowthEvent[]
+  /// 统一成长流水
+  growthLedgerRecords     GrowthLedgerRecord[]
+  /// 成长审计日志
+  growthAuditLogs         GrowthAuditLog[]
+  /// 规则限流槽位
+  growthRuleUsageSlots    GrowthRuleUsageSlot[]
   /// 任务分配
   taskAssignments         TaskAssignment[]
   /// 任务进度日志

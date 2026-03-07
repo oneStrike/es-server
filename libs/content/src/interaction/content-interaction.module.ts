@@ -1,12 +1,12 @@
 import { InteractionModule } from '@libs/interaction'
-import { UserGrowthEventModule } from '@libs/user/growth-event'
+import { UserGrowthRewardModule } from '@libs/user/growth-reward'
 import { Module } from '@nestjs/common'
 import { ContentInteractionEventHandler } from './content-interaction.handler'
 
 @Module({
   imports: [
     InteractionModule,
-    UserGrowthEventModule,
+    UserGrowthRewardModule,
   ],
   providers: [ContentInteractionEventHandler],
   exports: [ContentInteractionEventHandler],

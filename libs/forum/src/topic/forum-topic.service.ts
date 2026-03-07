@@ -9,7 +9,8 @@ import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { UserGrowthEventService } from '@libs/user/growth-event'
+import { UserGrowthRewardService } from '@libs/user/growth-reward'
+import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 
 import {
   BadRequestException,
@@ -24,7 +25,6 @@ import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumConfigCacheService } from '../config/forum-config-cache.service'
 import { ForumReviewPolicyEnum } from '../config/forum-config.constant'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import {
   CreateForumTopicDto,
   QueryForumTopicDto,
@@ -43,7 +43,7 @@ import {
 @Injectable()
 export class ForumTopicService extends BaseService {
   constructor(
-    private readonly userGrowthEventService: UserGrowthEventService,
+    private readonly userGrowthRewardService: UserGrowthRewardService,
     private readonly forumConfigCacheService: ForumConfigCacheService,
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
@@ -217,12 +217,13 @@ export class ForumTopicService extends BaseService {
 
     // 未进入审核队列才触发成长事件
     if (topic.auditStatus !== AuditStatusEnum.PENDING) {
-      await this.userGrowthEventService.handleEvent({
-        business: 'forum',
-        eventKey: ForumGrowthEventKey.TopicCreate,
+      await this.userGrowthRewardService.tryRewardByRule({
         userId,
+        ruleType: GrowthRuleTypeEnum.CREATE_TOPIC,
+        bizKey: `forum:topic:create:${topic.id}:user:${userId}`,
+        source: 'forum_topic',
+        remark: `create forum topic #${topic.id}`,
         targetId: topic.id,
-        occurredAt: new Date(),
       })
     }
 

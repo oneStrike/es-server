@@ -264,7 +264,6 @@ export type UserExperienceRuleWhereInput = {
   remark?: Prisma.StringNullableFilter<"UserExperienceRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserExperienceRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserExperienceRule"> | Date | string
-  records?: Prisma.UserExperienceRecordListRelationFilter
 }
 
 export type UserExperienceRuleOrderByWithRelationInput = {
@@ -277,7 +276,6 @@ export type UserExperienceRuleOrderByWithRelationInput = {
   remark?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  records?: Prisma.UserExperienceRecordOrderByRelationAggregateInput
 }
 
 export type UserExperienceRuleWhereUniqueInput = Prisma.AtLeast<{
@@ -293,7 +291,6 @@ export type UserExperienceRuleWhereUniqueInput = Prisma.AtLeast<{
   remark?: Prisma.StringNullableFilter<"UserExperienceRule"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserExperienceRule"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserExperienceRule"> | Date | string
-  records?: Prisma.UserExperienceRecordListRelationFilter
 }, "id" | "type">
 
 export type UserExperienceRuleOrderByWithAggregationInput = {
@@ -337,7 +334,6 @@ export type UserExperienceRuleCreateInput = {
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  records?: Prisma.UserExperienceRecordCreateNestedManyWithoutRuleInput
 }
 
 export type UserExperienceRuleUncheckedCreateInput = {
@@ -350,7 +346,6 @@ export type UserExperienceRuleUncheckedCreateInput = {
   remark?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  records?: Prisma.UserExperienceRecordUncheckedCreateNestedManyWithoutRuleInput
 }
 
 export type UserExperienceRuleUpdateInput = {
@@ -362,7 +357,6 @@ export type UserExperienceRuleUpdateInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  records?: Prisma.UserExperienceRecordUpdateManyWithoutRuleNestedInput
 }
 
 export type UserExperienceRuleUncheckedUpdateInput = {
@@ -375,7 +369,6 @@ export type UserExperienceRuleUncheckedUpdateInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  records?: Prisma.UserExperienceRecordUncheckedUpdateManyWithoutRuleNestedInput
 }
 
 export type UserExperienceRuleCreateManyInput = {
@@ -411,11 +404,6 @@ export type UserExperienceRuleUncheckedUpdateManyInput = {
   remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type UserExperienceRuleNullableScalarRelationFilter = {
-  is?: Prisma.UserExperienceRuleWhereInput | null
-  isNot?: Prisma.UserExperienceRuleWhereInput | null
 }
 
 export type UserExperienceRuleCountOrderByAggregateInput = {
@@ -470,113 +458,6 @@ export type UserExperienceRuleSumOrderByAggregateInput = {
   totalLimit?: Prisma.SortOrder
 }
 
-export type UserExperienceRuleCreateNestedOneWithoutRecordsInput = {
-  create?: Prisma.XOR<Prisma.UserExperienceRuleCreateWithoutRecordsInput, Prisma.UserExperienceRuleUncheckedCreateWithoutRecordsInput>
-  connectOrCreate?: Prisma.UserExperienceRuleCreateOrConnectWithoutRecordsInput
-  connect?: Prisma.UserExperienceRuleWhereUniqueInput
-}
-
-export type UserExperienceRuleUpdateOneWithoutRecordsNestedInput = {
-  create?: Prisma.XOR<Prisma.UserExperienceRuleCreateWithoutRecordsInput, Prisma.UserExperienceRuleUncheckedCreateWithoutRecordsInput>
-  connectOrCreate?: Prisma.UserExperienceRuleCreateOrConnectWithoutRecordsInput
-  upsert?: Prisma.UserExperienceRuleUpsertWithoutRecordsInput
-  disconnect?: Prisma.UserExperienceRuleWhereInput | boolean
-  delete?: Prisma.UserExperienceRuleWhereInput | boolean
-  connect?: Prisma.UserExperienceRuleWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserExperienceRuleUpdateToOneWithWhereWithoutRecordsInput, Prisma.UserExperienceRuleUpdateWithoutRecordsInput>, Prisma.UserExperienceRuleUncheckedUpdateWithoutRecordsInput>
-}
-
-export type UserExperienceRuleCreateWithoutRecordsInput = {
-  type: number
-  experience: number
-  dailyLimit?: number
-  totalLimit?: number
-  isEnabled?: boolean
-  remark?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-}
-
-export type UserExperienceRuleUncheckedCreateWithoutRecordsInput = {
-  id?: number
-  type: number
-  experience: number
-  dailyLimit?: number
-  totalLimit?: number
-  isEnabled?: boolean
-  remark?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-}
-
-export type UserExperienceRuleCreateOrConnectWithoutRecordsInput = {
-  where: Prisma.UserExperienceRuleWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserExperienceRuleCreateWithoutRecordsInput, Prisma.UserExperienceRuleUncheckedCreateWithoutRecordsInput>
-}
-
-export type UserExperienceRuleUpsertWithoutRecordsInput = {
-  update: Prisma.XOR<Prisma.UserExperienceRuleUpdateWithoutRecordsInput, Prisma.UserExperienceRuleUncheckedUpdateWithoutRecordsInput>
-  create: Prisma.XOR<Prisma.UserExperienceRuleCreateWithoutRecordsInput, Prisma.UserExperienceRuleUncheckedCreateWithoutRecordsInput>
-  where?: Prisma.UserExperienceRuleWhereInput
-}
-
-export type UserExperienceRuleUpdateToOneWithWhereWithoutRecordsInput = {
-  where?: Prisma.UserExperienceRuleWhereInput
-  data: Prisma.XOR<Prisma.UserExperienceRuleUpdateWithoutRecordsInput, Prisma.UserExperienceRuleUncheckedUpdateWithoutRecordsInput>
-}
-
-export type UserExperienceRuleUpdateWithoutRecordsInput = {
-  type?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type UserExperienceRuleUncheckedUpdateWithoutRecordsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  type?: Prisma.IntFieldUpdateOperationsInput | number
-  experience?: Prisma.IntFieldUpdateOperationsInput | number
-  dailyLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  totalLimit?: Prisma.IntFieldUpdateOperationsInput | number
-  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-
-/**
- * Count Type UserExperienceRuleCountOutputType
- */
-
-export type UserExperienceRuleCountOutputType = {
-  records: number
-}
-
-export type UserExperienceRuleCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  records?: boolean | UserExperienceRuleCountOutputTypeCountRecordsArgs
-}
-
-/**
- * UserExperienceRuleCountOutputType without action
- */
-export type UserExperienceRuleCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UserExperienceRuleCountOutputType
-   */
-  select?: Prisma.UserExperienceRuleCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * UserExperienceRuleCountOutputType without action
- */
-export type UserExperienceRuleCountOutputTypeCountRecordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.UserExperienceRecordWhereInput
-}
 
 
 export type UserExperienceRuleSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -589,8 +470,6 @@ export type UserExperienceRuleSelect<ExtArgs extends runtime.Types.Extensions.In
   remark?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  records?: boolean | Prisma.UserExperienceRule$recordsArgs<ExtArgs>
-  _count?: boolean | Prisma.UserExperienceRuleCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userExperienceRule"]>
 
 export type UserExperienceRuleSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -630,21 +509,10 @@ export type UserExperienceRuleSelectScalar = {
 }
 
 export type UserExperienceRuleOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "type" | "experience" | "dailyLimit" | "totalLimit" | "isEnabled" | "remark" | "createdAt" | "updatedAt", ExtArgs["result"]["userExperienceRule"]>
-export type UserExperienceRuleInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  records?: boolean | Prisma.UserExperienceRule$recordsArgs<ExtArgs>
-  _count?: boolean | Prisma.UserExperienceRuleCountOutputTypeDefaultArgs<ExtArgs>
-}
-export type UserExperienceRuleIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type UserExperienceRuleIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $UserExperienceRulePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "UserExperienceRule"
-  objects: {
-    /**
-     * 经验记录关联
-     */
-    records: Prisma.$UserExperienceRecordPayload<ExtArgs>[]
-  }
+  objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
      * 主键ID
@@ -1076,7 +944,6 @@ readonly fields: UserExperienceRuleFieldRefs;
  */
 export interface Prisma__UserExperienceRuleClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  records<T extends Prisma.UserExperienceRule$recordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserExperienceRule$recordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserExperienceRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1132,10 +999,6 @@ export type UserExperienceRuleFindUniqueArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
-  /**
    * Filter, which UserExperienceRule to fetch.
    */
   where: Prisma.UserExperienceRuleWhereUniqueInput
@@ -1155,10 +1018,6 @@ export type UserExperienceRuleFindUniqueOrThrowArgs<ExtArgs extends runtime.Type
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
-  /**
    * Filter, which UserExperienceRule to fetch.
    */
   where: Prisma.UserExperienceRuleWhereUniqueInput
@@ -1177,10 +1036,6 @@ export type UserExperienceRuleFindFirstArgs<ExtArgs extends runtime.Types.Extens
    * Omit specific fields from the UserExperienceRule
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
   /**
    * Filter, which UserExperienceRule to fetch.
    */
@@ -1231,10 +1086,6 @@ export type UserExperienceRuleFindFirstOrThrowArgs<ExtArgs extends runtime.Types
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
-  /**
    * Filter, which UserExperienceRule to fetch.
    */
   where?: Prisma.UserExperienceRuleWhereInput
@@ -1284,10 +1135,6 @@ export type UserExperienceRuleFindManyArgs<ExtArgs extends runtime.Types.Extensi
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
-  /**
    * Filter, which UserExperienceRules to fetch.
    */
   where?: Prisma.UserExperienceRuleWhereInput
@@ -1331,10 +1178,6 @@ export type UserExperienceRuleCreateArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the UserExperienceRule
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
   /**
    * The data needed to create a UserExperienceRule.
    */
@@ -1384,10 +1227,6 @@ export type UserExperienceRuleUpdateArgs<ExtArgs extends runtime.Types.Extension
    * Omit specific fields from the UserExperienceRule
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
   /**
    * The data needed to update a UserExperienceRule.
    */
@@ -1456,10 +1295,6 @@ export type UserExperienceRuleUpsertArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
-  /**
    * The filter to search for the UserExperienceRule to update in case it exists.
    */
   where: Prisma.UserExperienceRuleWhereUniqueInput
@@ -1487,10 +1322,6 @@ export type UserExperienceRuleDeleteArgs<ExtArgs extends runtime.Types.Extension
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
   /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
-  /**
    * Filter which UserExperienceRule to delete.
    */
   where: Prisma.UserExperienceRuleWhereUniqueInput
@@ -1512,30 +1343,6 @@ export type UserExperienceRuleDeleteManyArgs<ExtArgs extends runtime.Types.Exten
 }
 
 /**
- * UserExperienceRule.records
- */
-export type UserExperienceRule$recordsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UserExperienceRecord
-   */
-  select?: Prisma.UserExperienceRecordSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the UserExperienceRecord
-   */
-  omit?: Prisma.UserExperienceRecordOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRecordInclude<ExtArgs> | null
-  where?: Prisma.UserExperienceRecordWhereInput
-  orderBy?: Prisma.UserExperienceRecordOrderByWithRelationInput | Prisma.UserExperienceRecordOrderByWithRelationInput[]
-  cursor?: Prisma.UserExperienceRecordWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.UserExperienceRecordScalarFieldEnum | Prisma.UserExperienceRecordScalarFieldEnum[]
-}
-
-/**
  * UserExperienceRule without action
  */
 export type UserExperienceRuleDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1547,8 +1354,4 @@ export type UserExperienceRuleDefaultArgs<ExtArgs extends runtime.Types.Extensio
    * Omit specific fields from the UserExperienceRule
    */
   omit?: Prisma.UserExperienceRuleOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserExperienceRuleInclude<ExtArgs> | null
 }

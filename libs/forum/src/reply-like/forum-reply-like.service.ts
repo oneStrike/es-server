@@ -1,13 +1,13 @@
 import { BaseService } from '@libs/base/database'
 
-import { UserGrowthEventService } from '@libs/user/growth-event'
+import { UserGrowthRewardService } from '@libs/user/growth-reward'
+import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,
   ForumUserActionTypeEnum,
 } from '../action-log/action-log.constant'
 import { ForumUserActionLogService } from '../action-log/action-log.service'
-import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import {
   CreateForumReplyLikeDto,
   DeleteForumReplyLikeDto,
@@ -21,7 +21,7 @@ import {
 export class ForumReplyLikeService extends BaseService {
   constructor(
     private readonly actionLogService: ForumUserActionLogService,
-    private readonly userGrowthEventService: UserGrowthEventService,
+    private readonly userGrowthRewardService: UserGrowthRewardService,
   ) {
     super()
   }
@@ -105,12 +105,13 @@ export class ForumReplyLikeService extends BaseService {
       return like
     })
 
-    await this.userGrowthEventService.handleEvent({
-      business: 'forum',
-      eventKey: ForumGrowthEventKey.ReplyLike,
+    await this.userGrowthRewardService.tryRewardByRule({
       userId,
+      ruleType: GrowthRuleTypeEnum.REPLY_LIKED,
+      bizKey: `forum:reply:like:${replyId}:user:${userId}`,
+      source: 'forum_reply_like',
+      remark: `like forum reply #${replyId}`,
       targetId: replyId,
-      occurredAt: new Date(),
     })
 
     return like

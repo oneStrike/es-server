@@ -22,9 +22,6 @@ model UserExperienceRule {
   /// 更新时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  /// 经验记录关联
-  records UserExperienceRecord[]
-
   /// 类型索引
   @@index([type])
   /// 启用状态索引

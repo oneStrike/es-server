@@ -22,9 +22,6 @@ model UserPointRule {
   /// 更新时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  /// 积分记录关联
-  records UserPointRecord[]
-
   /// 类型索引
   @@index([type])
   /// 启用状态索引

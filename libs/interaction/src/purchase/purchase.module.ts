@@ -1,10 +1,10 @@
 import { ContentPermissionModule } from '@libs/content/permission'
-import { UserPointModule } from '@libs/user/point'
+import { GrowthLedgerModule } from '@libs/user/growth-ledger'
 import { Module } from '@nestjs/common'
 import { PurchaseService } from './purchase.service'
 
 @Module({
-  imports: [ContentPermissionModule, UserPointModule],
+  imports: [ContentPermissionModule, GrowthLedgerModule],
   providers: [PurchaseService],
   exports: [PurchaseService],
 })

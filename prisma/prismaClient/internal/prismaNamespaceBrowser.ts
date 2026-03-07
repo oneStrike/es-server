@@ -61,6 +61,9 @@ export const ModelName = {
   AppPage: 'AppPage',
   AppUserToken: 'AppUserToken',
   AppUser: 'AppUser',
+  GrowthAuditLog: 'GrowthAuditLog',
+  GrowthLedgerRecord: 'GrowthLedgerRecord',
+  GrowthRuleUsageSlot: 'GrowthRuleUsageSlot',
   TaskAssignment: 'TaskAssignment',
   TaskProgressLog: 'TaskProgressLog',
   Task: 'Task',
@@ -69,14 +72,10 @@ export const ModelName = {
   UserCommentLike: 'UserCommentLike',
   UserComment: 'UserComment',
   UserDownloadRecord: 'UserDownloadRecord',
-  UserExperienceRecord: 'UserExperienceRecord',
   UserExperienceRule: 'UserExperienceRule',
   UserFavorite: 'UserFavorite',
-  UserGrowthEventArchive: 'UserGrowthEventArchive',
-  UserGrowthEvent: 'UserGrowthEvent',
   UserLevelRule: 'UserLevelRule',
   UserLike: 'UserLike',
-  UserPointRecord: 'UserPointRecord',
   UserPointRule: 'UserPointRule',
   UserPurchaseRecord: 'UserPurchaseRecord',
   UserReport: 'UserReport',
@@ -315,6 +314,59 @@ export const AppUserScalarFieldEnum = {
 export type AppUserScalarFieldEnum = (typeof AppUserScalarFieldEnum)[keyof typeof AppUserScalarFieldEnum]
 
 
+export const GrowthAuditLogScalarFieldEnum = {
+  id: 'id',
+  requestId: 'requestId',
+  userId: 'userId',
+  bizKey: 'bizKey',
+  assetType: 'assetType',
+  action: 'action',
+  ruleType: 'ruleType',
+  decision: 'decision',
+  reason: 'reason',
+  deltaRequested: 'deltaRequested',
+  deltaApplied: 'deltaApplied',
+  context: 'context',
+  createdAt: 'createdAt'
+} as const
+
+export type GrowthAuditLogScalarFieldEnum = (typeof GrowthAuditLogScalarFieldEnum)[keyof typeof GrowthAuditLogScalarFieldEnum]
+
+
+export const GrowthLedgerRecordScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  assetType: 'assetType',
+  delta: 'delta',
+  beforeValue: 'beforeValue',
+  afterValue: 'afterValue',
+  bizKey: 'bizKey',
+  source: 'source',
+  ruleType: 'ruleType',
+  ruleId: 'ruleId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  remark: 'remark',
+  context: 'context',
+  createdAt: 'createdAt'
+} as const
+
+export type GrowthLedgerRecordScalarFieldEnum = (typeof GrowthLedgerRecordScalarFieldEnum)[keyof typeof GrowthLedgerRecordScalarFieldEnum]
+
+
+export const GrowthRuleUsageSlotScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  assetType: 'assetType',
+  ruleKey: 'ruleKey',
+  slotType: 'slotType',
+  slotValue: 'slotValue',
+  createdAt: 'createdAt'
+} as const
+
+export type GrowthRuleUsageSlotScalarFieldEnum = (typeof GrowthRuleUsageSlotScalarFieldEnum)[keyof typeof GrowthRuleUsageSlotScalarFieldEnum]
+
+
 export const TaskAssignmentScalarFieldEnum = {
   id: 'id',
   taskId: 'taskId',
@@ -452,21 +504,6 @@ export const UserDownloadRecordScalarFieldEnum = {
 export type UserDownloadRecordScalarFieldEnum = (typeof UserDownloadRecordScalarFieldEnum)[keyof typeof UserDownloadRecordScalarFieldEnum]
 
 
-export const UserExperienceRecordScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  ruleId: 'ruleId',
-  experience: 'experience',
-  beforeExperience: 'beforeExperience',
-  afterExperience: 'afterExperience',
-  eventKey: 'eventKey',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type UserExperienceRecordScalarFieldEnum = (typeof UserExperienceRecordScalarFieldEnum)[keyof typeof UserExperienceRecordScalarFieldEnum]
-
-
 export const UserExperienceRuleScalarFieldEnum = {
   id: 'id',
   type: 'type',
@@ -491,52 +528,6 @@ export const UserFavoriteScalarFieldEnum = {
 } as const
 
 export type UserFavoriteScalarFieldEnum = (typeof UserFavoriteScalarFieldEnum)[keyof typeof UserFavoriteScalarFieldEnum]
-
-
-export const UserGrowthEventArchiveScalarFieldEnum = {
-  id: 'id',
-  sourceId: 'sourceId',
-  business: 'business',
-  eventKey: 'eventKey',
-  userId: 'userId',
-  targetId: 'targetId',
-  ip: 'ip',
-  deviceId: 'deviceId',
-  occurredAt: 'occurredAt',
-  status: 'status',
-  ruleRefs: 'ruleRefs',
-  pointsDeltaApplied: 'pointsDeltaApplied',
-  experienceDeltaApplied: 'experienceDeltaApplied',
-  badgeAssigned: 'badgeAssigned',
-  context: 'context',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  archivedAt: 'archivedAt'
-} as const
-
-export type UserGrowthEventArchiveScalarFieldEnum = (typeof UserGrowthEventArchiveScalarFieldEnum)[keyof typeof UserGrowthEventArchiveScalarFieldEnum]
-
-
-export const UserGrowthEventScalarFieldEnum = {
-  id: 'id',
-  business: 'business',
-  eventKey: 'eventKey',
-  userId: 'userId',
-  targetId: 'targetId',
-  ip: 'ip',
-  deviceId: 'deviceId',
-  occurredAt: 'occurredAt',
-  status: 'status',
-  ruleRefs: 'ruleRefs',
-  pointsDeltaApplied: 'pointsDeltaApplied',
-  experienceDeltaApplied: 'experienceDeltaApplied',
-  badgeAssigned: 'badgeAssigned',
-  context: 'context',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type UserGrowthEventScalarFieldEnum = (typeof UserGrowthEventScalarFieldEnum)[keyof typeof UserGrowthEventScalarFieldEnum]
 
 
 export const UserLevelRuleScalarFieldEnum = {
@@ -575,25 +566,6 @@ export const UserLikeScalarFieldEnum = {
 } as const
 
 export type UserLikeScalarFieldEnum = (typeof UserLikeScalarFieldEnum)[keyof typeof UserLikeScalarFieldEnum]
-
-
-export const UserPointRecordScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  ruleId: 'ruleId',
-  targetType: 'targetType',
-  targetId: 'targetId',
-  exchangeId: 'exchangeId',
-  purchaseId: 'purchaseId',
-  points: 'points',
-  beforePoints: 'beforePoints',
-  afterPoints: 'afterPoints',
-  eventKey: 'eventKey',
-  remark: 'remark',
-  createdAt: 'createdAt'
-} as const
-
-export type UserPointRecordScalarFieldEnum = (typeof UserPointRecordScalarFieldEnum)[keyof typeof UserPointRecordScalarFieldEnum]
 
 
 export const UserPointRuleScalarFieldEnum = {

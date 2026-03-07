@@ -5,7 +5,8 @@ import {
   SensitiveWordDetectService,
   SensitiveWordLevelEnum,
 } from '@libs/sensitive-word'
-import { UserGrowthEventService } from '@libs/user/growth-event'
+import { UserGrowthRewardService } from '@libs/user/growth-reward'
+import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,
@@ -13,7 +14,6 @@ import {
 } from '../action-log/action-log.constant'
 import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 import { ForumNotificationService } from '../notification/notification.service'
 import { CreateForumReplyDto, QueryForumReplyDto } from './dto/forum-reply.dto'
 
@@ -28,7 +28,7 @@ export class ForumReplyService extends BaseService {
     private readonly sensitiveWordDetectService: SensitiveWordDetectService,
     private readonly forumCounterService: ForumCounterService,
     private readonly actionLogService: ForumUserActionLogService,
-    private readonly userGrowthEventService: UserGrowthEventService,
+    private readonly userGrowthRewardService: UserGrowthRewardService,
   ) {
     super()
   }
@@ -216,12 +216,13 @@ export class ForumReplyService extends BaseService {
 
     // 未进入审核队列才触发成长事件
     if (reply.auditStatus !== AuditStatusEnum.PENDING) {
-      await this.userGrowthEventService.handleEvent({
-        business: 'forum',
-        eventKey: ForumGrowthEventKey.ReplyCreate,
+      await this.userGrowthRewardService.tryRewardByRule({
         userId,
+        ruleType: GrowthRuleTypeEnum.CREATE_REPLY,
+        bizKey: `forum:reply:create:${reply.id}:user:${userId}`,
+        source: 'forum_reply',
+        remark: `create forum reply #${reply.id}`,
         targetId: reply.id,
-        occurredAt: new Date(),
       })
     }
 

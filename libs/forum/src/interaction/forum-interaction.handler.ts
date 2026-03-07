@@ -4,7 +4,8 @@ import {
   InteractionEvent,
   InteractionEventEmitter,
 } from '@libs/interaction'
-import { UserGrowthEventService } from '@libs/user/growth-event'
+import { UserGrowthRewardService } from '@libs/user/growth-reward'
+import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import {
   ForumUserActionTargetTypeEnum,
@@ -12,13 +13,12 @@ import {
 } from '../action-log/action-log.constant'
 import { ForumUserActionLogService } from '../action-log/action-log.service'
 import { ForumCounterService } from '../counter/forum-counter.service'
-import { ForumGrowthEventKey } from '../forum-growth-event.constant'
 
 @Injectable()
 export class ForumInteractionEventHandler implements OnModuleInit {
   constructor(
     private readonly eventEmitter: InteractionEventEmitter,
-    private readonly userGrowthEventService: UserGrowthEventService,
+    private readonly userGrowthRewardService: UserGrowthRewardService,
     private readonly forumCounterService: ForumCounterService,
     private readonly actionLogService: ForumUserActionLogService,
   ) {}
@@ -70,12 +70,13 @@ export class ForumInteractionEventHandler implements OnModuleInit {
       targetId: topicId,
     })
 
-    await this.userGrowthEventService.handleEvent({
-      business: 'forum',
-      eventKey: ForumGrowthEventKey.TopicLike,
+    await this.userGrowthRewardService.tryRewardByRule({
       userId,
+      ruleType: GrowthRuleTypeEnum.TOPIC_LIKED,
+      bizKey: `forum:topic:like:${topicId}:user:${userId}`,
+      source: 'forum_topic_like',
+      remark: `like forum topic #${topicId}`,
       targetId: topicId,
-      occurredAt: event.timestamp,
     })
   }
 
@@ -134,12 +135,13 @@ export class ForumInteractionEventHandler implements OnModuleInit {
       targetId: topicId,
     })
 
-    await this.userGrowthEventService.handleEvent({
-      business: 'forum',
-      eventKey: ForumGrowthEventKey.TopicFavorite,
+    await this.userGrowthRewardService.tryRewardByRule({
       userId,
+      ruleType: GrowthRuleTypeEnum.TOPIC_FAVORITED,
+      bizKey: `forum:topic:favorite:${topicId}:user:${userId}`,
+      source: 'forum_topic_favorite',
+      remark: `favorite forum topic #${topicId}`,
       targetId: topicId,
-      occurredAt: event.timestamp,
     })
   }
 

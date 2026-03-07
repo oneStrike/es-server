@@ -1,6 +1,11 @@
 import { ContentTypeEnum, WorkViewPermissionEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import { ContentPermissionService } from '@libs/content/permission'
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerActionEnum,
+  GrowthLedgerService,
+} from '@libs/user/growth-ledger'
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import {
   PurchasedWorkChapterPageDto,
@@ -17,8 +22,8 @@ import {
 } from './purchase.constant'
 
 /**
- * 购买服务
- * 处理用户购买章节的核心逻辑，包括购买验证、支付处理、退款等
+ * Purchase service.
+ * Handles chapter purchase validation, settlement, and related read APIs.
  */
 @Injectable()
 export class PurchaseService extends BaseService {
@@ -26,27 +31,28 @@ export class PurchaseService extends BaseService {
 
   constructor(
     private readonly contentPermissionService: ContentPermissionService,
+    private readonly growthLedgerService: GrowthLedgerService,
   ) {
     super()
   }
 
-  /** 获取作品数据访问对象 */
+  /** Work model accessor. */
   get work() {
     return this.prisma.work
   }
 
-  /** 获取APP用户数据访问对象 */
+  /** AppUser model accessor. */
   get appUser() {
     return this.prisma.appUser
   }
 
-  /** 获取用户购买记录数据访问对象 */
+  /** Purchase record model accessor. */
   get userPurchaseRecord() {
     return this.prisma.userPurchaseRecord
   }
 
   /**
-   * 检查当前目标是否需要购买
+   * Check whether the target requires purchase.
    */
   async checkNeedPurchase(
     targetType: PurchaseTargetTypeEnum,
@@ -61,14 +67,19 @@ export class PurchaseService extends BaseService {
       targetType !== PurchaseTargetTypeEnum.COMIC_CHAPTER &&
       targetType !== PurchaseTargetTypeEnum.NOVEL_CHAPTER
     ) {
-      throw new BadRequestException('仅支持章节购买')
+      throw new BadRequestException('Only chapter purchase is supported')
     }
     const { price, viewRule } =
       chapterPermission ??
       (await this.contentPermissionService.resolveChapterPermission(targetId))
 
     if (viewRule !== WorkViewPermissionEnum.PURCHASE) {
-      throw new BadRequestException('该章节禁止购买')
+      throw new BadRequestException('This chapter cannot be purchased')
+    }
+
+    // Guard invalid configuration. Zero price is allowed and means no deduction.
+    if (price < 0) {
+      throw new BadRequestException('Invalid chapter price')
     }
 
     const existingPurchase =
@@ -100,10 +111,10 @@ export class PurchaseService extends BaseService {
   }
 
   /**
-   * 购买目标内容（章节）
-   * @param dto - 购买请求参数
-   * @returns 购买记录
-   * @throws BadRequestException 目标类型不支持或购买验证失败
+   * Purchase a target chapter.
+   * @param dto purchase request
+   * @returns purchase record
+   * @throws BadRequestException when validation fails
    */
   async purchaseTarget(
     dto: PurchaseTargetDto,
@@ -139,56 +150,37 @@ export class PurchaseService extends BaseService {
           },
         })
 
-        const updateResult = await tx.appUser.updateMany({
-          where: {
-            id: userId,
-            points: {
-              gte: targetPrice,
-            },
-          },
-          data: {
-            points: {
-              decrement: targetPrice,
-            },
-          },
-        })
-
-        if (updateResult.count === 0) {
-          const user = await tx.appUser.findUnique({
-            where: { id: userId },
-            select: { id: true },
-          })
-          if (!user) {
-            this.logger.warn(
-              `purchase_failed_user_not_found userId=${userId} targetType=${targetType} targetId=${targetId}`,
-            )
-            throw new BadRequestException('用户不存在')
-          }
-          this.logger.warn(
-            `purchase_failed_points_not_enough userId=${userId} targetType=${targetType} targetId=${targetId} need=${targetPrice}`,
-          )
-          throw new BadRequestException('积分不足')
-        }
-
-        const user = await tx.appUser.findUniqueOrThrow({
-          where: { id: userId },
-          select: { points: true },
-        })
-        const afterPoints = user.points
-        const beforePoints = afterPoints + targetPrice
-
-        await tx.userPointRecord.create({
-          data: {
+        if (targetPrice > 0) {
+          const consumeResult = await this.growthLedgerService.applyDelta(tx, {
             userId,
-            points: -targetPrice,
-            beforePoints,
-            afterPoints,
-            purchaseId: record.id,
+            assetType: GrowthAssetTypeEnum.POINTS,
+            action: GrowthLedgerActionEnum.CONSUME,
+            amount: targetPrice,
+            bizKey: `purchase:${record.id}:consume`,
+            source: 'purchase',
+            remark: '购买章节',
             targetType,
             targetId,
-            remark: '购买章节',
-          },
-        })
+            context: {
+              purchaseId: record.id,
+              paymentMethod,
+              outTradeNo,
+            },
+          })
+
+          if (!consumeResult.success && !consumeResult.duplicated) {
+            if (consumeResult.reason === 'insufficient_balance') {
+              this.logger.warn(
+                `purchase_failed_points_not_enough userId=${userId} targetType=${targetType} targetId=${targetId} need=${targetPrice}`,
+              )
+              throw new BadRequestException('积分不足')
+            }
+            this.logger.warn(
+              `purchase_failed_ledger_reject userId=${userId} targetType=${targetType} targetId=${targetId} reason=${consumeResult.reason ?? 'unknown'}`,
+            )
+            throw new BadRequestException('购买失败')
+          }
+        }
 
         await tx.workChapter.update({
           where: { id: targetId },
@@ -247,14 +239,11 @@ export class PurchaseService extends BaseService {
       )
     }
 
-    throw new BadRequestException('不支持的章节类型')
+    throw new BadRequestException('Unsupported chapter type')
   }
 
   /**
-   * 获取用户购买记录列表
-   * 支持分页查询
-   * @param dto - 查询参数
-   * @returns 分页购买记录
+   * Get paginated purchase records.
    */
   async getUserPurchases(dto: QueryUserPurchaseRecordDto) {
     const { userId, targetType, status, ...other } = dto

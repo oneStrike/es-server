@@ -19,7 +19,10 @@ import {
   createInitialForumSensitiveWords,
   createInitialForumTags,
 } from './modules/forum'
-import { createInitialInteractionData } from './modules/interaction'
+import {
+  createInitialInteractionData,
+  createInitialInteractionGrowthRules,
+} from './modules/interaction'
 import { createInitialDataDictionary } from './modules/system'
 import {
   createInitialAuthors,
@@ -60,6 +63,7 @@ async function runSeeds() {
     createInitialForumLevelRules(prisma),
     createInitialForumSensitiveWords(prisma),
     createInitialWorkGrowthRules(prisma),
+    createInitialInteractionGrowthRules(prisma),
   ])
 
   console.log('✅ 基础配置数据初始化完成')

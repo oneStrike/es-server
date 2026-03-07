@@ -1,5 +1,5 @@
 import { SensitiveWordModule } from '@libs/sensitive-word'
-import { UserGrowthEventModule } from '@libs/user/growth-event'
+import { UserGrowthRewardModule } from '@libs/user/growth-reward'
 import { Module } from '@nestjs/common'
 import { ForumUserActionLogModule } from '../action-log/action-log.module'
 import { ForumCounterModule } from '../counter/forum-counter.module'
@@ -16,7 +16,7 @@ import { ForumReplyService } from './forum-reply.service'
     SensitiveWordModule,
     ForumCounterModule,
     ForumUserActionLogModule,
-    UserGrowthEventModule,
+    UserGrowthRewardModule,
   ],
   providers: [ForumReplyService],
   exports: [ForumReplyService],

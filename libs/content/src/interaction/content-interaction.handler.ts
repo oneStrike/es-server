@@ -4,14 +4,15 @@ import {
   InteractionEvent,
   InteractionEventEmitter,
 } from '@libs/interaction'
-import { UserGrowthEventService } from '@libs/user/growth-event'
+import { UserGrowthRewardService } from '@libs/user/growth-reward'
+import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { Injectable, OnModuleInit } from '@nestjs/common'
 
 @Injectable()
 export class ContentInteractionEventHandler implements OnModuleInit {
   constructor(
     private readonly eventEmitter: InteractionEventEmitter,
-    private readonly userGrowthEventService: UserGrowthEventService,
+    private readonly userGrowthRewardService: UserGrowthRewardService,
   ) {}
 
   onModuleInit() {
@@ -47,20 +48,29 @@ export class ContentInteractionEventHandler implements OnModuleInit {
       event.targetType === InteractionTargetTypeEnum.COMIC_CHAPTER ||
       event.targetType === InteractionTargetTypeEnum.NOVEL_CHAPTER
     ) {
-      await this.userGrowthEventService.handleEvent({
-        business: 'work',
-        eventKey: 'chapter_like',
+      await this.userGrowthRewardService.tryRewardByRule({
         userId,
+        ruleType: GrowthRuleTypeEnum.COMIC_CHAPTER_LIKE,
+        bizKey: `content:chapter:like:${targetId}:user:${userId}`,
+        source: 'content_chapter_like',
+        remark: `like chapter #${targetId}`,
+        targetType: event.targetType,
         targetId,
-        occurredAt: event.timestamp,
       })
     } else {
-      await this.userGrowthEventService.handleEvent({
-        business: 'work',
-        eventKey: 'work_like',
+      const ruleType =
+        event.targetType === InteractionTargetTypeEnum.NOVEL
+          ? GrowthRuleTypeEnum.NOVEL_WORK_LIKE
+          : GrowthRuleTypeEnum.COMIC_WORK_LIKE
+
+      await this.userGrowthRewardService.tryRewardByRule({
         userId,
+        ruleType,
+        bizKey: `content:work:like:${targetId}:user:${userId}`,
+        source: 'content_work_like',
+        remark: `like work #${targetId}`,
+        targetType: event.targetType,
         targetId,
-        occurredAt: event.timestamp,
       })
     }
   }
@@ -73,12 +83,19 @@ export class ContentInteractionEventHandler implements OnModuleInit {
     const targetId = event.targetId
     const userId = event.userId
 
-    await this.userGrowthEventService.handleEvent({
-      business: 'work',
-      eventKey: 'work_favorite',
+    const ruleType =
+      event.targetType === InteractionTargetTypeEnum.NOVEL
+        ? GrowthRuleTypeEnum.NOVEL_WORK_FAVORITE
+        : GrowthRuleTypeEnum.COMIC_WORK_FAVORITE
+
+    await this.userGrowthRewardService.tryRewardByRule({
       userId,
+      ruleType,
+      bizKey: `content:work:favorite:${targetId}:user:${userId}`,
+      source: 'content_work_favorite',
+      remark: `favorite work #${targetId}`,
+      targetType: event.targetType,
       targetId,
-      occurredAt: event.timestamp,
     })
   }
 
@@ -90,12 +107,14 @@ export class ContentInteractionEventHandler implements OnModuleInit {
     const targetId = event.targetId
     const userId = event.userId
 
-    await this.userGrowthEventService.handleEvent({
-      business: 'work',
-      eventKey: 'chapter_download',
+    await this.userGrowthRewardService.tryRewardByRule({
       userId,
+      ruleType: GrowthRuleTypeEnum.COMIC_CHAPTER_DOWNLOAD,
+      bizKey: `content:chapter:download:${targetId}:user:${userId}`,
+      source: 'content_chapter_download',
+      remark: `download chapter #${targetId}`,
+      targetType: event.targetType,
       targetId,
-      occurredAt: event.timestamp,
     })
   }
 }
