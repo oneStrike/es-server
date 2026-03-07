@@ -10,8 +10,17 @@ import {
   MessageOutboxStatusEnum,
 } from './outbox.constant'
 
+/**
+ * 消息发件箱服务
+ * 提供消息事件的入队功能，实现发件箱模式
+ */
 @Injectable()
 export class MessageOutboxService extends BaseService {
+  /**
+   * 将消息事件入队
+   * @param dto 消息事件数据
+   * @param tx 可选的事务对象
+   */
   async enqueueEvent(
     dto: CreateMessageOutboxEventDto,
     tx?: any,
@@ -40,6 +49,11 @@ export class MessageOutboxService extends BaseService {
     }
   }
 
+  /**
+   * 将通知事件入队
+   * @param dto 通知事件数据
+   * @param tx 可选的事务对象
+   */
   async enqueueNotificationEvent(
     dto: CreateNotificationOutboxEventDto,
     tx?: any,

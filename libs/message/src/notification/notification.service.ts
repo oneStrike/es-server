@@ -3,12 +3,22 @@ import type { QueryUserNotificationListDto } from './dto/notification.dto'
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
 
+/**
+ * 消息通知服务
+ * 提供用户通知的查询、标记已读、从发件箱创建通知等功能
+ */
 @Injectable()
 export class MessageNotificationService extends BaseService {
   private get notification() {
     return this.prisma.userNotification
   }
 
+  /**
+   * 分页查询用户通知列表
+   * @param userId 用户ID
+   * @param queryDto 查询条件
+   * @returns 分页的通知列表
+   */
   async queryUserNotificationList(
     userId: number,
     queryDto: QueryUserNotificationListDto,
@@ -33,6 +43,11 @@ export class MessageNotificationService extends BaseService {
     })
   }
 
+  /**
+   * 获取用户未读通知数量
+   * @param userId 用户ID
+   * @returns 未读通知数量
+   */
   async getUnreadCount(userId: number) {
     return {
       count: await this.notification.count({
@@ -44,6 +59,12 @@ export class MessageNotificationService extends BaseService {
     }
   }
 
+  /**
+   * 标记单条通知为已读
+   * @param userId 用户ID
+   * @param id 通知ID
+   * @returns 标记结果
+   */
   async markRead(userId: number, id: number) {
     const result = await this.notification.updateMany({
       where: {
@@ -62,6 +83,11 @@ export class MessageNotificationService extends BaseService {
     return { id }
   }
 
+  /**
+   * 标记用户所有通知为已读
+   * @param userId 用户ID
+   * @returns 更新结果
+   */
   async markAllRead(userId: number) {
     return this.notification.updateMany({
       where: {
@@ -75,6 +101,11 @@ export class MessageNotificationService extends BaseService {
     })
   }
 
+  /**
+   * 从发件箱事件创建通知
+   * @param bizKey 业务幂等键
+   * @param payload 通知载荷数据
+   */
   async createFromOutbox(bizKey: string, payload: NotificationOutboxPayload) {
     const receiverUserId = Number(payload.receiverUserId)
     const actorUserId =

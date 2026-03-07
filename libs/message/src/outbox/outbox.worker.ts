@@ -11,6 +11,10 @@ import {
   MessageOutboxStatusEnum,
 } from './outbox.constant'
 
+/**
+ * 消息发件箱工作器
+ * 定时消费发件箱中的待处理事件，实现消息的可靠投递
+ */
 @Injectable()
 export class MessageOutboxWorker extends BaseService {
   private readonly logger = new Logger(MessageOutboxWorker.name)
@@ -21,6 +25,10 @@ export class MessageOutboxWorker extends BaseService {
     super()
   }
 
+  /**
+   * 消费发件箱事件
+   * 每5秒执行一次，批量处理待处理的事件
+   */
   @Cron('*/5 * * * * *')
   async consumeOutbox() {
     const now = new Date()
@@ -69,6 +77,10 @@ export class MessageOutboxWorker extends BaseService {
     }
   }
 
+  /**
+   * 处理单个发件箱事件
+   * @param event 发件箱事件
+   */
   private async processEvent(event: MessageOutbox) {
     if (event.domain === MessageOutboxDomainEnum.NOTIFICATION) {
       await this.processNotificationEvent(event)
@@ -77,6 +89,10 @@ export class MessageOutboxWorker extends BaseService {
     throw new Error(`unsupported outbox domain: ${event.domain}`)
   }
 
+  /**
+   * 处理通知类型的事件
+   * @param event 发件箱事件
+   */
   private async processNotificationEvent(event: MessageOutbox) {
     if (!event.payload || typeof event.payload !== 'object') {
       throw new Error('invalid notification payload')
@@ -87,6 +103,11 @@ export class MessageOutboxWorker extends BaseService {
     )
   }
 
+  /**
+   * 处理事件处理过程中的错误
+   * @param event 发件箱事件
+   * @param error 错误信息
+   */
   private async handleProcessError(event: MessageOutbox, error: unknown) {
     const retryCount = event.retryCount + 1
     const message = this.stringifyError(error).slice(0, 500)
@@ -122,6 +143,11 @@ export class MessageOutboxWorker extends BaseService {
     )
   }
 
+  /**
+   * 将错误对象转换为字符串
+   * @param error 错误对象
+   * @returns 错误字符串
+   */
   private stringifyError(error: unknown) {
     if (error instanceof Error) {
       return error.message

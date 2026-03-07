@@ -1,3 +1,8 @@
+/**
+ * 消息模块入口文件
+ * 统一导出消息模块的所有公开接口
+ */
+
 export * from './message.module'
 
 export * from './notification/dto/notification.dto'

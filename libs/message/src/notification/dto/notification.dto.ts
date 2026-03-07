@@ -7,6 +7,9 @@ import {
 } from '@libs/base/decorators'
 import { PageDto } from '@libs/base/dto'
 
+/**
+ * 用户通知基础数据传输对象
+ */
 export class BaseUserNotificationDto {
   @NumberProperty({
     description: '通知ID',
@@ -132,6 +135,9 @@ export class BaseUserNotificationDto {
   createdAt: Date
 }
 
+/**
+ * 查询用户通知列表数据传输对象
+ */
 export class QueryUserNotificationListDto extends PageDto {
   @BooleanProperty({
     description: '是否已读',
@@ -149,6 +155,9 @@ export class QueryUserNotificationListDto extends PageDto {
   type?: string
 }
 
+/**
+ * 通知未读数量数据传输对象
+ */
 export class NotificationUnreadCountDto {
   @NumberProperty({
     description: '未读通知数量',
