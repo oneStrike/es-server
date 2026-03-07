@@ -60,7 +60,7 @@ export class FavoriteService extends BaseService {
         })
       } catch (error) {
         if (this.counterService.isDuplicateError(error)) {
-          throw new BadRequestException('Already favorited')
+          throw new BadRequestException('已收藏')
         }
         throw error
       }
@@ -95,7 +95,7 @@ export class FavoriteService extends BaseService {
         })
       } catch (error) {
         if (this.isRecordNotFound(error)) {
-          throw new BadRequestException('Not favorited yet')
+          throw new BadRequestException('未收藏')
         }
         throw error
       }

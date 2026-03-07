@@ -25,6 +25,14 @@ type Tx = any
 export class GrowthLedgerService extends BaseService {
   /**
    * 按规则结算（发放）
+   *
+   * 流程：
+   * 1. 根据资产类型查询对应规则表
+   * 2. 检查规则是否启用、数值是否有效
+   * 3. 创建账本记录（幂等检查）
+   * 4. 检查每日限额和总限额
+   * 5. 更新用户余额
+   * 6. 写入审计日志
    */
   async applyByRule(
     tx: Tx,
@@ -43,7 +51,8 @@ export class GrowthLedgerService extends BaseService {
       occurredAt = new Date(),
     } = params
 
-    // 规则读取按资产类型分别走对应规则表
+    // 规则读取：按资产类型分别走对应规则表
+    // POINTS -> userPointRule, EXPERIENCE -> userExperienceRule
     const rule =
       assetType === GrowthAssetTypeEnum.POINTS
         ? await tx.userPointRule.findUnique({
@@ -67,6 +76,7 @@ export class GrowthLedgerService extends BaseService {
             },
           })
 
+    // 规则不存在
     if (!rule) {
       return {
         success: false,
@@ -74,6 +84,7 @@ export class GrowthLedgerService extends BaseService {
       }
     }
 
+    // 规则已禁用
     if (!rule.isEnabled) {
       return {
         success: false,
@@ -81,12 +92,15 @@ export class GrowthLedgerService extends BaseService {
       }
     }
 
+    // 获取规则定义的变动值（积分或经验）
     const delta = 'points' in rule ? rule.points : rule.experience
 
+    // 规则值为零，无需处理
     if (delta === 0) {
       return { success: false, reason: GrowthLedgerFailReasonEnum.RULE_ZERO }
     }
 
+    // 创建账本记录入口（包含幂等检查）
     const gate = await this.createLedgerGate(tx, {
       userId,
       assetType,
@@ -104,9 +118,11 @@ export class GrowthLedgerService extends BaseService {
       return gate.result
     }
 
+    // 构建规则键和日期键，用于限额检查
     const ruleKey = `${assetType}:${ruleType}`
     const dayKey = this.formatDateKey(occurredAt)
 
+    // 检查每日限额：通过槽位占用实现并发安全
     if (rule.dailyLimit > 0) {
       const reservedDaily = await this.reserveLimitedSlots(tx, {
         userId,
@@ -117,6 +133,7 @@ export class GrowthLedgerService extends BaseService {
         limit: rule.dailyLimit,
       })
       if (!reservedDaily) {
+        // 每日限额已达，回滚账本记录
         await tx.growthLedgerRecord.delete({ where: { id: gate.recordId } })
         return {
           success: false,
@@ -125,6 +142,7 @@ export class GrowthLedgerService extends BaseService {
       }
     }
 
+    // 检查总限额：通过槽位占用实现并发安全
     if (rule.totalLimit > 0) {
       const reservedTotal = await this.reserveLimitedSlots(tx, {
         userId,
@@ -135,6 +153,7 @@ export class GrowthLedgerService extends BaseService {
         limit: rule.totalLimit,
       })
       if (!reservedTotal) {
+        // 总限额已达，回滚账本记录
         await tx.growthLedgerRecord.delete({ where: { id: gate.recordId } })
         return {
           success: false,
@@ -143,6 +162,7 @@ export class GrowthLedgerService extends BaseService {
       }
     }
 
+    // 更新用户余额（原子操作）
     const currentValue = await this.incrementUserBalance(tx, {
       userId,
       assetType,
@@ -151,6 +171,7 @@ export class GrowthLedgerService extends BaseService {
     const afterValue = currentValue
     const beforeValue = afterValue - delta
 
+    // 更新账本记录的前后值
     await tx.growthLedgerRecord.update({
       where: { id: gate.recordId },
       data: {
@@ -159,6 +180,7 @@ export class GrowthLedgerService extends BaseService {
       },
     })
 
+    // 写入审计日志
     await this.writeAuditLog(tx, {
       userId,
       bizKey,
@@ -183,6 +205,13 @@ export class GrowthLedgerService extends BaseService {
 
   /**
    * 直接结算（不走规则表）
+   *
+   * 流程：
+   * 1. 验证变动金额
+   * 2. 创建账本记录（幂等检查）
+   * 3. 消费时检查余额是否充足
+   * 4. 更新用户余额
+   * 5. 写入审计日志
    */
   async applyDelta(
     tx: Tx,
@@ -201,13 +230,17 @@ export class GrowthLedgerService extends BaseService {
       context,
     } = params
 
+    // 变动金额必须大于零
     if (amount <= 0) {
       return { success: false, reason: GrowthLedgerFailReasonEnum.RULE_ZERO }
     }
 
+    // 根据操作类型计算带符号的变动值
+    // CONSUME 为负数，GRANT 为正数
     const signedDelta =
       action === GrowthLedgerActionEnum.CONSUME ? -amount : amount
 
+    // 创建账本记录入口（包含幂等检查）
     const gate = await this.createLedgerGate(tx, {
       userId,
       assetType,
@@ -223,6 +256,7 @@ export class GrowthLedgerService extends BaseService {
       return gate.result
     }
 
+    // 消费操作：检查余额是否充足
     if (action === GrowthLedgerActionEnum.CONSUME) {
       const decreased = await this.decrementUserBalance(tx, {
         userId,
@@ -230,6 +264,7 @@ export class GrowthLedgerService extends BaseService {
         amount,
       })
       if (!decreased.ok) {
+        // 余额不足，回滚账本记录
         await tx.growthLedgerRecord.delete({ where: { id: gate.recordId } })
         return {
           success: false,
@@ -237,6 +272,7 @@ export class GrowthLedgerService extends BaseService {
         }
       }
     } else {
+      // 发放操作：直接增加余额
       await this.incrementUserBalance(tx, {
         userId,
         assetType,
@@ -244,6 +280,7 @@ export class GrowthLedgerService extends BaseService {
       })
     }
 
+    // 查询更新后的用户余额
     const user = await tx.appUser.findUniqueOrThrow({
       where: { id: userId },
       select: { points: true, experience: true },
@@ -252,6 +289,7 @@ export class GrowthLedgerService extends BaseService {
       assetType === GrowthAssetTypeEnum.POINTS ? user.points : user.experience
     const beforeValue = afterValue - signedDelta
 
+    // 更新账本记录的前后值
     await tx.growthLedgerRecord.update({
       where: { id: gate.recordId },
       data: {
@@ -260,6 +298,7 @@ export class GrowthLedgerService extends BaseService {
       },
     })
 
+    // 写入审计日志
     await this.writeAuditLog(tx, {
       userId,
       bizKey,
@@ -280,6 +319,15 @@ export class GrowthLedgerService extends BaseService {
     }
   }
 
+  /**
+   * 创建账本记录入口
+   *
+   * 实现幂等机制：
+   * 1. 使用 skipDuplicates 避免唯一约束冲突打断事务
+   * 2. 如果记录已存在，返回已有记录的结果
+   *
+   * @returns 如果重复返回已有结果，否则返回新记录ID
+   */
   private async createLedgerGate(
     tx: Tx,
     params: {
@@ -299,8 +347,7 @@ export class GrowthLedgerService extends BaseService {
     | { duplicated: false, recordId: number }
     | { duplicated: true, result: GrowthLedgerApplyResult }
   > {
-    // 事务内幂等 gate：
-    // 使用 skipDuplicates 避免唯一冲突异常把整个事务打断。
+    // 使用 skipDuplicates 避免唯一冲突异常把整个事务打断
     const inserted = await tx.growthLedgerRecord.createMany({
       data: {
         userId: params.userId,
@@ -336,7 +383,7 @@ export class GrowthLedgerService extends BaseService {
     })
 
     if (!existing) {
-      throw new Error('LEDGER_GATE_CREATE_FAILED')
+      throw new Error('账本记录创建失败')
     }
 
     if (inserted.count === 0) {
@@ -356,6 +403,15 @@ export class GrowthLedgerService extends BaseService {
     return { duplicated: false, recordId: existing.id }
   }
 
+  /**
+   * 预留限额槽位
+   *
+   * 槽位占用策略：
+   * 对于 limit=N，仅允许成功占用 N 个唯一槽位，超出即失败
+   * 通过尝试占用 slotNo=1 到 limit 的槽位来实现并发安全
+   *
+   * @returns 是否成功占用槽位
+   */
   private async reserveLimitedSlots(
     tx: Tx,
     params: {
@@ -387,6 +443,11 @@ export class GrowthLedgerService extends BaseService {
     return false
   }
 
+  /**
+   * 增加用户余额
+   * 使用原子操作更新用户表中的积分或经验字段
+   * @returns 更新后的余额值
+   */
   private async incrementUserBalance(
     tx: Tx,
     params: {
@@ -409,6 +470,11 @@ export class GrowthLedgerService extends BaseService {
       : user.experience
   }
 
+  /**
+   * 减少用户余额
+   * 使用条件更新确保余额充足时才扣减
+   * @returns 是否成功扣减
+   */
   private async decrementUserBalance(
     tx: Tx,
     params: {
@@ -436,6 +502,10 @@ export class GrowthLedgerService extends BaseService {
     return { ok: updateResult.count > 0 }
   }
 
+  /**
+   * 写入审计日志
+   * 记录所有结算请求的决策和结果，用于问题排查
+   */
   private async writeAuditLog(
     tx: Tx,
     params: {
@@ -467,6 +537,7 @@ export class GrowthLedgerService extends BaseService {
     })
   }
 
+  /** 格式化日期为 YYYY-MM-DD 格式，用于每日限额的日期键 */
   private formatDateKey(input: Date): string {
     const y = input.getFullYear()
     const m = String(input.getMonth() + 1).padStart(2, '0')

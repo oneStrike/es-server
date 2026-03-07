@@ -95,7 +95,7 @@ export class LikeService extends BaseService {
         })
       } catch (error) {
         if (this.counterService.isDuplicateError(error)) {
-          throw new BadRequestException('Already liked')
+          throw new BadRequestException('已点赞')
         }
         throw error
       }
@@ -130,7 +130,7 @@ export class LikeService extends BaseService {
         })
       } catch (error) {
         if (this.isRecordNotFound(error)) {
-          throw new BadRequestException('Not liked yet')
+          throw new BadRequestException('未点赞')
         }
         throw error
       }

@@ -19,7 +19,7 @@ export class FuzzyMatcher {
    */
   constructor(maxDistance: number = 2, useBKTree: boolean = true) {
     if (maxDistance < 0) {
-      throw new Error('maxDistance must be non-negative')
+      throw new Error('maxDistance 必须为非负数')
     }
     this.words = []
     this.maxDistance = maxDistance
@@ -51,7 +51,7 @@ export class FuzzyMatcher {
    */
   setMaxDistance(distance: number) {
     if (distance < 0) {
-      throw new Error('maxDistance must be non-negative')
+      throw new Error('maxDistance 必须为非负数')
     }
     this.maxDistance = distance
     this.bkTree.setMaxDistance(distance)

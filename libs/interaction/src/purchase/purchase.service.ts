@@ -67,19 +67,19 @@ export class PurchaseService extends BaseService {
       targetType !== PurchaseTargetTypeEnum.COMIC_CHAPTER &&
       targetType !== PurchaseTargetTypeEnum.NOVEL_CHAPTER
     ) {
-      throw new BadRequestException('Only chapter purchase is supported')
+      throw new BadRequestException('仅支持章节购买')
     }
     const { price, viewRule } =
       chapterPermission ??
       (await this.contentPermissionService.resolveChapterPermission(targetId))
 
     if (viewRule !== WorkViewPermissionEnum.PURCHASE) {
-      throw new BadRequestException('This chapter cannot be purchased')
+      throw new BadRequestException('该章节不支持购买')
     }
 
     // Guard invalid configuration. Zero price is allowed and means no deduction.
     if (price < 0) {
-      throw new BadRequestException('Invalid chapter price')
+      throw new BadRequestException('章节价格无效')
     }
 
     const existingPurchase =
@@ -239,7 +239,7 @@ export class PurchaseService extends BaseService {
       )
     }
 
-    throw new BadRequestException('Unsupported chapter type')
+    throw new BadRequestException('不支持的章节类型')
   }
 
   /**

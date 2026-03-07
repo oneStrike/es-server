@@ -86,7 +86,7 @@ export class MessageOutboxWorker extends BaseService {
       await this.processNotificationEvent(event)
       return
     }
-    throw new Error(`unsupported outbox domain: ${event.domain}`)
+    throw new Error(`不支持的发件箱域: ${event.domain}`)
   }
 
   /**
@@ -95,7 +95,7 @@ export class MessageOutboxWorker extends BaseService {
    */
   private async processNotificationEvent(event: MessageOutbox) {
     if (!event.payload || typeof event.payload !== 'object') {
-      throw new Error('invalid notification payload')
+      throw new Error('无效的通知负载')
     }
     await this.messageNotificationService.createFromOutbox(
       event.bizKey,
@@ -119,9 +119,10 @@ export class MessageOutboxWorker extends BaseService {
           status: MessageOutboxStatusEnum.FAILED,
           retryCount,
           lastError: message,
+          processedAt: new Date(),
         },
       })
-      this.logger.error(`outbox event failed permanently: id=${event.id}, err=${message}`)
+      this.logger.error(`发件箱事件永久失败: id=${event.id}, 错误=${message}`)
       return
     }
 
@@ -139,7 +140,7 @@ export class MessageOutboxWorker extends BaseService {
       },
     })
     this.logger.warn(
-      `outbox event retry scheduled: id=${event.id}, retry=${retryCount}, err=${message}`,
+      `发件箱事件重试已安排: id=${event.id}, 重试次数=${retryCount}, 错误=${message}`,
     )
   }
 
@@ -158,7 +159,7 @@ export class MessageOutboxWorker extends BaseService {
     try {
       return JSON.stringify(error)
     } catch {
-      return 'unknown error'
+      return '未知错误'
     }
   }
 }

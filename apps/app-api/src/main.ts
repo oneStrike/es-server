@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config'
 
 import { NestFactory } from '@nestjs/core'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
+import { IoAdapter } from '@nestjs/platform-socket.io'
 import { AppModule } from './app.module'
 
 // Webpack HMR 声明模块类型
@@ -28,6 +29,7 @@ async function bootstrap() {
   const appConfig = app.get(ConfigService).get<AppConfigInterface>('app')!
   // 配置应用（中间件、插件、日志等）
   await setupApp(app, fastifyAdapter, appConfig)
+  app.useWebSocketAdapter(new IoAdapter(app))
 
   await app.listen(appConfig.port, '0.0.0.0') // 监听所有网络接口（Docker 容器必需）
 

@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module'
 import { ContentModule } from './content-management/content.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
 import { ForumManagementModule } from './forum-management/forum-management.module'
+import { MessageModule } from './message/message.module'
 import { SystemConfigModule } from './system/config/system-config.module'
 import { UploadModule } from './system/upload/upload.module'
 import { TaskModule } from './task/task.module'
@@ -27,6 +28,7 @@ import { WorkModule } from './work/work.module'
     AdminAnnouncementModule,
     ContentModule,
     ForumManagementModule,
+    MessageModule,
     TaskModule,
     UserGrowthModule,
     WorkModule,

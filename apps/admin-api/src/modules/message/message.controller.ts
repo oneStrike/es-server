@@ -1,0 +1,23 @@
+import { ApiDoc } from '@libs/base/decorators'
+import { Controller, Get, Query } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
+import {
+  MessageOutboxMonitorSummaryDto,
+  QueryMessageOutboxMonitorDto,
+} from './dto/message-monitor.dto'
+import { MessageMonitorService } from './message-monitor.service'
+
+@ApiTags('消息中心/监控')
+@Controller('admin/message')
+export class MessageController {
+  constructor(private readonly messageMonitorService: MessageMonitorService) {}
+
+  @Get('monitor/summary')
+  @ApiDoc({
+    summary: '获取消息 outbox 监控摘要',
+    model: MessageOutboxMonitorSummaryDto,
+  })
+  async getOutboxMonitorSummary(@Query() query: QueryMessageOutboxMonitorDto) {
+    return this.messageMonitorService.getOutboxMonitorSummary(query)
+  }
+}

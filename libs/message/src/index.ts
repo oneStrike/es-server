@@ -3,10 +3,21 @@
  * 统一导出消息模块的所有公开接口
  */
 
+export * from './chat/chat.constant'
+
+export * from './chat/chat.module'
+export * from './chat/chat.service'
+export * from './chat/dto/chat.dto'
+export * from './inbox/dto/inbox.dto'
+
+export * from './inbox/inbox.module'
+export * from './inbox/inbox.service'
 export * from './message.module'
 
 export * from './notification/dto/notification.dto'
+export * from './notification/notification-realtime.service'
 export * from './notification/notification.constant'
+export * from './notification/notification.gateway'
 export * from './notification/notification.module'
 export * from './notification/notification.service'
 

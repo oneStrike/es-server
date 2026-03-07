@@ -78,9 +78,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
     })
 
     this.isInitialized = true
-    this.logger.log(
-      `Initialized with ${wordList.length} sensitive words (${fuzzyWordList.length} fuzzy)`,
-    )
+    this.logger.log(`初始化敏感词检测器，共 ${wordList.length} 个敏感词（${fuzzyWordList.length} 个模糊匹配）`)
   }
 
   /**
@@ -90,7 +88,7 @@ export class SensitiveWordDetectService implements OnModuleInit {
   async reloadWords(): Promise<void> {
     const words = await this.cacheService.getAllWords()
     this.initialize(words)
-    this.logger.log('Reloaded sensitive words from cache')
+    this.logger.log('已从缓存重新加载敏感词')
   }
 
   /**

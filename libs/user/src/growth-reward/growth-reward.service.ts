@@ -26,8 +26,9 @@ interface RewardTaskCompleteParams {
 }
 
 /**
- * Unified growth reward orchestrator.
- * Keeps business flows stable by swallowing reward failures.
+ * 用户成长奖励服务
+ * 统一协调积分和经验的奖励发放，同时更新用户等级
+ * 设计原则：奖励失败不影响主业务流程
  */
 @Injectable()
 export class UserGrowthRewardService extends BaseService {
@@ -39,11 +40,13 @@ export class UserGrowthRewardService extends BaseService {
   }
 
   /**
-   * Try rewarding both points and experience by the same rule type.
+   * 按规则类型发放奖励
+   * 同时发放积分和经验，并根据经验值更新用户等级
    */
   async tryRewardByRule(params: RewardByRuleParams): Promise<void> {
     try {
       await this.prisma.$transaction(async (tx) => {
+        // 发放积分
         await this.growthLedgerService.applyByRule(tx, {
           userId: params.userId,
           assetType: GrowthAssetTypeEnum.POINTS,
@@ -55,6 +58,7 @@ export class UserGrowthRewardService extends BaseService {
           targetId: params.targetId,
         })
 
+        // 发放经验
         const expResult = await this.growthLedgerService.applyByRule(tx, {
           userId: params.userId,
           assetType: GrowthAssetTypeEnum.EXPERIENCE,
@@ -66,6 +70,7 @@ export class UserGrowthRewardService extends BaseService {
           targetId: params.targetId,
         })
 
+        // 尝试更新用户等级
         await this.tryRefreshLevel(
           tx,
           params.userId,
@@ -73,12 +78,13 @@ export class UserGrowthRewardService extends BaseService {
         )
       })
     } catch {
-      // Do not break the main business flow.
+      // 奖励失败不影响主业务流程
     }
   }
 
   /**
-   * Try rewarding task completion by explicit reward config.
+   * 发放任务完成奖励
+   * 根据任务配置直接发放积分和经验
    */
   async tryRewardTaskComplete(params: RewardTaskCompleteParams): Promise<void> {
     const reward = this.parseRewardConfig(params.rewardConfig)
@@ -86,6 +92,7 @@ export class UserGrowthRewardService extends BaseService {
       return
     }
 
+    // 构建业务幂等键
     const baseBizKey = [
       'task',
       'complete',
@@ -103,6 +110,7 @@ export class UserGrowthRewardService extends BaseService {
 
     try {
       await this.prisma.$transaction(async (tx) => {
+        // 发放积分
         if (reward.points > 0) {
           await this.growthLedgerService.applyDelta(tx, {
             userId: params.userId,
@@ -111,12 +119,13 @@ export class UserGrowthRewardService extends BaseService {
             amount: reward.points,
             bizKey: `${baseBizKey}:POINTS`,
             source: 'task_reward',
-            remark: 'task completion reward (points)',
+            remark: '任务完成奖励（积分）',
             targetId: params.taskId,
             context,
           })
         }
 
+        // 发放经验
         if (reward.experience > 0) {
           const expResult = await this.growthLedgerService.applyDelta(tx, {
             userId: params.userId,
@@ -125,11 +134,12 @@ export class UserGrowthRewardService extends BaseService {
             amount: reward.experience,
             bizKey: `${baseBizKey}:EXPERIENCE`,
             source: 'task_reward',
-            remark: 'task completion reward (experience)',
+            remark: '任务完成奖励（经验）',
             targetId: params.taskId,
             context,
           })
 
+          // 尝试更新用户等级
           await this.tryRefreshLevel(
             tx,
             params.userId,
@@ -138,10 +148,11 @@ export class UserGrowthRewardService extends BaseService {
         }
       })
     } catch {
-      // Do not break the main business flow.
+      // 奖励失败不影响主业务流程
     }
   }
 
+  /** 尝试更新用户等级 */
   private async tryRefreshLevel(
     tx: any,
     userId: number,
@@ -151,6 +162,7 @@ export class UserGrowthRewardService extends BaseService {
       return
     }
 
+    // 根据经验值获取最高匹配的等级规则
     const levelRule =
       await this.levelRuleService.getHighestLevelRuleByExperience(
         experience,
@@ -161,12 +173,14 @@ export class UserGrowthRewardService extends BaseService {
       return
     }
 
+    // 更新用户等级
     await tx.appUser.update({
       where: { id: userId },
       data: { levelId: levelRule.id },
     })
   }
 
+  /** 解析奖励配置 */
   private parseRewardConfig(input: unknown): {
     points: number
     experience: number

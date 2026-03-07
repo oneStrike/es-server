@@ -40,6 +40,6 @@ import { LoginGuardService } from './login-guard.service'
     }),
   ],
   providers: [AuthService, JwtBlacklistService, LoginGuardService],
-  exports: [AuthService, JwtBlacklistService, LoginGuardService],
+  exports: [JwtModule, AuthService, JwtBlacklistService, LoginGuardService],
 })
 export class JwtAuthModule {}

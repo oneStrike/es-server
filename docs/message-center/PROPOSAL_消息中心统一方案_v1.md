@@ -3,6 +3,7 @@
 ## 0. 文档信息
 
 - 日期：2026-03-07
+- 最后更新：2026-03-08
 - 适用范围：`es-server` 单体仓（monorepo）
 - 目标：
   - 支持评论回复、点赞、收藏、关注等系统通知
@@ -11,6 +12,62 @@
 
 ---
 
+## 0.1 实施进展（截至 2026-03-08）
+
+已完成：
+
+1. 数据表已落地并完成数据库迁移（手动执行）：
+   - `user_notification`
+   - `message_outbox`
+   - `chat_conversation`
+   - `chat_conversation_member`
+   - `chat_message`
+2. `libs/message` 基础能力已完成：
+   - 通知查询/已读服务（`MessageNotificationService`）
+   - outbox 写入服务（`MessageOutboxService`）
+   - outbox worker（`MessageOutboxWorker`，含重试、失败状态、失败终态 `processedAt`）
+3. App API 通知接口已接入：
+   - `GET /app/message/notification/list`
+   - `GET /app/message/notification/unread-count`
+   - `POST /app/message/notification/read`
+   - `POST /app/message/notification/read-all`
+4. 评论回复链路已接入 outbox 生产与消费落库（`user_notification`）。
+5. 聊天域服务与 App API 已接入：
+   - `POST /app/message/chat/direct/open`
+   - `GET /app/message/chat/conversation/list`
+   - `GET /app/message/chat/conversation/messages`
+   - `POST /app/message/chat/conversation/send`
+   - `POST /app/message/chat/conversation/read`
+6. Inbox 摘要与时间线 API 已接入：
+   - `GET /app/message/inbox/summary`
+   - `GET /app/message/inbox/timeline`
+7. WebSocket 连接与推送链路已接入：
+   - 命名空间 `/message`，连接鉴权成功后加入 `user:{userId}`
+   - `notification.new`
+   - `notification.read.sync`
+   - `chat.message.new`
+   - `chat.conversation.update`
+   - `inbox.summary.update`
+8. 私聊收发 WS 化已落地：
+   - `@SubscribeMessage('chat.send')`
+   - `@SubscribeMessage('chat.read')`
+   - 统一 `chat.ack` 应答
+9. `chat.send` 已接入 `clientMessageId` 幂等（服务端去重）：
+   - 事务内会话级锁（`pg_advisory_xact_lock`）
+   - 发送请求重复时返回已存在消息（`deduplicated=true`）
+10. HTTP 查询补偿能力已增强：
+   - `GET /app/message/chat/conversation/messages` 支持 `afterSeq`
+11. 管理端监控接口已接入：
+   - `GET /admin/message/monitor/summary`（outbox 监控摘要）
+
+未完成：
+
+1. 点赞/收藏/关注事件接入统一通知 outbox（阶段 2 剩余事件，当前按约定暂缓）。
+2. WS 运行监控指标未完成（`ws 请求量/ack 成功率/ack 延时/重连次数/补偿触发次数`）。
+3. 阶段 4 的旧链路下线与全量迁移收尾未完成（HTTP 发送/已读接口仍保留）。
+4. 自动化测试与回归验证未补齐（当前按你的要求暂不做测试）。
+
+---
 ## 1. 背景与需求
 
 你当前的核心诉求：
@@ -409,21 +466,25 @@ Worker 消费策略：
    - `chat_message`
 2. 建立 `libs/message` 基础服务 + outbox worker。
 3. App 通知查询/已读接口先上线。
+4. 当前状态：**已完成**。
 
 阶段 2：业务事件接入
 
 1. 接评论回复通知。
 2. 接评论点赞/收藏/关注通知。
 3. 开启 WebSocket 推送。
+4. 当前状态：**部分完成**（评论回复通知 + 通知基础 WebSocket 已接入；点赞/收藏/关注暂未接入）。
 
 阶段 3：聊天能力
 
 1. 上线私聊会话与消息接口。
 2. 接入消息中心摘要聚合。
+3. 当前状态：**已完成（含 WS `chat.send/chat.read`、统一 `chat.ack`、`clientMessageId` 幂等、HTTP `afterSeq` 补偿查询）**。
 
 阶段 4：旧链路下线
 
 1. 全量迁移后下线论坛专用通知路径。
+2. 当前状态：**未开始**。
 
 ---
 
