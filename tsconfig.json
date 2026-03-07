@@ -66,6 +66,12 @@
       ],
       "@libs/interaction/*": [
         "libs/interaction/src/*"
+      ],
+      "@libs/message": [
+        "libs/message/src"
+      ],
+      "@libs/message/*": [
+        "libs/message/src/*"
       ]
     },
     "resolveJsonModule": true,

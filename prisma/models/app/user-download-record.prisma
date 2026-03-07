@@ -15,6 +15,9 @@ model UserDownloadRecord {
   /// 关联用户
   user       AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  /// 唯一约束：同一用户对同一章节只能有一条下载记录
+  /// 确保下载操作幂等，避免重复计数
+  @@unique([targetType, targetId, userId])
   /// 目标类型与目标ID联合索引
   @@index([targetType, targetId])
   /// 用户ID索引

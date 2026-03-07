@@ -1,5 +1,9 @@
 import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
+import {
+  MessageNotificationTypeEnum,
+  MessageOutboxService,
+} from '@libs/message'
 import { SensitiveWordLevelEnum } from '@libs/sensitive-word/sensitive-word-constant'
 import { SensitiveWordDetectService } from '@libs/sensitive-word/sensitive-word-detect.service'
 import { ConfigReader } from '@libs/system-config'
@@ -27,6 +31,7 @@ export class CommentService extends BaseService {
     private readonly configReader: ConfigReader,
     private readonly commentPermissionService: CommentPermissionService,
     private readonly commentGrowthService: CommentGrowthService,
+    private readonly messageOutboxService: MessageOutboxService,
   ) {
     super()
   }
@@ -200,6 +205,7 @@ export class CommentService extends BaseService {
         id: true,
         targetType: true,
         targetId: true,
+        userId: true,
         replyToId: true,
         actualReplyToId: true,
         deletedAt: true,
@@ -250,6 +256,27 @@ export class CommentService extends BaseService {
           targetType,
           targetId,
         })
+
+        if (replyTo.userId !== userId) {
+          await this.messageOutboxService.enqueueNotificationEvent(
+            {
+              eventType: MessageNotificationTypeEnum.COMMENT_REPLY,
+              bizKey: `comment:reply:${newComment.id}:to:${replyTo.userId}`,
+              payload: {
+                receiverUserId: replyTo.userId,
+                actorUserId: userId,
+                type: MessageNotificationTypeEnum.COMMENT_REPLY,
+                targetType,
+                targetId,
+                subjectType: 'comment',
+                subjectId: newComment.id,
+                title: '收到新的评论回复',
+                content: '你收到了一条新的评论回复',
+              },
+            },
+            tx,
+          )
+        }
       }
 
       return { id: newComment.id }

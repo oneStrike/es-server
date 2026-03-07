@@ -167,6 +167,7 @@
       "^@libs/forum(|/.*)$": "<rootDir>/libs/forum/src/$1",
       "^@libs/sensitive-word(|/.*)$": "<rootDir>/libs/sensitive-word/src/$1",
       "^@libs/system-config(|/.*)$": "<rootDir>/libs/system-config/src/$1",
+      "^@libs/message(|/.*)$": "<rootDir>/libs/message/src/$1",
       "^@libs/user(|/.*)$": "<rootDir>/libs/user/src/$1"
     }
   },

@@ -244,6 +244,7 @@ export type UserDownloadRecordOrderByWithRelationInput = {
 
 export type UserDownloadRecordWhereUniqueInput = Prisma.AtLeast<{
   id?: number
+  targetType_targetId_userId?: Prisma.UserDownloadRecordTargetTypeTargetIdUserIdCompoundUniqueInput
   AND?: Prisma.UserDownloadRecordWhereInput | Prisma.UserDownloadRecordWhereInput[]
   OR?: Prisma.UserDownloadRecordWhereInput[]
   NOT?: Prisma.UserDownloadRecordWhereInput | Prisma.UserDownloadRecordWhereInput[]
@@ -252,7 +253,7 @@ export type UserDownloadRecordWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.IntFilter<"UserDownloadRecord"> | number
   createdAt?: Prisma.DateTimeFilter<"UserDownloadRecord"> | Date | string
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
-}, "id">
+}, "id" | "targetType_targetId_userId">
 
 export type UserDownloadRecordOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -338,6 +339,12 @@ export type UserDownloadRecordListRelationFilter = {
 
 export type UserDownloadRecordOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type UserDownloadRecordTargetTypeTargetIdUserIdCompoundUniqueInput = {
+  targetType: number
+  targetId: number
+  userId: number
 }
 
 export type UserDownloadRecordCountOrderByAggregateInput = {

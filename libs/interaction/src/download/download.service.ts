@@ -95,6 +95,30 @@ export class DownloadService extends BaseService {
       chapterPermission,
     )
 
+    // 检查是否已下载（幂等设计：同一用户重复下载同一章节不重复计数）
+    const existingRecord = await this.userDownloadRecord.findUnique({
+      where: {
+        targetType_targetId_userId: {
+          targetType,
+          targetId,
+          userId,
+        },
+      },
+    })
+
+    if (existingRecord) {
+      // 已下载过：直接返回内容，不新增记录和计数
+      const workChapter = await this.prisma.workChapter.findUnique({
+        where: { id: targetId },
+        select: { content: true },
+      })
+      if (!workChapter?.content) {
+        throw new BadRequestException('下载内容不存在')
+      }
+      return workChapter.content
+    }
+
+    // 首次下载：创建记录 + 增加计数
     return this.prisma.$transaction(async (tx) => {
       await tx.userDownloadRecord.create({
         data: dto,

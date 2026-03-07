@@ -82,6 +82,15 @@
         "tsConfigPath": "libs/system-config/tsconfig.lib.json"
       }
     },
+    "message": {
+      "type": "library",
+      "root": "libs/message",
+      "entryFile": "index",
+      "sourceRoot": "libs/message/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/message/tsconfig.lib.json"
+      }
+    },
     "user": {
       "type": "library",
       "root": "libs/user",
