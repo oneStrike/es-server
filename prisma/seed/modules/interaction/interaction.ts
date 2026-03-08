@@ -364,6 +364,7 @@ async function createComments(
 
 /**
  * 创建评论点赞数据
+ * targetType=6 表示评论点赞
  */
 async function createCommentLikes(
   prisma: PrismaClient,
@@ -375,7 +376,8 @@ async function createCommentLikes(
   for (const commentId of commentIds.slice(0, 20)) {
     for (const userId of userIds.slice(0, 3)) {
       likes.push({
-        commentId,
+        targetType: 6, // 评论点赞
+        targetId: commentId,
         userId,
         createdAt: new Date(
           Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
@@ -385,7 +387,7 @@ async function createCommentLikes(
   }
 
   if (likes.length > 0) {
-    await prisma.userCommentLike.createMany({
+    await prisma.userLike.createMany({
       data: likes,
       skipDuplicates: true,
     })

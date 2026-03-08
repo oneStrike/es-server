@@ -1,4 +1,4 @@
-import { GenderEnum } from '@libs/base/constant'
+import { GenderEnum, UserStatusEnum } from '@libs/base/constant'
 import {
   BooleanProperty,
   DateProperty,
@@ -37,7 +37,7 @@ export class BaseAppUserDto extends BaseDto {
     description: '账号（唯一）',
     example: '123456',
     required: true,
-    maxLength: 11,
+    maxLength: 20,
     minLength: 6,
   })
   account!: string
@@ -45,10 +45,10 @@ export class BaseAppUserDto extends BaseDto {
   @StringProperty({
     description: '手机号码',
     example: '13800000000',
-    required: true,
-    maxLength: 11,
+    required: false,
+    maxLength: 20,
   })
-  phone!: string
+  phone?: string
 
   @StringProperty({
     description: '用户昵称（显示名称）',
@@ -122,14 +122,6 @@ export class BaseAppUserDto extends BaseDto {
   points!: number
 
   @NumberProperty({
-    description: '余额',
-    default: 0,
-    example: 100,
-    validation: false,
-  })
-  balance!: number
-
-  @NumberProperty({
     description: '经验值',
     default: 0,
     example: 1000,
@@ -145,13 +137,14 @@ export class BaseAppUserDto extends BaseDto {
   })
   levelId?: number
 
-  @NumberProperty({
-    description: '状态',
-    default: 1,
-    example: 1,
+  @EnumProperty({
+    description: '用户状态',
+    default: UserStatusEnum.NORMAL,
+    example: UserStatusEnum.NORMAL,
+    enum: UserStatusEnum,
     validation: false,
   })
-  status!: number
+  status!: UserStatusEnum
 
   @StringProperty({
     description: '账号封禁原因',

@@ -31,9 +31,14 @@ export class ComicContentService extends BaseService {
     const result = await this.contentPermissionService.checkChapterAccess(
       chapterId,
       userId,
-      { content: true },
+      { content: true, id: true, title: true, subtitle: true },
     )
-    return this.parseContent(result.chapter.content)
+    return {
+      content: this.parseContent(result.chapter.content),
+      id: result.chapter.id,
+      title: result.chapter.title,
+      subtitle: result.chapter.subtitle,
+    }
   }
 
   /**
