@@ -2,10 +2,13 @@ import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
   BaseWorkChapterDto,
+  ComicChapterContentDto,
   ComicContentService,
+  NovelChapterContentDto,
   NovelContentService,
   PageWorkChapterDto,
   QueryWorkChapterDto,
+  WorkChapterContentDto,
   WorkChapterService,
 } from '@libs/content'
 import { PurchaseService } from '@libs/interaction'
@@ -46,8 +49,7 @@ export class WorkChapterController {
   @Get('comic-content')
   @ApiDoc({
     summary: '查询漫画章节内容',
-    model: String,
-    isArray: true,
+    model: ComicChapterContentDto,
   })
   @Public()
   async getComicChapterContent(
@@ -63,7 +65,7 @@ export class WorkChapterController {
   @Get('novel-content')
   @ApiDoc({
     summary: '查询小说章节内容',
-    model: String,
+    model: NovelChapterContentDto,
   })
   @Public()
   async getNovelChapterContent(

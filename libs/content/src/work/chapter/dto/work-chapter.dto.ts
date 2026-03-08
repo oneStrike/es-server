@@ -1,5 +1,6 @@
 import { WorkViewPermissionEnum } from '@libs/base/constant'
 import {
+  ArrayProperty,
   BooleanProperty,
   DateProperty,
   EnumProperty,
@@ -88,8 +89,7 @@ export class BaseWorkChapterDto extends BaseDto {
   sortOrder!: number
 
   @EnumProperty({
-    description:
-      '查看规则（-1=继承, 0=所有人, 1=登录用户, 2=会员, 3=购买）',
+    description: '查看规则（-1=继承, 0=所有人, 1=登录用户, 2=会员, 3=购买）',
     example: WorkViewPermissionEnum.INHERIT,
     required: true,
     enum: WorkViewPermissionEnum,
@@ -326,6 +326,28 @@ export class ChapterUserStatusFieldsDto {
   })
   downloaded!: boolean
 }
+
+/// 漫画章节内容DTO
+export class ComicChapterContentDto extends IntersectionType(
+  IdDto,
+  PickType(BaseWorkChapterDto, ['title', 'subtitle']),
+) {
+  @ArrayProperty({
+    description: '章节内容',
+    example: ['/uploads/chapters/1/1.jpg', '/uploads/chapters/1/2.jpg'],
+    itemType: 'string',
+    required: true,
+    validation: false,
+  })
+  content!: string[]
+}
+
+/// 漫画章节内容DTO
+export class NovelChapterContentDto extends IntersectionType(
+  IdDto,
+  OmitType(ComicChapterContentDto, ['content']),
+  PickType(BaseWorkChapterDto, ['content']),
+) {}
 
 /// 章节分页带用户状态DTO
 export class WorkChapterPageWithUserStatusDto extends IntersectionType(
