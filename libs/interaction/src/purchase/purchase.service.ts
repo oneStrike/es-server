@@ -22,8 +22,8 @@ import {
 } from './purchase.constant'
 
 /**
- * Purchase service.
- * Handles chapter purchase validation, settlement, and related read APIs.
+ * 购买服务
+ * 处理章节购买验证、结算和相关读取接口
  */
 @Injectable()
 export class PurchaseService extends BaseService {
@@ -36,23 +36,23 @@ export class PurchaseService extends BaseService {
     super()
   }
 
-  /** Work model accessor. */
+  /** 作品模型访问器 */
   get work() {
     return this.prisma.work
   }
 
-  /** AppUser model accessor. */
+  /** 用户模型访问器 */
   get appUser() {
     return this.prisma.appUser
   }
 
-  /** Purchase record model accessor. */
+  /** 购买记录模型访问器 */
   get userPurchaseRecord() {
     return this.prisma.userPurchaseRecord
   }
 
   /**
-   * Check whether the target requires purchase.
+   * 检查目标是否需要购买
    */
   async checkNeedPurchase(
     targetType: PurchaseTargetTypeEnum,
@@ -77,7 +77,7 @@ export class PurchaseService extends BaseService {
       throw new BadRequestException('该章节不支持购买')
     }
 
-    // Guard invalid configuration. Zero price is allowed and means no deduction.
+    // 防止无效配置，零价格是允许的，意味着不扣款
     if (price < 0) {
       throw new BadRequestException('章节价格无效')
     }
@@ -111,10 +111,10 @@ export class PurchaseService extends BaseService {
   }
 
   /**
-   * Purchase a target chapter.
-   * @param dto purchase request
-   * @returns purchase record
-   * @throws BadRequestException when validation fails
+   * 购买目标章节
+   * @param dto 购买请求
+   * @returns 购买记录
+   * @throws BadRequestException 验证失败时抛出
    */
   async purchaseTarget(
     dto: PurchaseTargetDto,
@@ -158,7 +158,7 @@ export class PurchaseService extends BaseService {
             amount: targetPrice,
             bizKey: `purchase:${record.id}:consume`,
             source: 'purchase',
-            remark: '购买章节',
+            remark: '购买章节积分扣减',
             targetType,
             targetId,
             context: {
@@ -178,7 +178,7 @@ export class PurchaseService extends BaseService {
             this.logger.warn(
               `purchase_failed_ledger_reject userId=${userId} targetType=${targetType} targetId=${targetId} reason=${consumeResult.reason ?? 'unknown'}`,
             )
-            throw new BadRequestException('购买失败')
+            throw new BadRequestException('积分扣减失败，请稍后重试')
           }
         }
 
@@ -193,16 +193,14 @@ export class PurchaseService extends BaseService {
         return record
       })
     } catch (error) {
-      if (
-        error instanceof Error &&
-        'code' in error &&
-        (error as { code?: string }).code === 'P2002'
-      ) {
+      if (this.isUniqueConstraintError(error)) {
         this.logger.warn(
           `purchase_failed_duplicate userId=${userId} targetType=${targetType} targetId=${targetId}`,
         )
-        throw new BadRequestException('该章节已购买')
       }
+      this.handlePrismaBusinessError(error, {
+        duplicateMessage: '该章节已购买',
+      })
       this.logger.error(
         `purchase_failed_unknown userId=${userId} targetType=${targetType} targetId=${targetId}`,
         error instanceof Error ? error.stack : undefined,
@@ -243,7 +241,7 @@ export class PurchaseService extends BaseService {
   }
 
   /**
-   * Get paginated purchase records.
+   * 获取分页购买记录
    */
   async getUserPurchases(dto: QueryUserPurchaseRecordDto) {
     const { userId, targetType, status, ...other } = dto

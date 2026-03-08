@@ -6,7 +6,6 @@ import {
   MessageOutboxService,
 } from '@libs/message'
 import {
-  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
@@ -24,15 +23,6 @@ export class CommentInteractionService extends BaseService {
     super()
   }
 
-  private isDuplicateError(error: unknown) {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: string }).code === 'P2002'
-    )
-  }
-
   async likeComment(commentId: number, userId: number) {
     return this.prisma.$transaction(async (tx) => {
       const comment = await tx.userComment.findUnique({
@@ -42,20 +32,11 @@ export class CommentInteractionService extends BaseService {
           userId: true,
           targetType: true,
           targetId: true,
-          likes: {
-            where: { userId },
-            select: {
-              id: true,
-            },
-          },
         },
       })
 
       if (!comment) {
         throw new NotFoundException('评论不存在')
-      }
-      if (comment.likes.length) {
-        throw new BadRequestException('已点赞过该评论')
       }
 
       try {
@@ -63,10 +44,9 @@ export class CommentInteractionService extends BaseService {
           data: { commentId, userId },
         })
       } catch (error) {
-        if (this.isDuplicateError(error)) {
-          throw new BadRequestException('已点赞过该评论')
-        }
-        throw error
+        this.handlePrismaBusinessError(error, {
+          duplicateMessage: '已点赞过该评论',
+        })
       }
 
       await tx.userComment.applyCountDelta({ id: commentId }, 'likeCount', 1)
@@ -105,23 +85,11 @@ export class CommentInteractionService extends BaseService {
     return this.prisma.$transaction(async (tx) => {
       const comment = await tx.userComment.findUnique({
         where: { id: commentId, deletedAt: null },
-        select: {
-          id: true,
-          likes: {
-            where: { userId },
-            select: {
-              id: true,
-            },
-          },
-        },
+        select: { id: true },
       })
 
       if (!comment) {
         throw new NotFoundException('评论不存在')
-      }
-
-      if (!comment.likes.length) {
-        throw new BadRequestException('尚未点赞该评论')
       }
 
       try {
@@ -134,10 +102,9 @@ export class CommentInteractionService extends BaseService {
           },
         })
       } catch (error) {
-        if (this.isRecordNotFound(error)) {
-          throw new BadRequestException('尚未点赞该评论')
-        }
-        throw error
+        this.handlePrismaBusinessError(error, {
+          notFoundMessage: '尚未点赞该评论',
+        })
       }
 
       await tx.userComment.applyCountDelta({ id: commentId }, 'likeCount', -1)

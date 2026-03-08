@@ -11,7 +11,6 @@ import { ForumModeratorModule } from './moderator'
 import { ForumProfileModule } from './profile'
 import { ForumReplyModule } from './reply'
 import { ForumReplyLikeModule } from './reply-like'
-import { ForumReportModule } from './report'
 import { ForumSearchModule } from './search'
 import { ForumSectionModule } from './section'
 import { ForumSectionGroupModule } from './section-group'
@@ -31,7 +30,6 @@ import { ForumTopicModule } from './topic'
     ForumProfileModule,
     ForumReplyModule,
     ForumReplyLikeModule,
-    ForumReportModule,
     ForumSearchModule,
     ForumSectionModule,
     ForumSectionGroupModule,
@@ -50,7 +48,6 @@ import { ForumTopicModule } from './topic'
     ForumProfileModule,
     ForumReplyModule,
     ForumReplyLikeModule,
-    ForumReportModule,
     ForumSearchModule,
     ForumSectionModule,
     ForumSectionGroupModule,

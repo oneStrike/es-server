@@ -2,14 +2,16 @@ import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
   BaseWorkDto,
-  CreateWorkReportBodyDto,
   PageWorkDto,
   QueryWorkDto,
   QueryWorkTypeDto,
   WorkChapterService,
-  WorkReportService,
   WorkService,
 } from '@libs/content'
+import {
+  CreateWorkReportBodyDto,
+  ReportService,
+} from '@libs/interaction'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
@@ -19,7 +21,7 @@ export class WorkController {
   constructor(
     private readonly workService: WorkService,
     private readonly workChapterService: WorkChapterService,
-    private readonly workReportService: WorkReportService,
+    private readonly reportService: ReportService,
   ) {}
 
   @Get('hot')
@@ -80,7 +82,7 @@ export class WorkController {
     @Body() body: CreateWorkReportBodyDto,
     @CurrentUser('sub') userId: number,
   ) {
-    return this.workReportService.createWorkReport({
+    return this.reportService.createWorkReport({
       ...body,
       reporterId: userId,
     })

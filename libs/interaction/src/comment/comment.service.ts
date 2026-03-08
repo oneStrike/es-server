@@ -1,4 +1,4 @@
-import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
+﻿import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import {
   MessageNotificationSubjectTypeEnum,
@@ -25,7 +25,7 @@ import {
   UpdateCommentHiddenDto,
 } from './dto/comment.dto'
 
-type VisibleCommentPayload = {
+interface VisibleCommentPayload {
   id: number
   userId: number
   targetType: number
@@ -55,15 +55,6 @@ export class CommentService extends BaseService {
       comment.auditStatus === AuditStatusEnum.APPROVED &&
       !comment.isHidden &&
       comment.deletedAt === null
-    )
-  }
-
-  private isTransactionConflict(error: unknown) {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: string }).code === 'P2034'
     )
   }
 
@@ -99,7 +90,9 @@ export class CommentService extends BaseService {
           where: { id: targetId, deletedAt: null },
         }
       default:
-        throw new BadRequestException('不支持的评论目标类型')
+        throw new BadRequestException(
+          '不支持的评论目标类型',
+        )
     }
   }
 
@@ -202,61 +195,61 @@ export class CommentService extends BaseService {
     )
 
     const decision = this.resolveAuditDecision(content)
-    const maxRetries = 3
 
-    for (let attempt = 0; attempt < maxRetries; attempt += 1) {
-      try {
-        return await this.prisma.$transaction(
-          async (tx) => {
-            const result = await tx.userComment.aggregate({
-              where: {
-                targetType,
-                targetId,
-                replyToId: null,
-              },
-              _max: { floor: true },
-            })
-            const floor = (result._max.floor ?? 0) + 1
+    try {
+      return await this.withTransactionConflictRetry(
+        async () =>
+          this.prisma.$transaction(
+            async (tx) => {
+              const result = await tx.userComment.aggregate({
+                where: {
+                  targetType,
+                  targetId,
+                  replyToId: null,
+                },
+                _max: { floor: true },
+              })
+              const floor = (result._max.floor ?? 0) + 1
 
-            const newComment = await tx.userComment.create({
-              data: {
-                targetType,
-                targetId,
-                userId,
-                content,
-                floor,
-                ...decision,
-              },
-              select: {
-                id: true,
-                userId: true,
-                targetType: true,
-                targetId: true,
-                replyToId: true,
-                createdAt: true,
-              },
-            })
+              const newComment = await tx.userComment.create({
+                data: {
+                  targetType,
+                  targetId,
+                  userId,
+                  content,
+                  floor,
+                  ...decision,
+                },
+                select: {
+                  id: true,
+                  userId: true,
+                  targetType: true,
+                  targetId: true,
+                  replyToId: true,
+                  createdAt: true,
+                },
+              })
 
-            if (this.isVisible({ ...decision, deletedAt: null })) {
-              await this.applyCommentCountDelta(tx, targetType, targetId, 1)
-              await this.compensateVisibleCommentEffects(tx, newComment)
-            }
+              if (this.isVisible({ ...decision, deletedAt: null })) {
+                await this.applyCommentCountDelta(tx, targetType, targetId, 1)
+                await this.compensateVisibleCommentEffects(tx, newComment)
+              }
 
-            return { id: newComment.id }
-          },
-          {
-            isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-          },
-        )
-      } catch (error) {
-        if (attempt < maxRetries - 1 && this.isTransactionConflict(error)) {
-          continue
-        }
-        throw error
-      }
+              return { id: newComment.id }
+            },
+            {
+              isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+            },
+          ),
+        {
+          maxRetries: 3,
+        },
+      )
+    } catch (error) {
+      this.handlePrismaBusinessError(error, {
+        conflictMessage: '请求冲突，请稍后重试',
+      })
     }
-
-    throw new BadRequestException('评论创建失败，请重试')
   }
 
   async replyComment(dto: ReplyCommentDto) {
@@ -275,7 +268,9 @@ export class CommentService extends BaseService {
       },
     })
     if (!replyTo || replyTo.deletedAt) {
-      throw new BadRequestException('回复目标不存在')
+      throw new BadRequestException(
+        '回复目标不存在',
+      )
     }
 
     const { targetType, targetId } = replyTo
@@ -437,7 +432,9 @@ export class CommentService extends BaseService {
         },
       })
       if (!comment) {
-        throw new NotFoundException('未找到相关评论')
+        throw new NotFoundException(
+          '未找到相关评论',
+        )
       }
 
       const beforeVisible = this.isVisible(comment)
@@ -498,7 +495,9 @@ export class CommentService extends BaseService {
       })
 
       if (!before) {
-        throw new NotFoundException('未找到相关评论')
+        throw new NotFoundException(
+          '未找到相关评论',
+        )
       }
 
       if (before.isHidden === dto.isHidden) {

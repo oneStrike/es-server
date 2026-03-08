@@ -4,10 +4,7 @@ import {
   MessageNotificationTypeEnum,
   MessageOutboxService,
 } from '@libs/message'
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { CounterService } from '../counter/counter.service'
 
 @Injectable()
@@ -66,10 +63,9 @@ export class FavoriteService extends BaseService {
           },
         })
       } catch (error) {
-        if (this.counterService.isDuplicateError(error)) {
-          throw new BadRequestException('已收藏')
-        }
-        throw error
+        this.handlePrismaBusinessError(error, {
+          duplicateMessage: '已收藏',
+        })
       }
 
       await this.counterService.applyCountDelta(
@@ -125,10 +121,9 @@ export class FavoriteService extends BaseService {
           },
         })
       } catch (error) {
-        if (this.isRecordNotFound(error)) {
-          throw new BadRequestException('未收藏')
-        }
-        throw error
+        this.handlePrismaBusinessError(error, {
+          notFoundMessage: '未收藏',
+        })
       }
 
       await this.counterService.applyCountDelta(

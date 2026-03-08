@@ -197,16 +197,10 @@ export class MessageNotificationService extends BaseService {
       await this.emitInboxSummaryUpdate(receiverUserId)
       return notification
     } catch (error) {
-      // 唯一约束冲突（重复通知），静默处理
-      if (
-        typeof error === 'object'
-        && error !== null
-        && 'code' in error
-        && (error as { code?: string }).code === 'P2002'
-      ) {
-        return null
-      }
-      throw error
+      // 唯一约束冲突（重复通知）静默忽略
+      return this.handlePrismaError(error, {
+        P2002: () => null,
+      })
     }
   }
 

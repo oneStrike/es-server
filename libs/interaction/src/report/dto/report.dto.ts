@@ -1,4 +1,4 @@
-import type { ReportStatusEnum, ReportTargetTypeEnum } from '@libs/base/constant'
+import type { ReportReasonEnum, ReportStatusEnum, ReportTargetTypeEnum } from '@libs/base/constant'
 
 export interface CreateUserReportDto {
   reporterId: number
@@ -16,3 +16,20 @@ export interface CreateUserReportOptions {
   duplicateMessage?: string
 }
 
+export interface CreateWorkSceneReportDto {
+  reporterId: number
+  targetType?: ReportTargetTypeEnum
+  targetId: number
+  reason: ReportReasonEnum
+  description?: string
+  evidenceUrl?: string
+}
+
+export interface CreateForumSceneReportDto {
+  reporterId: number
+  targetType: ReportTargetTypeEnum
+  targetId: number
+  reason: ReportReasonEnum
+  description?: string
+  evidenceUrl?: string
+}

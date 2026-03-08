@@ -731,23 +731,6 @@ export class MessageChatService extends BaseService {
   }
 
   /**
-   * 判断是否为 Prisma 唯一约束冲突错误
-   *
-   * Prisma 错误码 P2002 表示唯一约束违反
-   *
-   * @param error - 捕获的错误对象
-   * @returns 是否为唯一约束冲突
-   */
-  private isUniqueConstraintError(error: unknown) {
-    return (
-      typeof error === 'object'
-      && error !== null
-      && 'code' in error
-      && (error as { code?: string }).code === 'P2002'
-    )
-  }
-
-  /**
    * 根据 clientMessageId 查找消息
    *
    * 用于幂等性检查，通过唯一约束字段匹配 clientMessageId

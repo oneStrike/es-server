@@ -37,15 +37,9 @@ export class MessageOutboxService extends BaseService {
         },
       })
     } catch (error) {
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        (error as { code?: string }).code === 'P2002'
-      ) {
-        return
-      }
-      throw error
+      this.handlePrismaError(error, {
+        P2002: () => undefined,
+      })
     }
   }
 

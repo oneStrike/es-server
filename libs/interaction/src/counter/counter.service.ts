@@ -15,7 +15,7 @@ export class CounterService extends BaseService {
     const model = tx[modelName]
 
     if (!model) {
-      throw new Error(`未找到模�? ${modelName}`)
+      throw new Error(`未找到模型: ${modelName}`)
     }
 
     await model.update({
@@ -39,7 +39,7 @@ export class CounterService extends BaseService {
     const model = tx[modelName]
 
     if (!model) {
-      throw new Error(`未找到模�? ${modelName}`)
+      throw new Error(`未找到模型: ${modelName}`)
     }
 
     await model.update({
@@ -118,7 +118,7 @@ export class CounterService extends BaseService {
     const model = (this.prisma as any)[modelName]
 
     if (!model) {
-      throw new Error(`未找到模�? ${modelName}`)
+      throw new Error(`未找到模型: ${modelName}`)
     }
 
     await model.update({
@@ -129,14 +129,6 @@ export class CounterService extends BaseService {
     })
   }
 
-  // ==================== 新增通用方法 ====================
-
-  /**
-   * 根据目标类型获取 Prisma 模型
-   * @param client - Prisma 客户端或事务对象
-   * @param targetType - 目标类型枚举
-   * @returns Prisma 模型对象
-   */
   getModel(client: any, targetType: InteractionTargetTypeEnum): any {
     switch (targetType) {
       case InteractionTargetTypeEnum.COMIC:
@@ -152,12 +144,6 @@ export class CounterService extends BaseService {
     }
   }
 
-  /**
-   * 根据目标类型获取查询条件
-   * @param targetType - 目标类型枚举
-   * @param targetId - 目标ID
-   * @returns Prisma where 条件对象
-   */
   getWhere(targetType: InteractionTargetTypeEnum, targetId: number): any {
     switch (targetType) {
       case InteractionTargetTypeEnum.COMIC:
@@ -175,12 +161,6 @@ export class CounterService extends BaseService {
     }
   }
 
-  /**
-   * 确保目标存在，不存在则抛出 NotFoundException
-   * @param targetType - 目标类型枚举
-   * @param targetId - 目标ID
-   * @throws NotFoundException 目标不存在时
-   */
   async ensureTargetExists(
     targetType: InteractionTargetTypeEnum,
     targetId: number,
@@ -193,32 +173,10 @@ export class CounterService extends BaseService {
     })
 
     if (!target) {
-      throw new NotFoundException('Target not found')
+      throw new NotFoundException('目标不存在')
     }
   }
 
-  /**
-   * 检测是否为 Prisma 重复键错误 (P2002)
-   * @param error - 错误对象
-   * @returns 是否为重复错误
-   */
-  isDuplicateError(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: string }).code === 'P2002'
-    )
-  }
-
-  /**
-   * 应用计数变化（支持增减）
-   * @param tx - Prisma 事务对象
-   * @param targetType - 目标类型枚举
-   * @param targetId - 目标ID
-   * @param field - 计数字段名
-   * @param delta - 变化量（正数增加，负数减少）
-   */
   async applyCountDelta(
     tx: any,
     targetType: InteractionTargetTypeEnum,
@@ -243,14 +201,12 @@ export class CounterService extends BaseService {
         },
       })
 
-      // 如果更新数量为0，说明目标不存在
       if (updated.count === 0) {
-        throw new NotFoundException('Target not found')
+        throw new NotFoundException('目标不存在')
       }
       return
     }
 
-    // delta < 0 时，确保不会减到负数
     const amount = Math.abs(delta)
     await model.updateMany({
       where: {
@@ -264,8 +220,6 @@ export class CounterService extends BaseService {
       },
     })
   }
-
-  // ==================== 私有方法 ====================
 
   private getModelInfo(
     targetType: InteractionTargetTypeEnum,
