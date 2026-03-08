@@ -169,11 +169,6 @@ export class ReportCommentDto extends IntersectionType(
   reporterId!: number
 }
 
-export class ReportCommentBodyDto extends IntersectionType(
-  CommentIdDto,
-  BaseReportInfoDto,
-) {}
-
 export class QueryCommentReportDto extends IntersectionType(
   PageDto,
   PickType(PartialType(BaseCommentReportDto), ['status']),

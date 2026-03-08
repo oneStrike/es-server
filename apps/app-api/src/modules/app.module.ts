@@ -3,13 +3,14 @@ import { AuthModule } from './auth/auth.module'
 import { CommentModule } from './comment/comment.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
 import { MessageModule } from './message/message.module'
+import { ReportModule } from './report/report.module'
 import { SystemModule } from './system/system.module'
 import { TaskModule } from './task/task.module'
 import { UserModule } from './user/user.module'
 import { WorkModule } from './work/work.module'
 
 @Module({
-  imports: [
+    imports: [
     AuthModule,
     UserModule,
     DictionaryModule,
@@ -18,6 +19,7 @@ import { WorkModule } from './work/work.module'
     SystemModule,
     CommentModule,
     MessageModule,
+    ReportModule,
   ],
 })
 export class AppApiModule {}

@@ -1,4 +1,4 @@
-﻿import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
+import { AuditStatusEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService, Prisma } from '@libs/base/database'
 import {
   MessageNotificationSubjectTypeEnum,

@@ -1,5 +1,4 @@
 import { BaseService } from '@libs/base/database'
-
 import { DragReorderDto, UpdateEnabledStatusDto } from '@libs/base/dto'
 import {
   BadRequestException,
@@ -12,46 +11,30 @@ import {
   UpdateForumSectionGroupDto,
 } from './dto/forum-section-group.dto'
 
-/**
- * 论坛板块分组服务类
- * 提供对论坛板块分组的增删改查等操作
- */
 @Injectable()
 export class ForumSectionGroupService extends BaseService {
-  /**
-   * 获取板块分组的 Prisma 模型
-   */
   get forumSectionGroup() {
     return this.prisma.forumSectionGroup
   }
 
-  /**
-   * 获取板块的 Prisma 模型
-   */
   get forumSection() {
     return this.prisma.forumSection
   }
 
-  /**
-   * 创建新的论坛板块分组
-   * @param dto 创建板块分组的数据传输对象
-   * @returns 创建成功的板块分组
-   */
   async createSectionGroup(dto: CreateForumSectionGroupDto) {
-    if (await this.forumSectionGroup.exists({ name: dto.name })) {
-      throw new BadRequestException('板块分组名称已存在')
+    try {
+      return await this.forumSectionGroup.create({
+        data: dto,
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('板块分组名称已存在')
+        },
+      })
     }
-    return this.forumSectionGroup.create({
-      data: dto,
-    })
   }
 
-  /**
-   * 根据ID获取论坛板块分组详情
-   * @param id 板块分组ID
-   * @returns 板块分组详情，包含其下的板块信息
-   * @throws NotFoundException 如果板块分组不存在
-   */
   async getSectionGroupById(id: number) {
     const group = await this.forumSectionGroup.findUnique({
       where: { id },
@@ -66,11 +49,6 @@ export class ForumSectionGroupService extends BaseService {
     return group
   }
 
-  /**
-   * 查询论坛板块分组列表（支持分页）
-   * @param dto 查询条件的数据传输对象
-   * @returns 分页后的板块分组列表
-   */
   async getSectionGroupPage(dto: QueryForumSectionGroupDto) {
     return this.forumSectionGroup.findPagination({
       where: {
@@ -90,45 +68,26 @@ export class ForumSectionGroupService extends BaseService {
     })
   }
 
-  /**
-   * 更新论坛板块分组信息
-   * @param updateSectionGroupDto 更新板块分组的数据传输对象
-   * @returns 更新后的板块分组
-   * @throws NotFoundException 如果板块分组不存在
-   */
   async updateSectionGroup(updateSectionGroupDto: UpdateForumSectionGroupDto) {
     const { id, ...updateData } = updateSectionGroupDto
 
-    if (!(await this.forumSectionGroup.exists({ id }))) {
-      throw new NotFoundException('板块分组不存在')
-    }
-
-    // 更新的时候检查名称是否重复
-    if (
-      updateData.name &&
-      (await this.forumSectionGroup.exists({
-        name: updateData.name,
-        id: {
-          not: id,
+    try {
+      return await this.forumSectionGroup.update({
+        where: { id },
+        data: updateData,
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('板块分组名称已存在')
         },
-      }))
-    ) {
-      throw new BadRequestException('板块分组名称已存在')
+        P2025: () => {
+          throw new NotFoundException('板块分组不存在')
+        },
+      })
     }
-
-    return this.forumSectionGroup.update({
-      where: { id },
-      data: updateData,
-    })
   }
 
-  /**
-   * 删除论坛板块分组
-   * @param id 板块分组ID
-   * @returns 删除操作结果
-   * @throws NotFoundException 如果板块分组不存在
-   * @throws Error 如果板块分组下还有板块，则无法删除
-   */
   async deleteSectionGroup(id: number) {
     const group = await this.forumSectionGroup.findUnique({
       where: { id },
@@ -154,42 +113,31 @@ export class ForumSectionGroupService extends BaseService {
     })
   }
 
-  /**
-   * 交换板块分组的排序顺序
-   * @param dto 拖拽重新排序的数据传输对象
-   * @throws NotFoundException 如果板块分组不存在
-   */
   async swapSectionGroupSortOrder(dto: DragReorderDto) {
     return this.forumSectionGroup.swapField({
       where: [{ id: dto.dragId }, { id: dto.targetId }],
     })
   }
 
-  /**
-   * 更新论坛板块分组的启用状态
-   * @param updateSectionGroupEnabledDto 更新启用状态的数据传输对象
-   * @returns 更新后的板块分组
-   * @throws NotFoundException 如果板块分组不存在
-   */
   async updateSectionGroupEnabled(
     updateSectionGroupEnabledDto: UpdateEnabledStatusDto,
   ) {
     const { id, isEnabled } = updateSectionGroupEnabledDto
 
-    if (!(await this.forumSectionGroup.exists({ id }))) {
-      throw new NotFoundException('板块分组不存在')
+    try {
+      return await this.forumSectionGroup.update({
+        where: { id },
+        data: { isEnabled },
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2025: () => {
+          throw new NotFoundException('板块分组不存在')
+        },
+      })
     }
-
-    return this.forumSectionGroup.update({
-      where: { id },
-      data: { isEnabled },
-    })
   }
 
-  /**
-   * 获取所有启用状态的板块分组及其下的板块
-   * @returns 启用状态的板块分组列表
-   */
   async getAllEnabledGroups() {
     return this.forumSectionGroup.findMany({
       where: {

@@ -11,97 +11,71 @@ import {
   UpdateUserBadgeDto,
 } from './dto/user-badge.dto'
 
-/**
- * 用户徽章服务类
- * 负责徽章管理与用户徽章授予/回收
- */
 @Injectable()
 export class UserBadgeService extends BaseService {
-  /**
-   * 获取徽章模型
-   */
   get userBadge() {
     return this.prisma.userBadge
   }
 
-  /**
-   * 获取徽章分配模型
-   */
   get userBadgeAssignment() {
     return this.prisma.userBadgeAssignment
   }
 
-  /**
-   * 创建徽章
-   * @param dto 创建参数
-   * @returns 新徽章
-   */
   async createBadge(dto: CreateUserBadgeDto) {
     return this.userBadge.create({
       data: dto,
     })
   }
 
-  /**
-   * 更新徽章
-   * @param dto 更新参数
-   * @returns 更新后的徽章
-   */
   async updateBadge(dto: UpdateUserBadgeDto) {
     const { id, ...updateData } = dto
-    if (!(await this.userBadge.exists({ id }))) {
-      throw new NotFoundException('徽章不存在')
-    }
 
-    return this.userBadge.update({
-      where: { id },
-      data: updateData,
-    })
+    try {
+      return await this.userBadge.update({
+        where: { id },
+        data: updateData,
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2025: () => {
+          throw new NotFoundException('徽章不存在')
+        },
+      })
+    }
   }
 
-  /**
-   * 删除徽章
-   * 同步删除分配记录
-   * @param dto 删除参数
-   * @param dto.id 徽章ID
-   * @returns 删除结果
-   */
   async deleteBadge(dto: { id: number }) {
-    if (!(await this.userBadge.exists({ id: dto.id }))) {
-      throw new NotFoundException('徽章不存在')
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.userBadgeAssignment.deleteMany({
+          where: { badgeId: dto.id },
+        })
+
+        return tx.userBadge.delete({
+          where: { id: dto.id },
+        })
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2025: () => {
+          throw new NotFoundException('徽章不存在')
+        },
+      })
     }
-
-    return this.prisma.$transaction(async (tx) => {
-      await tx.userBadgeAssignment.deleteMany({
-        where: { badgeId: dto.id },
-      })
-
-      return tx.userBadge.delete({
-        where: { id: dto.id },
-      })
-    })
   }
 
-  /**
-   * 获取徽章详情
-   * @param dto 查询参数
-   * @param dto.id 徽章ID
-   * @returns 徽章详情
-   */
   async getBadgeDetail(dto: { id: number }) {
-    if (!(await this.userBadge.exists({ id: dto.id }))) {
-      throw new NotFoundException('徽章不存在')
-    }
-    return this.userBadge.findUnique({
+    const badge = await this.userBadge.findUnique({
       where: { id: dto.id },
     })
+
+    if (!badge) {
+      throw new NotFoundException('徽章不存在')
+    }
+
+    return badge
   }
 
-  /**
-   * 查询徽章列表
-   * @param dto 查询参数
-   * @returns 分页结果
-   */
   async getBadges(dto: QueryUserBadgeDto) {
     return this.userBadge.findPagination({
       where: {
@@ -113,11 +87,6 @@ export class UserBadgeService extends BaseService {
     })
   }
 
-  /**
-   * 授予徽章
-   * @param dto 授予参数
-   * @returns 授予记录
-   */
   async assignBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
@@ -129,56 +98,41 @@ export class UserBadgeService extends BaseService {
       throw new NotFoundException('用户不存在')
     }
 
-    const existingBadge = await this.userBadgeAssignment.findUnique({
-      where: {
-        userId_badgeId: {
+    try {
+      return await this.userBadgeAssignment.create({
+        data: {
           userId,
           badgeId,
         },
-      },
-    })
-
-    if (existingBadge) {
-      throw new BadRequestException('用户已拥有该徽章')
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('用户已拥有该徽章')
+        },
+      })
     }
-
-    return this.userBadgeAssignment.create({
-      data: {
-        userId,
-        badgeId,
-      },
-    })
   }
 
-  /**
-   * 回收徽章
-   * @param dto 回收参数
-   * @returns 回收结果
-   */
   async revokeBadge(dto: AssignUserBadgeDto) {
     const { userId, badgeId } = dto
 
-    const badge = await this.userBadgeAssignment.findUnique({
-      where: {
-        userId_badgeId: {
-          userId,
-          badgeId,
+    try {
+      return await this.userBadgeAssignment.delete({
+        where: {
+          userId_badgeId: {
+            userId,
+            badgeId,
+          },
         },
-      },
-    })
-
-    if (!badge) {
-      throw new BadRequestException('用户徽章记录不存在')
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2025: () => {
+          throw new BadRequestException('用户徽章记录不存在')
+        },
+      })
     }
-
-    return this.userBadgeAssignment.delete({
-      where: {
-        userId_badgeId: {
-          userId,
-          badgeId,
-        },
-      },
-    })
   }
 
   async getUserBadges(userId: number, dto: QueryUserBadgeDto) {

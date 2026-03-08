@@ -8,7 +8,6 @@ import {
   QueryCommentRepliesDto,
   QueryMyCommentPageDto,
   ReplyCommentBodyDto,
-  ReportCommentBodyDto,
 } from '@libs/interaction'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -97,19 +96,5 @@ export class CommentController {
   })
   async unlikeComment(@Body() body: IdDto, @CurrentUser('sub') userId: number) {
     return this.commentInteractionService.unlikeComment(body.id, userId)
-  }
-
-  @Post('report')
-  @ApiDoc({
-    summary: '举报评论',
-  })
-  async reportComment(
-    @Body() body: ReportCommentBodyDto,
-    @CurrentUser('sub') userId: number,
-  ) {
-    return this.commentInteractionService.reportComment({
-      ...body,
-      reporterId: userId,
-    })
   }
 }

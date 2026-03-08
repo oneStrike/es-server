@@ -3,7 +3,6 @@ import {
   AppAgreementWhereInput,
   BaseService,
 } from '@libs/base/database'
-
 import { IdDto, UpdatePublishedStatusDto } from '@libs/base/dto'
 import {
   BadRequestException,
@@ -17,10 +16,6 @@ import {
   UpdateAgreementDto,
 } from './dto/agreement.dto'
 
-/**
- * 协议管理服务
- * 负责应用协议的新增、更新、发布与查询
- */
 @Injectable()
 export class AgreementService extends BaseService {
   constructor() {
@@ -35,82 +30,79 @@ export class AgreementService extends BaseService {
     return this.prisma.appAgreementLog
   }
 
-  /**
-   * 创建协议
-   */
   async create(dto: CreateAgreementDto) {
-    if (
-      await this.agreement.findFirst({
-        where: { title: dto.title, version: dto.version },
+    try {
+      return await this.agreement.create({
+        data: {
+          title: dto.title,
+          content: dto.content,
+          version: dto.version,
+          isForce: dto.isForce ?? false,
+          showInAuth: dto.showInAuth ?? false,
+        },
+        select: { id: true },
       })
-    ) {
-      throw new BadRequestException('协议已存在')
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('协议已存在')
+        },
+      })
     }
-
-    return this.agreement.create({
-      data: {
-        title: dto.title,
-        content: dto.content,
-        version: dto.version,
-        isForce: dto.isForce ?? false,
-        showInAuth: dto.showInAuth ?? false,
-      },
-      select: { id: true },
-    })
   }
 
-  /**
-   * 更新协议
-   */
   async update(dto: UpdateAgreementDto) {
-    if (!(await this.agreement.exists({ id: dto.id }))) {
-      throw new NotFoundException('协议不存在')
-    }
-
     const data: AppAgreementUpdateInput = {
       ...dto,
     }
 
-    // 如果设置为发布自动填充发布时间
     if (dto.isPublished === true) {
       data.publishedAt = new Date()
     }
 
-    return this.agreement.update({
-      where: { id: dto.id },
-      data,
-      select: { id: true },
-    })
+    try {
+      return await this.agreement.update({
+        where: { id: dto.id },
+        data,
+        select: { id: true },
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2025: () => {
+          throw new NotFoundException('协议不存在')
+        },
+      })
+    }
   }
 
-  /**
-   * 更新协议状态
-   */
   async updatePublishStatus(dto: UpdatePublishedStatusDto) {
-    if (!(await this.agreement.exists({ id: dto.id }))) {
-      throw new NotFoundException('协议不存在')
+    try {
+      return await this.agreement.update({
+        where: { id: dto.id },
+        data: { isPublished: dto.isPublished },
+        select: { id: true },
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2025: () => {
+          throw new NotFoundException('协议不存在')
+        },
+      })
     }
-
-    return this.agreement.update({
-      where: { id: dto.id },
-      data: { isPublished: dto.isPublished },
-      select: { id: true },
-    })
   }
 
-  /**
-   * 删除协议
-   */
   async delete({ id }: IdDto) {
-    if (!(await this.agreement.exists({ id }))) {
-      throw new NotFoundException('协议不存在')
+    try {
+      return await this.agreement.delete({ where: { id }, select: { id: true } })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2025: () => {
+          throw new NotFoundException('协议不存在')
+        },
+      })
     }
-    return this.agreement.delete({ where: { id }, select: { id: true } })
   }
 
-  /**
-   * 获取协议详情
-   */
   async findOne({ id }: IdDto) {
     const agreement = await this.agreement.findUnique({
       where: { id },
@@ -121,9 +113,6 @@ export class AgreementService extends BaseService {
     return agreement
   }
 
-  /**
-   * 分页查询协议
-   */
   async findPage(query: QueryAgreementDto) {
     const { title, ...otherDto } = query
     const where: AppAgreementWhereInput = {}
@@ -140,9 +129,6 @@ export class AgreementService extends BaseService {
     })
   }
 
-  /**
-   * 获取最新已发布的所有协议
-   */
   async getAllLatest(dto: QueryPublishedAgreementDto) {
     return this.agreement.findMany({
       where: { isPublished: true, showInAuth: dto.showInAuth },

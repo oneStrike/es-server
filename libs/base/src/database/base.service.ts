@@ -5,15 +5,15 @@ import { CustomPrismaService } from 'nestjs-prisma/dist/custom'
 @Injectable()
 export abstract class BaseService {
   @Inject('PrismaService')
-  /** Prisma service injection */
+  /** Prisma 服务注入 */
   protected prismaService!: CustomPrismaService<PrismaClientType>
 
-  /** Access Prisma client */
+  /** 获取 Prisma 客户端 */
   protected get prisma(): PrismaClientType {
     return this.prismaService.client
   }
 
-  /** Check whether error matches a Prisma error code */
+  /** 检查错误是否匹配指定的 Prisma 错误码 */
   protected isPrismaErrorCode(error: unknown, code: string): boolean {
     return (
       typeof error === 'object' &&
@@ -23,22 +23,22 @@ export abstract class BaseService {
     )
   }
 
-  /** Prisma unique constraint violation (P2002) */
+  /** Prisma 唯一约束冲突错误 (P2002) */
   isUniqueConstraintError(error: unknown): boolean {
     return this.isPrismaErrorCode(error, 'P2002')
   }
 
-  /** Prisma record not found (P2025) */
+  /** Prisma 记录未找到错误 (P2025) */
   isRecordNotFound(error: unknown): boolean {
     return this.isPrismaErrorCode(error, 'P2025')
   }
 
-  /** Prisma transaction conflict / serialization failure (P2034) */
+  /** Prisma 事务冲突/序列化失败错误 (P2034) */
   isTransactionConflict(error: unknown): boolean {
     return this.isPrismaErrorCode(error, 'P2034')
   }
 
-  /** Generic Prisma error mapper */
+  /** 通用 Prisma 错误映射器 */
   protected handlePrismaError<T = never>(
     error: unknown,
     handlers: Partial<Record<string, () => T>>,
@@ -60,8 +60,8 @@ export abstract class BaseService {
   }
 
   /**
-   * Map common Prisma business errors to BadRequestException messages.
-   * Use semantic fields instead of hardcoding P2002/P2025/P2034 in each service.
+   * 将常见的 Prisma 业务错误映射为 BadRequestException 消息。
+   * 使用语义化字段替代在每个服务中硬编码 P2002/P2025/P2034。
    */
   protected handlePrismaBusinessError(
     error: unknown,
@@ -92,7 +92,7 @@ export abstract class BaseService {
     return this.handlePrismaError(error, handlers)
   }
 
-  /** Retry helper for transaction conflicts */
+  /** 事务冲突重试辅助方法 */
   protected async withTransactionConflictRetry<T>(
     operation: () => Promise<T>,
     options?: {
@@ -100,9 +100,7 @@ export abstract class BaseService {
     },
   ): Promise<T> {
     const maxRetries = Math.max(1, options?.maxRetries ?? 3)
-    let lastError: unknown = new Error(
-      'transaction conflict retry exhausted unexpectedly',
-    )
+    let lastError: unknown = new Error('事务冲突重试次数已耗尽')
 
     for (let attempt = 0; attempt < maxRetries; attempt += 1) {
       try {
