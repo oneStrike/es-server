@@ -173,4 +173,3 @@ export class FavoriteService extends BaseService {
     })
   }
 }
-

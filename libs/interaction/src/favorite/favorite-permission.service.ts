@@ -91,4 +91,3 @@ export class FavoritePermissionService extends BaseService {
     return user
   }
 }
-

@@ -10,7 +10,6 @@ import {
   QueryWorkChapterDto,
   WorkChapterService,
 } from '@libs/content'
-import { PurchaseService } from '@libs/interaction'
 
 import { Controller, Get, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'

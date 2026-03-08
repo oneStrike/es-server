@@ -49,4 +49,3 @@ export class ViewPermissionService extends BaseService {
     }
   }
 }
-

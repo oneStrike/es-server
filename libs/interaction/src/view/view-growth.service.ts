@@ -99,4 +99,3 @@ export class ViewGrowthService extends BaseService {
     })
   }
 }
-

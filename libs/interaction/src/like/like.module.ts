@@ -1,5 +1,5 @@
-import { GrowthLedgerModule } from '@libs/user/growth-ledger'
 import { MessageModule } from '@libs/message'
+import { GrowthLedgerModule } from '@libs/user/growth-ledger'
 import { Module } from '@nestjs/common'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeInteractionService } from './like-interaction.service'

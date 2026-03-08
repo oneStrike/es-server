@@ -97,4 +97,3 @@ export class ViewService extends BaseService {
     await this.prisma.userView.deleteMany({ where })
   }
 }
-

@@ -65,4 +65,3 @@ export class LikeInteractionService extends BaseService {
     return undefined
   }
 }
-

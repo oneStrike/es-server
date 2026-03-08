@@ -65,4 +65,3 @@ export class FavoriteInteractionService extends BaseService {
     return undefined
   }
 }
-

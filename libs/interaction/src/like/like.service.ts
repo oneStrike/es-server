@@ -200,4 +200,3 @@ export class LikeService extends BaseService {
     })
   }
 }
-

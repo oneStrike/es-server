@@ -6,4 +6,3 @@ export class ViewInteractionService {
     // 预留给后续埋点或联动逻辑
   }
 }
-

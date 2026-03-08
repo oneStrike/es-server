@@ -3,6 +3,7 @@ import { AgreementModule } from './app-config/agreement/agreement.module'
 import { AdminAnnouncementModule } from './app-config/announcement/announcement.module'
 import { AppConfigModule } from './app-config/config/config.module'
 import { AppPageModule } from './app-config/page/page.module'
+import { AppUserModule } from './app-user/app-user.module'
 import { AuthModule } from './auth/auth.module'
 import { ContentModule } from './content-management/content.module'
 import { DictionaryModule } from './dictionary/dictionary.module'
@@ -18,6 +19,7 @@ import { WorkModule } from './work/work.module'
 @Module({
   imports: [
     AuthModule,
+    AppUserModule,
     UserModule,
     UploadModule,
     SystemConfigModule,

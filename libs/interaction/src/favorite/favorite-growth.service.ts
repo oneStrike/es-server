@@ -99,4 +99,3 @@ export class FavoriteGrowthService extends BaseService {
     })
   }
 }
-
