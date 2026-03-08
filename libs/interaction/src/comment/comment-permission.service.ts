@@ -55,10 +55,10 @@ export class CommentPermissionService extends BaseService {
     targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
-    const validators: Record<
+    const validators: Partial<Record<
       InteractionTargetTypeEnum,
       (id: number) => Promise<void>
-    > = {
+    >> = {
       [InteractionTargetTypeEnum.COMIC]: async (id) => this.validateWork(id, 1),
       [InteractionTargetTypeEnum.NOVEL]: async (id) => this.validateWork(id, 2),
       [InteractionTargetTypeEnum.COMIC_CHAPTER]: async (id) =>

@@ -110,8 +110,6 @@ model AppUser {
   userViews           UserView[]
   /// 评论记录
   userComments        UserComment[]
-  /// 评论点赞记录
-  userCommentLikes    UserCommentLike[]
   /// 举报记录（举报人）
   userReports         UserReport[]         @relation("UserReportReporter")
   /// 举报记录（处理人）

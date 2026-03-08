@@ -157,15 +157,17 @@ async function migrateForumReplies(prisma: PrismaClient) {
     if (!newCommentId) {
       continue
     }
-    await prisma.userCommentLike.upsert({
+    await prisma.userLike.upsert({
       where: {
-        commentId_userId: {
-          commentId: newCommentId,
+        targetType_targetId_userId: {
+          targetType: 6,
+          targetId: newCommentId,
           userId: like.userId,
         },
       },
       create: {
-        commentId: newCommentId,
+        targetType: 6,
+        targetId: newCommentId,
         userId: like.userId,
         createdAt: like.createdAt,
       },

@@ -1,5 +1,5 @@
+import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-
 import { UserGrowthRewardService } from '@libs/user/growth-reward'
 import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { BadRequestException, Injectable } from '@nestjs/common'
@@ -13,10 +13,6 @@ import {
   DeleteForumReplyLikeDto,
 } from './dto/forum-reply-like.dto'
 
-/**
- * 论坛回复点赞服务类
- * 提供论坛回复点赞的创建、删除等核心业务逻辑
- */
 @Injectable()
 export class ForumReplyLikeService extends BaseService {
   constructor(
@@ -27,21 +23,13 @@ export class ForumReplyLikeService extends BaseService {
   }
 
   get forumReplyLike() {
-    return (this.prisma as any).userCommentLike
+    return this.prisma.userLike
   }
 
   get forumReply() {
-    return (this.prisma as any).userComment
+    return this.prisma.userComment
   }
 
-  /**
-   * 点赞回复
-   * @param createForumReplyLikeDto - 创建点赞记录的数据传输对象
-   * @returns 创建的点赞记录
-   * @throws {BadRequestException} 回复不存在时抛出
-   * @throws {BadRequestException} 用户不存在时抛出
-   * @throws {BadRequestException} 已经点赞过该回复时抛出
-   */
   async likeReply(createForumReplyLikeDto: CreateForumReplyLikeDto) {
     const { replyId, userId } = createForumReplyLikeDto
 
@@ -63,8 +51,9 @@ export class ForumReplyLikeService extends BaseService {
 
     const existingLike = await this.forumReplyLike.findUnique({
       where: {
-        commentId_userId: {
-          commentId: replyId,
+        targetType_targetId_userId: {
+          targetType: InteractionTargetTypeEnum.COMMENT,
+          targetId: replyId,
           userId,
         },
       },
@@ -75,14 +64,15 @@ export class ForumReplyLikeService extends BaseService {
     }
 
     const like = await this.prisma.$transaction(async (tx) => {
-      const like = await (tx as any).userCommentLike.create({
+      const createdLike = await tx.userLike.create({
         data: {
-          commentId: replyId,
+          targetType: InteractionTargetTypeEnum.COMMENT,
+          targetId: replyId,
           userId,
         },
       })
 
-      await (tx as any).userComment.update({
+      await tx.userComment.update({
         where: { id: replyId },
         data: {
           likeCount: {
@@ -98,7 +88,7 @@ export class ForumReplyLikeService extends BaseService {
         targetId: replyId,
       })
 
-      return like
+      return createdLike
     })
 
     await this.userGrowthRewardService.tryRewardByRule({
@@ -113,18 +103,14 @@ export class ForumReplyLikeService extends BaseService {
     return like
   }
 
-  /**
-   * 取消点赞回复
-   * @param deleteForumReplyLikeDto - 删除点赞记录的数据传输对象
-   * @returns 被删除的点赞记录
-   * @throws {BadRequestException} 点赞记录不存在时抛出
-   * @throws {BadRequestException} 无权取消他人的点赞时抛出
-   */
   async unlikeReply(deleteForumReplyLikeDto: DeleteForumReplyLikeDto) {
     const { id, userId } = deleteForumReplyLikeDto
 
-    const like = await this.forumReplyLike.findUnique({
-      where: { id },
+    const like = await this.forumReplyLike.findFirst({
+      where: {
+        id,
+        targetType: InteractionTargetTypeEnum.COMMENT,
+      },
     })
 
     if (!like) {
@@ -136,8 +122,8 @@ export class ForumReplyLikeService extends BaseService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      await (tx as any).userComment.update({
-        where: { id: like.commentId },
+      await tx.userComment.update({
+        where: { id: like.targetId },
         data: {
           likeCount: {
             decrement: 1,
@@ -149,26 +135,21 @@ export class ForumReplyLikeService extends BaseService {
         userId,
         actionType: ForumUserActionTypeEnum.UNLIKE_REPLY,
         targetType: ForumUserActionTargetTypeEnum.REPLY,
-        targetId: like.commentId,
+        targetId: like.targetId,
       })
 
-      return (tx as any).userCommentLike.delete({
+      return tx.userLike.delete({
         where: { id },
       })
     })
   }
 
-  /**
-   * 检查用户是否已点赞回复
-   * @param replyId - 回复ID
-   * @param userId - 用户ID
-   * @returns 包含点赞状态的对象
-   */
   async checkUserLiked(replyId: number, userId: number) {
     const like = await this.forumReplyLike.findUnique({
       where: {
-        commentId_userId: {
-          commentId: replyId,
+        targetType_targetId_userId: {
+          targetType: InteractionTargetTypeEnum.COMMENT,
+          targetId: replyId,
           userId,
         },
       },

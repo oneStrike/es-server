@@ -112,13 +112,6 @@ export type UserBadgeAssignment = Prisma.UserBadgeAssignmentModel
  */
 export type UserBadge = Prisma.UserBadgeModel
 /**
- * Model UserCommentLike
- * 评论点赞记录表
- * 记录用户对评论的点赞操作
- * 支持评论点赞计数和用户点赞状态查询
- */
-export type UserCommentLike = Prisma.UserCommentLikeModel
-/**
  * Model UserComment
  * 用户评论表
  * 统一存储作品评论、章节评论和论坛回复
@@ -150,10 +143,8 @@ export type UserFavorite = Prisma.UserFavoriteModel
 export type UserLevelRule = Prisma.UserLevelRuleModel
 /**
  * Model UserLike
- * 用户点赞记录表
- * 记录用户对各类目标（漫画、小说、章节、论坛主题）的点赞操作
- * 支持点赞计数统计和用户点赞状态查询
- * 注意：评论点赞使用独立的 user_comment_like 表
+ * User like records.
+ * targetType: 1=comic, 2=novel, 3=comic chapter, 4=novel chapter, 5=forum topic, 6=comment.
  */
 export type UserLike = Prisma.UserLikeModel
 /**

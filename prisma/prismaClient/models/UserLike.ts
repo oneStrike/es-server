@@ -14,10 +14,8 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model UserLike
- * 用户点赞记录表
- * 记录用户对各类目标（漫画、小说、章节、论坛主题）的点赞操作
- * 支持点赞计数统计和用户点赞状态查询
- * 注意：评论点赞使用独立的 user_comment_like 表
+ * User like records.
+ * targetType: 1=comic, 2=novel, 3=comic chapter, 4=novel chapter, 5=forum topic, 6=comment.
  */
 export type UserLikeModel = runtime.Types.Result.DefaultSelection<Prisma.$UserLikePayload>
 
@@ -557,38 +555,33 @@ export type $UserLikePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "UserLike"
   objects: {
     /**
-     * 关联用户
+     * User relation
      */
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
-     * 主键ID（自增）
+     * Primary key
      */
     id: number
     /**
-     * 目标类型
-     * 1=漫画, 2=小说, 3=漫画章节, 4=小说章节, 5=论坛主题
-     * 用于区分点赞对象的具体类型，便于多态查询和统计
-     * 注意：作品必须区分漫画(1)和小说(2)，不能使用通用类型
+     * Interaction target type
      */
     targetType: number
     /**
-     * 目标ID
-     * 关联的具体目标记录ID
-     * - targetType=1/2 时：work.id
-     * - targetType=3/4 时：work_chapter.id
-     * - targetType=5 时：forum_topic.id
-     * 注意：不使用外键约束，由应用层保证数据一致性
+     * Interaction target id
+     * - targetType=1/2 -> work.id
+     * - targetType=3/4 -> work_chapter.id
+     * - targetType=5 -> forum_topic.id
+     * - targetType=6 -> user_comment.id
      */
     targetId: number
     /**
-     * 用户ID（关联 app_user.id）
-     * 执行点赞操作的用户
+     * User id who performs the like action
      */
     userId: number
     /**
-     * 创建时间（点赞时间）
+     * Created time
      */
     createdAt: Date
   }, ExtArgs["result"]["userLike"]>

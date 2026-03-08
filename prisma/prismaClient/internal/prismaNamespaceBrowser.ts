@@ -69,7 +69,6 @@ export const ModelName = {
   Task: 'Task',
   UserBadgeAssignment: 'UserBadgeAssignment',
   UserBadge: 'UserBadge',
-  UserCommentLike: 'UserCommentLike',
   UserComment: 'UserComment',
   UserDownloadRecord: 'UserDownloadRecord',
   UserExperienceRule: 'UserExperienceRule',
@@ -462,16 +461,6 @@ export const UserBadgeScalarFieldEnum = {
 } as const
 
 export type UserBadgeScalarFieldEnum = (typeof UserBadgeScalarFieldEnum)[keyof typeof UserBadgeScalarFieldEnum]
-
-
-export const UserCommentLikeScalarFieldEnum = {
-  id: 'id',
-  commentId: 'commentId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type UserCommentLikeScalarFieldEnum = (typeof UserCommentLikeScalarFieldEnum)[keyof typeof UserCommentLikeScalarFieldEnum]
 
 
 export const UserCommentScalarFieldEnum = {

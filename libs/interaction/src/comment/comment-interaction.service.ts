@@ -1,4 +1,4 @@
-import { ReportTargetTypeEnum } from '@libs/base/constant'
+import { InteractionTargetTypeEnum, ReportTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import {
   MessageNotificationSubjectTypeEnum,
@@ -40,8 +40,12 @@ export class CommentInteractionService extends BaseService {
       }
 
       try {
-        await tx.userCommentLike.create({
-          data: { commentId, userId },
+        await tx.userLike.create({
+          data: {
+            targetType: InteractionTargetTypeEnum.COMMENT,
+            targetId: commentId,
+            userId,
+          },
         })
       } catch (error) {
         this.handlePrismaBusinessError(error, {
@@ -93,10 +97,11 @@ export class CommentInteractionService extends BaseService {
       }
 
       try {
-        await tx.userCommentLike.delete({
+        await tx.userLike.delete({
           where: {
-            commentId_userId: {
-              commentId,
+            targetType_targetId_userId: {
+              targetType: InteractionTargetTypeEnum.COMMENT,
+              targetId: commentId,
               userId,
             },
           },

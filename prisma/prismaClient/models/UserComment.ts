@@ -370,7 +370,6 @@ export type UserCommentWhereInput = {
   replies?: Prisma.UserCommentListRelationFilter
   actualReplyTo?: Prisma.XOR<Prisma.UserCommentNullableScalarRelationFilter, Prisma.UserCommentWhereInput> | null
   actualReplies?: Prisma.UserCommentListRelationFilter
-  likes?: Prisma.UserCommentLikeListRelationFilter
 }
 
 export type UserCommentOrderByWithRelationInput = {
@@ -398,7 +397,6 @@ export type UserCommentOrderByWithRelationInput = {
   replies?: Prisma.UserCommentOrderByRelationAggregateInput
   actualReplyTo?: Prisma.UserCommentOrderByWithRelationInput
   actualReplies?: Prisma.UserCommentOrderByRelationAggregateInput
-  likes?: Prisma.UserCommentLikeOrderByRelationAggregateInput
 }
 
 export type UserCommentWhereUniqueInput = Prisma.AtLeast<{
@@ -429,7 +427,6 @@ export type UserCommentWhereUniqueInput = Prisma.AtLeast<{
   replies?: Prisma.UserCommentListRelationFilter
   actualReplyTo?: Prisma.XOR<Prisma.UserCommentNullableScalarRelationFilter, Prisma.UserCommentWhereInput> | null
   actualReplies?: Prisma.UserCommentListRelationFilter
-  likes?: Prisma.UserCommentLikeListRelationFilter
 }, "id">
 
 export type UserCommentOrderByWithAggregationInput = {
@@ -505,7 +502,6 @@ export type UserCommentCreateInput = {
   replies?: Prisma.UserCommentCreateNestedManyWithoutReplyToInput
   actualReplyTo?: Prisma.UserCommentCreateNestedOneWithoutActualRepliesInput
   actualReplies?: Prisma.UserCommentCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentUncheckedCreateInput = {
@@ -530,7 +526,6 @@ export type UserCommentUncheckedCreateInput = {
   deletedAt?: Date | string | null
   replies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutReplyToInput
   actualReplies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentUpdateInput = {
@@ -554,7 +549,6 @@ export type UserCommentUpdateInput = {
   replies?: Prisma.UserCommentUpdateManyWithoutReplyToNestedInput
   actualReplyTo?: Prisma.UserCommentUpdateOneWithoutActualRepliesNestedInput
   actualReplies?: Prisma.UserCommentUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUncheckedUpdateInput = {
@@ -579,7 +573,6 @@ export type UserCommentUncheckedUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   replies?: Prisma.UserCommentUncheckedUpdateManyWithoutReplyToNestedInput
   actualReplies?: Prisma.UserCommentUncheckedUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentCreateManyInput = {
@@ -652,11 +645,6 @@ export type UserCommentListRelationFilter = {
 
 export type UserCommentOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
-}
-
-export type UserCommentScalarRelationFilter = {
-  is?: Prisma.UserCommentWhereInput
-  isNot?: Prisma.UserCommentWhereInput
 }
 
 export type UserCommentNullableScalarRelationFilter = {
@@ -798,20 +786,6 @@ export type UserCommentUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.UserCommentScalarWhereInput | Prisma.UserCommentScalarWhereInput[]
 }
 
-export type UserCommentCreateNestedOneWithoutLikesInput = {
-  create?: Prisma.XOR<Prisma.UserCommentCreateWithoutLikesInput, Prisma.UserCommentUncheckedCreateWithoutLikesInput>
-  connectOrCreate?: Prisma.UserCommentCreateOrConnectWithoutLikesInput
-  connect?: Prisma.UserCommentWhereUniqueInput
-}
-
-export type UserCommentUpdateOneRequiredWithoutLikesNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCommentCreateWithoutLikesInput, Prisma.UserCommentUncheckedCreateWithoutLikesInput>
-  connectOrCreate?: Prisma.UserCommentCreateOrConnectWithoutLikesInput
-  upsert?: Prisma.UserCommentUpsertWithoutLikesInput
-  connect?: Prisma.UserCommentWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserCommentUpdateToOneWithWhereWithoutLikesInput, Prisma.UserCommentUpdateWithoutLikesInput>, Prisma.UserCommentUncheckedUpdateWithoutLikesInput>
-}
-
 export type UserCommentCreateNestedOneWithoutRepliesInput = {
   create?: Prisma.XOR<Prisma.UserCommentCreateWithoutRepliesInput, Prisma.UserCommentUncheckedCreateWithoutRepliesInput>
   connectOrCreate?: Prisma.UserCommentCreateOrConnectWithoutRepliesInput
@@ -948,7 +922,6 @@ export type UserCommentCreateWithoutUserInput = {
   replies?: Prisma.UserCommentCreateNestedManyWithoutReplyToInput
   actualReplyTo?: Prisma.UserCommentCreateNestedOneWithoutActualRepliesInput
   actualReplies?: Prisma.UserCommentCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentUncheckedCreateWithoutUserInput = {
@@ -972,7 +945,6 @@ export type UserCommentUncheckedCreateWithoutUserInput = {
   deletedAt?: Date | string | null
   replies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutReplyToInput
   actualReplies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentCreateOrConnectWithoutUserInput = {
@@ -1026,116 +998,6 @@ export type UserCommentScalarWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"UserComment"> | Date | string | null
 }
 
-export type UserCommentCreateWithoutLikesInput = {
-  targetType: number
-  targetId: number
-  content: string
-  floor?: number | null
-  isHidden?: boolean
-  auditStatus?: number
-  auditById?: number | null
-  auditRole?: number | null
-  auditReason?: string | null
-  auditAt?: Date | string | null
-  likeCount?: number
-  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  user: Prisma.AppUserCreateNestedOneWithoutUserCommentsInput
-  replyTo?: Prisma.UserCommentCreateNestedOneWithoutRepliesInput
-  replies?: Prisma.UserCommentCreateNestedManyWithoutReplyToInput
-  actualReplyTo?: Prisma.UserCommentCreateNestedOneWithoutActualRepliesInput
-  actualReplies?: Prisma.UserCommentCreateNestedManyWithoutActualReplyToInput
-}
-
-export type UserCommentUncheckedCreateWithoutLikesInput = {
-  id?: number
-  targetType: number
-  targetId: number
-  userId: number
-  content: string
-  floor?: number | null
-  replyToId?: number | null
-  actualReplyToId?: number | null
-  isHidden?: boolean
-  auditStatus?: number
-  auditById?: number | null
-  auditRole?: number | null
-  auditReason?: string | null
-  auditAt?: Date | string | null
-  likeCount?: number
-  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  deletedAt?: Date | string | null
-  replies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutReplyToInput
-  actualReplies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutActualReplyToInput
-}
-
-export type UserCommentCreateOrConnectWithoutLikesInput = {
-  where: Prisma.UserCommentWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCommentCreateWithoutLikesInput, Prisma.UserCommentUncheckedCreateWithoutLikesInput>
-}
-
-export type UserCommentUpsertWithoutLikesInput = {
-  update: Prisma.XOR<Prisma.UserCommentUpdateWithoutLikesInput, Prisma.UserCommentUncheckedUpdateWithoutLikesInput>
-  create: Prisma.XOR<Prisma.UserCommentCreateWithoutLikesInput, Prisma.UserCommentUncheckedCreateWithoutLikesInput>
-  where?: Prisma.UserCommentWhereInput
-}
-
-export type UserCommentUpdateToOneWithWhereWithoutLikesInput = {
-  where?: Prisma.UserCommentWhereInput
-  data: Prisma.XOR<Prisma.UserCommentUpdateWithoutLikesInput, Prisma.UserCommentUncheckedUpdateWithoutLikesInput>
-}
-
-export type UserCommentUpdateWithoutLikesInput = {
-  targetType?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.StringFieldUpdateOperationsInput | string
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  user?: Prisma.AppUserUpdateOneRequiredWithoutUserCommentsNestedInput
-  replyTo?: Prisma.UserCommentUpdateOneWithoutRepliesNestedInput
-  replies?: Prisma.UserCommentUpdateManyWithoutReplyToNestedInput
-  actualReplyTo?: Prisma.UserCommentUpdateOneWithoutActualRepliesNestedInput
-  actualReplies?: Prisma.UserCommentUpdateManyWithoutActualReplyToNestedInput
-}
-
-export type UserCommentUncheckedUpdateWithoutLikesInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  targetType?: Prisma.IntFieldUpdateOperationsInput | number
-  targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  userId?: Prisma.IntFieldUpdateOperationsInput | number
-  content?: Prisma.StringFieldUpdateOperationsInput | string
-  floor?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  replyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  actualReplyToId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  isHidden?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  auditStatus?: Prisma.IntFieldUpdateOperationsInput | number
-  auditById?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditRole?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  auditReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  auditAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
-  sensitiveWordHits?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  replies?: Prisma.UserCommentUncheckedUpdateManyWithoutReplyToNestedInput
-  actualReplies?: Prisma.UserCommentUncheckedUpdateManyWithoutActualReplyToNestedInput
-}
-
 export type UserCommentCreateWithoutRepliesInput = {
   targetType: number
   targetId: number
@@ -1156,7 +1018,6 @@ export type UserCommentCreateWithoutRepliesInput = {
   replyTo?: Prisma.UserCommentCreateNestedOneWithoutRepliesInput
   actualReplyTo?: Prisma.UserCommentCreateNestedOneWithoutActualRepliesInput
   actualReplies?: Prisma.UserCommentCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentUncheckedCreateWithoutRepliesInput = {
@@ -1180,7 +1041,6 @@ export type UserCommentUncheckedCreateWithoutRepliesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   actualReplies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentCreateOrConnectWithoutRepliesInput = {
@@ -1208,7 +1068,6 @@ export type UserCommentCreateWithoutReplyToInput = {
   replies?: Prisma.UserCommentCreateNestedManyWithoutReplyToInput
   actualReplyTo?: Prisma.UserCommentCreateNestedOneWithoutActualRepliesInput
   actualReplies?: Prisma.UserCommentCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentUncheckedCreateWithoutReplyToInput = {
@@ -1232,7 +1091,6 @@ export type UserCommentUncheckedCreateWithoutReplyToInput = {
   deletedAt?: Date | string | null
   replies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutReplyToInput
   actualReplies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentCreateOrConnectWithoutReplyToInput = {
@@ -1265,7 +1123,6 @@ export type UserCommentCreateWithoutActualRepliesInput = {
   replyTo?: Prisma.UserCommentCreateNestedOneWithoutRepliesInput
   replies?: Prisma.UserCommentCreateNestedManyWithoutReplyToInput
   actualReplyTo?: Prisma.UserCommentCreateNestedOneWithoutActualRepliesInput
-  likes?: Prisma.UserCommentLikeCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentUncheckedCreateWithoutActualRepliesInput = {
@@ -1289,7 +1146,6 @@ export type UserCommentUncheckedCreateWithoutActualRepliesInput = {
   updatedAt?: Date | string
   deletedAt?: Date | string | null
   replies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutReplyToInput
-  likes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentCreateOrConnectWithoutActualRepliesInput = {
@@ -1317,7 +1173,6 @@ export type UserCommentCreateWithoutActualReplyToInput = {
   replyTo?: Prisma.UserCommentCreateNestedOneWithoutRepliesInput
   replies?: Prisma.UserCommentCreateNestedManyWithoutReplyToInput
   actualReplies?: Prisma.UserCommentCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentUncheckedCreateWithoutActualReplyToInput = {
@@ -1341,7 +1196,6 @@ export type UserCommentUncheckedCreateWithoutActualReplyToInput = {
   deletedAt?: Date | string | null
   replies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutReplyToInput
   actualReplies?: Prisma.UserCommentUncheckedCreateNestedManyWithoutActualReplyToInput
-  likes?: Prisma.UserCommentLikeUncheckedCreateNestedManyWithoutCommentInput
 }
 
 export type UserCommentCreateOrConnectWithoutActualReplyToInput = {
@@ -1385,7 +1239,6 @@ export type UserCommentUpdateWithoutRepliesInput = {
   replyTo?: Prisma.UserCommentUpdateOneWithoutRepliesNestedInput
   actualReplyTo?: Prisma.UserCommentUpdateOneWithoutActualRepliesNestedInput
   actualReplies?: Prisma.UserCommentUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUncheckedUpdateWithoutRepliesInput = {
@@ -1409,7 +1262,6 @@ export type UserCommentUncheckedUpdateWithoutRepliesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   actualReplies?: Prisma.UserCommentUncheckedUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUpsertWithWhereUniqueWithoutReplyToInput = {
@@ -1459,7 +1311,6 @@ export type UserCommentUpdateWithoutActualRepliesInput = {
   replyTo?: Prisma.UserCommentUpdateOneWithoutRepliesNestedInput
   replies?: Prisma.UserCommentUpdateManyWithoutReplyToNestedInput
   actualReplyTo?: Prisma.UserCommentUpdateOneWithoutActualRepliesNestedInput
-  likes?: Prisma.UserCommentLikeUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUncheckedUpdateWithoutActualRepliesInput = {
@@ -1483,7 +1334,6 @@ export type UserCommentUncheckedUpdateWithoutActualRepliesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   replies?: Prisma.UserCommentUncheckedUpdateManyWithoutReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUpsertWithWhereUniqueWithoutActualReplyToInput = {
@@ -1543,7 +1393,6 @@ export type UserCommentUpdateWithoutUserInput = {
   replies?: Prisma.UserCommentUpdateManyWithoutReplyToNestedInput
   actualReplyTo?: Prisma.UserCommentUpdateOneWithoutActualRepliesNestedInput
   actualReplies?: Prisma.UserCommentUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUncheckedUpdateWithoutUserInput = {
@@ -1567,7 +1416,6 @@ export type UserCommentUncheckedUpdateWithoutUserInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   replies?: Prisma.UserCommentUncheckedUpdateManyWithoutReplyToNestedInput
   actualReplies?: Prisma.UserCommentUncheckedUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUncheckedUpdateManyWithoutUserInput = {
@@ -1653,7 +1501,6 @@ export type UserCommentUpdateWithoutReplyToInput = {
   replies?: Prisma.UserCommentUpdateManyWithoutReplyToNestedInput
   actualReplyTo?: Prisma.UserCommentUpdateOneWithoutActualRepliesNestedInput
   actualReplies?: Prisma.UserCommentUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUncheckedUpdateWithoutReplyToInput = {
@@ -1677,7 +1524,6 @@ export type UserCommentUncheckedUpdateWithoutReplyToInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   replies?: Prisma.UserCommentUncheckedUpdateManyWithoutReplyToNestedInput
   actualReplies?: Prisma.UserCommentUncheckedUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUncheckedUpdateManyWithoutReplyToInput = {
@@ -1721,7 +1567,6 @@ export type UserCommentUpdateWithoutActualReplyToInput = {
   replyTo?: Prisma.UserCommentUpdateOneWithoutRepliesNestedInput
   replies?: Prisma.UserCommentUpdateManyWithoutReplyToNestedInput
   actualReplies?: Prisma.UserCommentUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUncheckedUpdateWithoutActualReplyToInput = {
@@ -1745,7 +1590,6 @@ export type UserCommentUncheckedUpdateWithoutActualReplyToInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   replies?: Prisma.UserCommentUncheckedUpdateManyWithoutReplyToNestedInput
   actualReplies?: Prisma.UserCommentUncheckedUpdateManyWithoutActualReplyToNestedInput
-  likes?: Prisma.UserCommentLikeUncheckedUpdateManyWithoutCommentNestedInput
 }
 
 export type UserCommentUncheckedUpdateManyWithoutActualReplyToInput = {
@@ -1777,13 +1621,11 @@ export type UserCommentUncheckedUpdateManyWithoutActualReplyToInput = {
 export type UserCommentCountOutputType = {
   replies: number
   actualReplies: number
-  likes: number
 }
 
 export type UserCommentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   replies?: boolean | UserCommentCountOutputTypeCountRepliesArgs
   actualReplies?: boolean | UserCommentCountOutputTypeCountActualRepliesArgs
-  likes?: boolean | UserCommentCountOutputTypeCountLikesArgs
 }
 
 /**
@@ -1808,13 +1650,6 @@ export type UserCommentCountOutputTypeCountRepliesArgs<ExtArgs extends runtime.T
  */
 export type UserCommentCountOutputTypeCountActualRepliesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.UserCommentWhereInput
-}
-
-/**
- * UserCommentCountOutputType without action
- */
-export type UserCommentCountOutputTypeCountLikesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.UserCommentLikeWhereInput
 }
 
 
@@ -1843,7 +1678,6 @@ export type UserCommentSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   replies?: boolean | Prisma.UserComment$repliesArgs<ExtArgs>
   actualReplyTo?: boolean | Prisma.UserComment$actualReplyToArgs<ExtArgs>
   actualReplies?: boolean | Prisma.UserComment$actualRepliesArgs<ExtArgs>
-  likes?: boolean | Prisma.UserComment$likesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCommentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userComment"]>
 
@@ -1926,7 +1760,6 @@ export type UserCommentInclude<ExtArgs extends runtime.Types.Extensions.Internal
   replies?: boolean | Prisma.UserComment$repliesArgs<ExtArgs>
   actualReplyTo?: boolean | Prisma.UserComment$actualReplyToArgs<ExtArgs>
   actualReplies?: boolean | Prisma.UserComment$actualRepliesArgs<ExtArgs>
-  likes?: boolean | Prisma.UserComment$likesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCommentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserCommentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1963,10 +1796,6 @@ export type $UserCommentPayload<ExtArgs extends runtime.Types.Extensions.Interna
      * 关联根评论下回复列表
      */
     actualReplies: Prisma.$UserCommentPayload<ExtArgs>[]
-    /**
-     * 评论点赞记录
-     */
-    likes: Prisma.$UserCommentLikePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
@@ -2444,7 +2273,6 @@ export interface Prisma__UserCommentClient<T, Null = never, ExtArgs extends runt
   replies<T extends Prisma.UserComment$repliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserComment$repliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   actualReplyTo<T extends Prisma.UserComment$actualReplyToArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserComment$actualReplyToArgs<ExtArgs>>): Prisma.Prisma__UserCommentClient<runtime.Types.Result.GetResult<Prisma.$UserCommentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   actualReplies<T extends Prisma.UserComment$actualRepliesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserComment$actualRepliesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  likes<T extends Prisma.UserComment$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserComment$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserCommentLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2981,30 +2809,6 @@ export type UserComment$actualRepliesArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.UserCommentScalarFieldEnum | Prisma.UserCommentScalarFieldEnum[]
-}
-
-/**
- * UserComment.likes
- */
-export type UserComment$likesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the UserCommentLike
-   */
-  select?: Prisma.UserCommentLikeSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the UserCommentLike
-   */
-  omit?: Prisma.UserCommentLikeOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserCommentLikeInclude<ExtArgs> | null
-  where?: Prisma.UserCommentLikeWhereInput
-  orderBy?: Prisma.UserCommentLikeOrderByWithRelationInput | Prisma.UserCommentLikeOrderByWithRelationInput[]
-  cursor?: Prisma.UserCommentLikeWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.UserCommentLikeScalarFieldEnum | Prisma.UserCommentLikeScalarFieldEnum[]
 }
 
 /**

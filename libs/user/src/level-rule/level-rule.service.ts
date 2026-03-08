@@ -26,10 +26,6 @@ export class UserLevelRuleService extends BaseService {
     return this.prisma.userComment
   }
 
-  get forumReplyLike() {
-    return this.prisma.userCommentLike
-  }
-
   constructor(
     private readonly likeService: LikeService,
     private readonly favoriteService: FavoriteService,
@@ -326,20 +322,18 @@ export class UserLevelRuleService extends BaseService {
         if (limit > 0) {
           const today = new Date()
           today.setHours(0, 0, 0, 0)
-          const topicLikes = await this.prisma.userLike.count({
+          used = await this.prisma.userLike.count({
             where: {
               userId,
-              targetType: InteractionTargetTypeEnum.FORUM_TOPIC,
+              targetType: {
+                in: [
+                  InteractionTargetTypeEnum.FORUM_TOPIC,
+                  InteractionTargetTypeEnum.COMMENT,
+                ],
+              },
               createdAt: { gte: today },
             },
           })
-          const replyLikes = await this.forumReplyLike.count({
-            where: {
-              userId,
-              createdAt: { gte: today },
-            },
-          })
-          used = topicLikes + replyLikes
           hasPermission = used < limit
         }
         break

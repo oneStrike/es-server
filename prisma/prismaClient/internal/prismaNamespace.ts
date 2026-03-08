@@ -402,7 +402,6 @@ export const ModelName = {
   Task: 'Task',
   UserBadgeAssignment: 'UserBadgeAssignment',
   UserBadge: 'UserBadge',
-  UserCommentLike: 'UserCommentLike',
   UserComment: 'UserComment',
   UserDownloadRecord: 'UserDownloadRecord',
   UserExperienceRule: 'UserExperienceRule',
@@ -463,7 +462,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userCommentLike" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "messageWsMetric" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthorRelation" | "workAuthor" | "workCategoryRelation" | "workCategory" | "workChapter" | "workComic" | "workNovel" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "messageWsMetric" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthorRelation" | "workAuthor" | "workCategoryRelation" | "workCategory" | "workChapter" | "workComic" | "workNovel" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1796,80 +1795,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserBadgeCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserBadgeCountAggregateOutputType> | number
-        }
-      }
-    }
-    UserCommentLike: {
-      payload: Prisma.$UserCommentLikePayload<ExtArgs>
-      fields: Prisma.UserCommentLikeFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.UserCommentLikeFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.UserCommentLikeFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload>
-        }
-        findFirst: {
-          args: Prisma.UserCommentLikeFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.UserCommentLikeFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload>
-        }
-        findMany: {
-          args: Prisma.UserCommentLikeFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload>[]
-        }
-        create: {
-          args: Prisma.UserCommentLikeCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload>
-        }
-        createMany: {
-          args: Prisma.UserCommentLikeCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.UserCommentLikeCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload>[]
-        }
-        delete: {
-          args: Prisma.UserCommentLikeDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload>
-        }
-        update: {
-          args: Prisma.UserCommentLikeUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload>
-        }
-        deleteMany: {
-          args: Prisma.UserCommentLikeDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.UserCommentLikeUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.UserCommentLikeUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload>[]
-        }
-        upsert: {
-          args: Prisma.UserCommentLikeUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserCommentLikePayload>
-        }
-        aggregate: {
-          args: Prisma.UserCommentLikeAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateUserCommentLike>
-        }
-        groupBy: {
-          args: Prisma.UserCommentLikeGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserCommentLikeGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.UserCommentLikeCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.UserCommentLikeCountAggregateOutputType> | number
         }
       }
     }
@@ -5573,16 +5498,6 @@ export const UserBadgeScalarFieldEnum = {
 export type UserBadgeScalarFieldEnum = (typeof UserBadgeScalarFieldEnum)[keyof typeof UserBadgeScalarFieldEnum]
 
 
-export const UserCommentLikeScalarFieldEnum = {
-  id: 'id',
-  commentId: 'commentId',
-  userId: 'userId',
-  createdAt: 'createdAt'
-} as const
-
-export type UserCommentLikeScalarFieldEnum = (typeof UserCommentLikeScalarFieldEnum)[keyof typeof UserCommentLikeScalarFieldEnum]
-
-
 export const UserCommentScalarFieldEnum = {
   id: 'id',
   targetType: 'targetType',
@@ -6658,7 +6573,6 @@ export type GlobalOmitConfig = {
   task?: Prisma.TaskOmit
   userBadgeAssignment?: Prisma.UserBadgeAssignmentOmit
   userBadge?: Prisma.UserBadgeOmit
-  userCommentLike?: Prisma.UserCommentLikeOmit
   userComment?: Prisma.UserCommentOmit
   userDownloadRecord?: Prisma.UserDownloadRecordOmit
   userExperienceRule?: Prisma.UserExperienceRuleOmit

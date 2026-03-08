@@ -13,6 +13,7 @@ export enum InteractionTargetTypeEnum {
   NOVEL_CHAPTER = 4,
   /** 论坛主题 */
   FORUM_TOPIC = 5,
+  COMMENT = 6,
 }
 
 /**

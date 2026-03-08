@@ -71,9 +71,6 @@ model UserComment {
   /// 关联根评论下回复列表
   actualReplies UserComment[] @relation("CommentActualReply")
 
-  /// 评论点赞记录
-  likes UserCommentLike[]
-
   /// 目标维度时间索引
   @@index([targetType, targetId, createdAt])
   /// 楼层查询索引
