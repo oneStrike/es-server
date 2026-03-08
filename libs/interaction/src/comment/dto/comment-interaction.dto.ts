@@ -7,12 +7,10 @@ import {
 } from '@libs/base/decorators'
 import { BaseDto, PageDto } from '@libs/base/dto'
 import {
-  ApiProperty,
   IntersectionType,
   PartialType,
   PickType,
 } from '@nestjs/swagger'
-import { IsIn, IsString } from 'class-validator'
 import { ReportStatusEnum } from '../../common.constant'
 import { CommentIdDto } from './comment.dto'
 
@@ -173,17 +171,3 @@ export class QueryCommentReportDto extends IntersectionType(
   PageDto,
   PickType(PartialType(BaseCommentReportDto), ['status']),
 ) {}
-
-export class HandleCommentReportDto extends IntersectionType(
-  ReportIdDto,
-  ReportHandlingDto,
-) {
-  @ApiProperty({
-    description: '处理状态',
-    enum: [ReportStatusEnum.RESOLVED, ReportStatusEnum.REJECTED],
-    example: ReportStatusEnum.RESOLVED,
-  })
-  @IsString()
-  @IsIn([ReportStatusEnum.RESOLVED, ReportStatusEnum.REJECTED])
-  status!: ReportStatusEnum.RESOLVED | ReportStatusEnum.REJECTED
-}

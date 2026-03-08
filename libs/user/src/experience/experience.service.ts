@@ -47,14 +47,17 @@ export class UserExperienceService extends BaseService {
    * @returns 创建的规则信息
    */
   async createExperienceRule(dto: CreateUserExperienceRuleDto) {
-    if (
-      await this.userExperienceRule.exists({ type: dto.type, isEnabled: true })
-    ) {
-      throw new BadRequestException('经验规则类型已存在')
+    try {
+      return await this.userExperienceRule.create({
+        data: dto,
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('Experience rule type already exists')
+        },
+      })
     }
-    return this.userExperienceRule.create({
-      data: dto,
-    })
   }
 
   /**
@@ -97,15 +100,18 @@ export class UserExperienceService extends BaseService {
   async updateExperienceRule(dto: UpdateUserExperienceRuleDto) {
     const { id, ...updateData } = dto
 
-    if (
-      await this.userExperienceRule.exists({ type: dto.type, id: { not: id } })
-    ) {
-      throw new BadRequestException('经验规则类型已存在')
+    try {
+      return await this.userExperienceRule.update({
+        where: { id },
+        data: updateData,
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('Experience rule type already exists')
+        },
+      })
     }
-    return this.userExperienceRule.update({
-      where: { id },
-      data: updateData,
-    })
   }
 
   /**
@@ -323,20 +329,15 @@ export class UserExperienceService extends BaseService {
   }
 
   private mapRuleFailReason(reason?: string) {
-    switch (reason) {
-      case 'rule_not_found':
-        return '经验规则不存在'
-      case 'rule_disabled':
-        return '经验规则已禁用'
-      case 'rule_zero':
-        return '经验规则配置错误'
-      case 'daily_limit':
-        return '今日经验已达上限'
-      case 'total_limit':
-        return '经验总次数已达上限'
-      default:
-        return '经验发放失败'
+    const reasonMap: Record<string, string> = {
+      rule_not_found: 'Experience rule not found',
+      rule_disabled: 'Experience rule is disabled',
+      rule_zero: 'Invalid experience rule config',
+      daily_limit: 'Daily experience limit reached',
+      total_limit: 'Total experience limit reached',
     }
+
+    return reason ? (reasonMap[reason] ?? 'Experience grant failed') : 'Experience grant failed'
   }
 
   private buildBizKey(prefix: string, userId: number) {

@@ -81,7 +81,6 @@ export class TaskService extends BaseService {
   }
 
   async createTask(dto: CreateTaskDto, adminUser: JwtUserInfoInterface) {
-    await this.ensureCodeUnique(dto.code)
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
     const data: Prisma.TaskCreateInput = {
       code: dto.code,
@@ -102,8 +101,16 @@ export class TaskService extends BaseService {
       createdBy: { connect: { id: Number(adminUser.sub) } },
       updatedBy: { connect: { id: Number(adminUser.sub) } },
     }
-    const created = await this.task.create({ data })
-    return { id: created.id }
+    try {
+      const created = await this.task.create({ data })
+      return { id: created.id }
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('Task code already exists')
+        },
+      })
+    }
   }
 
   async updateTask(dto: UpdateTaskDto, adminUser: JwtUserInfoInterface) {
@@ -111,10 +118,7 @@ export class TaskService extends BaseService {
       where: { id: dto.id, deletedAt: null },
     })
     if (!task) {
-      throw new NotFoundException('任务不存在')
-    }
-    if (dto.code && dto.code !== task.code) {
-      await this.ensureCodeUnique(dto.code, dto.id)
+      throw new NotFoundException('Task not found')
     }
     this.ensurePublishWindow(dto.publishStartAt, dto.publishEndAt)
     const data: Prisma.TaskUpdateInput = {
@@ -135,11 +139,19 @@ export class TaskService extends BaseService {
       repeatRule: this.parseJsonValue(dto.repeatRule),
       updatedBy: { connect: { id: Number(adminUser.sub) } },
     }
-    await this.task.update({
-      where: { id: dto.id },
-      data,
-    })
-    return { id: dto.id }
+    try {
+      await this.task.update({
+        where: { id: dto.id },
+        data,
+      })
+      return { id: dto.id }
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('Task code already exists')
+        },
+      })
+    }
   }
 
   async updateTaskStatus(dto: UpdateTaskStatusDto) {
@@ -240,19 +252,7 @@ export class TaskService extends BaseService {
     const task = await this.findClaimableTask(dto.taskId)
     const now = new Date()
     const cycleKey = this.buildCycleKey(task, now)
-    const existing = await this.taskAssignment.findUnique({
-      where: {
-        taskId_userId_cycleKey: {
-          taskId: task.id,
-          userId,
-          cycleKey,
-        },
-      },
-    })
-    if (existing) {
-      return existing
-    }
-    return this.createAssignment(task, userId, cycleKey, now)
+    return this.createOrGetAssignment(task, userId, cycleKey, now)
   }
 
   async reportProgress(dto: TaskProgressDto, userId: number) {
@@ -273,7 +273,7 @@ export class TaskService extends BaseService {
     })
     if (!assignment) {
       if (task.claimMode === TaskClaimModeEnum.AUTO) {
-        assignment = await this.createAssignment(task, userId, cycleKey, now)
+        assignment = await this.createOrGetAssignment(task, userId, cycleKey, now)
       } else {
         throw new BadRequestException('任务未领取')
       }
@@ -403,20 +403,6 @@ export class TaskService extends BaseService {
         status: TaskAssignmentStatusEnum.EXPIRED,
       },
     })
-  }
-
-  private async ensureCodeUnique(code: string, excludeId?: number) {
-    const exists = await this.task.findFirst({
-      where: {
-        code,
-        deletedAt: null,
-        ...(excludeId ? { id: { not: excludeId } } : {}),
-      },
-      select: { id: true },
-    })
-    if (exists) {
-      throw new BadRequestException('任务编码已存在')
-    }
   }
 
   private ensurePublishWindow(
@@ -598,6 +584,42 @@ export class TaskService extends BaseService {
     })
   }
 
+  private async createOrGetAssignment(
+    task: {
+      id: number
+      code: string
+      title: string
+      type: number
+      rewardConfig: Prisma.JsonValue | null
+      targetCount: number
+      publishEndAt: Date | null
+    },
+    userId: number,
+    cycleKey: string,
+    now: Date,
+  ) {
+    try {
+      return await this.createAssignment(task, userId, cycleKey, now)
+    } catch (error) {
+      if (!this.isUniqueConstraintError(error)) {
+        throw error
+      }
+      const existing = await this.taskAssignment.findUnique({
+        where: {
+          taskId_userId_cycleKey: {
+            taskId: task.id,
+            userId,
+            cycleKey,
+          },
+        },
+      })
+      if (existing) {
+        return existing
+      }
+      throw error
+    }
+  }
+
   private async ensureAutoAssignments(userId: number, tasks: Array<{ id: number }>) {
     for (const task of tasks) {
       await this.ensureAutoAssignment(userId, task.id)
@@ -607,10 +629,21 @@ export class TaskService extends BaseService {
   private async ensureAutoAssignmentsForUser(userId: number) {
     const tasks = await this.task.findMany({
       where: this.buildAvailableWhere(),
-      select: { id: true },
+      select: {
+        id: true,
+        code: true,
+        title: true,
+        type: true,
+        rewardConfig: true,
+        targetCount: true,
+        claimMode: true,
+        publishStartAt: true,
+        publishEndAt: true,
+        repeatRule: true,
+      },
     })
     for (const task of tasks) {
-      await this.ensureAutoAssignment(userId, task.id)
+      await this.ensureAutoAssignmentByTask(userId, task)
     }
   }
 
@@ -627,6 +660,27 @@ export class TaskService extends BaseService {
     if (!task) {
       return
     }
+    await this.ensureAutoAssignmentByTask(userId, task)
+  }
+
+  private async ensureAutoAssignmentByTask(
+    userId: number,
+    task: {
+      id: number
+      code: string
+      title: string
+      type: number
+      rewardConfig: Prisma.JsonValue | null
+      targetCount: number
+      claimMode: number
+      publishStartAt: Date | null
+      publishEndAt: Date | null
+      repeatRule: Prisma.JsonValue | null
+    },
+  ) {
+    if (task.claimMode !== TaskClaimModeEnum.AUTO) {
+      return
+    }
     const now = new Date()
     if (task.publishStartAt && task.publishStartAt > now) {
       return
@@ -635,19 +689,7 @@ export class TaskService extends BaseService {
       return
     }
     const cycleKey = this.buildCycleKey(task, now)
-    const exists = await this.taskAssignment.findUnique({
-      where: {
-        taskId_userId_cycleKey: {
-          taskId: task.id,
-          userId,
-          cycleKey,
-        },
-      },
-    })
-    if (exists) {
-      return
-    }
-    await this.createAssignment(task, userId, cycleKey, now)
+    await this.createOrGetAssignment(task, userId, cycleKey, now)
   }
 
   private async emitTaskCompleteEvent(

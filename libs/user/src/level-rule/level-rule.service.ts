@@ -43,13 +43,17 @@ export class UserLevelRuleService extends BaseService {
    * @returns 创建的等级规则
    */
   async createLevelRule(dto: CreateUserLevelRuleDto) {
-    if (await this.userLevelRule.exists({ name: dto.name })) {
-      throw new BadRequestException('已存在相同等级规则')
+    try {
+      return await this.userLevelRule.create({
+        data: dto,
+      })
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('Level rule already exists')
+        },
+      })
     }
-
-    return this.userLevelRule.create({
-      data: dto,
-    })
   }
 
   /**
@@ -89,19 +93,18 @@ export class UserLevelRuleService extends BaseService {
   async updateLevelRule(updateLevelRuleDto: UpdateUserLevelRuleDto) {
     const { id, ...updateData } = updateLevelRuleDto
 
-    if (
-      await this.userLevelRule.exists({
-        name: updateData.name,
-        id: { not: id },
+    try {
+      return await this.userLevelRule.update({
+        where: { id },
+        data: updateData,
       })
-    ) {
-      throw new BadRequestException('已存在相同等级规则')
+    } catch (error) {
+      this.handlePrismaError(error, {
+        P2002: () => {
+          throw new BadRequestException('Level rule already exists')
+        },
+      })
     }
-
-    return this.userLevelRule.update({
-      where: { id },
-      data: updateData,
-    })
   }
 
   /**
