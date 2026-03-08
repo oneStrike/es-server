@@ -8,7 +8,6 @@ import {
   NovelContentService,
   PageWorkChapterDto,
   QueryWorkChapterDto,
-  WorkChapterContentDto,
   WorkChapterService,
 } from '@libs/content'
 import { PurchaseService } from '@libs/interaction'
@@ -23,7 +22,6 @@ export class WorkChapterController {
     private readonly workChapterService: WorkChapterService,
     private readonly comicContentService: ComicContentService,
     private readonly novelContentService: NovelContentService,
-    private readonly purchaseService: PurchaseService,
   ) {}
 
   @Get('page')

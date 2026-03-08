@@ -4,7 +4,7 @@ import { IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator'
 
 export class FavoriteDto {
   @ApiProperty({
-    description: '目标类型�?=漫画, 2=小说, 5=论坛主题',
+    description: '目标类型1=漫画, 2=小说, 5=论坛主题',
     enum: InteractionTargetTypeEnum,
     example: 1,
   })
