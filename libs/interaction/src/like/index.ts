@@ -1,3 +1,6 @@
 export * from './dto'
+export * from './like-growth.service'
+export * from './like-interaction.service'
 export * from './like.module'
+export * from './like-permission.service'
 export * from './like.service'

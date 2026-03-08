@@ -1,5 +1,3 @@
-export * from './action-event.emitter'
-
 // 评论
 export * from './comment/comment-interaction.service'
 export * from './comment/comment-permission.service'

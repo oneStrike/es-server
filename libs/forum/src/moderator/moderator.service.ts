@@ -34,10 +34,6 @@ export class ForumModeratorService extends BaseService {
     return this.prisma.forumModeratorActionLog
   }
 
-  // get forumProfile() {
-  //   return this.prisma.forumProfile
-  // }
-
   get forumSection() {
     return this.prisma.forumSection
   }

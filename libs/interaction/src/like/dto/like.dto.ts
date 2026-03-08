@@ -51,17 +51,17 @@ export class LikeListQueryDto {
   @IsOptional()
   targetType?: InteractionTargetTypeEnum
 
-  @ApiPropertyOptional({ description: '页码', default: 1, example: 1 })
+  @ApiPropertyOptional({ description: '页码', default: 0, example: 0 })
   @IsInt()
-  @Min(1)
+  @Min(0)
   @IsOptional()
-  page?: number = 1
+  pageIndex?: number = 0
 
-  @ApiPropertyOptional({ description: '每页数量', default: 20, example: 20 })
+  @ApiPropertyOptional({ description: '每页数量', default: 15, example: 15 })
   @IsInt()
   @Min(1)
   @IsOptional()
-  pageSize?: number = 20
+  pageSize?: number = 15
 }
 
 export class LikeStatusResponseDto {

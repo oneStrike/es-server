@@ -52,3 +52,37 @@ export class DeleteViewDto {
   @IsNotEmpty()
   viewId!: number
 }
+
+export class QueryUserViewDto {
+  @ApiPropertyOptional({
+    description: '目标类型筛选',
+    enum: InteractionTargetTypeEnum,
+    example: 1,
+  })
+  @IsInt()
+  @IsOptional()
+  targetType?: InteractionTargetTypeEnum
+
+  @ApiPropertyOptional({ description: '页码', default: 1, example: 1 })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  pageIndex?: number = 1
+
+  @ApiPropertyOptional({ description: '每页数量', default: 20, example: 20 })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  pageSize?: number = 20
+}
+
+export class ClearUserViewDto {
+  @ApiPropertyOptional({
+    description: '仅清理指定目标类型，默认清理全部',
+    enum: InteractionTargetTypeEnum,
+    example: 1,
+  })
+  @IsInt()
+  @IsOptional()
+  targetType?: InteractionTargetTypeEnum
+}

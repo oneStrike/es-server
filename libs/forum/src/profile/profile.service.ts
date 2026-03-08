@@ -29,13 +29,6 @@ export class ForumProfileService extends BaseService {
   }
 
   /**
-   * 获取论坛用户资料模型
-   */
-  // get forumProfile() {
-  //   return this.prisma.forumProfile
-  // }
-
-  /**
    * 查询用户资料列表
    * @param queryDto - 查询参数，包含用户ID、昵称、状态等过滤条件
    * @returns 分页的用户资料列表，包含用户信息和徽章信息

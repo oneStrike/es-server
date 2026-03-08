@@ -1,28 +1,18 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { CounterService } from '../counter/counter.service'
+import { ViewGrowthService } from './view-growth.service'
+import { ViewInteractionService } from './view-interaction.service'
+import { ViewPermissionService } from './view-permission.service'
 
 @Injectable()
 export class ViewService extends BaseService {
-  constructor(private readonly counterService: CounterService) {
+  constructor(
+    private readonly viewPermissionService: ViewPermissionService,
+    private readonly viewInteractionService: ViewInteractionService,
+    private readonly viewGrowthService: ViewGrowthService,
+  ) {
     super()
-  }
-
-  /**
-   * 判断目标是否有效
-   * 维持原行为：无效目标直接返回，不抛出异常
-   */
-  private async isTargetValid(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ): Promise<boolean> {
-    try {
-      await this.counterService.ensureTargetExists(targetType, targetId)
-      return true
-    } catch {
-      return false
-    }
   }
 
   async recordView(
@@ -33,7 +23,14 @@ export class ViewService extends BaseService {
     device?: string,
     userAgent?: string,
   ): Promise<void> {
-    if (!(await this.isTargetValid(targetType, targetId))) {
+    await this.viewPermissionService.ensureUserCanView(userId)
+    const isTargetValid = await this.viewPermissionService.isTargetValid(
+      targetType,
+      targetId,
+    )
+
+    // 维持原行为：无效目标静默返回
+    if (!isTargetValid) {
       return
     }
 
@@ -48,6 +45,9 @@ export class ViewService extends BaseService {
         viewedAt: new Date(),
       },
     })
+
+    await this.viewInteractionService.handleViewRecorded()
+    await this.viewGrowthService.rewardViewRecorded(targetType, targetId, userId)
   }
 
   async getUserViews(
@@ -97,3 +97,4 @@ export class ViewService extends BaseService {
     await this.prisma.userView.deleteMany({ where })
   }
 }
+

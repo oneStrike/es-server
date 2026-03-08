@@ -1,5 +1,4 @@
 import { Global, Module } from '@nestjs/common'
-import { InteractionEventEmitter } from './action-event.emitter'
 import { CommentModule } from './comment/comment.module'
 import { CounterModule } from './counter/counter.module'
 import { DownloadModule } from './download/download.module'
@@ -21,7 +20,6 @@ import { ViewModule } from './view/view.module'
     DownloadModule,
     PurchaseModule,
   ],
-  providers: [InteractionEventEmitter],
   exports: [
     CounterModule,
     LikeModule,
@@ -31,7 +29,6 @@ import { ViewModule } from './view/view.module'
     ReportModule,
     DownloadModule,
     PurchaseModule,
-    InteractionEventEmitter,
   ],
 })
 export class InteractionModule {}

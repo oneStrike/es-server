@@ -34,10 +34,6 @@ export class ForumReplyLikeService extends BaseService {
     return (this.prisma as any).userComment
   }
 
-  // get forumProfile() {
-  //   return this.prisma.forumProfile
-  // }
-
   /**
    * 点赞回复
    * @param createForumReplyLikeDto - 创建点赞记录的数据传输对象

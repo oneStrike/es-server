@@ -1,10 +1,19 @@
+import { GrowthLedgerModule } from '@libs/user/growth-ledger'
 import { MessageModule } from '@libs/message'
 import { Module } from '@nestjs/common'
+import { FavoriteGrowthService } from './favorite-growth.service'
+import { FavoriteInteractionService } from './favorite-interaction.service'
+import { FavoritePermissionService } from './favorite-permission.service'
 import { FavoriteService } from './favorite.service'
 
 @Module({
-  imports: [MessageModule],
-  providers: [FavoriteService],
+  imports: [MessageModule, GrowthLedgerModule],
+  providers: [
+    FavoriteService,
+    FavoritePermissionService,
+    FavoriteInteractionService,
+    FavoriteGrowthService,
+  ],
   exports: [FavoriteService],
 })
 export class FavoriteModule {}
