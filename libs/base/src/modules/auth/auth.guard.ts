@@ -1,5 +1,5 @@
 import { AuthConfig } from '@libs/base/config'
-import { IS_PUBLIC_KEY } from '@libs/base/decorators'
+import { IS_OPTIONAL_AUTH_KEY, IS_PUBLIC_KEY } from '@libs/base/decorators'
 import {
   CanActivate,
   ExecutionContext,
@@ -39,10 +39,38 @@ export class JwtAuthGuard
       return true
     }
 
+    // 检查路由是否被标记为可选认证
+    const isOptionalAuth = this.reflector.getAllAndOverride<boolean>(
+      IS_OPTIONAL_AUTH_KEY,
+      [context.getHandler(), context.getClass()],
+    )
+
+    // 如果是可选认证，尝试解析 token 但不强制要求
+    if (isOptionalAuth) {
+      try {
+        return (await super.canActivate(context)) as boolean
+      } catch {
+        // token 无效或不存在时，允许请求继续，但用户信息为空
+        return true
+      }
+    }
+
     return (await super.canActivate(context)) as boolean
   }
 
-  handleRequest(err: any, user: any) {
+  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+    // 检查是否为可选认证
+    const isOptionalAuth = this.reflector.getAllAndOverride<boolean>(
+      IS_OPTIONAL_AUTH_KEY,
+      [context.getHandler(), context.getClass()],
+    )
+
+    // 可选认证时，允许无用户信息
+    if (isOptionalAuth) {
+      return user
+    }
+
+    // 强制认证时，必须有用户信息
     if (err || !user) {
       throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
     }

@@ -1,5 +1,13 @@
+import { ContentTypeEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { DragReorderDto } from '@libs/base/dto'
+import { ContentPermissionService } from '@libs/content/permission'
+import {
+  DownloadService,
+  DownloadTargetTypeEnum,
+  FavoriteService,
+  LikeService,
+} from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkChapterDto,
@@ -26,7 +34,12 @@ export class WorkChapterService extends BaseService {
     return this.prisma.userLevelRule
   }
 
-  constructor() {
+  constructor(
+    private readonly likeService: LikeService,
+    private readonly favoriteService: FavoriteService,
+    private readonly downloadService: DownloadService,
+    private readonly contentPermissionService: ContentPermissionService,
+  ) {
     super()
   }
 
@@ -63,7 +76,7 @@ export class WorkChapterService extends BaseService {
     })
   }
 
-  async getChapterDetail(id: number) {
+  async getChapterDetail(id: number, userId?: number) {
     const chapter = await this.workChapter.findUnique({
       where: { id },
       include: {
@@ -88,7 +101,44 @@ export class WorkChapterService extends BaseService {
       throw new BadRequestException('章节不存在')
     }
 
-    return chapter
+    // 未登录用户直接返回基础信息
+    if (!userId) {
+      return chapter
+    }
+
+    // 根据 workType 确定目标类型
+    const interactionTargetType =
+      chapter.workType === ContentTypeEnum.COMIC
+        ? InteractionTargetTypeEnum.COMIC_CHAPTER
+        : InteractionTargetTypeEnum.NOVEL_CHAPTER
+
+    const downloadTargetType =
+      chapter.workType === ContentTypeEnum.COMIC
+        ? DownloadTargetTypeEnum.COMIC_CHAPTER
+        : DownloadTargetTypeEnum.NOVEL_CHAPTER
+
+    // 并行查询四个交互状态
+    const [liked, favorited, downloaded, purchased] = await Promise.all([
+      this.likeService.checkLikeStatus(interactionTargetType, id, userId),
+      this.favoriteService.checkFavoriteStatus(interactionTargetType, id, userId),
+      this.downloadService.checkDownloadStatus({
+        targetType: downloadTargetType,
+        targetId: id,
+        userId,
+      }),
+      this.contentPermissionService.validateChapterPurchasePermission(
+        userId,
+        id,
+      ),
+    ])
+
+    return {
+      ...chapter,
+      liked,
+      favorited,
+      downloaded,
+      purchased,
+    }
   }
 
   async updateChapter(dto: UpdateWorkChapterDto) {
@@ -96,8 +146,8 @@ export class WorkChapterService extends BaseService {
     const { requiredViewLevelId } = updateData
 
     if (
-      requiredViewLevelId
-      && !(await this.userLevelRule.exists({ id: requiredViewLevelId }))
+      requiredViewLevelId &&
+      !(await this.userLevelRule.exists({ id: requiredViewLevelId }))
     ) {
       throw new BadRequestException('指定的阅读会员等级不存在')
     }

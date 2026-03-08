@@ -1,13 +1,19 @@
-import { ApiDoc, ApiPageDoc, CurrentUser, Public } from '@libs/base/decorators'
+import {
+  ApiDoc,
+  ApiPageDoc,
+  CurrentUser,
+  OptionalAuth,
+  Public,
+} from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  BaseWorkChapterDto,
   ComicChapterContentDto,
   ComicContentService,
   NovelChapterContentDto,
   NovelContentService,
   PageWorkChapterDto,
   QueryWorkChapterDto,
+  WorkChapterDetailWithUserStatusDto,
   WorkChapterService,
 } from '@libs/content'
 
@@ -34,21 +40,24 @@ export class WorkChapterController {
   }
 
   @Get('detail')
-  @Public()
+  @OptionalAuth()
   @ApiDoc({
     summary: '查询作品章节详情',
-    model: BaseWorkChapterDto,
+    model: WorkChapterDetailWithUserStatusDto,
   })
-  async getWorkChapterDetail(@Query() query: IdDto) {
-    return this.workChapterService.getChapterDetail(query.id)
+  async getWorkChapterDetail(
+    @Query() query: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.workChapterService.getChapterDetail(query.id, userId)
   }
 
   @Get('comic-content')
+  @OptionalAuth()
   @ApiDoc({
     summary: '查询漫画章节内容',
     model: ComicChapterContentDto,
   })
-  @Public()
   async getComicChapterContent(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,
@@ -60,11 +69,11 @@ export class WorkChapterController {
   }
 
   @Get('novel-content')
+  @OptionalAuth()
   @ApiDoc({
     summary: '查询小说章节内容',
     model: NovelChapterContentDto,
   })
-  @Public()
   async getNovelChapterContent(
     @Query() query: IdDto,
     @CurrentUser('sub') userId: number,

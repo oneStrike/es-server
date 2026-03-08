@@ -14,8 +14,6 @@ import {
   RsaPublicKeyDto,
   TokenDto,
 } from './dto/auth.dto'
-
-import { RevokeDeviceDto, UserDeviceDto } from './dto/device.dto'
 import { PasswordService } from './password.service'
 import { SmsService } from './sms.service'
 
@@ -109,29 +107,5 @@ export class AuthController {
     @CurrentUser() user: JwtUserInfoInterface,
   ) {
     return this.passwordService.changePassword(user.sub, body)
-  }
-
-  @Get('devices')
-  @ApiDoc({
-    summary: '获取用户登录设备列表',
-    model: UserDeviceDto,
-    isArray: true,
-  })
-  async getDevices(@CurrentUser() user: JwtUserInfoInterface) {
-    return this.authService.getUserDevices(user.sub)
-  }
-
-  @Post('revoke-device')
-  @ApiDoc({
-    summary: '撤销特定设备的登录',
-    model: {
-      type: 'boolean',
-    },
-  })
-  async revokeDevice(
-    @Body() body: RevokeDeviceDto,
-    @CurrentUser() user: JwtUserInfoInterface,
-  ) {
-    return this.authService.revokeDevice(user.sub, body.tokenId)
   }
 }

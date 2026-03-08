@@ -311,6 +311,14 @@ export class ChapterUserStatusFieldsDto {
   liked!: boolean
 
   @BooleanProperty({
+    description: '是否已收藏',
+    example: false,
+    required: true,
+    validation: false,
+  })
+  favorited!: boolean
+
+  @BooleanProperty({
     description: '是否已购买',
     example: false,
     required: true,
