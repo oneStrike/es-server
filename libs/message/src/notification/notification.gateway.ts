@@ -1,6 +1,8 @@
 import type { AuthConfigInterface } from '@libs/base/types'
 import type { Server, Socket } from 'socket.io'
 import type { MessageChatService } from '../chat/chat.service'
+import process from 'node:process'
+import { isDevelopment } from '@libs/base/utils'
 import {
   BadRequestException,
   Injectable,
@@ -25,17 +27,29 @@ import {
 } from '../chat/chat.constant'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
 
-/** 数字字符串正则表达式（模块作用域，避免重复编译） */
+/** 鏁板瓧瀛楃涓叉鍒欒〃杈惧紡锛堟ā鍧椾綔鐢ㄥ煙锛岄伩鍏嶉噸澶嶇紪璇戯級 */
 const DIGIT_STRING_REGEX = /^\d+$/
 
-/** WebSocket 请求信封结构 */
+const MESSAGE_WS_CORS_ORIGINS = (process.env.MESSAGE_WS_CORS_ORIGINS || '')
+  .split(',')
+  .map((item) => item.trim())
+  .filter(Boolean)
+
+const MESSAGE_WS_CORS_ORIGIN =
+  MESSAGE_WS_CORS_ORIGINS.length > 0
+    ? (MESSAGE_WS_CORS_ORIGINS.includes('*')
+        ? true
+        : MESSAGE_WS_CORS_ORIGINS)
+    : (!!isDevelopment())
+
+/** WebSocket 璇锋眰淇″皝缁撴瀯 */
 interface WsRequestEnvelope<TPayload> {
   requestId?: string
   timestamp?: number
   payload?: TPayload
 }
 
-/** WebSocket 发送消息载荷 */
+/** WebSocket 鍙戦€佹秷鎭浇鑽? */
 interface WsSendPayload {
   conversationId: number
   clientMessageId?: string
@@ -44,13 +58,13 @@ interface WsSendPayload {
   payload?: unknown
 }
 
-/** WebSocket 已读消息载荷 */
+/** WebSocket 宸茶娑堟伅杞借嵎 */
 interface WsReadPayload {
   conversationId: number
   messageId: string
 }
 
-/** WebSocket 应答载荷 */
+/** WebSocket 搴旂瓟杞借嵎 */
 interface WsAckPayload {
   requestId: string | null
   code: number
@@ -59,15 +73,15 @@ interface WsAckPayload {
 }
 
 /**
- * 消息 WebSocket 网关
- * 处理实时消息通信，包括聊天消息发送和已读标记
+ * 娑堟伅 WebSocket 缃戝叧
+ * 澶勭悊瀹炴椂娑堟伅閫氫俊锛屽寘鎷亰澶╂秷鎭彂閫佸拰宸茶鏍囪
  */
 @Injectable()
 @WebSocketGateway({
   namespace: '/message',
   cors: {
-    origin: true,
-    credentials: true,
+    origin: MESSAGE_WS_CORS_ORIGIN,
+    credentials: MESSAGE_WS_CORS_ORIGIN !== false,
   },
 })
 export class MessageGateway
@@ -87,8 +101,8 @@ export class MessageGateway
   ) {}
 
   /**
-   * 处理 WebSocket 连接
-   * 验证 JWT 令牌并加入用户房间
+   * 澶勭悊 WebSocket 杩炴帴
+   * 楠岃瘉 JWT 浠ょ墝骞跺姞鍏ョ敤鎴锋埧闂?
    */
   async handleConnection(client: Socket) {
     const userId = await this.resolveUserId(client)
@@ -101,7 +115,7 @@ export class MessageGateway
     this.recordReconnectMetric()
   }
 
-  /** 处理 WebSocket 断开连接 */
+  /** 澶勭悊 WebSocket 鏂紑杩炴帴 */
   handleDisconnect(client: Socket) {
     const userId = Number(client.data.userId)
     if (!Number.isInteger(userId) || userId <= 0) {
@@ -110,7 +124,7 @@ export class MessageGateway
     void client.leave(this.getUserRoom(userId))
   }
 
-  /** 向指定用户发送事件 */
+  /** 鍚戞寚瀹氱敤鎴峰彂閫佷簨浠? */
   emitToUser(userId: number, event: string, payload: unknown) {
     if (!this.server || !Number.isInteger(userId) || userId <= 0) {
       return
@@ -119,8 +133,8 @@ export class MessageGateway
   }
 
   /**
-   * 处理聊天消息发送
-   * 通过 WebSocket 实时发送聊天消息
+   * 澶勭悊鑱婂ぉ娑堟伅鍙戦€?
+   * 閫氳繃 WebSocket 瀹炴椂鍙戦€佽亰澶╂秷鎭?
    */
   @SubscribeMessage('chat.send')
   async handleChatSend(
@@ -137,7 +151,7 @@ export class MessageGateway
         {
           requestId: null,
           code: 40001,
-          message: 'requestId 不能为空',
+          message: 'requestId 涓嶈兘涓虹┖',
         },
         requestStartAt,
       )
@@ -166,7 +180,7 @@ export class MessageGateway
         {
           requestId,
           code: 40001,
-          message: '无效的 chat.send 载荷',
+          message: '鏃犳晥鐨?chat.send 杞借嵎',
         },
         requestStartAt,
       )
@@ -213,8 +227,8 @@ export class MessageGateway
   }
 
   /**
-   * 处理聊天消息已读标记
-   * 通过 WebSocket 实时标记消息已读
+   * 澶勭悊鑱婂ぉ娑堟伅宸茶鏍囪
+   * 閫氳繃 WebSocket 瀹炴椂鏍囪娑堟伅宸茶
    */
   @SubscribeMessage('chat.read')
   async handleChatRead(
@@ -231,7 +245,7 @@ export class MessageGateway
         {
           requestId: null,
           code: 40001,
-          message: 'requestId 不能为空',
+          message: 'requestId 涓嶈兘涓虹┖',
         },
         requestStartAt,
       )
@@ -265,7 +279,7 @@ export class MessageGateway
         {
           requestId,
           code: 40001,
-          message: '无效的 chat.read 载荷',
+          message: '鏃犳晥鐨?chat.read 杞借嵎',
         },
         requestStartAt,
       )
@@ -302,12 +316,12 @@ export class MessageGateway
     }
   }
 
-  /** 获取用户房间名称 */
+  /** 鑾峰彇鐢ㄦ埛鎴块棿鍚嶇О */
   private getUserRoom(userId: number) {
     return `user:${userId}`
   }
 
-  /** 获取消息聊天服务实例（延迟加载） */
+  /** 鑾峰彇娑堟伅鑱婂ぉ鏈嶅姟瀹炰緥锛堝欢杩熷姞杞斤級 */
   private getMessageChatService() {
     if (!this.messageChatService) {
       this.messageChatService = this.moduleRef.get<MessageChatService>(
@@ -321,7 +335,7 @@ export class MessageGateway
     return this.messageChatService
   }
 
-  /** 解析用户ID（从 JWT 令牌） */
+  /** 瑙ｆ瀽鐢ㄦ埛ID锛堜粠 JWT 浠ょ墝锛? */
   private async resolveUserId(client: Socket) {
     const token = this.extractToken(client)
     if (!token) {
@@ -331,7 +345,7 @@ export class MessageGateway
     const authConfig = this.configService.get<AuthConfigInterface>('auth')
     const publicKey = this.configService.get<string>('rsa.publicKey')
     if (!authConfig || !publicKey) {
-      this.logger.warn('消息网关缺少认证配置')
+      this.logger.warn('娑堟伅缃戝叧缂哄皯璁よ瘉閰嶇疆')
       return null
     }
 
@@ -355,19 +369,11 @@ export class MessageGateway
     }
   }
 
-  /** 从客户端提取令牌 */
+  /** 浠庡鎴风鎻愬彇浠ょ墝 */
   private extractToken(client: Socket) {
     const authToken = client.handshake.auth?.token
     if (typeof authToken === 'string' && authToken.trim()) {
       return this.normalizeBearerToken(authToken)
-    }
-
-    const queryToken = client.handshake.query?.token
-    if (typeof queryToken === 'string' && queryToken.trim()) {
-      return this.normalizeBearerToken(queryToken)
-    }
-    if (Array.isArray(queryToken) && queryToken[0]?.trim()) {
-      return this.normalizeBearerToken(queryToken[0])
     }
 
     const headerToken = client.handshake.headers?.authorization
@@ -378,7 +384,7 @@ export class MessageGateway
     return null
   }
 
-  /** 标准化 Bearer 令牌 */
+  /** 鏍囧噯鍖?Bearer 浠ょ墝 */
   private normalizeBearerToken(value: string) {
     const token = value.trim()
     if (token.startsWith('Bearer ')) {
@@ -387,7 +393,7 @@ export class MessageGateway
     return token
   }
 
-  /** 发送应答消息 */
+  /** 鍙戦€佸簲绛旀秷鎭? */
   private emitAck(
     client: Socket,
     payload: WsAckPayload,
@@ -400,7 +406,7 @@ export class MessageGateway
     }
   }
 
-  /** 标准化请求ID */
+  /** 鏍囧噯鍖栬姹侷D */
   private normalizeRequestId(requestId?: string) {
     if (typeof requestId !== 'string' || !requestId.trim()) {
       return undefined
@@ -408,7 +414,7 @@ export class MessageGateway
     return requestId.trim().slice(0, 100)
   }
 
-  /** 提取已认证的用户ID */
+  /** 鎻愬彇宸茶璇佺殑鐢ㄦ埛ID */
   private extractAuthenticatedUserId(client: Socket) {
     const userId = Number(client.data.userId)
     if (!Number.isInteger(userId) || userId <= 0) {
@@ -417,13 +423,13 @@ export class MessageGateway
     return userId
   }
 
-  /** 判断是否为正整数 */
+  /** 鍒ゆ柇鏄惁涓烘鏁存暟 */
   private isPositiveInteger(value: unknown) {
     const normalized = Number(value)
     return Number.isInteger(normalized) && normalized > 0
   }
 
-  /** 判断是否为有效的消息类型 */
+  /** 鍒ゆ柇鏄惁涓烘湁鏁堢殑娑堟伅绫诲瀷 */
   private isValidMessageType(value: unknown) {
     return (
       value === ChatMessageTypeEnum.TEXT ||
@@ -432,7 +438,7 @@ export class MessageGateway
     )
   }
 
-  /** 验证发送消息载荷是否有效 */
+  /** 楠岃瘉鍙戦€佹秷鎭浇鑽锋槸鍚︽湁鏁? */
   private isValidSendPayload(payload: WsSendPayload) {
     if (!this.isPositiveInteger(payload.conversationId)) {
       return false
@@ -462,7 +468,7 @@ export class MessageGateway
     return true
   }
 
-  /** 将载荷对象序列化为字符串 */
+  /** 灏嗚浇鑽峰璞″簭鍒楀寲涓哄瓧绗︿覆 */
   private stringifyPayloadObject(payload: unknown) {
     if (payload === undefined) {
       return undefined
@@ -473,18 +479,18 @@ export class MessageGateway
       payload === null ||
       Array.isArray(payload)
     ) {
-      throw new BadRequestException('payload 必须是 JSON 对象')
+      throw new BadRequestException('payload 蹇呴』鏄?JSON 瀵硅薄')
     }
 
     return JSON.stringify(payload)
   }
 
-  /** 将错误映射为应答载荷 */
+  /** 灏嗛敊璇槧灏勪负搴旂瓟杞借嵎 */
   private mapErrorToAck(error: unknown): Omit<WsAckPayload, 'requestId'> {
     if (error instanceof BadRequestException) {
       return {
         code: 40001,
-        message: this.getErrorMessage(error, '请求参数错误'),
+        message: this.getErrorMessage(error, '璇锋眰鍙傛暟閿欒'),
       }
     }
 
@@ -497,7 +503,7 @@ export class MessageGateway
     }
 
     this.logger.error(
-      '消息网关 WebSocket 处理失败',
+      '娑堟伅缃戝叧 WebSocket 澶勭悊澶辫触',
       error instanceof Error ? error.stack : String(error),
     )
     return {
@@ -506,7 +512,7 @@ export class MessageGateway
     }
   }
 
-  /** 从异常中提取错误消息 */
+  /** 浠庡紓甯镐腑鎻愬彇閿欒娑堟伅 */
   private getErrorMessage(
     error: { getResponse: () => unknown },
     fallback: string,
@@ -536,7 +542,7 @@ export class MessageGateway
 
   private recordRequestMetric() {
     void this.messageWsMonitorService.recordRequest().catch((error) => {
-      this.logger.warn(`记录 WS 请求监控失败: ${this.stringifyError(error)}`)
+      this.logger.warn(`璁板綍 WS 璇锋眰鐩戞帶澶辫触: ${this.stringifyError(error)}`)
     })
   }
 
@@ -544,13 +550,13 @@ export class MessageGateway
     void this.messageWsMonitorService
       .recordAck(code, latencyMs)
       .catch((error) => {
-        this.logger.warn(`记录 WS ack 监控失败: ${this.stringifyError(error)}`)
+        this.logger.warn(`璁板綍 WS ack 鐩戞帶澶辫触: ${this.stringifyError(error)}`)
       })
   }
 
   private recordReconnectMetric() {
     void this.messageWsMonitorService.recordReconnect().catch((error) => {
-      this.logger.warn(`记录 WS 连接监控失败: ${this.stringifyError(error)}`)
+      this.logger.warn(`璁板綍 WS 杩炴帴鐩戞帶澶辫触: ${this.stringifyError(error)}`)
     })
   }
 

@@ -163,6 +163,12 @@ export class AuthService extends BaseService {
   async refreshToken(body: RefreshTokenDto, req: FastifyRequest) {
     const tokens = await this.baseJwtService.refreshAccessToken(
       body.refreshToken,
+      {
+        validateRefreshTokenJti: async (jti) =>
+          this.adminTokenStorageService.isTokenValid(jti),
+        revokeRefreshTokenJti: async (jti) =>
+          this.adminTokenStorageService.revokeByJti(jti, 'TOKEN_REFRESH'),
+      },
     )
 
     // 存储新令牌

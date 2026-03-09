@@ -3,7 +3,6 @@ import type {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify'
-import fastifyCsrf from '@fastify/csrf-protection'
 import fastifyHelmet from '@fastify/helmet'
 
 import { isDevelopment } from '@libs/base/utils'
@@ -13,7 +12,7 @@ import { setupMultipart } from './multipart'
 import { setupSwagger } from './swagger'
 
 /**
- * 配置应用的所有中间件和插件
+ * 閰嶇疆搴旂敤鐨勬墍鏈変腑闂翠欢鍜屾彃浠?
  */
 export async function setupApp(
   app: NestFastifyApplication,
@@ -22,34 +21,31 @@ export async function setupApp(
 ): Promise<void> {
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER))
 
-  // 设置全局路由前缀
+  // 璁剧疆鍏ㄥ眬璺敱鍓嶇紑
   app.setGlobalPrefix(config.globalApiPrefix)
 
-  // 处理浏览器自动请求的站点图标，避免 404 噪音日志
-  // 若需要自定义图标，可改为使用 @fastify/static 提供真实文件
+  // 澶勭悊娴忚鍣ㄨ嚜鍔ㄨ姹傜殑绔欑偣鍥炬爣锛岄伩鍏?404 鍣煶鏃ュ織
+  // 鑻ラ渶瑕佽嚜瀹氫箟鍥炬爣锛屽彲鏀逛负浣跨敤 @fastify/static 鎻愪緵鐪熷疄鏂囦欢
   fastifyAdapter.getInstance().get('/favicon.ico', async (_req, reply) => {
     reply.type('image/x-icon').code(204).send()
   })
 
-  // 配置响应压缩（gzip/brotli）
+  // 閰嶇疆鍝嶅簲鍘嬬缉锛坓zip/brotli锛?
   await setupCompression(fastifyAdapter)
 
-  // 配置文件上传
+  // 閰嶇疆鏂囦欢涓婁紶
   await setupMultipart(fastifyAdapter, app)
 
-  // 注册 CSRF 保护插件
-  await app.register(fastifyCsrf)
-
-  // 注册安全响应头（Helmet）
+  // 娉ㄥ唽瀹夊叏鍝嶅簲澶达紙Helmet锛?
   await app.register(fastifyHelmet, {
-    // 依据 API 服务特性开启常用安全策略
-    contentSecurityPolicy: false, // 若无模板渲染，可禁用以减少开销
+    // 渚濇嵁 API 鏈嶅姟鐗规€у紑鍚父鐢ㄥ畨鍏ㄧ瓥鐣?
+    contentSecurityPolicy: false, // 鑻ユ棤妯℃澘娓叉煋锛屽彲绂佺敤浠ュ噺灏戝紑閿€
     crossOriginResourcePolicy: { policy: 'cross-origin' },
     xssFilter: true,
     hidePoweredBy: true,
   })
 
-  // 配置 Swagger 文档（生产环境可条件性禁用）
+  // 閰嶇疆 Swagger 鏂囨。锛堢敓浜х幆澧冨彲鏉′欢鎬х鐢級
   if (isDevelopment() || config.swaggerConfig.enable) {
     setupSwagger(app, config.swaggerConfig)
   }

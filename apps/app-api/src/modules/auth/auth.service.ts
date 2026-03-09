@@ -270,7 +270,11 @@ export class AuthService extends BaseService {
    * 刷新令牌
    */
   async refreshToken(refreshToken: string, req: FastifyRequest) {
-    const tokens = await this.baseJwtService.refreshAccessToken(refreshToken)
+    const tokens = await this.baseJwtService.refreshAccessToken(refreshToken, {
+      validateRefreshTokenJti: async (jti) => this.tokenStorageService.isTokenValid(jti),
+      revokeRefreshTokenJti: async (jti) =>
+        this.tokenStorageService.revokeByJti(jti, 'TOKEN_REFRESH'),
+    })
     const payload = await this.baseJwtService.decodeToken(tokens.accessToken)
     const userId = Number(payload.sub)
 

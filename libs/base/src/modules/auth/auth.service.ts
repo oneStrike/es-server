@@ -7,10 +7,15 @@ import { v4 as uuid } from 'uuid'
 import { AuthErrorConstant } from './auth.constant'
 import { JwtBlacklistService } from './jwt-blacklist.service'
 
+interface RefreshAccessTokenOptions {
+  validateRefreshTokenJti?: (jti: string) => boolean | Promise<boolean>
+  revokeRefreshTokenJti?: (jti: string) => void | Promise<void>
+}
+
 /**
- * JWT 认证服务类
- * 提供 JWT Token 的生成、验证、刷新和撤销功能
- * 支持 Access Token 和 Refresh Token 双令牌机制
+ * JWT 璁よ瘉鏈嶅姟绫?
+ * 鎻愪緵 JWT Token 鐨勭敓鎴愩€侀獙璇併€佸埛鏂板拰鎾ら攢鍔熻兘
+ * 鏀寔 Access Token 鍜?Refresh Token 鍙屼护鐗屾満鍒?
  */
 @Injectable()
 export class AuthService {
@@ -23,13 +28,13 @@ export class AuthService {
   ) {
     const config = this.configService.get<AuthConfigInterface>('auth')
     if (!config) {
-      throw new Error('AuthService：缺少 auth 配置')
+      throw new Error('AuthService锛氱己灏?auth 閰嶇疆')
     }
     this.config = config
   }
 
   /**
-   * 生成 JWT Token 对
+   * 鐢熸垚 JWT Token 瀵?
    */
   async generateTokens(payload) {
     const basePayload = {
@@ -55,14 +60,34 @@ export class AuthService {
   }
 
   /**
-   * 使用 Refresh Token 刷新 Access Token
+   * 浣跨敤 Refresh Token 鍒锋柊 Access Token
    */
-  async refreshAccessToken(refreshToken: string) {
-    const { aud, jti, exp, iat, iss, ...payload } =
+  async refreshAccessToken(
+    refreshToken: string,
+    options: RefreshAccessTokenOptions = {},
+  ) {
+    const { aud, jti, ...payload } =
       await this.jwtService.verifyAsync(refreshToken)
-    const isBlacklist = await this.blacklistService.isInBlacklist(jti)
-    if (payload.type !== 'refresh' || aud !== this.config.aud || isBlacklist) {
+    if (!jti || typeof jti !== 'string') {
       throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+    }
+
+    const isBlacklist = await this.blacklistService.isInBlacklist(jti)
+    const isPersisted = options.validateRefreshTokenJti
+      ? await options.validateRefreshTokenJti(jti)
+      : true
+
+    if (
+      payload.type !== 'refresh'
+      || aud !== this.config.aud
+      || isBlacklist
+      || !isPersisted
+    ) {
+      throw new UnauthorizedException(AuthErrorConstant.LOGIN_INVALID)
+    }
+
+    if (options.revokeRefreshTokenJti) {
+      await options.revokeRefreshTokenJti(jti)
     }
 
     await this.addToBlacklist(refreshToken)
@@ -70,13 +95,13 @@ export class AuthService {
   }
 
   /**
-   * 计算令牌剩余有效时间并提取 JTI
+   * 璁＄畻浠ょ墝鍓╀綑鏈夋晥鏃堕棿骞舵彁鍙?JTI
    */
   protected async tokenTtlMsAndJti(token: string) {
     const publicKey = this.configService.get('rsa.publicKey')
 
     if (!publicKey) {
-      throw new Error('无法验证 Token: 未配置 RSA 公钥')
+      throw new Error('鏃犳硶楠岃瘉 Token: 鏈厤缃?RSA 鍏挜')
     }
 
     const verifyOptions = { publicKey, algorithms: ['RS256' as const] }
@@ -92,7 +117,7 @@ export class AuthService {
   }
 
   /**
-   * 退出登录，将 Access Token 和 Refresh Token 添加到黑名单
+   * 閫€鍑虹櫥褰曪紝灏?Access Token 鍜?Refresh Token 娣诲姞鍒伴粦鍚嶅崟
    */
   async logout(accessToken: string, refreshToken: string): Promise<boolean> {
     await Promise.all([
@@ -103,7 +128,7 @@ export class AuthService {
   }
 
   /**
-   * 将令牌添加到黑名单
+   * 灏嗕护鐗屾坊鍔犲埌榛戝悕鍗?
    */
   async addToBlacklist(token: string) {
     const { jti, ttlMs } = await this.tokenTtlMsAndJti(token)
@@ -114,12 +139,12 @@ export class AuthService {
   }
 
   /**
-   * 解码 Token（不验证签名）
+   * 瑙ｇ爜 Token锛堜笉楠岃瘉绛惧悕锛?
    */
   async decodeToken(token: string) {
     const parts = token.split('.')
     if (parts.length !== 3) {
-      throw new UnauthorizedException('无效的 Token 格式')
+      throw new UnauthorizedException('鏃犳晥鐨?Token 鏍煎紡')
     }
 
     const payload = parts[1]

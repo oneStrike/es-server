@@ -10,6 +10,8 @@ import fastifyMultipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import { ConfigService } from '@nestjs/config'
 
+const EXT_LEADING_DOT_REGEX = /^\./
+
 export async function setupMultipart(
   fastifyAdapter: FastifyAdapter,
   app: NestFastifyApplication,
@@ -18,10 +20,10 @@ export async function setupMultipart(
   const uploadConfig = configService.get<UploadConfigInterface>('upload')!
   const appConfig = configService.get<AppConfigInterface>('app')!
 
-  // 确保上传目录存在（在挂载的宿主机目录下递归创建）
+  // 绾喕绻氭稉濠佺炊閻╊喖缍嶇€涙ê婀敍鍫濇躬閹稿倽娴囬惃鍕問娑撶粯婧€閻╊喖缍嶆稉瀣偓鎺戠秺閸掓稑缂撻敍?
   await mkdir(uploadConfig.uploadDir, { recursive: true })
 
-  // 注册静态文件服务
+  // 濞夈劌鍞介棃娆愨偓浣规瀮娴犺埖婀囬崝?
   await fastifyAdapter.register(fastifyStatic, {
     root: uploadConfig.uploadDir,
     prefix: appConfig.fileUrlPrefix,
@@ -30,34 +32,35 @@ export async function setupMultipart(
     etag: true,
     cacheControl: true,
     maxAge: '1h',
-    // 针对文档与压缩包类型强制以附件方式下载，降低 XSS 风险
+    // 闁藉牆顕弬鍥ㄣ€傛稉搴″竾缂傗晛瀵樼猾璇茬€峰鍝勫煑娴犮儵妾禒鑸垫煙瀵繋绗呮潪鏂ょ礉闂勫秳缍?XSS 妞嬪酣娅?
     setHeaders(res: any, filePath: string) {
       try {
-        const { document, archive } = uploadConfig.allowMimeTypes
-        const ext = extname(filePath).toLowerCase()
+        const { document, archive } = uploadConfig.allowExtensions
+        const ext = extname(filePath).toLowerCase().replace(EXT_LEADING_DOT_REGEX, '')
         const isDoc = document?.includes(ext)
         const isArchive = archive?.includes(ext)
         if (isDoc || isArchive) {
           res.setHeader('Content-Disposition', 'attachment')
+          res.setHeader('X-Content-Type-Options', 'nosniff')
         }
       } catch {}
     },
   })
 
-  // 注册multipart插件
+  // 濞夈劌鍞絤ultipart閹绘帊娆?
   await fastifyAdapter.register(fastifyMultipart, {
-    // 启用文件大小限制异常抛出
+    // 閸氼垳鏁ら弬鍥︽婢堆冪毈闂勬劕鍩楀鍌氱埗閹舵稑鍤?
     throwFileSizeLimit: true,
-    // 全局文件大小限制，直接传递给插件
+    // 閸忋劌鐪弬鍥︽婢堆冪毈闂勬劕鍩楅敍宀€娲块幒銉ょ炊闁帞绮伴幓鎺嶆
     fileSize: uploadConfig.maxFileSize,
-    // 其他限制配置
+    // 閸忔湹绮梽鎰煑闁板秶鐤?
     limits: {
-      fieldNameSize: 100, // 字段名称最大长度
-      fieldSize: 100 * 1024, // 字段值最大长度 (100KB)
-      fields: 10, // 最大字段数量
-      files: 1, // 最大文件数量，单文件模式
-      parts: 1000, // 最大part数量
-      fileSize: uploadConfig.maxFileSize, // 确保在limits对象中也设置文件大小限制
+      fieldNameSize: 100, // 鐎涙顔岄崥宥囆為張鈧径褔鏆辨惔?
+      fieldSize: 100 * 1024, // 鐎涙顔岄崐鍏兼付婢堆囨毐鎼?(100KB)
+      fields: 10, // 閺堚偓婢堆冪摟濞堝灚鏆熼柌?
+      files: 1, // 閺堚偓婢堆勬瀮娴犺埖鏆熼柌蹇ョ礉閸楁洘鏋冩禒鑸的佸?
+      parts: 1000, // 閺堚偓婢额湺art閺佷即鍣?
+      fileSize: uploadConfig.maxFileSize, // 绾喕绻氶崷鈺╥mits鐎电钖勬稉顓濈瘍鐠佸墽鐤嗛弬鍥︽婢堆冪毈闂勬劕鍩?
     },
   })
 }
