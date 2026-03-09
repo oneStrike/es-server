@@ -81,7 +81,7 @@ export class WorkChapterController {
   @Get('comic-content')
   @OptionalAuth()
   @ApiDoc({
-    summary: '查询漫画章节内容',
+    summary: '查询漫画章节内容（内容可复用详情接口）',
     model: ComicChapterContentDto,
   })
   async getComicChapterContent(
@@ -97,7 +97,7 @@ export class WorkChapterController {
   @Get('novel-content')
   @OptionalAuth()
   @ApiDoc({
-    summary: '查询小说章节内容',
+    summary: '查询小说章节内容（内容可复用详情接口）',
     model: NovelChapterContentDto,
   })
   async getNovelChapterContent(

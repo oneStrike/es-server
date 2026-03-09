@@ -88,6 +88,8 @@ model Work {
   tags              WorkTagRelation[]
   /// 章节列表
   chapters          WorkChapter[]
+  /// 用户作品浏览状态
+  browseStates      UserWorkBrowseState[]
   /// 阅读等级关联
   requiredViewLevel UserLevelRule?         @relation("WorkViewLevel", fields: [requiredViewLevelId], references: [id])
 

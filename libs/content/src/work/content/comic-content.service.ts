@@ -176,7 +176,7 @@ export class ComicContentService extends BaseService {
    * @param content 原始内容字符串
    * @returns 图片路径列表
    */
-  private parseContent(content: string | null | undefined): string[] {
+  parseContent(content: string | null | undefined): string[] {
     if (!content) {
       return []
     }

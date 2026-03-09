@@ -5,8 +5,8 @@ import { MessageInboxModule } from '../inbox/inbox.module'
 import { MessageMonitorModule } from '../monitor/monitor.module'
 import { MessageNativeWebSocketServer } from './notification-native-websocket.server'
 import { MessageNotificationRealtimeService } from './notification-realtime.service'
-import { MessageGateway } from './notification.gateway'
 import { MessageWebSocketService } from './notification-websocket.service'
+import { MessageGateway } from './notification.gateway'
 import { MessageNotificationService } from './notification.service'
 
 @Module({

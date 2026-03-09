@@ -1,12 +1,13 @@
-import type { IncomingMessage, Server as HttpServer } from 'node:http'
+import type { Server as HttpServer, IncomingMessage } from 'node:http'
 import type { Socket as NodeSocket } from 'node:net'
-import type { NativeWsRequestEnvelope } from './notification-websocket.types'
 import type { WebSocket } from 'ws'
+import type { NativeWsRequestEnvelope } from './notification-websocket.types'
+import { Buffer } from 'node:buffer'
 import { Injectable, Logger, OnApplicationShutdown } from '@nestjs/common'
 import { WebSocketServer } from 'ws'
 import { MessageWebSocketService } from './notification-websocket.service'
 
-type NativeWsClientState = {
+interface NativeWsClientState {
   userId: number | null
 }
 
@@ -65,22 +66,30 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
       }
 
       if (state.userId) {
-        this.messageWebSocketService.unregisterNativeClient(state.userId, client)
+        this.messageWebSocketService.unregisterNativeClient(
+          state.userId,
+          client,
+        )
       }
 
       state.userId = userId
       this.messageWebSocketService.registerNativeClient(userId, client)
-      client.send(this.messageWebSocketService.createNativeAuthOkMessage(userId))
+      client.send(
+        this.messageWebSocketService.createNativeAuthOkMessage(userId),
+      )
     }
 
     const initialAuthPromise = (async () => {
-      const userId = await this.messageWebSocketService.resolveNativeRequestUserId(request)
+      const userId =
+        await this.messageWebSocketService.resolveNativeRequestUserId(request)
       if (userId) {
         bindUser(userId)
         return
       }
 
-      client.send(this.messageWebSocketService.createNativeAuthRequiredMessage())
+      client.send(
+        this.messageWebSocketService.createNativeAuthRequiredMessage(),
+      )
     })()
 
     client.on('message', async (raw, isBinary) => {
@@ -100,7 +109,10 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
 
     client.on('close', () => {
       if (state.userId) {
-        this.messageWebSocketService.unregisterNativeClient(state.userId, client)
+        this.messageWebSocketService.unregisterNativeClient(
+          state.userId,
+          client,
+        )
       }
     })
 
@@ -127,7 +139,8 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
       return
     }
 
-    const event = typeof envelope.event === 'string' ? envelope.event.trim() : ''
+    const event =
+      typeof envelope.event === 'string' ? envelope.event.trim() : ''
     if (!event) {
       client.send(
         this.messageWebSocketService.createNativeErrorMessage(
@@ -148,12 +161,17 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
       }
 
       if (state.userId && state.userId !== userId) {
-        this.messageWebSocketService.unregisterNativeClient(state.userId, client)
+        this.messageWebSocketService.unregisterNativeClient(
+          state.userId,
+          client,
+        )
       }
 
       state.userId = userId
       this.messageWebSocketService.registerNativeClient(userId, client)
-      client.send(this.messageWebSocketService.createNativeAuthOkMessage(userId))
+      client.send(
+        this.messageWebSocketService.createNativeAuthOkMessage(userId),
+      )
       return
     }
 
@@ -176,7 +194,9 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
     if (event === 'chat.send') {
       const ack = await this.messageWebSocketService.handleChatSend(
         state.userId,
-        envelope as NativeWsRequestEnvelope<import('./notification-websocket.types').WsSendPayload>,
+        envelope as NativeWsRequestEnvelope<
+          import('./notification-websocket.types').WsSendPayload
+        >,
       )
       client.send(this.messageWebSocketService.createNativeAckMessage(ack))
       return
@@ -185,7 +205,9 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
     if (event === 'chat.read') {
       const ack = await this.messageWebSocketService.handleChatRead(
         state.userId,
-        envelope as NativeWsRequestEnvelope<import('./notification-websocket.types').WsReadPayload>,
+        envelope as NativeWsRequestEnvelope<
+          import('./notification-websocket.types').WsReadPayload
+        >,
       )
       client.send(this.messageWebSocketService.createNativeAckMessage(ack))
       return
@@ -206,10 +228,10 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
     }
 
     if (
-      envelope.payload
-      && typeof envelope.payload === 'object'
-      && !Array.isArray(envelope.payload)
-      && 'token' in envelope.payload
+      envelope.payload &&
+      typeof envelope.payload === 'object' &&
+      !Array.isArray(envelope.payload) &&
+      'token' in envelope.payload
     ) {
       const token = (envelope.payload as { token?: unknown }).token
       if (typeof token === 'string' && token.trim()) {
@@ -222,8 +244,8 @@ export class MessageNativeWebSocketServer implements OnApplicationShutdown {
 
   private isMessagePath(request: IncomingMessage) {
     try {
-      const host
-        = typeof request.headers.host === 'string' && request.headers.host.trim()
+      const host =
+        typeof request.headers.host === 'string' && request.headers.host.trim()
           ? request.headers.host
           : 'localhost'
       const url = new URL(request.url ?? '/', `http://${host}`)

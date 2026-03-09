@@ -535,6 +535,7 @@ export type WorkWhereInput = {
   categories?: Prisma.WorkCategoryRelationListRelationFilter
   tags?: Prisma.WorkTagRelationListRelationFilter
   chapters?: Prisma.WorkChapterListRelationFilter
+  browseStates?: Prisma.UserWorkBrowseStateListRelationFilter
   requiredViewLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
 }
 
@@ -582,6 +583,7 @@ export type WorkOrderByWithRelationInput = {
   categories?: Prisma.WorkCategoryRelationOrderByRelationAggregateInput
   tags?: Prisma.WorkTagRelationOrderByRelationAggregateInput
   chapters?: Prisma.WorkChapterOrderByRelationAggregateInput
+  browseStates?: Prisma.UserWorkBrowseStateOrderByRelationAggregateInput
   requiredViewLevel?: Prisma.UserLevelRuleOrderByWithRelationInput
 }
 
@@ -632,6 +634,7 @@ export type WorkWhereUniqueInput = Prisma.AtLeast<{
   categories?: Prisma.WorkCategoryRelationListRelationFilter
   tags?: Prisma.WorkTagRelationListRelationFilter
   chapters?: Prisma.WorkChapterListRelationFilter
+  browseStates?: Prisma.UserWorkBrowseStateListRelationFilter
   requiredViewLevel?: Prisma.XOR<Prisma.UserLevelRuleNullableScalarRelationFilter, Prisma.UserLevelRuleWhereInput> | null
 }, "id">
 
@@ -765,6 +768,7 @@ export type WorkCreateInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
 }
 
@@ -812,6 +816,7 @@ export type WorkUncheckedCreateInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutWorkInput
 }
 
 export type WorkUpdateInput = {
@@ -856,6 +861,7 @@ export type WorkUpdateInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
 }
 
@@ -903,6 +909,7 @@ export type WorkUncheckedUpdateInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkCreateManyInput = {
@@ -1236,6 +1243,20 @@ export type WorkUncheckedUpdateManyWithoutRequiredViewLevelNestedInput = {
   deleteMany?: Prisma.WorkScalarWhereInput | Prisma.WorkScalarWhereInput[]
 }
 
+export type WorkCreateNestedOneWithoutBrowseStatesInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutBrowseStatesInput, Prisma.WorkUncheckedCreateWithoutBrowseStatesInput>
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutBrowseStatesInput
+  connect?: Prisma.WorkWhereUniqueInput
+}
+
+export type WorkUpdateOneRequiredWithoutBrowseStatesNestedInput = {
+  create?: Prisma.XOR<Prisma.WorkCreateWithoutBrowseStatesInput, Prisma.WorkUncheckedCreateWithoutBrowseStatesInput>
+  connectOrCreate?: Prisma.WorkCreateOrConnectWithoutBrowseStatesInput
+  upsert?: Prisma.WorkUpsertWithoutBrowseStatesInput
+  connect?: Prisma.WorkWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.WorkUpdateToOneWithWhereWithoutBrowseStatesInput, Prisma.WorkUpdateWithoutBrowseStatesInput>, Prisma.WorkUncheckedUpdateWithoutBrowseStatesInput>
+}
+
 export type WorkCreateNestedOneWithoutAuthorsInput = {
   create?: Prisma.XOR<Prisma.WorkCreateWithoutAuthorsInput, Prisma.WorkUncheckedCreateWithoutAuthorsInput>
   connectOrCreate?: Prisma.WorkCreateOrConnectWithoutAuthorsInput
@@ -1378,6 +1399,7 @@ export type WorkCreateWithoutRequiredViewLevelInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutWorkInput
 }
 
 export type WorkUncheckedCreateWithoutRequiredViewLevelInput = {
@@ -1423,6 +1445,7 @@ export type WorkUncheckedCreateWithoutRequiredViewLevelInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutWorkInput
 }
 
 export type WorkCreateOrConnectWithoutRequiredViewLevelInput = {
@@ -1494,6 +1517,204 @@ export type WorkScalarWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"Work"> | Date | string | null
 }
 
+export type WorkCreateWithoutBrowseStatesInput = {
+  type: number
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  remark?: string | null
+  isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  viewRule?: number
+  chapterPrice?: number
+  canComment?: boolean
+  recommendWeight?: number
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  commentCount?: number
+  downloadCount?: number
+  rating?: number | null
+  ratingCount?: number
+  popularity?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comic?: Prisma.WorkComicCreateNestedOneWithoutWorkInput
+  novel?: Prisma.WorkNovelCreateNestedOneWithoutWorkInput
+  authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
+  categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
+  tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
+  chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
+}
+
+export type WorkUncheckedCreateWithoutBrowseStatesInput = {
+  id?: number
+  type: number
+  name: string
+  alias?: string | null
+  cover: string
+  description: string
+  language: string
+  region: string
+  ageRating?: string | null
+  serialStatus?: number
+  publisher?: string | null
+  originalSource?: string | null
+  copyright?: string | null
+  disclaimer?: string | null
+  remark?: string | null
+  isPublished?: boolean
+  isRecommended?: boolean
+  isHot?: boolean
+  isNew?: boolean
+  publishAt?: Date | string | null
+  lastUpdated?: Date | string | null
+  viewRule?: number
+  requiredViewLevelId?: number | null
+  chapterPrice?: number
+  canComment?: boolean
+  recommendWeight?: number
+  viewCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  commentCount?: number
+  downloadCount?: number
+  rating?: number | null
+  ratingCount?: number
+  popularity?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  comic?: Prisma.WorkComicUncheckedCreateNestedOneWithoutWorkInput
+  novel?: Prisma.WorkNovelUncheckedCreateNestedOneWithoutWorkInput
+  authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
+  categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
+  tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
+  chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+}
+
+export type WorkCreateOrConnectWithoutBrowseStatesInput = {
+  where: Prisma.WorkWhereUniqueInput
+  create: Prisma.XOR<Prisma.WorkCreateWithoutBrowseStatesInput, Prisma.WorkUncheckedCreateWithoutBrowseStatesInput>
+}
+
+export type WorkUpsertWithoutBrowseStatesInput = {
+  update: Prisma.XOR<Prisma.WorkUpdateWithoutBrowseStatesInput, Prisma.WorkUncheckedUpdateWithoutBrowseStatesInput>
+  create: Prisma.XOR<Prisma.WorkCreateWithoutBrowseStatesInput, Prisma.WorkUncheckedCreateWithoutBrowseStatesInput>
+  where?: Prisma.WorkWhereInput
+}
+
+export type WorkUpdateToOneWithWhereWithoutBrowseStatesInput = {
+  where?: Prisma.WorkWhereInput
+  data: Prisma.XOR<Prisma.WorkUpdateWithoutBrowseStatesInput, Prisma.WorkUncheckedUpdateWithoutBrowseStatesInput>
+}
+
+export type WorkUpdateWithoutBrowseStatesInput = {
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comic?: Prisma.WorkComicUpdateOneWithoutWorkNestedInput
+  novel?: Prisma.WorkNovelUpdateOneWithoutWorkNestedInput
+  authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
+  categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
+  tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
+  chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
+}
+
+export type WorkUncheckedUpdateWithoutBrowseStatesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  type?: Prisma.IntFieldUpdateOperationsInput | number
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  alias?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cover?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  region?: Prisma.StringFieldUpdateOperationsInput | string
+  ageRating?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  serialStatus?: Prisma.IntFieldUpdateOperationsInput | number
+  publisher?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  originalSource?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  copyright?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  disclaimer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remark?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isPublished?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isRecommended?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isHot?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isNew?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  publishAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastUpdated?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  viewRule?: Prisma.IntFieldUpdateOperationsInput | number
+  requiredViewLevelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  chapterPrice?: Prisma.IntFieldUpdateOperationsInput | number
+  canComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  recommendWeight?: Prisma.FloatFieldUpdateOperationsInput | number
+  viewCount?: Prisma.IntFieldUpdateOperationsInput | number
+  favoriteCount?: Prisma.IntFieldUpdateOperationsInput | number
+  likeCount?: Prisma.IntFieldUpdateOperationsInput | number
+  commentCount?: Prisma.IntFieldUpdateOperationsInput | number
+  downloadCount?: Prisma.IntFieldUpdateOperationsInput | number
+  rating?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  ratingCount?: Prisma.IntFieldUpdateOperationsInput | number
+  popularity?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  comic?: Prisma.WorkComicUncheckedUpdateOneWithoutWorkNestedInput
+  novel?: Prisma.WorkNovelUncheckedUpdateOneWithoutWorkNestedInput
+  authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
+  categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
+  tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
+  chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+}
+
 export type WorkCreateWithoutAuthorsInput = {
   type: number
   name: string
@@ -1535,6 +1756,7 @@ export type WorkCreateWithoutAuthorsInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
 }
 
@@ -1581,6 +1803,7 @@ export type WorkUncheckedCreateWithoutAuthorsInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutWorkInput
 }
 
 export type WorkCreateOrConnectWithoutAuthorsInput = {
@@ -1640,6 +1863,7 @@ export type WorkUpdateWithoutAuthorsInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
 }
 
@@ -1686,6 +1910,7 @@ export type WorkUncheckedUpdateWithoutAuthorsInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkCreateWithoutCategoriesInput = {
@@ -1729,6 +1954,7 @@ export type WorkCreateWithoutCategoriesInput = {
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
 }
 
@@ -1775,6 +2001,7 @@ export type WorkUncheckedCreateWithoutCategoriesInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutWorkInput
 }
 
 export type WorkCreateOrConnectWithoutCategoriesInput = {
@@ -1834,6 +2061,7 @@ export type WorkUpdateWithoutCategoriesInput = {
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
 }
 
@@ -1880,6 +2108,7 @@ export type WorkUncheckedUpdateWithoutCategoriesInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkCreateWithoutChaptersInput = {
@@ -1923,6 +2152,7 @@ export type WorkCreateWithoutChaptersInput = {
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
 }
 
@@ -1969,6 +2199,7 @@ export type WorkUncheckedCreateWithoutChaptersInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutWorkInput
 }
 
 export type WorkCreateOrConnectWithoutChaptersInput = {
@@ -2028,6 +2259,7 @@ export type WorkUpdateWithoutChaptersInput = {
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
 }
 
@@ -2074,6 +2306,7 @@ export type WorkUncheckedUpdateWithoutChaptersInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkCreateWithoutComicInput = {
@@ -2117,6 +2350,7 @@ export type WorkCreateWithoutComicInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
 }
 
@@ -2163,6 +2397,7 @@ export type WorkUncheckedCreateWithoutComicInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutWorkInput
 }
 
 export type WorkCreateOrConnectWithoutComicInput = {
@@ -2222,6 +2457,7 @@ export type WorkUpdateWithoutComicInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
 }
 
@@ -2268,6 +2504,7 @@ export type WorkUncheckedUpdateWithoutComicInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkCreateWithoutNovelInput = {
@@ -2311,6 +2548,7 @@ export type WorkCreateWithoutNovelInput = {
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
 }
 
@@ -2357,6 +2595,7 @@ export type WorkUncheckedCreateWithoutNovelInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   tags?: Prisma.WorkTagRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutWorkInput
 }
 
 export type WorkCreateOrConnectWithoutNovelInput = {
@@ -2416,6 +2655,7 @@ export type WorkUpdateWithoutNovelInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
 }
 
@@ -2462,6 +2702,7 @@ export type WorkUncheckedUpdateWithoutNovelInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkCreateWithoutTagsInput = {
@@ -2505,6 +2746,7 @@ export type WorkCreateWithoutTagsInput = {
   authors?: Prisma.WorkAuthorRelationCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutWorkInput
   requiredViewLevel?: Prisma.UserLevelRuleCreateNestedOneWithoutWorksAsViewLevelInput
 }
 
@@ -2551,6 +2793,7 @@ export type WorkUncheckedCreateWithoutTagsInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedCreateNestedManyWithoutWorkInput
   categories?: Prisma.WorkCategoryRelationUncheckedCreateNestedManyWithoutWorkInput
   chapters?: Prisma.WorkChapterUncheckedCreateNestedManyWithoutWorkInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutWorkInput
 }
 
 export type WorkCreateOrConnectWithoutTagsInput = {
@@ -2610,6 +2853,7 @@ export type WorkUpdateWithoutTagsInput = {
   authors?: Prisma.WorkAuthorRelationUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutWorkNestedInput
   requiredViewLevel?: Prisma.UserLevelRuleUpdateOneWithoutWorksAsViewLevelNestedInput
 }
 
@@ -2656,6 +2900,7 @@ export type WorkUncheckedUpdateWithoutTagsInput = {
   authors?: Prisma.WorkAuthorRelationUncheckedUpdateManyWithoutWorkNestedInput
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkCreateManyRequiredViewLevelInput = {
@@ -2739,6 +2984,7 @@ export type WorkUpdateWithoutRequiredViewLevelInput = {
   categories?: Prisma.WorkCategoryRelationUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateWithoutRequiredViewLevelInput = {
@@ -2784,6 +3030,7 @@ export type WorkUncheckedUpdateWithoutRequiredViewLevelInput = {
   categories?: Prisma.WorkCategoryRelationUncheckedUpdateManyWithoutWorkNestedInput
   tags?: Prisma.WorkTagRelationUncheckedUpdateManyWithoutWorkNestedInput
   chapters?: Prisma.WorkChapterUncheckedUpdateManyWithoutWorkNestedInput
+  browseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutWorkNestedInput
 }
 
 export type WorkUncheckedUpdateManyWithoutRequiredViewLevelInput = {
@@ -2835,6 +3082,7 @@ export type WorkCountOutputType = {
   categories: number
   tags: number
   chapters: number
+  browseStates: number
 }
 
 export type WorkCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2842,6 +3090,7 @@ export type WorkCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   categories?: boolean | WorkCountOutputTypeCountCategoriesArgs
   tags?: boolean | WorkCountOutputTypeCountTagsArgs
   chapters?: boolean | WorkCountOutputTypeCountChaptersArgs
+  browseStates?: boolean | WorkCountOutputTypeCountBrowseStatesArgs
 }
 
 /**
@@ -2880,6 +3129,13 @@ export type WorkCountOutputTypeCountTagsArgs<ExtArgs extends runtime.Types.Exten
  */
 export type WorkCountOutputTypeCountChaptersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.WorkChapterWhereInput
+}
+
+/**
+ * WorkCountOutputType without action
+ */
+export type WorkCountOutputTypeCountBrowseStatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWorkBrowseStateWhereInput
 }
 
 
@@ -2927,6 +3183,7 @@ export type WorkSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   categories?: boolean | Prisma.Work$categoriesArgs<ExtArgs>
   tags?: boolean | Prisma.Work$tagsArgs<ExtArgs>
   chapters?: boolean | Prisma.Work$chaptersArgs<ExtArgs>
+  browseStates?: boolean | Prisma.Work$browseStatesArgs<ExtArgs>
   requiredViewLevel?: boolean | Prisma.Work$requiredViewLevelArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["work"]>
@@ -3061,6 +3318,7 @@ export type WorkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   categories?: boolean | Prisma.Work$categoriesArgs<ExtArgs>
   tags?: boolean | Prisma.Work$tagsArgs<ExtArgs>
   chapters?: boolean | Prisma.Work$chaptersArgs<ExtArgs>
+  browseStates?: boolean | Prisma.Work$browseStatesArgs<ExtArgs>
   requiredViewLevel?: boolean | Prisma.Work$requiredViewLevelArgs<ExtArgs>
   _count?: boolean | Prisma.WorkCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -3098,6 +3356,10 @@ export type $WorkPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
      * 章节列表
      */
     chapters: Prisma.$WorkChapterPayload<ExtArgs>[]
+    /**
+     * 用户作品浏览状态
+     */
+    browseStates: Prisma.$UserWorkBrowseStatePayload<ExtArgs>[]
     /**
      * 阅读等级关联
      */
@@ -3652,6 +3914,7 @@ export interface Prisma__WorkClient<T, Null = never, ExtArgs extends runtime.Typ
   categories<T extends Prisma.Work$categoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$categoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkCategoryRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tags<T extends Prisma.Work$tagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkTagRelationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   chapters<T extends Prisma.Work$chaptersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$chaptersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkChapterPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  browseStates<T extends Prisma.Work$browseStatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$browseStatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserWorkBrowseStatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   requiredViewLevel<T extends Prisma.Work$requiredViewLevelArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Work$requiredViewLevelArgs<ExtArgs>>): Prisma.Prisma__UserLevelRuleClient<runtime.Types.Result.GetResult<Prisma.$UserLevelRulePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -4255,6 +4518,30 @@ export type Work$chaptersArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.WorkChapterScalarFieldEnum | Prisma.WorkChapterScalarFieldEnum[]
+}
+
+/**
+ * Work.browseStates
+ */
+export type Work$browseStatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserWorkBrowseState
+   */
+  select?: Prisma.UserWorkBrowseStateSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserWorkBrowseState
+   */
+  omit?: Prisma.UserWorkBrowseStateOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserWorkBrowseStateInclude<ExtArgs> | null
+  where?: Prisma.UserWorkBrowseStateWhereInput
+  orderBy?: Prisma.UserWorkBrowseStateOrderByWithRelationInput | Prisma.UserWorkBrowseStateOrderByWithRelationInput[]
+  cursor?: Prisma.UserWorkBrowseStateWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserWorkBrowseStateScalarFieldEnum | Prisma.UserWorkBrowseStateScalarFieldEnum[]
 }
 
 /**

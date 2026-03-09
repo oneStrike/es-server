@@ -22,7 +22,7 @@ export class ViewController {
 
   @Post('record')
   @ApiDoc({
-    summary: '记录浏览',
+    summary: '记录浏览（可不调用，作品服务以处理）',
     model: Boolean,
   })
   async record(
@@ -47,7 +47,10 @@ export class ViewController {
     summary: '分页查询我的浏览记录',
     model: IdDto,
   })
-  async my(@Query() query: QueryUserViewDto, @CurrentUser('sub') userId: number) {
+  async my(
+    @Query() query: QueryUserViewDto,
+    @CurrentUser('sub') userId: number,
+  ) {
     return this.viewService.getUserViews(
       userId,
       query.targetType,

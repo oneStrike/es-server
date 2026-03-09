@@ -196,6 +196,12 @@ export type UserReport = Prisma.UserReportModel
  */
 export type UserView = Prisma.UserViewModel
 /**
+ * Model UserWorkBrowseState
+ * 用户作品浏览状态表
+ * 用于保存用户对每个作品的最新浏览状态，和 user_view 历史记录分离。
+ */
+export type UserWorkBrowseState = Prisma.UserWorkBrowseStateModel
+/**
  * Model ForumConfigHistory
  * 论坛配置历史表 - 记录配置项的变更历史，支持版本控制和回滚功能
  */

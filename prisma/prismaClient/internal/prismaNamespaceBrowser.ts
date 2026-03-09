@@ -79,6 +79,7 @@ export const ModelName = {
   UserPurchaseRecord: 'UserPurchaseRecord',
   UserReport: 'UserReport',
   UserView: 'UserView',
+  UserWorkBrowseState: 'UserWorkBrowseState',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
@@ -631,6 +632,20 @@ export const UserViewScalarFieldEnum = {
 } as const
 
 export type UserViewScalarFieldEnum = (typeof UserViewScalarFieldEnum)[keyof typeof UserViewScalarFieldEnum]
+
+
+export const UserWorkBrowseStateScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  workId: 'workId',
+  workType: 'workType',
+  lastViewedAt: 'lastViewedAt',
+  lastViewedChapterId: 'lastViewedChapterId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserWorkBrowseStateScalarFieldEnum = (typeof UserWorkBrowseStateScalarFieldEnum)[keyof typeof UserWorkBrowseStateScalarFieldEnum]
 
 
 export const ForumConfigHistoryScalarFieldEnum = {

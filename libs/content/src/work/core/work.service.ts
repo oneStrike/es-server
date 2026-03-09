@@ -1,6 +1,8 @@
 import type { WorkWhereInput } from '@libs/base/database'
-import { BaseService } from '@libs/base/database'
+import { ContentTypeEnum, InteractionTargetTypeEnum } from '@libs/base/constant'
+import { BaseService, Prisma } from '@libs/base/database'
 import { isNotNil } from '@libs/base/utils'
+import { FavoriteService, LikeService, ViewService } from '@libs/interaction'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
   CreateWorkDto,
@@ -10,6 +12,21 @@ import {
   UpdateWorkStatusDto,
 } from './dto/work.dto'
 import { PAGE_WORK_SELECT, WORK_RELATION_SELECT } from './work.select'
+
+interface WorkDetailContext {
+  userId?: number
+  ipAddress?: string
+  device?: string
+  userAgent?: string
+}
+
+interface ContinueReadingChapterState {
+  id: number
+  title: string
+  subtitle: string | null
+  sortOrder: number
+  viewedAt?: Date
+}
 
 /**
  * 作品服务类
@@ -30,8 +47,128 @@ export class WorkService extends BaseService {
     return this.prisma.appUser
   }
 
-  constructor() {
+  get userWorkBrowseState() {
+    return this.prisma.userWorkBrowseState
+  }
+
+  constructor(
+    private readonly likeService: LikeService,
+    private readonly favoriteService: FavoriteService,
+    private readonly viewService: ViewService,
+  ) {
     super()
+  }
+
+  /**
+   * Resolve interaction target types once so work detail logic does not need
+   * to repeat content-type branching in multiple places.
+   */
+  private resolveWorkInteractionTargets(workType: number) {
+    if (workType === ContentTypeEnum.COMIC) {
+      return {
+        workTargetType: InteractionTargetTypeEnum.COMIC,
+        chapterTargetType: InteractionTargetTypeEnum.COMIC_CHAPTER,
+      }
+    }
+
+    if (workType === ContentTypeEnum.NOVEL) {
+      return {
+        workTargetType: InteractionTargetTypeEnum.NOVEL,
+        chapterTargetType: InteractionTargetTypeEnum.NOVEL_CHAPTER,
+      }
+    }
+
+    throw new BadRequestException('涓嶆敮鎸佺殑浣滃搧绫诲瀷')
+  }
+
+  /**
+   * Materialize the latest continue-reading chapter for a user/work pair.
+   * The browse-state table is the primary source, and user_view history is
+   * used as a fallback so existing chapter view history remains effective.
+   */
+  private async resolveContinueReadingChapter(
+    userId: number,
+    workId: number,
+    workType: number,
+    browseState?: {
+      lastViewedChapter?: {
+        id: number
+        title: string
+        subtitle: string | null
+        sortOrder: number
+      } | null
+    } | null,
+  ): Promise<ContinueReadingChapterState | undefined> {
+    const { chapterTargetType } = this.resolveWorkInteractionTargets(workType)
+    const rows = await this.prisma.$queryRaw<ContinueReadingChapterState[]>(
+      Prisma.sql`
+        SELECT
+          wc.id AS "id",
+          wc.title AS "title",
+          wc.subtitle AS "subtitle",
+          wc.sort_order AS "sortOrder",
+          uv.viewed_at AS "viewedAt"
+        FROM user_view uv
+        INNER JOIN work_chapter wc ON wc.id = uv.target_id
+        WHERE uv.user_id = ${userId}
+          AND uv.target_type = ${chapterTargetType}
+          AND wc.work_id = ${workId}
+          AND wc.deleted_at IS NULL
+        ORDER BY uv.viewed_at DESC
+        LIMIT 1
+      `,
+    )
+
+    if (rows[0]) {
+      return rows[0]
+    }
+
+    if (browseState?.lastViewedChapter) {
+      return {
+        id: browseState.lastViewedChapter.id,
+        title: browseState.lastViewedChapter.title,
+        subtitle: browseState.lastViewedChapter.subtitle,
+        sortOrder: browseState.lastViewedChapter.sortOrder,
+      }
+    }
+
+    return undefined
+  }
+
+  /**
+   * Persist the latest browse state separately from history records.
+   * This keeps detail responses cheap and makes "continue reading" extensible.
+   */
+  private async upsertWorkBrowseState(params: {
+    userId: number
+    workId: number
+    workType: number
+    lastViewedAt: Date
+    lastViewedChapterId?: number
+  }) {
+    const { userId, workId, workType, lastViewedAt, lastViewedChapterId } =
+      params
+
+    return this.userWorkBrowseState.upsert({
+      where: {
+        userId_workId: {
+          userId,
+          workId,
+        },
+      },
+      create: {
+        userId,
+        workId,
+        workType,
+        lastViewedAt,
+        lastViewedChapterId,
+      },
+      update: {
+        workType,
+        lastViewedAt,
+        lastViewedChapterId,
+      },
+    })
   }
 
   /**
@@ -438,7 +575,9 @@ export class WorkService extends BaseService {
    * @returns 作品详情信息（包含作者、分类、标签关联）
    * @throws BadRequestException 当作品不存在时抛出异常
    */
-  async getWorkDetail(id: number) {
+  async getWorkDetail(id: number, context: WorkDetailContext = {}) {
+    console.log("🚀 ~ WorkService ~ getWorkDetail ~ context:", context)
+    const { userId, ipAddress, device, userAgent } = context
     const work = await this.work.findUnique({
       where: { id },
       include: {
@@ -452,7 +591,89 @@ export class WorkService extends BaseService {
       throw new BadRequestException('作品不存在')
     }
 
-    return work
+    // Keep a stable response shape for anonymous users so the app can reuse
+    // the same DTO without conditional parsing.
+    if (!userId) {
+      return {
+        ...work,
+        liked: false,
+        favorited: false,
+        viewed: false,
+      }
+    }
+
+    const { workTargetType } = this.resolveWorkInteractionTargets(work.type)
+    const now = new Date()
+
+    const [liked, favorited, browseState] = await Promise.all([
+      this.likeService.checkLikeStatus(workTargetType, id, userId),
+      this.favoriteService.checkFavoriteStatus(workTargetType, id, userId),
+      this.userWorkBrowseState.findUnique({
+        where: {
+          userId_workId: {
+            userId,
+            workId: id,
+          },
+        },
+        include: {
+          lastViewedChapter: {
+            select: {
+              id: true,
+              title: true,
+              subtitle: true,
+              sortOrder: true,
+            },
+          },
+        },
+      }),
+    ])
+
+    const continueChapter = await this.resolveContinueReadingChapter(
+      userId,
+      id,
+      work.type,
+      browseState,
+    )
+
+    // History records and browse state serve different purposes:
+    // - user_view keeps the append-only browsing trail and counters
+    // - user_work_browse_state keeps the latest snapshot for fast detail reads
+    await Promise.all([
+      this.viewService.recordView(
+        workTargetType,
+        id,
+        userId,
+        ipAddress,
+        device,
+        userAgent,
+      ),
+      this.upsertWorkBrowseState({
+        userId,
+        workId: id,
+        workType: work.type,
+        lastViewedAt: now,
+        lastViewedChapterId: continueChapter?.id,
+      }),
+    ])
+
+    return {
+      ...work,
+      // Reflect the just-recorded view immediately so the current response is
+      // consistent with the persisted counter update.
+      viewCount: work.viewCount + 1,
+      liked,
+      favorited,
+      viewed: true,
+      lastViewedAt: now,
+      continueChapter: continueChapter
+        ? {
+            id: continueChapter.id,
+            title: continueChapter.title,
+            subtitle: continueChapter.subtitle ?? undefined,
+            sortOrder: continueChapter.sortOrder,
+          }
+        : undefined,
+    }
   }
 
   /**

@@ -28,7 +28,7 @@ export class AuditService extends BaseService {
     const data = {
       ...createDto,
       ...parseRequestLogFields(req),
-    }
+    } as any
     return this.requestLog.create({
       data,
       select: { id: true },

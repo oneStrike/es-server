@@ -1,13 +1,21 @@
-import { ApiDoc, ApiPageDoc, Public } from '@libs/base/decorators'
+import {
+  ApiDoc,
+  ApiPageDoc,
+  CurrentUser,
+  OptionalAuth,
+  Public,
+  RequestMeta,
+  RequestMetaResult,
+} from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  BaseWorkDto,
   PageWorkDto,
   QueryWorkDto,
   QueryWorkTypeDto,
+  WorkDetailDto,
   WorkService,
 } from '@libs/content'
-import { Controller, Get, Query } from '@nestjs/common'
+import { Controller, Get, Headers, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
 @ApiTags('作品模块')
@@ -56,12 +64,22 @@ export class WorkController {
   }
 
   @Get('detail')
-  @Public()
+  @OptionalAuth()
   @ApiDoc({
     summary: '查询作品详情',
-    model: BaseWorkDto,
+    model: WorkDetailDto,
   })
-  async getWorkDetail(@Query() query: IdDto) {
-    return this.workService.getWorkDetail(query.id)
+  async getWorkDetail(
+    @Query() query: IdDto,
+    @CurrentUser('sub') userId: number,
+    @RequestMeta() meta: RequestMetaResult,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.workService.getWorkDetail(query.id, {
+      userId,
+      ipAddress: meta.ip,
+      device: meta.deviceId,
+      userAgent,
+    })
   }
 }

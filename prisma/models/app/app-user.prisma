@@ -108,6 +108,8 @@ model AppUser {
   userFavorites       UserFavorite[]
   /// 浏览记录
   userViews           UserView[]
+  /// 作品浏览状态
+  workBrowseStates    UserWorkBrowseState[]
   /// 评论记录
   userComments        UserComment[]
   /// 举报记录（举报人）

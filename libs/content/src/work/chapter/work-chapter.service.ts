@@ -131,6 +131,7 @@ export class WorkChapterService extends BaseService {
 
     // 未登录用户直接返回基础信息
     if (!userId) {
+      chapter.content = JSON.parse(chapter.content as unknown as string)
       return chapter
     }
 
@@ -145,14 +146,9 @@ export class WorkChapterService extends BaseService {
         ? DownloadTargetTypeEnum.COMIC_CHAPTER
         : DownloadTargetTypeEnum.NOVEL_CHAPTER
 
-    // 并行查询四个交互状态
-    const [liked, favorited, downloaded, purchased] = await Promise.all([
+    // 并行查询三个交互状态
+    const [liked, downloaded, purchased] = await Promise.all([
       this.likeService.checkLikeStatus(interactionTargetType, id, userId),
-      this.favoriteService.checkFavoriteStatus(
-        interactionTargetType,
-        id,
-        userId,
-      ),
       this.downloadService.checkDownloadStatus({
         targetType: downloadTargetType,
         targetId: id,
@@ -166,8 +162,8 @@ export class WorkChapterService extends BaseService {
 
     return {
       ...chapter,
+      content: JSON.parse(chapter.content as unknown as string),
       liked,
-      favorited,
       downloaded,
       purchased,
     }

@@ -169,9 +169,11 @@ export function extractRequestPath(req: FastifyRequest): string {
  * 合并 body、query、params 参数，时间复杂度 O(n)
  *
  * @param req - Fastify 请求对象
- * @returns JSON 字符串格式的参数，如果无参数则返回 undefined
+ * @returns 请求参数对象，如果无参数则返回 undefined
  */
-export function extractRequestParams(req: FastifyRequest): string | undefined {
+export function extractRequestParams(
+  req: FastifyRequest,
+): RequestParams | undefined {
   try {
     const params: RequestParams = {}
     let hasParams = false
@@ -202,7 +204,7 @@ export function extractRequestParams(req: FastifyRequest): string | undefined {
       hasParams = true
     }
 
-    return hasParams ? JSON.stringify(params) : undefined
+    return hasParams ? params : undefined
   } catch (error) {
     console.warn('提取请求参数失败:', error)
     return undefined

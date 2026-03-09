@@ -393,6 +393,7 @@ export type AppUserWhereInput = {
   userLikes?: Prisma.UserLikeListRelationFilter
   userFavorites?: Prisma.UserFavoriteListRelationFilter
   userViews?: Prisma.UserViewListRelationFilter
+  workBrowseStates?: Prisma.UserWorkBrowseStateListRelationFilter
   userComments?: Prisma.UserCommentListRelationFilter
   userReports?: Prisma.UserReportListRelationFilter
   handledUserReports?: Prisma.UserReportListRelationFilter
@@ -450,6 +451,7 @@ export type AppUserOrderByWithRelationInput = {
   userLikes?: Prisma.UserLikeOrderByRelationAggregateInput
   userFavorites?: Prisma.UserFavoriteOrderByRelationAggregateInput
   userViews?: Prisma.UserViewOrderByRelationAggregateInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateOrderByRelationAggregateInput
   userComments?: Prisma.UserCommentOrderByRelationAggregateInput
   userReports?: Prisma.UserReportOrderByRelationAggregateInput
   handledUserReports?: Prisma.UserReportOrderByRelationAggregateInput
@@ -510,6 +512,7 @@ export type AppUserWhereUniqueInput = Prisma.AtLeast<{
   userLikes?: Prisma.UserLikeListRelationFilter
   userFavorites?: Prisma.UserFavoriteListRelationFilter
   userViews?: Prisma.UserViewListRelationFilter
+  workBrowseStates?: Prisma.UserWorkBrowseStateListRelationFilter
   userComments?: Prisma.UserCommentListRelationFilter
   userReports?: Prisma.UserReportListRelationFilter
   handledUserReports?: Prisma.UserReportListRelationFilter
@@ -621,6 +624,7 @@ export type AppUserCreateInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -677,6 +681,7 @@ export type AppUserUncheckedCreateInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -732,6 +737,7 @@ export type AppUserUpdateInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -788,6 +794,7 @@ export type AppUserUncheckedUpdateInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -1257,6 +1264,20 @@ export type AppUserUpdateOneRequiredWithoutUserViewsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutUserViewsInput, Prisma.AppUserUpdateWithoutUserViewsInput>, Prisma.AppUserUncheckedUpdateWithoutUserViewsInput>
 }
 
+export type AppUserCreateNestedOneWithoutWorkBrowseStatesInput = {
+  create?: Prisma.XOR<Prisma.AppUserCreateWithoutWorkBrowseStatesInput, Prisma.AppUserUncheckedCreateWithoutWorkBrowseStatesInput>
+  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutWorkBrowseStatesInput
+  connect?: Prisma.AppUserWhereUniqueInput
+}
+
+export type AppUserUpdateOneRequiredWithoutWorkBrowseStatesNestedInput = {
+  create?: Prisma.XOR<Prisma.AppUserCreateWithoutWorkBrowseStatesInput, Prisma.AppUserUncheckedCreateWithoutWorkBrowseStatesInput>
+  connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutWorkBrowseStatesInput
+  upsert?: Prisma.AppUserUpsertWithoutWorkBrowseStatesInput
+  connect?: Prisma.AppUserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.AppUserUpdateToOneWithWhereWithoutWorkBrowseStatesInput, Prisma.AppUserUpdateWithoutWorkBrowseStatesInput>, Prisma.AppUserUncheckedUpdateWithoutWorkBrowseStatesInput>
+}
+
 export type AppUserCreateNestedOneWithoutOperatedConfigHistoriesInput = {
   create?: Prisma.XOR<Prisma.AppUserCreateWithoutOperatedConfigHistoriesInput, Prisma.AppUserUncheckedCreateWithoutOperatedConfigHistoriesInput>
   connectOrCreate?: Prisma.AppUserCreateOrConnectWithoutOperatedConfigHistoriesInput
@@ -1526,6 +1547,7 @@ export type AppUserCreateWithoutAgreementLogsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -1581,6 +1603,7 @@ export type AppUserUncheckedCreateWithoutAgreementLogsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -1651,6 +1674,7 @@ export type AppUserUpdateWithoutAgreementLogsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -1706,6 +1730,7 @@ export type AppUserUncheckedUpdateWithoutAgreementLogsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -1760,6 +1785,7 @@ export type AppUserCreateWithoutAnnouncementReadsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -1815,6 +1841,7 @@ export type AppUserUncheckedCreateWithoutAnnouncementReadsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -1885,6 +1912,7 @@ export type AppUserUpdateWithoutAnnouncementReadsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -1940,6 +1968,7 @@ export type AppUserUncheckedUpdateWithoutAnnouncementReadsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -1994,6 +2023,7 @@ export type AppUserCreateWithoutTokensInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -2049,6 +2079,7 @@ export type AppUserUncheckedCreateWithoutTokensInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -2119,6 +2150,7 @@ export type AppUserUpdateWithoutTokensInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -2174,6 +2206,7 @@ export type AppUserUncheckedUpdateWithoutTokensInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -2228,6 +2261,7 @@ export type AppUserCreateWithoutGrowthAuditLogsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -2283,6 +2317,7 @@ export type AppUserUncheckedCreateWithoutGrowthAuditLogsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -2353,6 +2388,7 @@ export type AppUserUpdateWithoutGrowthAuditLogsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -2408,6 +2444,7 @@ export type AppUserUncheckedUpdateWithoutGrowthAuditLogsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -2462,6 +2499,7 @@ export type AppUserCreateWithoutGrowthLedgerRecordsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -2517,6 +2555,7 @@ export type AppUserUncheckedCreateWithoutGrowthLedgerRecordsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -2587,6 +2626,7 @@ export type AppUserUpdateWithoutGrowthLedgerRecordsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -2642,6 +2682,7 @@ export type AppUserUncheckedUpdateWithoutGrowthLedgerRecordsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -2696,6 +2737,7 @@ export type AppUserCreateWithoutGrowthRuleUsageSlotsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -2751,6 +2793,7 @@ export type AppUserUncheckedCreateWithoutGrowthRuleUsageSlotsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -2821,6 +2864,7 @@ export type AppUserUpdateWithoutGrowthRuleUsageSlotsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -2876,6 +2920,7 @@ export type AppUserUncheckedUpdateWithoutGrowthRuleUsageSlotsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -2930,6 +2975,7 @@ export type AppUserCreateWithoutTaskAssignmentsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -2985,6 +3031,7 @@ export type AppUserUncheckedCreateWithoutTaskAssignmentsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -3055,6 +3102,7 @@ export type AppUserUpdateWithoutTaskAssignmentsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -3110,6 +3158,7 @@ export type AppUserUncheckedUpdateWithoutTaskAssignmentsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -3164,6 +3213,7 @@ export type AppUserCreateWithoutTaskProgressLogsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -3219,6 +3269,7 @@ export type AppUserUncheckedCreateWithoutTaskProgressLogsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -3289,6 +3340,7 @@ export type AppUserUpdateWithoutTaskProgressLogsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -3344,6 +3396,7 @@ export type AppUserUncheckedUpdateWithoutTaskProgressLogsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -3398,6 +3451,7 @@ export type AppUserCreateWithoutUserBadgesInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -3453,6 +3507,7 @@ export type AppUserUncheckedCreateWithoutUserBadgesInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -3523,6 +3578,7 @@ export type AppUserUpdateWithoutUserBadgesInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -3578,6 +3634,7 @@ export type AppUserUncheckedUpdateWithoutUserBadgesInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -3633,6 +3690,7 @@ export type AppUserCreateWithoutUserCommentsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
   userDownloadRecords?: Prisma.UserDownloadRecordCreateNestedManyWithoutUserInput
@@ -3688,6 +3746,7 @@ export type AppUserUncheckedCreateWithoutUserCommentsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
   userDownloadRecords?: Prisma.UserDownloadRecordUncheckedCreateNestedManyWithoutUserInput
@@ -3758,6 +3817,7 @@ export type AppUserUpdateWithoutUserCommentsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
   userDownloadRecords?: Prisma.UserDownloadRecordUpdateManyWithoutUserNestedInput
@@ -3813,6 +3873,7 @@ export type AppUserUncheckedUpdateWithoutUserCommentsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
   userDownloadRecords?: Prisma.UserDownloadRecordUncheckedUpdateManyWithoutUserNestedInput
@@ -3867,6 +3928,7 @@ export type AppUserCreateWithoutUserDownloadRecordsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -3922,6 +3984,7 @@ export type AppUserUncheckedCreateWithoutUserDownloadRecordsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -3992,6 +4055,7 @@ export type AppUserUpdateWithoutUserDownloadRecordsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -4047,6 +4111,7 @@ export type AppUserUncheckedUpdateWithoutUserDownloadRecordsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -4100,6 +4165,7 @@ export type AppUserCreateWithoutUserFavoritesInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -4155,6 +4221,7 @@ export type AppUserUncheckedCreateWithoutUserFavoritesInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -4225,6 +4292,7 @@ export type AppUserUpdateWithoutUserFavoritesInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -4280,6 +4348,7 @@ export type AppUserUncheckedUpdateWithoutUserFavoritesInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -4334,6 +4403,7 @@ export type AppUserCreateWithoutLevelInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -4389,6 +4459,7 @@ export type AppUserUncheckedCreateWithoutLevelInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -4496,6 +4567,7 @@ export type AppUserCreateWithoutUserLikesInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -4551,6 +4623,7 @@ export type AppUserUncheckedCreateWithoutUserLikesInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -4621,6 +4694,7 @@ export type AppUserUpdateWithoutUserLikesInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -4676,6 +4750,7 @@ export type AppUserUncheckedUpdateWithoutUserLikesInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -4731,6 +4806,7 @@ export type AppUserCreateWithoutUserPurchaseRecordsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -4786,6 +4862,7 @@ export type AppUserUncheckedCreateWithoutUserPurchaseRecordsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -4856,6 +4933,7 @@ export type AppUserUpdateWithoutUserPurchaseRecordsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -4911,6 +4989,7 @@ export type AppUserUncheckedUpdateWithoutUserPurchaseRecordsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -4965,6 +5044,7 @@ export type AppUserCreateWithoutUserReportsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
   userDownloadRecords?: Prisma.UserDownloadRecordCreateNestedManyWithoutUserInput
@@ -5020,6 +5100,7 @@ export type AppUserUncheckedCreateWithoutUserReportsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
   userDownloadRecords?: Prisma.UserDownloadRecordUncheckedCreateNestedManyWithoutUserInput
@@ -5079,6 +5160,7 @@ export type AppUserCreateWithoutHandledUserReportsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   userDownloadRecords?: Prisma.UserDownloadRecordCreateNestedManyWithoutUserInput
@@ -5134,6 +5216,7 @@ export type AppUserUncheckedCreateWithoutHandledUserReportsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   userDownloadRecords?: Prisma.UserDownloadRecordUncheckedCreateNestedManyWithoutUserInput
@@ -5204,6 +5287,7 @@ export type AppUserUpdateWithoutUserReportsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
   userDownloadRecords?: Prisma.UserDownloadRecordUpdateManyWithoutUserNestedInput
@@ -5259,6 +5343,7 @@ export type AppUserUncheckedUpdateWithoutUserReportsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
   userDownloadRecords?: Prisma.UserDownloadRecordUncheckedUpdateManyWithoutUserNestedInput
@@ -5324,6 +5409,7 @@ export type AppUserUpdateWithoutHandledUserReportsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   userDownloadRecords?: Prisma.UserDownloadRecordUpdateManyWithoutUserNestedInput
@@ -5379,6 +5465,7 @@ export type AppUserUncheckedUpdateWithoutHandledUserReportsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   userDownloadRecords?: Prisma.UserDownloadRecordUncheckedUpdateManyWithoutUserNestedInput
@@ -5432,6 +5519,7 @@ export type AppUserCreateWithoutUserViewsInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -5487,6 +5575,7 @@ export type AppUserUncheckedCreateWithoutUserViewsInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -5557,6 +5646,7 @@ export type AppUserUpdateWithoutUserViewsInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -5612,6 +5702,245 @@ export type AppUserUncheckedUpdateWithoutUserViewsInput = {
   operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
+  userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
+  handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
+  userDownloadRecords?: Prisma.UserDownloadRecordUncheckedUpdateManyWithoutUserNestedInput
+  userPurchaseRecords?: Prisma.UserPurchaseRecordUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type AppUserCreateWithoutWorkBrowseStatesInput = {
+  account: string
+  phone?: string | null
+  email?: string | null
+  nickname: string
+  password: string
+  avatar?: string | null
+  isEnabled?: boolean
+  gender?: number
+  birthDate?: Date | string | null
+  points?: number
+  experience?: number
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  agreementLogs?: Prisma.AppAgreementLogCreateNestedManyWithoutUserInput
+  level?: Prisma.UserLevelRuleCreateNestedOneWithoutUsersInput
+  forumProfile?: Prisma.ForumProfileCreateNestedOneWithoutUserInput
+  announcementReads?: Prisma.AppAnnouncementReadCreateNestedManyWithoutUserInput
+  tokens?: Prisma.AppUserTokenCreateNestedManyWithoutUserInput
+  forumTopics?: Prisma.ForumTopicCreateNestedManyWithoutUserInput
+  lastReplyTopics?: Prisma.ForumTopicCreateNestedManyWithoutLastReplyUserInput
+  forumNotifications?: Prisma.ForumNotificationCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.UserNotificationCreateNestedManyWithoutUserInput
+  triggeredNotifications?: Prisma.UserNotificationCreateNestedManyWithoutActorUserInput
+  chatConversationMembers?: Prisma.ChatConversationMemberCreateNestedManyWithoutUserInput
+  sentChatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  lastSentConversations?: Prisma.ChatConversationCreateNestedManyWithoutLastSenderInput
+  moderatorApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutApplicantInput
+  auditedApplications?: Prisma.ForumModeratorApplicationCreateNestedManyWithoutAuditByInput
+  moderator?: Prisma.ForumModeratorCreateNestedOneWithoutUserInput
+  forumActionLogs?: Prisma.ForumUserActionLogCreateNestedManyWithoutUserInput
+  userBadges?: Prisma.UserBadgeAssignmentCreateNestedManyWithoutUserInput
+  growthLedgerRecords?: Prisma.GrowthLedgerRecordCreateNestedManyWithoutUserInput
+  growthAuditLogs?: Prisma.GrowthAuditLogCreateNestedManyWithoutUserInput
+  growthRuleUsageSlots?: Prisma.GrowthRuleUsageSlotCreateNestedManyWithoutUserInput
+  taskAssignments?: Prisma.TaskAssignmentCreateNestedManyWithoutUserInput
+  taskProgressLogs?: Prisma.TaskProgressLogCreateNestedManyWithoutUserInput
+  updatedConfigs?: Prisma.ForumConfigCreateNestedManyWithoutUpdatedByInput
+  operatedConfigHistories?: Prisma.ForumConfigHistoryCreateNestedManyWithoutOperatedByInput
+  userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
+  userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
+  userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
+  handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
+  userDownloadRecords?: Prisma.UserDownloadRecordCreateNestedManyWithoutUserInput
+  userPurchaseRecords?: Prisma.UserPurchaseRecordCreateNestedManyWithoutUserInput
+}
+
+export type AppUserUncheckedCreateWithoutWorkBrowseStatesInput = {
+  id?: number
+  account: string
+  phone?: string | null
+  email?: string | null
+  levelId?: number | null
+  nickname: string
+  password: string
+  avatar?: string | null
+  isEnabled?: boolean
+  gender?: number
+  birthDate?: Date | string | null
+  points?: number
+  experience?: number
+  status?: number
+  banReason?: string | null
+  banUntil?: Date | string | null
+  lastLoginAt?: Date | string | null
+  lastLoginIp?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  deletedAt?: Date | string | null
+  agreementLogs?: Prisma.AppAgreementLogUncheckedCreateNestedManyWithoutUserInput
+  forumProfile?: Prisma.ForumProfileUncheckedCreateNestedOneWithoutUserInput
+  announcementReads?: Prisma.AppAnnouncementReadUncheckedCreateNestedManyWithoutUserInput
+  tokens?: Prisma.AppUserTokenUncheckedCreateNestedManyWithoutUserInput
+  forumTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutUserInput
+  lastReplyTopics?: Prisma.ForumTopicUncheckedCreateNestedManyWithoutLastReplyUserInput
+  forumNotifications?: Prisma.ForumNotificationUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.UserNotificationUncheckedCreateNestedManyWithoutUserInput
+  triggeredNotifications?: Prisma.UserNotificationUncheckedCreateNestedManyWithoutActorUserInput
+  chatConversationMembers?: Prisma.ChatConversationMemberUncheckedCreateNestedManyWithoutUserInput
+  sentChatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  lastSentConversations?: Prisma.ChatConversationUncheckedCreateNestedManyWithoutLastSenderInput
+  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutApplicantInput
+  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedCreateNestedManyWithoutAuditByInput
+  moderator?: Prisma.ForumModeratorUncheckedCreateNestedOneWithoutUserInput
+  forumActionLogs?: Prisma.ForumUserActionLogUncheckedCreateNestedManyWithoutUserInput
+  userBadges?: Prisma.UserBadgeAssignmentUncheckedCreateNestedManyWithoutUserInput
+  growthLedgerRecords?: Prisma.GrowthLedgerRecordUncheckedCreateNestedManyWithoutUserInput
+  growthAuditLogs?: Prisma.GrowthAuditLogUncheckedCreateNestedManyWithoutUserInput
+  growthRuleUsageSlots?: Prisma.GrowthRuleUsageSlotUncheckedCreateNestedManyWithoutUserInput
+  taskAssignments?: Prisma.TaskAssignmentUncheckedCreateNestedManyWithoutUserInput
+  taskProgressLogs?: Prisma.TaskProgressLogUncheckedCreateNestedManyWithoutUserInput
+  updatedConfigs?: Prisma.ForumConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedCreateNestedManyWithoutOperatedByInput
+  userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
+  userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
+  userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
+  handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
+  userDownloadRecords?: Prisma.UserDownloadRecordUncheckedCreateNestedManyWithoutUserInput
+  userPurchaseRecords?: Prisma.UserPurchaseRecordUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type AppUserCreateOrConnectWithoutWorkBrowseStatesInput = {
+  where: Prisma.AppUserWhereUniqueInput
+  create: Prisma.XOR<Prisma.AppUserCreateWithoutWorkBrowseStatesInput, Prisma.AppUserUncheckedCreateWithoutWorkBrowseStatesInput>
+}
+
+export type AppUserUpsertWithoutWorkBrowseStatesInput = {
+  update: Prisma.XOR<Prisma.AppUserUpdateWithoutWorkBrowseStatesInput, Prisma.AppUserUncheckedUpdateWithoutWorkBrowseStatesInput>
+  create: Prisma.XOR<Prisma.AppUserCreateWithoutWorkBrowseStatesInput, Prisma.AppUserUncheckedCreateWithoutWorkBrowseStatesInput>
+  where?: Prisma.AppUserWhereInput
+}
+
+export type AppUserUpdateToOneWithWhereWithoutWorkBrowseStatesInput = {
+  where?: Prisma.AppUserWhereInput
+  data: Prisma.XOR<Prisma.AppUserUpdateWithoutWorkBrowseStatesInput, Prisma.AppUserUncheckedUpdateWithoutWorkBrowseStatesInput>
+}
+
+export type AppUserUpdateWithoutWorkBrowseStatesInput = {
+  account?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  gender?: Prisma.IntFieldUpdateOperationsInput | number
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  experience?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  agreementLogs?: Prisma.AppAgreementLogUpdateManyWithoutUserNestedInput
+  level?: Prisma.UserLevelRuleUpdateOneWithoutUsersNestedInput
+  forumProfile?: Prisma.ForumProfileUpdateOneWithoutUserNestedInput
+  announcementReads?: Prisma.AppAnnouncementReadUpdateManyWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUpdateManyWithoutUserNestedInput
+  forumTopics?: Prisma.ForumTopicUpdateManyWithoutUserNestedInput
+  lastReplyTopics?: Prisma.ForumTopicUpdateManyWithoutLastReplyUserNestedInput
+  forumNotifications?: Prisma.ForumNotificationUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.UserNotificationUpdateManyWithoutUserNestedInput
+  triggeredNotifications?: Prisma.UserNotificationUpdateManyWithoutActorUserNestedInput
+  chatConversationMembers?: Prisma.ChatConversationMemberUpdateManyWithoutUserNestedInput
+  sentChatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  lastSentConversations?: Prisma.ChatConversationUpdateManyWithoutLastSenderNestedInput
+  moderatorApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutApplicantNestedInput
+  auditedApplications?: Prisma.ForumModeratorApplicationUpdateManyWithoutAuditByNestedInput
+  moderator?: Prisma.ForumModeratorUpdateOneWithoutUserNestedInput
+  forumActionLogs?: Prisma.ForumUserActionLogUpdateManyWithoutUserNestedInput
+  userBadges?: Prisma.UserBadgeAssignmentUpdateManyWithoutUserNestedInput
+  growthLedgerRecords?: Prisma.GrowthLedgerRecordUpdateManyWithoutUserNestedInput
+  growthAuditLogs?: Prisma.GrowthAuditLogUpdateManyWithoutUserNestedInput
+  growthRuleUsageSlots?: Prisma.GrowthRuleUsageSlotUpdateManyWithoutUserNestedInput
+  taskAssignments?: Prisma.TaskAssignmentUpdateManyWithoutUserNestedInput
+  taskProgressLogs?: Prisma.TaskProgressLogUpdateManyWithoutUserNestedInput
+  updatedConfigs?: Prisma.ForumConfigUpdateManyWithoutUpdatedByNestedInput
+  operatedConfigHistories?: Prisma.ForumConfigHistoryUpdateManyWithoutOperatedByNestedInput
+  userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
+  userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
+  userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
+  handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
+  userDownloadRecords?: Prisma.UserDownloadRecordUpdateManyWithoutUserNestedInput
+  userPurchaseRecords?: Prisma.UserPurchaseRecordUpdateManyWithoutUserNestedInput
+}
+
+export type AppUserUncheckedUpdateWithoutWorkBrowseStatesInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  account?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  levelId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  nickname?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  gender?: Prisma.IntFieldUpdateOperationsInput | number
+  birthDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  points?: Prisma.IntFieldUpdateOperationsInput | number
+  experience?: Prisma.IntFieldUpdateOperationsInput | number
+  status?: Prisma.IntFieldUpdateOperationsInput | number
+  banReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastLoginIp?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  agreementLogs?: Prisma.AppAgreementLogUncheckedUpdateManyWithoutUserNestedInput
+  forumProfile?: Prisma.ForumProfileUncheckedUpdateOneWithoutUserNestedInput
+  announcementReads?: Prisma.AppAnnouncementReadUncheckedUpdateManyWithoutUserNestedInput
+  tokens?: Prisma.AppUserTokenUncheckedUpdateManyWithoutUserNestedInput
+  forumTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutUserNestedInput
+  lastReplyTopics?: Prisma.ForumTopicUncheckedUpdateManyWithoutLastReplyUserNestedInput
+  forumNotifications?: Prisma.ForumNotificationUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.UserNotificationUncheckedUpdateManyWithoutUserNestedInput
+  triggeredNotifications?: Prisma.UserNotificationUncheckedUpdateManyWithoutActorUserNestedInput
+  chatConversationMembers?: Prisma.ChatConversationMemberUncheckedUpdateManyWithoutUserNestedInput
+  sentChatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  lastSentConversations?: Prisma.ChatConversationUncheckedUpdateManyWithoutLastSenderNestedInput
+  moderatorApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutApplicantNestedInput
+  auditedApplications?: Prisma.ForumModeratorApplicationUncheckedUpdateManyWithoutAuditByNestedInput
+  moderator?: Prisma.ForumModeratorUncheckedUpdateOneWithoutUserNestedInput
+  forumActionLogs?: Prisma.ForumUserActionLogUncheckedUpdateManyWithoutUserNestedInput
+  userBadges?: Prisma.UserBadgeAssignmentUncheckedUpdateManyWithoutUserNestedInput
+  growthLedgerRecords?: Prisma.GrowthLedgerRecordUncheckedUpdateManyWithoutUserNestedInput
+  growthAuditLogs?: Prisma.GrowthAuditLogUncheckedUpdateManyWithoutUserNestedInput
+  growthRuleUsageSlots?: Prisma.GrowthRuleUsageSlotUncheckedUpdateManyWithoutUserNestedInput
+  taskAssignments?: Prisma.TaskAssignmentUncheckedUpdateManyWithoutUserNestedInput
+  taskProgressLogs?: Prisma.TaskProgressLogUncheckedUpdateManyWithoutUserNestedInput
+  updatedConfigs?: Prisma.ForumConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+  operatedConfigHistories?: Prisma.ForumConfigHistoryUncheckedUpdateManyWithoutOperatedByNestedInput
+  userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
+  userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
+  userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -5666,6 +5995,7 @@ export type AppUserCreateWithoutOperatedConfigHistoriesInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -5721,6 +6051,7 @@ export type AppUserUncheckedCreateWithoutOperatedConfigHistoriesInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -5791,6 +6122,7 @@ export type AppUserUpdateWithoutOperatedConfigHistoriesInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -5846,6 +6178,7 @@ export type AppUserUncheckedUpdateWithoutOperatedConfigHistoriesInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -5900,6 +6233,7 @@ export type AppUserCreateWithoutUpdatedConfigsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -5955,6 +6289,7 @@ export type AppUserUncheckedCreateWithoutUpdatedConfigsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -6025,6 +6360,7 @@ export type AppUserUpdateWithoutUpdatedConfigsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -6080,6 +6416,7 @@ export type AppUserUncheckedUpdateWithoutUpdatedConfigsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -6134,6 +6471,7 @@ export type AppUserCreateWithoutModeratorApplicationsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -6189,6 +6527,7 @@ export type AppUserUncheckedCreateWithoutModeratorApplicationsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -6248,6 +6587,7 @@ export type AppUserCreateWithoutAuditedApplicationsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -6303,6 +6643,7 @@ export type AppUserUncheckedCreateWithoutAuditedApplicationsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -6373,6 +6714,7 @@ export type AppUserUpdateWithoutModeratorApplicationsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -6428,6 +6770,7 @@ export type AppUserUncheckedUpdateWithoutModeratorApplicationsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -6493,6 +6836,7 @@ export type AppUserUpdateWithoutAuditedApplicationsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -6548,6 +6892,7 @@ export type AppUserUncheckedUpdateWithoutAuditedApplicationsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -6602,6 +6947,7 @@ export type AppUserCreateWithoutModeratorInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -6657,6 +7003,7 @@ export type AppUserUncheckedCreateWithoutModeratorInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -6727,6 +7074,7 @@ export type AppUserUpdateWithoutModeratorInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -6782,6 +7130,7 @@ export type AppUserUncheckedUpdateWithoutModeratorInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -6836,6 +7185,7 @@ export type AppUserCreateWithoutForumNotificationsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -6891,6 +7241,7 @@ export type AppUserUncheckedCreateWithoutForumNotificationsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -6961,6 +7312,7 @@ export type AppUserUpdateWithoutForumNotificationsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -7016,6 +7368,7 @@ export type AppUserUncheckedUpdateWithoutForumNotificationsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -7070,6 +7423,7 @@ export type AppUserCreateWithoutForumProfileInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -7125,6 +7479,7 @@ export type AppUserUncheckedCreateWithoutForumProfileInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -7195,6 +7550,7 @@ export type AppUserUpdateWithoutForumProfileInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -7250,6 +7606,7 @@ export type AppUserUncheckedUpdateWithoutForumProfileInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -7304,6 +7661,7 @@ export type AppUserCreateWithoutForumTopicsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -7359,6 +7717,7 @@ export type AppUserUncheckedCreateWithoutForumTopicsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -7418,6 +7777,7 @@ export type AppUserCreateWithoutLastReplyTopicsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -7473,6 +7833,7 @@ export type AppUserUncheckedCreateWithoutLastReplyTopicsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -7543,6 +7904,7 @@ export type AppUserUpdateWithoutForumTopicsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -7598,6 +7960,7 @@ export type AppUserUncheckedUpdateWithoutForumTopicsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -7663,6 +8026,7 @@ export type AppUserUpdateWithoutLastReplyTopicsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -7718,6 +8082,7 @@ export type AppUserUncheckedUpdateWithoutLastReplyTopicsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -7772,6 +8137,7 @@ export type AppUserCreateWithoutForumActionLogsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -7827,6 +8193,7 @@ export type AppUserUncheckedCreateWithoutForumActionLogsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -7897,6 +8264,7 @@ export type AppUserUpdateWithoutForumActionLogsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -7952,6 +8320,7 @@ export type AppUserUncheckedUpdateWithoutForumActionLogsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -8006,6 +8375,7 @@ export type AppUserCreateWithoutChatConversationMembersInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -8061,6 +8431,7 @@ export type AppUserUncheckedCreateWithoutChatConversationMembersInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -8131,6 +8502,7 @@ export type AppUserUpdateWithoutChatConversationMembersInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -8186,6 +8558,7 @@ export type AppUserUncheckedUpdateWithoutChatConversationMembersInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -8240,6 +8613,7 @@ export type AppUserCreateWithoutLastSentConversationsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -8295,6 +8669,7 @@ export type AppUserUncheckedCreateWithoutLastSentConversationsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -8365,6 +8740,7 @@ export type AppUserUpdateWithoutLastSentConversationsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -8420,6 +8796,7 @@ export type AppUserUncheckedUpdateWithoutLastSentConversationsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -8474,6 +8851,7 @@ export type AppUserCreateWithoutSentChatMessagesInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -8529,6 +8907,7 @@ export type AppUserUncheckedCreateWithoutSentChatMessagesInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -8599,6 +8978,7 @@ export type AppUserUpdateWithoutSentChatMessagesInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -8654,6 +9034,7 @@ export type AppUserUncheckedUpdateWithoutSentChatMessagesInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -8708,6 +9089,7 @@ export type AppUserCreateWithoutReceivedNotificationsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -8763,6 +9145,7 @@ export type AppUserUncheckedCreateWithoutReceivedNotificationsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -8822,6 +9205,7 @@ export type AppUserCreateWithoutTriggeredNotificationsInput = {
   userLikes?: Prisma.UserLikeCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportCreateNestedManyWithoutHandlerInput
@@ -8877,6 +9261,7 @@ export type AppUserUncheckedCreateWithoutTriggeredNotificationsInput = {
   userLikes?: Prisma.UserLikeUncheckedCreateNestedManyWithoutUserInput
   userFavorites?: Prisma.UserFavoriteUncheckedCreateNestedManyWithoutUserInput
   userViews?: Prisma.UserViewUncheckedCreateNestedManyWithoutUserInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedCreateNestedManyWithoutUserInput
   userComments?: Prisma.UserCommentUncheckedCreateNestedManyWithoutUserInput
   userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   handledUserReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutHandlerInput
@@ -8947,6 +9332,7 @@ export type AppUserUpdateWithoutReceivedNotificationsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -9002,6 +9388,7 @@ export type AppUserUncheckedUpdateWithoutReceivedNotificationsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -9067,6 +9454,7 @@ export type AppUserUpdateWithoutTriggeredNotificationsInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -9122,6 +9510,7 @@ export type AppUserUncheckedUpdateWithoutTriggeredNotificationsInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -9199,6 +9588,7 @@ export type AppUserUpdateWithoutLevelInput = {
   userLikes?: Prisma.UserLikeUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUpdateManyWithoutHandlerNestedInput
@@ -9254,6 +9644,7 @@ export type AppUserUncheckedUpdateWithoutLevelInput = {
   userLikes?: Prisma.UserLikeUncheckedUpdateManyWithoutUserNestedInput
   userFavorites?: Prisma.UserFavoriteUncheckedUpdateManyWithoutUserNestedInput
   userViews?: Prisma.UserViewUncheckedUpdateManyWithoutUserNestedInput
+  workBrowseStates?: Prisma.UserWorkBrowseStateUncheckedUpdateManyWithoutUserNestedInput
   userComments?: Prisma.UserCommentUncheckedUpdateManyWithoutUserNestedInput
   userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   handledUserReports?: Prisma.UserReportUncheckedUpdateManyWithoutHandlerNestedInput
@@ -9315,6 +9706,7 @@ export type AppUserCountOutputType = {
   userLikes: number
   userFavorites: number
   userViews: number
+  workBrowseStates: number
   userComments: number
   userReports: number
   handledUserReports: number
@@ -9348,6 +9740,7 @@ export type AppUserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   userLikes?: boolean | AppUserCountOutputTypeCountUserLikesArgs
   userFavorites?: boolean | AppUserCountOutputTypeCountUserFavoritesArgs
   userViews?: boolean | AppUserCountOutputTypeCountUserViewsArgs
+  workBrowseStates?: boolean | AppUserCountOutputTypeCountWorkBrowseStatesArgs
   userComments?: boolean | AppUserCountOutputTypeCountUserCommentsArgs
   userReports?: boolean | AppUserCountOutputTypeCountUserReportsArgs
   handledUserReports?: boolean | AppUserCountOutputTypeCountHandledUserReportsArgs
@@ -9543,6 +9936,13 @@ export type AppUserCountOutputTypeCountUserViewsArgs<ExtArgs extends runtime.Typ
 /**
  * AppUserCountOutputType without action
  */
+export type AppUserCountOutputTypeCountWorkBrowseStatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWorkBrowseStateWhereInput
+}
+
+/**
+ * AppUserCountOutputType without action
+ */
 export type AppUserCountOutputTypeCountUserCommentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.UserCommentWhereInput
 }
@@ -9626,6 +10026,7 @@ export type AppUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   userLikes?: boolean | Prisma.AppUser$userLikesArgs<ExtArgs>
   userFavorites?: boolean | Prisma.AppUser$userFavoritesArgs<ExtArgs>
   userViews?: boolean | Prisma.AppUser$userViewsArgs<ExtArgs>
+  workBrowseStates?: boolean | Prisma.AppUser$workBrowseStatesArgs<ExtArgs>
   userComments?: boolean | Prisma.AppUser$userCommentsArgs<ExtArgs>
   userReports?: boolean | Prisma.AppUser$userReportsArgs<ExtArgs>
   handledUserReports?: boolean | Prisma.AppUser$handledUserReportsArgs<ExtArgs>
@@ -9738,6 +10139,7 @@ export type AppUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   userLikes?: boolean | Prisma.AppUser$userLikesArgs<ExtArgs>
   userFavorites?: boolean | Prisma.AppUser$userFavoritesArgs<ExtArgs>
   userViews?: boolean | Prisma.AppUser$userViewsArgs<ExtArgs>
+  workBrowseStates?: boolean | Prisma.AppUser$workBrowseStatesArgs<ExtArgs>
   userComments?: boolean | Prisma.AppUser$userCommentsArgs<ExtArgs>
   userReports?: boolean | Prisma.AppUser$userReportsArgs<ExtArgs>
   handledUserReports?: boolean | Prisma.AppUser$handledUserReportsArgs<ExtArgs>
@@ -9867,6 +10269,10 @@ export type $AppUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
      * 浏览记录
      */
     userViews: Prisma.$UserViewPayload<ExtArgs>[]
+    /**
+     * 作品浏览状态
+     */
+    workBrowseStates: Prisma.$UserWorkBrowseStatePayload<ExtArgs>[]
     /**
      * 评论记录
      */
@@ -10395,6 +10801,7 @@ export interface Prisma__AppUserClient<T, Null = never, ExtArgs extends runtime.
   userLikes<T extends Prisma.AppUser$userLikesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$userLikesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserLikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userFavorites<T extends Prisma.AppUser$userFavoritesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$userFavoritesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserFavoritePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userViews<T extends Prisma.AppUser$userViewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$userViewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserViewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  workBrowseStates<T extends Prisma.AppUser$workBrowseStatesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$workBrowseStatesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserWorkBrowseStatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userComments<T extends Prisma.AppUser$userCommentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$userCommentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userReports<T extends Prisma.AppUser$userReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$userReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   handledUserReports<T extends Prisma.AppUser$handledUserReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.AppUser$handledUserReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -11509,6 +11916,30 @@ export type AppUser$userViewsArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.UserViewScalarFieldEnum | Prisma.UserViewScalarFieldEnum[]
+}
+
+/**
+ * AppUser.workBrowseStates
+ */
+export type AppUser$workBrowseStatesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserWorkBrowseState
+   */
+  select?: Prisma.UserWorkBrowseStateSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserWorkBrowseState
+   */
+  omit?: Prisma.UserWorkBrowseStateOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserWorkBrowseStateInclude<ExtArgs> | null
+  where?: Prisma.UserWorkBrowseStateWhereInput
+  orderBy?: Prisma.UserWorkBrowseStateOrderByWithRelationInput | Prisma.UserWorkBrowseStateOrderByWithRelationInput[]
+  cursor?: Prisma.UserWorkBrowseStateWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserWorkBrowseStateScalarFieldEnum | Prisma.UserWorkBrowseStateScalarFieldEnum[]
 }
 
 /**

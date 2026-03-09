@@ -36,8 +36,8 @@ export interface ParsedRequestData {
   method: HttpMethodEnum
   /** 请求路径 */
   path: string
-  /** 序列化后的参数 */
-  params?: string
+  /** 请求参数 */
+  params?: RequestParams
   /** User-Agent */
   userAgent?: string
   /** 设备信息（序列化后） */

@@ -412,6 +412,7 @@ export const ModelName = {
   UserPurchaseRecord: 'UserPurchaseRecord',
   UserReport: 'UserReport',
   UserView: 'UserView',
+  UserWorkBrowseState: 'UserWorkBrowseState',
   ForumConfigHistory: 'ForumConfigHistory',
   ForumConfig: 'ForumConfig',
   ForumModeratorActionLog: 'ForumModeratorActionLog',
@@ -462,7 +463,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "messageWsMetric" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthorRelation" | "workAuthor" | "workCategoryRelation" | "workCategory" | "workChapter" | "workComic" | "workNovel" | "workTagRelation" | "workTag" | "work"
+    modelProps: "adminUserToken" | "adminUser" | "appAgreement" | "appAgreementLog" | "appAnnouncementRead" | "appAnnouncement" | "appConfig" | "appPage" | "appUserToken" | "appUser" | "growthAuditLog" | "growthLedgerRecord" | "growthRuleUsageSlot" | "taskAssignment" | "taskProgressLog" | "task" | "userBadgeAssignment" | "userBadge" | "userComment" | "userDownloadRecord" | "userExperienceRule" | "userFavorite" | "userLevelRule" | "userLike" | "userPointRule" | "userPurchaseRecord" | "userReport" | "userView" | "userWorkBrowseState" | "forumConfigHistory" | "forumConfig" | "forumModeratorActionLog" | "forumModeratorApplication" | "forumModeratorSection" | "forumModerator" | "forumNotification" | "forumProfile" | "forumSectionGroup" | "forumSection" | "forumTag" | "forumTopicTag" | "forumTopic" | "forumUserActionLog" | "chatConversationMember" | "chatConversation" | "chatMessage" | "messageOutbox" | "messageWsMetric" | "userNotification" | "requestLog" | "sensitiveWord" | "systemConfig" | "dictionary" | "dictionaryItem" | "workAuthorRelation" | "workAuthor" | "workCategoryRelation" | "workCategory" | "workChapter" | "workComic" | "workNovel" | "workTagRelation" | "workTag" | "work"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2535,6 +2536,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserViewCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserViewCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserWorkBrowseState: {
+      payload: Prisma.$UserWorkBrowseStatePayload<ExtArgs>
+      fields: Prisma.UserWorkBrowseStateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserWorkBrowseStateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserWorkBrowseStateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
+        }
+        findFirst: {
+          args: Prisma.UserWorkBrowseStateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserWorkBrowseStateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
+        }
+        findMany: {
+          args: Prisma.UserWorkBrowseStateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>[]
+        }
+        create: {
+          args: Prisma.UserWorkBrowseStateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
+        }
+        createMany: {
+          args: Prisma.UserWorkBrowseStateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserWorkBrowseStateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>[]
+        }
+        delete: {
+          args: Prisma.UserWorkBrowseStateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
+        }
+        update: {
+          args: Prisma.UserWorkBrowseStateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
+        }
+        deleteMany: {
+          args: Prisma.UserWorkBrowseStateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserWorkBrowseStateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserWorkBrowseStateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>[]
+        }
+        upsert: {
+          args: Prisma.UserWorkBrowseStateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserWorkBrowseStatePayload>
+        }
+        aggregate: {
+          args: Prisma.UserWorkBrowseStateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserWorkBrowseState>
+        }
+        groupBy: {
+          args: Prisma.UserWorkBrowseStateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserWorkBrowseStateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserWorkBrowseStateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserWorkBrowseStateCountAggregateOutputType> | number
         }
       }
     }
@@ -5668,6 +5743,20 @@ export const UserViewScalarFieldEnum = {
 export type UserViewScalarFieldEnum = (typeof UserViewScalarFieldEnum)[keyof typeof UserViewScalarFieldEnum]
 
 
+export const UserWorkBrowseStateScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  workId: 'workId',
+  workType: 'workType',
+  lastViewedAt: 'lastViewedAt',
+  lastViewedChapterId: 'lastViewedChapterId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserWorkBrowseStateScalarFieldEnum = (typeof UserWorkBrowseStateScalarFieldEnum)[keyof typeof UserWorkBrowseStateScalarFieldEnum]
+
+
 export const ForumConfigHistoryScalarFieldEnum = {
   id: 'id',
   configId: 'configId',
@@ -6589,6 +6678,7 @@ export type GlobalOmitConfig = {
   userPurchaseRecord?: Prisma.UserPurchaseRecordOmit
   userReport?: Prisma.UserReportOmit
   userView?: Prisma.UserViewOmit
+  userWorkBrowseState?: Prisma.UserWorkBrowseStateOmit
   forumConfigHistory?: Prisma.ForumConfigHistoryOmit
   forumConfig?: Prisma.ForumConfigOmit
   forumModeratorActionLog?: Prisma.ForumModeratorActionLogOmit

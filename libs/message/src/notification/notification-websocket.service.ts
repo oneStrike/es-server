@@ -1,8 +1,7 @@
-import type { IncomingMessage } from 'node:http'
-import type { Socket } from 'socket.io'
-import type { Server } from 'socket.io'
-import type { WebSocket } from 'ws'
 import type { AuthConfigInterface } from '@libs/base/types'
+import type { IncomingMessage } from 'node:http'
+import type { Server, Socket } from 'socket.io'
+import type { WebSocket } from 'ws'
 import type { MessageChatService } from '../chat/chat.service'
 import type {
   WsAckPayload,

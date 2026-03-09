@@ -311,14 +311,6 @@ export class ChapterUserStatusFieldsDto {
   liked!: boolean
 
   @BooleanProperty({
-    description: '是否已收藏',
-    example: false,
-    required: true,
-    validation: false,
-  })
-  favorited!: boolean
-
-  @BooleanProperty({
     description: '是否已购买',
     example: false,
     required: true,
@@ -357,14 +349,12 @@ export class NovelChapterContentDto extends IntersectionType(
   PickType(BaseWorkChapterDto, ['content']),
 ) {}
 
-/// 章节分页带用户状态DTO
-export class WorkChapterPageWithUserStatusDto extends IntersectionType(
+/// 章节详情带用户状态DTO
+export class WorkChapterDetailWithUserStatusDto extends IntersectionType(
   BaseWorkChapterDto,
   ChapterUserStatusFieldsDto,
+  PickType(ComicChapterContentDto, ['content']),
 ) {}
-
-/// 章节详情带用户状态DTO
-export class WorkChapterDetailWithUserStatusDto extends WorkChapterPageWithUserStatusDto {}
 
 /// 章节用户状态DTO
 export class WorkChapterUserStatusDto extends IntersectionType(
