@@ -1,19 +1,26 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator'
+import { IsIn, IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator'
+
+const FAVORITE_TARGET_TYPES = [
+  InteractionTargetTypeEnum.COMIC,
+  InteractionTargetTypeEnum.NOVEL,
+  InteractionTargetTypeEnum.FORUM_TOPIC,
+] as const
 
 export class FavoriteDto {
   @ApiProperty({
-    description: '目标类型1=漫画, 2=小说, 5=论坛主题',
-    enum: InteractionTargetTypeEnum,
-    example: 1,
+    description: 'Favorite target type: 1=comic, 2=novel, 5=forum topic',
+    enum: FAVORITE_TARGET_TYPES,
+    example: InteractionTargetTypeEnum.COMIC,
   })
   @IsInt()
+  @IsIn(FAVORITE_TARGET_TYPES)
   @IsNotEmpty()
   targetType!: InteractionTargetTypeEnum
 
   @ApiProperty({
-    description: '目标ID',
+    description: 'Target ID',
     example: 1,
   })
   @IsInt()
@@ -26,16 +33,17 @@ export class UnfavoriteDto extends FavoriteDto {}
 
 export class FavoriteStatusQueryDto {
   @ApiProperty({
-    description: '目标类型',
-    enum: InteractionTargetTypeEnum,
-    example: 1,
+    description: 'Favorite target type',
+    enum: FAVORITE_TARGET_TYPES,
+    example: InteractionTargetTypeEnum.COMIC,
   })
   @IsInt()
+  @IsIn(FAVORITE_TARGET_TYPES)
   @IsNotEmpty()
   targetType!: InteractionTargetTypeEnum
 
   @ApiProperty({
-    description: '目标ID',
+    description: 'Target ID',
     example: 1,
   })
   @IsInt()
@@ -46,21 +54,22 @@ export class FavoriteStatusQueryDto {
 
 export class FavoriteListQueryDto {
   @ApiPropertyOptional({
-    description: '目标类型筛选',
-    enum: InteractionTargetTypeEnum,
-    example: 1,
+    description: 'Filter by favorite target type',
+    enum: FAVORITE_TARGET_TYPES,
+    example: InteractionTargetTypeEnum.COMIC,
   })
   @IsInt()
+  @IsIn(FAVORITE_TARGET_TYPES)
   @IsOptional()
   targetType?: InteractionTargetTypeEnum
 
-  @ApiPropertyOptional({ description: '页码', default: 0, example: 0 })
+  @ApiPropertyOptional({ description: 'Page index', default: 0, example: 0 })
   @IsInt()
   @Min(0)
   @IsOptional()
   pageIndex?: number = 0
 
-  @ApiPropertyOptional({ description: '每页数量', default: 15, example: 15 })
+  @ApiPropertyOptional({ description: 'Page size', default: 15, example: 15 })
   @IsInt()
   @Min(1)
   @IsOptional()
@@ -68,6 +77,6 @@ export class FavoriteListQueryDto {
 }
 
 export class FavoriteStatusResponseDto {
-  @ApiProperty({ description: '是否已收藏', example: true })
+  @ApiProperty({ description: 'Whether target is favorited', example: true })
   isFavorited!: boolean
 }

@@ -3,13 +3,70 @@ import {
   UserStatusEnum,
 } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import { CounterService } from '../counter/counter.service'
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 
 @Injectable()
 export class ViewPermissionService extends BaseService {
-  constructor(private readonly counterService: CounterService) {
+  constructor() {
     super()
+  }
+
+  private getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
+    switch (targetType) {
+      case InteractionTargetTypeEnum.COMIC:
+      case InteractionTargetTypeEnum.NOVEL:
+        return client.work
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
+        return client.workChapter
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
+        return client.forumTopic
+      case InteractionTargetTypeEnum.COMMENT:
+        return client.userComment
+      default:
+        throw new Error(`Unsupported interaction target type: ${targetType}`)
+    }
+  }
+
+  private getTargetWhere(
+    targetType: InteractionTargetTypeEnum,
+    targetId: number,
+  ) {
+    switch (targetType) {
+      case InteractionTargetTypeEnum.COMIC:
+        return { id: targetId, type: 1, deletedAt: null }
+      case InteractionTargetTypeEnum.NOVEL:
+        return { id: targetId, type: 2, deletedAt: null }
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+        return { id: targetId, workType: 1, deletedAt: null }
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
+        return { id: targetId, workType: 2, deletedAt: null }
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.COMMENT:
+        return { id: targetId, deletedAt: null }
+      default:
+        throw new Error(`Unsupported interaction target type: ${targetType}`)
+    }
+  }
+
+  private async ensureTargetExists(
+    targetType: InteractionTargetTypeEnum,
+    targetId: number,
+  ) {
+    const model = this.getTargetModel(this.prisma, targetType)
+    const where = this.getTargetWhere(targetType, targetId)
+    const target = await model.findFirst({
+      where,
+      select: { id: true },
+    })
+
+    if (!target) {
+      throw new NotFoundException('Target not found')
+    }
   }
 
   async ensureUserCanView(userId: number): Promise<void> {
@@ -22,7 +79,7 @@ export class ViewPermissionService extends BaseService {
     })
 
     if (!user || !user.isEnabled) {
-      throw new BadRequestException('用户不存在或已被禁用')
+      throw new BadRequestException('User does not exist or is disabled')
     }
 
     if (
@@ -33,7 +90,7 @@ export class ViewPermissionService extends BaseService {
         UserStatusEnum.PERMANENT_BANNED,
       ].includes(user.status)
     ) {
-      throw new BadRequestException('用户已被禁言或封禁，无法浏览')
+      throw new BadRequestException('User is muted or banned and cannot view')
     }
   }
 
@@ -42,7 +99,7 @@ export class ViewPermissionService extends BaseService {
     targetId: number,
   ): Promise<boolean> {
     try {
-      await this.counterService.ensureTargetExists(targetType, targetId)
+      await this.ensureTargetExists(targetType, targetId)
       return true
     } catch {
       return false

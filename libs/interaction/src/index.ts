@@ -1,51 +1,48 @@
-// 评论
+// comment
 export * from './comment/comment-permission.service'
 export * from './comment/comment.module'
 export * from './comment/comment.service'
 export * from './comment/dto/comment.dto'
 
-// 常量和类型
+// constants and module
 export * from './common.constant'
 export * from './core.module'
-export * from './counter/counter.module'
-
-// 计数器
-export * from './counter/counter.service'
 export * from './domain.types'
-// 下载
-export * from './download/download.constant'
 
+// download
+export * from './download/download.constant'
 export * from './download/download.module'
 export * from './download/download.service'
 export * from './download/dto/download.dto'
-// 共享 DTO
+
+// shared dto
 export * from './dto/base-interaction.dto'
-
 export * from './dto/target.dto'
-// 收藏
-export * from './favorite/dto/favorite.dto'
 
+// favorite
+export * from './favorite/dto/favorite.dto'
 export * from './favorite/favorite.module'
 export * from './favorite/favorite.service'
+
 export * from './interaction-target-resolver.service'
 
-// 点赞
+// like
 export * from './like/dto/like.dto'
 export * from './like/like.module'
 export * from './like/like.service'
 
-// 购买
+// purchase
 export * from './purchase/dto/purchase.dto'
 export * from './purchase/purchase.module'
 export * from './purchase/purchase.service'
 
-// 举报
+// report
 export * from './report/dto/report-app.dto'
 export * from './report/dto/report.dto'
 export * from './report/report.module'
 export * from './report/report.service'
 
-// 浏览
+// view
 export * from './view/dto/view.dto'
 export * from './view/view.module'
 export * from './view/view.service'

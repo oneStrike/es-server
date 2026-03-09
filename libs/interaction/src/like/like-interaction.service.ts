@@ -7,13 +7,6 @@ import {
 } from '@libs/message'
 import { Injectable } from '@nestjs/common'
 
-/**
- * 点赞联动服务。
- *
- * 说明：
- * - 负责点赞后的站内通知等副作用
- * - 评论点赞需要保留评论主体信息，便于消息中心正确跳转
- */
 @Injectable()
 export class LikeInteractionService extends BaseService {
   constructor(private readonly messageOutboxService: MessageOutboxService) {
@@ -43,13 +36,6 @@ export class LikeInteractionService extends BaseService {
     )
   }
 
-  /**
-   * 构建点赞通知载荷。
-   *
-   * 说明：
-   * - 目前仅为论坛主题和评论点赞发送通知
-   * - 其余内容点赞暂不额外发送消息
-   */
   private async buildNotificationPayload(
     tx: any,
     params: {
@@ -62,7 +48,7 @@ export class LikeInteractionService extends BaseService {
 
     if (targetType === InteractionTargetTypeEnum.FORUM_TOPIC) {
       const topic = await tx.forumTopic.findUnique({
-        where: { id: targetId },
+        where: { id: targetId, deletedAt: null },
         select: { userId: true },
       })
 
@@ -78,8 +64,8 @@ export class LikeInteractionService extends BaseService {
           type: MessageNotificationTypeEnum.COMMENT_LIKE,
           targetType,
           targetId,
-          title: '你的主题收到了点赞',
-          content: '有人点赞了你的主题',
+          title: 'Your topic received a like',
+          content: 'Someone liked your topic',
         },
       }
     }
@@ -109,8 +95,8 @@ export class LikeInteractionService extends BaseService {
           targetId: comment.targetId,
           subjectType: MessageNotificationSubjectTypeEnum.COMMENT,
           subjectId: comment.id,
-          title: '你的评论收到了点赞',
-          content: '有人点赞了你的评论',
+          title: 'Your comment received a like',
+          content: 'Someone liked your comment',
         },
       }
     }

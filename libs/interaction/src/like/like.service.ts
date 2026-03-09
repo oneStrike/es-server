@@ -1,29 +1,95 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
-import { CounterService } from '../counter/counter.service'
 import { InteractionTargetResolverService } from '../interaction-target-resolver.service'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeInteractionService } from './like-interaction.service'
 import { LikePermissionService } from './like-permission.service'
 
-/**
- * 点赞服务。
- *
- * 说明：
- * - 所有点赞统一通过该服务处理
- * - 评论点赞不再单独维护一套专用写库逻辑
- */
 @Injectable()
 export class LikeService extends BaseService {
   constructor(
-    private readonly counterService: CounterService,
     private readonly likePermissionService: LikePermissionService,
     private readonly likeInteractionService: LikeInteractionService,
     private readonly likeGrowthService: LikeGrowthService,
     private readonly interactionTargetResolverService: InteractionTargetResolverService,
   ) {
     super()
+  }
+
+  private getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
+    switch (targetType) {
+      case InteractionTargetTypeEnum.COMIC:
+      case InteractionTargetTypeEnum.NOVEL:
+        return client.work
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
+        return client.workChapter
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
+        return client.forumTopic
+      case InteractionTargetTypeEnum.COMMENT:
+        return client.userComment
+      default:
+        throw new Error(`Unsupported interaction target type: ${targetType}`)
+    }
+  }
+
+  private getTargetWhere(
+    targetType: InteractionTargetTypeEnum,
+    targetId: number,
+  ) {
+    switch (targetType) {
+      case InteractionTargetTypeEnum.COMIC:
+        return { id: targetId, type: 1, deletedAt: null }
+      case InteractionTargetTypeEnum.NOVEL:
+        return { id: targetId, type: 2, deletedAt: null }
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+        return { id: targetId, workType: 1, deletedAt: null }
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
+        return { id: targetId, workType: 2, deletedAt: null }
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.COMMENT:
+        return { id: targetId, deletedAt: null }
+      default:
+        throw new Error(`Unsupported interaction target type: ${targetType}`)
+    }
+  }
+
+  private getTargetListWhere(
+    targetType: InteractionTargetTypeEnum,
+    targetIds: number[],
+  ) {
+    switch (targetType) {
+      case InteractionTargetTypeEnum.COMIC:
+        return { id: { in: targetIds }, type: 1, deletedAt: null }
+      case InteractionTargetTypeEnum.NOVEL:
+        return { id: { in: targetIds }, type: 2, deletedAt: null }
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
+        return { id: { in: targetIds }, workType: 1, deletedAt: null }
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
+        return { id: { in: targetIds }, workType: 2, deletedAt: null }
+      case InteractionTargetTypeEnum.FORUM_TOPIC:
+      case InteractionTargetTypeEnum.COMMENT:
+        return { id: { in: targetIds }, deletedAt: null }
+      default:
+        throw new Error(`Unsupported interaction target type: ${targetType}`)
+    }
+  }
+
+  private async applyTargetCountDelta(
+    tx: any,
+    targetType: InteractionTargetTypeEnum,
+    targetId: number,
+    field: string,
+    delta: number,
+  ) {
+    if (delta === 0) {
+      return
+    }
+
+    const model = this.getTargetModel(tx, targetType)
+    const where = this.getTargetWhere(targetType, targetId)
+    await model.applyCountDelta(where, field, delta)
   }
 
   async checkStatusBatch(
@@ -85,23 +151,45 @@ export class LikeService extends BaseService {
     targetType: InteractionTargetTypeEnum,
     targetId: number,
   ): Promise<number> {
-    return this.counterService.getCount(targetType, targetId, 'likeCount')
+    const model = this.getTargetModel(this.prisma, targetType)
+    const where = this.getTargetWhere(targetType, targetId)
+    const result = await model.findFirst({
+      where,
+      select: {
+        likeCount: true,
+      },
+    })
+
+    return result?.likeCount ?? 0
   }
 
   async getLikeCounts(
     targetType: InteractionTargetTypeEnum,
     targetIds: number[],
   ): Promise<Map<number, number>> {
-    return this.counterService.getCounts(targetType, targetIds, 'likeCount')
+    const countMap = new Map<number, number>()
+
+    if (targetIds.length === 0) {
+      return countMap
+    }
+
+    const model = this.getTargetModel(this.prisma, targetType)
+    const where = this.getTargetListWhere(targetType, targetIds)
+    const results = await model.findMany({
+      where,
+      select: {
+        id: true,
+        likeCount: true,
+      },
+    })
+
+    for (const item of results) {
+      countMap.set(item.id, item.likeCount ?? 0)
+    }
+
+    return countMap
   }
 
-  /**
-   * 创建点赞。
-   *
-   * 说明：
-   * - 先校验权限，再解析目标场景元数据
-   * - `sceneType` 等统计维度在点赞创建时直接冗余写入
-   */
   async like(
     targetType: InteractionTargetTypeEnum,
     targetId: number,
@@ -128,17 +216,11 @@ export class LikeService extends BaseService {
         })
       } catch (error) {
         this.handlePrismaBusinessError(error, {
-          duplicateMessage: '已点赞',
+          duplicateMessage: 'Already liked',
         })
       }
 
-      await this.counterService.applyCountDelta(
-        tx,
-        targetType,
-        targetId,
-        'likeCount',
-        1,
-      )
+      await this.applyTargetCountDelta(tx, targetType, targetId, 'likeCount', 1)
 
       await this.likeInteractionService.handleLikeCreated(tx, {
         targetType,
@@ -174,17 +256,11 @@ export class LikeService extends BaseService {
         })
       } catch (error) {
         this.handlePrismaBusinessError(error, {
-          notFoundMessage: '尚未点赞',
+          notFoundMessage: 'Like record not found',
         })
       }
 
-      await this.counterService.applyCountDelta(
-        tx,
-        targetType,
-        targetId,
-        'likeCount',
-        -1,
-      )
+      await this.applyTargetCountDelta(tx, targetType, targetId, 'likeCount', -1)
     })
   }
 

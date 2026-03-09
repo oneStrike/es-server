@@ -1,6 +1,5 @@
 import { Global, Module } from '@nestjs/common'
 import { CommentModule } from './comment/comment.module'
-import { CounterModule } from './counter/counter.module'
 import { DownloadModule } from './download/download.module'
 import { FavoriteModule } from './favorite/favorite.module'
 import { LikeModule } from './like/like.module'
@@ -11,7 +10,6 @@ import { ViewModule } from './view/view.module'
 @Global()
 @Module({
   imports: [
-    CounterModule,
     LikeModule,
     FavoriteModule,
     ViewModule,
@@ -21,7 +19,6 @@ import { ViewModule } from './view/view.module'
     PurchaseModule,
   ],
   exports: [
-    CounterModule,
     LikeModule,
     FavoriteModule,
     ViewModule,
