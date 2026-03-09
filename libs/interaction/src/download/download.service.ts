@@ -193,8 +193,6 @@ export class DownloadService extends BaseService {
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
           AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
-          AND wc.deleted_at IS NULL
-          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
         GROUP BY wc.work_id, w.type, w.name, w.cover
@@ -208,8 +206,6 @@ export class DownloadService extends BaseService {
         INNER JOIN work w ON w.id = wc.work_id
         WHERE udr.user_id = ${userId}
           AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
-          AND wc.deleted_at IS NULL
-          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
       `),
@@ -301,8 +297,6 @@ export class DownloadService extends BaseService {
         WHERE udr.user_id = ${userId}
           AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
           AND wc.work_id = ${workId}
-          AND wc.deleted_at IS NULL
-          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
         ORDER BY udr.created_at DESC
@@ -316,8 +310,6 @@ export class DownloadService extends BaseService {
         WHERE udr.user_id = ${userId}
           AND udr.target_type IN (${DownloadTargetTypeEnum.COMIC_CHAPTER}, ${DownloadTargetTypeEnum.NOVEL_CHAPTER})
           AND wc.work_id = ${workId}
-          AND wc.deleted_at IS NULL
-          AND w.deleted_at IS NULL
           ${workTypeFilter}
           ${createdAtFilter}
       `),

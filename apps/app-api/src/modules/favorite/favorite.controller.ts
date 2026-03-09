@@ -15,12 +15,15 @@ import { ApiTags } from '@nestjs/swagger'
 export class FavoriteController {
   constructor(private readonly favoriteService: FavoriteService) {}
 
-  @Post()
+  @Post('favorite')
   @ApiDoc({
     summary: '收藏',
     model: IdDto,
   })
-  async favorite(@Body() body: FavoriteDto, @CurrentUser('sub') userId: number) {
+  async favorite(
+    @Body() body: FavoriteDto,
+    @CurrentUser('sub') userId: number,
+  ) {
     await this.favoriteService.favorite(body.targetType, body.targetId, userId)
     return { id: body.targetId }
   }
@@ -34,7 +37,11 @@ export class FavoriteController {
     @Body() body: UnfavoriteDto,
     @CurrentUser('sub') userId: number,
   ) {
-    await this.favoriteService.unfavorite(body.targetType, body.targetId, userId)
+    await this.favoriteService.unfavorite(
+      body.targetType,
+      body.targetId,
+      userId,
+    )
     return { id: body.targetId }
   }
 
