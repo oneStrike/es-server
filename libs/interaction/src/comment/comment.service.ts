@@ -13,6 +13,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { CommentGrowthService } from './comment-growth.service'
 import { CommentPermissionService } from './comment-permission.service'
 import {
@@ -42,6 +43,7 @@ export class CommentService extends BaseService {
     private readonly commentPermissionService: CommentPermissionService,
     private readonly commentGrowthService: CommentGrowthService,
     private readonly messageOutboxService: MessageOutboxService,
+    private readonly interactionTargetAccessService: InteractionTargetAccessService,
   ) {
     super()
   }
@@ -58,43 +60,6 @@ export class CommentService extends BaseService {
     )
   }
 
-  private getTargetInfo(
-    tx: any,
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-        return {
-          model: tx.work,
-          where: { id: targetId, type: 1, deletedAt: null },
-        }
-      case InteractionTargetTypeEnum.NOVEL:
-        return {
-          model: tx.work,
-          where: { id: targetId, type: 2, deletedAt: null },
-        }
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-        return {
-          model: tx.workChapter,
-          where: { id: targetId, workType: 1, deletedAt: null },
-        }
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return {
-          model: tx.workChapter,
-          where: { id: targetId, workType: 2, deletedAt: null },
-        }
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-        return {
-          model: tx.forumTopic,
-          where: { id: targetId, deletedAt: null },
-        }
-      case InteractionTargetTypeEnum.COMMENT:
-      default:
-        throw new BadRequestException('不支持的评论目标类型')
-    }
-  }
-
   private async applyCommentCountDelta(
     tx: any,
     targetType: InteractionTargetTypeEnum,
@@ -105,8 +70,13 @@ export class CommentService extends BaseService {
       return
     }
 
-    const { model, where } = this.getTargetInfo(tx, targetType, targetId)
-    await model.applyCountDelta(where, 'commentCount', delta)
+    await this.interactionTargetAccessService.applyTargetCountDelta(
+      tx,
+      targetType,
+      targetId,
+      'commentCount',
+      delta,
+    )
   }
 
   private resolveAuditDecision(content: string) {

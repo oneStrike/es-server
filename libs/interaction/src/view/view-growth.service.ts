@@ -4,8 +4,8 @@ import {
   GrowthAssetTypeEnum,
   GrowthLedgerService,
 } from '@libs/user/growth-ledger'
-import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { Injectable } from '@nestjs/common'
+import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
 
 @Injectable()
 export class ViewGrowthService extends BaseService {
@@ -18,7 +18,7 @@ export class ViewGrowthService extends BaseService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    const ruleType = this.resolveRuleType(targetType)
+    const ruleType = resolveInteractionGrowthRuleType('view', targetType)
     if (!ruleType) {
       return
     }
@@ -65,24 +65,6 @@ export class ViewGrowthService extends BaseService {
       })
     } catch {
       // 奖励失败不影响主流程
-    }
-  }
-
-  private resolveRuleType(
-    targetType: InteractionTargetTypeEnum,
-  ): GrowthRuleTypeEnum | null {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-        return GrowthRuleTypeEnum.COMIC_WORK_VIEW
-      case InteractionTargetTypeEnum.NOVEL:
-        return GrowthRuleTypeEnum.NOVEL_WORK_VIEW
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-        return GrowthRuleTypeEnum.TOPIC_VIEW
-      case InteractionTargetTypeEnum.COMMENT:
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-      default:
-        return null
     }
   }
 

@@ -3,70 +3,27 @@ import {
   UserStatusEnum,
 } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { InteractionTargetAccessService } from '../interaction-target-access.service'
 
 @Injectable()
 export class LikePermissionService extends BaseService {
-  constructor() {
-    super()
-  }
-
-  private getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-      case InteractionTargetTypeEnum.NOVEL:
-        return client.work
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return client.workChapter
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-        return client.forumTopic
-      case InteractionTargetTypeEnum.COMMENT:
-        return client.userComment
-      default:
-        throw new Error(`Unsupported interaction target type: ${targetType}`)
-    }
-  }
-
-  private getTargetWhere(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
+  constructor(
+    private readonly interactionTargetAccessService: InteractionTargetAccessService,
   ) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-        return { id: targetId, type: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL:
-        return { id: targetId, type: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-        return { id: targetId, workType: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return { id: targetId, workType: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-      case InteractionTargetTypeEnum.COMMENT:
-        return { id: targetId, deletedAt: null }
-      default:
-        throw new Error(`Unsupported interaction target type: ${targetType}`)
-    }
+    super()
   }
 
   private async ensureTargetExists(
     targetType: InteractionTargetTypeEnum,
     targetId: number,
   ) {
-    const model = this.getTargetModel(this.prisma, targetType)
-    const where = this.getTargetWhere(targetType, targetId)
-    const target = await model.findFirst({
-      where,
-      select: { id: true },
-    })
-
-    if (!target) {
-      throw new NotFoundException('Target not found')
-    }
+    await this.interactionTargetAccessService.ensureTargetExists(
+      this.prisma,
+      targetType,
+      targetId,
+      { notFoundMessage: 'Target not found' },
+    )
   }
 
   async ensureCanLike(
@@ -75,9 +32,17 @@ export class LikePermissionService extends BaseService {
     targetId: number,
   ): Promise<void> {
     await Promise.all([
-      this.ensureUserCanLike(userId),
+      this.ensureCanLikeUser(userId),
       this.ensureTargetExists(targetType, targetId),
     ])
+  }
+
+  /**
+   * Exposed for flows that already resolve target metadata.
+   * This avoids running a second target existence query in the service layer.
+   */
+  async ensureCanLikeUser(userId: number): Promise<void> {
+    await this.ensureUserCanLike(userId)
   }
 
   async ensureCanUnlike(

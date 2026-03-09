@@ -1,6 +1,7 @@
 import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
+import { InteractionTargetAccessService } from '../interaction-target-access.service'
 import { InteractionTargetResolverService } from '../interaction-target-resolver.service'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeInteractionService } from './like-interaction.service'
@@ -12,70 +13,16 @@ export class LikeService extends BaseService {
     private readonly likePermissionService: LikePermissionService,
     private readonly likeInteractionService: LikeInteractionService,
     private readonly likeGrowthService: LikeGrowthService,
+    private readonly interactionTargetAccessService: InteractionTargetAccessService,
     private readonly interactionTargetResolverService: InteractionTargetResolverService,
   ) {
     super()
   }
 
-  private getTargetModel(client: any, targetType: InteractionTargetTypeEnum) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-      case InteractionTargetTypeEnum.NOVEL:
-        return client.work
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return client.workChapter
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-        return client.forumTopic
-      case InteractionTargetTypeEnum.COMMENT:
-        return client.userComment
-      default:
-        throw new Error(`Unsupported interaction target type: ${targetType}`)
-    }
-  }
-
-  private getTargetWhere(
-    targetType: InteractionTargetTypeEnum,
-    targetId: number,
-  ) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-        return { id: targetId, type: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL:
-        return { id: targetId, type: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-        return { id: targetId, workType: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return { id: targetId, workType: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-      case InteractionTargetTypeEnum.COMMENT:
-        return { id: targetId, deletedAt: null }
-      default:
-        throw new Error(`Unsupported interaction target type: ${targetType}`)
-    }
-  }
-
-  private getTargetListWhere(
-    targetType: InteractionTargetTypeEnum,
-    targetIds: number[],
-  ) {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-        return { id: { in: targetIds }, type: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL:
-        return { id: { in: targetIds }, type: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-        return { id: { in: targetIds }, workType: 1, deletedAt: null }
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return { id: { in: targetIds }, workType: 2, deletedAt: null }
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-      case InteractionTargetTypeEnum.COMMENT:
-        return { id: { in: targetIds }, deletedAt: null }
-      default:
-        throw new Error(`Unsupported interaction target type: ${targetType}`)
-    }
-  }
-
+  /**
+   * Shared target counter update.
+   * The target lookup details are centralized in InteractionTargetAccessService.
+   */
   private async applyTargetCountDelta(
     tx: any,
     targetType: InteractionTargetTypeEnum,
@@ -83,13 +30,13 @@ export class LikeService extends BaseService {
     field: string,
     delta: number,
   ) {
-    if (delta === 0) {
-      return
-    }
-
-    const model = this.getTargetModel(tx, targetType)
-    const where = this.getTargetWhere(targetType, targetId)
-    await model.applyCountDelta(where, field, delta)
+    await this.interactionTargetAccessService.applyTargetCountDelta(
+      tx,
+      targetType,
+      targetId,
+      field,
+      delta,
+    )
   }
 
   async checkStatusBatch(
@@ -151,8 +98,14 @@ export class LikeService extends BaseService {
     targetType: InteractionTargetTypeEnum,
     targetId: number,
   ): Promise<number> {
-    const model = this.getTargetModel(this.prisma, targetType)
-    const where = this.getTargetWhere(targetType, targetId)
+    const model = this.interactionTargetAccessService.getTargetModel(
+      this.prisma,
+      targetType,
+    )
+    const where = this.interactionTargetAccessService.buildTargetWhere(
+      targetType,
+      targetId,
+    )
     const result = await model.findFirst({
       where,
       select: {
@@ -173,8 +126,14 @@ export class LikeService extends BaseService {
       return countMap
     }
 
-    const model = this.getTargetModel(this.prisma, targetType)
-    const where = this.getTargetListWhere(targetType, targetIds)
+    const model = this.interactionTargetAccessService.getTargetModel(
+      this.prisma,
+      targetType,
+    )
+    const where = this.interactionTargetAccessService.buildTargetListWhere(
+      targetType,
+      targetIds,
+    )
     const results = await model.findMany({
       where,
       select: {
@@ -195,12 +154,13 @@ export class LikeService extends BaseService {
     targetId: number,
     userId: number,
   ): Promise<void> {
-    await this.likePermissionService.ensureCanLike(userId, targetType, targetId)
-
-    const targetMeta = await this.interactionTargetResolverService.resolveLikeTargetMeta(
-      targetType,
-      targetId,
-    )
+    const [, targetMeta] = await Promise.all([
+      this.likePermissionService.ensureCanLikeUser(userId),
+      this.interactionTargetResolverService.resolveLikeTargetMeta(
+        targetType,
+        targetId,
+      ),
+    ])
 
     await this.prisma.$transaction(async (tx) => {
       try {

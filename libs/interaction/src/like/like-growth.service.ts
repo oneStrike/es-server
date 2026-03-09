@@ -6,6 +6,7 @@ import {
 } from '@libs/user/growth-ledger'
 import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { Injectable } from '@nestjs/common'
+import { resolveInteractionGrowthRuleType } from '../interaction-target-growth-rule'
 
 /**
  * 点赞成长奖励服务。
@@ -30,7 +31,7 @@ export class LikeGrowthService extends BaseService {
       return
     }
 
-    const ruleType = this.resolveRuleType(targetType)
+    const ruleType = resolveInteractionGrowthRuleType('like', targetType)
     if (!ruleType) {
       return
     }
@@ -134,25 +135,6 @@ export class LikeGrowthService extends BaseService {
       })
     } catch {
       // 奖励失败不影响主流程。
-    }
-  }
-
-  private resolveRuleType(
-    targetType: InteractionTargetTypeEnum,
-  ): GrowthRuleTypeEnum | null {
-    switch (targetType) {
-      case InteractionTargetTypeEnum.COMIC:
-        return GrowthRuleTypeEnum.COMIC_WORK_LIKE
-      case InteractionTargetTypeEnum.NOVEL:
-        return GrowthRuleTypeEnum.NOVEL_WORK_LIKE
-      case InteractionTargetTypeEnum.COMIC_CHAPTER:
-      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
-        return GrowthRuleTypeEnum.COMIC_CHAPTER_LIKE
-      case InteractionTargetTypeEnum.FORUM_TOPIC:
-        return GrowthRuleTypeEnum.TOPIC_LIKED
-      case InteractionTargetTypeEnum.COMMENT:
-      default:
-        return null
     }
   }
 

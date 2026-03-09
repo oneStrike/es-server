@@ -24,7 +24,10 @@ export * from './favorite/dto/favorite.dto'
 export * from './favorite/favorite.module'
 export * from './favorite/favorite.service'
 
+export * from './interaction-target-access.service'
+export * from './interaction-target-growth-rule'
 export * from './interaction-target-resolver.service'
+export * from './interaction-target.definition'
 
 // like
 export * from './like/dto/like.dto'
