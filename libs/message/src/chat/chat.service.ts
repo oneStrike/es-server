@@ -278,7 +278,7 @@ export class MessageChatService extends BaseService {
       return {
         list,
         // 返回最后一条消息的序列号作为下次拉取的起点
-        nextCursor: list.length ? list.at(-1).messageSeq : null,
+        nextCursor: list?.length ? list.at(-1)?.messageSeq : null,
         hasMore: list.length >= limit,
       }
     }
@@ -301,7 +301,7 @@ export class MessageChatService extends BaseService {
     return {
       list,
       // 返回最后一条消息的序列号作为下次翻页的游标
-      nextCursor: list.length ? list.at(-1).messageSeq : null,
+      nextCursor: list.length ? list.at(-1)?.messageSeq : null,
       hasMore: list.length >= limit,
     }
   }
