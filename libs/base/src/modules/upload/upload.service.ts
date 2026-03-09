@@ -1,5 +1,6 @@
 import type { UploadConfigInterface } from '@libs/base/config'
 import type { FastifyRequest } from 'fastify'
+import fs from 'node:fs'
 import { join } from 'node:path'
 import { PassThrough, pipeline } from 'node:stream'
 import { promisify } from 'node:util'
@@ -12,10 +13,15 @@ import {
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { fileTypeFromBuffer } from 'file-type'
-import fs from 'fs-extra'
 import { v4 as uuidv4 } from 'uuid'
 
 const pump = promisify(pipeline)
+
+/** 场景名称验证正则：只允许字母和数字，最大长度20 */
+const SCENE_NAME_REGEX = /^[a-z0-9]+$/i
+
+/** Windows 路径分隔符替换正则 */
+const BACKSLASH_REGEX = /\\/g
 
 /**
  * 文件上传服务 - 单文件模式重构版本
@@ -52,8 +58,8 @@ export class UploadService {
 
     if (pathSegments && pathSegments?.length > 0) {
       const savePath = join(uploadPath, scene, ...pathSegments)
-      fs.ensureDirSync(savePath, 0o755)
-      return savePath
+    fs.mkdirSync(savePath, { recursive: true, mode: 0o755 })
+    return savePath
     }
 
     // 使用现代日期处理方式生成日期字符串
@@ -63,7 +69,7 @@ export class UploadService {
     const day = String(today.getDate()).padStart(2, '0')
     const dateStr = `${year}-${month}-${day}`
     const savePath = join(uploadPath, scene, dateStr, fileType)
-    fs.ensureDirSync(savePath, 0o755)
+    fs.mkdirSync(savePath, { recursive: true, mode: 0o755 })
     // 安全地拼接路径
     return savePath
   }
@@ -124,7 +130,7 @@ export class UploadService {
         }
       }
     }
-    if (!scene || !/^[a-z0-9]+$/i.test(scene) || scene.length > 20) {
+    if (!scene || !SCENE_NAME_REGEX.test(scene) || scene.length > 20) {
       // 必须消费完文件流，否则会导致客户端连接重置 (ERR_CONNECTION_RESET)
       await this.consumeStream(targetFile.file)
       throw new BadRequestException('未知的上传场景')
@@ -135,9 +141,9 @@ export class UploadService {
       targetFile.file.once('error', reject)
       targetFile.file.once('readable', () => {
         const chunk =
-          targetFile.file.read(4100)
-          || targetFile.file.read()
-          || new Uint8Array(0)
+          targetFile.file.read(4100) ||
+          targetFile.file.read() ||
+          new Uint8Array(0)
         resolve(chunk)
       })
     })
@@ -184,7 +190,7 @@ export class UploadService {
       fs.renameSync(tempPath, finalPath)
       const relativePath = finalPath
         .replace(this.uploadConfig.uploadDir, '')
-        .replace(/\\/g, '/')
+        .replace(BACKSLASH_REGEX, '/')
 
       return {
         filename: finalName,
@@ -197,7 +203,7 @@ export class UploadService {
         uploadTime: new Date(),
       }
     } catch (error) {
-      fs.removeSync(tempPath)
+      fs.rmSync(tempPath, { recursive: true, force: true })
       if (error.response.message) {
         throw error
       }

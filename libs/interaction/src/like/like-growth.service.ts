@@ -38,19 +38,29 @@ export class LikeGrowthService extends BaseService {
           targetId,
         })
 
-        const experienceResult = await this.growthLedgerService.applyByRule(tx, {
-          userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType,
-          bizKey: `${baseBizKey}:EXPERIENCE`,
-          source: 'interaction_like',
-          remark: `like target #${targetId}`,
-          targetType,
-          targetId,
-        })
+        const experienceResult = await this.growthLedgerService.applyByRule(
+          tx,
+          {
+            userId,
+            assetType: GrowthAssetTypeEnum.EXPERIENCE,
+            ruleType,
+            bizKey: `${baseBizKey}:EXPERIENCE`,
+            source: 'interaction_like',
+            remark: `like target #${targetId}`,
+            targetType,
+            targetId,
+          },
+        )
 
-        if (experienceResult.success && experienceResult.afterValue !== undefined) {
-          await this.refreshLevelByExperience(tx, userId, experienceResult.afterValue)
+        if (
+          experienceResult.success &&
+          experienceResult.afterValue !== undefined
+        ) {
+          await this.refreshLevelByExperience(
+            tx,
+            userId,
+            experienceResult.afterValue,
+          )
         }
       })
     } catch {
@@ -71,6 +81,7 @@ export class LikeGrowthService extends BaseService {
         return GrowthRuleTypeEnum.COMIC_CHAPTER_LIKE
       case InteractionTargetTypeEnum.FORUM_TOPIC:
         return GrowthRuleTypeEnum.TOPIC_LIKED
+      case InteractionTargetTypeEnum.COMMENT:
       default:
         return null
     }

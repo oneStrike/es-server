@@ -1,6 +1,10 @@
 import { BaseService } from '@libs/base/database'
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { GrowthAssetTypeEnum, GrowthLedgerActionEnum } from '../growth-ledger/growth-ledger.constant'
+import {
+  GrowthAssetTypeEnum,
+  GrowthLedgerActionEnum,
+  GrowthLedgerFailReasonLabel,
+} from '../growth-ledger/growth-ledger.constant'
 import { GrowthLedgerService } from '../growth-ledger/growth-ledger.service'
 import { GrowthRuleTypeEnum } from '../growth-rule.constant'
 import {
@@ -32,7 +36,9 @@ export class UserPointService extends BaseService {
    * @param addPointsDto 增加积分的数据
    * @returns 增加积分的结果
    */
-  async addPoints(addPointsDto: AddUserPointsDto & { bizKey?: string, source?: string }) {
+  async addPoints(
+    addPointsDto: AddUserPointsDto & { bizKey?: string, source?: string },
+  ) {
     const { userId, ruleType, remark } = addPointsDto
 
     const user = await this.appUser.findUnique({
@@ -52,8 +58,7 @@ export class UserPointService extends BaseService {
     }
 
     const bizKey =
-      addPointsDto.bizKey
-      ?? this.buildBizKey(`point:rule:${ruleType}`, userId)
+      addPointsDto.bizKey ?? this.buildBizKey(`point:rule:${ruleType}`, userId)
     const source = addPointsDto.source ?? 'point_service'
 
     return this.prisma.$transaction(async (tx) => {
@@ -67,7 +72,11 @@ export class UserPointService extends BaseService {
       })
 
       if (!result.success && !result.duplicated) {
-        throw new BadRequestException(this.mapRuleFailReason(result.reason))
+        throw new BadRequestException(
+          result.reason
+            ? GrowthLedgerFailReasonLabel[result.reason]
+            : '积分发放失败',
+        )
       }
 
       const recordId = result.recordId
@@ -89,7 +98,10 @@ export class UserPointService extends BaseService {
    * @returns 消费积分的结果
    */
   async consumePoints(
-    consumePointsDto: ConsumeUserPointsDto & { bizKey?: string, source?: string },
+    consumePointsDto: ConsumeUserPointsDto & {
+      bizKey?: string
+      source?: string
+    },
     tx?: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
   ) {
     const { userId, points, remark, targetType, targetId, exchangeId } =
@@ -99,8 +111,11 @@ export class UserPointService extends BaseService {
       trx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
     ) => {
       const bizKey =
-        consumePointsDto.bizKey
-        ?? this.buildBizKey(`point:consume:${targetType ?? 0}:${targetId ?? 0}`, userId)
+        consumePointsDto.bizKey ??
+        this.buildBizKey(
+          `point:consume:${targetType ?? 0}:${targetId ?? 0}`,
+          userId,
+        )
       const source = consumePointsDto.source ?? 'point_service'
 
       const result = await this.growthLedgerService.applyDelta(trx as any, {
@@ -118,7 +133,9 @@ export class UserPointService extends BaseService {
 
       if (!result.success && !result.duplicated) {
         throw new BadRequestException(
-          result.reason === 'insufficient_balance' ? '积分不足' : '积分扣减失败',
+          result.reason === 'insufficient_balance'
+            ? '积分不足'
+            : '积分扣减失败',
         )
       }
 
@@ -265,7 +282,9 @@ export class UserPointService extends BaseService {
 
       if (!ledger.success && !ledger.duplicated) {
         throw new BadRequestException(
-          ledger.reason === 'insufficient_balance' ? '积分不足' : '积分同步失败',
+          ledger.reason === 'insufficient_balance'
+            ? '积分不足'
+            : '积分同步失败',
         )
       }
 
@@ -332,23 +351,6 @@ export class UserPointService extends BaseService {
       remark: record.remark ?? undefined,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
-    }
-  }
-
-  private mapRuleFailReason(reason?: string) {
-    switch (reason) {
-      case 'rule_not_found':
-        return '积分规则不存在'
-      case 'rule_disabled':
-        return '积分规则已禁用'
-      case 'rule_zero':
-        return '积分规则配置错误'
-      case 'daily_limit':
-        return '今日积分已达上限'
-      case 'total_limit':
-        return '积分总次数已达上限'
-      default:
-        return '积分发放失败'
     }
   }
 

@@ -139,6 +139,7 @@ export class CounterService extends BaseService {
         return client.workChapter
       case InteractionTargetTypeEnum.FORUM_TOPIC:
         return client.forumTopic
+      case InteractionTargetTypeEnum.COMMENT:
       default:
         throw new Error(`不支持的目标类型: ${targetType}`)
     }
@@ -156,6 +157,7 @@ export class CounterService extends BaseService {
         return { id: targetId, workType: 2, deletedAt: null }
       case InteractionTargetTypeEnum.FORUM_TOPIC:
         return { id: targetId, deletedAt: null }
+      case InteractionTargetTypeEnum.COMMENT:
       default:
         throw new Error(`不支持的目标类型: ${targetType}`)
     }
@@ -243,6 +245,7 @@ export class CounterService extends BaseService {
           modelName: 'forumTopic',
           where: { id: targetId },
         }
+      case InteractionTargetTypeEnum.COMMENT:
       default:
         throw new Error(`不支持的目标类型: ${targetType}`)
     }

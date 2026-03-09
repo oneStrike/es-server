@@ -52,6 +52,32 @@ export class WorkChapterController {
     return this.workChapterService.getChapterDetail(query.id, userId)
   }
 
+  @Get('previous-detail')
+  @OptionalAuth()
+  @ApiDoc({
+    summary: '查询上一章节详情',
+    model: WorkChapterDetailWithUserStatusDto,
+  })
+  async getPreviousWorkChapterDetail(
+    @Query() query: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.workChapterService.getPreviousChapterDetail(query.id, userId)
+  }
+
+  @Get('next-detail')
+  @OptionalAuth()
+  @ApiDoc({
+    summary: '查询下一章节详情',
+    model: WorkChapterDetailWithUserStatusDto,
+  })
+  async getNextWorkChapterDetail(
+    @Query() query: IdDto,
+    @CurrentUser('sub') userId: number,
+  ) {
+    return this.workChapterService.getNextChapterDetail(query.id, userId)
+  }
+
   @Get('comic-content')
   @OptionalAuth()
   @ApiDoc({

@@ -6,6 +6,11 @@
 import type { BytesOptions, ByteUnit } from './bytes.types'
 
 /**
+ * 字节解析正则表达式（模块作用域，避免重复编译）
+ */
+const BYTE_PARSE_REGEX = /^([\d.]+)\s*([a-z]+)?$/i
+
+/**
  * 字节单位映射表，用于快速查找单位对应的字节数
  */
 export const byteUnits: Record<ByteUnit, number> = {
@@ -92,7 +97,7 @@ export function parseBytes(str: string): number {
   }
 
   // 匹配数字和单位
-  const match = str.trim().match(/^([\d.]+)\s*([a-z]+)?$/i)
+  const match = str.trim().match(BYTE_PARSE_REGEX)
   if (!match) {
     return 0
   }
@@ -120,7 +125,7 @@ export function isValidBytes(str: string): boolean {
     return false
   }
 
-  const match = str.trim().match(/^([\d.]+)\s*([a-z]+)?$/i)
+  const match = str.trim().match(BYTE_PARSE_REGEX)
   if (!match) {
     return false
   }

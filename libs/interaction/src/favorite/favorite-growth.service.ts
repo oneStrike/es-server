@@ -38,19 +38,29 @@ export class FavoriteGrowthService extends BaseService {
           targetId,
         })
 
-        const experienceResult = await this.growthLedgerService.applyByRule(tx, {
-          userId,
-          assetType: GrowthAssetTypeEnum.EXPERIENCE,
-          ruleType,
-          bizKey: `${baseBizKey}:EXPERIENCE`,
-          source: 'interaction_favorite',
-          remark: `favorite target #${targetId}`,
-          targetType,
-          targetId,
-        })
+        const experienceResult = await this.growthLedgerService.applyByRule(
+          tx,
+          {
+            userId,
+            assetType: GrowthAssetTypeEnum.EXPERIENCE,
+            ruleType,
+            bizKey: `${baseBizKey}:EXPERIENCE`,
+            source: 'interaction_favorite',
+            remark: `favorite target #${targetId}`,
+            targetType,
+            targetId,
+          },
+        )
 
-        if (experienceResult.success && experienceResult.afterValue !== undefined) {
-          await this.refreshLevelByExperience(tx, userId, experienceResult.afterValue)
+        if (
+          experienceResult.success &&
+          experienceResult.afterValue !== undefined
+        ) {
+          await this.refreshLevelByExperience(
+            tx,
+            userId,
+            experienceResult.afterValue,
+          )
         }
       })
     } catch {
@@ -68,6 +78,9 @@ export class FavoriteGrowthService extends BaseService {
         return GrowthRuleTypeEnum.NOVEL_WORK_FAVORITE
       case InteractionTargetTypeEnum.FORUM_TOPIC:
         return GrowthRuleTypeEnum.TOPIC_FAVORITED
+      case InteractionTargetTypeEnum.COMMENT:
+      case InteractionTargetTypeEnum.NOVEL_CHAPTER:
+      case InteractionTargetTypeEnum.COMIC_CHAPTER:
       default:
         return null
     }

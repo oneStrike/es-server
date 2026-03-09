@@ -3,6 +3,12 @@ import * as zlib from 'node:zlib'
 import fastifyCompress from '@fastify/compress'
 
 /**
+ * 自定义压缩类型的正则表达式
+ * 仅压缩文本类型内容
+ */
+const COMPRESSIBLE_CONTENT_TYPES = /^text\/|application\/json|application\/javascript|application\/xml/
+
+/**
  * 配置 Fastify 响应压缩
  * 支持 gzip、deflate、brotli 等压缩算法
  */
@@ -28,8 +34,7 @@ export async function setupCompression(fastifyAdapter: FastifyAdapter) {
     },
 
     // 自定义压缩条件
-    customTypes:
-      /^text\/|application\/json|application\/javascript|application\/xml/, // 仅压缩文本类型
+    customTypes: COMPRESSIBLE_CONTENT_TYPES,
 
     // 移除 Content-Length 头（压缩后长度会变化）
     removeContentLengthHeader: true,

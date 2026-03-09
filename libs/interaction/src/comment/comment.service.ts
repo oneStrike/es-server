@@ -89,10 +89,9 @@ export class CommentService extends BaseService {
           model: tx.forumTopic,
           where: { id: targetId, deletedAt: null },
         }
+      case InteractionTargetTypeEnum.COMMENT:
       default:
-        throw new BadRequestException(
-          '不支持的评论目标类型',
-        )
+        throw new BadRequestException('不支持的评论目标类型')
     }
   }
 
@@ -268,9 +267,7 @@ export class CommentService extends BaseService {
       },
     })
     if (!replyTo || replyTo.deletedAt) {
-      throw new BadRequestException(
-        '回复目标不存在',
-      )
+      throw new BadRequestException('回复目标不存在')
     }
 
     const { targetType, targetId } = replyTo
@@ -432,9 +429,7 @@ export class CommentService extends BaseService {
         },
       })
       if (!comment) {
-        throw new NotFoundException(
-          '未找到相关评论',
-        )
+        throw new NotFoundException('未找到相关评论')
       }
 
       const beforeVisible = this.isVisible(comment)
@@ -495,9 +490,7 @@ export class CommentService extends BaseService {
       })
 
       if (!before) {
-        throw new NotFoundException(
-          '未找到相关评论',
-        )
+        throw new NotFoundException('未找到相关评论')
       }
 
       if (before.isHidden === dto.isHidden) {

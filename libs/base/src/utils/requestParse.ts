@@ -6,6 +6,26 @@ import type {
 } from './request-parse.types'
 import { ApiTypeEnum, HttpMethodEnum } from '@libs/base/constant'
 
+// 浏览器检测正则表达式（模块作用域，避免重复编译）
+const CHROME_REGEX = /Chrome\/(\d+)/
+const FIREFOX_REGEX = /Firefox\/(\d+)/
+const SAFARI_REGEX = /Safari\/(\d+)/
+const EDGE_REGEX = /Edge\/(\d+)/
+const OPERA_REGEX = /Opera\/(\d+)/
+const SAFARI_CHECK_REGEX = /Safari\/\d+/
+const CHROME_CHECK_REGEX = /Chrome/
+
+// 操作系统检测正则表达式
+const WINDOWS_REGEX = /Windows NT \d+\.\d+/
+const MACOS_REGEX = /Mac OS X \d+[._]\d+/
+const LINUX_REGEX = /Linux/
+const ANDROID_REGEX = /Android \d+\.\d+/
+const IOS_REGEX = /iPhone OS \d+[._]\d+/
+
+// 设备类型检测正则表达式
+const MOBILE_REGEX = /Mobile/
+const TABLET_REGEX = /Tablet/
+
 /**
  * 从 FastifyRequest 中提取 IP 地址
  * 优先级：x-forwarded-for > x-real-ip > req.ip > socket.remoteAddress
@@ -154,28 +174,31 @@ export function parseDeviceInfo(userAgent?: string): string | undefined {
     const device: DeviceInfo = {}
 
     // 浏览器检测（按优先级排序）
-    let match = userAgent.match(/Chrome\/(\d+)/)
+    let match = userAgent.match(CHROME_REGEX)
     if (match) {
       device.browser = 'Chrome'
       device.version = match[1]
     } else {
-      match = userAgent.match(/Firefox\/(\d+)/)
+      match = userAgent.match(FIREFOX_REGEX)
       if (match) {
         device.browser = 'Firefox'
         device.version = match[1]
-      } else if (/Safari\/\d+/.test(userAgent) && !/Chrome/.test(userAgent)) {
-        match = userAgent.match(/Safari\/(\d+)/)
+      } else if (
+        SAFARI_CHECK_REGEX.test(userAgent) &&
+        !CHROME_CHECK_REGEX.test(userAgent)
+      ) {
+        match = userAgent.match(SAFARI_REGEX)
         device.browser = 'Safari'
         if (match) {
           device.version = match[1]
         }
       } else {
-        match = userAgent.match(/Edge\/(\d+)/)
+        match = userAgent.match(EDGE_REGEX)
         if (match) {
           device.browser = 'Edge'
           device.version = match[1]
         } else {
-          match = userAgent.match(/Opera\/(\d+)/)
+          match = userAgent.match(OPERA_REGEX)
           if (match) {
             device.browser = 'Opera'
             device.version = match[1]
@@ -185,22 +208,22 @@ export function parseDeviceInfo(userAgent?: string): string | undefined {
     }
 
     // 操作系统检测
-    if (/Windows NT \d+\.\d+/.test(userAgent)) {
+    if (WINDOWS_REGEX.test(userAgent)) {
       device.os = 'Windows'
-    } else if (/Mac OS X \d+[._]\d+/.test(userAgent)) {
+    } else if (MACOS_REGEX.test(userAgent)) {
       device.os = 'macOS'
-    } else if (/Linux/.test(userAgent)) {
+    } else if (LINUX_REGEX.test(userAgent)) {
       device.os = 'Linux'
-    } else if (/Android \d+\.\d+/.test(userAgent)) {
+    } else if (ANDROID_REGEX.test(userAgent)) {
       device.os = 'Android'
-    } else if (/iPhone OS \d+[._]\d+/.test(userAgent)) {
+    } else if (IOS_REGEX.test(userAgent)) {
       device.os = 'iOS'
     }
 
     // 设备类型检测
-    if (/Mobile/.test(userAgent)) {
+    if (MOBILE_REGEX.test(userAgent)) {
       device.device = 'Mobile'
-    } else if (/Tablet/.test(userAgent)) {
+    } else if (TABLET_REGEX.test(userAgent)) {
       device.device = 'Tablet'
     } else {
       device.device = 'Desktop'

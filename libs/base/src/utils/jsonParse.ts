@@ -5,6 +5,9 @@
  * - 解析失败时返回 defaultValue
  */
 
+// BOM 字符正则表达式（模块作用域，避免重复编译）
+const BOM_REGEX = /^\uFEFF/
+
 function isObjectLike(
   value: unknown,
 ): value is Record<string, unknown> | unknown[] {
@@ -32,7 +35,7 @@ function normalizeInputToString(input: unknown): string | null {
   }
 
   // 去除 BOM 与首尾空白
-  str = str.replace(/^\uFEFF/, '').trim()
+  str = str.replace(BOM_REGEX, '').trim()
   return str
 }
 

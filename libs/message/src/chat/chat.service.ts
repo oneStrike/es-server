@@ -19,6 +19,9 @@ import {
   ChatMessageTypeEnum,
 } from './chat.constant'
 
+/** 数字字符串正则表达式（模块作用域，避免重复编译） */
+const DIGIT_STRING_REGEX = /^\d+$/
+
 /**
  * 私聊聊天服务
  *
@@ -275,7 +278,7 @@ export class MessageChatService extends BaseService {
       return {
         list,
         // 返回最后一条消息的序列号作为下次拉取的起点
-        nextCursor: list.length ? list[list.length - 1].messageSeq : null,
+        nextCursor: list.length ? list.at(-1).messageSeq : null,
         hasMore: list.length >= limit,
       }
     }
@@ -298,7 +301,7 @@ export class MessageChatService extends BaseService {
     return {
       list,
       // 返回最后一条消息的序列号作为下次翻页的游标
-      nextCursor: list.length ? list[list.length - 1].messageSeq : null,
+      nextCursor: list.length ? list.at(-1).messageSeq : null,
       hasMore: list.length >= limit,
     }
   }
@@ -855,6 +858,12 @@ export class MessageChatService extends BaseService {
    * - peerUser: 对端用户信息（私聊场景）
    *
    * @param conversation - 会话数据
+   * @param conversation.id - 会话ID
+   * @param conversation.bizKey - 会话业务标识
+   * @param conversation.lastMessageId - 最后消息ID
+   * @param conversation.lastMessageAt - 最后消息时间
+   * @param conversation.lastSenderId - 最后发送者ID
+   * @param conversation.members - 会话成员列表
    * @param userId - 当前用户ID
    * @param lastMessageContent - 最后消息内容
    * @returns 格式化的会话输出
@@ -1054,7 +1063,7 @@ export class MessageChatService extends BaseService {
    * @throws BadRequestException 如果值格式无效
    */
   private parseBigintId(value: unknown, fieldName: string) {
-    if (typeof value !== 'string' || !/^\d+$/.test(value.trim())) {
+    if (typeof value !== 'string' || !DIGIT_STRING_REGEX.test(value.trim())) {
       throw new BadRequestException(`${fieldName} must be a valid integer string`)
     }
     return BigInt(value.trim())
@@ -1073,7 +1082,7 @@ export class MessageChatService extends BaseService {
     if (!cursor || !cursor.trim()) {
       return undefined
     }
-    if (!/^\d+$/.test(cursor.trim())) {
+    if (!DIGIT_STRING_REGEX.test(cursor.trim())) {
       throw new BadRequestException(`${fieldName} must be a valid integer string`)
     }
     return BigInt(cursor.trim())

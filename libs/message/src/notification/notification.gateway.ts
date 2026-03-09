@@ -1,7 +1,12 @@
 import type { AuthConfigInterface } from '@libs/base/types'
 import type { Server, Socket } from 'socket.io'
 import type { MessageChatService } from '../chat/chat.service'
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
@@ -14,8 +19,14 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets'
-import { ChatMessageTypeEnum, MESSAGE_CHAT_SERVICE_TOKEN } from '../chat/chat.constant'
+import {
+  ChatMessageTypeEnum,
+  MESSAGE_CHAT_SERVICE_TOKEN,
+} from '../chat/chat.constant'
 import { MessageWsMonitorService } from '../monitor/ws-monitor.service'
+
+/** 数字字符串正则表达式（模块作用域，避免重复编译） */
+const DIGIT_STRING_REGEX = /^\d+$/
 
 /** WebSocket 请求信封结构 */
 interface WsRequestEnvelope<TPayload> {
@@ -59,7 +70,9 @@ interface WsAckPayload {
     credentials: true,
   },
 })
-export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class MessageGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   private server?: Server
 
@@ -119,38 +132,51 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
     const requestId = this.normalizeRequestId(body?.requestId)
     if (!requestId) {
-      this.emitAck(client, {
-        requestId: null,
-        code: 40001,
-        message: 'requestId 不能为空',
-      }, requestStartAt)
+      this.emitAck(
+        client,
+        {
+          requestId: null,
+          code: 40001,
+          message: 'requestId 不能为空',
+        },
+        requestStartAt,
+      )
       return
     }
 
     const userId = this.extractAuthenticatedUserId(client)
     if (!userId) {
-      this.emitAck(client, {
-        requestId,
-        code: 40101,
-        message: '未授权',
-      }, requestStartAt)
+      this.emitAck(
+        client,
+        {
+          requestId,
+          code: 40101,
+          message: '未授权',
+        },
+        requestStartAt,
+      )
       client.disconnect(true)
       return
     }
 
     const payload = body?.payload
     if (!payload || !this.isValidSendPayload(payload)) {
-      this.emitAck(client, {
-        requestId,
-        code: 40001,
-        message: '无效的 chat.send 载荷',
-      }, requestStartAt)
+      this.emitAck(
+        client,
+        {
+          requestId,
+          code: 40001,
+          message: '无效的 chat.send 载荷',
+        },
+        requestStartAt,
+      )
       return
     }
 
     try {
-      const clientMessageId
-        = typeof payload.clientMessageId === 'string' && payload.clientMessageId.trim()
+      const clientMessageId =
+        typeof payload.clientMessageId === 'string' &&
+        payload.clientMessageId.trim()
           ? payload.clientMessageId.trim()
           : undefined
       const result = await this.getMessageChatService().sendMessage(userId, {
@@ -161,20 +187,28 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
         payload: this.stringifyPayloadObject(payload.payload),
       })
 
-      this.emitAck(client, {
-        requestId,
-        code: 0,
-        message: 'ok',
-        data: {
-          ...result,
-          clientMessageId,
+      this.emitAck(
+        client,
+        {
+          requestId,
+          code: 0,
+          message: 'ok',
+          data: {
+            ...result,
+            clientMessageId,
+          },
         },
-      }, requestStartAt)
+        requestStartAt,
+      )
     } catch (error) {
-      this.emitAck(client, {
-        requestId,
-        ...this.mapErrorToAck(error),
-      }, requestStartAt)
+      this.emitAck(
+        client,
+        {
+          requestId,
+          ...this.mapErrorToAck(error),
+        },
+        requestStartAt,
+      )
     }
   }
 
@@ -192,37 +226,49 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
     const requestId = this.normalizeRequestId(body?.requestId)
     if (!requestId) {
-      this.emitAck(client, {
-        requestId: null,
-        code: 40001,
-        message: 'requestId 不能为空',
-      }, requestStartAt)
+      this.emitAck(
+        client,
+        {
+          requestId: null,
+          code: 40001,
+          message: 'requestId 不能为空',
+        },
+        requestStartAt,
+      )
       return
     }
 
     const userId = this.extractAuthenticatedUserId(client)
     if (!userId) {
-      this.emitAck(client, {
-        requestId,
-        code: 40101,
-        message: '未授权',
-      }, requestStartAt)
+      this.emitAck(
+        client,
+        {
+          requestId,
+          code: 40101,
+          message: '未授权',
+        },
+        requestStartAt,
+      )
       client.disconnect(true)
       return
     }
 
     const payload = body?.payload
     if (
-      !payload
-      || !this.isPositiveInteger(payload.conversationId)
-      || typeof payload.messageId !== 'string'
-      || !/^\d+$/.test(payload.messageId.trim())
+      !payload ||
+      !this.isPositiveInteger(payload.conversationId) ||
+      typeof payload.messageId !== 'string' ||
+      !DIGIT_STRING_REGEX.test(payload.messageId.trim())
     ) {
-      this.emitAck(client, {
-        requestId,
-        code: 40001,
-        message: '无效的 chat.read 载荷',
-      }, requestStartAt)
+      this.emitAck(
+        client,
+        {
+          requestId,
+          code: 40001,
+          message: '无效的 chat.read 载荷',
+        },
+        requestStartAt,
+      )
       return
     }
 
@@ -234,17 +280,25 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
           messageId: payload.messageId.trim(),
         },
       )
-      this.emitAck(client, {
-        requestId,
-        code: 0,
-        message: 'ok',
-        data: result,
-      }, requestStartAt)
+      this.emitAck(
+        client,
+        {
+          requestId,
+          code: 0,
+          message: 'ok',
+          data: result,
+        },
+        requestStartAt,
+      )
     } catch (error) {
-      this.emitAck(client, {
-        requestId,
-        ...this.mapErrorToAck(error),
-      }, requestStartAt)
+      this.emitAck(
+        client,
+        {
+          requestId,
+          ...this.mapErrorToAck(error),
+        },
+        requestStartAt,
+      )
     }
   }
 
@@ -334,7 +388,11 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   /** 发送应答消息 */
-  private emitAck(client: Socket, payload: WsAckPayload, requestStartAt?: number) {
+  private emitAck(
+    client: Socket,
+    payload: WsAckPayload,
+    requestStartAt?: number,
+  ) {
     client.emit('chat.ack', payload)
     if (Number.isFinite(requestStartAt)) {
       const latencyMs = Math.max(0, Date.now() - Number(requestStartAt))
@@ -368,9 +426,9 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
   /** 判断是否为有效的消息类型 */
   private isValidMessageType(value: unknown) {
     return (
-      value === ChatMessageTypeEnum.TEXT
-      || value === ChatMessageTypeEnum.IMAGE
-      || value === ChatMessageTypeEnum.SYSTEM
+      value === ChatMessageTypeEnum.TEXT ||
+      value === ChatMessageTypeEnum.IMAGE ||
+      value === ChatMessageTypeEnum.SYSTEM
     )
   }
 
@@ -386,18 +444,18 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
       return false
     }
     if (
-      payload.clientMessageId !== undefined
-      && (typeof payload.clientMessageId !== 'string'
-        || !payload.clientMessageId.trim()
-        || payload.clientMessageId.trim().length > 64)
+      payload.clientMessageId !== undefined &&
+      (typeof payload.clientMessageId !== 'string' ||
+        !payload.clientMessageId.trim() ||
+        payload.clientMessageId.trim().length > 64)
     ) {
       return false
     }
     if (
-      payload.payload !== undefined
-      && (typeof payload.payload !== 'object'
-        || payload.payload === null
-        || Array.isArray(payload.payload))
+      payload.payload !== undefined &&
+      (typeof payload.payload !== 'object' ||
+        payload.payload === null ||
+        Array.isArray(payload.payload))
     ) {
       return false
     }
@@ -411,9 +469,9 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
     }
 
     if (
-      typeof payload !== 'object'
-      || payload === null
-      || Array.isArray(payload)
+      typeof payload !== 'object' ||
+      payload === null ||
+      Array.isArray(payload)
     ) {
       throw new BadRequestException('payload 必须是 JSON 对象')
     }
@@ -449,15 +507,18 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   /** 从异常中提取错误消息 */
-  private getErrorMessage(error: { getResponse: () => unknown }, fallback: string) {
+  private getErrorMessage(
+    error: { getResponse: () => unknown },
+    fallback: string,
+  ) {
     const response = error.getResponse()
     if (typeof response === 'string' && response.trim()) {
       return response
     }
     if (
-      typeof response === 'object'
-      && response !== null
-      && 'message' in response
+      typeof response === 'object' &&
+      response !== null &&
+      'message' in response
     ) {
       const message = (response as { message?: unknown }).message
       if (typeof message === 'string' && message.trim()) {
@@ -480,9 +541,11 @@ export class MessageGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   private recordAckMetric(code: number, latencyMs: number) {
-    void this.messageWsMonitorService.recordAck(code, latencyMs).catch((error) => {
-      this.logger.warn(`记录 WS ack 监控失败: ${this.stringifyError(error)}`)
-    })
+    void this.messageWsMonitorService
+      .recordAck(code, latencyMs)
+      .catch((error) => {
+        this.logger.warn(`记录 WS ack 监控失败: ${this.stringifyError(error)}`)
+      })
   }
 
   private recordReconnectMetric() {
