@@ -1,32 +1,47 @@
-/// User like records.
-/// targetType: 1=comic, 2=novel, 3=comic chapter, 4=novel chapter, 5=forum topic, 6=comment.
+/// 用户点赞记录表
+/// 统一存储作品、章节、论坛主题、评论的点赞行为
 model UserLike {
-  /// Primary key
+  /// 主键 ID
   id Int @id @default(autoincrement())
 
-  /// Interaction target type
+  /// 点赞直接目标类型
+  /// 取值见 InteractionTargetTypeEnum
   targetType Int @map("target_type") @db.SmallInt
 
-  /// Interaction target id
-  /// - targetType=1/2 -> work.id
-  /// - targetType=3/4 -> work_chapter.id
-  /// - targetType=5 -> forum_topic.id
-  /// - targetType=6 -> user_comment.id
+  /// 点赞直接目标 ID
   targetId Int @map("target_id")
 
-  /// User id who performs the like action
+  /// 目标所属业务场景类型
+  /// 取值见 SceneTypeEnum
+  sceneType Int @map("scene_type") @db.SmallInt
+
+  /// 目标所属业务场景根对象 ID
+  /// 例如评论点赞时，这里存评论挂载的作品、章节或主题 ID
+  sceneId Int @map("scene_id")
+
+  /// 评论层级类型
+  /// 仅当 targetType=COMMENT 时有值
+  /// 取值见 CommentLevelEnum
+  commentLevel Int? @map("comment_level") @db.SmallInt
+
+  /// 点赞用户 ID
   userId Int @map("user_id")
 
-  /// Created time
+  /// 点赞时间
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  /// User relation
+  /// 关联用户
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  /// One user can like one target only once
+  /// 同一用户对同一目标只允许点赞一次
   @@unique([targetType, targetId, userId])
+  /// 直接目标查询索引
   @@index([targetType, targetId])
-  @@index([userId])
+  /// 场景维度统计索引
+  @@index([sceneType, sceneId])
+  /// 用户场景查询索引
+  @@index([userId, sceneType, createdAt])
+  /// 创建时间索引
   @@index([createdAt])
   @@map("user_like")
 }

@@ -1,4 +1,8 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
+import {
+  CommentLevelEnum,
+  InteractionTargetTypeEnum,
+  SceneTypeEnum,
+} from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { UserGrowthRewardService } from '@libs/user/growth-reward'
 import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
@@ -33,8 +37,14 @@ export class ForumReplyLikeService extends BaseService {
   async likeReply(createForumReplyLikeDto: CreateForumReplyLikeDto) {
     const { replyId, userId } = createForumReplyLikeDto
 
-    const reply = await this.forumReply.findUnique({
-      where: { id: replyId },
+    const reply = await this.forumReply.findFirst({
+      where: { id: replyId, deletedAt: null },
+      select: {
+        id: true,
+        userId: true,
+        targetId: true,
+        replyToId: true,
+      },
     })
 
     if (!reply) {
@@ -43,6 +53,7 @@ export class ForumReplyLikeService extends BaseService {
 
     const user = await this.prisma.appUser.findUnique({
       where: { id: userId },
+      select: { id: true },
     })
 
     if (!user) {
@@ -68,6 +79,11 @@ export class ForumReplyLikeService extends BaseService {
         data: {
           targetType: InteractionTargetTypeEnum.COMMENT,
           targetId: replyId,
+          sceneType: SceneTypeEnum.FORUM_TOPIC,
+          sceneId: reply.targetId,
+          commentLevel: reply.replyToId
+            ? CommentLevelEnum.REPLY
+            : CommentLevelEnum.ROOT,
           userId,
         },
       })

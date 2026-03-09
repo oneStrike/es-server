@@ -1,16 +1,20 @@
 /**
- * 交互模块类型定义
+ * 交互模块通用类型定义。
  */
 
 import type {
   AuditRoleEnum,
   AuditStatusEnum,
+  CommentLevelEnum,
   InteractionTargetTypeEnum,
+  ReportReasonEnum,
   ReportStatusEnum,
+  ReportTargetTypeEnum,
+  SceneTypeEnum,
 } from '@libs/base/constant'
 
 /**
- * 交互记录基础接口
+ * 交互记录基础接口。
  */
 export interface IInteractionRecord {
   id: number
@@ -19,7 +23,7 @@ export interface IInteractionRecord {
 }
 
 /**
- * 目标对象接口
+ * 多态目标基础接口。
  */
 export interface IInteractionTarget {
   targetType: InteractionTargetTypeEnum
@@ -27,18 +31,24 @@ export interface IInteractionTarget {
 }
 
 /**
- * 点赞记录接口
+ * 点赞记录接口。
+ *
+ * 说明：
+ * - 点赞表会冗余场景维度，便于直接统计
  */
-export interface ILikeRecord extends IInteractionRecord, IInteractionTarget {}
+export interface ILikeRecord extends IInteractionRecord, IInteractionTarget {
+  sceneType: SceneTypeEnum
+  sceneId: number
+  commentLevel?: CommentLevelEnum | null
+}
 
 /**
- * 收藏记录接口
+ * 收藏记录接口。
  */
-export interface IFavoriteRecord
-  extends IInteractionRecord, IInteractionTarget {}
+export interface IFavoriteRecord extends IInteractionRecord, IInteractionTarget {}
 
 /**
- * 浏览记录接口
+ * 浏览记录接口。
  */
 export interface IViewRecord extends IInteractionRecord, IInteractionTarget {
   ipAddress?: string | null
@@ -48,7 +58,7 @@ export interface IViewRecord extends IInteractionRecord, IInteractionTarget {
 }
 
 /**
- * 评论记录接口
+ * 评论记录接口。
  */
 export interface ICommentRecord extends IInteractionRecord, IInteractionTarget {
   content: string
@@ -68,39 +78,41 @@ export interface ICommentRecord extends IInteractionRecord, IInteractionTarget {
 }
 
 /**
- * 评论点赞记录接口
+ * 举报记录接口。
+ *
+ * 说明：
+ * - 举报表同样会冗余场景维度
+ * - `targetType` 使用举报模块自己的枚举，而不是点赞枚举
  */
-export interface ICommentLikeRecord extends IInteractionRecord {
-  commentId: number
-}
-
-/**
- * 评论举报记录接口
- */
-export interface ICommentReportRecord extends IInteractionRecord {
+export interface IReportRecord {
+  id: number
   reporterId: number
   handlerId?: number | null
-  commentId: number
-  reason: string
+  targetType: ReportTargetTypeEnum
+  targetId: number
+  sceneType: SceneTypeEnum
+  sceneId: number
+  commentLevel?: CommentLevelEnum | null
+  reasonType: ReportReasonEnum
   description?: string | null
   evidenceUrl?: string | null
   status: ReportStatusEnum
   handlingNote?: string | null
   handledAt?: Date | null
+  createdAt: Date
   updatedAt: Date
 }
 
 /**
- * 下载记录接口
+ * 下载记录接口。
  */
-export interface IDownloadRecord
-  extends IInteractionRecord, IInteractionTarget {
+export interface IDownloadRecord extends IInteractionRecord, IInteractionTarget {
   workId: number
   workType: number
 }
 
 /**
- * 用户交互状态接口
+ * 用户交互状态接口。
  */
 export interface IUserInteractionStatus {
   isLiked: boolean
@@ -109,7 +121,7 @@ export interface IUserInteractionStatus {
 }
 
 /**
- * 交互计数接口
+ * 交互计数接口。
  */
 export interface IInteractionCounts {
   likeCount: number
@@ -120,7 +132,7 @@ export interface IInteractionCounts {
 }
 
 /**
- * 分页查询参数接口
+ * 分页查询参数接口。
  */
 export interface IInteractionQueryParams {
   page?: number
@@ -130,7 +142,7 @@ export interface IInteractionQueryParams {
 }
 
 /**
- * 分页查询结果接口
+ * 分页查询结果接口。
  */
 export interface IInteractionQueryResult<T> {
   list: T[]

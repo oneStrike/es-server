@@ -1,10 +1,13 @@
 import { ApiDoc, ApiPageDoc, CurrentUser } from '@libs/base/decorators'
 import { IdDto } from '@libs/base/dto'
 import {
-  LikeDto,
+  CancelLikeBodyDto,
+  CreateLikeBodyDto,
   LikeListQueryDto,
+  LikeRecordResponseDto,
   LikeService,
-  UnlikeDto,
+  LikeStatusQueryDto,
+  LikeStatusResponseDto,
 } from '@libs/interaction'
 import { Body, Controller, Get, Post, Query } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
@@ -19,7 +22,7 @@ export class LikeController {
     summary: '点赞',
     model: IdDto,
   })
-  async like(@Body() body: LikeDto, @CurrentUser('sub') userId: number) {
+  async like(@Body() body: CreateLikeBodyDto, @CurrentUser('sub') userId: number) {
     await this.likeService.like(body.targetType, body.targetId, userId)
     return { id: body.targetId }
   }
@@ -29,7 +32,10 @@ export class LikeController {
     summary: '取消点赞',
     model: IdDto,
   })
-  async unlike(@Body() body: UnlikeDto, @CurrentUser('sub') userId: number) {
+  async unlike(
+    @Body() body: CancelLikeBodyDto,
+    @CurrentUser('sub') userId: number,
+  ) {
     await this.likeService.unlike(body.targetType, body.targetId, userId)
     return { id: body.targetId }
   }
@@ -37,10 +43,14 @@ export class LikeController {
   @Get('status')
   @ApiDoc({
     summary: '查询点赞状态',
-    model: Boolean,
+    model: LikeStatusResponseDto,
   })
-  async status(@Query() query: LikeDto, @CurrentUser('sub') userId: number) {
+  async status(
+    @Query() query: LikeStatusQueryDto,
+    @CurrentUser('sub') userId: number,
+  ) {
     return {
+      targetId: query.targetId,
       isLiked: await this.likeService.checkLikeStatus(
         query.targetType,
         query.targetId,
@@ -52,7 +62,7 @@ export class LikeController {
   @Get('my')
   @ApiPageDoc({
     summary: '分页查询我的点赞记录',
-    model: IdDto,
+    model: LikeRecordResponseDto,
   })
   async my(@Query() query: LikeListQueryDto, @CurrentUser('sub') userId: number) {
     return this.likeService.getUserLikes(

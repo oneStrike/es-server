@@ -14,8 +14,8 @@ import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model UserLike
- * User like records.
- * targetType: 1=comic, 2=novel, 3=comic chapter, 4=novel chapter, 5=forum topic, 6=comment.
+ * 用户点赞记录表
+ * 统一存储作品、章节、论坛主题、评论的点赞行为
  */
 export type UserLikeModel = runtime.Types.Result.DefaultSelection<Prisma.$UserLikePayload>
 
@@ -31,6 +31,9 @@ export type UserLikeAvgAggregateOutputType = {
   id: number | null
   targetType: number | null
   targetId: number | null
+  sceneType: number | null
+  sceneId: number | null
+  commentLevel: number | null
   userId: number | null
 }
 
@@ -38,6 +41,9 @@ export type UserLikeSumAggregateOutputType = {
   id: number | null
   targetType: number | null
   targetId: number | null
+  sceneType: number | null
+  sceneId: number | null
+  commentLevel: number | null
   userId: number | null
 }
 
@@ -45,6 +51,9 @@ export type UserLikeMinAggregateOutputType = {
   id: number | null
   targetType: number | null
   targetId: number | null
+  sceneType: number | null
+  sceneId: number | null
+  commentLevel: number | null
   userId: number | null
   createdAt: Date | null
 }
@@ -53,6 +62,9 @@ export type UserLikeMaxAggregateOutputType = {
   id: number | null
   targetType: number | null
   targetId: number | null
+  sceneType: number | null
+  sceneId: number | null
+  commentLevel: number | null
   userId: number | null
   createdAt: Date | null
 }
@@ -61,6 +73,9 @@ export type UserLikeCountAggregateOutputType = {
   id: number
   targetType: number
   targetId: number
+  sceneType: number
+  sceneId: number
+  commentLevel: number
   userId: number
   createdAt: number
   _all: number
@@ -71,6 +86,9 @@ export type UserLikeAvgAggregateInputType = {
   id?: true
   targetType?: true
   targetId?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
   userId?: true
 }
 
@@ -78,6 +96,9 @@ export type UserLikeSumAggregateInputType = {
   id?: true
   targetType?: true
   targetId?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
   userId?: true
 }
 
@@ -85,6 +106,9 @@ export type UserLikeMinAggregateInputType = {
   id?: true
   targetType?: true
   targetId?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
   userId?: true
   createdAt?: true
 }
@@ -93,6 +117,9 @@ export type UserLikeMaxAggregateInputType = {
   id?: true
   targetType?: true
   targetId?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
   userId?: true
   createdAt?: true
 }
@@ -101,6 +128,9 @@ export type UserLikeCountAggregateInputType = {
   id?: true
   targetType?: true
   targetId?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
   userId?: true
   createdAt?: true
   _all?: true
@@ -196,6 +226,9 @@ export type UserLikeGroupByOutputType = {
   id: number
   targetType: number
   targetId: number
+  sceneType: number
+  sceneId: number
+  commentLevel: number | null
   userId: number
   createdAt: Date
   _count: UserLikeCountAggregateOutputType | null
@@ -227,6 +260,9 @@ export type UserLikeWhereInput = {
   id?: Prisma.IntFilter<"UserLike"> | number
   targetType?: Prisma.IntFilter<"UserLike"> | number
   targetId?: Prisma.IntFilter<"UserLike"> | number
+  sceneType?: Prisma.IntFilter<"UserLike"> | number
+  sceneId?: Prisma.IntFilter<"UserLike"> | number
+  commentLevel?: Prisma.IntNullableFilter<"UserLike"> | number | null
   userId?: Prisma.IntFilter<"UserLike"> | number
   createdAt?: Prisma.DateTimeFilter<"UserLike"> | Date | string
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
@@ -236,6 +272,9 @@ export type UserLikeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   user?: Prisma.AppUserOrderByWithRelationInput
@@ -249,6 +288,9 @@ export type UserLikeWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserLikeWhereInput | Prisma.UserLikeWhereInput[]
   targetType?: Prisma.IntFilter<"UserLike"> | number
   targetId?: Prisma.IntFilter<"UserLike"> | number
+  sceneType?: Prisma.IntFilter<"UserLike"> | number
+  sceneId?: Prisma.IntFilter<"UserLike"> | number
+  commentLevel?: Prisma.IntNullableFilter<"UserLike"> | number | null
   userId?: Prisma.IntFilter<"UserLike"> | number
   createdAt?: Prisma.DateTimeFilter<"UserLike"> | Date | string
   user?: Prisma.XOR<Prisma.AppUserScalarRelationFilter, Prisma.AppUserWhereInput>
@@ -258,6 +300,9 @@ export type UserLikeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.UserLikeCountOrderByAggregateInput
@@ -274,6 +319,9 @@ export type UserLikeScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"UserLike"> | number
   targetType?: Prisma.IntWithAggregatesFilter<"UserLike"> | number
   targetId?: Prisma.IntWithAggregatesFilter<"UserLike"> | number
+  sceneType?: Prisma.IntWithAggregatesFilter<"UserLike"> | number
+  sceneId?: Prisma.IntWithAggregatesFilter<"UserLike"> | number
+  commentLevel?: Prisma.IntNullableWithAggregatesFilter<"UserLike"> | number | null
   userId?: Prisma.IntWithAggregatesFilter<"UserLike"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserLike"> | Date | string
 }
@@ -281,6 +329,9 @@ export type UserLikeScalarWhereWithAggregatesInput = {
 export type UserLikeCreateInput = {
   targetType: number
   targetId: number
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
   createdAt?: Date | string
   user: Prisma.AppUserCreateNestedOneWithoutUserLikesInput
 }
@@ -289,6 +340,9 @@ export type UserLikeUncheckedCreateInput = {
   id?: number
   targetType: number
   targetId: number
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
   userId: number
   createdAt?: Date | string
 }
@@ -296,6 +350,9 @@ export type UserLikeUncheckedCreateInput = {
 export type UserLikeUpdateInput = {
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.AppUserUpdateOneRequiredWithoutUserLikesNestedInput
 }
@@ -304,6 +361,9 @@ export type UserLikeUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -312,6 +372,9 @@ export type UserLikeCreateManyInput = {
   id?: number
   targetType: number
   targetId: number
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
   userId: number
   createdAt?: Date | string
 }
@@ -319,6 +382,9 @@ export type UserLikeCreateManyInput = {
 export type UserLikeUpdateManyMutationInput = {
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -326,6 +392,9 @@ export type UserLikeUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -350,6 +419,9 @@ export type UserLikeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -358,6 +430,9 @@ export type UserLikeAvgOrderByAggregateInput = {
   id?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
   userId?: Prisma.SortOrder
 }
 
@@ -365,6 +440,9 @@ export type UserLikeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -373,6 +451,9 @@ export type UserLikeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -381,6 +462,9 @@ export type UserLikeSumOrderByAggregateInput = {
   id?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
   userId?: Prisma.SortOrder
 }
 
@@ -429,6 +513,9 @@ export type UserLikeUncheckedUpdateManyWithoutUserNestedInput = {
 export type UserLikeCreateWithoutUserInput = {
   targetType: number
   targetId: number
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
   createdAt?: Date | string
 }
 
@@ -436,6 +523,9 @@ export type UserLikeUncheckedCreateWithoutUserInput = {
   id?: number
   targetType: number
   targetId: number
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
   createdAt?: Date | string
 }
 
@@ -472,6 +562,9 @@ export type UserLikeScalarWhereInput = {
   id?: Prisma.IntFilter<"UserLike"> | number
   targetType?: Prisma.IntFilter<"UserLike"> | number
   targetId?: Prisma.IntFilter<"UserLike"> | number
+  sceneType?: Prisma.IntFilter<"UserLike"> | number
+  sceneId?: Prisma.IntFilter<"UserLike"> | number
+  commentLevel?: Prisma.IntNullableFilter<"UserLike"> | number | null
   userId?: Prisma.IntFilter<"UserLike"> | number
   createdAt?: Prisma.DateTimeFilter<"UserLike"> | Date | string
 }
@@ -480,12 +573,18 @@ export type UserLikeCreateManyUserInput = {
   id?: number
   targetType: number
   targetId: number
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
   createdAt?: Date | string
 }
 
 export type UserLikeUpdateWithoutUserInput = {
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -493,6 +592,9 @@ export type UserLikeUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -500,6 +602,9 @@ export type UserLikeUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -509,6 +614,9 @@ export type UserLikeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   id?: boolean
   targetType?: boolean
   targetId?: boolean
+  sceneType?: boolean
+  sceneId?: boolean
+  commentLevel?: boolean
   userId?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -518,6 +626,9 @@ export type UserLikeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   targetType?: boolean
   targetId?: boolean
+  sceneType?: boolean
+  sceneId?: boolean
+  commentLevel?: boolean
   userId?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -527,6 +638,9 @@ export type UserLikeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   targetType?: boolean
   targetId?: boolean
+  sceneType?: boolean
+  sceneId?: boolean
+  commentLevel?: boolean
   userId?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
@@ -536,11 +650,14 @@ export type UserLikeSelectScalar = {
   id?: boolean
   targetType?: boolean
   targetId?: boolean
+  sceneType?: boolean
+  sceneId?: boolean
+  commentLevel?: boolean
   userId?: boolean
   createdAt?: boolean
 }
 
-export type UserLikeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "targetType" | "targetId" | "userId" | "createdAt", ExtArgs["result"]["userLike"]>
+export type UserLikeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "targetType" | "targetId" | "sceneType" | "sceneId" | "commentLevel" | "userId" | "createdAt", ExtArgs["result"]["userLike"]>
 export type UserLikeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
 }
@@ -555,33 +672,46 @@ export type $UserLikePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "UserLike"
   objects: {
     /**
-     * User relation
+     * 关联用户
      */
     user: Prisma.$AppUserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
-     * Primary key
+     * 主键 ID
      */
     id: number
     /**
-     * Interaction target type
+     * 点赞直接目标类型
+     * 取值见 InteractionTargetTypeEnum
      */
     targetType: number
     /**
-     * Interaction target id
-     * - targetType=1/2 -> work.id
-     * - targetType=3/4 -> work_chapter.id
-     * - targetType=5 -> forum_topic.id
-     * - targetType=6 -> user_comment.id
+     * 点赞直接目标 ID
      */
     targetId: number
     /**
-     * User id who performs the like action
+     * 目标所属业务场景类型
+     * 取值见 SceneTypeEnum
+     */
+    sceneType: number
+    /**
+     * 目标所属业务场景根对象 ID
+     * 例如评论点赞时，这里存评论挂载的作品、章节或主题 ID
+     */
+    sceneId: number
+    /**
+     * 评论层级类型
+     * 仅当 targetType=COMMENT 时有值
+     * 取值见 CommentLevelEnum
+     */
+    commentLevel: number | null
+    /**
+     * 点赞用户 ID
      */
     userId: number
     /**
-     * Created time
+     * 点赞时间
      */
     createdAt: Date
   }, ExtArgs["result"]["userLike"]>
@@ -1011,6 +1141,9 @@ export interface UserLikeFieldRefs {
   readonly id: Prisma.FieldRef<"UserLike", 'Int'>
   readonly targetType: Prisma.FieldRef<"UserLike", 'Int'>
   readonly targetId: Prisma.FieldRef<"UserLike", 'Int'>
+  readonly sceneType: Prisma.FieldRef<"UserLike", 'Int'>
+  readonly sceneId: Prisma.FieldRef<"UserLike", 'Int'>
+  readonly commentLevel: Prisma.FieldRef<"UserLike", 'Int'>
   readonly userId: Prisma.FieldRef<"UserLike", 'Int'>
   readonly createdAt: Prisma.FieldRef<"UserLike", 'DateTime'>
 }

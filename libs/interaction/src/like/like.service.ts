@@ -2,10 +2,18 @@ import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { Injectable } from '@nestjs/common'
 import { CounterService } from '../counter/counter.service'
+import { InteractionTargetResolverService } from '../interaction-target-resolver.service'
 import { LikeGrowthService } from './like-growth.service'
 import { LikeInteractionService } from './like-interaction.service'
 import { LikePermissionService } from './like-permission.service'
 
+/**
+ * 点赞服务。
+ *
+ * 说明：
+ * - 所有点赞统一通过该服务处理
+ * - 评论点赞不再单独维护一套专用写库逻辑
+ */
 @Injectable()
 export class LikeService extends BaseService {
   constructor(
@@ -13,6 +21,7 @@ export class LikeService extends BaseService {
     private readonly likePermissionService: LikePermissionService,
     private readonly likeInteractionService: LikeInteractionService,
     private readonly likeGrowthService: LikeGrowthService,
+    private readonly interactionTargetResolverService: InteractionTargetResolverService,
   ) {
     super()
   }
@@ -37,7 +46,7 @@ export class LikeService extends BaseService {
       },
     })
 
-    const likedSet = new Set(likes.map((l) => l.targetId))
+    const likedSet = new Set(likes.map((item) => item.targetId))
     const statusMap = new Map<number, boolean>()
 
     for (const targetId of targetIds) {
@@ -62,7 +71,11 @@ export class LikeService extends BaseService {
       } as any,
       orderBy: { createdAt: 'desc' },
       select: {
+        id: true,
         userId: true,
+        sceneType: true,
+        sceneId: true,
+        commentLevel: true,
         createdAt: true,
       },
     })
@@ -82,6 +95,13 @@ export class LikeService extends BaseService {
     return this.counterService.getCounts(targetType, targetIds, 'likeCount')
   }
 
+  /**
+   * 创建点赞。
+   *
+   * 说明：
+   * - 先校验权限，再解析目标场景元数据
+   * - `sceneType` 等统计维度在点赞创建时直接冗余写入
+   */
   async like(
     targetType: InteractionTargetTypeEnum,
     targetId: number,
@@ -89,12 +109,20 @@ export class LikeService extends BaseService {
   ): Promise<void> {
     await this.likePermissionService.ensureCanLike(userId, targetType, targetId)
 
+    const targetMeta = await this.interactionTargetResolverService.resolveLikeTargetMeta(
+      targetType,
+      targetId,
+    )
+
     await this.prisma.$transaction(async (tx) => {
       try {
         await tx.userLike.create({
           data: {
             targetType,
             targetId,
+            sceneType: targetMeta.sceneType,
+            sceneId: targetMeta.sceneId,
+            commentLevel: targetMeta.commentLevel,
             userId,
           },
         })
@@ -146,7 +174,7 @@ export class LikeService extends BaseService {
         })
       } catch (error) {
         this.handlePrismaBusinessError(error, {
-          notFoundMessage: '未点赞',
+          notFoundMessage: '尚未点赞',
         })
       }
 
@@ -193,8 +221,12 @@ export class LikeService extends BaseService {
       } as any,
       orderBy: { createdAt: 'desc' },
       select: {
+        id: true,
         targetId: true,
         targetType: true,
+        sceneType: true,
+        sceneId: true,
+        commentLevel: true,
         createdAt: true,
       },
     })

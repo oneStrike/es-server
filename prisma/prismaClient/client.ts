@@ -165,8 +165,8 @@ export type UserFavorite = Prisma.UserFavoriteModel
 export type UserLevelRule = Prisma.UserLevelRuleModel
 /**
  * Model UserLike
- * User like records.
- * targetType: 1=comic, 2=novel, 3=comic chapter, 4=novel chapter, 5=forum topic, 6=comment.
+ * 用户点赞记录表
+ * 统一存储作品、章节、论坛主题、评论的点赞行为
  */
 export type UserLike = Prisma.UserLikeModel
 /**
@@ -184,7 +184,7 @@ export type UserPurchaseRecord = Prisma.UserPurchaseRecordModel
 /**
  * Model UserReport
  * 用户举报记录表
- * 统一存储评论举报、论坛主题举报、论坛回复举报、用户举报
+ * 统一存储作品、章节、论坛主题、评论、用户的举报行为
  */
 export type UserReport = Prisma.UserReportModel
 /**

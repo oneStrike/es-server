@@ -1,33 +1,33 @@
 // 评论
-export * from './comment/comment-interaction.service'
 export * from './comment/comment-permission.service'
 export * from './comment/comment.module'
 export * from './comment/comment.service'
-export * from './comment/dto/comment-interaction.dto'
 export * from './comment/dto/comment.dto'
 
 // 常量和类型
 export * from './common.constant'
 export * from './core.module'
-// 计数器
 export * from './counter/counter.module'
 
+// 计数器
 export * from './counter/counter.service'
 export * from './domain.types'
-
 // 下载
 export * from './download/download.constant'
+
 export * from './download/download.module'
 export * from './download/download.service'
 export * from './download/dto/download.dto'
-
-// 数据传输对象
+// 共享 DTO
 export * from './dto/base-interaction.dto'
 
+export * from './dto/target.dto'
 // 收藏
 export * from './favorite/dto/favorite.dto'
+
 export * from './favorite/favorite.module'
 export * from './favorite/favorite.service'
+export * from './interaction-target-resolver.service'
 
 // 点赞
 export * from './like/dto/like.dto'

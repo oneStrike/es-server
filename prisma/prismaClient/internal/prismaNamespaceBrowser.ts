@@ -556,6 +556,9 @@ export const UserLikeScalarFieldEnum = {
   id: 'id',
   targetType: 'targetType',
   targetId: 'targetId',
+  sceneType: 'sceneType',
+  sceneId: 'sceneId',
+  commentLevel: 'commentLevel',
   userId: 'userId',
   createdAt: 'createdAt'
 } as const
@@ -600,7 +603,10 @@ export const UserReportScalarFieldEnum = {
   handlerId: 'handlerId',
   targetType: 'targetType',
   targetId: 'targetId',
-  reason: 'reason',
+  sceneType: 'sceneType',
+  sceneId: 'sceneId',
+  commentLevel: 'commentLevel',
+  reasonType: 'reasonType',
   description: 'description',
   evidenceUrl: 'evidenceUrl',
   status: 'status',

@@ -7,6 +7,13 @@ import {
 import { GrowthRuleTypeEnum } from '@libs/user/growth-rule.constant'
 import { Injectable } from '@nestjs/common'
 
+/**
+ * 点赞成长奖励服务。
+ *
+ * 说明：
+ * - 作品、章节、主题点赞奖励点赞人
+ * - 评论点赞奖励评论作者，保持与历史行为一致
+ */
 @Injectable()
 export class LikeGrowthService extends BaseService {
   constructor(private readonly growthLedgerService: GrowthLedgerService) {
@@ -18,6 +25,11 @@ export class LikeGrowthService extends BaseService {
     targetId: number,
     userId: number,
   ): Promise<void> {
+    if (targetType === InteractionTargetTypeEnum.COMMENT) {
+      await this.rewardCommentLiked(targetId, userId)
+      return
+    }
+
     const ruleType = this.resolveRuleType(targetType)
     if (!ruleType) {
       return
@@ -33,7 +45,7 @@ export class LikeGrowthService extends BaseService {
           ruleType,
           bizKey: `${baseBizKey}:POINTS`,
           source: 'interaction_like',
-          remark: `like target #${targetId}`,
+          remark: `点赞目标 #${targetId}`,
           targetType,
           targetId,
         })
@@ -46,7 +58,7 @@ export class LikeGrowthService extends BaseService {
             ruleType,
             bizKey: `${baseBizKey}:EXPERIENCE`,
             source: 'interaction_like',
-            remark: `like target #${targetId}`,
+            remark: `点赞目标 #${targetId}`,
             targetType,
             targetId,
           },
@@ -64,7 +76,64 @@ export class LikeGrowthService extends BaseService {
         }
       })
     } catch {
-      // 奖励失败不影响主流程
+      // 奖励失败不影响主流程。
+    }
+  }
+
+  /**
+   * 奖励被点赞的评论作者。
+   */
+  private async rewardCommentLiked(
+    commentId: number,
+    likerUserId: number,
+  ): Promise<void> {
+    const comment = await this.prisma.userComment.findFirst({
+      where: { id: commentId, deletedAt: null },
+      select: { userId: true },
+    })
+
+    if (!comment || comment.userId === likerUserId) {
+      return
+    }
+
+    const baseBizKey =
+      `comment:liked:${commentId}:liker:${likerUserId}:author:${comment.userId}`
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await this.growthLedgerService.applyByRule(tx, {
+          userId: comment.userId,
+          assetType: GrowthAssetTypeEnum.POINTS,
+          ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
+          bizKey: `${baseBizKey}:POINTS`,
+          source: 'comment_like',
+          remark: `评论被点赞 #${commentId}`,
+          targetId: commentId,
+        })
+
+        const experienceResult = await this.growthLedgerService.applyByRule(tx, {
+          userId: comment.userId,
+          assetType: GrowthAssetTypeEnum.EXPERIENCE,
+          ruleType: GrowthRuleTypeEnum.COMMENT_LIKED,
+          bizKey: `${baseBizKey}:EXPERIENCE`,
+          source: 'comment_like',
+          remark: `评论被点赞 #${commentId}`,
+          targetId: commentId,
+        })
+
+        if (
+          experienceResult.success &&
+          experienceResult.afterValue !== undefined
+        ) {
+          await this.refreshLevelByExperience(
+            tx,
+            comment.userId,
+            experienceResult.afterValue,
+          )
+        }
+      })
+    } catch {
+      // 奖励失败不影响主流程。
     }
   }
 

@@ -15,7 +15,7 @@ import type * as Prisma from "../internal/prismaNamespace"
 /**
  * Model UserReport
  * 用户举报记录表
- * 统一存储评论举报、论坛主题举报、论坛回复举报、用户举报
+ * 统一存储作品、章节、论坛主题、评论、用户的举报行为
  */
 export type UserReportModel = runtime.Types.Result.DefaultSelection<Prisma.$UserReportPayload>
 
@@ -33,6 +33,11 @@ export type UserReportAvgAggregateOutputType = {
   handlerId: number | null
   targetType: number | null
   targetId: number | null
+  sceneType: number | null
+  sceneId: number | null
+  commentLevel: number | null
+  reasonType: number | null
+  status: number | null
 }
 
 export type UserReportSumAggregateOutputType = {
@@ -41,6 +46,11 @@ export type UserReportSumAggregateOutputType = {
   handlerId: number | null
   targetType: number | null
   targetId: number | null
+  sceneType: number | null
+  sceneId: number | null
+  commentLevel: number | null
+  reasonType: number | null
+  status: number | null
 }
 
 export type UserReportMinAggregateOutputType = {
@@ -49,10 +59,13 @@ export type UserReportMinAggregateOutputType = {
   handlerId: number | null
   targetType: number | null
   targetId: number | null
-  reason: string | null
+  sceneType: number | null
+  sceneId: number | null
+  commentLevel: number | null
+  reasonType: number | null
   description: string | null
   evidenceUrl: string | null
-  status: string | null
+  status: number | null
   handlingNote: string | null
   handledAt: Date | null
   createdAt: Date | null
@@ -65,10 +78,13 @@ export type UserReportMaxAggregateOutputType = {
   handlerId: number | null
   targetType: number | null
   targetId: number | null
-  reason: string | null
+  sceneType: number | null
+  sceneId: number | null
+  commentLevel: number | null
+  reasonType: number | null
   description: string | null
   evidenceUrl: string | null
-  status: string | null
+  status: number | null
   handlingNote: string | null
   handledAt: Date | null
   createdAt: Date | null
@@ -81,7 +97,10 @@ export type UserReportCountAggregateOutputType = {
   handlerId: number
   targetType: number
   targetId: number
-  reason: number
+  sceneType: number
+  sceneId: number
+  commentLevel: number
+  reasonType: number
   description: number
   evidenceUrl: number
   status: number
@@ -99,6 +118,11 @@ export type UserReportAvgAggregateInputType = {
   handlerId?: true
   targetType?: true
   targetId?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
+  reasonType?: true
+  status?: true
 }
 
 export type UserReportSumAggregateInputType = {
@@ -107,6 +131,11 @@ export type UserReportSumAggregateInputType = {
   handlerId?: true
   targetType?: true
   targetId?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
+  reasonType?: true
+  status?: true
 }
 
 export type UserReportMinAggregateInputType = {
@@ -115,7 +144,10 @@ export type UserReportMinAggregateInputType = {
   handlerId?: true
   targetType?: true
   targetId?: true
-  reason?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
+  reasonType?: true
   description?: true
   evidenceUrl?: true
   status?: true
@@ -131,7 +163,10 @@ export type UserReportMaxAggregateInputType = {
   handlerId?: true
   targetType?: true
   targetId?: true
-  reason?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
+  reasonType?: true
   description?: true
   evidenceUrl?: true
   status?: true
@@ -147,7 +182,10 @@ export type UserReportCountAggregateInputType = {
   handlerId?: true
   targetType?: true
   targetId?: true
-  reason?: true
+  sceneType?: true
+  sceneId?: true
+  commentLevel?: true
+  reasonType?: true
   description?: true
   evidenceUrl?: true
   status?: true
@@ -250,10 +288,13 @@ export type UserReportGroupByOutputType = {
   handlerId: number | null
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel: number | null
+  reasonType: number
   description: string | null
   evidenceUrl: string | null
-  status: string
+  status: number
   handlingNote: string | null
   handledAt: Date | null
   createdAt: Date
@@ -289,10 +330,13 @@ export type UserReportWhereInput = {
   handlerId?: Prisma.IntNullableFilter<"UserReport"> | number | null
   targetType?: Prisma.IntFilter<"UserReport"> | number
   targetId?: Prisma.IntFilter<"UserReport"> | number
-  reason?: Prisma.StringFilter<"UserReport"> | string
+  sceneType?: Prisma.IntFilter<"UserReport"> | number
+  sceneId?: Prisma.IntFilter<"UserReport"> | number
+  commentLevel?: Prisma.IntNullableFilter<"UserReport"> | number | null
+  reasonType?: Prisma.IntFilter<"UserReport"> | number
   description?: Prisma.StringNullableFilter<"UserReport"> | string | null
   evidenceUrl?: Prisma.StringNullableFilter<"UserReport"> | string | null
-  status?: Prisma.StringFilter<"UserReport"> | string
+  status?: Prisma.IntFilter<"UserReport"> | number
   handlingNote?: Prisma.StringNullableFilter<"UserReport"> | string | null
   handledAt?: Prisma.DateTimeNullableFilter<"UserReport"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"UserReport"> | Date | string
@@ -307,7 +351,10 @@ export type UserReportOrderByWithRelationInput = {
   handlerId?: Prisma.SortOrderInput | Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrderInput | Prisma.SortOrder
+  reasonType?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -329,10 +376,13 @@ export type UserReportWhereUniqueInput = Prisma.AtLeast<{
   handlerId?: Prisma.IntNullableFilter<"UserReport"> | number | null
   targetType?: Prisma.IntFilter<"UserReport"> | number
   targetId?: Prisma.IntFilter<"UserReport"> | number
-  reason?: Prisma.StringFilter<"UserReport"> | string
+  sceneType?: Prisma.IntFilter<"UserReport"> | number
+  sceneId?: Prisma.IntFilter<"UserReport"> | number
+  commentLevel?: Prisma.IntNullableFilter<"UserReport"> | number | null
+  reasonType?: Prisma.IntFilter<"UserReport"> | number
   description?: Prisma.StringNullableFilter<"UserReport"> | string | null
   evidenceUrl?: Prisma.StringNullableFilter<"UserReport"> | string | null
-  status?: Prisma.StringFilter<"UserReport"> | string
+  status?: Prisma.IntFilter<"UserReport"> | number
   handlingNote?: Prisma.StringNullableFilter<"UserReport"> | string | null
   handledAt?: Prisma.DateTimeNullableFilter<"UserReport"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"UserReport"> | Date | string
@@ -347,7 +397,10 @@ export type UserReportOrderByWithAggregationInput = {
   handlerId?: Prisma.SortOrderInput | Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrderInput | Prisma.SortOrder
+  reasonType?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -371,10 +424,13 @@ export type UserReportScalarWhereWithAggregatesInput = {
   handlerId?: Prisma.IntNullableWithAggregatesFilter<"UserReport"> | number | null
   targetType?: Prisma.IntWithAggregatesFilter<"UserReport"> | number
   targetId?: Prisma.IntWithAggregatesFilter<"UserReport"> | number
-  reason?: Prisma.StringWithAggregatesFilter<"UserReport"> | string
+  sceneType?: Prisma.IntWithAggregatesFilter<"UserReport"> | number
+  sceneId?: Prisma.IntWithAggregatesFilter<"UserReport"> | number
+  commentLevel?: Prisma.IntNullableWithAggregatesFilter<"UserReport"> | number | null
+  reasonType?: Prisma.IntWithAggregatesFilter<"UserReport"> | number
   description?: Prisma.StringNullableWithAggregatesFilter<"UserReport"> | string | null
   evidenceUrl?: Prisma.StringNullableWithAggregatesFilter<"UserReport"> | string | null
-  status?: Prisma.StringWithAggregatesFilter<"UserReport"> | string
+  status?: Prisma.IntWithAggregatesFilter<"UserReport"> | number
   handlingNote?: Prisma.StringNullableWithAggregatesFilter<"UserReport"> | string | null
   handledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"UserReport"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserReport"> | Date | string
@@ -384,10 +440,13 @@ export type UserReportScalarWhereWithAggregatesInput = {
 export type UserReportCreateInput = {
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
+  reasonType: number
   description?: string | null
   evidenceUrl?: string | null
-  status?: string
+  status?: number
   handlingNote?: string | null
   handledAt?: Date | string | null
   createdAt?: Date | string
@@ -402,10 +461,13 @@ export type UserReportUncheckedCreateInput = {
   handlerId?: number | null
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
+  reasonType: number
   description?: string | null
   evidenceUrl?: string | null
-  status?: string
+  status?: number
   handlingNote?: string | null
   handledAt?: Date | string | null
   createdAt?: Date | string
@@ -415,10 +477,13 @@ export type UserReportUncheckedCreateInput = {
 export type UserReportUpdateInput = {
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -433,10 +498,13 @@ export type UserReportUncheckedUpdateInput = {
   handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -449,10 +517,13 @@ export type UserReportCreateManyInput = {
   handlerId?: number | null
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
+  reasonType: number
   description?: string | null
   evidenceUrl?: string | null
-  status?: string
+  status?: number
   handlingNote?: string | null
   handledAt?: Date | string | null
   createdAt?: Date | string
@@ -462,10 +533,13 @@ export type UserReportCreateManyInput = {
 export type UserReportUpdateManyMutationInput = {
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -478,10 +552,13 @@ export type UserReportUncheckedUpdateManyInput = {
   handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -510,7 +587,10 @@ export type UserReportCountOrderByAggregateInput = {
   handlerId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
+  reasonType?: Prisma.SortOrder
   description?: Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -526,6 +606,11 @@ export type UserReportAvgOrderByAggregateInput = {
   handlerId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
+  reasonType?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type UserReportMaxOrderByAggregateInput = {
@@ -534,7 +619,10 @@ export type UserReportMaxOrderByAggregateInput = {
   handlerId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
+  reasonType?: Prisma.SortOrder
   description?: Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -550,7 +638,10 @@ export type UserReportMinOrderByAggregateInput = {
   handlerId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
-  reason?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
+  reasonType?: Prisma.SortOrder
   description?: Prisma.SortOrder
   evidenceUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -566,6 +657,11 @@ export type UserReportSumOrderByAggregateInput = {
   handlerId?: Prisma.SortOrder
   targetType?: Prisma.SortOrder
   targetId?: Prisma.SortOrder
+  sceneType?: Prisma.SortOrder
+  sceneId?: Prisma.SortOrder
+  commentLevel?: Prisma.SortOrder
+  reasonType?: Prisma.SortOrder
+  status?: Prisma.SortOrder
 }
 
 export type UserReportCreateNestedManyWithoutReporterInput = {
@@ -655,10 +751,13 @@ export type UserReportUncheckedUpdateManyWithoutHandlerNestedInput = {
 export type UserReportCreateWithoutReporterInput = {
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
+  reasonType: number
   description?: string | null
   evidenceUrl?: string | null
-  status?: string
+  status?: number
   handlingNote?: string | null
   handledAt?: Date | string | null
   createdAt?: Date | string
@@ -671,10 +770,13 @@ export type UserReportUncheckedCreateWithoutReporterInput = {
   handlerId?: number | null
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
+  reasonType: number
   description?: string | null
   evidenceUrl?: string | null
-  status?: string
+  status?: number
   handlingNote?: string | null
   handledAt?: Date | string | null
   createdAt?: Date | string
@@ -694,10 +796,13 @@ export type UserReportCreateManyReporterInputEnvelope = {
 export type UserReportCreateWithoutHandlerInput = {
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
+  reasonType: number
   description?: string | null
   evidenceUrl?: string | null
-  status?: string
+  status?: number
   handlingNote?: string | null
   handledAt?: Date | string | null
   createdAt?: Date | string
@@ -710,10 +815,13 @@ export type UserReportUncheckedCreateWithoutHandlerInput = {
   reporterId: number
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
+  reasonType: number
   description?: string | null
   evidenceUrl?: string | null
-  status?: string
+  status?: number
   handlingNote?: string | null
   handledAt?: Date | string | null
   createdAt?: Date | string
@@ -755,10 +863,13 @@ export type UserReportScalarWhereInput = {
   handlerId?: Prisma.IntNullableFilter<"UserReport"> | number | null
   targetType?: Prisma.IntFilter<"UserReport"> | number
   targetId?: Prisma.IntFilter<"UserReport"> | number
-  reason?: Prisma.StringFilter<"UserReport"> | string
+  sceneType?: Prisma.IntFilter<"UserReport"> | number
+  sceneId?: Prisma.IntFilter<"UserReport"> | number
+  commentLevel?: Prisma.IntNullableFilter<"UserReport"> | number | null
+  reasonType?: Prisma.IntFilter<"UserReport"> | number
   description?: Prisma.StringNullableFilter<"UserReport"> | string | null
   evidenceUrl?: Prisma.StringNullableFilter<"UserReport"> | string | null
-  status?: Prisma.StringFilter<"UserReport"> | string
+  status?: Prisma.IntFilter<"UserReport"> | number
   handlingNote?: Prisma.StringNullableFilter<"UserReport"> | string | null
   handledAt?: Prisma.DateTimeNullableFilter<"UserReport"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"UserReport"> | Date | string
@@ -786,10 +897,13 @@ export type UserReportCreateManyReporterInput = {
   handlerId?: number | null
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
+  reasonType: number
   description?: string | null
   evidenceUrl?: string | null
-  status?: string
+  status?: number
   handlingNote?: string | null
   handledAt?: Date | string | null
   createdAt?: Date | string
@@ -801,10 +915,13 @@ export type UserReportCreateManyHandlerInput = {
   reporterId: number
   targetType: number
   targetId: number
-  reason: string
+  sceneType: number
+  sceneId: number
+  commentLevel?: number | null
+  reasonType: number
   description?: string | null
   evidenceUrl?: string | null
-  status?: string
+  status?: number
   handlingNote?: string | null
   handledAt?: Date | string | null
   createdAt?: Date | string
@@ -814,10 +931,13 @@ export type UserReportCreateManyHandlerInput = {
 export type UserReportUpdateWithoutReporterInput = {
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -830,10 +950,13 @@ export type UserReportUncheckedUpdateWithoutReporterInput = {
   handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -845,10 +968,13 @@ export type UserReportUncheckedUpdateManyWithoutReporterInput = {
   handlerId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -858,10 +984,13 @@ export type UserReportUncheckedUpdateManyWithoutReporterInput = {
 export type UserReportUpdateWithoutHandlerInput = {
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -874,10 +1003,13 @@ export type UserReportUncheckedUpdateWithoutHandlerInput = {
   reporterId?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -889,10 +1021,13 @@ export type UserReportUncheckedUpdateManyWithoutHandlerInput = {
   reporterId?: Prisma.IntFieldUpdateOperationsInput | number
   targetType?: Prisma.IntFieldUpdateOperationsInput | number
   targetId?: Prisma.IntFieldUpdateOperationsInput | number
-  reason?: Prisma.StringFieldUpdateOperationsInput | string
+  sceneType?: Prisma.IntFieldUpdateOperationsInput | number
+  sceneId?: Prisma.IntFieldUpdateOperationsInput | number
+  commentLevel?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  reasonType?: Prisma.IntFieldUpdateOperationsInput | number
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   evidenceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  status?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.IntFieldUpdateOperationsInput | number
   handlingNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   handledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -907,7 +1042,10 @@ export type UserReportSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   handlerId?: boolean
   targetType?: boolean
   targetId?: boolean
-  reason?: boolean
+  sceneType?: boolean
+  sceneId?: boolean
+  commentLevel?: boolean
+  reasonType?: boolean
   description?: boolean
   evidenceUrl?: boolean
   status?: boolean
@@ -925,7 +1063,10 @@ export type UserReportSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   handlerId?: boolean
   targetType?: boolean
   targetId?: boolean
-  reason?: boolean
+  sceneType?: boolean
+  sceneId?: boolean
+  commentLevel?: boolean
+  reasonType?: boolean
   description?: boolean
   evidenceUrl?: boolean
   status?: boolean
@@ -943,7 +1084,10 @@ export type UserReportSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   handlerId?: boolean
   targetType?: boolean
   targetId?: boolean
-  reason?: boolean
+  sceneType?: boolean
+  sceneId?: boolean
+  commentLevel?: boolean
+  reasonType?: boolean
   description?: boolean
   evidenceUrl?: boolean
   status?: boolean
@@ -961,7 +1105,10 @@ export type UserReportSelectScalar = {
   handlerId?: boolean
   targetType?: boolean
   targetId?: boolean
-  reason?: boolean
+  sceneType?: boolean
+  sceneId?: boolean
+  commentLevel?: boolean
+  reasonType?: boolean
   description?: boolean
   evidenceUrl?: boolean
   status?: boolean
@@ -971,7 +1118,7 @@ export type UserReportSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reporterId" | "handlerId" | "targetType" | "targetId" | "reason" | "description" | "evidenceUrl" | "status" | "handlingNote" | "handledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userReport"]>
+export type UserReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reporterId" | "handlerId" | "targetType" | "targetId" | "sceneType" | "sceneId" | "commentLevel" | "reasonType" | "description" | "evidenceUrl" | "status" | "handlingNote" | "handledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userReport"]>
 export type UserReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reporter?: boolean | Prisma.AppUserDefaultArgs<ExtArgs>
   handler?: boolean | Prisma.UserReport$handlerArgs<ExtArgs>
@@ -989,51 +1136,70 @@ export type $UserReportPayload<ExtArgs extends runtime.Types.Extensions.Internal
   name: "UserReport"
   objects: {
     /**
-     * 举报人关系
+     * 关联举报人
      */
     reporter: Prisma.$AppUserPayload<ExtArgs>
     /**
-     * 处理人关系
+     * 关联处理人
      */
     handler: Prisma.$AppUserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     /**
-     * 主键ID（自增）
+     * 主键 ID
      */
     id: number
     /**
-     * 举报人ID（关联 app_user.id）
+     * 举报人 ID
      */
     reporterId: number
     /**
-     * 处理人ID（关联 app_user.id，可空）
+     * 处理人 ID
      */
     handlerId: number | null
     /**
-     * 举报目标类型（1=评论, 2=论坛主题, 3=论坛回复, 4=用户）
+     * 举报直接目标类型
+     * 取值见 ReportTargetTypeEnum
      */
     targetType: number
     /**
-     * 举报目标ID
+     * 举报直接目标 ID
      */
     targetId: number
     /**
-     * 举报原因
+     * 目标所属业务场景类型
+     * 取值见 SceneTypeEnum
      */
-    reason: string
+    sceneType: number
     /**
-     * 举报描述
+     * 目标所属业务场景根对象 ID
+     * 例如评论举报时，这里存评论挂载的作品、章节或主题 ID
+     */
+    sceneId: number
+    /**
+     * 评论层级类型
+     * 仅当 targetType=COMMENT 时有值
+     * 取值见 CommentLevelEnum
+     */
+    commentLevel: number | null
+    /**
+     * 举报原因类型
+     * 取值见 ReportReasonEnum
+     */
+    reasonType: number
+    /**
+     * 举报补充说明
      */
     description: string | null
     /**
-     * 证据图片URL
+     * 证据链接
      */
     evidenceUrl: string | null
     /**
-     * 处理状态（pending=待处理, processing=处理中, resolved=已处理, rejected=已驳回）
+     * 举报状态
+     * 取值见 ReportStatusEnum
      */
-    status: string
+    status: number
     /**
      * 处理备注
      */
@@ -1480,10 +1646,13 @@ export interface UserReportFieldRefs {
   readonly handlerId: Prisma.FieldRef<"UserReport", 'Int'>
   readonly targetType: Prisma.FieldRef<"UserReport", 'Int'>
   readonly targetId: Prisma.FieldRef<"UserReport", 'Int'>
-  readonly reason: Prisma.FieldRef<"UserReport", 'String'>
+  readonly sceneType: Prisma.FieldRef<"UserReport", 'Int'>
+  readonly sceneId: Prisma.FieldRef<"UserReport", 'Int'>
+  readonly commentLevel: Prisma.FieldRef<"UserReport", 'Int'>
+  readonly reasonType: Prisma.FieldRef<"UserReport", 'Int'>
   readonly description: Prisma.FieldRef<"UserReport", 'String'>
   readonly evidenceUrl: Prisma.FieldRef<"UserReport", 'String'>
-  readonly status: Prisma.FieldRef<"UserReport", 'String'>
+  readonly status: Prisma.FieldRef<"UserReport", 'Int'>
   readonly handlingNote: Prisma.FieldRef<"UserReport", 'String'>
   readonly handledAt: Prisma.FieldRef<"UserReport", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"UserReport", 'DateTime'>

@@ -1,119 +1,135 @@
 import type { PrismaClient } from '@prisma/client'
 
-/**
- * 创建交互模块初始数据
- * 包含点赞、收藏、浏览记录、评论、评论点赞、评论举报、下载等测试数据
- */
-export async function createInitialInteractionData(prisma: PrismaClient) {
-  console.log('🌱 开始初始化交互模块数据...')
+type SeedWork = {
+  id: number
+  type: number
+}
 
-  // 获取测试用户ID（假设已有用户数据）
-  const users = await prisma.appUser.findMany({ take: 5 })
-  if (users.length === 0) {
-    console.log('⚠️ 没有用户数据，跳过交互数据初始化')
-    return
-  }
+type SeedChapter = {
+  id: number
+  workType: number
+}
 
-  // 获取作品数据
-  const works = await prisma.work.findMany({ take: 10 })
-  if (works.length === 0) {
-    console.log('⚠️ 没有作品数据，跳过交互数据初始化')
-    return
-  }
+type SeedTopic = {
+  id: number
+}
 
-  // 获取章节数据
-  const chapters = await prisma.workChapter.findMany({ take: 20 })
-
-  // 获取论坛主题数据
-  const topics = await prisma.forumTopic.findMany({ take: 10 })
-
-  const userIds = users.map((u) => u.id)
-  const workIds = works.map((w) => w.id)
-  const chapterIds = chapters.map((c) => c.id)
-  const topicIds = topics.map((t) => t.id)
-
-  // 1. 创建点赞数据
-  await createLikes(prisma, userIds, workIds, chapterIds, topicIds)
-
-  // 2. 创建收藏数据
-  await createFavorites(prisma, userIds, workIds, topicIds)
-
-  // 3. 创建浏览记录数据
-  await createViews(prisma, userIds, workIds, chapterIds, topicIds)
-
-  // 4. 创建评论数据
-  const commentIds = await createComments(
-    prisma,
-    userIds,
-    workIds,
-    chapterIds,
-    topicIds,
-  )
-
-  // 5. 创建评论点赞数据
-  if (commentIds.length > 0) {
-    await createCommentLikes(prisma, userIds, commentIds)
-  }
-
-  // 6. 创建下载数据
-  if (chapterIds.length > 0) {
-    await createDownloads(prisma, userIds, workIds, chapterIds)
-  }
-
-  console.log('✅ 交互模块数据初始化完成')
+type CreatedCommentMeta = {
+  id: number
+  targetType: number
+  targetId: number
+  replyToId: number | null
 }
 
 /**
- * 创建点赞数据
- * targetType: 1=漫画, 2=小说, 3=漫画章节, 4=小说章节, 5=论坛主题
+ * 创建交互模块初始数据。
+ *
+ * 说明：
+ * - 本文件只需要适配新的点赞模型种子
+ * - 举报本次不依赖旧数据迁移，因此这里不额外制造历史举报数据
+ */
+export async function createInitialInteractionData(prisma: PrismaClient) {
+  console.log('开始初始化交互模块数据...')
+
+  const users = await prisma.appUser.findMany({ take: 5, select: { id: true } })
+  if (users.length === 0) {
+    console.log('没有用户数据，跳过交互数据初始化')
+    return
+  }
+
+  const works = await prisma.work.findMany({
+    take: 10,
+    select: { id: true, type: true },
+  })
+  if (works.length === 0) {
+    console.log('没有作品数据，跳过交互数据初始化')
+    return
+  }
+
+  const chapters = await prisma.workChapter.findMany({
+    take: 20,
+    select: { id: true, workType: true },
+  })
+
+  const topics = await prisma.forumTopic.findMany({
+    take: 10,
+    select: { id: true },
+  })
+
+  const userIds = users.map((item) => item.id)
+
+  await createLikes(prisma, userIds, works, chapters, topics)
+  await createFavorites(prisma, userIds, works, topics)
+  await createViews(prisma, userIds, works, chapters, topics)
+
+  const comments = await createComments(prisma, userIds, works, chapters, topics)
+  if (comments.length > 0) {
+    await createCommentLikes(prisma, userIds, comments)
+  }
+
+  if (chapters.length > 0) {
+    await createDownloads(prisma, userIds, works, chapters)
+  }
+
+  console.log('交互模块数据初始化完成')
+}
+
+/**
+ * 创建点赞种子数据。
+ *
+ * 说明：
+ * - 点赞记录需要同步写入 `sceneType`、`sceneId`、`commentLevel`
+ * - 作品与章节的目标类型必须基于真实业务类型生成，不能随机写错
  */
 async function createLikes(
   prisma: PrismaClient,
   userIds: number[],
-  workIds: number[],
-  chapterIds: number[],
-  topicIds: number[],
+  works: SeedWork[],
+  chapters: SeedChapter[],
+  topics: SeedTopic[],
 ) {
   const likes = []
 
-  // 作品点赞 (targetType: 1=漫画, 2=小说)
   for (const userId of userIds.slice(0, 3)) {
-    for (const workId of workIds.slice(0, 5)) {
+    for (const work of works.slice(0, 5)) {
+      const targetType = work.type === 1 ? 1 : 2
       likes.push({
-        targetType: Math.random() > 0.5 ? 1 : 2,
-        targetId: workId,
+        targetType,
+        targetId: work.id,
+        sceneType: targetType,
+        sceneId: work.id,
+        commentLevel: null,
         userId,
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
-        ),
+        createdAt: randomPastDate(7),
       })
     }
   }
 
-  // 章节点赞 (targetType: 3=漫画章节, 4=小说章节)
   for (const userId of userIds.slice(0, 2)) {
-    for (const chapterId of chapterIds.slice(0, 10)) {
+    for (const chapter of chapters.slice(0, 10)) {
+      const targetType = chapter.workType === 1 ? 3 : 4
       likes.push({
-        targetType: Math.random() > 0.5 ? 3 : 4,
-        targetId: chapterId,
+        targetType,
+        targetId: chapter.id,
+        sceneType: targetType,
+        sceneId: chapter.id,
+        commentLevel: null,
         userId,
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
-        ),
+        createdAt: randomPastDate(7),
       })
     }
   }
 
-  // 论坛主题点赞 (targetType: 5)
   for (const userId of userIds.slice(0, 3)) {
-    for (const topicId of topicIds.slice(0, 5)) {
+    for (const topic of topics.slice(0, 5)) {
       likes.push({
         targetType: 5,
-        targetId: topicId,
+        targetId: topic.id,
+        sceneType: 5,
+        sceneId: topic.id,
+        commentLevel: null,
         userId,
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
-        ),
+        createdAt: randomPastDate(7),
       })
     }
   }
@@ -123,46 +139,43 @@ async function createLikes(
       data: likes,
       skipDuplicates: true,
     })
-    console.log(`  ✅ 创建 ${likes.length} 条点赞记录`)
+    console.log(`  创建 ${likes.length} 条点赞记录`)
   }
 }
 
 /**
- * 创建收藏数据
- * targetType: 1=漫画, 2=小说, 5=论坛主题
+ * 创建收藏种子数据。
+ *
+ * 说明：
+ * - 收藏模块不在本次改造范围内
+ * - 这里只顺手把目标类型改为基于真实作品类型生成，避免旧种子写错
  */
 async function createFavorites(
   prisma: PrismaClient,
   userIds: number[],
-  workIds: number[],
-  topicIds: number[],
+  works: SeedWork[],
+  topics: SeedTopic[],
 ) {
   const favorites = []
 
-  // 作品收藏
   for (const userId of userIds.slice(0, 3)) {
-    for (const workId of workIds.slice(0, 5)) {
+    for (const work of works.slice(0, 5)) {
       favorites.push({
-        targetType: Math.random() > 0.5 ? 1 : 2,
-        targetId: workId,
+        targetType: work.type === 1 ? 1 : 2,
+        targetId: work.id,
         userId,
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 14 * 24 * 60 * 60 * 1000),
-        ),
+        createdAt: randomPastDate(14),
       })
     }
   }
 
-  // 论坛主题收藏
   for (const userId of userIds.slice(0, 2)) {
-    for (const topicId of topicIds.slice(0, 3)) {
+    for (const topic of topics.slice(0, 3)) {
       favorites.push({
         targetType: 5,
-        targetId: topicId,
+        targetId: topic.id,
         userId,
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
-        ),
+        createdAt: randomPastDate(7),
       })
     }
   }
@@ -172,216 +185,277 @@ async function createFavorites(
       data: favorites,
       skipDuplicates: true,
     })
-    console.log(`  ✅ 创建 ${favorites.length} 条收藏记录`)
+    console.log(`  创建 ${favorites.length} 条收藏记录`)
   }
 }
 
 /**
- * 创建浏览记录数据
- * targetType: 1=漫画, 2=小说, 3=漫画章节, 4=小说章节, 5=论坛主题
+ * 创建浏览种子数据。
  */
 async function createViews(
   prisma: PrismaClient,
   userIds: number[],
-  workIds: number[],
-  chapterIds: number[],
-  topicIds: number[],
+  works: SeedWork[],
+  chapters: SeedChapter[],
+  topics: SeedTopic[],
 ) {
   const views = []
   const devices = ['mobile', 'desktop', 'tablet']
 
-  // 作品浏览
   for (const userId of userIds) {
-    for (const workId of workIds.slice(0, 5)) {
+    for (const work of works.slice(0, 5)) {
       views.push({
-        targetType: Math.random() > 0.5 ? 1 : 2,
-        targetId: workId,
+        targetType: work.type === 1 ? 1 : 2,
+        targetId: work.id,
         userId,
-        ipAddress: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        device: devices[Math.floor(Math.random() * devices.length)],
-        userAgent: 'Mozilla/5.0 (Test)',
-        viewedAt: new Date(
-          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-        ),
+        ipAddress: randomIp(),
+        device: randomItem(devices),
+        userAgent: 'Mozilla/5.0 (Seed)',
+        viewedAt: randomPastDate(30),
       })
     }
   }
 
-  // 章节浏览
   for (const userId of userIds) {
-    for (const chapterId of chapterIds.slice(0, 10)) {
+    for (const chapter of chapters.slice(0, 10)) {
       views.push({
-        targetType: Math.random() > 0.5 ? 3 : 4,
-        targetId: chapterId,
+        targetType: chapter.workType === 1 ? 3 : 4,
+        targetId: chapter.id,
         userId,
-        ipAddress: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        device: devices[Math.floor(Math.random() * devices.length)],
-        userAgent: 'Mozilla/5.0 (Test)',
-        viewedAt: new Date(
-          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-        ),
+        ipAddress: randomIp(),
+        device: randomItem(devices),
+        userAgent: 'Mozilla/5.0 (Seed)',
+        viewedAt: randomPastDate(30),
       })
     }
   }
 
-  // 论坛主题浏览
   for (const userId of userIds) {
-    for (const topicId of topicIds.slice(0, 5)) {
+    for (const topic of topics.slice(0, 5)) {
       views.push({
         targetType: 5,
-        targetId: topicId,
+        targetId: topic.id,
         userId,
-        ipAddress: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-        device: devices[Math.floor(Math.random() * devices.length)],
-        userAgent: 'Mozilla/5.0 (Test)',
-        viewedAt: new Date(
-          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-        ),
+        ipAddress: randomIp(),
+        device: randomItem(devices),
+        userAgent: 'Mozilla/5.0 (Seed)',
+        viewedAt: randomPastDate(30),
       })
     }
   }
 
   if (views.length > 0) {
     await prisma.userView.createMany({ data: views })
-    console.log(`  ✅ 创建 ${views.length} 条浏览记录`)
+    console.log(`  创建 ${views.length} 条浏览记录`)
   }
 }
 
 /**
- * 创建评论数据
- * targetType: 1=漫画, 2=小说, 3=漫画章节, 4=小说章节, 5=论坛主题
+ * 创建评论与回复种子数据。
+ *
+ * 说明：
+ * - 这里会同时制造根评论和回复评论
+ * - 方便后续验证 `commentLevel` 是否能正确落种子
  */
 async function createComments(
   prisma: PrismaClient,
   userIds: number[],
-  workIds: number[],
-  chapterIds: number[],
-  topicIds: number[],
-): Promise<number[]> {
-  const comments = []
+  works: SeedWork[],
+  chapters: SeedChapter[],
+  topics: SeedTopic[],
+): Promise<CreatedCommentMeta[]> {
+  const createdComments: CreatedCommentMeta[] = []
+  const rootComments: CreatedCommentMeta[] = []
   const contents = [
-    '这个作品真的很棒！',
-    '剧情很精彩，期待更新',
-    '画风很喜欢，支持作者',
-    '角色塑造得很好',
+    '这个内容很精彩',
+    '剧情推进不错',
+    '画风很喜欢',
+    '人物塑造得很好',
     '这个章节太精彩了',
     '期待下一话',
-    '故事情节很吸引人',
-    '画得真好，加油',
-    '这个转折没想到',
-    '太喜欢了，收藏了',
+    '故事设定很吸引人',
+    '节奏控制得不错',
+    '这个转折很意外',
+    '已经加入收藏了',
   ]
 
   let floor = 1
 
-  // 作品评论
-  for (const workId of workIds.slice(0, 5)) {
+  for (const work of works.slice(0, 5)) {
     for (const userId of userIds.slice(0, 3)) {
-      comments.push({
-        targetType: Math.random() > 0.5 ? 1 : 2,
-        targetId: workId,
-        userId,
-        content: contents[Math.floor(Math.random() * contents.length)],
-        floor: floor++,
-        auditStatus: 1, // 已通过
-        likeCount: Math.floor(Math.random() * 50),
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-        ),
-        replyToId: null,
-        actualReplyToId: null,
-        auditById: null,
-        auditRole: null,
-        auditReason: null,
-        auditAt: null,
-        sensitiveWordHits: null,
+      const created = await prisma.userComment.create({
+        data: {
+          targetType: work.type === 1 ? 1 : 2,
+          targetId: work.id,
+          userId,
+          content: randomItem(contents),
+          floor: floor++,
+          auditStatus: 1,
+          likeCount: Math.floor(Math.random() * 50),
+          createdAt: randomPastDate(30),
+          replyToId: null,
+          actualReplyToId: null,
+          auditById: null,
+          auditRole: null,
+          auditReason: null,
+          auditAt: null,
+          sensitiveWordHits: null,
+        },
+        select: {
+          id: true,
+          targetType: true,
+          targetId: true,
+        },
       })
+
+      const commentMeta: CreatedCommentMeta = {
+        id: created.id,
+        targetType: created.targetType,
+        targetId: created.targetId,
+        replyToId: null,
+      }
+      createdComments.push(commentMeta)
+      rootComments.push(commentMeta)
     }
   }
 
-  // 章节评论
-  for (const chapterId of chapterIds.slice(0, 5)) {
+  for (const chapter of chapters.slice(0, 5)) {
     for (const userId of userIds.slice(0, 2)) {
-      comments.push({
-        targetType: Math.random() > 0.5 ? 3 : 4,
-        targetId: chapterId,
-        userId,
-        content: contents[Math.floor(Math.random() * contents.length)],
-        floor: floor++,
-        auditStatus: 1,
-        likeCount: Math.floor(Math.random() * 30),
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-        ),
-        replyToId: null,
-        actualReplyToId: null,
-        auditById: null,
-        auditRole: null,
-        auditReason: null,
-        auditAt: null,
-        sensitiveWordHits: null,
+      const created = await prisma.userComment.create({
+        data: {
+          targetType: chapter.workType === 1 ? 3 : 4,
+          targetId: chapter.id,
+          userId,
+          content: randomItem(contents),
+          floor: floor++,
+          auditStatus: 1,
+          likeCount: Math.floor(Math.random() * 30),
+          createdAt: randomPastDate(30),
+          replyToId: null,
+          actualReplyToId: null,
+          auditById: null,
+          auditRole: null,
+          auditReason: null,
+          auditAt: null,
+          sensitiveWordHits: null,
+        },
+        select: {
+          id: true,
+          targetType: true,
+          targetId: true,
+        },
       })
+
+      const commentMeta: CreatedCommentMeta = {
+        id: created.id,
+        targetType: created.targetType,
+        targetId: created.targetId,
+        replyToId: null,
+      }
+      createdComments.push(commentMeta)
+      rootComments.push(commentMeta)
     }
   }
 
-  // 论坛回复
-  for (const topicId of topicIds.slice(0, 5)) {
+  for (const topic of topics.slice(0, 5)) {
     for (const userId of userIds.slice(0, 3)) {
-      comments.push({
-        targetType: 5,
-        targetId: topicId,
-        userId,
-        content: contents[Math.floor(Math.random() * contents.length)],
-        floor: floor++,
-        auditStatus: 1,
-        likeCount: Math.floor(Math.random() * 20),
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-        ),
+      const created = await prisma.userComment.create({
+        data: {
+          targetType: 5,
+          targetId: topic.id,
+          userId,
+          content: randomItem(contents),
+          floor: floor++,
+          auditStatus: 1,
+          likeCount: Math.floor(Math.random() * 20),
+          createdAt: randomPastDate(30),
+          replyToId: null,
+          actualReplyToId: null,
+          auditById: null,
+          auditRole: null,
+          auditReason: null,
+          auditAt: null,
+          sensitiveWordHits: null,
+        },
+        select: {
+          id: true,
+          targetType: true,
+          targetId: true,
+        },
+      })
+
+      const commentMeta: CreatedCommentMeta = {
+        id: created.id,
+        targetType: created.targetType,
+        targetId: created.targetId,
         replyToId: null,
-        actualReplyToId: null,
-        auditById: null,
-        auditRole: null,
-        auditReason: null,
-        auditAt: null,
-        sensitiveWordHits: null,
+      }
+      createdComments.push(commentMeta)
+      rootComments.push(commentMeta)
+    }
+  }
+
+  for (const rootComment of rootComments.slice(0, 8)) {
+    for (const userId of userIds.slice(0, 2)) {
+      const created = await prisma.userComment.create({
+        data: {
+          targetType: rootComment.targetType,
+          targetId: rootComment.targetId,
+          userId,
+          content: `回复：${randomItem(contents)}`,
+          floor: null,
+          replyToId: rootComment.id,
+          actualReplyToId: rootComment.id,
+          auditStatus: 1,
+          likeCount: Math.floor(Math.random() * 10),
+          createdAt: randomPastDate(15),
+          auditById: null,
+          auditRole: null,
+          auditReason: null,
+          auditAt: null,
+          sensitiveWordHits: null,
+        },
+        select: {
+          id: true,
+          targetType: true,
+          targetId: true,
+          replyToId: true,
+        },
+      })
+
+      createdComments.push({
+        id: created.id,
+        targetType: created.targetType,
+        targetId: created.targetId,
+        replyToId: created.replyToId,
       })
     }
   }
 
-  const createdComments: number[] = []
-  if (comments.length > 0) {
-    // 由于需要获取创建的ID，使用循环逐个创建
-    for (const comment of comments) {
-      const created = await prisma.userComment.create({ data: comment })
-      createdComments.push(created.id)
-    }
-    console.log(`  ✅ 创建 ${comments.length} 条评论记录`)
-  }
-
+  console.log(`  创建 ${createdComments.length} 条评论记录`)
   return createdComments
 }
 
 /**
- * 创建评论点赞数据
- * targetType=6 表示评论点赞
+ * 创建评论点赞种子数据。
  */
 async function createCommentLikes(
   prisma: PrismaClient,
   userIds: number[],
-  commentIds: number[],
+  comments: CreatedCommentMeta[],
 ) {
   const likes = []
 
-  for (const commentId of commentIds.slice(0, 20)) {
+  for (const comment of comments.slice(0, 20)) {
     for (const userId of userIds.slice(0, 3)) {
       likes.push({
-        targetType: 6, // 评论点赞
-        targetId: commentId,
+        targetType: 6,
+        targetId: comment.id,
+        sceneType: comment.targetType,
+        sceneId: comment.targetId,
+        commentLevel: comment.replyToId ? 2 : 1,
         userId,
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
-        ),
+        createdAt: randomPastDate(7),
       })
     }
   }
@@ -391,63 +465,40 @@ async function createCommentLikes(
       data: likes,
       skipDuplicates: true,
     })
-    console.log(`  ✅ 创建 ${likes.length} 条评论点赞记录`)
+    console.log(`  创建 ${likes.length} 条评论点赞记录`)
   }
 }
 
 /**
- * 创建下载数据
- * targetType: 1=漫画, 2=小说, 3=漫画章节, 4=小说章节
+ * 创建下载种子数据。
  */
 async function createDownloads(
   prisma: PrismaClient,
   userIds: number[],
-  workIds: number[],
-  chapterIds: number[],
+  works: SeedWork[],
+  chapters: SeedChapter[],
 ) {
   const downloads = []
 
-  // 作品下载
   for (const userId of userIds.slice(0, 3)) {
-    for (const workId of workIds.slice(0, 5)) {
-      const workType = Math.random() > 0.5 ? 1 : 2
+    for (const work of works.slice(0, 5)) {
       downloads.push({
-        targetType: workType,
-        targetId: workId,
+        targetType: work.type === 1 ? 1 : 2,
+        targetId: work.id,
         userId,
-        createdAt: new Date(
-          Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-        ),
+        createdAt: randomPastDate(30),
       })
     }
   }
 
-  // 章节下载
   for (const userId of userIds.slice(0, 2)) {
-    for (const chapterId of chapterIds.slice(0, 10)) {
-      // 获取章节所属作品信息
-      const chapter = await prisma.workChapter.findUnique({
-        where: { id: chapterId },
-        select: { workId: true },
+    for (const chapter of chapters.slice(0, 10)) {
+      downloads.push({
+        targetType: chapter.workType === 1 ? 3 : 4,
+        targetId: chapter.id,
+        userId,
+        createdAt: randomPastDate(30),
       })
-      if (chapter) {
-        const work = await prisma.work.findUnique({
-          where: { id: chapter.workId },
-          select: { type: true },
-        })
-        if (work) {
-          const workType = work.type === 1 ? 1 : 2
-          const targetType = work.type === 1 ? 3 : 4
-          downloads.push({
-            targetType,
-            targetId: chapterId,
-            userId,
-            createdAt: new Date(
-              Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
-            ),
-          })
-        }
-      }
     }
   }
 
@@ -456,6 +507,20 @@ async function createDownloads(
       data: downloads,
       skipDuplicates: true,
     })
-    console.log(`  ✅ 创建 ${downloads.length} 条下载记录`)
+    console.log(`  创建 ${downloads.length} 条下载记录`)
   }
+}
+
+function randomPastDate(days: number) {
+  return new Date(
+    Date.now() - Math.floor(Math.random() * days * 24 * 60 * 60 * 1000),
+  )
+}
+
+function randomIp() {
+  return `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
+}
+
+function randomItem<T>(items: T[]) {
+  return items[Math.floor(Math.random() * items.length)]
 }

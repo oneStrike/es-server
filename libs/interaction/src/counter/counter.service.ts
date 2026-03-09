@@ -2,6 +2,13 @@ import { InteractionTargetTypeEnum } from '@libs/base/constant'
 import { BaseService } from '@libs/base/database'
 import { Injectable, NotFoundException } from '@nestjs/common'
 
+/**
+ * 交互计数服务。
+ *
+ * 说明：
+ * - 统一维护点赞、评论、浏览等计数字段
+ * - 本次改造后正式支持 `COMMENT` 目标
+ */
 @Injectable()
 export class CounterService extends BaseService {
   async incrementCount(
@@ -140,6 +147,7 @@ export class CounterService extends BaseService {
       case InteractionTargetTypeEnum.FORUM_TOPIC:
         return client.forumTopic
       case InteractionTargetTypeEnum.COMMENT:
+        return client.userComment
       default:
         throw new Error(`不支持的目标类型: ${targetType}`)
     }
@@ -158,6 +166,7 @@ export class CounterService extends BaseService {
       case InteractionTargetTypeEnum.FORUM_TOPIC:
         return { id: targetId, deletedAt: null }
       case InteractionTargetTypeEnum.COMMENT:
+        return { id: targetId, deletedAt: null }
       default:
         throw new Error(`不支持的目标类型: ${targetType}`)
     }
@@ -223,6 +232,13 @@ export class CounterService extends BaseService {
     })
   }
 
+  /**
+   * 获取目标模型名称与主键查询条件。
+   *
+   * 说明：
+   * - 这里用于直接更新主键记录，因此不额外拼接业务类型过滤
+   * - 业务类型过滤统一在 `getWhere` 中用于存在性校验
+   */
   private getModelInfo(
     targetType: InteractionTargetTypeEnum,
     targetId: number,
@@ -246,6 +262,10 @@ export class CounterService extends BaseService {
           where: { id: targetId },
         }
       case InteractionTargetTypeEnum.COMMENT:
+        return {
+          modelName: 'userComment',
+          where: { id: targetId },
+        }
       default:
         throw new Error(`不支持的目标类型: ${targetType}`)
     }

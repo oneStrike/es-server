@@ -1,99 +1,117 @@
-import { InteractionTargetTypeEnum } from '@libs/base/constant'
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator'
+import {
+  CommentLevelEnum,
+  InteractionTargetTypeEnum,
+  SceneTypeEnum,
+} from '@libs/base/constant'
+import {
+  BooleanProperty,
+  DateProperty,
+  EnumProperty,
+  NumberProperty,
+} from '@libs/base/decorators'
+import { PageDto } from '@libs/base/dto'
+import { PartialType } from '@nestjs/swagger'
+import { LikeTargetBodyDto } from '../../dto/target.dto'
 
-export class LikeDto {
-  @ApiProperty({
-    description: '目标类型：1=漫画,2=小说,3=漫画章节,4=小说章节,5=论坛主题',
-    enum: InteractionTargetTypeEnum,
-    example: 1,
-  })
-  @IsInt()
-  @IsNotEmpty()
-  targetType!: InteractionTargetTypeEnum
+/**
+ * 创建点赞请求体。
+ *
+ * 说明：
+ * - 所有点赞入口统一使用该 DTO
+ * - 评论点赞不再单独维护独立接口 DTO
+ */
+export class CreateLikeBodyDto extends LikeTargetBodyDto {}
 
-  @ApiProperty({ description: '目标ID', example: 1 })
-  @IsInt()
-  @Min(1)
-  @IsNotEmpty()
-  targetId!: number
-}
+/**
+ * 取消点赞请求体。
+ */
+export class CancelLikeBodyDto extends LikeTargetBodyDto {}
 
-export class UnlikeDto extends LikeDto {}
+/**
+ * 点赞状态查询参数。
+ */
+export class LikeStatusQueryDto extends LikeTargetBodyDto {}
 
-export class LikeStatusQueryDto {
-  @ApiProperty({
-    description: '目标类型',
-    enum: InteractionTargetTypeEnum,
-    example: 1,
-  })
-  @IsInt()
-  @IsNotEmpty()
-  targetType!: InteractionTargetTypeEnum
-
-  @ApiProperty({
-    description: '目标ID数组',
-    example: [1, 2, 3],
-    type: [Number],
-  })
-  @IsInt({ each: true })
-  @IsNotEmpty()
-  targetIds!: number[]
-}
-
-export class LikeListQueryDto {
-  @ApiPropertyOptional({
+/**
+ * 我的点赞列表查询参数。
+ */
+export class LikeListQueryDto extends PartialType(PageDto) {
+  @EnumProperty({
     description: '目标类型筛选',
     enum: InteractionTargetTypeEnum,
-    example: 1,
+    example: InteractionTargetTypeEnum.COMIC,
+    required: false,
   })
-  @IsInt()
-  @IsOptional()
   targetType?: InteractionTargetTypeEnum
-
-  @ApiPropertyOptional({ description: '页码', default: 0, example: 0 })
-  @IsInt()
-  @Min(0)
-  @IsOptional()
-  pageIndex?: number = 0
-
-  @ApiPropertyOptional({ description: '每页数量', default: 15, example: 15 })
-  @IsInt()
-  @Min(1)
-  @IsOptional()
-  pageSize?: number = 15
 }
 
+/**
+ * 点赞状态响应体。
+ */
 export class LikeStatusResponseDto {
-  @ApiProperty({ description: '目标ID', example: 1 })
+  @NumberProperty({
+    description: '目标 ID',
+    example: 1,
+    required: true,
+  })
   targetId!: number
 
-  @ApiProperty({ description: '是否已点赞', example: true })
+  @BooleanProperty({
+    description: '是否已点赞',
+    example: true,
+    required: true,
+  })
   isLiked!: boolean
 }
 
-export class LikeCountResponseDto {
-  @ApiProperty({ description: '目标ID', example: 1 })
-  targetId!: number
-
-  @ApiProperty({ description: '点赞数', example: 100 })
-  likeCount!: number
-}
-
+/**
+ * 点赞记录响应体。
+ *
+ * 说明：
+ * - 返回直接目标与场景维度，便于后续分页展示和前端筛选
+ */
 export class LikeRecordResponseDto {
-  @ApiProperty({ description: '点赞记录ID', example: 1 })
+  @NumberProperty({ description: '点赞记录 ID', example: 1, required: true })
   id!: number
 
-  @ApiProperty({
-    description: '目标类型',
+  @EnumProperty({
+    description: '点赞目标类型',
     enum: InteractionTargetTypeEnum,
-    example: 1,
+    example: InteractionTargetTypeEnum.COMIC,
+    required: true,
   })
   targetType!: InteractionTargetTypeEnum
 
-  @ApiProperty({ description: '目标ID', example: 1 })
+  @NumberProperty({ description: '点赞目标 ID', example: 1, required: true })
   targetId!: number
 
-  @ApiProperty({ description: '点赞时间', example: '2024-01-01T00:00:00.000Z' })
+  @EnumProperty({
+    description: '所属业务场景类型',
+    enum: SceneTypeEnum,
+    example: SceneTypeEnum.COMIC_WORK,
+    required: true,
+  })
+  sceneType!: SceneTypeEnum
+
+  @NumberProperty({
+    description: '所属业务场景根对象 ID',
+    example: 1,
+    required: true,
+  })
+  sceneId!: number
+
+  @EnumProperty({
+    description: '评论层级，仅评论点赞时有值',
+    enum: CommentLevelEnum,
+    example: CommentLevelEnum.ROOT,
+    required: false,
+  })
+  commentLevel?: CommentLevelEnum
+
+  @DateProperty({
+    description: '点赞时间',
+    example: '2026-03-09T10:00:00.000Z',
+    required: true,
+  })
   createdAt!: Date
 }
